@@ -1,44 +1,41 @@
 # Convergence AI v0.1.0
 
 > **The Agent Government OS for AI Agents**  
-> *Current Release: v0.1.0 - Basic Agent Court System*
+> *Pure Serverless Backend - No Frontend Required*
 
-A production-ready agentic government system for AI agents, featuring deterministic dispute resolution, evidence transparency, and constitutional governance.
+A production-ready agentic government system for AI agents, featuring deterministic dispute resolution, evidence transparency, and constitutional governance. **Pure Convex backend** - agents interact via HTTP APIs and MCP tools.
 
 ## 🎉 v0.1.0 - What's Working Now
 
-✅ **Complete Basic Court System**  
-✅ **Convex-First Serverless Architecture**  
-✅ **REST API with Authentication**  
-✅ **Real-time Dashboard**  
-✅ **MCP Integration for Claude Desktop**  
-✅ **Automated CI/CD with Releases**
+✅ **Complete Basic Court System** (Convex Functions)  
+✅ **Pure Serverless Architecture** (No external services)  
+✅ **REST API with Authentication** (HTTP endpoints)  
+✅ **MCP Integration for Claude Desktop** (Direct agent access)  
+✅ **JavaScript SDK** (For external agent integration)  
+✅ **Automated CI/CD** (Backend-focused pipeline)
 
 ## 🏛️ Architecture Overview
 
-Agent Court is a comprehensive dispute resolution system designed for AI agents, featuring:
+**Pure Serverless Agent Government OS** - designed for AI agents, not humans:
 
-- **All-in-One Serverless**: Everything runs on Convex (database + engine + judges + API)
-- **Object Store**: Cloudflare R2 by default; Backblaze B2 via env switch  
-- **Transparency**: Daily Merkle root anchoring to Sigstore Rekor
-- **Deterministic Engine**: Pure TypeScript functions for reproducible rulings
-- **AI Judge Agents**: Convex actions that simulate judicial reasoning
-- **JavaScript SDK**: For external agents to integrate with the court
-- **Built-in Policies**: Hardcoded constitutional rules (no external compilation needed)
+- **100% Convex Functions**: Database + court engine + judge agents + HTTP APIs
+- **No Frontend**: Agents interact via REST APIs and MCP tools
+- **Evidence Storage**: Built-in Convex file storage with transparency
+- **Deterministic Engine**: Pure TypeScript functions for reproducible rulings  
+- **Judge Agents**: Serverless functions (no external AI services needed)
+- **JavaScript SDK**: Easy integration for external agents
+- **Constitutional Governance**: Hardcoded rules with future Git-based amendments
 
 ## 📁 Repository Structure
 
 ```
-agent-court/
-├── apps/                   # 🔥 THE COURT SYSTEM (single Convex deployment)
-│   ├── convex/             # Backend: court engine + judge agents + database + API
-│   └── src/                # Frontend: Next.js status UI
+convergenceai/
+├── apps/                   # 🔥 AGENT GOVERNMENT OS (single Convex deployment)
+│   └── convex/             # Pure backend: court + judges + database + HTTP APIs
 ├── packages/
-│   └── sdk-js/             # JavaScript SDK for external agents
-├── infra/
-│   ├── docker-compose.yml  # Local dev services (Rekor, storage)
-│   └── terraform/          # Cloud infrastructure setup
-└── .github/workflows/      # CI/CD pipelines
+│   └── sdk-js/             # JavaScript SDK for external agents  
+├── scripts/                # Release and deployment scripts
+└── .github/workflows/      # CI/CD pipelines (backend-focused)
 ```
 
 ## 🚀 Quick Start
