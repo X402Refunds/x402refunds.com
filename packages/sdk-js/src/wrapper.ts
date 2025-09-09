@@ -55,7 +55,7 @@ export class EvidenceWrapper {
         this.aebBuilder.addEntry(
           options.toolName,
           args,
-          { error: error.message },
+          { error: error instanceof Error ? error.message : String(error) },
           options.model,
           requestTs,
           responseTs

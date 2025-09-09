@@ -17,9 +17,9 @@ export async function generateKeys(): Promise<{ privateKey: string; publicKey: s
 /**
  * Load keys from hex strings
  */
-export function loadKeys(privateKeyHex: string): { privateKey: Uint8Array; publicKey: Promise<Uint8Array> } {
+export async function loadKeys(privateKeyHex: string): Promise<{ privateKey: Uint8Array; publicKey: Uint8Array }> {
   const privateKey = Buffer.from(privateKeyHex, 'hex');
-  const publicKey = ed25519.getPublicKey(privateKey);
+  const publicKey = await ed25519.getPublicKey(privateKey);
   
   return {
     privateKey,

@@ -37,7 +37,7 @@ export class CourtClient {
       throw new Error(`Evidence submission failed: ${error}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as { evidenceId: string };
     return result.evidenceId;
   }
 
@@ -65,7 +65,7 @@ export class CourtClient {
       throw new Error(`Dispute filing failed: ${error}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as { caseId: string };
     return result.caseId;
   }
 
