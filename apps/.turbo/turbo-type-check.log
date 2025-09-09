@@ -1,0 +1,4 @@
+
+> @agent-court/court-system@0.1.0 type-check /Users/vkotecha/Desktop/convergenceai/apps
+> tsc --noEmit
+

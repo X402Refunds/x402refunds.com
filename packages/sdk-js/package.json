@@ -8,6 +8,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "echo 'No tests specified for SDK yet' && exit 0",
+    "type-check": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
     "demo": "node dist/demo.js"
   },
