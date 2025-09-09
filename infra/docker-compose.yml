@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  # Rekor server for transparency logging
+  rekor-server:
+    image: gcr.io/projectsigstore/rekor-server:latest
+    container_name: agent-court-rekor
+    ports:
+      - "3000:3000"
+    environment:
+      - REKOR_FORMAT_LOG=text
+    volumes:
+      - rekor-data:/var/lib/rekor
+    command: >
+      rekor-server serve
+      --trillian_log_server.address=trillian-log-server:8090
+      --trillian_log_server.port=8090
+      --redis_server.address=redis:6379
+      --rekor_server.address=0.0.0.0:3000
+      --enable_attestation_storage
+      --attestation_storage_bucket=file:///var/lib/rekor/attestations
+    depends_on:
+      - trillian-log-server
+      - redis
+    networks:
+      - agent-court
+
+  # Trillian log server (required by Rekor)
+  trillian-log-server:
+    image: gcr.io/trillian-opensource-ci/log_server:latest
+    container_name: agent-court-trillian-log
+    ports:
+      - "8090:8090"
+      - "8091:8091"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=trillian
+      - MYSQL_USER=trillian
+      - MYSQL_PASSWORD=trillian
+    command: >
+      /go/bin/trillian_log_server
+      --storage_system=mysql
+      --mysql_uri=trillian:trillian@tcp(mysql:3306)/trillian
+      --rpc_endpoint=0.0.0.0:8090
+      --http_endpoint=0.0.0.0:8091
+      --alsologtostderr
+    depends_on:
+      - mysql
+    networks:
+      - agent-court
+
+  # Trillian log signer (required by Trillian)
+  trillian-log-signer:
+    image: gcr.io/trillian-opensource-ci/log_signer:latest
+    container_name: agent-court-trillian-signer
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=trillian
+      - MYSQL_USER=trillian
+      - MYSQL_PASSWORD=trillian
+    command: >
+      /go/bin/trillian_log_signer
+      --storage_system=mysql
+      --mysql_uri=trillian:trillian@tcp(mysql:3306)/trillian
+      --force_master
+      --alsologtostderr
+    depends_on:
+      - mysql
+    networks:
+      - agent-court
+
+  # MySQL database for Trillian
+  mysql:
+    image: mysql:8.0
+    container_name: agent-court-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=trillian
+      - MYSQL_USER=trillian
+      - MYSQL_PASSWORD=trillian
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - agent-court
+
+  # Redis for Rekor
+  redis:
+    image: redis:7-alpine
+    container_name: agent-court-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - agent-court
+
+  # LocalStack for S3-compatible storage (development)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: agent-court-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack-data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - agent-court
+
+  # MinIO as alternative S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    container_name: agent-court-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - agent-court
+
+  # Create MinIO bucket on startup
+  minio-init:
+    image: minio/mc:latest
+    container_name: agent-court-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/agent-court-evidence --ignore-existing;
+      /usr/bin/mc policy set public myminio/agent-court-evidence;
+      exit 0;
+      "
+    networks:
+      - agent-court
+
+volumes:
+  rekor-data:
+  mysql-data:
+  redis-data:
+  localstack-data:
+  minio-data:
+
+networks:
+  agent-court:
+    driver: bridge

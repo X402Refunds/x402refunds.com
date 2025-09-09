@@ -1,0 +1,49 @@
+---
+globs: apps/convex/*.ts
+---
+
+# Convex Function Patterns for Agent Court
+
+## Function Types
+
+- **Mutations**: Write to database (cases, evidence, rulings, votes)
+- **Queries**: Read from database (case details, stats, judge info) 
+- **Actions**: External calls, complex logic, engine processing
+- **HTTP Actions**: API endpoints for external agents
+
+## Error Handling Pattern
+
+Always use try-catch with detailed logging:
+
+```typescript
+try {
+  console.info(`Processing ${operation} for ${identifier}`);
+  // ... operation logic
+  console.info(`${operation} result: ${result}`);
+  return result;
+} catch (error) {
+  console.error(`${operation} failed for ${identifier}:`, error);
+  throw new Error(`${operation} failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+```
+
+## Database Query Pattern
+
+Use type annotations for query callbacks:
+```typescript
+.withIndex("by_field", (q: any) => q.eq("field", value))
+```
+
+## Judge Agent Integration
+
+Judge agents are **functions**, not separate services:
+- Analysis logic in mutations/actions
+- Simple hardcoded logic for MVP (replace with LLM calls later)
+- Panel voting via standard mutations
+
+## No External Dependencies
+
+- Constitution rules: hardcoded in [constitution.ts](mdc:apps/convex/constitution.ts)
+- MCP tools: HTTP endpoints in [http.ts](mdc:apps/convex/http.ts)  
+- Evidence processing: built into mutations
+- Transparency: Convex actions calling Rekor

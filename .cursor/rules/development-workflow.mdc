@@ -1,0 +1,56 @@
+---
+description: Development workflow and command patterns for Agent Court
+---
+
+# Development Workflow - Simplified Commands
+
+Agent Court development follows **single-command patterns** for maximum simplicity.
+
+## Primary Development Commands
+
+```bash
+# Start everything (backend + frontend)
+cd apps && pnpm dev
+
+# Build for production
+cd apps && pnpm build
+
+# Deploy to Convex
+cd apps && npx convex deploy
+
+# Run SDK demo
+pnpm sdk:demo
+```
+
+## File Organization in apps/
+
+- **[convex/](mdc:apps/convex/)** - All backend serverless functions
+- **[src/](mdc:apps/src/)** - Next.js frontend for court dashboard
+- **[package.json](mdc:apps/package.json)** - Single dependency file
+
+## Testing Approach
+
+- Unit tests run automatically with `pnpm test`
+- Integration tests via [scripts/e2e-test.sh](mdc:scripts/e2e-test.sh)
+- SDK demos validate end-to-end functionality
+
+## Database Schema Changes
+
+All schema changes go in [schema.ts](mdc:apps/convex/schema.ts) - Convex handles migrations automatically.
+
+## Adding New Features
+
+1. **New endpoints** → Add to [http.ts](mdc:apps/convex/http.ts) as HTTP actions
+2. **New rules** → Add to [courtEngine.ts](mdc:apps/convex/courtEngine.ts) as rule classes
+3. **New judge logic** → Add to [judges.ts](mdc:apps/convex/judges.ts) as functions
+4. **New database tables** → Add to [schema.ts](mdc:apps/convex/schema.ts)
+
+## No Multi-Service Patterns
+
+Avoid these patterns that add complexity:
+- ❌ Separate FastAPI/Flask servers
+- ❌ Multiple docker-compose services for core logic
+- ❌ External microservices for court functionality
+- ❌ Complex package inter-dependencies
+
+Everything should be **functions in the same Convex deployment**.
