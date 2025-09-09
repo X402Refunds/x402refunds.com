@@ -188,3 +188,20 @@
 2025-09-09T08:24:14.091118Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/court-api"), path: AnchoredSystemPathBuf("apps/court-api") }}))
 2025-09-09T08:24:43.991138Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("SIMPLIFICATION_SUMMARY.md")}
 2025-09-09T08:24:43.991151Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-09T10:29:59.055898Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie")}
+2025-09-09T10:29:59.055916Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-09T10:29:59.155603Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie")}
+2025-09-09T10:29:59.155617Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-09T10:30:06.056364Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/2.cookie")}
+2025-09-09T10:30:06.056382Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-09T10:30:14.956153Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/sdk-js/tsconfig.json")}
+2025-09-09T10:30:14.956164Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/sdk-js"), path: AnchoredSystemPathBuf("packages/sdk-js") }}))
+2025-09-09T10:30:15.956307Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/sdk-js/dist")}
+2025-09-09T10:30:15.956319Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/sdk-js"), path: AnchoredSystemPathBuf("packages/sdk-js") }}))
+2025-09-09T10:30:15.956338Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-09T10:30:22.356158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/sdk-js/.eslintrc.js")}
+2025-09-09T10:30:22.356169Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/sdk-js"), path: AnchoredSystemPathBuf("packages/sdk-js") }}))
+2025-09-09T10:30:22.456485Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/sdk-js/.eslintrc.js")}
+2025-09-09T10:30:22.456505Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/sdk-js"), path: AnchoredSystemPathBuf("packages/sdk-js") }}))
+2025-09-09T10:30:24.257029Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/sdk-js/package.json")}
+2025-09-09T10:30:24.257042Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@agent-court/sdk-js"), path: AnchoredSystemPathBuf("packages/sdk-js") }}))
