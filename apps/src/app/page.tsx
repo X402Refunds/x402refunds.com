@@ -3,6 +3,9 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 export default function Dashboard() {
   const recentCases = useQuery(api.cases.getRecentCases, { limit: 10 });
   const recentRulings = useQuery(api.rulings.getRecentRulings, { limit: 10 });
