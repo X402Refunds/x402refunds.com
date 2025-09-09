@@ -3,13 +3,29 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-// Force dynamic rendering for this page
+// Force dynamic rendering for this page  
 export const dynamic = 'force-dynamic';
 
-export default function Dashboard() {
+// Check if we're in a build environment
+const isBuilding = typeof window === 'undefined' && !process.env.NEXT_PUBLIC_CONVEX_URL;
+
+function DashboardContent() {
   const recentCases = useQuery(api.cases.getRecentCases, { limit: 10 });
   const recentRulings = useQuery(api.rulings.getRecentRulings, { limit: 10 });
   const recentEvidence = useQuery(api.evidence.getRecentEvidence, { limit: 10 });
+
+  return { recentCases, recentRulings, recentEvidence };
+}
+
+function DashboardFallback() {
+  return { recentCases: [], recentRulings: [], recentEvidence: [] };
+}
+
+export default function Dashboard() {
+  // Use fallback data during build, real data at runtime
+  const { recentCases, recentRulings, recentEvidence } = isBuilding ? 
+    DashboardFallback() : 
+    DashboardContent();
 
   return (
     <div className="px-4 py-6 sm:px-0">
