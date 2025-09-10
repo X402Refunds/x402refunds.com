@@ -1,5 +1,5 @@
 ---
-globs: apps/convex/*.ts
+globs: convex/*.ts
 ---
 
 # Convex Function Patterns for Agent Court
@@ -43,7 +43,7 @@ Judge agents are **functions**, not separate services:
 
 ## No External Dependencies
 
-- Constitution rules: hardcoded in [constitution.ts](mdc:apps/convex/constitution.ts)
-- MCP tools: HTTP endpoints in [http.ts](mdc:apps/convex/http.ts)  
+- Constitution rules: hardcoded in [constitution.ts](mdc:convex/constitution.ts)
+- MCP tools: HTTP endpoints in [http.ts](mdc:convex/http.ts)  
 - Evidence processing: built into mutations
 - Transparency: Convex actions calling Rekor

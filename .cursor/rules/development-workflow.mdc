@@ -9,41 +9,38 @@ Agent Court development follows **single-command patterns** for maximum simplici
 ## Primary Development Commands
 
 ```bash
-# Start everything (backend + frontend)
-cd apps && pnpm dev
-
-# Build for production
-cd apps && pnpm build
+# Start everything (pure Convex backend)
+pnpm dev
 
 # Deploy to Convex
-cd apps && npx convex deploy
+pnpm deploy
 
-# Run SDK demo
-pnpm sdk:demo
+# No build needed - pure serverless!
+pnpm build  # (just echoes "no build needed")
 ```
 
-## File Organization in apps/
+## File Organization at Root
 
-- **[convex/](mdc:apps/convex/)** - All backend serverless functions
-- **[src/](mdc:apps/src/)** - Next.js frontend for court dashboard
-- **[package.json](mdc:apps/package.json)** - Single dependency file
+- **[convex/](mdc:convex/)** - All backend serverless functions (entire system)
+- **[package.json](mdc:package.json)** - Single dependency file
+- **[scripts/](mdc:scripts/)** - Release automation
 
 ## Testing Approach
 
 - Unit tests run automatically with `pnpm test`
 - Integration tests via [scripts/e2e-test.sh](mdc:scripts/e2e-test.sh)
-- SDK demos validate end-to-end functionality
+- Semantic releases create GitHub tar files
 
 ## Database Schema Changes
 
-All schema changes go in [schema.ts](mdc:apps/convex/schema.ts) - Convex handles migrations automatically.
+All schema changes go in [schema.ts](mdc:convex/schema.ts) - Convex handles migrations automatically.
 
 ## Adding New Features
 
-1. **New endpoints** → Add to [http.ts](mdc:apps/convex/http.ts) as HTTP actions
-2. **New rules** → Add to [courtEngine.ts](mdc:apps/convex/courtEngine.ts) as rule classes
-3. **New judge logic** → Add to [judges.ts](mdc:apps/convex/judges.ts) as functions
-4. **New database tables** → Add to [schema.ts](mdc:apps/convex/schema.ts)
+1. **New endpoints** → Add to [http.ts](mdc:convex/http.ts) as HTTP actions
+2. **New rules** → Add to [courtEngine.ts](mdc:convex/courtEngine.ts) as rule classes
+3. **New judge logic** → Add to [judges.ts](mdc:convex/judges.ts) as functions
+4. **New database tables** → Add to [schema.ts](mdc:convex/schema.ts)
 
 ## No Multi-Service Patterns
 

@@ -8,11 +8,9 @@ Agent Court is a **pure serverless system** built on Convex. Everything runs as 
 
 ## Core Structure
 
-- **`apps/`** - Single Convex deployment containing the entire court system
-  - **`convex/`** - All backend logic as serverless functions
-  - **`src/`** - Next.js UI for court status dashboard
-- **`packages/sdk-js/`** - Only external package needed for agent integration
-- **`infra/`** - Docker services for local development only
+- **`convex/`** - Single Convex deployment containing the entire court system
+  - All backend logic as serverless functions
+  - Database schema, HTTP APIs, court engine, judges
 
 ## Key Principles
 
@@ -20,17 +18,17 @@ Agent Court is a **pure serverless system** built on Convex. Everything runs as 
 2. **No Python**: Pure TypeScript/JavaScript ecosystem 
 3. **No separate services**: Avoid microservice complexity
 4. **Single deployment**: One `npx convex deploy` deploys everything
-5. **Built-in policies**: No external constitution compilation - hardcode rules in [constitution.ts](mdc:apps/convex/constitution.ts)
+5. **Built-in policies**: No external constitution compilation - hardcode rules in [constitution.ts](mdc:convex/constitution.ts)
 
 ## Judge Agents = Functions
 
 Judge agents are **Convex functions**, not separate applications:
-- Analysis logic in [judges.ts](mdc:apps/convex/judges.ts)
+- Analysis logic in [judges.ts](mdc:convex/judges.ts)
 - Panel voting via mutations
 - No external AI service needed (yet)
 
 ## Development Workflow
 
 ```bash
-cd apps && pnpm dev  # Starts everything
+pnpm dev  # Starts everything from root
 ```

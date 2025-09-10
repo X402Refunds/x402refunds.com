@@ -20,19 +20,14 @@
       }
     ],
     "baseUrl": ".",
-    "paths": {
-      "@agent-court/sdk-js": ["./packages/sdk-js/src"],
-      "@agent-court/evidence": ["./packages/evidence/src"],
-      "@agent-court/constitution": ["./packages/constitution/src"],
-      "@agent-court/transparency": ["./packages/transparency/src"],
-      "@agent-court/mcp-server": ["./packages/mcp-server/src"]
-    }
+    "paths": {}
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "convex/**/*.ts"
   ],
   "exclude": [
     "node_modules",

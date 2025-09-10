@@ -1,0 +1,89 @@
+version: "1.0"
+project: "convergenceai"
+last_updated: "2025-09-10"
+description: "Architecture mapping for Convergence AI - Agent Government OS"
+
+# Current architecture state (source of truth)
+current:
+  locations:
+    backend: "convex/"
+    root_config: "./"
+    scripts: "scripts/"
+    cursor_rules: ".cursor/rules/"
+    workflows: ".github/workflows/"
+    architecture_map: ".architecture/"
+  
+  commands:
+    dev: "pnpm dev"
+    deploy: "pnpm deploy" 
+    build: "pnpm build"
+    convex_dev: "convex dev"
+    convex_deploy: "convex deploy"
+  
+  patterns:
+    backend_files: "convex/*.ts"
+    import_paths: "convex/"
+    config_files: "package.json"
+    generated_api: "convex/_generated/"
+
+# Deprecated patterns (never suggest these - they're from old architecture)
+deprecated:
+  locations:
+    - "apps/convex/"
+    - "apps/"
+    - "packages/"
+    - "infra/"
+  commands:
+    - "cd apps && pnpm dev"
+    - "cd apps && pnpm deploy"
+    - "cd apps && npx convex deploy"
+  patterns:
+    - "apps/convex/*.ts"
+    - "packages/sdk-js"
+    - "apps/package.json"
+
+# Dependencies - what files need updates when architecture changes
+dependency_graph:
+  "locations.backend":
+    description: "Backend location affects many dependent files"
+    affects:
+      - file: ".cursor/rules/agent-court-architecture.mdc"
+        type: "path_references"
+      - file: ".cursor/rules/convex-backend-architecture.mdc" 
+        type: "path_references"
+      - file: ".cursor/rules/development-workflow.mdc"
+        type: "path_references"
+      - file: ".cursor/rules/convex-functions.mdc"
+        type: "globs_pattern"
+      - file: ".github/workflows/ci.yml"
+        type: "command_paths"
+      - file: "README.md"
+        type: "documentation_paths"
+      - file: "tsconfig.json"
+        type: "include_paths"
+
+  "commands.dev":
+    description: "Development command affects documentation and workflows"
+    affects:
+      - file: ".cursor/rules/development-workflow.mdc"
+        type: "command_examples"
+      - file: "README.md"
+        type: "command_documentation"
+      - file: ".github/workflows/ci.yml"
+        type: "build_commands"
+
+# Architecture principles (for validation)
+principles:
+  - "Pure serverless - everything in Convex functions"
+  - "No external services or complex infrastructure"
+  - "Single deployment model"
+  - "Root-level simplicity over monorepo complexity"
+  - "Zero build complexity"
+
+# Change history (track major architecture changes)
+history:
+  - date: "2025-09-10"
+    change: "Moved from apps/convex/ to convex/ at root level"
+    reason: "Simplified structure, follows Convex conventions"
+    files_affected: 15
+    breaking: true

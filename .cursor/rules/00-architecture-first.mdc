@@ -1,0 +1,64 @@
+---
+alwaysApply: true
+priority: 1000
+---
+
+# 🏗️ Architecture Consistency - CHECK FIRST
+
+**CRITICAL RULE**: Before suggesting ANY file paths, commands, or structural changes, you MUST consult the architecture mapping to ensure consistency.
+
+## 📍 Architecture Source of Truth
+
+**Primary Map**: [.architecture/map.yaml](mdc:.architecture/map.yaml)
+
+This file contains:
+- ✅ **Current locations** for all components
+- ✅ **Current commands** for all operations  
+- ✅ **Current patterns** for file organization
+- ❌ **Deprecated patterns** to never suggest
+
+## 🔄 Required Workflow
+
+Before ANY suggestion involving structure:
+
+1. **Read architecture map** - Check current state
+2. **Validate suggestion** - Ensure it uses current patterns
+3. **Check deprecated list** - Avoid suggesting old patterns
+4. **Consider impact** - Check dependency graph if changing architecture
+
+## ⚠️ Common Mistakes to Avoid
+
+Never suggest these deprecated patterns:
+- `convex/` → Use `convex/` 
+- `npm run dev` → Use `pnpm dev`
+- `packages/` directory → Everything is in `convex/`
+
+## 🎯 Example Validation
+
+```
+User: "How do I start the backend?"
+
+❌ WRONG: "Run npm run dev" 
+✅ CORRECT: Check map.yaml → commands.dev → "Run pnpm dev"
+
+User: "Where is the schema file?"
+❌ WRONG: "It's in convex/schema.ts"
+✅ CORRECT: Check map.yaml → locations.backend → "It's in convex/schema.ts"
+```
+
+## 🛠️ Validation Tools Available
+
+You can call these tools to verify suggestions:
+- `node scripts/arch-validate.js "<suggestion>"` - Validate against current architecture
+- `node scripts/arch-impact.js "<change>"` - See impact of proposed changes
+
+## 📏 Architecture Principles
+
+Always follow these core principles:
+- Pure serverless - everything in Convex functions
+- No external services or complex infrastructure  
+- Single deployment model
+- Root-level simplicity over monorepo complexity
+- Zero build complexity
+
+**Remember: Architecture map wins over any code you might see that uses deprecated patterns!**

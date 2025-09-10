@@ -51,12 +51,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       
-      - name: Install Convex dependencies
-        run: cd apps && pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       
       - name: Validate Agent Government OS
         run: |
-          cd apps
           echo "🏛️ Validating Agent Government OS Backend:"
           echo "  📋 Cases system: $(ls convex/cases.ts)"
           echo "  📊 Evidence system: $(ls convex/evidence.ts)"  
@@ -90,7 +89,6 @@ jobs:
       
       - name: Test API Endpoints
         run: |
-          cd apps
           echo "🔗 Testing Agent Auto-Configuration:"
           echo "  📍 Health check: GET /health"
           echo "  📍 Version info: GET /version" 
