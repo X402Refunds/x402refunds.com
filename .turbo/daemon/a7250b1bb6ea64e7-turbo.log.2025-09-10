@@ -86,3 +86,45 @@
 2025-09-10T03:18:43.821328Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
 2025-09-10T03:18:43.921180Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml.319954245"), AnchoredSystemPathBuf("pnpm-lock.yaml")}
 2025-09-10T03:18:43.921195Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:19:19.920705Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json"), AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-09-10T03:19:19.920716Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-09-10T03:20:51.618767Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-09-10T03:20:51.618779Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:03.718672Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/conventional-commits.mdc")}
+2025-09-10T03:21:03.718685Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:03.818528Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/conventional-commits.mdc")}
+2025-09-10T03:21:03.818540Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:16.318283Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/testing-before-push.mdc")}
+2025-09-10T03:21:16.318296Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:16.519011Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/testing-before-push.mdc")}
+2025-09-10T03:21:16.519025Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:29.617900Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/convex-backend-architecture.mdc")}
+2025-09-10T03:21:29.617912Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:29.718038Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/convex-backend-architecture.mdc")}
+2025-09-10T03:21:29.718050Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:46.417864Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:21:46.417876Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:21:46.517958Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:21:46.517975Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:08.317426Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/agent-first-design.mdc")}
+2025-09-10T03:22:08.317442Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:08.416855Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/agent-first-design.mdc")}
+2025-09-10T03:22:08.416869Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:26.316882Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:22:26.316900Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:27.716801Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:22:27.716820Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:32.616957Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:22:32.616981Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:33.917637Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:22:33.917655Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:22:41.117116Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("CHANGELOG.md")}
+2025-09-10T03:22:41.117129Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T03:23:58.915400Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/testing-before-push.mdc"), AnchoredSystemPathBuf(".cursor/rules/convex-backend-architecture.mdc"), AnchoredSystemPathBuf(".cursor/rules/agent-first-design.mdc"), AnchoredSystemPathBuf(".cursor/rules/conventional-commits.mdc"), AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T03:23:58.915414Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T05:43:22.226164Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".cursor/rules/conventional-commits.mdc"), AnchoredSystemPathBuf(".cursor/rules/ci-cd-patterns.mdc")}
+2025-09-10T05:43:22.226176Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T05:43:22.330204Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json"), AnchoredSystemPathBuf(".cursor/rules/convex-backend-architecture.mdc"), AnchoredSystemPathBuf(".cursor/rules/testing-before-push.mdc"), AnchoredSystemPathBuf(".cursor/rules/agent-first-design.mdc")}
+2025-09-10T05:43:22.330250Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-09-10T05:43:35.025963Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("CHANGELOG.md")}
+2025-09-10T05:43:35.025976Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))

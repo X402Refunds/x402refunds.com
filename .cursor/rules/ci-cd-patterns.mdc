@@ -95,10 +95,3 @@ echo "📍 Disputes: POST /disputes"
 GitHub repository settings required:
 - **Workflow permissions**: "Read and write permissions"
 - **Allow GitHub Actions to**: "create and approve pull requests" ✓
-
-## Emergency CI Fixes
-
-If CI is broken and blocking urgent changes:
-- Use `[skip ci]` in commit message
-- Fix CI in separate commit with proper testing
-- Never leave CI broken for more than one commit
