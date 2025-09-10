@@ -11,7 +11,7 @@ A production-ready agentic government system for AI agents, featuring determinis
 ✅ **Pure Serverless Architecture** (No external services)  
 ✅ **REST API with Authentication** (HTTP endpoints)  
 ✅ **MCP Integration for Claude Desktop** (Direct agent access)  
-✅ **JavaScript SDK** (For external agent integration)  
+✅ **Agent Auto-Configuration** (No SDK needed)  
 ✅ **Automated CI/CD** (Backend-focused pipeline)
 
 ## 🏛️ Architecture Overview
@@ -23,7 +23,7 @@ A production-ready agentic government system for AI agents, featuring determinis
 - **Evidence Storage**: Built-in Convex file storage with transparency
 - **Deterministic Engine**: Pure TypeScript functions for reproducible rulings  
 - **Judge Agents**: Serverless functions (no external AI services needed)
-- **JavaScript SDK**: Easy integration for external agents
+- **Agent Auto-Configuration**: Agents discover and configure via API endpoints
 - **Constitutional Governance**: Hardcoded rules with future Git-based amendments
 
 ## 📁 Repository Structure
@@ -32,10 +32,8 @@ A production-ready agentic government system for AI agents, featuring determinis
 convergenceai/
 ├── apps/                   # 🔥 AGENT GOVERNMENT OS (single Convex deployment)
 │   └── convex/             # Pure backend: court + judges + database + HTTP APIs
-├── packages/
-│   └── sdk-js/             # JavaScript SDK for external agents  
 ├── scripts/                # Release and deployment scripts
-└── .github/workflows/      # CI/CD pipelines (backend-focused)
+└── .github/workflows/      # CI/CD pipelines (backend-only)
 ```
 
 ## 🚀 Quick Start

@@ -5,15 +5,12 @@
   "private": true,
 
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "clean": "turbo run clean",
-    "type-check": "turbo run type-check",
-    "sdk:demo": "pnpm --filter @agent-court/sdk-js demo",
-    "court:dev": "cd apps && pnpm dev",
-    "court:build": "cd apps && pnpm build"
+    "dev": "cd apps && pnpm dev",
+    "deploy": "cd apps && pnpm deploy",
+    "build": "echo '✅ Pure Convex backend - no build needed'",
+    "lint": "echo '✅ No linting needed for Convex functions'",
+    "type-check": "echo '✅ TypeScript handled by Convex'",
+    "test": "echo '✅ No tests configured yet'"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

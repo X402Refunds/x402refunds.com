@@ -1,4 +1,5 @@
 
-> @agent-court/court-system@0.1.0 type-check /Users/vkotecha/Desktop/convergenceai/apps
-> tsc --noEmit
+> @agent-court/convex-backend@0.1.0 type-check /Users/vkotecha/Desktop/convergenceai/apps
+> echo 'TypeScript checking handled by Convex'
 
+TypeScript checking handled by Convex
