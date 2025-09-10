@@ -108,6 +108,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: write
+      issues: write
+      repository-projects: write
     outputs:
       version: ${{ steps.version.outputs.version }}
       release_created: ${{ steps.release.outputs.release_created }}
@@ -136,10 +139,11 @@ jobs:
       
       - name: Create Release
         id: release
-        uses: google-github-actions/release-please-action@v3
+        uses: google-github-actions/release-please-action@v4
         with:
           release-type: node
           package-name: convergenceai
+          token: ${{ secrets.GITHUB_TOKEN }}
           changelog-types: |
             [
               {"type": "feat", "section": "Features", "hidden": false},
