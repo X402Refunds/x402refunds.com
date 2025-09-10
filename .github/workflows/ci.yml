@@ -103,52 +103,53 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'feat:')
     needs: [integration-test]
     permissions:
       contents: write
-      packages: write
-      pull-requests: write
-      issues: write
-      repository-projects: write
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      
-      - name: Build packages
-        run: pnpm build
-      
-      - name: Create Release
-        id: release
-        uses: google-github-actions/release-please-action@v4
       
       - name: Get version from package.json
         id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
       
-      - name: Tag release
-        if: steps.release.outputs.release_created
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Convergence AI v${{ steps.version.outputs.version }}
+          body: |
+            # Convergence AI v${{ steps.version.outputs.version }}
+            
+            🎉 **Agent Government OS for AI Agents**
+            
+            ## What's New
+            
+            This release includes the complete basic court system for AI agents:
+            
+            ✅ **Pure Convex Backend** - Serverless functions only  
+            ✅ **HTTP APIs** - Direct agent interaction  
+            ✅ **MCP Tools** - Claude Desktop integration  
+            ✅ **Court System** - Cases, evidence, rulings, judges  
+            ✅ **Auto-Rules** - Automated dispute resolution  
+            ✅ **Authentication** - Ed25519 signature verification  
+            
+            ## Agent Auto-Configuration
+            
+            Agents can discover and configure themselves via:
+            - `GET /health` - System health
+            - `GET /version` - Capabilities info  
+            - `GET /mcp/tools` - Available tools
+            - `POST /evidence` - Submit evidence
+            - `POST /disputes` - File disputes
+            
+            ## Deployment
+            
+            Single command: `cd apps && npx convex deploy`
+            
+            See commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
