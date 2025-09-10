@@ -1,3 +1,23 @@
+# [1.0.0](https://github.com/vbkotecha/convergenceai/compare/v0.2.0...v1.0.0) (2025-09-10)
+
+
+### Bug Fixes
+
+* add missing type-check script and fix TypeScript error ([82b74f7](https://github.com/vbkotecha/convergenceai/commit/82b74f7e88aca626da40f371970909d95384287e))
+
+
+### Features
+
+* complete architecture overhaul with fully automatic dependency management ([440dd12](https://github.com/vbkotecha/convergenceai/commit/440dd12e326ef360ca4bbb06aca8d93bd9469f2a))
+
+
+### BREAKING CHANGES
+
+* Moved from apps/convex/ to convex/ at root level
+
+Architecture changes are now fully automatic - edit .architecture/map.yaml
+and all dependent files update automatically via git hooks.
+
 # [0.2.0](https://github.com/vbkotecha/convergenceai/compare/v0.1.0...v0.2.0) (2025-09-10)
 
 

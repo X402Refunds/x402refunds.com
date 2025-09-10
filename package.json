@@ -1,11 +1,11 @@
 {
   "name": "convergenceai",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Convergence AI - Agent Government OS",
   "private": true,
   "scripts": {
     "dev": "convex dev",
-    "deploy": "convex deploy", 
+    "deploy": "convex deploy",
     "build": "echo 'Convex backend - no build needed'",
     "lint": "echo 'No linting configured'",
     "type-check": "tsc --noEmit",
