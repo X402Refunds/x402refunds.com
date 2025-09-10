@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/vbkotecha/convergenceai/compare/v0.1.0...v0.2.0) (2025-09-10)
+
+
+### Features
+
+* implement automatic semantic versioning with conventional commits ([84cbb3e](https://github.com/vbkotecha/convergenceai/commit/84cbb3ebefd30fa04cb987882fad7c3be44ed23b))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
