@@ -20,3 +20,19 @@
 2025-09-10T02:48:03.967715Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
 2025-09-10T02:48:29.867390Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-workspace.yaml")}
 2025-09-10T02:48:29.867401Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:48:56.966843Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json"), AnchoredSystemPathBuf("pnpm-workspace.yaml"), AnchoredSystemPathBuf(".github/workflows/ci.yml"), AnchoredSystemPathBuf("README.md")}
+2025-09-10T02:48:56.966869Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-09-10T02:52:27.863604Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("_tmp_35494_232d5a0ceed4a6a9bf1481612f800341"), AnchoredSystemPathBuf("")}
+2025-09-10T02:52:27.863616Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:29.263317Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("_tmp_35517_c0f843fa2b4f8df313b756e628d15c7d")}
+2025-09-10T02:52:29.263330Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:40.863629Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml")}
+2025-09-10T02:52:40.863645Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:43.063606Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("_tmp_35638_70b0085a92ab2c13526dfb4d06d7281c"), AnchoredSystemPathBuf("")}
+2025-09-10T02:52:43.063618Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:44.063684Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml.3636801105")}
+2025-09-10T02:52:44.063697Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:44.163293Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml.3636801105"), AnchoredSystemPathBuf("pnpm-lock.yaml")}
+2025-09-10T02:52:44.163305Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-10T02:52:45.063700Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("_tmp_35661_451d3f60286211617bbe38dfabf52805")}
+2025-09-10T02:52:45.063713Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
