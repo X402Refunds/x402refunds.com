@@ -71,7 +71,7 @@ export async function validateAuth(
   // Get owner's public keys
   const owner = await ctx.db
     .query("owners")
-    .withIndex("by_did", (q) => q.eq("did", agent.ownerDid))
+    .withIndex("by_did", (q: any) => q.eq("did", agent.ownerDid))
     .first();
 
   if (!owner || owner.pubkeys.length === 0) {

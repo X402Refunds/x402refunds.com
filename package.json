@@ -8,6 +8,7 @@
     "deploy": "convex deploy", 
     "build": "echo 'Convex backend - no build needed'",
     "lint": "echo 'No linting configured'",
+    "type-check": "tsc --noEmit",
     "test": "echo 'No tests configured yet'",
     "arch:update": "node scripts/arch-auto-update.js",
     "arch:validate": "node scripts/arch-validate.js",
