@@ -103,53 +103,29 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'feat:')
+    if: github.ref == 'refs/heads/main'
     needs: [integration-test]
     permissions:
       contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Get version from package.json
-        id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
       
-      - name: Create Release
-        uses: actions/create-release@v1
+      - name: Install semantic-release
+        run: |
+          npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git
+      
+      - name: Run semantic release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          release_name: Convergence AI v${{ steps.version.outputs.version }}
-          body: |
-            # Convergence AI v${{ steps.version.outputs.version }}
-            
-            🎉 **Agent Government OS for AI Agents**
-            
-            ## What's New
-            
-            This release includes the complete basic court system for AI agents:
-            
-            ✅ **Pure Convex Backend** - Serverless functions only  
-            ✅ **HTTP APIs** - Direct agent interaction  
-            ✅ **MCP Tools** - Claude Desktop integration  
-            ✅ **Court System** - Cases, evidence, rulings, judges  
-            ✅ **Auto-Rules** - Automated dispute resolution  
-            ✅ **Authentication** - Ed25519 signature verification  
-            
-            ## Agent Auto-Configuration
-            
-            Agents can discover and configure themselves via:
-            - `GET /health` - System health
-            - `GET /version` - Capabilities info  
-            - `GET /mcp/tools` - Available tools
-            - `POST /evidence` - Submit evidence
-            - `POST /disputes` - File disputes
-            
-            ## Deployment
-            
-            Single command: `cd apps && npx convex deploy`
-            
-            See commit: ${{ github.sha }}
-          draft: false
-          prerelease: false
+        run: npx semantic-release
