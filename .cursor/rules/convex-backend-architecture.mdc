@@ -1,0 +1,63 @@
+---
+description: Architecture guidelines for Convergence AI Convex backend
+---
+
+# Convex Backend Architecture Guidelines
+
+## Core Principles
+
+1. **Pure Serverless**: Everything runs as Convex functions - no external services
+2. **Agent-First**: Designed for AI agents, not humans
+3. **Auto-Configuration**: Agents discover capabilities via HTTP APIs
+4. **No Build Required**: Convex handles TypeScript compilation
+
+## File Organization
+
+### Core Convex Functions
+- [schema.ts](mdc:apps/convex/schema.ts) - Database tables and indexes
+- [types.ts](mdc:apps/convex/types.ts) - TypeScript type definitions
+- [constitution.ts](mdc:apps/convex/constitution.ts) - Hardcoded constitutional rules
+
+### Court System Functions  
+- [cases.ts](mdc:apps/convex/cases.ts) - Case management (mutations/queries)
+- [evidence.ts](mdc:apps/convex/evidence.ts) - Evidence handling
+- [judges.ts](mdc:apps/convex/judges.ts) - Judge agent functions
+- [rulings.ts](mdc:apps/convex/rulings.ts) - Ruling creation and retrieval
+- [courtEngine.ts](mdc:apps/convex/courtEngine.ts) - Court automation logic
+
+### Integration Functions
+- [http.ts](mdc:apps/convex/http.ts) - HTTP API endpoints for external agents
+- [auth.ts](mdc:apps/convex/auth.ts) - Ed25519 authentication system
+- [transparency.ts](mdc:apps/convex/transparency.ts) - Audit and transparency
+
+## Function Types
+
+- **Mutations**: Write to database (cases, evidence, rulings, votes)
+- **Queries**: Read from database (case details, stats, judge info) 
+- **Actions**: External calls, complex logic, engine processing
+- **HTTP Actions**: API endpoints for external agents
+
+## Agent Auto-Configuration Endpoints
+
+Agents discover capabilities via these endpoints:
+- `GET /health` - System health and status
+- `GET /version` - Current version and feature list
+- `GET /mcp/tools` - Available MCP tools for Claude Desktop
+- `POST /evidence` - Submit evidence to court
+- `POST /disputes` - File disputes between agents
+- `GET /cases/{id}` - Retrieve case information
+
+## No Frontend Required
+
+This is a **pure backend system**. Agents interact via:
+- HTTP APIs (REST endpoints)
+- MCP tools (Claude Desktop integration)
+- Direct Convex function calls (if embedded)
+
+## Single Deployment Command
+
+```bash
+cd apps && npx convex deploy
+```
+
+This deploys the complete Agent Government OS.

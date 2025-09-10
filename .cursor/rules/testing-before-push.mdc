@@ -1,0 +1,66 @@
+---
+description: Testing and verification requirements before pushing code
+---
+
+# Testing Before Push - MANDATORY
+
+## Critical Rule: ALWAYS Test Before Push
+
+**NEVER push code without testing locally first.** This prevents CI failures and broken builds.
+
+## Required Testing Sequence
+
+### 1. Local Build Test
+```bash
+cd /Users/vkotecha/Desktop/convergenceai
+pnpm build && echo "✅ BUILD TEST PASSED"
+```
+
+### 2. For Convex Backend Changes
+```bash
+cd apps
+npx convex dev --once  # Validate schema and functions
+```
+
+### 3. For CI/Workflow Changes
+```bash
+# Test all CI commands locally:
+pnpm install --frozen-lockfile  # Must work for CI
+pnpm lint                       # Must pass
+pnpm type-check                 # Must pass
+```
+
+### 4. Dependency Changes
+```bash
+# After changing package.json:
+rm pnpm-lock.yaml              # Remove old lockfile
+pnpm install                   # Regenerate
+pnpm install --frozen-lockfile # Test CI command works
+```
+
+## Common CI Failures to Prevent
+
+1. **Lockfile out of sync** - Always regenerate after dependency changes
+2. **Missing scripts** - Ensure all referenced scripts exist in package.json
+3. **Wrong cache type** - Use `cache: 'pnpm'` not `cache: 'npm'`
+4. **Missing dependencies** - Pre-install all required packages
+5. **Broken references** - Update all config files when removing packages
+
+## Commit Only After Green Local Tests
+
+```bash
+# Only commit after all tests pass:
+pnpm build ✅
+pnpm lint ✅ 
+pnpm type-check ✅
+convex dev --once ✅
+
+# THEN commit and push
+git add . && git commit -m "..." && git push
+```
+
+## Emergency Override
+
+If you MUST push without full testing (emergency fix):
+- Use `[skip ci]` in commit message
+- Fix and test properly in next commit

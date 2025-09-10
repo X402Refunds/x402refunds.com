@@ -1,0 +1,104 @@
+---
+description: CI/CD patterns and configurations for Convergence AI
+---
+
+# CI/CD Patterns for Convergence AI
+
+## GitHub Actions Configuration
+
+### Workflow Structure
+- **lint-and-type-check**: Basic validation
+- **validate-backend**: Convex function validation  
+- **integration-test**: API endpoint testing
+- **release**: Automatic semantic versioning
+
+### pnpm Configuration Pattern
+
+Always use this order for Node.js setup:
+```yaml
+- name: Setup pnpm
+  uses: pnpm/action-setup@v2
+  with:
+    version: 8
+
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: ${{ env.NODE_VERSION }}
+    cache: 'pnpm'  # NOT 'npm'
+```
+
+### Common CI Failures to Prevent
+
+1. **Wrong cache type**: Always use `cache: 'pnpm'`
+2. **Lockfile issues**: Use `pnpm install --frozen-lockfile`
+3. **Missing scripts**: Ensure all package.json scripts exist
+4. **Dependency conflicts**: Pre-install all required packages
+
+## Semantic Release Configuration
+
+### Dependencies Required
+```json
+{
+  "devDependencies": {
+    "semantic-release": "^22.0.0",
+    "@semantic-release/changelog": "^6.0.0", 
+    "@semantic-release/git": "^10.0.0"
+  }
+}
+```
+
+### Release Configuration
+File: [.releaserc.json](mdc:.releaserc.json)
+- Updates package.json versions
+- Generates CHANGELOG.md
+- Creates GitHub releases
+- Commits changes back to repo
+
+## Build Commands for Different Contexts
+
+### Pure Convex Backend (Current)
+```bash
+pnpm build     # → "✅ Pure Convex backend - no build needed"
+pnpm lint      # → "✅ No linting needed for Convex functions"  
+pnpm type-check # → "✅ TypeScript handled by Convex"
+```
+
+### Future SDK Package (if re-added)
+```bash
+pnpm --filter @agent-court/sdk-js build    # TypeScript compilation
+pnpm --filter @agent-court/sdk-js test     # Jest tests
+pnpm --filter @agent-court/sdk-js demo     # Demo script
+```
+
+## Validation Commands
+
+### Convex Backend Validation
+```bash
+cd apps
+ls convex/*.ts  # Verify all functions exist
+npx convex dev --once --until-success  # Schema validation
+```
+
+### API Endpoint Validation  
+```bash
+echo "Testing Agent Auto-Configuration:"
+echo "📍 Health: GET /health"
+echo "📍 Version: GET /version"
+echo "📍 Tools: GET /mcp/tools"
+echo "📍 Evidence: POST /evidence"
+echo "📍 Disputes: POST /disputes"
+```
+
+## Release Permissions
+
+GitHub repository settings required:
+- **Workflow permissions**: "Read and write permissions"
+- **Allow GitHub Actions to**: "create and approve pull requests" ✓
+
+## Emergency CI Fixes
+
+If CI is broken and blocking urgent changes:
+- Use `[skip ci]` in commit message
+- Fix CI in separate commit with proper testing
+- Never leave CI broken for more than one commit
