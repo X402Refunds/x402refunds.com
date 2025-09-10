@@ -115,15 +115,20 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: 'pnpm'
       
       - name: Install semantic-release
         run: |
-          npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git
+          pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git
       
       - name: Run semantic release
         env:
