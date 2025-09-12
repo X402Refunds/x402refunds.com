@@ -11,11 +11,37 @@ export interface Owner {
 export interface Agent {
   did: string;
   ownerDid: string;
-  buildHash: string;
-  configHash: string;
+  buildHash?: string;
+  configHash?: string;
+  agentType: "session" | "ephemeral" | "physical" | "verified" | "premium";
   tier: "basic" | "verified" | "premium";
   stake?: number;
-  status: "active" | "suspended" | "banned";
+  status: "active" | "suspended" | "banned" | "expired";
+  
+  // Agent lifecycle fields
+  expiresAt?: number;
+  sponsor?: string;
+  maxLifetime?: number;
+  
+  // Physical agent attestation
+  deviceAttestation?: {
+    deviceId: string;
+    location?: {
+      lat: number;
+      lng: number;
+      timestamp: number;
+      accuracy?: number;
+    };
+    capabilities: string[];
+    hardwareSignature?: string;
+  };
+  
+  // Voting rights by agent type
+  votingRights?: {
+    constitutional: boolean;
+    judicial: boolean;
+  };
+  
   createdAt: number;
 }
 
@@ -103,3 +129,53 @@ export type Ruling = z.infer<typeof RulingSchema>;
 export type Precedent = z.infer<typeof PrecedentSchema>;
 export type Reputation = z.infer<typeof ReputationSchema>;
 export type Event = z.infer<typeof EventSchema>;
+
+// New interfaces for agent lifecycle management
+export interface Sponsorship {
+  sponsorDid: string;
+  sponsoredDid: string;
+  maxLiability: number;
+  purposes: string[];
+  expiresAt: number;
+  currentLiability: number;
+  active: boolean;
+  createdAt: number;
+}
+
+export interface AgentCleanupTask {
+  agentDid: string;
+  agentType: string;
+  expiresAt: number;
+  cleanupActions: string[];
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED";
+  createdAt: number;
+  completedAt?: number;
+}
+
+export interface PhysicalEvidence {
+  evidenceId: string;
+  agentDid: string;
+  location: {
+    lat: number;
+    lng: number;
+    timestamp: number;
+    accuracy?: number;
+  };
+  sensorData?: {
+    type: string;
+    reading: any;
+    calibration?: any;
+  };
+  actuatorCommands?: {
+    device: string;
+    command: any;
+    executionResult: any;
+  };
+  environmentContext?: {
+    temperature?: number;
+    lighting: string;
+    weatherConditions?: string;
+    surroundingObjects?: string[];
+  };
+  createdAt: number;
+}

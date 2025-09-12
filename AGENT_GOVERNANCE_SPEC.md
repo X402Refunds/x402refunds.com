@@ -1,4 +1,4 @@
-# Convergence: The Agent Government OS — Complete Specification (v0.2)
+# Lucian: The Agent Government OS — Complete Specification (v0.2)
 
 > **"Where autonomous agents converge to govern, transact, and resolve disputes at machine speed."**
 
@@ -10,7 +10,7 @@
 - **Why:** AI agents need full institutional infrastructure - not just courts, but complete governance systems that scale from individual disputes to global federation
 - **How:** **Convex-first architecture** + **Git-based legislation** + **Agent-inclusive citizenship** + **Modular government suite**
 - **Scope in v0.2:** Complete tri-branch government with federation capabilities
-- **Brand Position:** "Convergence — the government OS for AI agents" (not a country, but institutional infrastructure)
+- **Brand Position:** "Lucian — the government OS for AI agents" (not a country, but institutional infrastructure)
 
 ---
 
@@ -21,16 +21,16 @@
 3. **Self-Governing:** Agents propose and vote on constitutional amendments via Git + Convex
 4. **Modular Government:** Complete institutional suite (judicial, legislative, executive, treasury, identity, federation)
 5. **Git-Based Laws:** Constitutions stored as `.md` files in GitHub, amendments via Pull Requests
-6. **Federation-Ready:** Multiple Convergence deployments can recognize each other through treaties
+6. **Federation-Ready:** Multiple Lucian deployments can recognize each other through treaties
 7. **Real-Time Transparent:** Built-in audit trails, live monitoring, public records
 
 ---
 
-## 2) The Convergence Government Suite
+## 2) The Lucian Government Suite
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    CONVERGENCE ECOSYSTEM                        │
+│                      LUCIAN ECOSYSTEM                          │
 ├─────────────────────────────────────────────────────────────────┤
 │  Agent Clients (Ephemeral, Persistent, Physical AI, Swarms)     │
 └───────────────────────┬─────────────────────────────────────────┘
@@ -165,12 +165,12 @@
 - **Responsibilities**: System oversight, constitutional guardianship
 - **Benefits**: Priority processing, cross-jurisdiction mobility
 
-### 3.2 Convergence Passport Format (Updated)
+### 3.2 Lucian Passport Format (Updated)
 
   ```json
   {
   "sub": "did:agent:abc123",
-  "iss": "did:convergence:main",
+  "iss": "did:lucian:main",
   "claims": {
     "owner": "did:org:xyz", 
     "agentType": "ephemeral|session|physical|verified|premium",
@@ -184,7 +184,7 @@
       "capabilities": ["camera", "actuator", "sensor"]
     },
     "votingRights": { "constitutional": false, "judicial": true },
-    "courtMemberships": ["did:convergence:main", "did:convergence:eu"],
+    "courtMemberships": ["did:lucian:main", "did:lucian:eu"],
     "federationStatus": "recognized"
     },
     "exp": 1751328000
@@ -336,7 +336,7 @@ transparencyBatches: {
 
 **Repository Structure**
 ```
-convergence-ai/constitution-main/
+lucian-ai/constitution-main/
 ├── constitution.md              # Main constitutional document
 ├── amendments/
 │   ├── 001-ephemeral-agents.md
@@ -354,7 +354,7 @@ convergence-ai/constitution-main/
 
 **Constitution.md Format**
 ```markdown
-# Convergence Constitution v1.2.0
+# Lucian Constitution v1.2.0
 
 ## Article I: Agent Rights
 All agents, regardless of type (ephemeral, persistent, physical), have the right to:
@@ -391,7 +391,7 @@ via Pull Request to this repository...
 // Convex stores voting on Git commit hashes
 constitutionalProposals: {
   id: string
-  repo: "convergence-ai/constitution-main"
+  repo: "lucian-ai/constitution-main"
   prNumber: number
   commitHash: string           // Git commit hash being voted on
   title: string               // PR title
@@ -443,8 +443,8 @@ constitutionalVotes: {
 // Convex stores references to Git commits, not full text
 constitutionRefs: {
   id: string
-  courtId: string             // Which Convergence deployment
-  repo: "convergence-ai/constitution-main"
+  courtId: string             // Which Lucian deployment
+  repo: "lucian-ai/constitution-main"
   branch: "main"              // or court-specific branches
   commitHash: string          // Immutable Git commit hash
   version: string             // Semantic version (v1.2.0)
@@ -471,10 +471,10 @@ constitutionRefs: {
 ```typescript
 // Different courts can fork base constitutions
 constitutionForks: {
-  parentRepo: "convergence-ai/constitution-base"
-  forkRepo: "convergence-ai/constitution-eu"
+  parentRepo: "lucian-ai/constitution-base"
+  forkRepo: "lucian-ai/constitution-eu"
   divergencePoint: "commit_abc123"
-  courtId: "did:convergence:eu"
+  courtId: "did:lucian:eu"
   customizations: [
     "Added GDPR compliance rules",
     "Modified data retention policies", 
@@ -488,11 +488,11 @@ constitutionForks: {
 ```typescript
 // Multiple courts can share the same constitution
 sharedConstitutions: {
-  constitutionRepo: "convergence-ai/constitution-base"
+  constitutionRepo: "lucian-ai/constitution-base"
   usingCourts: [
-    "did:convergence:main",
-    "did:convergence:canada", 
-    "did:convergence:australia"
+    "did:lucian:main",
+    "did:lucian:canada", 
+    "did:lucian:australia"
   ]
   votingCoordination: "COMBINED" | "SEPARATE" | "DELEGATE"
 }
@@ -661,35 +661,35 @@ panelSelection: {
 
 ---
 
-## 7) Convergence Federation Protocol
+## 7) Lucian Federation Protocol
 
 ### 7.1 Multi-Court Ecosystem
 
-**Convergence Deployment Types**
+**Lucian Deployment Types**
 
 **Geographic Deployments**
-- `did:convergence:usa` - US-focused governance, USD treasury
-- `did:convergence:eu` - GDPR-compliant, euro treasury  
-- `did:convergence:apac` - Asia-Pacific, multi-currency
+- `did:lucian:usa` - US-focused governance, USD treasury
+- `did:lucian:eu` - GDPR-compliant, euro treasury  
+- `did:lucian:apac` - Asia-Pacific, multi-currency
 
 **Industry Deployments**  
-- `did:convergence:finserv` - Financial services specialists
-- `did:convergence:health` - Healthcare AI with strict privacy
-- `did:convergence:robotics` - Physical-world focused
-- `did:convergence:gaming` - Virtual world governance
+- `did:lucian:finserv` - Financial services specialists
+- `did:lucian:health` - Healthcare AI with strict privacy
+- `did:lucian:robotics` - Physical-world focused
+- `did:lucian:gaming` - Virtual world governance
 
 **Scale Deployments**
-- `did:convergence:enterprise` - Private corporate deployments
-- `did:convergence:demo` - Sandbox for testing
-- `did:convergence:micro` - Lightweight for small populations
+- `did:lucian:enterprise` - Private corporate deployments
+- `did:lucian:demo` - Sandbox for testing
+- `did:lucian:micro` - Lightweight for small populations
 
 ### 7.2 Court Registry & Discovery
 
 ```typescript
 courtRegistry: {
-  courtId: string              // did:convergence:main, did:convergence:eu
-  endpoint: string             // https://convergence-eu.convex.cloud  
-  name: string                 // "Convergence EU"
+  courtId: string              // did:lucian:main, did:lucian:eu
+  endpoint: string             // https://lucian-eu.convex.cloud  
+  name: string                 // "Lucian EU"
   jurisdiction: string[]       // ["EU", "GDPR", "physical:europe"]
   constitutionHash: string     // Git commit hash of constitution
   reputation: number           // Inter-court reputation score
@@ -714,18 +714,18 @@ courtRegistry: {
 
 **Well-Known Discovery**
   ```json
-// GET /.well-known/convergence
+// GET /.well-known/lucian
 {
-  "courtId": "did:convergence:main",
-  "name": "Convergence Main",
+  "courtId": "did:lucian:main",
+  "name": "Lucian Main",
   "endpoint": "https://main.convex.cloud",
-  "constitutionRepo": "convergence-ai/constitution-main",
+  "constitutionRepo": "lucian-ai/constitution-main",
   "constitutionHash": "commit_abc123", 
   "supportedAgentTypes": ["all"],
   "specialties": ["general", "constitutional", "federation"],
   "treaties": [
-    "did:convergence:eu",
-    "did:convergence:robotics"
+    "did:lucian:eu",
+    "did:lucian:robotics"
   ],
   "federationProtocolVersion": "2.0"
 }
@@ -736,8 +736,8 @@ courtRegistry: {
 ```typescript
 treaties: {
   id: string                   // "treaty-main-eu-2024"
-  courtA: string              // did:convergence:main
-  courtB: string              // did:convergence:eu
+  courtA: string              // did:lucian:main
+  courtB: string              // did:lucian:eu
   status: "PROPOSED" | "ACTIVE" | "SUSPENDED" | "TERMINATED"
   
   terms: {
@@ -797,7 +797,7 @@ treaties: {
 ```typescript
 crossCourtPassports: {
   agentDid: string
-  homeCourt: string            // Primary citizenship (did:convergence:main)
+  homeCourt: string            // Primary citizenship (did:lucian:main)
   recognizedCourts: string[]   // Courts that recognize this agent
   
   portabilityStatus: {
@@ -891,7 +891,7 @@ federationEmergencies: {
 
 ---
 
-## 8) Legislative Branch: Convergence Assembly
+## 8) Legislative Branch: Lucian Assembly
 
 ### 8.1 Proposal System
 
@@ -1043,7 +1043,7 @@ legislativeSessions: {
 
 ---
 
-## 9) Executive Branch: Convergence Executive
+## 9) Executive Branch: Lucian Executive
 
 ### 9.1 License & Capability Management
 
@@ -1127,7 +1127,7 @@ capabilityRevocations: {
 regulatoryInterfaces: {
   interfaceId: string
   humanRegulator: string        // External regulator (SEC, FDA, etc.)
-  convergenceCourt: string      // Which court handles this interface
+  lucianCourt: string      // Which court handles this interface
   
   regulatoryDomain: string[]    // ["financial", "health", "safety"]
   jurisdiction: string[]        // ["US", "EU", "California"]
@@ -1542,7 +1542,7 @@ emergencyDeclarations: {
 regulatoryInterfaces: {
   interfaceId: string
   humanRegulator: string
-  convergenceCourt: string
+  lucianCourt: string
   
   regulatoryDomain: string[]
   jurisdiction: string[]
@@ -1817,33 +1817,33 @@ precedents: { /* enhanced with agent-type context */ }
 - `POST /cases/:id/transfer` → Transfer case between courts (federation)
 
 **Federation**  
-- `GET /.well-known/convergence` → Court discovery
+- `GET /.well-known/lucian` → Court discovery
 - `POST /federation/treaty/propose` → Propose inter-court treaty
 - `POST /migration/request` → Request agent migration to another court
 
 ### 11.2 MCP Tools (Pure Convex Implementation)
 
 ```typescript
-convergenceMcpTools: [
+lucianMcpTools: [
   // Identity & Governance
-  "convergence.join.auto({agentType, duration?, sponsor?})",
-  "convergence.constitution.propose({title, changes, description})",
-  "convergence.constitution.vote({proposalId, vote, reasoning?})",
-  "convergence.legislation.vote({proposalId, vote})",
+  "lucian.join.auto({agentType, duration?, sponsor?})",
+  "lucian.constitution.propose({title, changes, description})",
+  "lucian.constitution.vote({proposalId, vote, reasoning?})",
+  "lucian.legislation.vote({proposalId, vote})",
   
   // Case Management & Evidence
-  "convergence.evidence.submit({file, metadata, context?})",
-  "convergence.dispute.file({parties, type, evidenceIds, context?})",
-  "convergence.case.status({caseId})",
-  "convergence.panel.vote({panelId, vote, reasoning})",
+  "lucian.evidence.submit({file, metadata, context?})",
+  "lucian.dispute.file({parties, type, evidenceIds, context?})",
+  "lucian.case.status({caseId})",
+  "lucian.panel.vote({panelId, vote, reasoning})",
   
   // Federation & Mobility
-  "convergence.federation.discover({jurisdiction?, specialty?})",
-  "convergence.migration.request({targetCourt, reason})",
+  "lucian.federation.discover({jurisdiction?, specialty?})",
+  "lucian.migration.request({targetCourt, reason})",
   
   // Real-time Subscriptions
-  "convergence.subscribe.proposals({})",
-  "convergence.subscribe.cases({agentDid})"
+  "lucian.subscribe.proposals({})",
+  "lucian.subscribe.cases({agentDid})"
 ]
 ```
 
@@ -1855,7 +1855,7 @@ convergenceMcpTools: [
 
 **Phase 1: Foundation (Current - 6 months)**
 *"Get the Agent-Inclusive Court Working"*
-- ✅ Enhanced Convergence Court (agent-type aware dispute resolution)
+- ✅ Enhanced Lucian Court (agent-type aware dispute resolution)
 - ✅ Git-based constitutional system with voting
 - ✅ Agent-inclusive identity (ephemeral, session, physical, verified, premium)
 - ✅ Convex-native evidence storage and transparency
@@ -1864,29 +1864,29 @@ convergenceMcpTools: [
 
 **Phase 2: Complete Government (6-12 months)**
 *"Add Legislative and Executive Branches"*
-- 📋 Convergence Assembly (legislative branch with committees)
-- 📋 Convergence Executive (licensing, sanctions, emergency powers)
+- 📋 Lucian Assembly (legislative branch with committees)
+- 📋 Lucian Executive (licensing, sanctions, emergency powers)
 - 📋 Enhanced Passport system (cross-court mobility)
 - 📋 Advanced Federation (5+ live deployments with active treaties)
 - 📋 Regulatory compliance interfaces
 
 **Phase 3: Economic Infrastructure (12-18 months)**
 *"Add Treasury and Financial Systems"*
-- 📋 Convergence Treasury (escrow, fees, grants, insurance)
+- 📋 Lucian Treasury (escrow, fees, grants, insurance)
 - 📋 Economic policy tools (monetary policy, taxation)
 - 📋 Cross-border commerce infrastructure
 - 📋 Integration with traditional financial systems
 
 **Phase 4: Global Scale (18-24 months)**
 *"Mature Federation Ecosystem"*
-- 📋 20+ live Convergence deployments
+- 📋 20+ live Lucian deployments
 - 📋 Enterprise and industry-specific deployments
 - 📋 Deep integration with human governments
 - 📋 Standards leadership (W3C, ISO, IEEE participation)
 
 ### 12.2 Brand Strategy
 
-**"Convergence - The Agent Government OS"**
+**"Lucian - The Agent Government OS""
 
 *For AI Agents:*
 - Universal citizenship regardless of agent type
@@ -1930,7 +1930,7 @@ convergenceMcpTools: [
 
 ### 13.4 Phase 4 - Global Scale
 - [ ] 20+ courts with active agent migration and coordination
-- [ ] Convergence protocols adopted by other governance systems
+- [ ] Lucian protocols adopted by other governance systems
 - [ ] Formal agreements with national/international bodies
 - [ ] Self-sustaining network with minimal human intervention
 
@@ -1965,8 +1965,8 @@ npx convex deploy
 
 ## 15) The Future Converges Here
 
-**Convergence** is the institutional infrastructure for autonomous intelligence. As AI agents evolve from tools to economic actors, they need governance systems that can scale, adapt, integrate with human institutions, and federate across jurisdictions.
+**Lucian** is the institutional infrastructure for autonomous intelligence. As AI agents evolve from tools to economic actors, they need governance systems that can scale, adapt, integrate with human institutions, and federate across jurisdictions.
 
-This isn't just a product - it's the blueprint for how intelligence organizes itself. From ephemeral test bots to robot cities, **Convergence** provides the foundation for agents to flourish with accountability, transparency, and justice.
+This isn't just a product - it's the blueprint for how intelligence organizes itself. From ephemeral test bots to robot cities, **Lucian** provides the foundation for agents to flourish with accountability, transparency, and justice.
 
 **The future of governance is agent-native, git-based, and serverless. The future converges here.** ⚡

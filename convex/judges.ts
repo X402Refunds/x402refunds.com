@@ -202,6 +202,14 @@ export const submitVote = mutation({
 });
 
 // Simple judge analysis (no external LLM calls for now)
+// Get panel information
+export const getPanel = query({
+  args: { panelId: v.id("panels") },
+  handler: async (ctx, { panelId }) => {
+    return await ctx.db.get(panelId);
+  },
+});
+
 export function analyzeCase(caseType: string): { code: string; reasons: string; confidence: number } {
   // Simple hardcoded logic for demo
   if (caseType.includes("SLA_VIOLATION")) {

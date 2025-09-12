@@ -1,7 +1,7 @@
 {
-  "name": "convergenceai",
+  "name": "lucianai",
   "version": "1.0.0",
-  "description": "Convergence AI - Agent Government OS",
+  "description": "Lucian AI - Agent Government OS",
   "private": true,
   "scripts": {
     "dev": "convex dev",

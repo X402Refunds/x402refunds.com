@@ -27,6 +27,8 @@ Judge agents are **Convex functions**, not separate applications:
 - Panel voting via mutations
 - No external AI service needed (yet)
 
+**See:** [agent-coordination-architecture.mdc](mdc:.cursor/rules/agent-coordination-architecture.mdc) for complete coordination patterns
+
 ## Development Workflow
 
 ```bash

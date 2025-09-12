@@ -41,9 +41,12 @@ Judge agents are **functions**, not separate services:
 - Simple hardcoded logic for MVP (replace with LLM calls later)
 - Panel voting via standard mutations
 
+**See:** [agent-coordination-architecture.mdc](mdc:.cursor/rules/agent-coordination-architecture.mdc) for complete coordination patterns
+
 ## No External Dependencies
 
 - Constitution rules: hardcoded in [constitution.ts](mdc:convex/constitution.ts)
 - MCP tools: HTTP endpoints in [http.ts](mdc:convex/http.ts)  
 - Evidence processing: built into mutations
 - Transparency: Convex actions calling Rekor
+- **No traditional agent frameworks:** No LangGraph, OpenAI Agents SDK, etc.

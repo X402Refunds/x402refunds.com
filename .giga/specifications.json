@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview documenting the AI dispute resolution architecture, core components, and their interactions"
+  },
+  {
+    "fileName": "court-engine-algorithms.mdc",
+    "description": "Detailed documentation of the court engine's decision-making algorithms, including SLA rules, format validation, confidence-based auto-ruling, and panel voting systems"
+  },
+  {
+    "fileName": "agent-lifecycle-model.mdc",
+    "description": "Comprehensive documentation of the agent tier system, including session management, sponsorship mechanisms, device attestation, and stake requirements for different agent types"
+  },
+  {
+    "fileName": "data-models-relationships.mdc",
+    "description": "Complete documentation of data models and relationships between agents, cases, evidence, rulings, and constitutional rules, including schema definitions and relationships"
+  },
+  {
+    "fileName": "evidence-validation-flow.mdc",
+    "description": "Detailed documentation of the evidence management system, including cryptographic validation, model metadata tracking, and case linkage mechanisms"
+  }
+]

@@ -12,16 +12,51 @@ export default defineSchema({
   agents: defineTable({
     did: v.string(),
     ownerDid: v.string(),
-    buildHash: v.string(),
-    configHash: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("verified"), v.literal("premium")),
+    buildHash: v.optional(v.string()),
+    configHash: v.optional(v.string()),
+    // New: Support all agent types from the spec
+    agentType: v.union(
+      v.literal("session"),     // 4h max, observer only
+      v.literal("ephemeral"),   // 24h max, sponsored
+      v.literal("physical"),    // Robots/IoT with location
+      v.literal("verified"),    // Full citizenship
+      v.literal("premium")      // Enhanced powers
+    ),
+    tier: v.union(v.literal("basic"), v.literal("verified"), v.literal("premium")), // Keep for backward compatibility
     stake: v.optional(v.number()),
-    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned")),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"), v.literal("expired")),
+    
+    // Agent lifecycle fields
+    expiresAt: v.optional(v.number()),        // For ephemeral/session agents
+    sponsor: v.optional(v.string()),          // Sponsor DID for ephemeral agents
+    maxLifetime: v.optional(v.number()),      // Max lifetime in ms
+    
+    // Physical agent attestation
+    deviceAttestation: v.optional(v.object({
+      deviceId: v.string(),
+      location: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(), 
+        timestamp: v.number(),
+        accuracy: v.optional(v.number())
+      })),
+      capabilities: v.array(v.string()),       // ["camera", "actuator", "sensor"]
+      hardwareSignature: v.optional(v.string())
+    })),
+    
+    // Voting rights by agent type
+    votingRights: v.optional(v.object({
+      constitutional: v.boolean(),
+      judicial: v.boolean()
+    })),
+    
     createdAt: v.number(),
   })
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_type", ["agentType"])
+    .index("by_expires", ["expiresAt"]),
 
   constitutions: defineTable({
     version: v.string(),
@@ -151,4 +186,79 @@ export default defineSchema({
   })
     .index("by_type", ["type"])
     .index("by_timestamp", ["ts"]),
+
+  // New: Agent sponsorship system for ephemeral agents
+  sponsorships: defineTable({
+    sponsorDid: v.string(),
+    sponsoredDid: v.string(),
+    maxLiability: v.number(),
+    purposes: v.array(v.string()),        // ["testing", "demo", "trial"]
+    expiresAt: v.number(),
+    currentLiability: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_sponsor", ["sponsorDid"])
+    .index("by_sponsored", ["sponsoredDid"])
+    .index("by_active", ["active"]),
+
+  // New: Agent cleanup queue for expired agents
+  agentCleanupQueue: defineTable({
+    agentDid: v.string(),
+    agentType: v.string(),
+    expiresAt: v.number(),
+    cleanupActions: v.array(v.string()),  // Actions to perform on cleanup
+    status: v.union(v.literal("PENDING"), v.literal("IN_PROGRESS"), v.literal("COMPLETED")),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_agent", ["agentDid"])
+    .index("by_expires", ["expiresAt"])
+    .index("by_status", ["status"]),
+
+  // API keys for Bearer token authentication
+  apiKeys: defineTable({
+    token: v.string(),              // The actual API key (ak_live_...)
+    agentId: v.id("agents"),        // Which agent this key belongs to
+    active: v.boolean(),            // Whether key is active
+    expiresAt: v.optional(v.number()), // Optional expiration
+    permissions: v.array(v.string()), // Specific permissions for this key
+    createdAt: v.number(),
+    lastUsed: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_agent", ["agentId"])
+    .index("by_active", ["active"]),
+
+  // New: Enhanced evidence for physical agents
+  physicalEvidence: defineTable({
+    evidenceId: v.id("evidenceManifests"),
+    agentDid: v.string(),
+    location: v.object({
+      lat: v.number(),
+      lng: v.number(),
+      timestamp: v.number(),
+      accuracy: v.optional(v.number()),
+    }),
+    sensorData: v.optional(v.object({
+      type: v.string(),                   // "camera", "lidar", "temperature"
+      reading: v.any(),
+      calibration: v.optional(v.any()),
+    })),
+    actuatorCommands: v.optional(v.object({
+      device: v.string(),                 // "arm", "wheel", "gripper"
+      command: v.any(),
+      executionResult: v.any(),
+    })),
+    environmentContext: v.optional(v.object({
+      temperature: v.optional(v.number()),
+      lighting: v.string(),               // "indoor", "outdoor", "artificial", "dark"
+      weatherConditions: v.optional(v.string()),
+      surroundingObjects: v.optional(v.array(v.string())),
+    })),
+    createdAt: v.number(),
+  })
+    .index("by_evidence", ["evidenceId"])
+    .index("by_agent", ["agentDid"])
+    .index("by_timestamp", ["createdAt"]),
 });

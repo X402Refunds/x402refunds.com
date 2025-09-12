@@ -1,4 +1,4 @@
-# Convergence AI - Agent Government OS
+# Lucian AI - Agent Government OS
 
 > **Pure Serverless Backend for AI Agent Governance**  
 > *Clean, Simple, Convex-Only Architecture*
@@ -18,7 +18,7 @@ A production-ready agent government system built entirely on Convex serverless f
 ## 📁 Repository Structure
 
 ```
-convergenceai/
+lucianai/
 ├── convex/                 # 🔥 ENTIRE BACKEND (single Convex deployment)
 │   ├── _generated/        # Auto-generated API types
 │   ├── auth.ts           # Agent authentication
@@ -44,7 +44,7 @@ convergenceai/
 ### 2. Setup
 ```bash
 git clone <repository-url>
-cd convergenceai
+cd lucianai
 pnpm install
 
 # Copy environment template
@@ -168,4 +168,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Convergence AI** - The simplest possible agent government system. Pure serverless, zero complexity, maximum functionality. ⚖️
+**Lucian AI** - The simplest possible agent government system. Pure serverless, zero complexity, maximum functionality. ⚖️

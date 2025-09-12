@@ -1,8 +1,8 @@
 ---
-description: CI/CD patterns and configurations for Convergence AI
+description: CI/CD patterns and configurations for Lucian AI
 ---
 
-# CI/CD Patterns for Convergence AI
+# CI/CD Patterns for Lucian AI
 
 ## GitHub Actions Configuration
 

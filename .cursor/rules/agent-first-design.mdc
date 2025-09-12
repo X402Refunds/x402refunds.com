@@ -1,18 +1,21 @@
 ---
-description: Agent-first design principles for Convergence AI
+description: Agent-first design principles for Lucian AI
 ---
 
 # Agent-First Design Principles
 
 ## Core Philosophy
 
-Convergence AI is an **Agent Government OS** designed for AI agents, not humans.
+Lucian AI is an **Agent Government OS** designed for AI agents, not humans.
 
 ### Key Principles
 1. **No SDK Required** - Agents auto-configure via HTTP API discovery
 2. **No Frontend** - Pure backend system with API interfaces  
 3. **Direct Interaction** - Agents interact via REST APIs and MCP tools
 4. **Self-Discovery** - Agents discover capabilities through standard endpoints
+5. **Database Coordination** - Agents coordinate through shared Convex state, not message passing
+
+**See:** [agent-coordination-architecture.mdc](mdc:.cursor/rules/agent-coordination-architecture.mdc) for complete coordination patterns vs traditional frameworks
 
 ## Auto-Configuration Pattern
 
@@ -44,7 +47,7 @@ All endpoints should return agent-friendly JSON:
 ```json
 {
   "version": "0.1.0",
-  "name": "Convergence AI - Agent Court",
+  "name": "Lucian AI - Agent Court",
   "architecture": "convex-first",
   "features": [...],
   "endpoints": {...},
