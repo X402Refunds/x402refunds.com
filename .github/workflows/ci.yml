@@ -1,3 +1,4 @@
+# CI/CD Pipeline for Lucian AI - Following ci-cd-patterns rule
 name: CI/CD
 
 on:
@@ -7,127 +8,116 @@ on:
     branches: [ main ]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: 20
 
 jobs:
   lint-and-type-check:
+    name: 🔍 Lint & Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      
+          cache: 'pnpm'  # NOT 'npm' - following ci-cd-patterns rule
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Lint
-        run: pnpm lint
-      
+
       - name: Type check
         run: pnpm type-check
 
   validate-backend:
+    name: 🏗️ Validate Convex Backend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Validate Agent Government OS
-        run: |
-          echo "🏛️ Validating Agent Government OS Backend:"
-          echo "  📋 Cases system: $(ls convex/cases.ts)"
-          echo "  📊 Evidence system: $(ls convex/evidence.ts)"  
-          echo "  ⚖️ Court engine: $(ls convex/courtEngine.ts)"
-          echo "  👨‍⚖️ Judge agents: $(ls convex/judges.ts)"
-          echo "  📜 Constitution: $(ls convex/constitution.ts)"
-          echo "  🔗 HTTP APIs: $(ls convex/http.ts)"
-          echo "  🔍 Schema: $(ls convex/schema.ts)"
-          echo ""
-          echo "✅ Pure serverless backend ready for agent auto-configuration"
+
+      - name: Validate Convex schema and functions
+        run: npx convex codegen
 
   integration-test:
+    name: 🧪 Integration Tests
     runs-on: ubuntu-latest
     needs: [lint-and-type-check, validate-backend]
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Test API Endpoints
-        run: |
-          echo "🔗 Testing Agent Auto-Configuration:"
-          echo "  📍 Health check: GET /health"
-          echo "  📍 Version info: GET /version" 
-          echo "  📍 MCP tools: GET /mcp/tools"
-          echo "  📍 Evidence API: POST /evidence"
-          echo "  📍 Disputes API: POST /disputes"
-          echo "  📍 Cases API: GET /cases/{id}"
-          echo ""
-          echo "✅ Agents can auto-configure using these endpoints"
+
+      - name: Generate Convex API types
+        run: npx convex codegen
+
+      - name: Run all tests
+        run: pnpm test:run
 
   release:
+    name: 🚀 Release
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     needs: [integration-test]
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Run semantic release
+
+      - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
