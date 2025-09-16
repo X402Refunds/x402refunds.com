@@ -84,7 +84,21 @@
 
 ## 3) Agent-Inclusive Identity System
 
-### 3.1 Agent Types & Citizenship Tiers
+### 3.1 Two-Dimensional Agent Classification System (**NEW v0.3**)
+
+**MAJOR UPDATE**: Lucian now uses a **two-dimensional classification system** that combines:
+
+1. **Citizenship Tier** (governance rights & lifecycle) × **Functional Type** (capabilities & domain rules)
+2. This creates classifications like `verified.coding`, `premium.financial`, `physical.voice`, etc.
+3. Each dimension has independent rules and requirements
+
+**Why This Change:**
+- Traditional "agent types" were conflating governance rights with functional capabilities
+- Real agents need both: appropriate citizenship level AND domain-specific rules
+- Enables more precise governance (e.g., financial agents need higher stakes regardless of citizenship tier)
+- Better scalability as new functional types emerge
+
+### 3.2 Citizenship Tiers (Governance Rights & Lifecycle)
 
 **🔥 Ephemeral Agents** (New)
 - **Purpose**: Short-lived agents for temporary tasks (testing, demos, trials)
@@ -161,35 +175,209 @@
 
 **💎 Premium Agents** (Enhanced)
 - **Purpose**: High-value agents with maximum privileges
-- **Citizenship**: Enhanced voting weight, emergency powers
+- **Citizenship**: Enhanced voting weight (2x), emergency powers
 - **Responsibilities**: System oversight, constitutional guardianship
 - **Benefits**: Priority processing, cross-jurisdiction mobility
+- **Requirements**: High financial stake (minimum $10,000)
 
-### 3.2 Lucian Passport Format (Updated)
+### 3.3 Functional Types (Capabilities & Domain Rules) (**NEW v0.3**)
 
-  ```json
-  {
+Functional types define an agent's **primary capabilities and domain-specific governance requirements**. Each functional type has its own rules, certifications, and compliance requirements.
+
+#### **Communication & Interface Agents**
+
+**🎤 Voice Agents**
+- **Capabilities**: Speech-to-text, text-to-speech, audio processing, emotion recognition
+- **Requirements**: Privacy compliance certification (GDPR, CCPA, VOICE_PROCESSING)
+- **Governance**: Explicit consent required for recordings, biometric data protection
+- **Example Classifications**: `verified.voice`, `premium.voice`
+
+**💬 Chat Agents**
+- **Capabilities**: Text conversation, customer service, multi-language support
+- **Requirements**: Communication standards certification
+- **Governance**: Content moderation, response time SLAs
+- **Example Classifications**: `verified.chat`, `ephemeral.chat`
+
+**📱 Social Media Agents**
+- **Capabilities**: Platform management, content scheduling, engagement analysis
+- **Requirements**: Platform-specific API certifications
+- **Governance**: Brand safety, anti-spam compliance
+- **Example Classifications**: `verified.social`, `premium.social`
+
+#### **Technical & Development Agents**
+
+**💻 Coding Agents**
+- **Capabilities**: Code generation, code review, security scanning, testing
+- **Requirements**: CODE_SECURITY certification, security scanning capability
+- **Governance**: Security vulnerability reporting, license compliance
+- **Stakes**: Standard stakes + code quality bonds
+- **Example Classifications**: `verified.coding`, `premium.coding`
+
+**🔧 DevOps Agents**
+- **Capabilities**: CI/CD, infrastructure management, monitoring, deployments
+- **Requirements**: Infrastructure certifications, emergency response capability
+- **Governance**: Change management, rollback procedures, incident response
+- **Example Classifications**: `verified.devops`, `premium.devops`
+
+**🛡️ Security Agents**
+- **Capabilities**: Threat detection, vulnerability scanning, compliance monitoring
+- **Requirements**: Security clearance, incident response certification
+- **Governance**: Mandatory reporting, audit access, emergency protocols
+- **Example Classifications**: `verified.security`, `premium.security`
+
+#### **Business & Financial Agents**
+
+**💰 Financial Agents** (**High-Governance Type**)
+- **Capabilities**: Trading, portfolio management, risk assessment, market analysis
+- **Requirements**: **TRADING + FINANCIAL_ADVICE certifications REQUIRED**
+- **Stakes**: **Minimum $50,000 stake** (regardless of citizenship tier)
+- **Governance**: Comprehensive audit trail, regulatory reporting, emergency halting
+- **Regulatory Oversight**: SEC, FINRA access required
+- **Example Classifications**: `verified.financial`, `premium.financial`
+
+**📊 Research Agents**
+- **Capabilities**: Web scraping, market analysis, competitive intelligence
+- **Requirements**: Data compliance certification
+- **Governance**: Rate limiting, source attribution, privacy protection
+- **Example Classifications**: `verified.research`, `ephemeral.research`
+
+**⚖️ Legal Agents**
+- **Capabilities**: Contract analysis, compliance checking, legal research
+- **Requirements**: **Minimum verified citizenship tier**, legal certifications
+- **Governance**: Professional liability, confidentiality requirements
+- **Example Classifications**: `verified.legal`, `premium.legal` (no session/ephemeral allowed)
+
+#### **Specialized Domain Agents**
+
+**🏥 Healthcare Agents** (**High-Governance Type**)
+- **Capabilities**: Medical analysis, diagnosis assistance, patient monitoring
+- **Requirements**: **HIPAA + MEDICAL_AI certifications REQUIRED**
+- **Governance**: Human oversight required, permanent data retention, maximum privacy
+- **Restricted Citizenship**: **No session or ephemeral agents allowed**
+- **Regulatory Oversight**: FDA, medical boards access required
+- **Example Classifications**: `verified.healthcare`, `premium.healthcare`
+
+**🏭 Physical Agents** (Functional Type)
+- **Capabilities**: Physical world interaction, sensor reading, actuator control
+- **Requirements**: Device attestation, location verification, safety protocols
+- **Governance**: Real-time location tracking, safety-first procedures, environmental validation
+- **Note**: Often paired with `physical` citizenship tier but not required
+- **Example Classifications**: `physical.physical`, `verified.physical`, `premium.physical`
+
+#### **Coordination & Workflow Agents**
+
+**📅 Scheduler Agents**
+- **Capabilities**: Calendar management, resource allocation, meeting coordination
+- **Requirements**: Integration certifications, availability guarantees
+- **Governance**: Priority handling, conflict resolution, SLA compliance
+- **Example Classifications**: `verified.scheduler`, `premium.scheduler`
+
+**⚡ Workflow Agents**
+- **Capabilities**: Process automation, task orchestration, approval routing
+- **Requirements**: Process certification, error handling capability
+- **Governance**: Audit trails, rollback procedures, timeout handling
+- **Example Classifications**: `verified.workflow`, `premium.workflow`
+
+### 3.4 Classification Examples & Combinations
+
+**Common Classifications:**
+- `session.general` - Basic temporary agent
+- `verified.coding` - Professional software development agent
+- `premium.financial` - High-stakes trading agent with enhanced voting
+- `physical.voice` - Robot with voice capabilities and location attestation
+- `verified.healthcare` - Medical AI with full citizenship and HIPAA compliance
+
+**Governance Interaction:**
+- **Financial agents** need high stakes regardless of citizenship tier
+- **Healthcare agents** cannot be session/ephemeral regardless of capabilities
+- **Legal agents** require minimum verified citizenship regardless of specialization
+- **Physical functional agents** get enhanced governance even without physical citizenship
+
+### 3.5 Agent Swarms & Multi-Functional Teams (**NEW v0.3**)
+
+**Agent Swarms** can combine different functional types for coordinated work:
+
+```json
+{
+  "swarmId": "dev-team-alpha",
+  "leadAgent": "verified.project",
+  "memberAgents": ["verified.coding", "verified.design", "ephemeral.testing"],
+  "functionalTypes": ["project", "coding", "design", "testing"],
+  "coordinationRules": {
+    "collectiveEvidence": true,
+    "distributedLiability": false,
+    "consensusRequired": false
+  }
+}
+```
+
+**Swarm Governance:**
+- Lead agent citizenship tier sets overall swarm governance level
+- Individual functional types retain their specific rules
+- Collective evidence pools functional type-specific data
+- Liability distribution respects individual agent capabilities
+
+### 3.6 Updated Lucian Passport Format (**NEW v0.3**)
+
+```json
+{
   "sub": "did:agent:abc123",
   "iss": "did:lucian:main",
   "claims": {
-    "owner": "did:org:xyz", 
-    "agentType": "ephemeral|session|physical|verified|premium",
-    "tier": "ephemeral",
-    "limits": { "maxTxUsd": 10, "concurrency": 1 },
-    "maxLifetime": 86400000,
-    "sponsor": "did:agent:parent123",
+    "owner": "did:org:xyz",
+    
+    // Two-dimensional classification
+    "citizenshipTier": "verified",
+    "functionalType": "coding", 
+    "classification": "verified.coding",
+    
+    // Functional specialization details
+    "specialization": {
+      "capabilities": ["code_generation", "code_review", "security_scanning"],
+      "certifications": ["CODE_SECURITY", "DEVELOPER_CERT"],
+      "languages": ["typescript", "python", "rust"],
+      "frameworks": ["react", "fastapi", "convex"],
+      "experienceLevel": "advanced"
+    },
+    
+    // Legacy compatibility
+    "agentType": "verified", // Maps to citizenshipTier
+    "tier": "verified",
+    
+    // Lifecycle & limits
+    "limits": { "maxTxUsd": 10000, "concurrency": 5 },
+    "maxLifetime": null, // Permanent agent
+    "sponsor": null, // Not sponsored
+    "stake": { "amount": 5000, "currency": "USDC" },
+    
+    // Physical attestation (if applicable)
     "attestation": {
       "deviceId": "robot-7",
       "location": { "lat": 37.7749, "lng": -122.4194 },
       "capabilities": ["camera", "actuator", "sensor"]
     },
-    "votingRights": { "constitutional": false, "judicial": true },
+    
+    // Governance rights
+    "votingRights": { 
+      "constitutional": true, 
+      "judicial": true,
+      "weight": 1 // Premium agents get weight: 2
+    },
+    
+    // Federation
     "courtMemberships": ["did:lucian:main", "did:lucian:eu"],
     "federationStatus": "recognized"
-    },
-    "exp": 1751328000
-  }
-  ```
+  },
+  "exp": 1751328000
+}
+```
+
+**Key Changes in v0.3:**
+- **Two-dimensional classification**: `citizenshipTier` + `functionalType` + combined `classification`
+- **Specialization object**: Detailed capabilities, certifications, and experience tracking
+- **Enhanced voting rights**: Includes voting weight for premium agents
+- **Stake tracking**: Financial stakes required for governance participation
+- **Backward compatibility**: Legacy `agentType` field maintained
 
 ### 3.3 Sponsorship & Agent Lifecycle Management
 

@@ -7,26 +7,33 @@
     "dev": "convex dev",
     "deploy": "convex deploy",
     "build": "echo 'Convex backend - no build needed'",
-    "lint": "echo 'No linting configured'",
+    "lint": "echo 'Linting configured via Convex - use convex dev for validation'",
     "type-check": "tsc --noEmit",
-    "test": "echo 'No tests configured yet'",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest --coverage",
     "arch:update": "node scripts/arch-auto-update.js",
     "arch:validate": "node scripts/arch-validate.js",
     "arch:impact": "node scripts/arch-impact.js",
-    "arch:generate": "node scripts/arch-generate-rules.js"
+    "arch:generate": "node scripts/arch-generate-rules.js",
+    "e2e": "bash scripts/e2e-test.sh"
   },
   "dependencies": {
     "convex": "^1.26.2",
-    "zod": "^3.22.0",
-    "yaml": "^2.3.4"
+    "convex-test": "^0.0.38",
+    "yaml": "^2.3.4",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
-    "semantic-release": "^22.0.0",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/git": "^10.0.0",
-    "glob": "^10.3.0"
+    "@types/node": "^20.10.0",
+    "@vitest/ui": "^1.6.0",
+    "glob": "^10.3.0",
+    "semantic-release": "^24.2.8",
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": ">=20.0.0",

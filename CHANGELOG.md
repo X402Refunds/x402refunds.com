@@ -13,7 +13,7 @@
 
 ### BREAKING CHANGES
 
-* Moved from apps/convex/ to convex/ at root level
+* Moved from convex/ to convex/ at root level
 
 Architecture changes are now fully automatic - edit .architecture/map.yaml
 and all dependent files update automatically via git hooks.

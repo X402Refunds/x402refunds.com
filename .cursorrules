@@ -1,5 +1,33 @@
 
-# main-overview
+# Lucian AI - Agent Government OS
+
+**🚨 CRITICAL: This project uses a comprehensive rule system located in `.cursor/rules/`**
+
+## 🏗️ Architecture-First Development (MANDATORY)
+
+**Before making ANY structural changes, you MUST:**
+1. **Read** `.architecture/map.yaml` - the single source of truth
+2. **Validate** your changes use current patterns (not deprecated ones)
+3. **Update** the architecture map if adding new locations/commands/patterns
+4. **Run** `pnpm arch:update` to regenerate auto-rules
+
+## 🧪 Testing Requirements (MANDATORY)
+
+**Before pushing ANY API changes:**
+- ✅ Create tests in `test/` directory for new endpoints
+- ✅ Run `pnpm test:run` - all tests must pass
+- ✅ Use ConvexTest for database isolation
+- ✅ Cover happy paths, error cases, and edge cases
+
+## 📋 Complete Rule System
+
+**See `.cursor/rules/` for full rule set including:**
+- Architecture consistency enforcement
+- Process discipline workflows  
+- Agent coordination patterns
+- Constitutional framework rules
+- Testing standards and patterns
+- CI/CD requirements
 
 ## Development Guidelines
 

@@ -61,7 +61,7 @@ export const createRuling = mutation({
         code: args.code,
         summary: args.reasons.substring(0, 200) + (args.reasons.length > 200 ? "..." : ""),
         rulingId,
-        ts: Date.now(),
+        timestamp: Date.now(),
       };
 
       await ctx.db.insert("precedents", precedent);
@@ -79,7 +79,7 @@ export const createRuling = mutation({
         verdict: args.verdict,
         auto: args.auto,
       },
-      ts: Date.now(),
+      timestamp: Date.now(),
     });
 
     return rulingId;
@@ -204,7 +204,7 @@ export const updateRulingProof = mutation({
         merkleRoot: args.merkleRoot,
         rekorId: args.rekorId,
       },
-      ts: Date.now(),
+      timestamp: Date.now(),
     });
 
     return args.rulingId;

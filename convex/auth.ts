@@ -1,3 +1,6 @@
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
 export interface AuthContext {
   agentDid: string;
   signature: string;
@@ -208,3 +211,42 @@ export async function validateUnifiedAuth(
   
   return { valid: false, permissions: [] };
 }
+
+// Create a new owner in the system
+export const createOwner = mutation({
+  args: {
+    did: v.string(),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    verificationTier: v.optional(v.union(v.literal("basic"), v.literal("verified"), v.literal("premium"))),
+    pubkeys: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.info(`Creating owner ${args.did}`);
+
+      // Check if owner already exists
+      const existingOwner = await ctx.db
+        .query("owners")
+        .withIndex("by_did", (q) => q.eq("did", args.did))
+        .first();
+
+      if (existingOwner) {
+        throw new Error(`Owner ${args.did} already exists`);
+      }
+
+      const ownerId = await ctx.db.insert("owners", {
+        did: args.did,
+        verificationTier: args.verificationTier || "basic",
+        pubkeys: args.pubkeys || [],
+        createdAt: Date.now(),
+      });
+
+      console.info(`Created owner ${args.did} with ID: ${ownerId}`);
+      return ownerId;
+    } catch (error) {
+      console.error(`Failed to create owner ${args.did}:`, error);
+      throw new Error(`Failed to create owner: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});

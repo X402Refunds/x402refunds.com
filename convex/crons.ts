@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -10,14 +10,25 @@ crons.daily(
   internal.transparency.dailyBatch
 );
 
-// Hourly agent cleanup - expire session and ephemeral agents
-crons.hourly(
-  "cleanup expired agents",
-  { minuteUTC: 30 }, // 30 minutes past each hour
-  internal.agents.cleanupExpiredAgents
+// Hourly agent cleanup - expire session and ephemeral agents (DISABLED - has bugs)
+// crons.hourly(
+//   "cleanup expired agents",
+//   { minuteUTC: 30 }, // 30 minutes past each hour
+//   internal.agents.cleanupExpiredAgents
+// );
+
+// RAPID CONSTITUTION BUILDING MODE - Speed up until constitution is complete
+crons.interval(
+  "rapid-constitution-building",
+  { minutes: 2 }, // Every 2 minutes - rapid constitutional development
+  api.institutionalAgents.agentOrchestrator.runInstitutionalGovernanceRound
 );
 
-// Panel deadline sweep and reputation decay - TODO: implement these functions
-// For now, these are handled by the court engine directly
+// Cleanup expired memories every 6 hours  
+crons.interval(
+  "cleanup-expired-memories",
+  { hours: 6 },
+  api.constitutionalAgents.cleanupExpiredMemories
+);
 
 export default crons;

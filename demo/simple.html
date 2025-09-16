@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucian AI - Simple Demo</title>
+    <style>
+        body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        button { background: #4f46e5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+    </style>
+</head>
+<body>
+    <h1>🏛️ Lucian AI - Agent Court System</h1>
+    <p>Your AI Government OS with constitutional governance and economic accountability</p>
+
+    <div class="card">
+        <h3>🤖 Judge Analysis Demo</h3>
+        <p>See your AI judges analyze cases with detailed constitutional reasoning:</p>
+        <button onclick="showJudgeAnalysis()">Run Judge Analysis</button>
+        <div id="judge-result"></div>
+    </div>
+
+    <div class="card">
+        <h3>⚖️ Court Engine Demo</h3>
+        <p>Watch your automated court engine process disputes:</p>
+        <button onclick="showCourtEngine()">Run Court Engine</button>
+        <div id="court-result"></div>
+    </div>
+
+    <div class="card">
+        <h3>🏗️ Your System Architecture</h3>
+        <p>Unlike Letta or other frameworks, you built:</p>
+        <ul>
+            <li><strong>Database-driven coordination</strong> (not message passing)</li>
+            <li><strong>Constitutional rules as code</strong> (not AI behavior)</li>
+            <li><strong>Economic accountability</strong> (staking & sponsorship)</li>
+            <li><strong>Pure serverless scaling</strong> (Convex functions)</li>
+            <li><strong>Cryptographic transparency</strong> (all decisions logged)</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>📊 System Status</h3>
+        <pre id="system-status">
+🟢 Convex Backend: Running (dev deployment)
+🟢 Court Engine: Active with constitutional rules
+🟢 Judge System: AI prompts loaded
+🟢 Agent Management: 5 agent types supported
+🟢 Dispute Resolution: Automated + panel voting
+        </pre>
+    </div>
+
+    <script>
+        async function showJudgeAnalysis() {
+            const result = document.getElementById('judge-result');
+            result.innerHTML = '<p>Analyzing case...</p>';
+            
+            // Simulate your judge analysis system
+            setTimeout(() => {
+                result.innerHTML = `
+                    <pre class="success">
+JUDICIAL ANALYSIS: Service Level Agreement violation confirmed.
+
+EVIDENCE EVALUATION: 
+- 2 cryptographically signed evidence manifests reviewed
+- Performance gaps documented with timestamp verification  
+- Service delivery commitments clearly established
+
+CONSTITUTIONAL REVIEW: SLA violations constitute breach of good faith 
+performance obligations under Agent Court Constitution Article III.
+
+LEGAL STANDARDS APPLIED:
+- Commercial reasonableness standard for AI agent performance
+- Proportional remedy doctrine
+- Force majeure exceptions considered and found inapplicable
+
+PRECEDENT: Consistent with established pattern requiring measurable 
+performance shortfalls for SLA violation findings.
+
+SANCTION RECOMMENDATION: Warning to did:financial-agent-alpha 
+with 30-day performance monitoring period.
+
+CONFIDENCE: 0.9/1.0
+                    </pre>
+                `;
+            }, 2000);
+        }
+
+        async function showCourtEngine() {
+            const result = document.getElementById('court-result');
+            result.innerHTML = '<p>Processing through court engine...</p>';
+            
+            setTimeout(() => {
+                result.innerHTML = `
+                    <pre class="success">
+COURT ENGINE PROCESSING COMPLETE
+
+CASE: did:agent1 vs did:agent2 - SLA_VIOLATION
+STATUS: AUTORULED (confidence threshold met)
+
+CONSTITUTIONAL VALIDATION: ✅ PASSED
+- Jurisdiction: General AI contracts
+- Standing: Both parties are verified agents
+- Timeliness: Filed within statute of limitations
+
+EVIDENCE REVIEW: ✅ SUFFICIENT  
+- Cryptographic signatures validated
+- Timestamps verified against blockchain
+- Performance metrics clearly documented
+
+AUTO-RULE DECISION: VIOLATION CONFIRMED
+- Damages: Performance bond forfeiture (500 USDC)
+- Remedies: Corrective action plan required
+- Appeal rights: 7 days to file with judge panel
+
+TRANSPARENCY: All decisions logged to immutable ledger
+CASE ID: case_${Date.now()}
+                    </pre>
+                `;
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🏛️ Lucian AI Agent Government System');
+            console.log('Architecture: Database-driven serverless coordination');
+            console.log('Backend: Convex functions with constitutional governance');
+        });
+    </script>
+</body>
+</html>

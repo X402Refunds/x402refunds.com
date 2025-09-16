@@ -1,7 +1,7 @@
-version: "1.0"
-project: "convergenceai"
-last_updated: "2025-09-10"
-description: "Architecture mapping for Convergence AI - Agent Government OS"
+version: "1.1"
+project: "lucianai"
+last_updated: "2025-09-12"
+description: "Architecture mapping for Lucian AI - Agent Government OS"
 
 # Current architecture state (source of truth)
 current:
@@ -12,6 +12,7 @@ current:
     cursor_rules: ".cursor/rules/"
     workflows: ".github/workflows/"
     architecture_map: ".architecture/"
+    tests: "test/"
   
   commands:
     dev: "pnpm dev"
@@ -19,12 +20,20 @@ current:
     build: "pnpm build"
     convex_dev: "convex dev"
     convex_deploy: "convex deploy"
+    test: "pnpm test"
+    test_run: "pnpm test:run"
+    test_ui: "pnpm test:ui"
+    test_coverage: "pnpm test:coverage"
+    e2e: "pnpm e2e"
   
   patterns:
     backend_files: "convex/*.ts"
     import_paths: "convex/"
     config_files: "package.json"
     generated_api: "convex/_generated/"
+    test_files: "test/*.test.ts"
+    test_setup: "test/setup.ts"
+    test_config: "vitest.config.ts"
 
 # Deprecated patterns (never suggest these - they're from old architecture)
 deprecated:
@@ -72,6 +81,18 @@ dependency_graph:
       - file: ".github/workflows/ci.yml"
         type: "build_commands"
 
+  "locations.tests":
+    description: "Test directory affects testing workflows and documentation"
+    affects:
+      - file: ".cursor/rules/testing-before-push.mdc"
+        type: "path_references"
+      - file: "vitest.config.ts"
+        type: "test_configuration"
+      - file: "package.json"
+        type: "test_scripts"
+      - file: "scripts/e2e-test.sh"
+        type: "test_execution"
+
 # Architecture principles (for validation)
 principles:
   - "Pure serverless - everything in Convex functions"
@@ -87,3 +108,16 @@ history:
     reason: "Simplified structure, follows Convex conventions"
     files_affected: 15
     breaking: true
+  
+  - date: "2025-09-12"
+    change: "Added comprehensive testing framework with Vitest and ConvexTest"
+    reason: "Enable proper API testing for all court engine endpoints and business logic"
+    files_affected: 8
+    breaking: false
+    details:
+      - "Added test/ directory with 5 comprehensive test suites"
+      - "Created vitest.config.ts for test configuration"
+      - "Added testing commands to package.json (test, test:run, test:ui, test:coverage, e2e)"
+      - "Updated testing-before-push.mdc rule to require API tests"
+      - "Modernized E2E script for current Convex serverless architecture"
+      - "Added vitest and convex-test dependencies"

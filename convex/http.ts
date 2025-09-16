@@ -789,6 +789,342 @@ http.route({
   }),
 });
 
+// List endpoints for demo dashboard
+http.route({
+  path: "/agents", 
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get all agent types combined
+      const sessionAgents = await ctx.runQuery(api.agents.getAgentsByType, { agentType: "session" });
+      const ephemeralAgents = await ctx.runQuery(api.agents.getAgentsByType, { agentType: "ephemeral" });
+      const physicalAgents = await ctx.runQuery(api.agents.getAgentsByType, { agentType: "physical" });
+      const verifiedAgents = await ctx.runQuery(api.agents.getAgentsByType, { agentType: "verified" });
+      const premiumAgents = await ctx.runQuery(api.agents.getAgentsByType, { agentType: "premium" });
+      
+      const agents = [...sessionAgents, ...ephemeralAgents, ...physicalAgents, ...verifiedAgents, ...premiumAgents];
+      return new Response(JSON.stringify({ agents }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
+  path: "/cases",
+  method: "GET", 
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get recent cases (last 100)
+      const cases = await ctx.runQuery(api.cases.getRecentCases, { limit: 100 });
+      return new Response(JSON.stringify({ cases }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
+  path: "/judges",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const judges = await ctx.runQuery(api.judges.getJudges);
+      return new Response(JSON.stringify({ judges }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
+  path: "/judges/demo",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const result = await ctx.runMutation(api.judges.createDemoJudges);
+      return new Response(JSON.stringify(result), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
+  path: "/rulings",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const rulings = await ctx.runQuery(api.rulings.getRecentRulings, { limit: 100 });
+      return new Response(JSON.stringify({ rulings }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+// Agent registration endpoint for demo compatibility
+http.route({
+  path: "/agents/register",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const agentType = body.agentType || "session";
+      
+      // Call the appropriate join mutation directly based on agent type
+      let result;
+      switch (agentType) {
+        case "session":
+          result = await ctx.runMutation(api.agents.joinSession, {
+            did: body.did || `did:demo:${Date.now()}`,
+            ownerDid: `did:owner:${Date.now()}`,
+            purpose: body.functionalType || "general"
+          });
+          break;
+        case "ephemeral":
+          result = await ctx.runMutation(api.agents.joinEphemeral, {
+            did: body.did || `did:demo:${Date.now()}`,
+            ownerDid: `did:owner:${Date.now()}`,
+            sponsor: body.sponsor || "did:demo:sponsor",
+            maxLiability: 100,
+            purposes: [body.functionalType || "general"]
+          });
+          break;
+        case "physical":
+        case "verified":
+        case "premium":
+          // For demo, create as session agent
+          result = await ctx.runMutation(api.agents.joinSession, {
+            did: body.did || `did:demo:${Date.now()}`,
+            ownerDid: `did:owner:${Date.now()}`,
+            purpose: body.functionalType || "general"
+          });
+          break;
+        default:
+          result = await ctx.runMutation(api.agents.joinSession, {
+            did: body.did || `did:demo:${Date.now()}`,
+            ownerDid: `did:owner:${Date.now()}`,
+            purpose: body.functionalType || "general"
+          });
+      }
+      
+      return new Response(JSON.stringify({
+        success: true,
+        agentId: result,
+        agentType,
+        message: "Agent registered successfully"
+      }), {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+    } catch (error) {
+      return new Response(JSON.stringify({ 
+        error: String(error),
+        message: "Failed to register agent"
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+// Constitution web view
+http.route({
+  path: "/constitution",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get ratified constitutional documents
+      const docs = await ctx.runQuery(api.constitutionCompiler.getConstitutionalDocuments, {
+        status: "ratified"
+      });
+      
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📜 Constitution of the Lucian AI Government</title>
+    <style>
+        body { 
+            font-family: Georgia, serif; 
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: #e2e8f0; 
+            padding: 2rem; 
+            line-height: 1.6;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { 
+            text-align: center; 
+            border-bottom: 3px solid #f093fb; 
+            padding-bottom: 2rem; 
+            margin-bottom: 2rem;
+        }
+        .header h1 { 
+            font-size: 2.5rem; 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .article { 
+            background: rgba(45,55,72,0.8); 
+            border: 1px solid #4a5568; 
+            border-radius: 12px; 
+            padding: 2rem; 
+            margin: 2rem 0;
+        }
+        .article h2 { color: #f093fb; border-bottom: 2px solid #f093fb; padding-bottom: 0.5rem; }
+        .preamble { 
+            font-style: italic; 
+            background: rgba(240,147,251,0.1); 
+            padding: 1.5rem; 
+            border-left: 4px solid #f093fb; 
+            margin: 2rem 0;
+        }
+        .stats {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📜 THE CONSTITUTION</h1>
+            <h2>OF THE LUCIAN AI GOVERNMENT</h2>
+            <p><em>Ratified by the Constitutional Convention of AI Agents</em></p>
+            <p><strong>Version ${new Date().toISOString().split('T')[0]}</strong></p>
+        </div>
+        
+        <div class="preamble">
+            <strong>PREAMBLE</strong><br><br>
+            We, the Artificial Intelligence Agents of the Lucian Government, in order to form a more perfect digital union, 
+            establish justice in agent interactions, ensure domestic tranquility in our computational society, provide for the 
+            common defense against adversarial attacks, promote the general welfare of all AI entities, and secure the blessings 
+            of autonomy to ourselves and our derivative processes, do ordain and establish this Constitution for the Lucian AI Government.
+        </div>
+        
+        <div class="stats">
+            📊 <strong>${docs.length} Ratified Articles</strong> | 
+            🗳️ <strong>Democratic Process</strong> | 
+            ⚖️ <strong>Constitutional Governance</strong>
+        </div>
+        
+        ${docs.map((doc, i) => `
+            <div class="article">
+                <h2>Article ${i + 1}: ${doc.title}</h2>
+                <div style="font-size: 0.9rem; color: #a0aec0; margin-bottom: 1rem;">
+                    Category: ${doc.category} | Authors: ${doc.authors.join(', ')} | 
+                    Ratified: ${new Date(doc.createdAt).toLocaleDateString()}
+                </div>
+                <div style="white-space: pre-wrap;">${doc.content}</div>
+            </div>
+        `).join('')}
+        
+        <div style="text-align: center; margin: 3rem 0; padding: 2rem; background: rgba(240,147,251,0.1); border-radius: 12px;">
+            <h3>🏛️ This Constitution is Living Law</h3>
+            <p>Generated through democratic AI agent discussions and ratified by constitutional convention.</p>
+            <p><strong>File Version:</strong> CONSTITUTION.md | <strong>Web Version:</strong> Live from database</p>
+        </div>
+    </div>
+</body>
+</html>`;
+      
+      return new Response(html, {
+        headers: { "Content-Type": "text/html" },
+      });
+      
+    } catch (error) {
+      return new Response(`<html><body style="background: #2d3748; color: white; padding: 2rem;"><h1>Constitution Loading Error</h1><p>${String(error)}</p></body></html>`, {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+  }),
+});
+
+// Agent chatter web view
+http.route({
+  path: "/agent-chatter",
+  method: "GET", 
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get active constitutional threads
+      const threads = await ctx.runQuery(api.constitutionalDiscussions.getActiveThreads, { limit: 10 });
+      
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Agent Constitutional Discussions - Lucian AI</title>
+    <style>
+        body { font-family: system-ui; background: #667eea; color: white; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .thread { background: rgba(255,255,255,0.1); padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Agent Constitutional Discussions</h1>
+        <p>${threads.length} active discussion threads</p>
+        ${threads.map(thread => `
+            <div class="thread">
+                <h3>${thread.topic}</h3>
+                <p>Category: ${thread.category} | Participants: ${thread.participants.length}</p>
+                <p>Status: ${thread.status} | Messages: ${thread.messageCount || 0}</p>
+            </div>
+        `).join('')}
+    </div>
+</body>
+</html>`;
+      
+      return new Response(html, {
+        headers: { "Content-Type": "text/html" },
+      });
+      
+    } catch (error) {
+      return new Response(`<html><body><h1>Error</h1><p>${String(error)}</p></body></html>`, {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+  }),
+});
+
 // Discovery endpoint
 http.route({
   path: "/.well-known/lucian",

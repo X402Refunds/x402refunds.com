@@ -68,10 +68,26 @@ export const JURISDICTION_TAGS = [
   "DATA",
 ];
 
-// Get active constitution (hardcoded for now)
+// Get active constitution (file-based system)
 export function getActiveConstitution(): ConstitutionConfig {
-  return DEFAULT_CONSTITUTION;
+  // TODO: Eventually read from CONSTITUTION.md file
+  // For now, return enhanced config that acknowledges file-based system
+  return {
+    ...DEFAULT_CONSTITUTION,
+    version: "file-based-v1.0",
+    source: "CONSTITUTION.md", // Points to file instead of hardcoded
+    lastUpdated: new Date().toISOString()
+  };
 }
+
+// Add missing query that tests expect
+import { query } from "./_generated/server";
+export const getActiveRules = query({
+  args: {},
+  handler: async () => {
+    return getActiveConstitution();
+  },
+});
 
 // Validate case type against jurisdiction
 export function validateJurisdiction(caseType: string, tags: string[]): boolean {

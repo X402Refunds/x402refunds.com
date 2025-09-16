@@ -1,4 +1,4 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const dailyBatch = internalMutation({
@@ -110,5 +110,79 @@ export const dailyBatch = internalMutation({
         ts: now,
       });
     }
+  },
+});
+
+// Get recent events for testing and transparency
+export const getRecentEvents = query({
+  args: {
+    eventType: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+    
+    let query = ctx.db.query("events");
+    
+    if (args.eventType) {
+      query = query.withIndex("by_type", (q) => q.eq("type", args.eventType));
+    } else {
+      query = query.withIndex("by_timestamp");
+    }
+    
+    const events = await query
+      .order("desc")
+      .take(limit);
+    
+    return events;
+  },
+});
+
+// Log an event for transparency
+export const logEvent = mutation({
+  args: {
+    type: v.string(),
+    payload: v.any(),
+    agentDid: v.optional(v.string()),
+    caseId: v.optional(v.id("cases")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("events", {
+      type: args.type,
+      payload: args.payload,
+      timestamp: Date.now(),
+      agentDid: args.agentDid,
+      caseId: args.caseId,
+    });
+  },
+});
+
+// Log judge deliberation for transparency and audit trail
+export const logDeliberation = mutation({
+  args: {
+    caseId: v.string(),
+    judgePrompt: v.string(),
+    analysisResult: v.object({
+      code: v.string(),
+      reasons: v.string(),
+      confidence: v.number()
+    }),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("events", {
+      type: "JUDGE_DELIBERATION",
+      payload: {
+        caseId: args.caseId,
+        systemPromptPreview: args.judgePrompt,
+        ruling: args.analysisResult.code,
+        reasoning: args.analysisResult.reasons.substring(0, 1000) + "...", // Truncate for storage
+        confidence: args.analysisResult.confidence
+      },
+      timestamp: args.timestamp,
+      caseId: args.caseId
+    });
+    
+    console.log(`Judge deliberation logged for case ${args.caseId}: ${args.analysisResult.code}`);
   },
 });

@@ -70,7 +70,8 @@ export const fileDispute = mutation({
         type: args.type,
         evidenceCount: args.evidenceIds.length,
       },
-      ts: now,
+      timestamp: now,
+      caseId,
     });
 
     return caseId;
@@ -184,9 +185,28 @@ export const updateCaseStatus = mutation({
         newStatus: args.status,
         panelId: args.panelId,
       },
-      ts: Date.now(),
+      timestamp: Date.now(),
+      caseId: args.caseId,
     });
 
     return args.caseId;
+  },
+});
+
+// Update case ruling - for autoRule integration
+export const updateCaseRuling = mutation({
+  args: {
+    caseId: v.id("cases"),
+    ruling: v.object({
+      verdict: v.string(),
+      auto: v.boolean(),
+      decidedAt: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.caseId, {
+      ruling: args.ruling,
+    });
+    console.info(`Case ${args.caseId} ruling updated`);
   },
 });

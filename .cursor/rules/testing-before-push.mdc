@@ -12,14 +12,13 @@ description: Testing and verification requirements before pushing code
 
 ### 1. Local Build Test
 ```bash
-cd /Users/vkotecha/Desktop/convergenceai
 pnpm build && echo "✅ BUILD TEST PASSED"
 ```
 
 ### 2. For Convex Backend Changes
 ```bash
-cd apps
-npx convex dev --once  # Validate schema and functions
+convex dev --once  # Validate schema and functions
+pnpm test          # Run comprehensive API tests
 ```
 
 ### 3. For CI/Workflow Changes
@@ -28,6 +27,7 @@ npx convex dev --once  # Validate schema and functions
 pnpm install --frozen-lockfile  # Must work for CI
 pnpm lint                       # Must pass
 pnpm type-check                 # Must pass
+pnpm test:run                   # Must pass all tests
 ```
 
 ### 4. Dependency Changes
@@ -36,7 +36,40 @@ pnpm type-check                 # Must pass
 rm pnpm-lock.yaml              # Remove old lockfile
 pnpm install                   # Regenerate
 pnpm install --frozen-lockfile # Test CI command works
+pnpm test:run                  # Ensure tests still work
 ```
+
+## API Testing Requirements - NEW
+
+### 5. For New API Endpoints (mutations/queries/actions)
+```bash
+# MANDATORY: Create tests for new APIs
+# Test files must be created in test/ directory:
+# - test/agents.test.ts         # Agent registration & lifecycle
+# - test/evidence.test.ts       # Evidence submission & validation  
+# - test/cases.test.ts          # Case filing & dispute resolution
+# - test/courtEngine.test.ts    # Court engine decision logic
+# - test/judges.test.ts         # Panel voting & judge management
+
+# Before committing new API functions:
+pnpm test:run                  # All tests must pass
+pnpm test:coverage             # Check coverage (optional but recommended)
+```
+
+### 6. Test Requirements for New Code
+
+**MUST have tests for:**
+- ✅ New mutations (create/update operations)
+- ✅ New queries (data retrieval)
+- ✅ New actions (complex logic/external calls)
+- ✅ Validation logic and error handling
+- ✅ Integration between components
+
+**Test patterns to follow:**
+- ✅ Happy path scenarios
+- ✅ Error cases and validation
+- ✅ Edge cases and boundary conditions
+- ✅ Integration with existing APIs
 
 ## Common CI Failures to Prevent
 
@@ -45,6 +78,8 @@ pnpm install --frozen-lockfile # Test CI command works
 3. **Wrong cache type** - Use `cache: 'pnpm'` not `cache: 'npm'`
 4. **Missing dependencies** - Pre-install all required packages
 5. **Broken references** - Update all config files when removing packages
+6. **Missing API tests** - New endpoints without tests fail in CI
+7. **Test database issues** - Use ConvexTest for proper isolation
 
 ## Commit Only After Green Local Tests
 
@@ -54,9 +89,31 @@ pnpm build ✅
 pnpm lint ✅ 
 pnpm type-check ✅
 convex dev --once ✅
+pnpm test:run ✅
 
 # THEN commit and push
 git add . && git commit -m "..." && git push
+```
+
+## Test Development Guidelines
+
+### Writing Good API Tests
+1. **Use ConvexTest** for database isolation
+2. **Test business logic** not implementation details
+3. **Create comprehensive scenarios** covering happy/error paths
+4. **Use descriptive test names** that explain what's being tested
+5. **Set up proper test data** in beforeEach hooks
+6. **Validate complete responses** not just existence
+
+### Test Organization
+```
+test/
+├── setup.ts              # Common test utilities
+├── agents.test.ts         # Agent APIs
+├── evidence.test.ts       # Evidence APIs  
+├── cases.test.ts          # Case/dispute APIs
+├── courtEngine.test.ts    # Decision engine
+└── judges.test.ts         # Panel/voting APIs
 ```
 
 ## Emergency Override
@@ -64,3 +121,4 @@ git add . && git commit -m "..." && git push
 If you MUST push without full testing (emergency fix):
 - Use `[skip ci]` in commit message
 - Fix and test properly in next commit
+- **NEVER skip API tests for new endpoints** - they prevent breaking changes

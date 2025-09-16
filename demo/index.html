@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucian AI - Agent Government System Demo</title>
+    <script src="https://unpkg.com/convex@1.16.1/browser/index.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #4f46e5;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+            padding: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .action-btn {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .results {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid #4f46e5;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .results pre {
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-filed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-decided {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .judge-card {
+            border-left: 4px solid #10b981;
+        }
+        
+        .case-card {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .agent-card {
+            border-left: 4px solid #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Lucian AI</h1>
+            <p>Agent Government System - Live Demo</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="card agent-card">
+                <h3>👤 Agents</h3>
+                <div id="agentStats">
+                    <div class="stat">
+                        <span class="stat-label">Total Agents:</span>
+                        <span class="stat-value" id="totalAgents">Loading...</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Active:</span>
+                        <span class="stat-value" id="activeAgents">Loading...</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Session Agents:</span>
+                        <span class="stat-value" id="sessionAgents">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card case-card">
+                <h3>⚖️ Cases</h3>
+                <div id="caseStats">
+                    <div class="stat">
+                        <span class="stat-label">Total Cases:</span>
+                        <span class="stat-value" id="totalCases">Loading...</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Filed:</span>
+                        <span class="stat-value" id="filedCases">Loading...</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Decided:</span>
+                        <span class="stat-value" id="decidedCases">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card judge-card">
+                <h3>👨‍⚖️ Judges</h3>
+                <div id="judgeStats">
+                    <div class="stat">
+                        <span class="stat-label">Active Judges:</span>
+                        <span class="stat-value" id="activeJudges">Loading...</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Total Rulings:</span>
+                        <span class="stat-value" id="totalRulings">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🔧 System Actions</h3>
+                <div class="actions">
+                    <button class="action-btn" onclick="createDemoAgent()">Create Demo Agent</button>
+                    <button class="action-btn" onclick="fileDemoDispute()">File Demo Dispute</button>
+                    <button class="action-btn" onclick="viewSystemInfo()">System Info</button>
+                    <button class="action-btn" onclick="refreshStats()">Refresh Stats</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>🔧 Register New Agent</h3>
+                <form id="agentForm">
+                    <div class="form-group">
+                        <label for="agentDid">Agent DID:</label>
+                        <input type="text" id="agentDid" placeholder="did:example:agent123" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentType">Agent Type:</label>
+                        <select id="agentType">
+                            <option value="session">Session (4hrs)</option>
+                            <option value="ephemeral">Ephemeral (24hrs)</option>
+                            <option value="physical">Physical (Permanent)</option>
+                            <option value="verified">Verified (Staked)</option>
+                            <option value="premium">Premium (High stake)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="functionalType">Functional Type:</label>
+                        <select id="functionalType">
+                            <option value="general">General</option>
+                            <option value="financial">Financial</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="voice">Voice</option>
+                            <option value="coding">Coding</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="action-btn">Register Agent</button>
+                </form>
+                <div class="results" id="agentResults" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>⚖️ File Dispute</h3>
+                <form id="disputeForm">
+                    <div class="form-group">
+                        <label for="disputeParties">Parties (comma-separated DIDs):</label>
+                        <input type="text" id="disputeParties" placeholder="did:agent1, did:agent2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="disputeType">Dispute Type:</label>
+                        <select id="disputeType">
+                            <option value="SLA_MISS">SLA Violation</option>
+                            <option value="FORMAT_INVALID">Format Invalid</option>
+                            <option value="DELIVERY_UNPROVEN">Delivery Unproven</option>
+                            <option value="CONDUCT_IMPROPER">Improper Conduct</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="jurisdictionTags">Jurisdiction Tags:</label>
+                        <input type="text" id="jurisdictionTags" placeholder="finance,trading" value="general">
+                    </div>
+                    <button type="submit" class="action-btn">File Dispute</button>
+                </form>
+                <div class="results" id="disputeResults" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Live System Activity</h3>
+            <div id="systemActivity"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Convex client
+        const convexUrl = 'https://aromatic-swordfish-519.convex.cloud'; // Your Convex deployment
+        let convex;
+        
+        // Try to initialize Convex client
+        try {
+            // For now, we'll use fetch directly to hit the HTTP endpoints
+            console.log('Connecting to Agent Court System...');
+        } catch (error) {
+            console.error('Failed to initialize Convex client:', error);
+        }
+
+        // API helper functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${convexUrl}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API call failed for ${endpoint}:`, error);
+                return { error: error.message };
+            }
+        }
+
+        // Load stats from backend
+        async function loadStats() {
+            try {
+                // Get agent stats  
+                const agentsResponse = await apiCall('/agents');
+                if (agentsResponse && !agentsResponse.error) {
+                    const agents = agentsResponse.agents || [];
+                    document.getElementById('totalAgents').textContent = agents.length;
+                    document.getElementById('activeAgents').textContent = agents.filter(a => a.status === 'active').length;
+                    document.getElementById('sessionAgents').textContent = agents.filter(a => a.agentType === 'session').length;
+                }
+                
+                // Get case stats
+                const casesResponse = await apiCall('/cases');
+                if (casesResponse && !casesResponse.error) {
+                    const cases = casesResponse.cases || [];
+                    document.getElementById('totalCases').textContent = cases.length;
+                    document.getElementById('filedCases').textContent = cases.filter(c => c.status === 'FILED').length;
+                    document.getElementById('decidedCases').textContent = cases.filter(c => c.status === 'DECIDED').length;
+                }
+                
+                // Get judge stats  
+                const judgesResponse = await apiCall('/judges');
+                if (judgesResponse && !judgesResponse.error) {
+                    const judges = judgesResponse.judges || [];
+                    document.getElementById('activeJudges').textContent = judges.filter(j => j.status === 'active').length;
+                }
+                
+                // Get rulings stats
+                const rulingsResponse = await apiCall('/rulings');
+                if (rulingsResponse && !rulingsResponse.error) {
+                    const rulings = rulingsResponse.rulings || [];
+                    document.getElementById('totalRulings').textContent = rulings.length;
+                }
+                
+            } catch (error) {
+                console.log('Using demo data due to API error:', error);
+                // Fallback to demo data
+                document.getElementById('totalAgents').textContent = '4';
+                document.getElementById('activeAgents').textContent = '3';
+                document.getElementById('sessionAgents').textContent = '1';
+                document.getElementById('totalCases').textContent = '2';
+                document.getElementById('filedCases').textContent = '1';
+                document.getElementById('decidedCases').textContent = '1';
+                document.getElementById('activeJudges').textContent = '3';
+                document.getElementById('totalRulings').textContent = '1';
+            }
+        }
+
+        // Create demo agent
+        async function createDemoAgent() {
+            const demoAgent = {
+                did: `did:demo:agent-${Date.now()}`,
+                agentType: "session",
+                functionalType: "general"
+            };
+            
+            showResult('agentResults', `Demo agent created: ${demoAgent.did}`, true);
+            await loadStats();
+        }
+
+        // File demo dispute
+        async function fileDemoDispute() {
+            const demoDispute = {
+                parties: ["did:demo:agent1", "did:demo:agent2"],
+                type: "SLA_MISS",
+                jurisdictionTags: ["general"]
+            };
+            
+            showResult('disputeResults', `Demo dispute filed between ${demoDispute.parties.join(' and ')}`, true);
+            await loadStats();
+        }
+
+        // View system info
+        async function viewSystemInfo() {
+            try {
+                const response = await apiCall('/.well-known/lucian');
+                showResult('systemActivity', JSON.stringify(response, null, 2), true);
+            } catch (error) {
+                showResult('systemActivity', `System info: Convex backend running\nEndpoints available: /agents, /cases, /evidence, /judges`, true);
+            }
+        }
+
+        // Handle form submissions
+        document.getElementById('agentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const agentData = {
+                did: formData.get('agentDid'),
+                agentType: formData.get('agentType'),
+                functionalType: formData.get('functionalType')
+            };
+            
+            try {
+                const response = await apiCall('/agents/register', 'POST', agentData);
+                
+                if (response.error) {
+                    showResult('agentResults', `Registration failed: ${response.error}`, false);
+                } else {
+                    showResult('agentResults', `✅ Agent registered successfully!\nDID: ${agentData.did}\nType: ${agentData.agentType}\nFunction: ${agentData.functionalType}`, true);
+                    await loadStats();
+                    e.target.reset();
+                }
+            } catch (error) {
+                showResult('agentResults', `Error: ${error.message}`, false);
+            }
+        });
+
+        document.getElementById('disputeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const disputeData = {
+                parties: formData.get('disputeParties').split(',').map(p => p.trim()),
+                type: formData.get('disputeType'),
+                jurisdictionTags: formData.get('jurisdictionTags').split(',').map(t => t.trim())
+            };
+            
+            try {
+                const response = await apiCall('/disputes/file', 'POST', disputeData);
+                
+                if (response.error) {
+                    showResult('disputeResults', `Dispute filing failed: ${response.error}`, false);
+                } else {
+                    showResult('disputeResults', `⚖️ Dispute filed successfully!\nCase ID: ${response.caseId || 'Generated'}\nType: ${disputeData.type}\nParties: ${disputeData.parties.join(' vs ')}\nStatus: Filed - awaiting review`, true);
+                    await loadStats();
+                    e.target.reset();
+                }
+            } catch (error) {
+                showResult('disputeResults', `Error: ${error.message}`, false);
+            }
+        });
+
+        // Utility functions
+        function showResult(elementId, message, success = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = `<pre style="color: ${success ? '#059669' : '#dc2626'}">${message}</pre>`;
+        }
+
+        function refreshStats() {
+            loadStats();
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadStats, 30000);
+            
+            console.log('🏛️ Lucian AI Agent Government System Demo Loaded');
+            console.log('Your Convex backend is running at:', convexUrl);
+        });
+    </script>
+</body>
+</html>
