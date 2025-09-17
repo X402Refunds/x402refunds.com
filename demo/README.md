@@ -1,4 +1,4 @@
-# Lucian AI Agent Court System - Live Demo
+# Consulate Agent Court System - Live Demo
 
 ## 🚀 See Your AI Government System in Action!
 

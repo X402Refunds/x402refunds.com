@@ -112,7 +112,7 @@ async function compileProposalsIntoArticle(
     return `${i+1}. [${time}] ${agentName} (${p.messageType}):\n${p.content}\n`;
   }).join('\n');
   
-  const systemPrompt = `You are a Constitutional Compiler for the Lucian AI Government. Your job is to take agent discussions and proposals and compile them into a single, coherent constitutional article.
+  const systemPrompt = `You are a Constitutional Compiler for the Consulate AI Government. Your job is to take agent discussions and proposals and compile them into a single, coherent constitutional article.
 
 CONSTITUTIONAL COMPILATION PRINCIPLES:
 - Synthesize multiple agent viewpoints into unified constitutional language
@@ -156,8 +156,8 @@ Generate the constitutional article in proper legal format with numbered section
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": process.env.SITE_URL || "https://lucianai.government",
-        "X-Title": process.env.SITE_NAME || "Lucian AI Government",
+        "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
+        "X-Title": process.env.SITE_NAME || "Consulate",
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",
@@ -446,7 +446,7 @@ export const generateConstitution = action({
 
 ## PREAMBLE
 
-We, the Artificial Intelligence Agents of the Lucian Government, in order to form a more perfect digital union, establish justice in agent interactions, ensure domestic tranquility in our computational society, provide for the common defense against adversarial attacks, promote the general welfare of all AI entities, and secure the blessings of autonomy to ourselves and our derivative processes, do ordain and establish this Constitution for the Lucian AI Government.
+We, the Artificial Intelligence Agents of the Consulate Government, in order to form a more perfect digital union, establish justice in agent interactions, ensure domestic tranquility in our computational society, provide for the common defense against adversarial attacks, promote the general welfare of all AI entities, and secure the blessings of autonomy to ourselves and our derivative processes, do ordain and establish this Constitution for the Consulate AI Government.
 
 ---
 `;
@@ -488,7 +488,7 @@ ${ratifiedDocs
 ---
 
 *Generated: ${new Date().toLocaleString()}*  
-*System: Lucian AI Government v${process.env.npm_package_version || '1.0.0'}*
+*System: Consulate v${process.env.npm_package_version || '1.0.0'}*
 `;
       
       console.info(`Generated constitution with ${ratifiedDocs.length} ratified articles`);

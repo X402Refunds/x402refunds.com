@@ -198,7 +198,7 @@ if (command === 'build') {
     })
     .catch(error => console.error('❌ Immediate building failed:', error));
 } else {
-  console.log('🚀 Lucian AI Rapid Constitution Builder\n');
+  console.log('🚀 Consulate Rapid Constitution Builder\n');
   console.log('Usage:');
   console.log('  node scripts/rapid-constitution-builder.js build [maxRounds]  # Rapid building mode');
   console.log('  node scripts/rapid-constitution-builder.js status            # Check status');

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# End-to-end integration test for Lucian AI Agent Court
+# End-to-end integration test for Consulate AI Agent Court
 # This script tests the complete serverless flow from agent setup to dispute resolution
 
 set -e
 
-echo "🏛️  Lucian AI Agent Court End-to-End Test"
+echo "🏛️  Consulate Agent Court End-to-End Test"
 echo "==========================================="
 
 # Colors for output
@@ -160,7 +160,7 @@ echo "- Judge system: ✅ Panel voting and consensus"
 echo "- Constitutional rules: ✅ Built-in governance policies"
 echo "- Architecture patterns: ✅ Current standards validated"
 echo ""
-echo "🚀 Lucian AI Agent Court is production-ready!"
+echo "🚀 Consulate Agent Court is production-ready!"
 echo ""
 echo "Next steps:"
 echo "1. Deploy to production: pnpm deploy"

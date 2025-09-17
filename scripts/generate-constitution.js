@@ -281,7 +281,7 @@ if (command === 'status') {
 } else if (command === 'generate') {
   generateFinalConstitution();
 } else {
-  console.log('🏛️  Lucian AI Constitution Generator\n');
+  console.log('🏛️  Consulate Constitution Generator\n');
   console.log('Usage:');
   console.log('  node scripts/generate-constitution.js create   # Full process');
   console.log('  node scripts/generate-constitution.js status   # Check status');

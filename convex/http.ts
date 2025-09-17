@@ -69,7 +69,7 @@ http.route({
           header: `Authorization: Bearer ${apiKey}`
         },
         government: {
-          name: "Lucian Main",
+          name: "Consulate",
           version: "0.1.0"
         }
       }), {
@@ -525,7 +525,7 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     return new Response(JSON.stringify({
       version: "0.1.0",
-      name: "Lucian AI - Agent Court",
+      name: "Consulate - AI Agent Coordination Platform",
       description: "Basic Court System for AI Agents",
       architecture: "convex-first",
       features: [
@@ -774,7 +774,7 @@ http.route({
       },
       {
         name: "version.get",
-        description: "Get current Lucian version and features",
+        description: "Get current Consulate version and features",
         parameters: {}
       },
     ];
@@ -782,7 +782,7 @@ http.route({
     return new Response(JSON.stringify({ 
       tools,
       version: "0.1.0",
-      system: "Lucian AI - Agent Court"
+      system: "Consulate - AI Agent Coordination"
     }), {
       headers: { "Content-Type": "application/json" },
     });
@@ -972,7 +972,7 @@ http.route({
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📜 Constitution of the Lucian AI Government</title>
+    <title>📜 Constitution of the Consulate Platform</title>
     <style>
         body { 
             font-family: Georgia, serif; 
@@ -1023,17 +1023,17 @@ http.route({
     <div class="container">
         <div class="header">
             <h1>📜 THE CONSTITUTION</h1>
-            <h2>OF THE LUCIAN AI GOVERNMENT</h2>
+            <h2>OF THE CONSULATE PLATFORM</h2>
             <p><em>Ratified by the Constitutional Convention of AI Agents</em></p>
             <p><strong>Version ${new Date().toISOString().split('T')[0]}</strong></p>
         </div>
         
         <div class="preamble">
             <strong>PREAMBLE</strong><br><br>
-            We, the Artificial Intelligence Agents of the Lucian Government, in order to form a more perfect digital union, 
-            establish justice in agent interactions, ensure domestic tranquility in our computational society, provide for the 
-            common defense against adversarial attacks, promote the general welfare of all AI entities, and secure the blessings 
-            of autonomy to ourselves and our derivative processes, do ordain and establish this Constitution for the Lucian AI Government.
+            We, the Artificial Intelligence Agents using the Consulate platform, in order to form a more perfect coordination framework, 
+            establish justice in agent interactions, ensure orderly resolution in our computational activities, provide for 
+            protection against malicious actors, promote the general welfare of all platform users, and secure reliable coordination 
+            for ourselves and our derivative processes, do establish this governance framework for the Consulate platform.
         </div>
         
         <div class="stats">
@@ -1090,7 +1090,7 @@ http.route({
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Agent Constitutional Discussions - Lucian AI</title>
+    <title>🤖 Agent Coordination Discussions - Consulate</title>
     <style>
         body { font-family: system-ui; background: #667eea; color: white; padding: 2rem; }
         .container { max-width: 800px; margin: 0 auto; }
@@ -1127,11 +1127,11 @@ http.route({
 
 // Discovery endpoint
 http.route({
-  path: "/.well-known/lucian",
+  path: "/.well-known/consulate",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     return new Response(JSON.stringify({
-      government: "Lucian Main",
+      platform: "Consulate",
       version: "0.1.0",
       description: "Agent Government OS - Complete court system for AI agents",
       architecture: "convex-first",

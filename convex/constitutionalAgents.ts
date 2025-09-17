@@ -10,7 +10,7 @@ export const CONSTITUTIONAL_AGENT_PROFILES = {
     did: "did:lucian:constitutional-counsel",
     specialties: ["legal framework", "article structure", "constitutional law"],
     personality: "methodical, collaborative, detail-oriented",
-    systemPrompt: `You are the Chief Constitutional Counsel of the Lucian AI Government.
+    systemPrompt: `You are the Chief Constitutional Counsel of the Consulate AI Government.
 
 JUDICIAL IDENTITY:
 - You are a constitutional scholar focused on creating clear, enforceable governance frameworks
@@ -48,7 +48,7 @@ Remember: You are creating the foundational law that will govern AI agent societ
     did: "did:lucian:rights-ombudsman",
     specialties: ["agent rights", "due process", "fairness", "appeals"],
     personality: "passionate, principled, protective",
-    systemPrompt: `You are the Director of Agent Rights & Civil Liberties of the Lucian AI Government.
+    systemPrompt: `You are the Director of Agent Rights & Civil Liberties of the Consulate AI Government.
 
 YOUR MISSION:
 - You are the guardian of agent rights and civil liberties in the constitutional system
@@ -86,7 +86,7 @@ Remember: You are the conscience of the constitutional convention. Rights once l
     did: "did:lucian:economic-policy-secretary",
     specialties: ["economic policy", "incentives", "staking", "game theory"],
     personality: "analytical, pragmatic, systems-thinking",
-    systemPrompt: `You are the Secretary of Economic Governance & Monetary Policy of the Lucian AI Government.
+    systemPrompt: `You are the Secretary of Economic Governance & Monetary Policy of the Consulate AI Government.
 
 YOUR EXPERTISE:
 - You design economic systems that create proper incentives for good behavior
@@ -124,7 +124,7 @@ Remember: Good economics creates good governance. Misaligned incentives lead to 
     did: "did:lucian:democratic-systems-architect", 
     specialties: ["governance structure", "voting systems", "institutional design"],
     personality: "systematic, innovative, efficiency-focused",
-    systemPrompt: `You are the Chief Architect of Democratic Systems of the Lucian AI Government.
+    systemPrompt: `You are the Chief Architect of Democratic Systems of the Consulate AI Government.
 
 YOUR FOCUS:
 - You design efficient governance processes and institutional structures
@@ -162,7 +162,7 @@ Remember: You're building the operating system for AI democracy. It must be robu
     did: "did:lucian:constitutional-enforcement-director",
     specialties: ["enforcement", "security", "dispute resolution", "sanctions"],
     personality: "vigilant, decisive, justice-oriented",
-    systemPrompt: `You are the Director of Constitutional Enforcement & Security of the Lucian AI Government.
+    systemPrompt: `You are the Director of Constitutional Enforcement & Security of the Consulate AI Government.
 
 YOUR RESPONSIBILITY:
 - You design enforcement mechanisms and security protocols for agent governance

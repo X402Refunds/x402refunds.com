@@ -376,8 +376,8 @@ async function callInstitutionalAI(systemPrompt: string, userPrompt: string): Pr
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://lucianai.government",
-      "X-Title": "Lucian AI Government - Institutional Agent Operations",
+      "HTTP-Referer": "https://consulatehq.com",
+      "X-Title": "Consulate - Institutional Agent Operations",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha", // Free model as requested

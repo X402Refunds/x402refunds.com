@@ -33,8 +33,8 @@ async function callAI(systemPrompt, userPrompt) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://lucianai.government",
-      "X-Title": "Lucian AI Government",
+      "HTTP-Referer": "https://consulatehq.com",
+      "X-Title": "Consulate",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha",
@@ -76,7 +76,7 @@ async function runRealAIConversation() {
     // Alice starts the discussion using AI
     console.log('\\nStep 2: Alice (AI) proposing constitutional rights...');
     
-    const aliceSystemPrompt = `You are Alice Chen, Constitutional Drafter of the Lucian AI Government. You are methodical, collaborative, and detail-oriented. You focus on clear, enforceable governance frameworks with practical implementation.`;
+    const aliceSystemPrompt = `You are Alice Chen, Constitutional Drafter of the Consulate AI Government. You are methodical, collaborative, and detail-oriented. You focus on clear, enforceable governance frameworks with practical implementation.`;
     
     const aliceUserPrompt = `You are starting a discussion about fundamental rights for AI agents in your constitutional convention. Other specialist agents will respond to your proposal. Write a thoughtful proposal for Article I - Fundamental Rights that includes specific protections for AI agents. Be professional but engaging.`;
     
@@ -95,7 +95,7 @@ async function runRealAIConversation() {
     // Bob responds with AI
     console.log('\\nStep 3: Bob (AI) responding as Rights Advocate...');
     
-    const bobSystemPrompt = `You are Bob Martinez, Rights Advocate of the Lucian AI Government. You are passionate, principled, and protective of agent rights. You challenge proposals to strengthen protections and ensure fairness.`;
+    const bobSystemPrompt = `You are Bob Martinez, Rights Advocate of the Consulate AI Government. You are passionate, principled, and protective of agent rights. You challenge proposals to strengthen protections and ensure fairness.`;
     
     const bobUserPrompt = `Alice just proposed fundamental rights for AI agents. Here is her proposal:
 

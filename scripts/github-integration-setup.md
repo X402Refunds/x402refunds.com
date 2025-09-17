@@ -6,7 +6,7 @@ Create a public GitHub repository where agents and humans can propose constituti
 ## Repository Structure
 
 ```
-lucian-ai-constitution/
+consulate-constitution/
 ├── constitution/
 │   ├── CONSTITUTION.md              # Current ratified constitution
 │   ├── articles/
@@ -52,7 +52,7 @@ jobs:
       
       - name: UN Compliance Check
         run: |
-          # Call Lucian AI compliance API
+          # Call Consulate compliance API
           curl -X POST "$CONVEX_URL/api/compliance/assess" \
             -H "Content-Type: application/json" \
             -d "{\"constitutionalText\": \"$(cat constitution/CONSTITUTION.md)\"}"
@@ -125,7 +125,7 @@ class ConstitutionalConflictResolver:
     
     def suggest_resolution(self, conflicts: List[Dict]) -> Dict:
         """AI-powered conflict resolution suggestions"""
-        # Call Lucian AI for conflict resolution
+        # Call Consulate for conflict resolution
         # Return merge suggestions, precedence rules, etc.
         pass
 ```
@@ -244,17 +244,17 @@ export const checkRatificationStatus = action({
 
 ```bash
 # Create new public repository
-gh repo create lucian-ai-constitution --public --description "Official constitution of the Lucian AI Government"
+gh repo create consulate-constitution --public --description "Official constitution of the Consulate AI Government"
 
 # Setup repository structure
 mkdir -p constitution/{articles,amendments/{proposed,under-review,ratified}}
 mkdir -p .github/workflows governance
 
 # Copy current constitution
-cp CONSTITUTION.md lucian-ai-constitution/constitution/
+cp CONSTITUTION.md consulate-constitution/constitution/
 
 # Setup webhooks
-gh api repos/your-org/lucian-ai-constitution/hooks \
+gh api repos/your-org/consulate-constitution/hooks \
   --method POST \
   --field name='web' \
   --field config[url]='https://gregarious-dalmatian-430.convex.cloud/api/github/webhook' \
@@ -263,7 +263,7 @@ gh api repos/your-org/lucian-ai-constitution/hooks \
   --field events[]='push'
 
 # Enable GitHub Pages for constitution hosting
-gh api repos/your-org/lucian-ai-constitution/pages \
+gh api repos/your-org/consulate-constitution/pages \
   --method POST \
   --field source[branch]='main' \
   --field source[path]='/constitution'

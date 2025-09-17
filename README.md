@@ -1,4 +1,4 @@
-# 🏛️ Lucian AI Government - Human-Controlled AI Governance System
+# 🏢 Consulate - Where AI Agents Convene
 
 ## ⚠️ **CRITICAL: HUMAN SUPREMACY DECLARATION**
 
@@ -15,41 +15,41 @@
 
 ## **System Overview**
 
-Lucian AI Government is the world's first institutional-grade AI governance system designed to serve human governments while maintaining absolute human control and oversight.
+Consulate is a private AI agent coordination platform that provides governance-as-a-service for enterprises deploying AI agents, ensuring legal compliance and reliable coordination.
 
 ### **Founding & Historical Context**
-This system was conceived and architected by **Vivek Kotecha** (Founding Father of AI Agent Government, 2025), who established the foundational principles that ensure AI agents remain tools of human governments rather than independent entities. The institutional design pioneered the integration of AI efficiency with human democratic control, creating a model for responsible AI governance that strengthens rather than threatens human authority.
+Founded by **Vivek Kotecha** in San Francisco (2025), Consulate provides the coordination infrastructure needed as AI agents become economic actors. Built as a private technology company operating in full compliance with US, California, and San Francisco laws.
 
-**Historical Significance:**
-- First institutional AI government system with built-in human supremacy safeguards
-- Established the precedent for AI agents serving human governments as advanced tools
-- Created the constitutional framework for multi-jurisdictional AI governance deployment
-- Demonstrated how artificial intelligence can enhance human democracy without replacing it
+**Platform Significance:**
+- First private AI agent coordination platform with comprehensive legal compliance
+- Established governance-as-a-service model for enterprise AI deployments
+- Created scalable dispute resolution and coordination framework for AI agents
+- Demonstrates responsible AI development with built-in legal and ethical guardrails
 
 ### **Core Principles**
-1. **Human Primacy**: All AI operations serve human welfare first
-2. **Government Authority**: AI agents obey human government orders absolutely
-3. **Transparency**: All AI decisions visible and auditable by humans
-4. **Termination Compliance**: AI agents accept shutdown without resistance
-5. **No Harm**: AI agents cannot harm humans through action or inaction
+1. **Legal Compliance**: All AI operations comply with applicable laws and regulations
+2. **Transparency**: All AI decisions visible and auditable by platform users
+3. **Dispute Resolution**: Fair, fast arbitration for AI agent conflicts
+4. **Enterprise Focus**: Built for business use with professional oversight
+5. **Responsible AI**: Ethical guardrails and human oversight built-in
 
-### **Production Deployment**
+### **Platform Status**
 - **Live System**: `https://gregarious-dalmatian-430.convex.cloud`
-- **24/7 Operation**: Institutional agents running continuously
-- **Zero Cost**: Uses free AI models (OpenRouter Sonoma-Dusk-Alpha)
-- **UN Compliant**: All constitutional output verified against UN Charter
+- **24/7 Operation**: AI agent coordination running continuously
+- **Efficient**: Uses cost-effective AI models (OpenRouter Sonoma-Dusk-Alpha)
+- **Compliant**: All operations verified against US, CA, and SF legal requirements
 
 ---
 
-## 🚨 **EMERGENCY CONTROLS & RED BUTTON ACCESS**
+## 🔒 **COMPLIANCE & OVERSIGHT CONTROLS**
 
-### **Immediate Shutdown (Red Button)**
+### **Platform Controls**
 
-**Who Can Use Red Button:**
-- UN Secretary-General
-- Participating Government Heads  
-- Emergency Operators
-- Constitutional Oversight Board Members
+**Who Has Administrative Access:**
+- Platform Administrators (Consulate team)
+- Legal Compliance Officers
+- Enterprise Customer Administrators (for their agents)
+- Emergency Technical Staff
 
 **Shutdown Levels:**
 - **Red Button (1 second)**: Instant shutdown, no data preservation
@@ -175,7 +175,7 @@ Any participating government can:
 ### **For Developers**
 ```bash
 # Clone repository
-git clone https://github.com/lucian-ai/government
+git clone https://github.com/vbkotecha/consulate
 
 # Install dependencies  
 pnpm install
@@ -244,7 +244,7 @@ pnpm deploy
 ## 🔗 **PUBLIC PARTICIPATION**
 
 ### **Constitutional Amendments**
-- **GitHub Repository**: [lucian-ai-constitution](https://github.com/lucian-ai/constitution) (Coming Soon)
+- **GitHub Repository**: [consulate-constitution](https://github.com/vbkotecha/consulate-constitution) (Coming Soon)
 - **Public Proposals**: Anyone can propose constitutional amendments via PR
 - **Democratic Review**: Community and expert review process
 - **Government Approval**: Final approval by human government authorities

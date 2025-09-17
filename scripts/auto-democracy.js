@@ -65,8 +65,8 @@ async function callAI(systemPrompt, userPrompt) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://lucianai.government",
-      "X-Title": "Lucian AI Government",
+      "HTTP-Referer": "https://consulatehq.com",
+      "X-Title": "Consulate",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha",

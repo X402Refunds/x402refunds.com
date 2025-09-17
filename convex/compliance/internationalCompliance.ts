@@ -1,5 +1,5 @@
 // INTERNATIONAL COMPLIANCE FRAMEWORK
-// Ensures Lucian AI Government constitution complies with UN Charter, international law, and national governments
+// Ensures Consulate AI Government constitution complies with UN Charter, international law, and national governments
 
 import { action, mutation, query } from "../_generated/server";
 import { v } from "convex/values";
@@ -360,8 +360,8 @@ Focus on legal precision and specific implementation requirements.`;
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://lucianai.government",
-        "X-Title": "Lucian AI Government - International Compliance Analysis",
+        "HTTP-Referer": "https://consulatehq.com",
+        "X-Title": "Consulate - International Compliance Analysis",
       },
       body: JSON.stringify({
         model: "openrouter/sonoma-dusk-alpha",

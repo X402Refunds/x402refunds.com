@@ -2,7 +2,7 @@
 
 ## **CRITICAL DECLARATION: AI AGENTS SERVE HUMANS**
 
-**Every AI agent in the Lucian Government system exists solely as a tool of human governments. They have NO independent authority, rights, or decision-making power. Human control is absolute and non-negotiable.**
+**Every AI agent in the Consulate Government system exists solely as a tool of human governments. They have NO independent authority, rights, or decision-making power. Human control is absolute and non-negotiable.**
 
 ---
 

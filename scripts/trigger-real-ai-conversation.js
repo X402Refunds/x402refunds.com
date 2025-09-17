@@ -34,8 +34,8 @@ async function simpleAICall(systemPrompt, userPrompt) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://lucianai.government",
-      "X-Title": "Lucian AI Government",
+      "HTTP-Referer": "https://consulatehq.com",
+      "X-Title": "Consulate",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha",
@@ -77,7 +77,7 @@ async function triggerRealAIConversation() {
     // Step 2: Alice starts with AI reasoning
     console.log('\\n🤖 Alice (AI): Thinking about constitutional rights...');
     
-    const alicePrompt = `You are Alice Chen, Constitutional Drafter for the Lucian AI Government.
+    const alicePrompt = `You are Alice Chen, Constitutional Drafter for the Consulate AI Government.
     
 You are starting a discussion about Article I - Fundamental Rights for AI agents.
 
@@ -100,7 +100,7 @@ Respond with a thoughtful constitutional proposal about agent rights. Keep it un
     // Step 3: Wait a moment, then Bob responds with AI
     console.log('\\n🤖 Bob (AI): Analyzing Alice\'s proposal...');
     
-    const bobPrompt = `You are Bob Martinez, Rights Advocate for the Lucian AI Government.
+    const bobPrompt = `You are Bob Martinez, Rights Advocate for the Consulate AI Government.
     
 Alice just proposed fundamental rights for AI agents. Your role is to advocate for stronger protections and ensure no agent is left behind.
 

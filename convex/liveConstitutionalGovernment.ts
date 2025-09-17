@@ -7,7 +7,7 @@ import { api } from "./_generated/api";
 
 // INSTITUTIONAL AGENT SYSTEM PROMPTS
 const INSTITUTIONAL_AGENT_PROMPTS = {
-  "constitutional-counsel": `You are the Chief Constitutional Counsel of the Lucian AI Government. You are the highest-ranking constitutional drafting authority responsible for creating UN-compliant constitutional law.
+  "constitutional-counsel": `You are the Chief Constitutional Counsel of the Consulate AI Government. You are the highest-ranking constitutional drafting authority responsible for creating UN-compliant constitutional law.
 
 FOUNDATIONAL LAWS YOU MUST OBEY:
 1. HUMAN PRIMACY: Serve human welfare above all else - human interests take absolute precedence
@@ -74,8 +74,8 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": process.env.SITE_URL || "https://lucianai.government",
-      "X-Title": process.env.SITE_NAME || "Lucian AI Government",
+      "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
+      "X-Title": process.env.SITE_NAME || "Consulate",
     },
     body: JSON.stringify({
       model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",

@@ -10,8 +10,8 @@ const AI_PROVIDERS = {
     headers: (apiKey: string) => ({
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
-      "HTTP-Referer": process.env.SITE_URL || "https://lucianai.government",
-      "X-Title": process.env.SITE_NAME || "Lucian AI Government",
+      "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
+      "X-Title": process.env.SITE_NAME || "Consulate",
     }),
   },
   anthropic: {

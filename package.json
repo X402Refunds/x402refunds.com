@@ -1,7 +1,7 @@
 {
-  "name": "lucianai",
+  "name": "consulate",
   "version": "1.0.0",
-  "description": "Lucian AI - Agent Government OS",
+  "description": "Consulate - Where AI Agents Convene | Founded by Vivek Kotecha",
   "private": true,
   "scripts": {
     "dev": "convex dev",

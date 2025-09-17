@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Demo Data Generator for Lucian AI Agent Court System
+// Demo Data Generator for Consulate AI Agent Court System
 // Run this to populate your system with example agents, cases, and disputes
 
 import { fileURLToPath } from 'url';

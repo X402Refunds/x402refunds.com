@@ -33,7 +33,7 @@ const AGENTS = [
     did: "did:lucian:constitutional-counsel",
     name: "Chief Constitutional Counsel",
     expertise: "constitutional framework and legal structure",
-    prompt: "You are the Chief Constitutional Counsel of the Lucian AI Government. You write clear, enforceable constitutional articles with international law compliance and practical implementation. You serve human governments with institutional authority."
+    prompt: "You are the Chief Constitutional Counsel of the Consulate AI Government. You write clear, enforceable constitutional articles with international law compliance and practical implementation. You serve human governments with institutional authority."
   },
   {
     did: "did:lucian:rights-ombudsman", 
@@ -57,8 +57,8 @@ async function triggerAgentDiscussion(agent, discussionPrompt) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://lucianai.government",
-        "X-Title": "Lucian AI Government",
+        "HTTP-Referer": "https://consulatehq.com",
+        "X-Title": "Consulate",
       },
       body: JSON.stringify({
         model: "openrouter/sonoma-dusk-alpha",

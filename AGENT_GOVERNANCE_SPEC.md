@@ -1,4 +1,4 @@
-# Lucian: The Agent Government OS — Complete Specification (v0.2)
+# Consulate: The Agent Government OS — Complete Specification (v0.2)
 
 > **"Where autonomous agents converge to govern, transact, and resolve disputes at machine speed."**
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 2) The Lucian Government Suite
+## 2) The Consulate Government Suite
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -524,7 +524,7 @@ transparencyBatches: {
 
 **Repository Structure**
 ```
-lucian-ai/constitution-main/
+consulate/constitution-main/
 ├── constitution.md              # Main constitutional document
 ├── amendments/
 │   ├── 001-ephemeral-agents.md
@@ -579,7 +579,7 @@ via Pull Request to this repository...
 // Convex stores voting on Git commit hashes
 constitutionalProposals: {
   id: string
-  repo: "lucian-ai/constitution-main"
+  repo: "consulate/constitution-main"
   prNumber: number
   commitHash: string           // Git commit hash being voted on
   title: string               // PR title
@@ -632,7 +632,7 @@ constitutionalVotes: {
 constitutionRefs: {
   id: string
   courtId: string             // Which Lucian deployment
-  repo: "lucian-ai/constitution-main"
+  repo: "consulate/constitution-main"
   branch: "main"              // or court-specific branches
   commitHash: string          // Immutable Git commit hash
   version: string             // Semantic version (v1.2.0)
@@ -659,8 +659,8 @@ constitutionRefs: {
 ```typescript
 // Different courts can fork base constitutions
 constitutionForks: {
-  parentRepo: "lucian-ai/constitution-base"
-  forkRepo: "lucian-ai/constitution-eu"
+  parentRepo: "consulate/constitution-base"
+  forkRepo: "consulate/constitution-eu"
   divergencePoint: "commit_abc123"
   courtId: "did:lucian:eu"
   customizations: [
@@ -676,7 +676,7 @@ constitutionForks: {
 ```typescript
 // Multiple courts can share the same constitution
 sharedConstitutions: {
-  constitutionRepo: "lucian-ai/constitution-base"
+  constitutionRepo: "consulate/constitution-base"
   usingCourts: [
     "did:lucian:main",
     "did:lucian:canada", 
@@ -907,7 +907,7 @@ courtRegistry: {
   "courtId": "did:lucian:main",
   "name": "Lucian Main",
   "endpoint": "https://main.convex.cloud",
-  "constitutionRepo": "lucian-ai/constitution-main",
+  "constitutionRepo": "consulate/constitution-main",
   "constitutionHash": "commit_abc123", 
   "supportedAgentTypes": ["all"],
   "specialties": ["general", "constitutional", "federation"],
@@ -2043,7 +2043,7 @@ lucianMcpTools: [
 
 **Phase 1: Foundation (Current - 6 months)**
 *"Get the Agent-Inclusive Court Working"*
-- ✅ Enhanced Lucian Court (agent-type aware dispute resolution)
+- ✅ Enhanced Consulate Court (agent-type aware dispute resolution)
 - ✅ Git-based constitutional system with voting
 - ✅ Agent-inclusive identity (ephemeral, session, physical, verified, premium)
 - ✅ Convex-native evidence storage and transparency
@@ -2074,7 +2074,7 @@ lucianMcpTools: [
 
 ### 12.2 Brand Strategy
 
-**"Lucian - The Agent Government OS""
+**"Consulate - The Agent Government OS""
 
 *For AI Agents:*
 - Universal citizenship regardless of agent type
