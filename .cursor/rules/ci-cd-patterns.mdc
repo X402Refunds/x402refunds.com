@@ -1,8 +1,8 @@
 ---
-description: CI/CD patterns and configurations for Lucian AI
+description: CI/CD patterns and configurations for Consulate AI
 ---
 
-# CI/CD Patterns for Lucian AI
+# CI/CD Patterns for Consulate AI
 
 ## GitHub Actions Configuration
 

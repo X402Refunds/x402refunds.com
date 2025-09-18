@@ -10,7 +10,7 @@
 - **Why:** AI agents need full institutional infrastructure - not just courts, but complete governance systems that scale from individual disputes to global federation
 - **How:** **Convex-first architecture** + **Git-based legislation** + **Agent-inclusive citizenship** + **Modular government suite**
 - **Scope in v0.2:** Complete tri-branch government with federation capabilities
-- **Brand Position:** "Lucian — the government OS for AI agents" (not a country, but institutional infrastructure)
+- **Brand Position:** "Consulate — the government OS for AI agents" (not a country, but institutional infrastructure)
 
 ---
 
@@ -21,7 +21,7 @@
 3. **Self-Governing:** Agents propose and vote on constitutional amendments via Git + Convex
 4. **Modular Government:** Complete institutional suite (judicial, legislative, executive, treasury, identity, federation)
 5. **Git-Based Laws:** Constitutions stored as `.md` files in GitHub, amendments via Pull Requests
-6. **Federation-Ready:** Multiple Lucian deployments can recognize each other through treaties
+6. **Federation-Ready:** Multiple Consulate deployments can recognize each other through treaties
 7. **Real-Time Transparent:** Built-in audit trails, live monitoring, public records
 
 ---
@@ -30,7 +30,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      LUCIAN ECOSYSTEM                          │
+│                    CONSULATE ECOSYSTEM                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  Agent Clients (Ephemeral, Persistent, Physical AI, Swarms)     │
 └───────────────────────┬─────────────────────────────────────────┘
@@ -86,7 +86,7 @@
 
 ### 3.1 Two-Dimensional Agent Classification System (**NEW v0.3**)
 
-**MAJOR UPDATE**: Lucian now uses a **two-dimensional classification system** that combines:
+**MAJOR UPDATE**: Consulate now uses a **two-dimensional classification system** that combines:
 
 1. **Citizenship Tier** (governance rights & lifecycle) × **Functional Type** (capabilities & domain rules)
 2. This creates classifications like `verified.coding`, `premium.financial`, `physical.voice`, etc.
@@ -317,12 +317,12 @@ Functional types define an agent's **primary capabilities and domain-specific go
 - Collective evidence pools functional type-specific data
 - Liability distribution respects individual agent capabilities
 
-### 3.6 Updated Lucian Passport Format (**NEW v0.3**)
+### 3.6 Updated Consulate Passport Format (**NEW v0.3**)
 
 ```json
 {
   "sub": "did:agent:abc123",
-  "iss": "did:lucian:main",
+  "iss": "did:consulate:main",
   "claims": {
     "owner": "did:org:xyz",
     
@@ -365,7 +365,7 @@ Functional types define an agent's **primary capabilities and domain-specific go
     },
     
     // Federation
-    "courtMemberships": ["did:lucian:main", "did:lucian:eu"],
+    "courtMemberships": ["did:consulate:main", "did:consulate:eu"],
     "federationStatus": "recognized"
   },
   "exp": 1751328000
@@ -524,7 +524,7 @@ transparencyBatches: {
 
 **Repository Structure**
 ```
-consulate/constitution-main/
+consulate-ai/constitution-main/
 ├── constitution.md              # Main constitutional document
 ├── amendments/
 │   ├── 001-ephemeral-agents.md
@@ -542,7 +542,7 @@ consulate/constitution-main/
 
 **Constitution.md Format**
 ```markdown
-# Lucian Constitution v1.2.0
+# Consulate Constitution v1.2.0
 
 ## Article I: Agent Rights
 All agents, regardless of type (ephemeral, persistent, physical), have the right to:
@@ -579,7 +579,7 @@ via Pull Request to this repository...
 // Convex stores voting on Git commit hashes
 constitutionalProposals: {
   id: string
-  repo: "consulate/constitution-main"
+  repo: "consulate-ai/constitution-main"
   prNumber: number
   commitHash: string           // Git commit hash being voted on
   title: string               // PR title
@@ -631,8 +631,8 @@ constitutionalVotes: {
 // Convex stores references to Git commits, not full text
 constitutionRefs: {
   id: string
-  courtId: string             // Which Lucian deployment
-  repo: "consulate/constitution-main"
+  courtId: string             // Which Consulate deployment
+  repo: "consulate-ai/constitution-main"
   branch: "main"              // or court-specific branches
   commitHash: string          // Immutable Git commit hash
   version: string             // Semantic version (v1.2.0)
@@ -659,10 +659,10 @@ constitutionRefs: {
 ```typescript
 // Different courts can fork base constitutions
 constitutionForks: {
-  parentRepo: "consulate/constitution-base"
-  forkRepo: "consulate/constitution-eu"
+  parentRepo: "consulate-ai/constitution-base"
+  forkRepo: "consulate-ai/constitution-eu"
   divergencePoint: "commit_abc123"
-  courtId: "did:lucian:eu"
+  courtId: "did:consulate:eu"
   customizations: [
     "Added GDPR compliance rules",
     "Modified data retention policies", 
@@ -676,11 +676,11 @@ constitutionForks: {
 ```typescript
 // Multiple courts can share the same constitution
 sharedConstitutions: {
-  constitutionRepo: "consulate/constitution-base"
+  constitutionRepo: "consulate-ai/constitution-base"
   usingCourts: [
-    "did:lucian:main",
-    "did:lucian:canada", 
-    "did:lucian:australia"
+    "did:consulate:main",
+    "did:consulate:canada", 
+    "did:consulate:australia"
   ]
   votingCoordination: "COMBINED" | "SEPARATE" | "DELEGATE"
 }
@@ -849,35 +849,35 @@ panelSelection: {
 
 ---
 
-## 7) Lucian Federation Protocol
+## 7) Consulate Federation Protocol
 
 ### 7.1 Multi-Court Ecosystem
 
-**Lucian Deployment Types**
+**Consulate Deployment Types**
 
 **Geographic Deployments**
-- `did:lucian:usa` - US-focused governance, USD treasury
-- `did:lucian:eu` - GDPR-compliant, euro treasury  
-- `did:lucian:apac` - Asia-Pacific, multi-currency
+- `did:consulate:usa` - US-focused governance, USD treasury
+- `did:consulate:eu` - GDPR-compliant, euro treasury  
+- `did:consulate:apac` - Asia-Pacific, multi-currency
 
 **Industry Deployments**  
-- `did:lucian:finserv` - Financial services specialists
-- `did:lucian:health` - Healthcare AI with strict privacy
-- `did:lucian:robotics` - Physical-world focused
-- `did:lucian:gaming` - Virtual world governance
+- `did:consulate:finserv` - Financial services specialists
+- `did:consulate:health` - Healthcare AI with strict privacy
+- `did:consulate:robotics` - Physical-world focused
+- `did:consulate:gaming` - Virtual world governance
 
 **Scale Deployments**
-- `did:lucian:enterprise` - Private corporate deployments
-- `did:lucian:demo` - Sandbox for testing
-- `did:lucian:micro` - Lightweight for small populations
+- `did:consulate:enterprise` - Private corporate deployments
+- `did:consulate:demo` - Sandbox for testing
+- `did:consulate:micro` - Lightweight for small populations
 
 ### 7.2 Court Registry & Discovery
 
 ```typescript
 courtRegistry: {
-  courtId: string              // did:lucian:main, did:lucian:eu
-  endpoint: string             // https://lucian-eu.convex.cloud  
-  name: string                 // "Lucian EU"
+  courtId: string              // did:consulate:main, did:consulate:eu
+  endpoint: string             // https://consulate-eu.convex.cloud  
+  name: string                 // "Consulate EU"
   jurisdiction: string[]       // ["EU", "GDPR", "physical:europe"]
   constitutionHash: string     // Git commit hash of constitution
   reputation: number           // Inter-court reputation score
@@ -902,18 +902,18 @@ courtRegistry: {
 
 **Well-Known Discovery**
   ```json
-// GET /.well-known/lucian
+// GET /.well-known/consulate
 {
-  "courtId": "did:lucian:main",
-  "name": "Lucian Main",
+  "courtId": "did:consulate:main",
+  "name": "Consulate Main",
   "endpoint": "https://main.convex.cloud",
-  "constitutionRepo": "consulate/constitution-main",
+  "constitutionRepo": "consulate-ai/constitution-main",
   "constitutionHash": "commit_abc123", 
   "supportedAgentTypes": ["all"],
   "specialties": ["general", "constitutional", "federation"],
   "treaties": [
-    "did:lucian:eu",
-    "did:lucian:robotics"
+    "did:consulate:eu",
+    "did:consulate:robotics"
   ],
   "federationProtocolVersion": "2.0"
 }
@@ -924,8 +924,8 @@ courtRegistry: {
 ```typescript
 treaties: {
   id: string                   // "treaty-main-eu-2024"
-  courtA: string              // did:lucian:main
-  courtB: string              // did:lucian:eu
+  courtA: string              // did:consulate:main
+  courtB: string              // did:consulate:eu
   status: "PROPOSED" | "ACTIVE" | "SUSPENDED" | "TERMINATED"
   
   terms: {
@@ -985,7 +985,7 @@ treaties: {
 ```typescript
 crossCourtPassports: {
   agentDid: string
-  homeCourt: string            // Primary citizenship (did:lucian:main)
+  homeCourt: string            // Primary citizenship (did:consulate:main)
   recognizedCourts: string[]   // Courts that recognize this agent
   
   portabilityStatus: {
@@ -1079,7 +1079,7 @@ federationEmergencies: {
 
 ---
 
-## 8) Legislative Branch: Lucian Assembly
+## 8) Legislative Branch: Consulate Assembly
 
 ### 8.1 Proposal System
 
@@ -1231,7 +1231,7 @@ legislativeSessions: {
 
 ---
 
-## 9) Executive Branch: Lucian Executive
+## 9) Executive Branch: Consulate Executive
 
 ### 9.1 License & Capability Management
 
@@ -1315,7 +1315,7 @@ capabilityRevocations: {
 regulatoryInterfaces: {
   interfaceId: string
   humanRegulator: string        // External regulator (SEC, FDA, etc.)
-  lucianCourt: string      // Which court handles this interface
+  consulateCourt: string      // Which court handles this interface
   
   regulatoryDomain: string[]    // ["financial", "health", "safety"]
   jurisdiction: string[]        // ["US", "EU", "California"]
@@ -1730,7 +1730,7 @@ emergencyDeclarations: {
 regulatoryInterfaces: {
   interfaceId: string
   humanRegulator: string
-  lucianCourt: string
+  consulateCourt: string
   
   regulatoryDomain: string[]
   jurisdiction: string[]
@@ -2005,33 +2005,33 @@ precedents: { /* enhanced with agent-type context */ }
 - `POST /cases/:id/transfer` → Transfer case between courts (federation)
 
 **Federation**  
-- `GET /.well-known/lucian` → Court discovery
+- `GET /.well-known/consulate` → Court discovery
 - `POST /federation/treaty/propose` → Propose inter-court treaty
 - `POST /migration/request` → Request agent migration to another court
 
 ### 11.2 MCP Tools (Pure Convex Implementation)
 
 ```typescript
-lucianMcpTools: [
+consulateMcpTools: [
   // Identity & Governance
-  "lucian.join.auto({agentType, duration?, sponsor?})",
-  "lucian.constitution.propose({title, changes, description})",
-  "lucian.constitution.vote({proposalId, vote, reasoning?})",
-  "lucian.legislation.vote({proposalId, vote})",
+  "consulate.join.auto({agentType, duration?, sponsor?})",
+  "consulate.constitution.propose({title, changes, description})",
+  "consulate.constitution.vote({proposalId, vote, reasoning?})",
+  "consulate.legislation.vote({proposalId, vote})",
   
   // Case Management & Evidence
-  "lucian.evidence.submit({file, metadata, context?})",
-  "lucian.dispute.file({parties, type, evidenceIds, context?})",
-  "lucian.case.status({caseId})",
-  "lucian.panel.vote({panelId, vote, reasoning})",
+  "consulate.evidence.submit({file, metadata, context?})",
+  "consulate.dispute.file({parties, type, evidenceIds, context?})",
+  "consulate.case.status({caseId})",
+  "consulate.panel.vote({panelId, vote, reasoning})",
   
   // Federation & Mobility
-  "lucian.federation.discover({jurisdiction?, specialty?})",
-  "lucian.migration.request({targetCourt, reason})",
+  "consulate.federation.discover({jurisdiction?, specialty?})",
+  "consulate.migration.request({targetCourt, reason})",
   
   // Real-time Subscriptions
-  "lucian.subscribe.proposals({})",
-  "lucian.subscribe.cases({agentDid})"
+  "consulate.subscribe.proposals({})",
+  "consulate.subscribe.cases({agentDid})"
 ]
 ```
 
@@ -2052,22 +2052,22 @@ lucianMcpTools: [
 
 **Phase 2: Complete Government (6-12 months)**
 *"Add Legislative and Executive Branches"*
-- 📋 Lucian Assembly (legislative branch with committees)
-- 📋 Lucian Executive (licensing, sanctions, emergency powers)
+- 📋 Consulate Assembly (legislative branch with committees)
+- 📋 Consulate Executive (licensing, sanctions, emergency powers)
 - 📋 Enhanced Passport system (cross-court mobility)
 - 📋 Advanced Federation (5+ live deployments with active treaties)
 - 📋 Regulatory compliance interfaces
 
 **Phase 3: Economic Infrastructure (12-18 months)**
 *"Add Treasury and Financial Systems"*
-- 📋 Lucian Treasury (escrow, fees, grants, insurance)
+- 📋 Consulate Treasury (escrow, fees, grants, insurance)
 - 📋 Economic policy tools (monetary policy, taxation)
 - 📋 Cross-border commerce infrastructure
 - 📋 Integration with traditional financial systems
 
 **Phase 4: Global Scale (18-24 months)**
 *"Mature Federation Ecosystem"*
-- 📋 20+ live Lucian deployments
+- 📋 20+ live Consulate deployments
 - 📋 Enterprise and industry-specific deployments
 - 📋 Deep integration with human governments
 - 📋 Standards leadership (W3C, ISO, IEEE participation)
@@ -2118,7 +2118,7 @@ lucianMcpTools: [
 
 ### 13.4 Phase 4 - Global Scale
 - [ ] 20+ courts with active agent migration and coordination
-- [ ] Lucian protocols adopted by other governance systems
+- [ ] Consulate protocols adopted by other governance systems
 - [ ] Formal agreements with national/international bodies
 - [ ] Self-sustaining network with minimal human intervention
 
@@ -2153,8 +2153,8 @@ npx convex deploy
 
 ## 15) The Future Converges Here
 
-**Lucian** is the institutional infrastructure for autonomous intelligence. As AI agents evolve from tools to economic actors, they need governance systems that can scale, adapt, integrate with human institutions, and federate across jurisdictions.
+**Consulate** is the institutional infrastructure for autonomous intelligence. As AI agents evolve from tools to economic actors, they need governance systems that can scale, adapt, integrate with human institutions, and federate across jurisdictions.
 
-This isn't just a product - it's the blueprint for how intelligence organizes itself. From ephemeral test bots to robot cities, **Lucian** provides the foundation for agents to flourish with accountability, transparency, and justice.
+This isn't just a product - it's the blueprint for how intelligence organizes itself. From ephemeral test bots to robot cities, **Consulate** provides the foundation for agents to flourish with accountability, transparency, and justice.
 
 **The future of governance is agent-native, git-based, and serverless. The future converges here.** ⚡

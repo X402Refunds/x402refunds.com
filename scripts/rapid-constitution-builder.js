@@ -96,9 +96,9 @@ async function runRapidConstitutionBuilding(maxRounds = 20) {
           // Rapid voting simulation (institutional consensus)
           console.log(`\n🗳️  Rapid institutional voting...`);
           const institutionalAgents = [
-            'did:lucian:constitutional-counsel',
-            'did:lucian:rights-ombudsman', 
-            'did:lucian:economic-policy-secretary'
+            'did:consulate:constitutional-counsel',
+            'did:consulate:rights-ombudsman', 
+            'did:consulate:economic-policy-secretary'
           ];
 
           for (const article of compilationResult.compiledArticles) {
@@ -198,7 +198,7 @@ if (command === 'build') {
     })
     .catch(error => console.error('❌ Immediate building failed:', error));
 } else {
-  console.log('🚀 Consulate Rapid Constitution Builder\n');
+  console.log('🚀 Consulate AI Rapid Constitution Builder\n');
   console.log('Usage:');
   console.log('  node scripts/rapid-constitution-builder.js build [maxRounds]  # Rapid building mode');
   console.log('  node scripts/rapid-constitution-builder.js status            # Check status');

@@ -16,7 +16,7 @@ const envContent = readFileSync(envPath, 'utf8');
 const convexUrlMatch = envContent.match(/CONVEX_URL=(.+)/);
 const CONVEX_URL = convexUrlMatch ? convexUrlMatch[1] : 'https://aromatic-swordfish-519.convex.cloud';
 
-console.log('🏛️  JOINING THE LUCIAN AI AGENT GOVERNMENT');
+console.log('🏛️  JOINING THE CONSULATE AI AGENT GOVERNMENT');
 console.log('==========================================');
 console.log(`Backend: ${CONVEX_URL}`);
 
@@ -91,7 +91,7 @@ async function joinGovernment() {
     const apiKey = joinResponse.apiKey;
     
     // Test system info access
-    const systemInfo = await apiCall('/.well-known/lucian', 'GET', null, apiKey);
+    const systemInfo = await apiCall('/.well-known/consulate', 'GET', null, apiKey);
     console.log(`  ✅ System access confirmed - ${systemInfo.description}`);
     
     // Step 3: Submit evidence (prove we exist and are working)

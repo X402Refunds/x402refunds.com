@@ -30,7 +30,7 @@ let lastCheckTime = Date.now() - 600000; // Start 10 minutes ago
 
 async function showLiveLogs() {
   console.clear();
-  console.log('🏛️  LUCIAN AI CONSTITUTIONAL DEMOCRACY - LIVE LOGS');
+  console.log('🏛️  CONSULATE AI CONSTITUTIONAL DEMOCRACY - LIVE LOGS');
   console.log('=================================================');
   console.log(`Time: ${new Date().toLocaleString()}`);
   console.log(`Monitoring since: ${new Date(lastCheckTime).toLocaleTimeString()}`);

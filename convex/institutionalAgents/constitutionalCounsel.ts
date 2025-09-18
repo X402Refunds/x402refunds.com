@@ -7,7 +7,7 @@ import { INSTITUTIONAL_SYSTEM_PROMPTS } from "./agentHierarchy";
 // Responsible for UN-compliant constitutional article creation
 
 export const CONSTITUTIONAL_COUNSEL_CONFIG = {
-  institutionalId: "did:lucian:constitutional-counsel",
+  institutionalId: "did:consulate:constitutional-counsel",
   title: "Chief Constitutional Counsel", 
   systemPrompt: `${INSTITUTIONAL_SYSTEM_PROMPTS["constitutional-counsel"]}
 
@@ -377,7 +377,7 @@ async function callInstitutionalAI(systemPrompt: string, userPrompt: string): Pr
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       "HTTP-Referer": "https://consulatehq.com",
-      "X-Title": "Consulate - Institutional Agent Operations",
+      "X-Title": "Consulate AI Government - Institutional Agent Operations",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha", // Free model as requested

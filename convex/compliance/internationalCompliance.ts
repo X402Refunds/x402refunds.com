@@ -361,7 +361,7 @@ Focus on legal precision and specific implementation requirements.`;
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "HTTP-Referer": "https://consulatehq.com",
-        "X-Title": "Consulate - International Compliance Analysis",
+        "X-Title": "Consulate AI Government - International Compliance Analysis",
       },
       body: JSON.stringify({
         model: "openrouter/sonoma-dusk-alpha",

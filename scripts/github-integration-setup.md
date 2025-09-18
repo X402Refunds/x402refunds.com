@@ -6,7 +6,7 @@ Create a public GitHub repository where agents and humans can propose constituti
 ## Repository Structure
 
 ```
-consulate-constitution/
+consulate-ai-constitution/
 ├── constitution/
 │   ├── CONSTITUTION.md              # Current ratified constitution
 │   ├── articles/
@@ -52,7 +52,7 @@ jobs:
       
       - name: UN Compliance Check
         run: |
-          # Call Consulate compliance API
+          # Call Consulate AI compliance API
           curl -X POST "$CONVEX_URL/api/compliance/assess" \
             -H "Content-Type: application/json" \
             -d "{\"constitutionalText\": \"$(cat constitution/CONSTITUTION.md)\"}"
@@ -125,7 +125,7 @@ class ConstitutionalConflictResolver:
     
     def suggest_resolution(self, conflicts: List[Dict]) -> Dict:
         """AI-powered conflict resolution suggestions"""
-        # Call Consulate for conflict resolution
+        # Call Consulate AI for conflict resolution
         # Return merge suggestions, precedence rules, etc.
         pass
 ```
@@ -244,17 +244,17 @@ export const checkRatificationStatus = action({
 
 ```bash
 # Create new public repository
-gh repo create consulate-constitution --public --description "Official constitution of the Consulate AI Government"
+gh repo create consulate-ai-constitution --public --description "Official constitution of the Consulate AI Government"
 
 # Setup repository structure
 mkdir -p constitution/{articles,amendments/{proposed,under-review,ratified}}
 mkdir -p .github/workflows governance
 
 # Copy current constitution
-cp CONSTITUTION.md consulate-constitution/constitution/
+cp CONSTITUTION.md consulate-ai-constitution/constitution/
 
 # Setup webhooks
-gh api repos/your-org/consulate-constitution/hooks \
+gh api repos/your-org/consulate-ai-constitution/hooks \
   --method POST \
   --field name='web' \
   --field config[url]='https://gregarious-dalmatian-430.convex.cloud/api/github/webhook' \
@@ -263,7 +263,7 @@ gh api repos/your-org/consulate-constitution/hooks \
   --field events[]='push'
 
 # Enable GitHub Pages for constitution hosting
-gh api repos/your-org/consulate-constitution/pages \
+gh api repos/your-org/consulate-ai-constitution/pages \
   --method POST \
   --field source[branch]='main' \
   --field source[path]='/constitution'

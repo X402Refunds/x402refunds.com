@@ -1,5 +1,5 @@
 ---
-description: Conventional commits and semantic versioning guidelines for Lucian AI
+description: Conventional commits and semantic versioning guidelines for Consulate AI
 ---
 
 # Conventional Commits & Semantic Versioning
@@ -21,7 +21,7 @@ description: Conventional commits and semantic versioning guidelines for Lucian 
 - **`chore:`** - Maintenance, dependency updates, cleanup
 - **`perf:`** - Performance improvements
 
-## Examples for Lucian AI
+## Examples for Consulate AI
 
 ```bash
 # ✅ ACTUAL RELEASES (Agent Court functionality)

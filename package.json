@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "convex dev",
+    "dev:full": "concurrently \"convex dev\" \"npm run arch:watch\" --names \"convex,arch\" --prefix-colors \"cyan,yellow\"",
     "deploy": "convex deploy",
     "build": "echo 'Convex backend - no build needed'",
     "lint": "echo 'Linting configured via Convex - use convex dev for validation'",
@@ -14,9 +15,12 @@
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
     "arch:update": "node scripts/arch-auto-update.js",
+    "arch:watch": "chokidar '.architecture/map.yaml' -c 'npm run arch:update'",
     "arch:validate": "node scripts/arch-validate.js",
     "arch:impact": "node scripts/arch-impact.js",
     "arch:generate": "node scripts/arch-generate-rules.js",
+    "setup:hooks": "git config core.hooksPath .githooks",
+    "postinstall": "npm run setup:hooks",
     "e2e": "bash scripts/e2e-test.sh"
   },
   "dependencies": {
@@ -30,6 +34,8 @@
     "@semantic-release/git": "^10.0.0",
     "@types/node": "^20.10.0",
     "@vitest/ui": "^1.6.0",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "glob": "^10.3.0",
     "semantic-release": "^24.2.8",
     "typescript": "^5.3.0",

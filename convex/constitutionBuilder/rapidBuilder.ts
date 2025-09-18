@@ -224,9 +224,9 @@ function determinePriorityFocus(completeness: ConstitutionCompleteness): string 
 // Simulate institutional voting for rapid building
 async function simulateInstitutionalVoting(ctx: any, articles: any[]) {
   const institutionalAgents = [
-    "did:lucian:constitutional-counsel",
-    "did:lucian:rights-ombudsman",
-    "did:lucian:economic-policy-secretary"
+    "did:consulate:constitutional-counsel",
+    "did:consulate:rights-ombudsman",
+    "did:consulate:economic-policy-secretary"
   ];
 
   for (const article of articles) {

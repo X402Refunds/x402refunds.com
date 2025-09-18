@@ -28,7 +28,7 @@ const client = new ConvexHttpClient(CONVEX_URL);
 
 async function showLiveDemocracy() {
   console.clear();
-  console.log('🏛️  LUCIAN AI CONSTITUTIONAL DEMOCRACY - LIVE');
+  console.log('🏛️  CONSULATE AI CONSTITUTIONAL DEMOCRACY - LIVE');
   console.log('=============================================');
   console.log(`Time: ${new Date().toLocaleString()}`);
   console.log(`Status: AUTONOMOUS AI GOVERNMENT ACTIVE`);

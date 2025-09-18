@@ -11,7 +11,7 @@ const AI_PROVIDERS = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
       "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
-      "X-Title": process.env.SITE_NAME || "Consulate",
+      "X-Title": process.env.SITE_NAME || "Consulate AI Government",
     }),
   },
   anthropic: {

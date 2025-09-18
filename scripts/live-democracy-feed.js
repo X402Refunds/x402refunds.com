@@ -30,7 +30,7 @@ let lastCheck = Date.now() - 3600000; // Start 1 hour ago
 
 async function showLiveActivity() {
   console.clear();
-  console.log('🏛️  LUCIAN AI CONSTITUTIONAL DEMOCRACY - LIVE FEED');
+  console.log('🏛️  CONSULATE AI CONSTITUTIONAL DEMOCRACY - LIVE FEED');
   console.log('==================================================');
   console.log(`Time: ${new Date().toLocaleString()}`);
   console.log(`Backend: ${CONVEX_URL}`);

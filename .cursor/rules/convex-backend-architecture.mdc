@@ -1,5 +1,5 @@
 ---
-description: Architecture guidelines for Lucian AI Convex backend
+description: Architecture guidelines for Consulate AI Convex backend
 ---
 
 # Convex Backend Architecture Guidelines
@@ -10,6 +10,25 @@ description: Architecture guidelines for Lucian AI Convex backend
 2. **Agent-First**: Designed for AI agents, not humans
 3. **Auto-Configuration**: Agents discover capabilities via HTTP APIs
 4. **No Build Required**: Convex handles TypeScript compilation
+5. **Single Deployment**: One `convex deploy --once` deploys everything
+6. **No Microservices**: Avoid complexity - everything in same Convex deployment
+
+## Development Commands
+
+```bash
+# Start everything (pure Convex backend)
+pnpm dev
+
+# Deploy to Convex
+pnpm deploy
+
+# No build needed - pure serverless!
+pnpm build  # (just echoes "no build needed")
+
+# Testing
+pnpm test      # Unit tests
+pnpm e2e       # Integration tests
+```
 
 ## File Organization
 
@@ -61,3 +80,25 @@ npx convex deploy
 ```
 
 This deploys the complete Agent Government OS.
+
+## Adding New Features
+
+1. **New endpoints** → Add to [http.ts](mdc:convex/http.ts) as HTTP actions
+2. **New rules** → Add to [courtEngine.ts](mdc:convex/courtEngine.ts) as rule classes
+3. **New judge logic** → Add to [judges.ts](mdc:convex/judges.ts) as functions
+4. **New database tables** → Add to [schema.ts](mdc:convex/schema.ts)
+
+## Database Schema Changes
+
+All schema changes go in [schema.ts](mdc:convex/schema.ts) - Convex handles migrations automatically.
+
+## What NOT to Build
+
+Avoid these patterns that add complexity:
+- ❌ Separate FastAPI/Flask servers
+- ❌ Multiple docker-compose services for core logic
+- ❌ External microservices for court functionality
+- ❌ Complex package inter-dependencies
+- ❌ Python dependencies (Pure TypeScript/JavaScript ecosystem)
+
+Everything should be **functions in the same Convex deployment**.

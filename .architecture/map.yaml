@@ -1,7 +1,7 @@
-version: "1.1"
-project: "lucianai"
-last_updated: "2025-09-12"
-description: "Architecture mapping for Lucian AI - Agent Government OS"
+version: "1.2"
+project: "consulate"
+last_updated: "2025-09-18"
+description: "Architecture mapping for Consulate AI - Agent Government OS"
 
 # Current architecture state (source of truth)
 current:
@@ -56,11 +56,7 @@ dependency_graph:
   "locations.backend":
     description: "Backend location affects many dependent files"
     affects:
-      - file: ".cursor/rules/agent-court-architecture.mdc"
-        type: "path_references"
       - file: ".cursor/rules/convex-backend-architecture.mdc" 
-        type: "path_references"
-      - file: ".cursor/rules/development-workflow.mdc"
         type: "path_references"
       - file: ".cursor/rules/convex-functions.mdc"
         type: "globs_pattern"
@@ -74,7 +70,7 @@ dependency_graph:
   "commands.dev":
     description: "Development command affects documentation and workflows"
     affects:
-      - file: ".cursor/rules/development-workflow.mdc"
+      - file: ".cursor/rules/convex-backend-architecture.mdc"
         type: "command_examples"
       - file: "README.md"
         type: "command_documentation"
@@ -121,3 +117,14 @@ history:
       - "Updated testing-before-push.mdc rule to require API tests"
       - "Modernized E2E script for current Convex serverless architecture"
       - "Added vitest and convex-test dependencies"
+  
+  - date: "2025-09-18"
+    change: "Consolidated overlapping cursor rules to reduce redundancy"
+    reason: "Clean up duplicate documentation and consolidate related rules for better maintainability"
+    files_affected: 5
+    breaking: false
+    details:
+      - "Merged agent-coordination-patterns.mdc into agent-coordination-architecture.mdc"
+      - "Consolidated development-workflow.mdc and agent-court-architecture.mdc into convex-backend-architecture.mdc"
+      - "Removed 3 redundant rule files"
+      - "Updated dependency graph to reflect new structure"

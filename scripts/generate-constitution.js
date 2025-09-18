@@ -177,7 +177,7 @@ async function generateFinalConstitution() {
 
 // Full constitution creation process
 async function createConstitution() {
-  console.log('🏛️  LUCIAN AI CONSTITUTION GENERATOR');
+  console.log('🏛️  CONSULATE AI CONSTITUTION GENERATOR');
   console.log('=====================================');
   console.log('Time:', new Date().toLocaleString());
   console.log('\n🎯 Mission: Turn agent chatter into REAL CONSTITUTION!\n');
@@ -281,7 +281,7 @@ if (command === 'status') {
 } else if (command === 'generate') {
   generateFinalConstitution();
 } else {
-  console.log('🏛️  Consulate Constitution Generator\n');
+  console.log('🏛️  Consulate AI Constitution Generator\n');
   console.log('Usage:');
   console.log('  node scripts/generate-constitution.js create   # Full process');
   console.log('  node scripts/generate-constitution.js status   # Check status');

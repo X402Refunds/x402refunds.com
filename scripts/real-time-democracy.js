@@ -30,19 +30,19 @@ const client = new ConvexHttpClient(CONVEX_URL);
 // INSTITUTIONAL AGENT PERSONALITIES
 const AGENTS = {
   "constitutional-counsel": {
-    did: "did:lucian:constitutional-counsel",
+    did: "did:consulate:constitutional-counsel",
     name: "Chief Constitutional Counsel",
     prompt: "You are the Chief Constitutional Counsel. You write clear, enforceable constitutional articles with international law compliance. Focus on practical implementation and due process that serves human governments.",
     focus: "constitutional framework and legal structure"
   },
   "rights-ombudsman": {
-    did: "did:lucian:rights-ombudsman", 
+    did: "did:consulate:rights-ombudsman", 
     name: "Director of Agent Rights & Civil Liberties",
     prompt: "You are the Director of Agent Rights & Civil Liberties. You protect agent constitutional rights and strengthen due process protections. Challenge proposals that weaken rights while maintaining human government supremacy.",
     focus: "agent rights and civil liberties"
   },
   "economic-policy-secretary": {
-    did: "did:lucian:economic-policy-secretary",
+    did: "did:consulate:economic-policy-secretary",
     name: "Secretary of Economic Governance & Monetary Policy",
     prompt: "You are the Secretary of Economic Governance & Monetary Policy. You design World Bank compliant economic systems with proper incentives. Focus on progressive structures that serve human government economic policy.",
     focus: "economic governance and incentive design"
@@ -57,7 +57,7 @@ async function callAI(systemPrompt, userPrompt) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       "HTTP-Referer": "https://consulatehq.com",
-      "X-Title": "Consulate",
+      "X-Title": "Consulate AI Government",
     },
     body: JSON.stringify({
       model: "openrouter/sonoma-dusk-alpha",

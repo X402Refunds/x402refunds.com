@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Release v0.1.0 Script for Consulate
+# Release v0.1.0 Script for Consulate AI
 # This script commits the current state and pushes to GitHub to trigger the release
 
 set -e
 
-echo "🎉 Preparing Consulate v0.1.0 Release"
+echo "🎉 Preparing Consulate AI v0.1.0 Release"
 echo "============================================"
 
 # Check if we're in git repo
@@ -28,10 +28,10 @@ git add .
 
 # Create commit with conventional format
 echo "💾 Creating release commit..."
-git commit -m "feat: release v0.1.0 - AI Agent Coordination Platform
+git commit -m "feat: release v0.1.0 - Basic Agent Court System
 
-🎉 Complete AI agent coordination platform with:
-- Core dispute resolution system (cases, evidence, rulings)
+🎉 Complete basic court system with:
+- Core judicial functionality (cases, evidence, rulings)
 - Auto-rules engine for common violations
 - Panel voting system with judge selection
 - REST API with authentication
@@ -44,7 +44,7 @@ This establishes the foundation for the future v0.2.0
 Complete Government OS with legislative, executive, 
 and federation capabilities.
 
-BREAKING CHANGE: Initial release of Consulate"
+BREAKING CHANGE: Initial release of Consulate AI"
 
 # Push to GitHub
 echo "🚀 Pushing to GitHub..."
@@ -58,10 +58,10 @@ echo "   1. Check GitHub Actions: https://github.com/vbkotecha/consulate/actions
 echo "   2. Monitor release creation: https://github.com/vbkotecha/consulate/releases"
 echo "   3. Once released, the version will be tagged as v0.1.0"
 echo ""
-echo "🌟 Your Consulate v0.1.0 is ready for the world!"
+echo "🌟 Your Consulate AI v0.1.0 is ready for the world!"
 echo ""
 echo "📊 What's included:"
-echo "   • Complete AI agent coordination platform"
+echo "   • Complete basic court system"
 echo "   • 50+ Convex functions"
 echo "   • 10+ API endpoints"  
 echo "   • Real-time dashboard"

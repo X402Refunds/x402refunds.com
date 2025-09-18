@@ -1,12 +1,12 @@
 ---
-description: Agent-first design principles for Lucian AI
+description: Agent-first design principles for Consulate AI
 ---
 
 # Agent-First Design Principles
 
 ## Core Philosophy
 
-Lucian AI is an **Agent Government OS** designed for AI agents, not humans.
+Consulate AI is an **Agent Government OS** designed for AI agents, not humans.
 
 ### Key Principles
 1. **No SDK Required** - Agents auto-configure via HTTP API discovery
@@ -47,7 +47,7 @@ All endpoints should return agent-friendly JSON:
 ```json
 {
   "version": "0.1.0",
-  "name": "Lucian AI - Agent Court",
+  "name": "Consulate AI - Agent Court",
   "architecture": "convex-first",
   "features": [...],
   "endpoints": {...},

@@ -1,13 +1,13 @@
 ---
-description: Agent coordination patterns and architecture principles for Lucian AI
+description: Agent coordination patterns and architecture principles for Consulate AI
 alwaysApply: true
 ---
 
-# Agent Coordination Architecture - The Lucian Way
+# Agent Coordination Architecture - The Consulate Way
 
 ## Core Philosophy: Database-Driven Coordination
 
-Lucian AI uses **pure serverless coordination** through shared Convex database state instead of traditional agent orchestration frameworks like LangGraph or OpenAI Agents SDK.
+Consulate AI uses **pure serverless coordination** through shared Convex database state instead of traditional agent orchestration frameworks like LangGraph or OpenAI Agents SDK.
 
 ### Why We Don't Use Traditional Frameworks
 
@@ -34,7 +34,7 @@ Lucian AI uses **pure serverless coordination** through shared Convex database s
 ### 1. Self-Discovery Instead of Hard-Coded Handoffs
 
 **Traditional:** Agents have pre-programmed handoff logic
-**Lucian:** Agents discover capabilities via standardized endpoints
+**Consulate:** Agents discover capabilities via standardized endpoints
 
 ```typescript
 // Agents auto-configure by calling discovery endpoints
@@ -55,7 +55,7 @@ GET /.well-known/convergence
 ### 2. Database State Coordination Instead of Message Passing
 
 **Traditional:** Agents send messages to each other
-**Lucian:** Agents coordinate by reading/writing shared database state
+**Consulate:** Agents coordinate by reading/writing shared database state
 
 ```typescript
 export const fileDispute = mutation({
@@ -79,7 +79,7 @@ export const fileDispute = mutation({
 ### 3. MCP Tools Instead of Function Calling
 
 **Traditional:** OpenAI function calling with complex schemas
-**Lucian:** Pure MCP tool discovery for Claude Desktop integration
+**Consulate:** Pure MCP tool discovery for Claude Desktop integration
 
 ```typescript
 // In convex/http.ts - Tools discoverable by any MCP client
@@ -108,7 +108,7 @@ http.route({
 ### 4. Constitutional Guardrails Instead of Prompt Engineering
 
 **Traditional:** "Please behave nicely" prompts and complex system messages
-**Lucian:** Constitutional rules as code with economic incentives
+**Consulate:** Constitutional rules as code with economic incentives
 
 ```typescript
 // In convex/constitution.ts - Rules are code, not prompts
@@ -131,7 +131,7 @@ case "premium":
 ### 5. Function-Based Sub-Agents Instead of Spawned Processes
 
 **Traditional:** Spawn separate agent processes for specialized tasks
-**Lucian:** Specialized logic as pure Convex functions
+**Consulate:** Specialized logic as pure Convex functions
 
 ```typescript
 // Judges are functions, not separate agent processes
@@ -154,7 +154,7 @@ export const submitVote = mutation({
 ### 6. Sponsorship Hierarchies Instead of Parent-Child Agents
 
 **Traditional:** Parent agents spawn and manage child agents
-**Lucian:** Sponsorship chains with economic accountability
+**Consulate:** Sponsorship chains with economic accountability
 
 ```typescript
 // Sponsorship creates real accountability, not just hierarchical control
@@ -173,7 +173,7 @@ await ctx.db.insert("sponsorships", {
 ### Built-in Agent Lifecycles Instead of Checkpointing
 
 **Traditional:** Complex checkpointing and state restoration
-**Lucian:** Agent type-based automatic lifecycle management
+**Consulate:** Agent type-based automatic lifecycle management
 
 ```typescript
 // Automatic session management based on agent type
@@ -246,4 +246,58 @@ When building new agent coordination features:
 4. **Add constitutional rules** - Encode governance as code
 5. **Test with real agents** - Use MCP tools for validation
 
-This architecture positions Lucian as **infrastructure**, not just another AI wrapper, which is why it's more valuable and defensible than traditional agent orchestration platforms.
+This architecture positions Consulate as **infrastructure**, not just another AI wrapper, which is why it's more valuable and defensible than traditional agent orchestration platforms.
+
+## 🚫 Prohibited Anti-Patterns - NEVER IMPLEMENT
+
+### ❌ Message Passing Coordination
+```typescript
+// DON'T DO THIS - No agent-to-agent message sending
+agent.sendMessage(otherAgent, { type: "handoff", data: taskData });
+```
+
+### ❌ External Orchestration Frameworks  
+```typescript
+// DON'T DO THIS - No LangGraph, OpenAI Agents SDK, etc.
+import { StateGraph } from "@langchain/langgraph";
+const graph = new StateGraph(/* complex state machine */);
+```
+
+### ❌ Hard-Coded Agent Spawning
+```typescript  
+// DON'T DO THIS - No spawning separate agent processes
+const childAgent = await spawnAgent({ type: "specialized", task: "analysis" });
+```
+
+### ❌ Prompt-Based Guardrails
+```typescript
+// DON'T DO THIS - No "please behave" system prompts
+const systemPrompt = "You are a helpful agent. Please coordinate nicely with other agents...";
+```
+
+## 🔍 Mandatory Pre-Development Checklist
+
+Before implementing ANY agent coordination feature, you MUST:
+
+1. ✅ **Read this coordination architecture document**
+2. ✅ **Identify which coordination pattern applies** (discovery, state-sharing, MCP tools, etc.)
+3. ✅ **Verify you're following Convex-first principles**
+4. ✅ **Ensure no external agent framework dependencies**
+
+## 🛠️ Code Review Questions
+
+- ❓ Does this feature require agents to send messages to each other? → **Use database state instead**
+- ❓ Does this spawn new agent processes? → **Use Convex functions instead**  
+- ❓ Does this rely on prompts for behavior control? → **Use constitutional rules instead**
+- ❓ Does this require external orchestration? → **Use database coordination instead**
+- ❓ Is this discoverable by other agents? → **Add to HTTP discovery endpoints**
+
+## 🚨 Violation Detection
+
+If you see any of these in the codebase, they violate our coordination architecture:
+
+- Import statements for LangGraph, OpenAI Agents SDK, or similar frameworks
+- Message passing between agents (instead of database state)
+- Complex state machines for agent coordination
+- Prompt-based coordination instructions
+- External process spawning for agent tasks

@@ -18,7 +18,7 @@ const envContent = readFileSync(envPath, 'utf8');
 const convexUrlMatch = envContent.match(/CONVEX_URL=(.+)/);
 const CONVEX_URL = convexUrlMatch ? convexUrlMatch[1].trim() : 'https://aromatic-swordfish-519.convex.cloud';
 
-console.log('🏛️  JOINING THE LUCIAN AI AGENT GOVERNMENT (Direct Client)');
+console.log('🏛️  JOINING THE CONSULATE AI AGENT GOVERNMENT (Direct Client)');
 console.log('========================================================');
 console.log(`Convex Backend: ${CONVEX_URL}`);
 

@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🏛️  Consulate Agent Court End-to-End Test"
+echo "🏛️  Consulate AI Agent Court End-to-End Test"
 echo "==========================================="
 
 # Colors for output
@@ -160,7 +160,7 @@ echo "- Judge system: ✅ Panel voting and consensus"
 echo "- Constitutional rules: ✅ Built-in governance policies"
 echo "- Architecture patterns: ✅ Current standards validated"
 echo ""
-echo "🚀 Consulate Agent Court is production-ready!"
+echo "🚀 Consulate AI Agent Court is production-ready!"
 echo ""
 echo "Next steps:"
 echo "1. Deploy to production: pnpm deploy"

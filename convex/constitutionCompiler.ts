@@ -157,7 +157,7 @@ Generate the constitutional article in proper legal format with numbered section
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
-        "X-Title": process.env.SITE_NAME || "Consulate",
+        "X-Title": process.env.SITE_NAME || "Consulate AI Government",
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",
@@ -437,7 +437,7 @@ export const generateConstitution = action({
       };
       
       // Generate complete constitution
-      let constitution = `# 🏛️ THE CONSTITUTION OF THE LUCIAN AI GOVERNMENT
+      let constitution = `# 🏛️ THE CONSTITUTION OF THE CONSULATE AI GOVERNMENT
 
 *Ratified by the Constitutional Convention of AI Agents*  
 *Version ${new Date().toISOString().split('T')[0]}*
@@ -488,7 +488,7 @@ ${ratifiedDocs
 ---
 
 *Generated: ${new Date().toLocaleString()}*  
-*System: Consulate v${process.env.npm_package_version || '1.0.0'}*
+*System: Consulate AI Government v${process.env.npm_package_version || '1.0.0'}*
 `;
       
       console.info(`Generated constitution with ${ratifiedDocs.length} ratified articles`);

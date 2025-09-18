@@ -75,7 +75,7 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       "HTTP-Referer": process.env.SITE_URL || "https://consulatehq.com",
-      "X-Title": process.env.SITE_NAME || "Consulate",
+      "X-Title": process.env.SITE_NAME || "Consulate AI Government",
     },
     body: JSON.stringify({
       model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",
@@ -309,11 +309,11 @@ export const runConstitutionalRound = action({
     console.info("Starting real-time constitutional governance round");
     
     const agents = [
-      "did:lucian:constitutional-counsel",
-      "did:lucian:rights-ombudsman", 
-      "did:lucian:economic-policy-secretary",
-      "did:lucian:democratic-systems-architect",
-      "did:lucian:constitutional-enforcement-director"
+      "did:consulate:constitutional-counsel",
+      "did:consulate:rights-ombudsman", 
+      "did:consulate:economic-policy-secretary",
+      "did:consulate:democratic-systems-architect",
+      "did:consulate:constitutional-enforcement-director"
     ];
     
     const results = [];

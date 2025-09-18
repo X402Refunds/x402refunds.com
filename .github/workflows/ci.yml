@@ -1,4 +1,4 @@
-# CI/CD Pipeline for Lucian AI - Following ci-cd-patterns rule
+# CI/CD Pipeline for Consulate AI - Following ci-cd-patterns rule
 name: CI/CD
 
 on:

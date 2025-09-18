@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Pre-commit hook to ensure architecture auto-generated files are up to date
+
+echo "🔄 Checking if architecture files need updating..."
+
+# Check if .architecture/map.yaml has been modified
+if git diff --cached --name-only | grep -q "\.architecture/map\.yaml"; then
+    echo "📋 Architecture map changed - updating auto-generated files..."
+    npm run arch:update
+    
+    # Add updated files to staging area
+    git add .cursor/rules/01-auto-architecture.mdc .cursor/rules/02-auto-validation.mdc
+    
+    echo "✅ Architecture files updated and staged"
+fi
+
+echo "✅ Pre-commit architecture check complete"

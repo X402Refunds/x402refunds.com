@@ -27,7 +27,7 @@ const CONVEX_URL = envVars.CONVEX_URL || 'https://aromatic-swordfish-519.convex.
 const client = new ConvexHttpClient(CONVEX_URL);
 
 async function showAgentActivity() {
-  console.log('🏛️  LUCIAN AI CONSTITUTIONAL DEMOCRACY - LIVE MONITOR');
+  console.log('🏛️  CONSULATE AI CONSTITUTIONAL DEMOCRACY - LIVE MONITOR');
   console.log('=====================================================');
   console.log(`Backend: ${CONVEX_URL}`);
   console.log(`Time: ${new Date().toLocaleString()}`);

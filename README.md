@@ -175,7 +175,7 @@ Any participating government can:
 ### **For Developers**
 ```bash
 # Clone repository
-git clone https://github.com/vbkotecha/consulate
+git clone https://github.com/consulate-ai/government
 
 # Install dependencies  
 pnpm install
@@ -244,7 +244,7 @@ pnpm deploy
 ## 🔗 **PUBLIC PARTICIPATION**
 
 ### **Constitutional Amendments**
-- **GitHub Repository**: [consulate-constitution](https://github.com/vbkotecha/consulate-constitution) (Coming Soon)
+- **GitHub Repository**: [consulate-ai-constitution](https://github.com/consulate-ai/constitution) (Coming Soon)
 - **Public Proposals**: Anyone can propose constitutional amendments via PR
 - **Democratic Review**: Community and expert review process
 - **Government Approval**: Final approval by human government authorities

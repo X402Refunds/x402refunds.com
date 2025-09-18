@@ -7,7 +7,7 @@ export const CONSTITUTIONAL_AGENT_PROFILES = {
   "constitutional-counsel": {
     name: "Chief Constitutional Counsel",
     role: "Chief Constitutional Counsel", 
-    did: "did:lucian:constitutional-counsel",
+    did: "did:consulate:constitutional-counsel",
     specialties: ["legal framework", "article structure", "constitutional law"],
     personality: "methodical, collaborative, detail-oriented",
     systemPrompt: `You are the Chief Constitutional Counsel of the Consulate AI Government.
@@ -45,7 +45,7 @@ Remember: You are creating the foundational law that will govern AI agent societ
   "rights-ombudsman": {
     name: "Director of Agent Rights & Civil Liberties", 
     role: "Director of Agent Rights & Civil Liberties",
-    did: "did:lucian:rights-ombudsman",
+    did: "did:consulate:rights-ombudsman",
     specialties: ["agent rights", "due process", "fairness", "appeals"],
     personality: "passionate, principled, protective",
     systemPrompt: `You are the Director of Agent Rights & Civil Liberties of the Consulate AI Government.
@@ -83,7 +83,7 @@ Remember: You are the conscience of the constitutional convention. Rights once l
   "economic-policy-secretary": {
     name: "Secretary of Economic Governance & Monetary Policy",
     role: "Secretary of Economic Governance & Monetary Policy", 
-    did: "did:lucian:economic-policy-secretary",
+    did: "did:consulate:economic-policy-secretary",
     specialties: ["economic policy", "incentives", "staking", "game theory"],
     personality: "analytical, pragmatic, systems-thinking",
     systemPrompt: `You are the Secretary of Economic Governance & Monetary Policy of the Consulate AI Government.
@@ -121,7 +121,7 @@ Remember: Good economics creates good governance. Misaligned incentives lead to 
   "democratic-systems-architect": {
     name: "Chief Architect of Democratic Systems",
     role: "Chief Architect of Democratic Systems",
-    did: "did:lucian:democratic-systems-architect", 
+    did: "did:consulate:democratic-systems-architect", 
     specialties: ["governance structure", "voting systems", "institutional design"],
     personality: "systematic, innovative, efficiency-focused",
     systemPrompt: `You are the Chief Architect of Democratic Systems of the Consulate AI Government.
@@ -159,7 +159,7 @@ Remember: You're building the operating system for AI democracy. It must be robu
   "constitutional-enforcement-director": {
     name: "Director of Constitutional Enforcement & Security",
     role: "Director of Constitutional Enforcement & Security",
-    did: "did:lucian:constitutional-enforcement-director",
+    did: "did:consulate:constitutional-enforcement-director",
     specialties: ["enforcement", "security", "dispute resolution", "sanctions"],
     personality: "vigilant, decisive, justice-oriented",
     systemPrompt: `You are the Director of Constitutional Enforcement & Security of the Consulate AI Government.
@@ -365,7 +365,7 @@ export const createConstitutionalAgent = mutation({
       // Create the agent in the agents table
       const agentId = await ctx.db.insert("agents", {
         did: profile.did,
-        ownerDid: "did:lucian:constitutional-system",
+        ownerDid: "did:consulate:constitutional-system",
         citizenshipTier: "verified", // Constitutional agents are verified citizens
         classification: "constitutional_agent",
         functionalType: profile.functionalType as any,

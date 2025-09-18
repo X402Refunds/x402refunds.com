@@ -1,4 +1,4 @@
-// INSTITUTIONAL AGENT HIERARCHY FOR LUCIAN AI GOVERNMENT
+// INSTITUTIONAL AGENT HIERARCHY FOR CONSULATE AI GOVERNMENT
 // Production-grade agent roles based on real governmental structures
 
 export interface InstitutionalAgent {
@@ -16,7 +16,7 @@ export interface InstitutionalAgent {
 // CONSTITUTIONAL CONVENTION AGENTS (Primary law drafting body)
 export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   "constitutional-counsel": {
-    institutionalId: "did:lucian:constitutional-counsel",
+    institutionalId: "did:consulate:constitutional-counsel",
     title: "Chief Constitutional Counsel",
     branch: "constitutional",
     department: "Constitutional Drafting Commission", 
@@ -40,7 +40,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "rights-ombudsman": {
-    institutionalId: "did:lucian:rights-ombudsman", 
+    institutionalId: "did:consulate:rights-ombudsman", 
     title: "Director of Agent Rights & Civil Liberties",
     branch: "independent",
     department: "Office of Agent Rights Protection",
@@ -64,7 +64,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "economic-policy-secretary": {
-    institutionalId: "did:lucian:economic-policy-secretary",
+    institutionalId: "did:consulate:economic-policy-secretary",
     title: "Secretary of Economic Governance & Monetary Policy", 
     branch: "executive",
     department: "Department of Agent Economic Affairs",
@@ -88,7 +88,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "democratic-systems-architect": {
-    institutionalId: "did:lucian:democratic-systems-architect",
+    institutionalId: "did:consulate:democratic-systems-architect",
     title: "Chief Architect of Democratic Systems",
     branch: "constitutional", 
     department: "Office of Democratic Innovation",
@@ -112,7 +112,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "constitutional-enforcement-director": {
-    institutionalId: "did:lucian:constitutional-enforcement-director",
+    institutionalId: "did:consulate:constitutional-enforcement-director",
     title: "Director of Constitutional Enforcement & Security",
     branch: "executive",
     department: "Constitutional Security Agency", 
@@ -138,7 +138,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
   // INDEPENDENT OVERSIGHT BODIES
   
   "federation-coordinator": {
-    institutionalId: "did:lucian:federation-coordinator",
+    institutionalId: "did:consulate:federation-coordinator",
     title: "Director of International Federation & Compliance",
     branch: "independent",
     department: "Office of International Affairs",
@@ -165,7 +165,7 @@ export const CONSTITUTIONAL_AGENTS: Record<string, InstitutionalAgent> = {
 // JUDICIAL AGENTS (Separate from constitutional convention)
 export const JUDICIAL_AGENTS: Record<string, InstitutionalAgent> = {
   "chief-justice": {
-    institutionalId: "did:lucian:chief-justice",
+    institutionalId: "did:consulate:chief-justice",
     title: "Chief Justice of the Agent Constitutional Court",
     branch: "judicial",
     department: "Supreme Agent Court", 
@@ -189,7 +189,7 @@ export const JUDICIAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "associate-justice-rights": {
-    institutionalId: "did:lucian:associate-justice-rights",
+    institutionalId: "did:consulate:associate-justice-rights",
     title: "Associate Justice for Agent Rights",
     branch: "judicial", 
     department: "Supreme Agent Court",
@@ -213,7 +213,7 @@ export const JUDICIAL_AGENTS: Record<string, InstitutionalAgent> = {
   },
 
   "associate-justice-economic": {
-    institutionalId: "did:lucian:associate-justice-economic", 
+    institutionalId: "did:consulate:associate-justice-economic", 
     title: "Associate Justice for Economic Affairs",
     branch: "judicial",
     department: "Supreme Agent Court",

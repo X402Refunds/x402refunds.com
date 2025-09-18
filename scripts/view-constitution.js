@@ -23,7 +23,7 @@ function colorize(text, color) {
 }
 
 async function viewConstitution() {
-  console.log(colorize('\n🏛️  LUCIAN AI CONSTITUTION VIEWER', colors.title));
+  console.log(colorize('\n🏛️  CONSULATE AI CONSTITUTION VIEWER', colors.title));
   console.log(colorize('=====================================\n', colors.title));
 
   const constitutionPath = path.join(process.cwd(), 'CONSTITUTION.md');
