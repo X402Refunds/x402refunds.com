@@ -31,21 +31,24 @@ describe('Case Filing and Dispute Resolution APIs', () => {
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid1,
       ownerDid: 'did:test:caseowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 2000,
     });
 
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid2,
       ownerDid: 'did:test:caseowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 1500,
     });
 
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid3,
       ownerDid: 'did:test:caseowner',
-      agentType: 'premium' as const,
+      citizenshipTier: 'premium' as const,
+      functionalType: 'general' as const,
       stake: 15000,
     });
 
@@ -194,7 +197,8 @@ describe('Case Filing and Dispute Resolution APIs', () => {
       const agentId = await t.mutation(api.agents.joinAgent, {
         did: inactiveAgentDid,
         ownerDid: 'did:test:caseowner',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       // Mark agent as inactive
@@ -354,7 +358,8 @@ describe('Case Filing and Dispute Resolution APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:nocases',
         ownerDid: 'did:test:caseowner',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       const noCases = await t.query(api.cases.getCasesByParty, { 

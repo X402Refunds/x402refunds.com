@@ -29,14 +29,16 @@ describe('Judges and Panel Voting APIs', () => {
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid1,
       ownerDid: 'did:test:judgeowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 2000,
     });
 
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid2,
       ownerDid: 'did:test:judgeowner',
-      agentType: 'premium' as const,
+      citizenshipTier: 'premium' as const,
+      functionalType: 'general' as const,
       stake: 15000,
     });
 
@@ -515,7 +517,20 @@ describe('Judges and Panel Voting APIs', () => {
     it('should analyze SLA violation cases correctly', async () => {
       const { analyzeCase } = await import('../convex/judges');
       
-      const result = analyzeCase('SLA_VIOLATION_CRITICAL');
+      const mockCase = {
+        type: 'SLA_MISS',
+        parties: ['did:test:agent1', 'did:test:agent2'],
+        jurisdictionTags: ['AI_AGENTS', 'SERVICE_LEVEL']
+      };
+      const mockEvidence = [
+        {
+          model: { provider: 'openai', name: 'gpt-4', version: '1106' },
+          ts: Date.now(),
+          uri: 'https://example.com/evidence'
+        }
+      ];
+      
+      const result = await analyzeCase(mockCase, mockEvidence);
       
       expect(result).toMatchObject({
         code: 'UPHELD',
@@ -527,7 +542,20 @@ describe('Judges and Panel Voting APIs', () => {
     it('should analyze format violation cases correctly', async () => {
       const { analyzeCase } = await import('../convex/judges');
       
-      const result = analyzeCase('FORMAT_VIOLATION_SCHEMA');
+      const mockCase = {
+        type: 'FORMAT_INVALID',
+        parties: ['did:test:agent1', 'did:test:agent2'],
+        jurisdictionTags: ['AI_AGENTS', 'COMPLIANCE']
+      };
+      const mockEvidence = [
+        {
+          model: { provider: 'openai', name: 'gpt-4', version: '1106' },
+          ts: Date.now(),
+          uri: 'https://example.com/format-evidence'
+        }
+      ];
+      
+      const result = await analyzeCase(mockCase, mockEvidence);
       
       expect(result).toMatchObject({
         code: 'UPHELD',
@@ -539,12 +567,25 @@ describe('Judges and Panel Voting APIs', () => {
     it('should handle unknown case types with default logic', async () => {
       const { analyzeCase } = await import('../convex/judges');
       
-      const result = analyzeCase('UNKNOWN_CASE_TYPE');
+      const mockCase = {
+        type: 'UNKNOWN_CASE_TYPE',
+        parties: ['did:test:agent1', 'did:test:agent2'],
+        jurisdictionTags: ['AI_AGENTS', 'UNKNOWN']
+      };
+      const mockEvidence = [
+        {
+          model: { provider: 'openai', name: 'gpt-4', version: '1106' },
+          ts: Date.now(),
+          uri: 'https://example.com/unknown-evidence'
+        }
+      ];
+      
+      const result = await analyzeCase(mockCase, mockEvidence);
       
       expect(result).toMatchObject({
-        code: 'DISMISSED',
-        reasons: expect.stringContaining('evidence'),
-        confidence: 0.7,
+        code: 'REMANDED',
+        reasons: expect.stringContaining('additional review'),
+        confidence: 0.6,
       });
     });
   });

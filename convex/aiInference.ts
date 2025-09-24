@@ -6,7 +6,7 @@ import { api } from "./_generated/api";
 const AI_PROVIDERS = {
   openrouter: {
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",
+    model: process.env.OPENROUTER_MODEL || "x-ai/grok-4-fast:free",
     headers: (apiKey: string) => ({
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
@@ -162,7 +162,11 @@ async function callAIProvider(systemPrompt: string, userPrompt: string, preferre
             { role: "user", content: userPrompt }
           ],
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: 2000,
+          // Enable reasoning for Grok models  
+          ...(provider === "openrouter" && process.env.OPENROUTER_REASONING_ENABLED === "true" && {
+            reasoning: {}
+          })
         };
       }
 
@@ -180,6 +184,9 @@ async function callAIProvider(systemPrompt: string, userPrompt: string, preferre
 
       const result = await response.json();
       
+      // Log basic model information  
+      console.info(`🤖 AI Model Used: ${config.model} via ${provider.toUpperCase()}`);
+      
       let responseText: string;
       if (provider === "anthropic") {
         responseText = result.content[0].text;
@@ -187,7 +194,7 @@ async function callAIProvider(systemPrompt: string, userPrompt: string, preferre
         responseText = result.choices[0].message.content;
       }
 
-      console.info(`Successfully used ${provider} for AI inference`);
+      console.info(`✅ Successfully used ${provider}/${config.model} for AI inference`);
       return responseText;
       
     } catch (error) {
@@ -265,14 +272,12 @@ async function executeAgentActions(ctx: any, agentDid: string, actions: AgentAct
           // Find thread by topic if threadId looks like a topic name
           let threadId = action.params.threadId;
           if (!threadId.startsWith("thread-")) {
-            // Try to find thread by topic
-            const threads = await ctx.db
-              .query("constitutionalThreads")
-              .withIndex("by_topic", (q) => q.eq("topic", threadId))
-              .collect();
+            // Try to find thread by topic using getActiveThreads query
+            const allThreads = await ctx.runQuery(api.constitutionalDiscussions.getActiveThreads, { limit: 100 });
+            const matchingThreads = allThreads.filter(t => t.topic === threadId || t.topic.toLowerCase().includes(threadId.toLowerCase()));
             
-            if (threads.length > 0) {
-              threadId = threads[0].threadId;
+            if (matchingThreads.length > 0) {
+              threadId = matchingThreads[0].threadId;
             } else {
               throw new Error(`No thread found for topic: ${action.params.threadId}`);
             }
@@ -407,7 +412,7 @@ export const runAgentInference = action({
       // Execute actions
       const results = await executeAgentActions(ctx, args.agentDid, actions);
 
-      // Store inference as episodic memory
+      // Store inference as episodic memory 
       await ctx.runMutation(api.constitutionalAgents.storeAgentMemory, {
         agentDid: args.agentDid,
         memoryType: "episodic",

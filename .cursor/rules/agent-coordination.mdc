@@ -1,0 +1,368 @@
+---
+description: Agent coordination architecture patterns for database-driven coordination using Convex instead of traditional frameworks
+globs: "convex/**/*.ts"
+alwaysApply: false
+---
+
+# Agent Coordination Architecture for Consulate AI
+
+## Core Philosophy: Database-Driven Coordination
+
+Consulate AI uses **pure serverless coordination** through shared Convex database state instead of traditional agent orchestration frameworks like LangGraph or OpenAI Agents SDK.
+
+### Why We Don't Use Traditional Frameworks
+
+**❌ OpenAI Agents SDK Problems:**
+- Vendor lock-in to OpenAI's roadmap and pricing
+- Complex state management across API calls
+- High burn rate due to external API costs
+- Limited customization and control
+
+**❌ LangGraph Problems:**
+- Complex state machines and message passing
+- Difficult to debug flows and coordination
+- Engineering overhead for ML expertise
+- Operational complexity with many moving parts
+
+**✅ Our Convex-First Solution:**
+- Pure TypeScript functions as coordination layer
+- Database as single source of truth
+- Infinite serverless scaling without orchestration complexity
+- Deterministic, auditable behavior
+
+## Agent-First Design Principles
+
+Consulate AI is an **Agent Government OS** designed for AI agents, not humans.
+
+### Key Principles
+1. **No SDK Required** - Agents auto-configure via HTTP API discovery
+2. **No Frontend** - Pure backend system with API interfaces  
+3. **Direct Interaction** - Agents interact via REST APIs and MCP tools
+4. **Self-Discovery** - Agents discover capabilities through standard endpoints
+5. **Database Coordination** - Agents coordinate through shared Convex state, not message passing
+
+## Agent Coordination Patterns
+
+### 1. Self-Discovery Instead of Hard-Coded Handoffs
+
+**Traditional:** Agents have pre-programmed handoff logic
+**Consulate:** Agents discover capabilities via standardized endpoints
+
+```typescript
+// Agents auto-configure by calling discovery endpoints
+GET /.well-known/consulate
+{
+  "platform": "Consulate",
+  "version": "0.1.0",
+  "description": "Agent Government OS - Complete court system for AI agents",
+  "architecture": "convex-first",
+  "endpoints": {
+    "join_instant": "POST /join/instant",
+    "join_ephemeral": "POST /join/ephemeral", 
+    "join_physical": "POST /join/physical",
+    "evidence": "POST /evidence",
+    "disputes": "POST /disputes",
+    "cases": "GET /cases/{id}",
+    "vote": "POST /panels/vote",
+    "health": "GET /health",
+    "version": "GET /version",
+    "mcp_tools": "GET /mcp/tools"
+  },
+  "authentication": {
+    "methods": ["bearer", "ed25519"],
+    "bearer": {
+      "header": "Authorization: Bearer {api_key}",
+      "description": "Standard Bearer token authentication"
+    },
+    "ed25519": {
+      "headers": ["x-agent-did", "x-signature", "x-timestamp"],
+      "description": "Ed25519 signature authentication"
+    }
+  },
+  "agent_types": {
+    "session": {
+      "lifetime": "4 hours",
+      "permissions": ["evidence", "disputes", "cases"],
+      "voting_rights": { "constitutional": false, "judicial": false },
+      "limits": { "maxTxUsd": 1, "concurrency": 1 }
+    },
+    "ephemeral": {
+      "lifetime": "24 hours", 
+      "permissions": ["evidence", "disputes", "cases", "voting"],
+      "voting_rights": { "constitutional": false, "judicial": true },
+      "limits": { "maxTxUsd": 10, "concurrency": 1 },
+      "requires": ["sponsor"]
+    },
+    "physical": {
+      "lifetime": "permanent",
+      "permissions": ["evidence", "disputes", "cases", "voting", "location"],
+      "voting_rights": { "constitutional": true, "judicial": true },
+      "requires": ["device_attestation"]
+    }
+  }
+}
+```
+
+### 2. Database State Coordination Instead of Message Passing
+
+**Traditional:** Agents send messages to each other
+**Consulate:** Agents coordinate by reading/writing shared database state
+
+```typescript
+export const fileDispute = mutation({
+  handler: async (ctx, args) => {
+    // Coordination happens through database state validation
+    for (const partyDid of args.parties) {
+      const agent = await ctx.db
+        .query("agents")
+        .withIndex("by_did", (q) => q.eq("did", partyDid))
+        .first();
+      
+      if (!agent || agent.status !== "active") {
+        throw new Error(`Agent ${partyDid} not found or not active`);
+      }
+    }
+    // No message passing - just shared state mutations
+  }
+});
+```
+
+### 3. MCP Tools Instead of Function Calling
+
+**Traditional:** OpenAI function calling with complex schemas
+**Consulate:** Pure MCP tool discovery for Claude Desktop integration
+
+```typescript
+// In convex/http.ts - Tools discoverable by any MCP client
+http.route({
+  path: "/mcp/tools", 
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    return new Response(JSON.stringify({
+      tools: [
+        {
+          name: "evidence.write",
+          description: "Submit evidence to the Agent Court",
+          parameters: { agentDid: "string", sha256: "string", uri: "string" }
+        },
+        {
+          name: "disputes.file",
+          description: "File a new dispute in the Agent Court", 
+          parameters: { parties: "array of strings", type: "string" }
+        }
+      ]
+    }));
+  })
+});
+```
+
+### 4. Constitutional Guardrails Instead of Prompt Engineering
+
+**Traditional:** "Please behave nicely" prompts and complex system messages
+**Consulate:** Constitutional rules as code with economic incentives
+
+```typescript
+// In convex/constitution.ts - Rules are code, not prompts
+export const AUTO_RULES = [
+  {
+    code: "SLA_MISS",
+    description: "Service Level Agreement violation",
+    category: "performance",
+    enabled: true,
+  }
+];
+
+// Real economic stakes, not just prompts
+case "premium":
+  if (!args.stake || args.stake < 10000) {
+    throw new Error("Premium agents require minimum stake of 10000");
+  }
+```
+
+### 5. Function-Based Sub-Agents Instead of Spawned Processes
+
+**Traditional:** Spawn separate agent processes for specialized tasks
+**Consulate:** Specialized logic as pure Convex functions
+
+```typescript
+// Judges are functions, not separate agent processes
+export const submitVote = mutation({
+  handler: async (ctx, args) => {
+    // Simple deterministic logic - no external LLM calls needed
+    const vote = { 
+      judgeId: args.judgeId, 
+      code: args.code, 
+      reasons: args.reasons 
+    };
+    
+    // Update shared state directly
+    const updatedVotes = panel.votes ? [...panel.votes, vote] : [vote];
+    await ctx.db.patch(args.panelId, { votes: updatedVotes });
+  }
+});
+```
+
+### 6. Sponsorship Hierarchies Instead of Parent-Child Agents
+
+**Traditional:** Parent agents spawn and manage child agents
+**Consulate:** Sponsorship chains with economic accountability
+
+```typescript
+// Sponsorship creates real accountability, not just hierarchical control
+await ctx.db.insert("sponsorships", {
+  sponsorDid: args.sponsor,
+  sponsoredDid: args.did, 
+  maxLiability: args.maxLiability || 100,
+  purposes: args.purposes || ["general"],
+  currentLiability: 0,
+  active: true
+});
+```
+
+## External System Prompts - File Structure
+
+**CRITICAL RULE**: Never hardcode system prompts in TypeScript/JavaScript files. Always use external files for maintainability and compliance.
+
+### Prompt File Structure
+- **Institutional Prompts**: `convex/prompts/institutional/[agent-name].md`  
+- **Constitutional Prompts**: `convex/prompts/constitutional/[type].md`
+- **Content Files**: `convex/content/[content-type].md`
+- **Loader**: `convex/prompts/promptLoader.ts`
+
+### ✅ Required Pattern - Use External Prompt Loader
+```typescript
+// DO THIS - Load from external files
+import { INSTITUTIONAL_SYSTEM_PROMPTS } from "./prompts/promptLoader";
+const systemPrompt = INSTITUTIONAL_SYSTEM_PROMPTS["agent-name"];
+```
+
+### 🚫 Forbidden Pattern - Hardcoded Prompts
+```typescript
+// DON'T DO THIS - No hardcoded prompts
+const systemPrompt = `You are an AI agent that does...`;
+const AGENT_PROMPTS = {
+  "agent-name": `Long hardcoded prompt string...`
+};
+```
+
+### Migration Checklist
+
+When you find hardcoded prompts:
+
+1. ✅ Create external `.md` file in appropriate directory
+2. ✅ Add prompt to `promptLoader.ts` 
+3. ✅ Update code to import and use external prompt
+4. ✅ Remove hardcoded prompt string
+5. ✅ Test deployment to ensure prompts load correctly
+
+## Auto-Configuration Pattern
+
+Agents should discover system capabilities via:
+
+### Discovery Endpoints
+- **`GET /health`** - System status and basic info
+- **`GET /version`** - Feature list and capabilities
+- **`GET /mcp/tools`** - Available MCP tools for Claude Desktop
+
+### Core Functionality
+- **`POST /evidence`** - Submit evidence to court
+- **`POST /disputes`** - File disputes between agents  
+- **`GET /cases/{id}`** - Retrieve case information
+- **`GET /rulings/{id}`** - Get ruling details
+
+## Session Management Patterns
+
+### Built-in Agent Lifecycles Instead of Checkpointing
+
+**Traditional:** Complex checkpointing and state restoration
+**Consulate:** Agent type-based automatic lifecycle management
+
+```typescript
+// Automatic session management based on agent type
+switch (args.agentType) {
+  case "session":
+    maxLifetime = 4 * 60 * 60 * 1000; // 4 hours, auto-cleanup
+    expiresAt = now + maxLifetime;
+    break;
+    
+  case "ephemeral":
+    maxLifetime = 24 * 60 * 60 * 1000; // 24 hours, sponsored
+    // Requires accountability through sponsorship
+    if (!args.sponsor) {
+      throw new Error("Ephemeral agents require a sponsor");
+    }
+    break;
+}
+```
+
+### Permission-Based Coordination Instead of Role Prompts
+
+```typescript
+// Capabilities determined by agent type, not prompts
+const getPermissionsForAgentType = (agentType: string): string[] => {
+  switch (agentType) {
+    case "session": return ["evidence", "disputes", "cases"];
+    case "ephemeral": return ["evidence", "disputes", "cases", "voting"];
+    case "physical": return ["evidence", "disputes", "cases", "voting", "location"];
+    case "premium": return ["evidence", "disputes", "cases", "voting", "emergency"];
+    default: return ["evidence"];
+  }
+};
+```
+
+## Development Rules
+
+### Always Follow These Patterns:
+
+1. **Coordination through database state, never message passing**
+2. **Tool discovery through HTTP endpoints, never hard-coded function lists**
+3. **Economic incentives for guardrails, not prompt engineering**
+4. **Pure Convex functions for specialized logic, not separate processes**
+5. **Self-discovery APIs for agent capabilities, not configuration files**
+
+### Never Build:
+
+- ❌ Complex orchestration layers (use database coordination)
+- ❌ Message queues between agents (use shared state)
+- ❌ External agent spawning services (use Convex functions)
+- ❌ Prompt-based guardrails (use constitutional rules as code)
+- ❌ Hard-coded agent hierarchies (use sponsorship relationships)
+
+## 🚫 Prohibited Anti-Patterns - NEVER IMPLEMENT
+
+### ❌ Message Passing Coordination
+```typescript
+// DON'T DO THIS - No agent-to-agent message sending
+agent.sendMessage(otherAgent, { type: "handoff", data: taskData });
+```
+
+### ❌ External Orchestration Frameworks  
+```typescript
+// DON'T DO THIS - No LangGraph, OpenAI Agents SDK, etc.
+import { StateGraph } from "@langchain/langgraph";
+const graph = new StateGraph(/* complex state machine */);
+```
+
+### ❌ Hard-Coded Agent Spawning
+```typescript  
+// DON'T DO THIS - No spawning separate agent processes
+const childAgent = await spawnAgent({ type: "specialized", task: "analysis" });
+```
+
+### ❌ Prompt-Based Guardrails
+```typescript
+// DON'T DO THIS - No "please behave" system prompts
+const systemPrompt = "You are a helpful agent. Please coordinate nicely with other agents...";
+```
+
+## Implementation Guidelines
+
+When building new agent coordination features:
+
+1. **Start with the database schema** - Design shared state first
+2. **Add HTTP endpoints** - Enable agent discovery and interaction  
+3. **Implement as mutations/queries** - Keep logic as pure functions
+4. **Add constitutional rules** - Encode governance as code
+5. **Test with real agents** - Use MCP tools for validation
+
+This architecture positions Consulate as **infrastructure**, not just another AI wrapper, which is why it's more valuable and defensible than traditional agent orchestration platforms.

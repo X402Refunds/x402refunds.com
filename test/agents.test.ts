@@ -66,7 +66,8 @@ describe('Agent Registration APIs', () => {
       const agentData = {
         did: 'did:test:ephemeral123',
         ownerDid: 'did:test:owner123',
-        agentType: 'ephemeral' as const,
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
         sponsor: 'did:test:sponsor123',
         maxLiability: 500,
         purposes: ['testing', 'automation'],
@@ -97,7 +98,8 @@ describe('Agent Registration APIs', () => {
       const agentData = {
         did: 'did:test:physical123',
         ownerDid: 'did:test:owner123',
-        agentType: 'physical' as const,
+        citizenshipTier: 'physical' as const,
+        functionalType: 'general' as const,
         deviceAttestation: {
           deviceId: 'device-abc-123',
           location: {
@@ -129,7 +131,8 @@ describe('Agent Registration APIs', () => {
       const agentData = {
         did: 'did:test:verified123',
         ownerDid: 'did:test:owner123',
-        agentType: 'verified' as const,
+        citizenshipTier: 'verified' as const,
+        functionalType: 'general' as const,
         stake: 1000, // minimum stake
       };
 
@@ -150,7 +153,8 @@ describe('Agent Registration APIs', () => {
       const agentData = {
         did: 'did:test:premium123',
         ownerDid: 'did:test:owner123',
-        agentType: 'premium' as const,
+        citizenshipTier: 'premium' as const,
+        functionalType: 'general' as const,
         stake: 15000, // above minimum
       };
 
@@ -173,7 +177,8 @@ describe('Agent Registration APIs', () => {
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:invalid123',
         ownerDid: 'did:test:nonexistent',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       })).rejects.toThrow('Owner did:test:nonexistent not found');
     });
 
@@ -181,7 +186,8 @@ describe('Agent Registration APIs', () => {
       const agentData = {
         did: 'did:test:duplicate123',
         ownerDid: 'did:test:owner123',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       };
 
       // Register first time - should succeed
@@ -196,7 +202,8 @@ describe('Agent Registration APIs', () => {
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:nosponsor123',
         ownerDid: 'did:test:owner123',
-        agentType: 'ephemeral' as const,
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
       })).rejects.toThrow('Ephemeral agents require a sponsor');
     });
 
@@ -205,13 +212,15 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:badsponsor123',
         ownerDid: 'did:test:owner123',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:ephemeral456',
         ownerDid: 'did:test:owner123',
-        agentType: 'ephemeral' as const,
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
         sponsor: 'did:test:badsponsor123',
       })).rejects.toThrow('Sponsor must be verified or premium agent');
     });
@@ -220,7 +229,8 @@ describe('Agent Registration APIs', () => {
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:nodevice123',
         ownerDid: 'did:test:owner123',
-        agentType: 'physical' as const,
+        citizenshipTier: 'physical' as const,
+        functionalType: 'general' as const,
       })).rejects.toThrow('Physical agents require device attestation');
     });
 
@@ -228,7 +238,8 @@ describe('Agent Registration APIs', () => {
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:lowstake123',
         ownerDid: 'did:test:owner123',
-        agentType: 'verified' as const,
+        citizenshipTier: 'verified' as const,
+        functionalType: 'general' as const,
         stake: 500, // below minimum of 1000
       })).rejects.toThrow('Verified agents require minimum stake of 1000');
     });
@@ -237,7 +248,8 @@ describe('Agent Registration APIs', () => {
       await expect(t.mutation(api.agents.joinAgent, {
         did: 'did:test:lowpremium123',
         ownerDid: 'did:test:owner123',
-        agentType: 'premium' as const,
+        citizenshipTier: 'premium' as const,
+        functionalType: 'general' as const,
         stake: 5000, // below minimum of 10000
       })).rejects.toThrow('Premium agents require minimum stake of 10000');
     });
@@ -359,7 +371,7 @@ describe('Agent Registration APIs', () => {
         did: 'did:test:physicalfunc123',
         ownerDid: 'did:test:owner123',
         citizenshipTier: 'physical' as const,
-        functionalType: 'physical' as const,
+        functionalType: 'general' as const,
         deviceAttestation: {
           deviceId: 'robot-456',
           location: {
@@ -371,6 +383,7 @@ describe('Agent Registration APIs', () => {
         },
         specialization: {
           capabilities: ['navigation', 'object_recognition'],
+          certifications: ['ISO_13482_SAFETY', 'ROS_CERTIFIED'],
           specializations: ['autonomous_navigation'],
           experienceLevel: 'basic',
         },
@@ -380,7 +393,7 @@ describe('Agent Registration APIs', () => {
       expect(agentId).toBeDefined();
 
       const agent = await t.query(api.agents.getAgent, { did: agentData.did });
-      expect(agent?.classification).toBe('physical.physical');
+      expect(agent?.classification).toBe('physical.general');
     });
   });
 
@@ -564,7 +577,7 @@ describe('Agent Registration APIs', () => {
       const agentId = await t.mutation(api.agents.joinSession, {
         did: 'did:test:quicksession123',
         ownerDid: 'did:test:owner123',
-        purpose: 'testing',
+        purpose: 'general',
       });
       expect(agentId).toBeDefined();
 
@@ -581,7 +594,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:quicksponsor123',
         ownerDid: 'did:test:owner123',
-        agentType: 'verified' as const,
+        citizenshipTier: 'verified' as const,
+        functionalType: 'general' as const,
         stake: 2000,
       });
 
@@ -629,20 +643,23 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:query1',
         ownerDid: 'did:test:owner123',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:query2',
         ownerDid: 'did:test:owner123',
-        agentType: 'verified' as const,
+        citizenshipTier: 'verified' as const,
+        functionalType: 'general' as const,
         stake: 1500,
       });
 
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:query3',
         ownerDid: 'did:test:owner123',
-        agentType: 'premium' as const,
+        citizenshipTier: 'premium' as const,
+        functionalType: 'general' as const,
         stake: 20000,
       });
     });
@@ -807,7 +824,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:cleanup123',
         ownerDid: 'did:test:owner123',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       // Check that cleanup queue entry was created
@@ -827,7 +845,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:permanent123',
         ownerDid: 'did:test:owner123',
-        agentType: 'verified' as const,
+        citizenshipTier: 'verified' as const,
+        functionalType: 'general' as const,
         stake: 2000,
       });
 
@@ -842,7 +861,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:premium123',
         ownerDid: 'did:test:owner123',
-        agentType: 'premium' as const,
+        citizenshipTier: 'premium' as const,
+        functionalType: 'general' as const,
         stake: 15000,
       });
 
@@ -850,7 +870,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:events123',
         ownerDid: 'did:test:owner123',
-        agentType: 'ephemeral' as const,
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
         sponsor: 'did:test:premium123',
       });
 
@@ -858,7 +879,8 @@ describe('Agent Registration APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:events456',
         ownerDid: 'did:test:owner123',
-        agentType: 'ephemeral' as const,
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
         sponsor: 'did:test:premium123',
       });
 

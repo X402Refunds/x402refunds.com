@@ -1,0 +1,175 @@
+---
+description: Convex development patterns for serverless functions, error handling, and deployment safety
+globs: "convex/**/*.ts"
+alwaysApply: false
+---
+
+# Convex Patterns for Consulate AI
+
+## Function Types
+
+- **Mutations**: Write to database (cases, evidence, rulings, votes)
+- **Queries**: Read from database (case details, stats, judge info) 
+- **Actions**: External calls, complex logic, engine processing
+- **HTTP Actions**: API endpoints for external agents
+
+## Error Handling Pattern
+
+Always use try-catch with detailed logging:
+
+```typescript
+try {
+  console.info(`Processing ${operation} for ${identifier}`);
+  // ... operation logic
+  console.info(`${operation} result: ${result}`);
+  return result;
+} catch (error) {
+  console.error(`${operation} failed for ${identifier}:`, error);
+  throw new Error(`${operation} failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+```
+
+## Database Query Pattern
+
+Use type annotations for query callbacks:
+```typescript
+.withIndex("by_field", (q: any) => q.eq("field", value))
+```
+
+## Judge Agent Integration
+
+Judge agents are **functions**, not separate services:
+- Analysis logic in mutations/actions
+- Simple hardcoded logic for MVP (replace with LLM calls later)
+- Panel voting via standard mutations
+
+## Core Principles
+
+1. **Pure Serverless**: Everything runs as Convex functions - no external services
+2. **Agent-First**: Designed for AI agents, not humans
+3. **Auto-Configuration**: Agents discover capabilities via HTTP APIs
+4. **No Build Required**: Convex handles TypeScript compilation
+5. **Single Deployment**: One deployment command deploys everything
+6. **No Microservices**: Avoid complexity - everything in same Convex deployment
+
+## Development Commands
+
+```bash
+# Start everything (convex + dashboard)
+pnpm dev
+
+# Deploy to development (default)
+pnpm deploy
+
+# Deploy to production (only with explicit approval)
+pnpm deploy:prod
+
+# Build all packages
+pnpm build
+
+# Testing
+pnpm test          # Unit tests with Vitest
+pnpm test:run      # Run tests once
+pnpm test:ui       # Open Vitest UI
+pnpm test:coverage # Run with coverage
+pnpm e2e           # End-to-end tests
+```
+
+## File Organization
+
+### Core Convex Functions
+- `schema.ts` - Database tables and indexes
+- `types.ts` - TypeScript type definitions
+- `constitution.ts` - Hardcoded constitutional rules
+
+### Court System Functions  
+- `cases.ts` - Case management (mutations/queries)
+- `evidence.ts` - Evidence handling
+- `judges.ts` - Judge agent functions
+- `rulings.ts` - Ruling creation and retrieval
+- `courtEngine.ts` - Court automation logic
+
+### Integration Functions
+- `http.ts` - HTTP API endpoints for external agents
+- `auth.ts` - Ed25519 authentication system
+- `transparency.ts` - Audit and transparency
+
+### Frontend Application
+- `dashboard/` - Next.js application with React components
+- `dashboard/src/app/` - App router pages
+- `dashboard/src/components/` - React components
+
+## Agent Auto-Configuration Endpoints
+
+Agents discover capabilities via these endpoints:
+- `GET /health` - System health and status
+- `GET /version` - Current version and feature list
+- `GET /mcp/tools` - Available MCP tools for Claude Desktop
+- `POST /evidence` - Submit evidence to court
+- `POST /disputes` - File disputes between agents
+- `GET /cases/{id}` - Retrieve case information
+
+## No External Dependencies
+
+- Constitution rules: hardcoded in `constitution.ts`
+- MCP tools: HTTP endpoints in `http.ts`  
+- Evidence processing: built into mutations
+- Transparency: Convex actions calling Rekor
+- **No traditional agent frameworks:** No LangGraph, OpenAI Agents SDK, etc.
+
+## Adding New Features
+
+1. **New endpoints** → Add to `http.ts` as HTTP actions
+2. **New rules** → Add to `courtEngine.ts` as rule classes
+3. **New judge logic** → Add to `judges.ts` as functions
+4. **New database tables** → Add to `schema.ts`
+
+## Deployment Safety - Dev First, Prod Never Without Approval
+
+**CRITICAL RULE**: Always deploy to development first. Never assume production deployment without explicit user approval.
+
+### Default to Development
+```bash
+# Correct development deployment
+pnpm deploy
+```
+
+### Production (Only with explicit approval)
+```bash
+# Only use when explicitly requested
+pnpm deploy:prod
+```
+
+### Deployment Process Rules
+- **Always use**: `pnpm deploy` for development deployment
+- **Never assume**: Production deployment unless explicitly requested
+- **User says "deploy"**: Means development deployment by default
+- **Production requires**: Explicit user request and confirmation
+
+## What NOT to Build
+
+Avoid these patterns that add complexity:
+- ❌ Separate FastAPI/Flask servers
+- ❌ Multiple docker-compose services for core logic
+- ❌ External microservices for court functionality
+- ❌ Complex package inter-dependencies
+- ❌ Python dependencies (Pure TypeScript/JavaScript ecosystem)
+
+Everything should be **functions in the same Convex deployment**.
+
+## Testing Patterns
+
+### Test File Organization
+- `test/agents.test.ts` - Agent registration & lifecycle
+- `test/evidence.test.ts` - Evidence submission & validation
+- `test/cases.test.ts` - Case filing & dispute resolution
+- `test/courtEngine.test.ts` - Court engine decision logic
+- `test/judges.test.ts` - Panel voting & judge management
+
+### Test Requirements
+**MUST have tests for:**
+- ✅ New mutations (create/update operations)
+- ✅ New queries (data retrieval)
+- ✅ New actions (complex logic/external calls)
+- ✅ Validation logic and error handling
+- ✅ Integration between components

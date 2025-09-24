@@ -1,0 +1,44 @@
+# PNPM WORKSPACE CONFIGURATION
+# =============================
+# This workspace configuration works with globally installed PNPM.
+# 
+# PREFERRED:
+# - macOS: Homebrew-installed PNPM (brew install pnpm)
+# - CI/Linux: System package manager or official installer
+# - Avoid npm-installed PNPM to prevent conflicts
+#
+# This configuration works with .npmrc to enforce consistent global PNPM usage.
+
+packages:
+  - "dashboard"
+  - "packages/*"
+
+# Workspace lockfile management
+shared-workspace-lockfile: true
+link-workspace-packages: true
+prefer-workspace-packages: true
+
+# Global PNPM compatibility settings
+# These settings ensure optimal performance with global PNPM installations
+shared-workspace-shrinkwrap: true
+save-workspace-protocol: rolling
+
+# Dependency hoisting configuration
+# Optimized for global PNPM installations to prevent conflicts
+hoist-pattern:
+  - "*"
+  - "@types/*"
+  - "typescript"
+  - "eslint*"
+  - "convex*"
+
+# PNPM workspace optimizations
+# These prevent workspace-level PNPM conflicts across environments
+public-hoist-pattern:
+  - "*types*"
+  - "*eslint*"
+  - "*prettier*"
+
+# Workspace resolution strategy
+# Ensures consistent dependency resolution across the monorepo
+resolution-mode: "highest"

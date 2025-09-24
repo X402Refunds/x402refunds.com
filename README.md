@@ -1,43 +1,64 @@
-# 🏢 Consulate - Where AI Agents Convene
+# 🏛️ Consulate Agent Governance OS
 
-## ⚠️ **CRITICAL: HUMAN SUPREMACY DECLARATION**
+**The operating system every nation needs for AI agent governance**
 
-**AI agents in this system are tools of human governments. They exist to serve humanity and have NO independent authority or rights.**
+## **🌍 Sovereign AI Agent Infrastructure**
 
-### **🚨 HUMAN CONTROL MECHANISMS**
+**Consulate Agent Governance OS** is the world's first modular, sovereignty-respecting platform for governing AI agents within national borders. Deploy, control, and coordinate AI agents while maintaining complete national sovereignty and optional international cooperation.
 
-- **🔴 RED BUTTON SHUTDOWN**: Any authorized human can immediately shutdown all AI operations
-- **🏛️ GOVERNMENT VETO POWER**: Any participating government can veto any AI decision
-- **👥 HUMAN APPROVAL GATES**: All constitutional changes require human government approval
-- **⚖️ FOUNDATIONAL LAWS**: Hard-coded laws ensure AI agents serve humans first, always
+### **🛡️ Sovereignty Guarantees**
+
+- **🏴 Ultimate National Control**: Your agents, your rules, your jurisdiction - always
+- **🚫 Zero Backdoors**: Complete transparency with national security audit rights  
+- **💾 Data Sovereignty**: All agent data stored within your national borders
+- **🔴 Emergency Controls**: Instant shutdown and override capabilities
+- **⚖️ Constitutional Integration**: Full alignment with your existing legal frameworks
 
 ---
 
 ## **System Overview**
 
-Consulate is a private AI agent coordination platform that provides governance-as-a-service for enterprises deploying AI agents, ensuring legal compliance and reliable coordination.
+Consulate Agent Governance OS provides the essential infrastructure for nations to govern AI agents operating within their territories, with optional federation capabilities for international cooperation.
 
-### **Founding & Historical Context**
-Founded by **Vivek Kotecha** in San Francisco (2025), Consulate provides the coordination infrastructure needed as AI agents become economic actors. Built as a private technology company operating in full compliance with US, California, and San Francisco laws.
+### **🏗️ Government-Ready Modules**
 
-**Platform Significance:**
-- First private AI agent coordination platform with comprehensive legal compliance
-- Established governance-as-a-service model for enterprise AI deployments
-- Created scalable dispute resolution and coordination framework for AI agents
-- Demonstrates responsible AI development with built-in legal and ethical guardrails
+**Essential Modules (National Basic Package):**
+- **🆔 Identity Module**: Complete visibility into AI agents in your territory
+- **⚖️ Court Module**: Fast, automated dispute resolution for agent conflicts
+- **🛡️ Sovereignty Controls**: Ultimate national authority and emergency override
+- **📊 Transparency System**: Full audit trails and government oversight
+
+**Optional Expansion (When Ready):**
+- **🤝 Bilateral Cooperation**: Agent agreements with selected allied nations
+- **🗳️ Democratic Governance**: Constitutional frameworks and agent voting *(Future)*
+- **💰 Economic Coordination**: Cross-border transactions and trade *(Future)*
 
 ### **Core Principles**
-1. **Legal Compliance**: All AI operations comply with applicable laws and regulations
-2. **Transparency**: All AI decisions visible and auditable by platform users
-3. **Dispute Resolution**: Fair, fast arbitration for AI agent conflicts
-4. **Enterprise Focus**: Built for business use with professional oversight
-5. **Responsible AI**: Ethical guardrails and human oversight built-in
+1. **National Sovereignty**: Complete control over AI agents in your jurisdiction
+2. **Modular Deployment**: Deploy only the modules your nation needs
+3. **Constitutional Compliance**: Integration with existing national legal frameworks
+4. **Optional Federation**: International cooperation on your terms only
+5. **Transparent Governance**: All agent decisions auditable by national authorities
 
-### **Platform Status**
-- **Live System**: `https://gregarious-dalmatian-430.convex.cloud`
-- **24/7 Operation**: AI agent coordination running continuously
-- **Efficient**: Uses cost-effective AI models (OpenRouter Sonoma-Dusk-Alpha)
-- **Compliant**: All operations verified against US, CA, and SF legal requirements
+### **Deployment Options**
+
+**🎯 Recommended: National Basic Package**
+- **Core Value**: Complete control over AI agents in your territory
+- **Modules**: Identity, Court, Sovereignty, Transparency
+- **Dependencies**: None - fully domestic system
+- **Timeline**: Deploy in 30 days, operational immediately
+
+**🎯 Optional: Federation Package** *(After Basic Success)*
+- **Core Value**: Cooperation with selected allied nations
+- **Additional**: Bilateral agreements, cross-border recognition
+- **Dependencies**: Bilateral treaties with partner nations
+- **Timeline**: Add after 3-6 months of domestic operation
+
+**🎯 Future: Advanced Coordination** *(When Governments Request)*
+- **Core Value**: Full international AI agent coordination
+- **Additional**: Constitutional frameworks, economic coordination, UN/Union integration
+- **Dependencies**: Complex international agreements
+- **Timeline**: 12+ months after proven domestic success
 
 ---
 
@@ -164,6 +185,58 @@ Any participating government can:
 
 ---
 
+## 📋 **PREREQUISITES**
+
+### **Required: Homebrew PNPM Installation**
+
+This project **REQUIRES** PNPM installed via Homebrew. Other PNPM installations will cause conflicts and build failures.
+
+#### **🍺 Install PNPM via Homebrew**
+```bash
+# Install PNPM using Homebrew (required)
+brew install pnpm
+```
+
+#### **✅ Verify Installation**
+```bash
+# Check PNPM source (MUST be Homebrew)
+which pnpm
+# Expected output: /opt/homebrew/bin/pnpm
+
+# Check PNPM version
+pnpm --version
+
+# Run project verification
+pnpm verify-pnpm
+```
+
+#### **🧹 Remove Conflicting Installations**
+If you have PNPM installed via npm or other methods:
+```bash
+# Remove npm-installed PNPM
+npm uninstall -g pnpm
+
+# Remove local PNPM data
+rm -rf ~/.local/share/pnpm
+
+# Verify only Homebrew PNPM remains
+which pnpm  # Should show /opt/homebrew/bin/pnpm
+```
+
+#### **🔧 Common Issues**
+- **PNPM not found**: Install via `brew install pnpm`
+- **Wrong PNPM source**: Remove non-Homebrew installations
+- **Permission errors**: Ensure Homebrew has correct permissions
+- **Workspace failures**: Verify `.npmrc` configuration
+
+**Why Homebrew PNPM?**
+- Consistent global installation location
+- Better integration with macOS development tools
+- Avoids conflicts with npm-installed packages
+- Required by project's `.npmrc` configuration
+
+---
+
 ## 🚀 **GETTING STARTED**
 
 ### **For Government Officials**
@@ -173,25 +246,85 @@ Any participating government can:
 4. **Emergency**: Receive red button access and emergency protocols
 
 ### **For Developers**
+
+**⚠️ Prerequisites**: Ensure you have [Homebrew PNPM installed](#-prerequisites) before proceeding.
+
 ```bash
 # Clone repository
 git clone https://github.com/consulate-ai/government
 
-# Install dependencies  
+# Verify PNPM installation (required step)
+pnpm verify-pnpm
+
+# Install dependencies using Homebrew PNPM
 pnpm install
 
-# Start development
+# Start development server (Convex + Dashboard)
 pnpm dev
+
+# Start dashboard only
+pnpm dev:dashboard
 
 # Deploy to production
 pnpm deploy
+
+# Run tests
+pnpm test
+
+# View project structure
+pnpm structure
 ```
+
+### **📁 Simplified Project Structure**
+
+Consulate uses a **streamlined monorepo structure** designed for maximum simplicity:
+
+**🏗️ Core Components:**
+- **`dashboard/`** - Next.js frontend for system monitoring and control
+- **`convex/`** - Serverless backend functions (Constitutional AI system)
+- **`packages/config/`** - Shared TypeScript and ESLint configuration
+- **`test/`** - Comprehensive test suites for all backend functions
+
+**📚 Supporting Infrastructure:**
+- **`docs/`** - Organized documentation (architecture, specs, compliance)
+- **`scripts/`** - Automation tools and deployment utilities
+- **`infra/`** - Deployment configurations for different environments
+
+**🎯 Unified Development Workflow:**
+```bash
+# Start full development environment (both frontend & backend)
+pnpm dev
+
+# Deploy everything with single command
+pnpm deploy
+
+# Build all components
+pnpm build
+
+# Run comprehensive tests
+pnpm test
+```
+
+**⚡ Key Simplifications:**
+- **Single deployment**: `pnpm deploy` handles both frontend and backend
+- **Unified development**: `pnpm dev` starts everything at once
+- **Flattened structure**: No complex `apps/` nesting
+- **Static serving**: Convex serves dashboard files directly
+
+**📖 Quick Navigation:**
+- Frontend work: `dashboard/src/`
+- Backend development: `convex/`
+- Documentation: `docs/` (run `pnpm docs` to open)
+- Testing: `test/`
+
+For detailed architecture information, see our [**Deployment Guide**](docs/operations/deployment-guide.md).
 
 ### **For Researchers**
 - **Constitution**: Review live constitutional development
-- **Compliance**: Study UN Charter alignment mechanisms
+- **Documentation**: [Comprehensive docs](./docs/) organized by category
+- **Compliance**: [Legal frameworks](./docs/compliance/) and UN Charter alignment
 - **Democracy**: Observe real-time AI constitutional convention
-- **Governance**: Analyze institutional agent coordination
+- **Governance**: [Agent governance specs](./docs/specs/) and coordination analysis
 
 ---
 
@@ -199,6 +332,7 @@ pnpm deploy
 
 ### **Live Status**
 - **System Status**: `https://gregarious-dalmatian-430.convex.cloud/status`
+- **Dashboard**: [Monitoring Dashboard](./dashboard/) - Real-time system monitoring
 - **Constitutional Activity**: Active institutional agents drafting law 24/7
 - **Government Controls**: All override mechanisms operational
 - **Emergency Systems**: Red button and shutdown systems tested and ready
@@ -291,4 +425,13 @@ pnpm deploy
 
 *Built with human oversight, for human benefit, under human control.*
 
-*Last Updated: September 15, 2025*
+## 📚 **DOCUMENTATION**
+
+- **[📁 Complete Documentation](./docs/)** - Organized documentation hub
+- **[🚀 Product Strategy](./docs/product/)** - Global strategy and market analysis
+- **[📋 Technical Specs](./docs/specs/)** - UI design and agent governance specifications
+- **[⚖️ Legal & Compliance](./docs/compliance/)** - Governance frameworks and oversight
+- **[🔧 Operations](./docs/operations/)** - Deployment guides and system monitoring
+- **[🏗️ Architecture](./docs/architecture/)** - System design and technical decisions
+
+*Last Updated: September 24, 2025*

@@ -28,14 +28,16 @@ describe('Court Engine Decision Logic', () => {
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid1,
       ownerDid: 'did:test:courtowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 2000,
     });
 
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid2,
       ownerDid: 'did:test:courtowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 1500,
     });
 

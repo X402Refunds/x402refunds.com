@@ -24,7 +24,8 @@ describe('Evidence APIs', () => {
     await t.mutation(api.agents.joinAgent, {
       did: testAgentDid,
       ownerDid: 'did:test:evidenceowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 2000,
     });
 
@@ -32,7 +33,8 @@ describe('Evidence APIs', () => {
     await t.mutation(api.agents.joinAgent, {
       did: 'did:test:other',
       ownerDid: 'did:test:evidenceowner',
-      agentType: 'verified' as const,
+      citizenshipTier: 'verified' as const,
+      functionalType: 'general' as const,
       stake: 2000,
     });
 
@@ -148,7 +150,8 @@ describe('Evidence APIs', () => {
       const agentId = await t.mutation(api.agents.joinAgent, {
         did: inactiveAgentDid,
         ownerDid: 'did:test:evidenceowner',
-        agentType: 'session' as const,
+        citizenshipTier: 'session' as const,
+        functionalType: 'general' as const,
       });
 
       // Mark agent as inactive
@@ -227,6 +230,8 @@ describe('Evidence APIs', () => {
       await t.mutation(api.agents.joinAgent, {
         did: 'did:test:otherapent',
         ownerDid: 'did:test:evidenceowner',
+        citizenshipTier: 'ephemeral' as const,
+        functionalType: 'general' as const,
         agentType: 'ephemeral' as const,
         sponsor: testAgentDid, // Use our test agent as sponsor
       });

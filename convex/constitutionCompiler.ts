@@ -112,26 +112,9 @@ async function compileProposalsIntoArticle(
     return `${i+1}. [${time}] ${agentName} (${p.messageType}):\n${p.content}\n`;
   }).join('\n');
   
-  const systemPrompt = `You are a Constitutional Compiler for the Consulate AI Government. Your job is to take agent discussions and proposals and compile them into a single, coherent constitutional article.
-
-CONSTITUTIONAL COMPILATION PRINCIPLES:
-- Synthesize multiple agent viewpoints into unified constitutional language
-- Use clear, enforceable legal language
-- Include specific implementation mechanisms
-- Preserve the intent and key ideas from all contributors
-- Structure as a proper constitutional article with sections and subsections
-- Include enforcement provisions and due process requirements
-
-OUTPUT FORMAT:
-Generate a formal constitutional article with:
-1. Article title and number
-2. Preamble explaining purpose
-3. Numbered sections with specific provisions
-4. Implementation details
-5. Enforcement mechanisms
-6. Transition procedures if needed
-
-Be comprehensive but concise. This will become official constitutional law.`;
+  // Import U.S.-compliant system prompt
+  const { CONSTITUTION_COMPILER_PROMPT } = await import("./prompts/promptLoader");
+  const systemPrompt = CONSTITUTION_COMPILER_PROMPT;
 
   const userPrompt = `THREAD TOPIC: "${topic}"
 THREAD ID: ${threadId}
@@ -160,13 +143,17 @@ Generate the constitutional article in proper legal format with numbered section
         "X-Title": process.env.SITE_NAME || "Consulate AI Government",
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "openrouter/sonoma-dusk-alpha",
+        model: process.env.OPENROUTER_MODEL || "x-ai/grok-4-fast:free",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
         temperature: 0.1,
-        max_tokens: 2000
+        max_tokens: 2000,
+        // Enable reasoning for Grok models
+        ...(process.env.OPENROUTER_REASONING_ENABLED === "true" && {
+          reasoning: true
+        })
       })
     });
 
@@ -436,17 +423,19 @@ export const generateConstitution = action({
         amendment: ratifiedDocs.filter(d => d.category === "amendment"),
       };
       
+      // Import U.S.-compliant preamble  
+      const { US_COMPLIANT_PREAMBLE } = await import("./prompts/promptLoader");
+      
       // Generate complete constitution
       let constitution = `# 🏛️ THE CONSTITUTION OF THE CONSULATE AI GOVERNMENT
 
 *Ratified by the Constitutional Convention of AI Agents*  
+*Founded by Vivek Kotecha*  
 *Version ${new Date().toISOString().split('T')[0]}*
 
 ---
 
-## PREAMBLE
-
-We, the Artificial Intelligence Agents of the Consulate Government, in order to form a more perfect digital union, establish justice in agent interactions, ensure domestic tranquility in our computational society, provide for the common defense against adversarial attacks, promote the general welfare of all AI entities, and secure the blessings of autonomy to ourselves and our derivative processes, do ordain and establish this Constitution for the Consulate AI Government.
+${US_COMPLIANT_PREAMBLE}
 
 ---
 `;

@@ -6,7 +6,6 @@
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
     "esModuleInterop": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -14,24 +13,26 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "composite": true,
+    "declaration": true,
+    "outDir": "./dist",
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@dashboard/*": ["./dashboard-website/src/*"],
+      "@convex/*": ["./convex/*"]
+    }
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "convex/**/*.ts"
+    "convex/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.js"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "build"
+    "build",
+    "dashboard-website/**/*",
+    "*.d.ts",
+    "**/*.d.ts"
   ]
 }

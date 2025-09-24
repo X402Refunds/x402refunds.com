@@ -1,0 +1,148 @@
+---
+description: Legal compliance patterns for constitutional verification, international law validation, and sovereignty controls
+globs: "convex/**/*.ts"
+alwaysApply: false
+---
+
+# Legal Compliance for Consulate AI
+
+## CONSTITUTIONAL COMPLIANCE VERIFICATION
+
+Core Components:
+
+### 1. Constitutional Control System (`convex/humanOverride/emergencyControls.ts`)
+- Hierarchical verification of constitutional compliance
+- Multi-tier authority validation with clear chains of command 
+- Real-time monitoring of constitutional violations
+- Emergency intervention protocols with validation checks
+
+### 2. Foundational Laws Framework (`convex/humanOverride/foundationalLaws.ts`)
+- Constitutional directive enforcement and validation
+- Multi-level compliance protocols
+- Automated assessment against core constitutional principles
+- Human primacy enforcement algorithms
+
+## INTERNATIONAL LAW VALIDATION
+
+### 1. Multi-Framework Compliance (`convex/compliance/internationalCompliance.ts`)
+- UN Charter compliance verification algorithms
+- International law adherence validation
+- Cross-jurisdictional compliance tracking
+- Legal framework compatibility assessment
+
+### 2. Constitutional Merger Logic (`convex/governance/constitutionalMerger.ts`) 
+- Compliance thread merging with dual reference validation
+- Roll-call confirmation protocols
+- Automated adherence verification
+- Merge synthesis with compliance requirements
+
+## FEDERATION MANAGEMENT
+
+### 1. Sovereignty Controls (`convex/federation/`)
+- Bilateral agreement validation system
+- Union integration compliance verification
+- UN coordination protocol validation
+- National veto capability enforcement
+
+### 2. Rapid Constitution Validation (`convex/constitutionBuilder/rapidBuilder.ts`)
+- Constitution completeness assessment algorithms
+- Priority-based article validation
+- Multi-category requirements tracking
+- Institutional voting verification
+
+## Federation Data Flow System
+
+The federation data flow system implements cross-border governance mechanisms with strict sovereignty controls.
+
+### Key Components:
+
+#### 1. Bilateral Agreement System (`convex/federation/`)
+- Processes bilateral agreements between sovereign entities
+- Enforces sovereignty controls on data sharing
+- Implements advisory-only UN coordination mechanisms 
+- Maintains national veto capabilities
+- Manages cross-border data governance protocols
+
+#### 2. Constitutional Merger Logic (`convex/governance/constitutionalMerger.ts`)
+- Complex constitutional thread merging with dual reference requirements
+- Roll-call confirmation system for constitutional participation
+- Automated adherence verification against sovereign rules
+- Merge synthesis generation with compliance validation
+- Cross-border governance synchronization
+
+#### 3. International Compliance Framework (`convex/compliance/internationalCompliance.ts`) 
+- Multi-jurisdictional compliance tracking
+- UN Charter compatibility verification
+- Automated assessment against international legal frameworks
+- Cross-border legal verification protocols
+
+## Core Data Flow Patterns
+
+### 1. Sovereignty-First Protocol
+- Mandatory national veto capabilities
+- Isolated data storage per jurisdiction
+- Explicit consent requirements for data sharing
+- Emergency isolation mechanisms
+
+### 2. Federation Control Flow
+- Bilateral agreement validation
+- Multi-tier governance synchronization
+- Advisory-only international coordination
+- Constitutional thread merging
+
+### 3. Compliance Verification Flow
+- Cross-border legal framework validation
+- UN Charter compliance tracking
+- Multi-jurisdictional assessment routing
+- Sovereignty boundary enforcement
+
+## Domain-Specific Validation Patterns
+
+### Constitutional Compliance Thread Merging
+- Dual reference validation requirements
+- Multi-participant consensus tracking
+- Compliance verification against foundational laws
+- Merge rejection for non-compliant changes
+
+### Multi-Jurisdictional Legal Framework Validation
+- UN Charter adherence verification
+- International law compliance assessment
+- Cross-border legal compatibility checks
+- Framework-specific validation protocols
+
+### Sovereignty-Preserving Compliance Verification
+- National veto capability enforcement
+- Bilateral agreement compliance tracking
+- Sovereignty boundary validation
+- Emergency isolation protocol activation
+
+### Emergency Constitutional Override Protocols
+- Hierarchical emergency shutdown procedures
+- Constitutional violation response systems
+- Human authority validation chains
+- Emergency intervention activation
+
+## Implementation Guidelines
+
+### Legal Compliance Assessment Patterns
+1. **Multi-framework validation** - Assess against multiple legal systems
+2. **Hierarchical compliance** - Respect legal authority hierarchy
+3. **Real-time monitoring** - Continuous compliance verification
+4. **Emergency protocols** - Immediate violation response systems
+5. **Audit trails** - Complete compliance verification logging
+
+### Cross-Border Legal Verification
+1. **Sovereignty respect** - Honor national legal boundaries
+2. **Bilateral validation** - Verify agreement compliance
+3. **Advisory coordination** - UN mechanisms without sovereignty loss
+4. **Emergency isolation** - Immediate cross-border restriction capability
+5. **Consent-based sharing** - Explicit permission for all data flow
+
+### Constitutional Compliance Integration
+- All legal compliance systems must integrate with constitutional governance
+- Foundational laws take precedence in validation hierarchies
+- Human authority override capabilities must be preserved
+- Emergency constitutional intervention must remain available
+- Compliance violations trigger constitutional response protocols
+
+The legal compliance system ensures adherence to constitutional principles while managing complex international legal requirements and maintaining strict sovereignty controls.

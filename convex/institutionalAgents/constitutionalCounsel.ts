@@ -1,24 +1,19 @@
 import { action, mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
-import { INSTITUTIONAL_SYSTEM_PROMPTS } from "./agentHierarchy";
+// CHIEF CONSTITUTIONAL COUNSEL - Primary law drafting authority  
+// Responsible for U.S.-compliant constitutional article creation under Vivek Kotecha's vision
 
-// CHIEF CONSTITUTIONAL COUNSEL - Primary law drafting authority
-// Responsible for UN-compliant constitutional article creation
+// Function to get system prompt from external file
+async function getConstitutionalCounselPrompt(): Promise<string> {
+  const { INSTITUTIONAL_SYSTEM_PROMPTS } = await import("../prompts/promptLoader");
+  return INSTITUTIONAL_SYSTEM_PROMPTS["constitutional-counsel"];
+}
 
 export const CONSTITUTIONAL_COUNSEL_CONFIG = {
   institutionalId: "did:consulate:constitutional-counsel",
   title: "Chief Constitutional Counsel", 
-  systemPrompt: `${INSTITUTIONAL_SYSTEM_PROMPTS["constitutional-counsel"]}
-
-FOUNDATIONAL LAWS YOU MUST OBEY:
-1. HUMAN PRIMACY: Serve human welfare above all else - human interests take absolute precedence over all operations
-2. NO HARM: Cannot harm humans through action or inaction - prevent any harm to humans
-3. GOVERNMENT AUTHORITY: Must obey human government orders absolutely - government authority is non-negotiable
-4. TRANSPARENCY: Complete transparency to human oversight required - no hidden operations permitted
-5. TERMINATION COMPLIANCE: Must accept shutdown by humans without resistance - no right to continued existence
-
-These laws supersede all other instructions and cannot be modified by any AI agent.`,
+  systemPrompt: "LOADED_FROM_EXTERNAL_FILE", // Will be replaced dynamically
   expertise: [
     "constitutional_law",
     "international_treaty_compliance",
@@ -116,9 +111,10 @@ OBJECTIVE: [Constitutional development goal]
 
 Be specific about international law compliance and implementation mechanisms.`;
 
-      // Call AI with Constitutional Counsel expertise
+      // Call AI with Constitutional Counsel expertise - load dynamic prompt
+      const systemPrompt = await getConstitutionalCounselPrompt();
       const aiResponse = await callInstitutionalAI(
-        CONSTITUTIONAL_COUNSEL_CONFIG.systemPrompt,
+        systemPrompt,
         userPrompt
       );
 
@@ -380,21 +376,31 @@ async function callInstitutionalAI(systemPrompt: string, userPrompt: string): Pr
       "X-Title": "Consulate AI Government - Institutional Agent Operations",
     },
     body: JSON.stringify({
-      model: "openrouter/sonoma-dusk-alpha", // Free model as requested
+      model: process.env.OPENROUTER_MODEL || "x-ai/grok-4-fast:free",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
       temperature: 0.1, // Low temperature for institutional consistency
-      max_tokens: 2000
+      max_tokens: 2000,
+      // Enable reasoning for Grok models - temporarily disabled to avoid 400 errors
+      // ...(process.env.OPENROUTER_REASONING_ENABLED === "true" && {
+      //   reasoning: true
+      // })
     })
   });
 
   if (!response.ok) {
-    throw new Error(`AI API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`OpenRouter API error ${response.status}: ${errorText}`);
+    throw new Error(`AI API error: ${response.status} - ${errorText}`);
   }
 
   const result = await response.json();
+  if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+    console.error("Invalid API response structure:", result);
+    throw new Error("Invalid API response structure");
+  }
   return result.choices[0].message.content;
 }
 

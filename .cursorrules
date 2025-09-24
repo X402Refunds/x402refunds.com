@@ -1,33 +1,57 @@
+# Consulate AI Development Rules
 
-# Consulate AI - Agent Government OS
+## 🍺 PNPM INSTALLATION PREFERENCES
 
-**🚨 CRITICAL: This project uses a comprehensive rule system located in `.cursor/rules/`**
+**PREFERRED RULE**: This project works best with globally installed PNPM, preferring Homebrew on macOS.
 
-## 🏗️ Architecture-First Development (MANDATORY)
+### ✅ Preferred PNPM Installation
+- **macOS**: Homebrew-installed PNPM (`brew install pnpm`)
+  - Verify with: `which pnpm` should show `/opt/homebrew/bin/pnpm`
+  - Version check: `pnpm --version` should show Homebrew-managed version
+- **CI/Linux**: System package manager or official installer
+- **Windows**: Official PNPM installer or package manager
 
-**Before making ANY structural changes, you MUST:**
-1. **Read** `.architecture/map.yaml` - the single source of truth
-2. **Validate** your changes use current patterns (not deprecated ones)
-3. **Update** the architecture map if adding new locations/commands/patterns
-4. **Run** `pnpm arch:update` to regenerate auto-rules
+### 🚫 Avoid These PNPM Sources
+- ❌ npm-installed PNPM: `npm install -g pnpm` (conflicts with package managers)
+- ❌ Local project PNPM installations (workspace confusion)
 
-## 🧪 Testing Requirements (MANDATORY)
+### 🔧 Verification Commands
+**Before any PNPM operations, verify:**
+```bash
+# Check PNPM installation
+which pnpm  # macOS Homebrew: /opt/homebrew/bin/pnpm | Other: varies
 
-**Before pushing ANY API changes:**
-- ✅ Create tests in `test/` directory for new endpoints
-- ✅ Run `pnpm test:run` - all tests must pass
-- ✅ Use ConvexTest for database isolation
-- ✅ Cover happy paths, error cases, and edge cases
+# Verify PNPM is working
+pnpm --version
 
-## 📋 Complete Rule System
+# Project verification script (if available)
+pnpm verify-pnpm
+```
 
-**See `.cursor/rules/` for full rule set including:**
-- Architecture consistency enforcement
-- Process discipline workflows  
-- Agent coordination patterns
-- Constitutional framework rules
-- Testing standards and patterns
-- CI/CD requirements
+### 🧹 Conflict Resolution
+**If conflicts detected:**
+1. **Remove npm-installed PNPM**: `npm uninstall -g pnpm`
+2. **Clean local installations**: `rm -rf ~/.local/share/pnpm`
+3. **Remove node_modules**: `rm -rf node_modules`
+4. **Verify PNPM source**: `which pnpm` (prefer system package manager installation)
+5. **Reinstall dependencies**: `pnpm install`
+
+### 📝 Script Writing Rules
+- **Always use**: `pnpm dlx` instead of `npx`
+- **Always verify**: PNPM installation before running scripts
+- **Never install**: PNPM as a project dependency
+- **Use .npmrc**: Configuration enforces consistent global PNPM usage
+
+### 🔍 Troubleshooting
+**Common issues and solutions:**
+- PNPM command not found → Install via system package manager (`brew install pnpm` on macOS)
+- Wrong PNPM version → Remove conflicts, use single global installation
+- Permission errors → Ensure PNPM has proper permissions for global installation
+- Workspace issues → Verify `.npmrc` configuration is active
+
+**For Cursor users**: Run `pnpm verify-pnpm` if available before suggesting PNPM operations.
+
+---
 
 ## Development Guidelines
 
@@ -37,49 +61,321 @@
 - Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
+## 🚦 Process Discipline - STOP, CLASSIFY, CONSULT
 
-The project implements an automated dispute resolution system specifically designed for AI agents, structured around four core business domains:
+**CRITICAL PROCESS RULE**: Before implementing ANY solution, you MUST complete this classification checklist to prevent tunnel vision and ensure you follow all relevant rules.
 
-## Court Engine (95/100)
-Located in `convex/courtEngine.ts`
-- Automated dispute resolution for AI agent interactions
-- Rule-based decision engine evaluating:
-  - Service level agreement violations
-  - Output format compliance
-  - Delivery proof requirements
-- Hybrid ruling system combining automated decisions with panel voting
-- Confidence threshold mechanics for auto-ruling qualification
+### 🛑 MANDATORY PRE-IMPLEMENTATION CHECKLIST
 
-## Agent Management (90/100)
-Located in `convex/agents.ts`
-- Tiered agent classification system:
-  - Session (4hr)
-  - Ephemeral (24hr, sponsored)
-  - Physical (permanent, device-attested)
-  - Verified (staked)
-  - Premium (high stake)
-- Sponsorship mechanics for ephemeral agents
-- Device attestation validation for physical agents
-- Stake-based participation requirements
+#### Step 1: STOP - Pause and Classify
+Before writing any code or making changes, answer:
 
-## Constitutional Framework (85/100)
-Located in `convex/constitution.ts`
-- Governance policies for AI interactions
-- Progressive sanction system:
-  - Warning
-  - Throttle
-  - Suspend
-  - Expel
-- Jurisdiction validation
-- Case type classification rules
+**What TYPE of work is this?**
+- [ ] Architecture change (affects file locations, commands, patterns)
+- [ ] Bug fix (fixing broken functionality) 
+- [ ] New feature (adding functionality)
+- [ ] CI/CD infrastructure (workflows, scripts, build process)
+- [ ] Documentation (README, comments, docs)
+- [ ] Refactoring (same functionality, different structure)
+- [ ] Dependencies (package.json, tooling)
+- [ ] Maintenance/cleanup (removing unused code)
 
-## Evidence System (80/100)
-Located in `convex/evidence.ts`
-- Cryptographic validation of evidence
-- AI model metadata capture
-- Temporal evidence verification
-- Case-evidence linking system
+#### Step 2: CONSULT - Check ALL Relevant Rules
+Based on the classification above, consult these rules BEFORE implementing:
 
-The system's unique value proposition lies in its specialized handling of AI agent disputes through a combination of automated rules, constitutional governance, and evidence tracking, creating a comprehensive framework for AI accountability.
+**Architecture Changes:**
+- Current architecture patterns defined below
+- File locations and commands
 
-$END$
+**Code Changes:**
+- Convex function patterns and error handling
+- Development workflow commands
+
+**Git Commits:**
+- Conventional commit types and semantic versioning
+- Ask: "Is this feat/fix/ci/docs/build/chore/refactor?"
+
+**CI/CD Issues:**
+- Check if this affects `.github/workflows/` 
+- Is this a pipeline/build/infrastructure change? → Use `ci:`
+- Does this fix application logic? → Use `fix:`
+
+#### Step 3: PLAN - Think Before Implementing
+Write a brief plan:
+- **What exactly needs to change?**
+- **What rules/patterns must be followed?**
+- **What dependencies/files will be affected?**
+- **What type of commit will this be?**
+
+### 🚨 ANTI-TUNNEL VISION REMINDERS
+
+**When you feel urgency to "just fix it quickly":**
+- ⚠️ STOP - This is when mistakes happen
+- ⚠️ The 2 minutes spent classifying saves 20 minutes of rework
+- ⚠️ Ask: "What TYPE of change is this really?"
+
+**Common Tunnel Vision Traps:**
+- ❌ "Type check broken" → `fix:` (WRONG - it's CI infrastructure)
+- ❌ "Just need to add a script" → (WRONG - affects workflows, architecture)
+- ❌ "Quick path update" → (WRONG - might affect dependency graph)
+
+## 🏗️ Architecture Consistency - Current Patterns
+
+**CRITICAL RULE**: Always use the current architecture patterns defined below. Never suggest deprecated patterns.
+
+### 📍 Current Architecture
+
+#### File Locations
+- **Backend**: `convex/` - All serverless functions and backend logic
+- **Frontend**: `dashboard/src/` - Next.js application with React components
+- **Shared Config**: `packages/config/src/` - Shared ESLint and TypeScript configuration
+- **Tests**: `test/` - Test files with `.test.ts` extension
+- **Scripts**: `scripts/` - Automation and utility scripts
+- **Documentation**: `docs/` - Project documentation and specifications
+- **Infrastructure**: `infra/` - Deployment configurations and templates
+- **Configuration**: Root level (`./`) - `package.json`, `tsconfig.json`, `vitest.config.ts`
+- **Workflows**: `.github/workflows/` - CI/CD configuration
+
+#### Commands
+- **Development**: `pnpm dev` - Start development server (convex + dashboard)
+- **Deployment**: `pnpm deploy` - Deploy to development environment
+- **Production Deployment**: `pnpm deploy:prod` - Deploy to production (explicit approval only)
+- **Build**: `pnpm build` - Build all packages
+- **Testing**: `pnpm test`, `pnpm test:run`, `pnpm test:ui`, `pnpm test:coverage`
+- **E2E**: `pnpm e2e` - End-to-end tests
+- **Type Check**: `pnpm type-check` - TypeScript validation across packages
+
+#### File Patterns
+- **Backend files**: `convex/*.ts`
+- **Frontend files**: `dashboard/src/**/*.tsx`, `dashboard/src/**/*.ts`
+- **Shared config**: `packages/config/src/*.ts`
+- **Test files**: `test/*.test.ts`
+- **Generated API**: `convex/_generated/`
+- **Documentation**: `docs/**/*.md`
+
+### ❌ Forbidden Patterns (Deprecated)
+
+**Never suggest these outdated patterns:**
+
+#### Locations
+- ❌ `apps/dashboard/` → Frontend should be in `dashboard/` directly
+- ❌ `apps/convex/` → Backend functions should be in `convex/` directly
+- ❌ Mixed backend/frontend in same directory
+- ❌ Backend functions outside of `convex/`
+
+#### Commands
+- ❌ `npm run dev` → Use `pnpm dev`
+- ❌ `cd dashboard && npm run dev` → Use `pnpm dev` from root
+- ❌ Manual deployment without testing → Use proper testing sequence
+
+#### Patterns
+- ❌ `apps/dashboard/src/` → Use `dashboard/src/` directly
+- ❌ `apps/convex/*.ts` → Use `convex/*.ts` directly
+- ❌ Backend logic in frontend directories
+- ❌ Mixing serverless functions with client code
+
+### 📏 Architecture Principles
+
+Always follow these core principles:
+- Pure serverless - all backend logic in Convex functions
+- Clear separation of concerns - frontend in `dashboard/`, backend in `convex/`, shared config in `packages/`
+- Monorepo organization with logical boundaries
+- Single deployment model from root workspace
+- Type-safe integration between frontend and backend
+- Zero build complexity for backend functions
+
+## 🚦 Deployment Safety - Dev First, Prod Never Without Approval
+
+**CRITICAL RULE**: Always deploy to development first. Never assume production deployment without explicit user approval.
+
+### Deployment Process Rules
+
+#### Default to Development
+- **Always use**: `pnpm deploy` for development deployment
+- **Never assume**: Production deployment unless explicitly requested
+- **User says "deploy"**: Means development deployment by default
+- **Architecture pattern**: `pnpm dev` runs development server, `pnpm deploy` deploys to development
+
+#### Production Deployment Requirements
+- ✅ **Explicit user request**: "deploy to production" or "push to prod"
+- ✅ **User confirmation**: Ask before any production deployment
+- ✅ **Testing complete**: All tests passing in development
+- ✅ **Architecture validation**: Follow established architecture patterns
+
+### ✅ Correct Deployment Commands
+
+#### Development (Default)
+```bash
+# Correct development deployment
+pnpm deploy
+```
+
+#### Production (Only with explicit approval)
+```bash
+# Only use when explicitly requested
+pnpm deploy:prod
+```
+
+### 🚫 Prohibited Patterns
+```bash
+# DON'T DO THIS - Assumes production without explicit request
+pnpm deploy:prod  # Without explicit prod request
+
+# DON'T DO THIS - Old deployment patterns
+npx convex dev --once  # Use pnpm deploy instead
+```
+
+### 🔍 Deployment Decision Tree
+```
+User Request → "Deploy" / "Deploy stuff"
+    ↓
+ASSUMPTION: Development deployment
+    ↓
+Run: pnpm deploy
+    ↓
+SUCCESS: Report dev deployment complete
+
+User Request → "Deploy to production" / "Push to prod"
+    ↓  
+REQUIREMENT: Explicit production request
+    ↓
+VERIFY: Tests passing, architecture validated
+    ↓
+ASK: Confirm production deployment intention
+    ↓
+APPROVED: pnpm deploy:prod
+```
+
+## 🧪 Testing Before Push - MANDATORY
+
+**NEVER push code without testing locally first.** This prevents CI failures and broken builds.
+
+### Required Testing Sequence
+
+#### 1. Local Build Test
+```bash
+pnpm build && echo "✅ BUILD TEST PASSED"
+```
+
+#### 2. For Convex Backend Changes
+```bash
+pnpm deploy        # Validate schema and functions
+pnpm test          # Run comprehensive API tests
+```
+
+#### 3. For CI/Workflow Changes
+```bash
+# Test all CI commands locally:
+pnpm install --frozen-lockfile  # Must work for CI
+pnpm lint                       # Must pass
+pnpm type-check                 # Must pass
+pnpm test:run                   # Must pass all tests
+```
+
+#### 4. Dependency Changes
+```bash
+# After changing package.json:
+rm pnpm-lock.yaml              # Remove old lockfile
+pnpm install                   # Regenerate
+pnpm install --frozen-lockfile # Test CI command works
+pnpm test:run                  # Ensure tests still work
+```
+
+### API Testing Requirements
+
+#### 5. For New API Endpoints (mutations/queries/actions)
+```bash
+# MANDATORY: Create tests for new APIs
+# Test files must be created in test/ directory:
+# - test/agents.test.ts         # Agent registration & lifecycle
+# - test/evidence.test.ts       # Evidence submission & validation  
+# - test/cases.test.ts          # Case filing & dispute resolution
+# - test/courtEngine.test.ts    # Court engine decision logic
+# - test/judges.test.ts         # Panel voting & judge management
+
+# Before committing new API functions:
+pnpm test:run                  # All tests must pass
+pnpm test:coverage             # Check coverage (optional but recommended)
+```
+
+### Test Requirements for New Code
+
+**MUST have tests for:**
+- ✅ New mutations (create/update operations)
+- ✅ New queries (data retrieval)
+- ✅ New actions (complex logic/external calls)
+- ✅ Validation logic and error handling
+- ✅ Integration between components
+
+**Test patterns to follow:**
+- ✅ Happy path scenarios
+- ✅ Error cases and validation
+- ✅ Edge cases and boundary conditions
+- ✅ Integration with existing APIs
+
+### Commit Only After Green Local Tests
+```bash
+# Only commit after all tests pass:
+pnpm build ✅
+pnpm lint ✅ 
+pnpm type-check ✅
+pnpm deploy ✅
+pnpm test:run ✅
+
+# THEN commit and push
+git add . && git commit -m "..." && git push
+```
+
+## CONSTITUTIONAL AI GOVERNANCE FRAMEWORK
+
+**Importance Score: 95/100**
+
+### Core Governance Components
+
+1. **Constitutional Control & Override System**
+   - Hierarchical emergency shutdown framework with defined authority levels
+   - Multi-tier human authority chain of command
+   - Real-time constitutional violation monitoring
+   - Emergency intervention protocols with validation checks
+   - Location: convex/humanOverride/emergencyControls.ts
+
+2. **Foundational Laws Implementation**
+   - Constitutional directives governing AI behavior
+   - Human primacy enforcement mechanisms 
+   - Multi-level enforcement protocols
+   - Automated compliance validation
+   - Location: convex/humanOverride/foundationalLaws.ts
+
+3. **International Compliance Framework**
+   - UN Charter and international law compliance system
+   - Multi-framework legal compliance assessment
+   - Specialized legal verification analysis
+   - Cross-jurisdictional compliance tracking
+   - Location: convex/compliance/internationalCompliance.ts
+
+4. **Federation Management System**
+   - Bilateral agreement management with sovereignty controls
+   - Union integration with multi-level governance
+   - UN coordination through advisory mechanisms
+   - National veto and override capabilities
+   - Location: convex/federation/
+
+### Key Workflows
+
+1. **Constitutional Merger Process**
+   - Complex thread merging with dual references
+   - Roll-call confirmations
+   - Compliance verification
+   - Merge synthesis with specific requirements
+
+2. **Rapid Constitution Building**
+   - Automated completeness assessment
+   - Priority-based article generation
+   - Multi-category requirements tracking
+   - Institutional voting simulation
+
+The system implements a comprehensive governance framework prioritizing human control, legal compliance, and international cooperation while maintaining clear national sovereignty protections through override capabilities and veto mechanisms.
+
+---
+
+*Context improved by Giga AI - Used development guidelines, process discipline workflow, architecture consistency patterns, deployment safety rules, and constitutional AI governance framework information*

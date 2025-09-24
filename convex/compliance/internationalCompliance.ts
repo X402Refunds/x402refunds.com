@@ -364,13 +364,17 @@ Focus on legal precision and specific implementation requirements.`;
         "X-Title": "Consulate AI Government - International Compliance Analysis",
       },
       body: JSON.stringify({
-        model: "openrouter/sonoma-dusk-alpha",
+        model: process.env.OPENROUTER_MODEL || "x-ai/grok-4-fast:free",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
         temperature: 0.1,
-        max_tokens: 2000
+        max_tokens: 2000,
+        // Enable reasoning for Grok models
+        ...(process.env.OPENROUTER_REASONING_ENABLED === "true" && {
+          reasoning: true
+        })
       })
     });
 

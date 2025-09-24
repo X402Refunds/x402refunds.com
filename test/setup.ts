@@ -20,7 +20,8 @@ afterAll(async () => {
 export const createTestAgent = () => ({
   did: `did:test:${Date.now()}`,
   name: `TestAgent${Date.now()}`,
-  agentType: 'ephemeral' as const,
+  citizenshipTier: 'ephemeral' as const,
+  functionalType: 'general' as const,
   metadata: {
     model: 'claude-3.5-sonnet',
     version: '1.0.0',

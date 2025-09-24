@@ -1,0 +1,23 @@
+{
+  "node": {
+    "version": "20"
+  },
+  "environment": {
+    "variables": {
+      "CONVEX_SITE_URL": {
+        "development": "http://localhost:3000",
+        "production": "https://consulate.ai"
+      }
+    }
+  },
+  "typescript": {
+    "config": "tsconfig.json"
+  },
+  "httpAction": true,
+  "httpMounts": [
+    {
+      "mountPath": "/app",
+      "staticAssets": "dashboard/out"
+    }
+  ]
+}

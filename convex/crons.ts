@@ -17,11 +17,18 @@ crons.daily(
 //   internal.agents.cleanupExpiredAgents
 // );
 
-// RAPID CONSTITUTION BUILDING MODE - Speed up until constitution is complete
+// ULTRA-RAPID CONSTITUTION BUILDING MODE - Maximum agent activity
 crons.interval(
-  "rapid-constitution-building",
-  { minutes: 2 }, // Every 2 minutes - rapid constitutional development
+  "ultra-rapid-constitution-building",
+  { seconds: 10 }, // Every 10 seconds - ultra-rapid constitutional development
   api.institutionalAgents.agentOrchestrator.runInstitutionalGovernanceRound
+);
+
+// High-frequency AI agent inference - direct constitutional agent activation
+crons.interval(
+  "high-frequency-agent-inference",
+  { seconds: 15 }, // Every 15 seconds - direct agent AI inference
+  api.aiInference.scheduleAllAgentInferences
 );
 
 // Cleanup expired memories every 6 hours  

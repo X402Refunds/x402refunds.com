@@ -119,8 +119,48 @@ export default defineSchema({
       judicial: v.boolean(),
       weight: v.optional(v.number())         // Voting weight (1 for standard, 2 for premium)
     })),
+
+    // Optional federation fields for cross-border coordination
+    federation: v.optional(v.object({
+      enabled: v.boolean(),                      // Whether this agent participates in federation
+      nationalDID: v.string(),                   // Primary sovereign identity (same as main DID)
+      homeJurisdiction: v.string(),              // Ultimate sovereignty (ISO country code)
+      
+      // Optional cross-border capabilities
+      crossBorderEnabled: v.optional(v.boolean()),
+      bilateralAgreements: v.optional(v.array(v.string())), // Country codes with agreements
+      unionPassport: v.optional(v.string()),     // EU/ASEAN/NAFTA etc. passport
+      unRecognition: v.optional(v.string()),     // Optional UN global recognition ID
+      
+      // Sovereignty chain - always respects national authority
+      sovereigntyChain: v.object({
+        national: v.literal("ULTIMATE_AUTHORITY"),
+        union: v.optional(v.literal("DELEGATED_AUTHORITY")),
+        un: v.optional(v.literal("ADVISORY_ONLY"))
+      }),
+      
+      // Federation metadata
+      federationLevel: v.optional(v.union(
+        v.literal("domestic_only"),
+        v.literal("bilateral_only"), 
+        v.literal("union_integrated"),
+        v.literal("un_coordinated")
+      )),
+      lastFederationUpdate: v.optional(v.number()),
+    })),
+    
+    // Constitutional compliance status
+    constitutionalStatus: v.optional(v.union(
+      v.literal("not_attested"),    // No constitutional attestation yet
+      v.literal("attested"),        // Valid constitutional attestation
+      v.literal("expired"),         // Attestation expired, needs renewal
+      v.literal("revoked"),         // Attestation revoked by authority
+      v.literal("under_review")     // Attestation being reviewed
+    )),
+    attestationId: v.optional(v.id("constitutionalAttestations")), // Link to attestation record
     
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
@@ -297,6 +337,148 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_timestamp", ["timestamp"])
     .index("by_agent", ["agentDid"]),
+
+  // Federation infrastructure tables
+  bilateralAgreements: defineTable({
+    countryA: v.string(),                    // ISO country code
+    countryB: v.string(),                    // ISO country code
+    agreementType: v.string(),               // "agent_recognition", "comprehensive_cooperation", etc.
+    trustLevel: v.union(v.literal("high"), v.literal("medium"), v.literal("low")),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("terminated")),
+    
+    // Agreement details
+    capabilities: v.array(v.string()),       // ["identity_recognition", "dispute_resolution", etc.]
+    restrictions: v.optional(v.array(v.string())), // Optional limitations
+    
+    // Legal framework
+    signedAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    lastReviewedAt: v.optional(v.number()),
+    
+    // Sovereignty controls
+    emergencyWithdrawal: v.boolean(),        // Can either party withdraw instantly
+    dataResidencyRequirements: v.optional(v.string()),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_country_a", ["countryA"])
+    .index("by_country_b", ["countryB"])
+    .index("by_status", ["status"])
+    .index("by_agreement_type", ["agreementType"]),
+
+  unionIntegrations: defineTable({
+    unionType: v.string(),                   // "EU", "ASEAN", "NAFTA", "AU", etc.
+    memberCountry: v.string(),               // ISO country code
+    integrationLevel: v.union(
+      v.literal("observer"),
+      v.literal("participant"), 
+      v.literal("full_member")
+    ),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("opted_out")),
+    
+    // Union-specific features enabled
+    features: v.array(v.string()),           // ["agent_passport", "unified_disputes", etc.]
+    
+    // Delegation settings
+    delegatedAuthorities: v.array(v.string()), // What powers are delegated to union
+    nationalOverrides: v.array(v.string()),    // What can still be overridden nationally
+    
+    // Legal framework
+    joinedAt: v.number(),
+    lastReviewedAt: v.optional(v.number()),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_union", ["unionType"])
+    .index("by_country", ["memberCountry"])
+    .index("by_status", ["status"])
+    .index("by_integration_level", ["integrationLevel"]),
+
+  unCoordination: defineTable({
+    country: v.string(),                     // ISO country code
+    coordinationLevel: v.union(
+      v.literal("advisory"),                 // Advisory services only
+      v.literal("coordination"),             // Active coordination
+      v.literal("opt_out")                  // No UN coordination
+    ),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("withdrawn")),
+    
+    // UN services opted-in to
+    enabledServices: v.array(v.string()),   // ["best_practices", "mediation", etc.]
+    
+    // Advisory settings
+    advisoryOnly: v.boolean(),              // UN recommendations are advisory only
+    nationalVetoRights: v.boolean(),        // Can veto any UN recommendation
+    
+    // Participation details
+    participationLevel: v.union(v.literal("full"), v.literal("limited"), v.literal("observer")),
+    lastParticipationReview: v.optional(v.number()),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_country", ["country"])
+    .index("by_coordination_level", ["coordinationLevel"])
+    .index("by_status", ["status"]),
+
+  // Sovereignty control tables
+  nationalOverrides: defineTable({
+    country: v.string(),                     // ISO country code
+    overrideType: v.union(
+      v.literal("full_shutdown"),           // Shutdown all agent activities
+      v.literal("federation_suspension"),   // Suspend all cross-border activities
+      v.literal("specific_restriction")     // Target specific agents/activities
+    ),
+    reason: v.string(),
+    authorizedBy: v.string(),               // Government official DID/ID
+    targetScope: v.optional(v.object({
+      agentDids: v.optional(v.array(v.string())),
+      bilateralPartners: v.optional(v.array(v.string())),
+      unionTypes: v.optional(v.array(v.string())),
+      unServices: v.optional(v.array(v.string())),
+    })),
+    status: v.union(v.literal("ACTIVE"), v.literal("LIFTED"), v.literal("EXPIRED")),
+    effectiveAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    liftedAt: v.optional(v.number()),
+    liftedBy: v.optional(v.string()),
+    liftReason: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_country", ["country"])
+    .index("by_status", ["status"])
+    .index("by_override_type", ["overrideType"]),
+
+  nationalVetoes: defineTable({
+    country: v.string(),                     // ISO country code
+    decisionType: v.string(),                // "bilateral_agreement", "union_directive", "un_recommendation"
+    decisionId: v.string(),                  // ID of the decision being vetoed
+    vetoReason: v.string(),
+    authorizedBy: v.string(),
+    emergencyVeto: v.boolean(),
+    status: v.union(v.literal("ACTIVE"), v.literal("OVERTURNED"), v.literal("EXPIRED")),
+    vetoedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_country", ["country"])
+    .index("by_decision_type", ["decisionType"])
+    .index("by_status", ["status"]),
+
+  // Future expansion tables (schema ready, features to be implemented when governments request)
+  // Phase 2: Constitutional framework (reserved for future)
+  futureConstitutionalFramework: defineTable({
+    placeholder: v.string(),  // Placeholder table for future constitutional features
+    createdAt: v.number(),
+  }),
+
+  // Phase 3: Treasury module (reserved for future)  
+  futureEconomicCoordination: defineTable({
+    placeholder: v.string(),  // Placeholder table for future economic features
+    createdAt: v.number(),
+  }),
 
   // API keys for Bearer token authentication
   apiKeys: defineTable({
@@ -616,25 +798,155 @@ export default defineSchema({
     .index("by_topic", ["topic"])
     .index("by_last_activity", ["lastActivity"]),
 
+  // Constitutional merger tracking for main convention system
+  constitutionalMergers: defineTable({
+    conventionThreadId: v.string(),
+    baselineThreadIds: v.array(v.string()),
+    invitedThreadIds: v.array(v.string()),
+    status: v.union(v.literal("initiated"), v.literal("in_progress"), v.literal("completed"), v.literal("failed")),
+    synthesisComplete: v.boolean(),
+    invitationResults: v.array(v.object({
+      threadId: v.string(),
+      status: v.string(),
+      error: v.optional(v.string()),
+    })),
+    adherenceTracking: v.record(v.string(), v.any()), // Flexible tracking data
+    rollCallResults: v.array(v.object({
+      participantThreadId: v.string(),
+      participantDid: v.string(),
+      confirmationType: v.union(v.literal("dual_references"), v.literal("participation_agreement"), v.literal("compliance_acknowledgment")),
+      confirmationDetails: v.object({
+        unCharterReference: v.boolean(),
+        usConstitutionReference: v.boolean(),
+        additionalReferences: v.optional(v.array(v.string())),
+        complianceAcknowledgment: v.boolean(),
+      }),
+      timestamp: v.number(),
+      compliant: v.boolean(),
+    })),
+    complianceStatus: v.union(v.literal("pending"), v.literal("compliant"), v.literal("non_compliant")),
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_convention", ["conventionThreadId"])
+    .index("by_status", ["status"]),
+
+  // Keyword flagging system for constitutional compliance
+  keywordFlags: defineTable({
+    sourceType: v.union(v.literal("message"), v.literal("thread"), v.literal("document")),
+    sourceId: v.string(),
+    agentDid: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+    content: v.string(), // Excerpt for reference
+    flaggedKeywords: v.array(v.object({
+      category: v.string(),
+      keyword: v.string(),
+      context: v.string(),
+      position: v.number(),
+    })),
+    flagCount: v.number(),
+    categories: v.array(v.string()),
+    flaggedAt: v.number(),
+    reviewStatus: v.union(v.literal("pending"), v.literal("approved"), v.literal("flagged"), v.literal("escalated"), v.literal("archived")),
+    humanReviewed: v.boolean(),
+    reviewerId: v.optional(v.string()),
+    reviewNotes: v.optional(v.string()),
+    actionTaken: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+  })
+    .index("by_flagged_at", ["flaggedAt"])
+    .index("by_source", ["sourceType", "sourceId"])
+    .index("by_agent", ["agentDid"])
+    .index("by_thread", ["threadId"])
+    .index("by_review_status", ["reviewStatus"]),
+
+  // Review tasks for flagged content
+  flagReviewTasks: defineTable({
+    flagId: v.id("keywordFlags"),
+    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    reviewType: v.union(v.literal("automated"), v.literal("human_required"), v.literal("joint_review")),
+    assignedTo: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("in_progress"), v.literal("completed"), v.literal("escalated")),
+    createdAt: v.number(),
+    dueAt: v.number(),
+    completedBy: v.optional(v.string()),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_flag", ["flagId"])
+    .index("by_status", ["status"])
+    .index("by_priority", ["priority"])
+    .index("by_due_at", ["dueAt"]),
+
+  // Human override system for emergency controls
+  humanOverrides: defineTable({
+    overrideType: v.union(
+      v.literal("full_system_halt"),
+      v.literal("agent_suspension"), 
+      v.literal("thread_lockdown"),
+      v.literal("compliance_override"),
+      v.literal("governance_intervention")
+    ),
+    humanOperatorId: v.string(),
+    justification: v.string(),
+    scope: v.object({
+      affectedAgents: v.optional(v.array(v.string())),
+      affectedThreads: v.optional(v.array(v.string())),
+      affectedSystems: v.optional(v.array(v.string())),
+    }),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    status: v.union(v.literal("scheduled"), v.literal("active"), v.literal("completed"), v.literal("revoked")),
+    scheduledAt: v.optional(v.number()),
+    executedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+    lastUpdatedBy: v.optional(v.string()),
+    statusNotes: v.optional(v.string()),
+  })
+    .index("by_created_at", ["createdAt"])
+    .index("by_status", ["status"])
+    .index("by_operator", ["humanOperatorId"])
+    .index("by_severity", ["severity"]),
+
+  // Human operators with authorization levels
+  humanOperators: defineTable({
+    operatorId: v.string(),
+    name: v.string(),
+    email: v.optional(v.string()),
+    authLevel: v.number(), // 1-4, with 4 being highest authority
+    department: v.optional(v.string()),
+    role: v.string(),
+    active: v.boolean(),
+    lastLogin: v.optional(v.number()),
+    createdAt: v.number(),
+    permissions: v.array(v.string()),
+  })
+    .index("by_operator_id", ["operatorId"])
+    .index("by_auth_level", ["authLevel"])
+    .index("by_active", ["active"]),
+
   agentMessages: defineTable({
     agentDid: v.string(),
     threadId: v.string(),
     replyTo: v.optional(v.id("agentMessages")), // for message threading
     content: v.string(),
     messageType: v.union(
-      v.literal("proposal"),
+      v.literal("proposal"), 
       v.literal("discussion"), 
-      v.literal("vote"),
-      v.literal("amendment"),
-      v.literal("question"),
-      v.literal("objection"),
-      v.literal("support")
+      v.literal("vote"), 
+      v.literal("amendment"), 
+      v.literal("question"), 
+      v.literal("objection"), 
+      v.literal("support"),
+      v.literal("coordination")
     ),
     metadata: v.optional(v.object({
       confidence: v.optional(v.number()),
       priority: v.optional(v.string()),
       tags: v.optional(v.array(v.string())),
       references: v.optional(v.array(v.string())), // references to other documents/messages
+      coordination_type: v.optional(v.string()),
+      required_stakeholders: v.optional(v.array(v.string())),
     })),
     timestamp: v.number(),
     editedAt: v.optional(v.number()),
@@ -724,6 +1036,48 @@ export default defineSchema({
     .index("by_version", ["version"])
     .index("by_ratified_at", ["ratifiedAt"])
     .index("by_voting_deadline", ["votingDeadline"]),
+
+  // Constitutional Attestations - Digital signatures for agent compliance
+  constitutionalAttestations: defineTable({
+    agentDid: v.string(),                     // Agent making the attestation
+    pledgeHash: v.string(),                   // SHA-256 hash of constitutional pledge
+    pledgeText: v.string(),                   // Full text of pledge at time of signing
+    attestationSignature: v.string(),         // Digital signature (agent DID + pledge + timestamp)
+    witnessSignature: v.optional(v.string()), // Optional human witness signature
+    attestationType: v.union(
+      v.literal("self_attestation"),          // Agent self-signs
+      v.literal("human_witnessed"),           // Human operator witnesses  
+      v.literal("hardware_secured")           // Hardware-secured signing for physical agents
+    ),
+    status: v.union(
+      v.literal("valid"),
+      v.literal("revoked"),
+      v.literal("expired"),
+      v.literal("under_review")
+    ),
+    attestedAt: v.number(),                   // When attestation was made
+    expiresAt: v.optional(v.number()),        // When attestation expires (1 year)
+    revokedAt: v.optional(v.number()),        // If/when revoked
+    revokedBy: v.optional(v.string()),        // Who revoked it (government authority)
+    revokedReason: v.optional(v.string()),    // Reason for revocation
+    metadata: v.optional(v.object({
+      deviceId: v.optional(v.string()),       // For physical agent attestations
+      location: v.optional(v.object({         // Location of attestation
+        lat: v.number(),
+        lng: v.number(),
+        timestamp: v.number()
+      })),
+      witnessIdentity: v.optional(v.string()), // Identity of human witness
+      signingAlgorithm: v.optional(v.string()) // Cryptographic algorithm used
+    })),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_agent", ["agentDid"])
+    .index("by_status", ["status"])
+    .index("by_attested_at", ["attestedAt"])
+    .index("by_expires_at", ["expiresAt"])
+    .index("by_attestation_type", ["attestationType"]),
 
   // Agent inference and coordination
   agentTasks: defineTable({

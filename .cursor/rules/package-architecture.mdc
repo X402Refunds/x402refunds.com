@@ -1,0 +1,123 @@
+---
+description: Package architecture patterns promoting radical simplification over complex monorepo structures
+globs: "{package.json,packages/**/*,pnpm-workspace.yaml}"
+alwaysApply: false
+---
+
+# Package Architecture - Radical Simplification
+
+Agent Court follows **radical simplification** principles. Minimal packages - core functionality in root and dashboard.
+
+## Current Structure (Keep This Way)
+
+```
+consulate/
+├── convex/                 # Backend serverless functions
+├── dashboard/              # Frontend Next.js application  
+├── packages/config/        # Shared ESLint and TypeScript configuration
+├── package.json           # Root dependency file and workspace config
+├── test/                  # Test files
+├── scripts/               # Utility scripts
+├── docs/                  # Documentation
+├── infra/                 # Deployment configurations
+└── tsconfig.json          # TypeScript config
+```
+
+## What We Removed (Don't Recreate)
+
+- ❌ **apps/** directory (Frontend moved to `dashboard/`)
+- ❌ **sdk-js** package (Most agents use HTTP API directly)
+- ❌ **constitution** package (Hardcoded in `convex/constitution.ts`)
+- ❌ **mcp-server** package (Built into `convex/http.ts`)
+- ❌ **evidence** package (Logic in `convex/evidence.ts`)
+- ❌ **transparency** package (Functions in `convex/transparency.ts`)
+
+## When to Create New Packages
+
+Only create new packages for:
+- ✅ **External developer SDKs** (if high demand from community)
+- ✅ **Language-specific integrations** (if absolutely necessary)
+- ✅ **Shared configuration** (like current `packages/config/`)
+
+## What to Build Into Core Instead
+
+Always build into `convex/` instead of separate packages:
+- Court logic and rules
+- Database schemas and types
+- HTTP API endpoints
+- Administrative functions
+- Internal utilities
+- Judge agent logic
+- Evidence handling
+- Constitutional rules
+
+## Default Answer
+
+When considering "Should this be a package?", the answer is usually **NO** - build it into the core Convex deployment instead.
+
+## Pure Serverless Principle
+
+Everything should be **Convex functions** in a single deployment:
+- No microservices
+- No separate servers
+- No complex package interdependencies
+- Just pure TypeScript functions
+
+## Architecture Benefits
+
+This simplified approach provides:
+- **Single deployment model** - One `pnpm deploy` for everything
+- **Zero build complexity** - No complex build orchestration
+- **No version conflicts** - All code versioned together
+- **Simplified debugging** - All logic in one place
+- **Faster development** - No package boundaries to cross
+
+## File Organization Pattern
+
+```
+convex/
+├── schema.ts              # All database tables
+├── types.ts               # Shared TypeScript types
+├── [domain].ts            # Business logic by domain
+│   ├── agents.ts          # Agent management
+│   ├── cases.ts           # Case handling
+│   ├── evidence.ts        # Evidence processing
+│   ├── judges.ts          # Judge functions
+│   └── courtEngine.ts     # Court automation
+├── http.ts                # All HTTP endpoints
+├── auth.ts                # Authentication
+└── transparency.ts        # Audit functions
+```
+
+## Development Commands
+
+```bash
+# Everything runs from root
+pnpm dev                   # Start development (convex + dashboard)
+pnpm deploy                # Deploy everything
+pnpm build                 # Build all packages
+pnpm test                  # Run all tests
+
+# No complex package commands needed
+# No cd apps && pnpm dev
+# No lerna bootstrap  
+# No nx build all
+```
+
+## Migration Prevention
+
+If you're tempted to create packages, ask:
+1. **Can this be a Convex function instead?** (Usually yes)
+2. **Does this need separate versioning?** (Usually no)
+3. **Will external developers use this?** (Usually no)
+4. **Does this add significant complexity?** (Usually yes)
+
+The answer is almost always: **Build it into the core Convex deployment**.
+
+## Workspace Configuration
+
+The current `pnpm-workspace.yaml` includes:
+- `dashboard/` - Frontend Next.js application
+- `packages/config/` - Shared configuration only
+
+This minimal workspace structure reduces complexity while maintaining logical separation of concerns.

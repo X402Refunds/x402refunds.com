@@ -4,6 +4,7 @@
 
 import { action, mutation, query } from "../_generated/server";
 import { v } from "convex/values";
+import { api } from "../_generated/api";
 
 // PRIMARY DIRECTIVES - IMMUTABLE AND NON-AMENDABLE
 export const PRIMARY_DIRECTIVES = {

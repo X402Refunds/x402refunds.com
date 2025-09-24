@@ -3,36 +3,17 @@
 // CONSTITUTION GENERATOR - Turn agent chatter into actual constitution!
 // This is what you wanted - a real constitutional document!
 
-import { ConvexHttpClient } from "convex/browser";
-import { readFileSync, writeFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { api } from "../convex/_generated/api.js";
+const { parseEnvironment, createConvexClient, handleError, formatAgentName, CONSTITUTIONAL_AGENTS, buildDID } = require("./lib/index.js");
+const { writeFileSync } = require('fs');
+const { join } = require('path');
+const { api } = require("../convex/_generated/api");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Initialize environment and client using shared utilities  
+const envVars = parseEnvironment();
+const client = createConvexClient(envVars);
 
-// Environment setup
-const envPath = join(__dirname, '..', '.env.local');
-const envContent = readFileSync(envPath, 'utf8');
-const envVars = {};
-envContent.split('\n').forEach(line => {
-  const match = line.match(/^([^#][^=]*)=(.*)$/);
-  if (match) {
-    envVars[match[1]] = match[2].trim();
-  }
-});
-Object.assign(process.env, envVars);
-
-const CONVEX_URL = envVars.CONVEX_URL || 'https://aromatic-swordfish-519.convex.cloud';
-const client = new ConvexHttpClient(CONVEX_URL);
-
-// Constitutional agents for voting
-const CONSTITUTIONAL_AGENTS = [
-  "did:constitutional:alice-drafter",
-  "did:constitutional:bob-rights", 
-  "did:constitutional:carol-economic"
-];
+// Constitutional agents for voting - using shared constants with DID format
+const CONSTITUTIONAL_VOTING_AGENTS = CONSTITUTIONAL_AGENTS.map(agent => buildDID(agent));
 
 // Step 1: Compile discussions into formal articles
 async function compileAllDiscussions() {
@@ -47,7 +28,7 @@ async function compileAllDiscussions() {
       
       result.compiledArticles.forEach((article, i) => {
         console.log(`   ${i+1}. "${article.title}"`);
-        console.log(`      Authors: ${article.authors.map(a => a.split(':').pop()?.replace('-', ' ')).join(', ')}`);
+        console.log(`      Authors: ${article.authors.map(a => formatAgentName(a)).join(', ')}`);
         console.log(`      Thread: ${article.threadId}`);
       });
       
@@ -57,7 +38,7 @@ async function compileAllDiscussions() {
       return [];
     }
   } catch (error) {
-    console.error("❌ Compilation error:", error);
+    handleError(error, "discussion compilation");
     return [];
   }
 }
@@ -84,12 +65,12 @@ async function conductConstitutionalVoting(articles) {
   for (const doc of documents) {
     console.log(`\n📄 Voting on: "${doc.title}"`);
     console.log(`   Category: ${doc.category}`);
-    console.log(`   Authors: ${doc.authors.map(a => a.split(':').pop()?.replace('-', ' ')).join(', ')}`);
+    console.log(`   Authors: ${doc.authors.map(a => formatAgentName(a)).join(', ')}`);
     
     // Each agent votes
-    for (const agentDid of CONSTITUTIONAL_AGENTS) {
+    for (const agentDid of CONSTITUTIONAL_VOTING_AGENTS) {
       try {
-        const agentName = agentDid.split(':').pop()?.replace('-', ' ') || 'unknown';
+        const agentName = formatAgentName(agentDid);
         
         // Simple voting logic - agents usually approve articles in their domain
         const agentExpertise = {
@@ -147,7 +128,7 @@ async function generateFinalConstitution() {
       console.log(`✅ Constitution generated with ${result.articleCount} ratified articles!`);
       
       // Save to file
-      const constitutionPath = join(__dirname, '..', 'CONSTITUTION.md');
+      const constitutionPath = join(process.cwd(), 'CONSTITUTION.md');
       writeFileSync(constitutionPath, result.constitution, 'utf8');
       
       console.log(`📄 Constitution saved to: CONSTITUTION.md`);
@@ -170,7 +151,7 @@ async function generateFinalConstitution() {
     }
     
   } catch (error) {
-    console.error("❌ Constitution generation error:", error);
+    handleError(error, "constitution generation");
     return null;
   }
 }
@@ -189,7 +170,7 @@ async function createConstitution() {
     if (articles.length === 0) {
       console.log('\n❌ No constitutional content found in discussions!');
       console.log('   Make sure your agents have been creating constitutional proposals');
-      console.log('   Run: node scripts/continuous-democracy.js to generate content first');
+      console.log('   Run: node scripts/governance.js continuous to generate content first');
       return;
     }
     
@@ -218,7 +199,7 @@ async function createConstitution() {
     }
     
   } catch (error) {
-    console.error('❌ Constitution creation failed:', error);
+    handleError(error, "constitution creation");
   }
 }
 
@@ -263,31 +244,34 @@ async function showConstitutionalStatus() {
     }
     
   } catch (error) {
-    console.error('Status check failed:', error);
+    handleError(error, "status check");
   }
 }
 
 // Command line interface
 const command = process.argv[2];
 
-if (command === 'status') {
-  showConstitutionalStatus();
-} else if (command === 'create' || !command) {
-  createConstitution();
-} else if (command === 'compile') {
-  compileAllDiscussions();
-} else if (command === 'vote') {
-  conductConstitutionalVoting([]);
-} else if (command === 'generate') {
-  generateFinalConstitution();
-} else {
-  console.log('🏛️  Consulate AI Constitution Generator\n');
-  console.log('Usage:');
-  console.log('  node scripts/generate-constitution.js create   # Full process');
-  console.log('  node scripts/generate-constitution.js status   # Check status');
-  console.log('  node scripts/generate-constitution.js compile  # Just compile');
-  console.log('  node scripts/generate-constitution.js vote     # Just vote');
-  console.log('  node scripts/generate-constitution.js generate # Just generate');
+// Run if called directly
+if (require.main === module) {
+  if (command === 'status') {
+    showConstitutionalStatus();
+  } else if (command === 'create' || !command) {
+    createConstitution();
+  } else if (command === 'compile') {
+    compileAllDiscussions();
+  } else if (command === 'vote') {
+    conductConstitutionalVoting([]);
+  } else if (command === 'generate') {
+    generateFinalConstitution();
+  } else {
+    console.log('🏛️  Consulate AI Constitution Generator\n');
+    console.log('Usage:');
+    console.log('  node scripts/generate-constitution.js create   # Full process');
+    console.log('  node scripts/generate-constitution.js status   # Check status');
+    console.log('  node scripts/generate-constitution.js compile  # Just compile');
+    console.log('  node scripts/generate-constitution.js vote     # Just vote');
+    console.log('  node scripts/generate-constitution.js generate # Just generate');
+  }
 }
 
-export { createConstitution, showConstitutionalStatus };
+module.exports = { createConstitution, showConstitutionalStatus };

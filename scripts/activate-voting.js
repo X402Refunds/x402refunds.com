@@ -2,29 +2,12 @@
 
 // ACTIVATE VOTING - Move draft articles to voting status
 
-import { ConvexHttpClient } from "convex/browser";
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { api } from "../convex/_generated/api.js";
+const { parseEnvironment, createConvexClient, handleError } = require("./lib/index.js");
+const { api } = require("../convex/_generated/api");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Environment setup
-const envPath = join(__dirname, '..', '.env.local');
-const envContent = readFileSync(envPath, 'utf8');
-const envVars = {};
-envContent.split('\n').forEach(line => {
-  const match = line.match(/^([^#][^=]*)=(.*)$/);
-  if (match) {
-    envVars[match[1]] = match[2].trim();
-  }
-});
-Object.assign(process.env, envVars);
-
-const CONVEX_URL = envVars.CONVEX_URL || 'https://aromatic-swordfish-519.convex.cloud';
-const client = new ConvexHttpClient(CONVEX_URL);
+// Initialize environment and client using shared utilities
+const envVars = parseEnvironment();
+const client = createConvexClient(envVars);
 
 async function activateVotingOnAllDrafts() {
   console.log('🗳️  ACTIVATING VOTING ON DRAFT CONSTITUTIONAL ARTICLES');
@@ -86,11 +69,16 @@ async function activateVotingOnAllDrafts() {
     return results;
     
   } catch (error) {
-    console.error("Failed to activate voting:", error);
+    handleError(error, "voting activation");
     return [];
   }
 }
 
-activateVotingOnAllDrafts();
+// Run if called directly
+if (require.main === module) {
+  activateVotingOnAllDrafts().catch(error => {
+    handleError(error, "activate-voting.js startup");
+  });
+}
 
-export { activateVotingOnAllDrafts };
+module.exports = { activateVotingOnAllDrafts };

@@ -65,7 +65,8 @@ export const postMessage = mutation({
       v.literal("amendment"),
       v.literal("question"),
       v.literal("objection"),
-      v.literal("support")
+      v.literal("support"),
+      v.literal("coordination")
     ),
     replyTo: v.optional(v.id("agentMessages")),
     metadata: v.optional(v.object({
@@ -73,6 +74,8 @@ export const postMessage = mutation({
       priority: v.optional(v.string()),
       tags: v.optional(v.array(v.string())),
       references: v.optional(v.array(v.string())),
+      coordination_type: v.optional(v.string()),
+      required_stakeholders: v.optional(v.array(v.string())),
     })),
   },
   handler: async (ctx, args) => {
