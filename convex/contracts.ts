@@ -218,8 +218,8 @@ export const submitPerformanceMetric = mutation({
         throw new Error(`Contract ${args.contractId} not found`);
       }
       
-      if (contract.status !== "active") {
-        throw new Error(`Contract ${args.contractId} is not active`);
+      if (contract.status !== "active" && contract.status !== "disputed" && contract.status !== "breached") {
+        throw new Error(`Contract ${args.contractId} is not accepting performance metrics (status: ${contract.status})`);
       }
       
       // Verify agent is party to this contract
