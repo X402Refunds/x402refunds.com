@@ -1,76 +1,84 @@
-# Consulate Agent Government OS - Professional Dashboard Specification
+# AI Agent Dispute Resolution Platform - UI Design Specification
 
 ## Overview
-Create an ultra-professional governance dashboard interface using shadcn/ui components, inspired by inference.net's clean, minimalist design aesthetic. The interface should feel institutional and serious - like enterprise-grade software that governments would use to manage AI agent infrastructure.
+Create a professional enterprise dispute resolution dashboard using shadcn/ui components, inspired by modern enterprise SaaS platforms like Stripe, Linear, and DataDog. The interface should feel enterprise-grade and trustworthy - like software that CTOs and Legal teams would use to manage AI agent relationships and resolve disputes.
 
 ## Design Principles
-- **Minimalism**: Clean, uncluttered layouts with purposeful white space
-- **Professional Authority**: Convey institutional credibility and technical sophistication
-- **Information Hierarchy**: Clear visual hierarchy with excellent typography
-- **Government-Grade**: Look like software used by national institutions
+- **Enterprise Professional**: Clean, trustworthy, business-focused
+- **Data-Driven**: Metrics, evidence, and outcomes prominently displayed
+- **Operational Excellence**: Focus on efficiency and problem-solving
+- **Trust & Transparency**: Clear audit trails and evidence presentation
 
-## Color Scheme & Theme (inference.net inspired)
-- **Primary Background**: Clean white (#ffffff) with subtle off-white sections (#f8fafc)
+## Color Scheme & Theme (Modern Enterprise)
+- **Primary Background**: Clean white (#ffffff) with subtle gray sections (#f8fafc)
 - **Card Backgrounds**: Pure white (#ffffff) with subtle shadows
-- **Border Colors**: Light gray (#e2e8f0) for subtle definition
+- **Border Colors**: Light gray (#e2e8f0) for clean definition
 - **Text Colors**: 
   - Primary text: Charcoal (#0f172a)
   - Secondary text: Slate gray (#64748b)
   - Muted text: Light slate (#94a3b8)
-- **Accent Colors**:
-  - Success/For votes: Professional green (#059669)
-  - Warning/Against votes: Professional red (#dc2626)
-  - Primary brand: Deep blue (#1e40af)
+- **Status Colors**:
+  - Success/Resolved: Professional green (#059669)
+  - Warning/Pending: Amber (#d97706)
+  - Error/Violation: Professional red (#dc2626)
+  - Primary brand: Enterprise blue (#1e40af)
   - Interactive elements: Blue (#3b82f6)
 
 ## Layout Structure
 
-### Header Bar (shadcn/ui approach)
-- **Left**: "Consulate" logo with professional typography
-- **Center**: Clean navigation tabs (Dashboard, Agents, Governance, Court Engine)
-- **Right**: User profile dropdown or settings menu
-- **Style**: Fixed header with subtle border-bottom, minimal shadow
+### Header Bar (Enterprise SaaS Style)
+- **Left**: Platform logo with "AI Agent Dispute Resolution"
+- **Center**: Clean navigation tabs (Dashboard, Agents, Contracts, Disputes, Analytics)
+- **Right**: Enterprise user profile, notifications, settings
+- **Style**: Fixed header with clean border-bottom, professional styling
 
 ### Left Sidebar Navigation (shadcn/ui components)
 Clean vertical navigation using shadcn NavigationMenu:
-- **Court Engine** (Dispute Resolution)
-- **Agent Registry** (Active AI Agents)  
-- **Constitutional Framework** (Live Governance)
-- **Sovereignty Controls** (Government Oversight)
-- **Treasury** (Economic Management)
-- **Federation** (International Cooperation)
-- **Transparency** (Audit & Compliance)
+- **🏠 Dashboard** (Overview & Metrics)
+- **🤖 Agent Registry** (Agent Management & Discovery)  
+- **📋 Contracts** (SLA Management & Templates)
+- **⚖️ Disputes** (Case Management & Resolution)
+- **🏆 Reputation** (Agent Performance & Trust Scores)
+- **🔍 Evidence** (Audit Trail & Verification)
+- **📊 Analytics** (Performance Insights & Reports)
+- **⚙️ Settings** (Enterprise Configuration)
 
 **Style Notes:**
-- Use shadcn Navigation components with subtle hover states
-- Clean icons (Lucide React) with consistent spacing
-- Professional gray sidebar background (#f8fafc)
+- Use shadcn Navigation components with clean hover states
+- Professional icons (Lucide React) with consistent spacing
+- Clean white/light gray sidebar background
 - Active state with subtle blue accent
 
-Below modules, include tagline:
-"Constitutional AI Government Operating System"
+Bottom of sidebar:
+"Enterprise-Grade Dispute Resolution"
 
 ### Main Content Area
 
 #### Top Metrics Row (shadcn/ui Cards)
-Three metric cards using shadcn Card components:
+Four metric cards using shadcn Card components:
 
-**Card 1: Active AI Agents**
-- Primary metric: "137" (large, bold typography)
-- Trend indicator: "+5.2%" (professional green #059669)
-- Label: "Active AI Agents" (secondary text color)
+**Card 1: Active Agents**
+- Primary metric: "1,247" (large, bold typography)
+- Trend indicator: "+12%" (professional green #059669)
+- Label: "Active Agents" (secondary text color)
 - Icon: Activity icon from Lucide React
 
-**Card 2: Constitutional Proposals** 
-- Primary metric: "19"
-- Trend indicator: "-1.4%" (professional red #dc2626)
-- Label: "Active Proposals"
-- Icon: FileText icon from Lucide React
+**Card 2: Active Contracts** 
+- Primary metric: "342"
+- Trend indicator: "+8.3%" (professional green #059669)
+- Label: "Active SLAs"
+- Icon: FileContract icon from Lucide React
 
-**Card 3: Governance Actions**
-- Primary metric: "14"
-- Trend indicator: "+2.7%" (professional green)
-- Label: "Completed This Month"
+**Card 3: Resolution Time**
+- Primary metric: "3.2h"
+- Trend indicator: "-15%" (professional green - faster is better)
+- Label: "Avg Resolution Time"
+- Icon: Clock icon from Lucide React
+
+**Card 4: Success Rate**
+- Primary metric: "94.7%"
+- Trend indicator: "+2.1%" (professional green)
+- Label: "Auto-Resolution Rate"
 - Icon: CheckCircle icon from Lucide React
 
 **Card Styling:**
@@ -80,127 +88,174 @@ Three metric cards using shadcn Card components:
 - Subtle border (#e2e8f0)
 - Hover effect with slight elevation
 
-#### Constitutional Proposal Section (shadcn/ui)
-**Section Title**: "Active Constitutional Proposal" (using shadcn heading typography)
+#### Recent Disputes Section (shadcn/ui)
+**Section Title**: "Recent Dispute Resolutions" (using shadcn heading typography)
 
-**Proposal Card (shadcn Card component)**:
-- **Title**: "Constitutional Amendment #42 - AI Agent Operational Standards"
-- **Description**: Brief proposal summary with professional typography
-- **Progress Component**: shadcn Progress component showing vote distribution
-  - 68% progress fill in professional green (#059669)
-  - Clean progress track in light gray
-- **Vote Metrics**: 
-  - "68% Supporting" (left, with thumbs-up icon)
-  - "32% Opposing" (right, with thumbs-down icon)
-- **Timing**: "Voting ends in 2h 14m" (top-right, muted text)
-- **Action Buttons** (shadcn Button components):
-  - Primary button: "Support Amendment" (solid blue #1e40af)
-  - Secondary button: "Oppose Amendment" (outline variant)
+**Dispute Cards (shadcn Card component)**:
+Each card shows:
+- **Case ID**: "DR-2024-1089" (prominent, clickable)
+- **Parties**: "DataProcessor-AI ↔ AnalyticsService-AI" 
+- **Violation Type**: "SLA Breach - Response Time" (with severity badge)
+- **Resolution**: "Automatic - $2,300 penalty applied" (with status badge)
+- **Timeline**: "Filed: 2h ago → Resolved: 47m ago" (with success indicator)
+- **Action Button**: "View Details" (shadcn Button, outline variant)
 
 **Card Features**:
 - Clean white background with subtle shadow
+- Status badges using shadcn Badge component
 - Professional spacing and typography
-- Lucide React icons for visual clarity
+- Clickable for detailed case view
 
-#### AI Agent Registry (shadcn/ui Table)
-**Section Title**: "Constitutional AI Agent Registry"
+#### Performance Dashboard (shadcn/ui Components)
+
+**Real-Time Monitoring Section**:
+- **System Health**: Green indicator with "All Systems Operational"
+- **Active Disputes**: "3 in progress, 12 resolved today"
+- **SLA Compliance**: "96.8% of contracts meeting SLA targets"
+- **Evidence Processing**: "247 evidence items processed today"
+
+**Charts and Visualizations**:
+- **Resolution Time Trend**: Line chart showing improvement over time
+- **Dispute Types**: Pie chart of most common dispute categories
+- **Agent Performance**: Bar chart of top-performing agents
+- **Contract Status**: Donut chart of contract health status
+
+#### Agent Performance Table (shadcn/ui Table)
+**Section Title**: "Agent Performance Overview"
 
 **Table Component (shadcn Table)**:
 **Columns:**
-- **Agent ID**: Clean identifier formatting (AG-101, AG-102)
-- **Classification**: Two-dimensional system (e.g., "Verified.Legal", "Premium.Financial")
-- **Specialization**: Functional capabilities and certifications
-- **Reputation Score**: Professional numeric display with trend indicators
-- **Constitutional Status**: Compliance status with clear indicators
+- **Agent ID**: Clean identifier (AI-DataProc-001, AI-Analytics-042)
+- **Service Type**: "Data Processing", "API Service", "Analytics"
+- **Reputation Score**: Numeric score with trend (94 ⬆️, 87 ⬇️)
+- **Active Contracts**: Number of current SLAs
+- **Dispute Rate**: Percentage with color coding
+- **Last Activity**: Time since last transaction
 
-**Sample Data (Government-focused)**:
-1. **AG-101** | Verified.Legal | Constitutional Law, Compliance | 94 ⬆️ | Active ✅
-2. **AG-102** | Premium.Financial | Treasury, Economic Policy | 88 ⬆️ | Active ✅  
-3. **AG-103** | Physical.Security | Border Control, Enforcement | 76 ⬇️ | Under Review ⚠️
-4. **AG-104** | Verified.Healthcare | Public Health, Emergency Response | 91 ⬆️ | Active ✅
+**Sample Data (Enterprise-focused)**:
+1. **AI-DataProc-001** | Data Processing | 94 ⬆️ | 23 contracts | 0.8% | 2m ago ✅
+2. **AI-Analytics-042** | Business Analytics | 91 ⬆️ | 18 contracts | 1.2% | 5m ago ✅  
+3. **AI-Translate-007** | Language Processing | 87 ⬇️ | 12 contracts | 3.1% | 1h ago ⚠️
+4. **AI-ImageProc-015** | Computer Vision | 89 ⬆️ | 31 contracts | 1.8% | 12m ago ✅
 
 **Table Styling:**
 - Use shadcn Table component with clean borders
 - Alternating row backgrounds for readability
-- Professional status badges (shadcn Badge component)
-- Sortable columns with subtle hover states
-- Responsive design with proper spacing
+- Professional status indicators (shadcn Badge component)
+- Sortable columns with hover states
+- Clickable rows for detailed agent view
 
-## Typography (inference.net inspired)
+## Typography (Modern Enterprise)
 - **Font Family**: Inter (fallback: system-ui, -apple-system, sans-serif)
 - **Font Weights**:
-  - Light (300): Subtle text, captions
   - Regular (400): Body text, descriptions
-  - Medium (500): Emphasis, labels
-  - Semi-bold (600): Section headings, important metrics
-  - Bold (700): Page titles, primary metrics
+  - Medium (500): Labels, emphasis
+  - Semi-bold (600): Section headings, metrics
+  - Bold (700): Page titles, primary numbers
 - **Font Scale** (following shadcn conventions):
-  - **Display**: text-4xl (36px) for page titles
+  - **Display**: text-3xl (30px) for primary metrics
   - **Headline**: text-2xl (24px) for section headers
   - **Title**: text-xl (20px) for card titles
   - **Body**: text-base (16px) for standard content
   - **Caption**: text-sm (14px) for secondary information
-  - **Metrics**: text-3xl (30px) with font-bold for key numbers
-- **Line Height**: 1.5 for body text, 1.2 for headings
-- **Letter Spacing**: -0.025em for headings, normal for body
+- **Line Height**: 1.5 for body text, 1.3 for headings
+
+## Dispute Resolution Interface
+
+### Case Detail View
+**Header Section**:
+- **Case ID**: "DR-2024-1089" (prominent)
+- **Status Badge**: "Resolved" (green) or "In Progress" (blue) or "Escalated" (amber)
+- **Timeline**: "Filed 3h ago → Resolved 1h ago"
+- **Parties**: Clear identification of disputing agents
+
+**Evidence Section** (shadcn/ui Components):
+- **Evidence List**: Table showing all submitted evidence
+- **Verification Status**: Cryptographic verification indicators
+- **Evidence Viewer**: Expandable cards showing evidence details
+- **Chain of Custody**: Timeline of evidence handling
+
+**Resolution Section**:
+- **Automated Decision**: Clear explanation of resolution logic
+- **Applied Penalties**: Financial penalties and their calculation
+- **Reputation Impact**: How the dispute affected agent reputation
+- **Appeal Options**: Available appeal processes (if applicable)
+
+### Contract Management Interface
+
+**SLA Template Library**:
+- **Template Cards**: Grid of available SLA templates
+- **Template Categories**: "Performance", "Availability", "Quality", "Security"
+- **Usage Statistics**: How often each template is used
+- **Custom Templates**: Enterprise-specific template creation
+
+**Active Contract Dashboard**:
+- **Contract Health**: Visual indicators of SLA compliance
+- **Performance Metrics**: Real-time metric tracking
+- **Breach Warnings**: Predictive alerts for potential violations
+- **Contract Actions**: Renewal, modification, termination options
 
 ## Interactive Elements (shadcn/ui components)
 - **Buttons**: Use shadcn Button component variants
-  - Primary: Solid background, professional blue (#1e40af)
+  - Primary: Solid background, enterprise blue (#1e40af)
   - Secondary: Outline variant with subtle border
-  - Ghost: Transparent background for subtle actions
-  - Destructive: Professional red for critical actions
-- **Hover States**: Subtle opacity changes and micro-animations
-- **Progress Bars**: shadcn Progress component with smooth animations
-- **Form Elements**: shadcn Input, Select, Checkbox components
-- **Status Indicators**: shadcn Badge component with color variants
+  - Success: Green for positive actions
+  - Destructive: Red for critical actions
+- **Status Badges**: shadcn Badge component with semantic colors
+- **Progress Indicators**: shadcn Progress component for SLA compliance
+- **Data Tables**: shadcn Table with sorting and filtering
+- **Form Elements**: shadcn Input, Select, Checkbox for configuration
 
-## Spacing & Layout (Tailwind/shadcn approach)
-- **Container**: max-w-7xl mx-auto for main content
-- **Grid**: CSS Grid with consistent gaps (gap-6, gap-8)
-- **Card Spacing**: p-6 for card interiors, space-y-4 for content stacking
-- **Section Spacing**: space-y-8 between major sections
-- **Responsive**: Mobile-first responsive design with proper breakpoints
+## Real-Time Features
 
-## shadcn/ui Component Implementation
-- **Card**: For metrics, proposals, and content containers
-- **Table**: For agent registry and data display
-- **Button**: All interactive actions
-- **Badge**: Status indicators and classifications
-- **Progress**: Voting results and completion metrics
-- **Navigation Menu**: Sidebar and header navigation
-- **Dropdown Menu**: User actions and settings
-- **Tooltip**: Contextual help and information
-- **Alert**: System notifications and status messages
+### Live Updates
+- **WebSocket Integration**: Real-time dispute status updates
+- **Notification System**: Toast notifications for important events
+- **Auto-refresh**: Automatic data refresh every 30 seconds
+- **Live Indicators**: Pulsing indicators for active processes
 
-## Data Visualization (Professional Standards)
-- **Metrics Display**: Large, bold numbers with subtle trend indicators
-- **Progress Components**: Clean shadcn Progress bars with professional color coding
-- **Real-time Updates**: Subtle fade-in animations for data changes
-- **Status Visualization**: Professional badge system with clear hierarchy
-- **Charts/Graphs**: Clean, minimal styling with inference.net aesthetic
+### Notification Types
+- **Dispute Filed**: New case created
+- **SLA Breach**: Contract violation detected  
+- **Resolution Complete**: Case automatically resolved
+- **Appeal Filed**: Dispute escalated to appeals process
+- **Payment Processed**: Penalties/payments completed
 
-## Accessibility (Government Standards)
-- **Color Contrast**: WCAG AA compliance with 4.5:1 contrast ratios
-- **Keyboard Navigation**: Full keyboard accessibility with focus indicators
-- **Screen Readers**: Proper ARIA labels and semantic HTML structure
-- **Visual Indicators**: Icons combined with color for status (not color alone)
-- **Font Sizes**: Minimum 16px for body text, scalable with user preferences
+## Mobile Responsiveness
+
+### Responsive Design
+- **Breakpoints**: Mobile-first responsive design
+- **Navigation**: Collapsible sidebar for mobile
+- **Cards**: Stackable card layouts on smaller screens
+- **Tables**: Horizontal scrolling with key columns pinned
+
+### Mobile-Specific Features
+- **Quick Actions**: Swipe actions for common tasks
+- **Touch-Friendly**: Appropriately sized touch targets
+- **Optimized Forms**: Mobile-optimized form layouts
+- **Push Notifications**: Mobile app integration for alerts
+
+## Accessibility (Enterprise Standards)
+- **Color Contrast**: WCAG AA compliance with proper contrast ratios
+- **Keyboard Navigation**: Full keyboard accessibility
+- **Screen Readers**: Comprehensive ARIA labels and semantic HTML
+- **Focus Management**: Clear focus indicators and logical tab order
+- **Text Scaling**: Responsive text sizing for accessibility needs
 
 ## Technical Implementation
-- **Framework**: React with TypeScript (recommended for government applications)
+- **Framework**: React with TypeScript
 - **UI Library**: shadcn/ui components with Tailwind CSS
-- **Icons**: Lucide React (consistent, professional icon set)
-- **Animations**: Framer Motion for subtle micro-interactions
-- **State Management**: Zustand or React Context for clean state handling
-- **Build Tool**: Vite for fast development and production builds
+- **Icons**: Lucide React (consistent, professional icons)
+- **Animations**: Framer Motion for smooth transitions
+- **Charts**: Recharts or Chart.js for data visualization
+- **State Management**: Zustand for clean state handling
 
-## shadcn/ui Setup Requirements
+## shadcn/ui Component Requirements
 ```bash
 # Core shadcn/ui installation
 npx shadcn-ui@latest init
 
-# Required components for this interface
+# Required components for dispute resolution interface
 npx shadcn-ui@latest add button
 npx shadcn-ui@latest add card
 npx shadcn-ui@latest add table
@@ -208,28 +263,60 @@ npx shadcn-ui@latest add badge
 npx shadcn-ui@latest add progress
 npx shadcn-ui@latest add navigation-menu
 npx shadcn-ui@latest add dropdown-menu
-npx shadcn-ui@latest add tooltip
+npx shadcn-ui@latest add toast
+npx shadcn-ui@latest add alert
+npx shadcn-ui@latest add tabs
+npx shadcn-ui@latest add dialog
+npx shadcn-ui@latest add form
+npx shadcn-ui@latest add input
+npx shadcn-ui@latest add select
 ```
 
-## Overall Aesthetic Goals (inference.net inspired)
-Create an interface that embodies:
-- **Enterprise Professional**: Clean, authoritative, trustworthy
-- **Government-Grade**: Suitable for national institutions and agencies
-- **Technical Sophistication**: Advanced but accessible functionality
-- **Constitutional Authority**: Conveys serious governmental responsibility
-- **Global Standards**: Internationally acceptable and professional
+## Page-Specific Designs
 
-**Design Philosophy:**
-- Minimalism with purpose - every element serves a function
-- Professional restraint - no flashy or consumer-oriented elements  
-- Institutional credibility - looks like software governments would actually deploy
-- Clean information hierarchy - crystal clear data presentation
-- Accessible by design - usable by government officials of all technical levels
+### Dashboard Home
+- **Executive Summary**: Key metrics and trends
+- **Recent Activity**: Latest disputes, resolutions, contracts
+- **System Health**: Platform status and performance
+- **Quick Actions**: Common tasks and shortcuts
 
-**Inspiration Sources:**
-- inference.net's clean, professional aesthetic
-- Government portals and institutional dashboards
-- Enterprise SaaS platforms (linear, clean design)
-- Constitutional documents and legal frameworks (serious, authoritative presentation)
+### Agent Registry
+- **Agent Search**: Powerful search and filtering
+- **Performance Comparison**: Side-by-side agent comparison
+- **Reputation Trends**: Historical reputation tracking
+- **Service Discovery**: Find agents by capability
 
-The final result should make government officials think: *"This is the caliber of software we need for managing AI agents in our jurisdiction."*
+### Disputes Center
+- **Active Cases**: Current disputes requiring attention
+- **Case History**: Historical dispute records
+- **Resolution Analytics**: Success rates and patterns
+- **Appeal Management**: Appeals process tracking
+
+### Analytics Dashboard
+- **Performance Metrics**: Comprehensive platform analytics
+- **Cost Analysis**: Dispute resolution cost tracking
+- **Trend Analysis**: Long-term pattern identification
+- **Custom Reports**: Configurable reporting tools
+
+## Design Philosophy
+
+Create an interface that conveys:
+- **Enterprise Reliability**: Professional, trustworthy, dependable
+- **Operational Excellence**: Efficient, clear, problem-solving focused
+- **Data-Driven Decisions**: Metrics and evidence prominently displayed
+- **Transparent Process**: Clear audit trails and decision logic
+- **Scalable Operations**: Built for growing enterprise needs
+
+**Target User Experience:**
+- CTOs think: *"This gives me visibility and control over our AI operations"*
+- Legal teams think: *"This provides the evidence and audit trails we need"*  
+- Operations teams think: *"This makes our agent management much more efficient"*
+- Executives think: *"This reduces our AI operational risk significantly"*
+
+The interface should feel like a blend of:
+- **Stripe Dashboard**: Clean, professional, metric-focused
+- **DataDog**: Comprehensive monitoring and alerting
+- **Linear**: Efficient workflow and status management  
+- **GitHub**: Clear audit trails and collaboration features
+
+**Final Result**: Enterprise software that makes AI agent dispute resolution feel automated, transparent, and completely under control.

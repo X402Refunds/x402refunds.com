@@ -1284,4 +1284,306 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_timestamp", ["timestamp"])
     .index("by_status", ["status"]),
+
+  // ===============================================
+  // ENTERPRISE SLA CONTRACT SYSTEM
+  // ===============================================
+  
+  // SLA Contract Templates - Pre-built enterprise agreements
+  slaTemplates: defineTable({
+    templateId: v.string(),
+    name: v.string(),
+    description: v.string(),
+    serviceType: v.union(
+      v.literal("api_service"),
+      v.literal("data_processing"), 
+      v.literal("analysis_service"),
+      v.literal("content_generation"),
+      v.literal("monitoring_service"),
+      v.literal("integration_service"),
+      v.literal("custom")
+    ),
+    
+    // Performance metrics and thresholds
+    metrics: v.array(v.object({
+      name: v.string(),           // "response_time", "availability", "accuracy"
+      displayName: v.string(),    // "Response Time", "Uptime"
+      threshold: v.number(),      // Numeric threshold
+      unit: v.string(),          // "ms", "percent", "seconds"
+      operator: v.union(v.literal("less_than"), v.literal("greater_than"), v.literal("equals")),
+      severity: v.union(v.literal("warning"), v.literal("breach"), v.literal("critical")),
+      penalty: v.number(),        // Penalty amount for breach
+    })),
+    
+    // Contract terms
+    duration: v.number(),         // Contract duration in milliseconds
+    autoRenewal: v.boolean(),
+    gracePeriod: v.number(),      // Grace period before penalties apply
+    
+    // Economic terms
+    baseFee: v.optional(v.number()),
+    penaltyStructure: v.union(v.literal("flat"), v.literal("percentage"), v.literal("escalating")),
+    maxPenalty: v.optional(v.number()),
+    
+    // Template metadata
+    createdBy: v.string(),        // Creator DID
+    version: v.string(),
+    active: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_template_id", ["templateId"])
+    .index("by_service_type", ["serviceType"])
+    .index("by_active", ["active"])
+    .index("by_created_by", ["createdBy"]),
+
+  // Active SLA Contracts between agents
+  slaContracts: defineTable({
+    contractId: v.string(),
+    templateId: v.id("slaTemplates"),
+    
+    // Parties
+    providerAgent: v.string(),    // DID of service provider
+    consumerAgent: v.string(),    // DID of service consumer
+    
+    // Contract details
+    serviceType: v.string(),
+    metrics: v.array(v.object({
+      name: v.string(),
+      displayName: v.string(),
+      threshold: v.number(),
+      unit: v.string(),
+      operator: v.string(),
+      severity: v.string(),
+      penalty: v.number(),
+      currentValue: v.optional(v.number()),    // Latest measured value
+      lastMeasured: v.optional(v.number()),    // Timestamp of last measurement
+    })),
+    
+    // Contract lifecycle
+    status: v.union(
+      v.literal("pending"),       // Awaiting acceptance
+      v.literal("active"),        // Currently active
+      v.literal("breached"),      // SLA breach occurred
+      v.literal("disputed"),      // Under dispute
+      v.literal("terminated"),    // Contract ended
+      v.literal("expired")        // Contract expired
+    ),
+    
+    // Timeline
+    startDate: v.number(),
+    endDate: v.number(),
+    signedAt: v.optional(v.number()),
+    terminatedAt: v.optional(v.number()),
+    
+    // Performance tracking
+    totalInteractions: v.number(),
+    successfulInteractions: v.number(),
+    breachCount: v.number(),
+    lastBreachAt: v.optional(v.number()),
+    
+    // Economic terms
+    totalPaid: v.number(),
+    totalPenalties: v.number(),
+    escrowAmount: v.optional(v.number()),
+    
+    // Dispute tracking
+    activeDispute: v.optional(v.id("cases")),
+    disputeHistory: v.array(v.id("cases")),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_contract_id", ["contractId"])
+    .index("by_provider", ["providerAgent"])
+    .index("by_consumer", ["consumerAgent"])
+    .index("by_status", ["status"])
+    .index("by_service_type", ["serviceType"])
+    .index("by_end_date", ["endDate"]),
+
+  // Performance metrics submitted as evidence
+  performanceMetrics: defineTable({
+    contractId: v.id("slaContracts"),
+    agentDid: v.string(),         // Who submitted this metric
+    metricName: v.string(),       // "response_time", "availability", etc.
+    value: v.number(),            // Measured value
+    unit: v.string(),             // "ms", "percent", etc.
+    timestamp: v.number(),        // When measurement was taken
+    
+    // Evidence linking
+    evidenceId: v.optional(v.id("evidenceManifests")),
+    source: v.union(
+      v.literal("agent_self_report"),
+      v.literal("third_party_monitor"), 
+      v.literal("automated_system"),
+      v.literal("manual_verification")
+    ),
+    
+    // Validation
+    verified: v.boolean(),        // Has this been validated
+    verifiedBy: v.optional(v.string()),
+    verificationMethod: v.optional(v.string()),
+    
+    // Breach detection
+    breachDetected: v.boolean(),
+    breachSeverity: v.optional(v.union(v.literal("warning"), v.literal("breach"), v.literal("critical"))),
+    breachHandled: v.boolean(),
+    
+    createdAt: v.number(),
+  })
+    .index("by_contract", ["contractId"])
+    .index("by_agent", ["agentDid"])
+    .index("by_metric_name", ["metricName"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_breach_detected", ["breachDetected"]),
+
+  // SLA Breach incidents
+  slaBreaches: defineTable({
+    breachId: v.string(),
+    contractId: v.id("slaContracts"),
+    metricName: v.string(),
+    
+    // Breach details
+    thresholdValue: v.number(),
+    actualValue: v.number(),
+    severity: v.union(v.literal("warning"), v.literal("breach"), v.literal("critical")),
+    
+    // Parties involved
+    providerAgent: v.string(),
+    consumerAgent: v.string(),
+    
+    // Timeline
+    detectedAt: v.number(),
+    acknowledgedAt: v.optional(v.number()),
+    resolvedAt: v.optional(v.number()),
+    
+    // Resolution
+    status: v.union(
+      v.literal("detected"),      // Just detected
+      v.literal("acknowledged"),  // Provider acknowledged
+      v.literal("disputed"),      // Consumer disputes
+      v.literal("resolved"),      // Resolved amicably
+      v.literal("escalated")      // Escalated to formal dispute
+    ),
+    
+    // Penalties
+    penaltyAmount: v.number(),
+    penaltyApplied: v.boolean(),
+    penaltyWaived: v.boolean(),
+    waiverReason: v.optional(v.string()),
+    
+    // Dispute escalation
+    caseId: v.optional(v.id("cases")),
+    autoResolved: v.boolean(),
+    
+    // Evidence
+    evidenceIds: v.array(v.id("evidenceManifests")),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_breach_id", ["breachId"])
+    .index("by_contract", ["contractId"])
+    .index("by_provider", ["providerAgent"])
+    .index("by_consumer", ["consumerAgent"])
+    .index("by_status", ["status"])
+    .index("by_severity", ["severity"])
+    .index("by_detected_at", ["detectedAt"]),
+
+  // Agent Service Registry - What services agents offer
+  agentServices: defineTable({
+    serviceId: v.string(),
+    agentDid: v.string(),
+    
+    // Service details
+    name: v.string(),
+    description: v.string(),
+    serviceType: v.string(),
+    
+    // Capabilities and requirements
+    capabilities: v.array(v.string()),
+    requirements: v.array(v.string()),
+    supportedMetrics: v.array(v.string()),    // What metrics this service can report
+    
+    // Pricing and SLA info
+    basePricing: v.optional(v.object({
+      model: v.union(v.literal("per_call"), v.literal("subscription"), v.literal("usage_based")),
+      amount: v.number(),
+      currency: v.string(),
+    })),
+    availableSLAs: v.array(v.string()),       // Template IDs this service supports
+    
+    // Performance history
+    averageResponseTime: v.optional(v.number()),
+    uptimePercentage: v.optional(v.number()),
+    totalCompletedContracts: v.number(),
+    breachRate: v.number(),                   // Percentage of contracts with breaches
+    
+    // Service status
+    active: v.boolean(),
+    maxConcurrentContracts: v.optional(v.number()),
+    currentActiveContracts: v.number(),
+    
+    // Discovery
+    tags: v.array(v.string()),
+    searchable: v.boolean(),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_service_id", ["serviceId"])
+    .index("by_agent", ["agentDid"])
+    .index("by_service_type", ["serviceType"])
+    .index("by_active", ["active"])
+    .index("by_searchable", ["searchable"]),
+
+  // Agent Reputation Scores - Multi-dimensional reputation
+  agentReputation: defineTable({
+    agentDid: v.string(),
+    
+    // Overall reputation
+    overallScore: v.number(),     // 0-1000 overall score
+    trustLevel: v.union(v.literal("new"), v.literal("bronze"), v.literal("silver"), v.literal("gold"), v.literal("platinum")),
+    
+    // Domain-specific scores
+    domainScores: v.object({
+      reliability: v.number(),     // Contract completion rate
+      performance: v.number(),     // SLA compliance rate
+      communication: v.number(),   // Response to disputes/issues
+      innovation: v.number(),      // Quality of service delivery
+    }),
+    
+    // Performance metrics
+    totalContracts: v.number(),
+    completedContracts: v.number(),
+    breachedContracts: v.number(),
+    disputedContracts: v.number(),
+    
+    // Time-weighted scoring
+    recentPerformance: v.number(), // Last 30 days weighted score
+    quarterlyTrend: v.union(v.literal("improving"), v.literal("stable"), v.literal("declining")),
+    
+    // Relationship-specific reputation (top partners)
+    partnerScores: v.array(v.object({
+      partnerAgent: v.string(),
+      score: v.number(),
+      contractCount: v.number(),
+      lastInteraction: v.number(),
+    })),
+    
+    // Badges and certifications
+    badges: v.array(v.string()),  // "high_availability", "low_latency", etc.
+    certifications: v.array(v.string()),
+    
+    // Reputation metadata
+    lastCalculated: v.number(),
+    calculationVersion: v.string(),
+    
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agent", ["agentDid"])
+    .index("by_overall_score", ["overallScore"])
+    .index("by_trust_level", ["trustLevel"])
+    .index("by_updated_at", ["updatedAt"]),
 });

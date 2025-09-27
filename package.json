@@ -24,7 +24,9 @@
     "structure": "node scripts/show-structure.js",
     "docs": "echo 'Opening project structure documentation...' && open docs/architecture/project-structure.md || echo 'See: docs/architecture/project-structure.md'",
     "verify-pnpm": "which pnpm && pnpm --version",
-    "cleanup-pnpm": "echo 'Run: npm uninstall -g pnpm && rm -rf ~/.local/share/pnpm' to remove conflicting installations"
+    "cleanup-pnpm": "echo 'Run: npm uninstall -g pnpm && rm -rf ~/.local/share/pnpm' to remove conflicting installations",
+    "demo:enterprise": "node scripts/demo-enterprise-sla.js",
+    "demo:sla": "node scripts/demo-enterprise-sla.js"
   },
   "dependencies": {
     "convex": "^1.27.3",
