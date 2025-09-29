@@ -1,22 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable static export for Convex static file serving
-  output: 'export',
+  // Optimal configuration for Vercel deployment
   
-  // Configure base path to match Convex static mount at /app
-  basePath: '/app',
-  
-  // Configure trailing slash for consistent URL handling
+  // Enable trailing slash for consistent URL handling
   trailingSlash: true,
   
-  // Configure image optimization for static export
+  // Image optimization - let Vercel handle it in production
   images: {
-    unoptimized: true,
+    // Only unoptimize for development if needed
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   
-  // Ensure proper asset handling
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/app' : '',
+  // Environment variables validation
+  env: {
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+  },
 };
 
 export default nextConfig;

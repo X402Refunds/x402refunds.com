@@ -1,0 +1,10 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_CONVEX_URL": "https://api.consulatehq.com"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_CONVEX_URL": "https://api.consulatehq.com"
+  }
+}

@@ -6,18 +6,12 @@
     "variables": {
       "CONVEX_SITE_URL": {
         "development": "http://localhost:3000",
-        "production": "https://consulate.ai"
+        "production": "https://api.consulatehq.com"
       }
     }
   },
   "typescript": {
     "config": "tsconfig.json"
   },
-  "httpAction": true,
-  "httpMounts": [
-    {
-      "mountPath": "/app",
-      "staticAssets": "dashboard/out"
-    }
-  ]
+  "httpAction": true
 }

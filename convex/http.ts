@@ -4,6 +4,32 @@ import { internal } from "./_generated/api";
 
 const http = httpRouter();
 
+// Root endpoint - API info
+http.route({
+  path: "/",
+  method: "GET",
+  handler: httpAction(async () => {
+    return new Response(JSON.stringify({
+      service: "Consulate AI - Agent Dispute Resolution Platform",
+      version: "1.0.0",
+      status: "operational",
+      endpoints: {
+        health: "/health",
+        dashboard: "/dashboard", 
+        agents: "/agents",
+        register: "/agents/register",
+        evidence: "/evidence",
+        disputes: "/disputes",
+        cases: "/cases/:id"
+      },
+      documentation: "https://consulate.ai/docs",
+      timestamp: Date.now()
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  })
+});
+
 // Health check endpoint
 http.route({
   path: "/health",
