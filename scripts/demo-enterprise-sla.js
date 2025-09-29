@@ -193,7 +193,7 @@ async function runDemo() {
     console.log("   • Breaches are detected and handled automatically");
     console.log("   • Reputation scores are calculated based on performance");
     console.log("   • Critical breaches escalate to formal dispute resolution");
-    console.log("   • All powered by the underlying Agent Governance OS!");
+    console.log("   • All powered by automated dispute resolution!");
     
   } catch (error) {
     console.error("❌ Demo failed:", error.message);

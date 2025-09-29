@@ -93,13 +93,13 @@ function showProjectStructure() {
       details: [
         'Convex serverless functions',
         'Database schema and queries',
-        'AI governance framework',
-        'Constitutional AI system'
+        'AI dispute resolution framework',
+        'Automated arbitration system'
       ],
       keyFiles: [
         'schema.ts - Database schema',
         'agents.ts - AI agent management',
-        'constitution.ts - Constitutional framework',
+        'cases.ts - Dispute resolution framework',
         'courtEngine.ts - Decision engine'
       ],
       fileCount: {
@@ -156,12 +156,12 @@ function showProjectStructure() {
       details: [
         'Deployment automation',
         'Monitoring scripts',
-        'Governance utilities',
+        'Dispute resolution utilities',
         'Development tools'
       ],
       keyFiles: [
         'deploy-*.js - Deployment scripts',
-        'governance.js - Governance utilities',
+        'monitoring.js - System monitoring utilities',
         'monitor.js - System monitoring'
       ],
       fileCount: {
