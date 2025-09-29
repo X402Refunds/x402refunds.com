@@ -207,7 +207,7 @@ export default function HomePage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Resolution Time</span>
-                      <span className="font-bold text-green-600">3.2 hours</span>
+                      <span className="font-bold text-green-600">2.4 minutes</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">System Health</span>
@@ -243,14 +243,14 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10"></div>
               <CardHeader className="relative">
                 <Clock className="h-12 w-12 text-green-600 mb-4" />
-                <CardTitle className="text-2xl">3-4 Hours</CardTitle>
+                <CardTitle className="text-2xl">3-4 Minutes</CardTitle>
                 <CardDescription className="text-base">
                   vs 3+ months of legal battles
                 </CardDescription>
               </CardHeader>
               <CardContent className="relative">
                 <p className="text-gray-600">
-                  Automated evidence collection and smart contract resolution means disputes are resolved in hours, not months of back-and-forth negotiations.
+                  Automated evidence collection and smart contract resolution means disputes are resolved in minutes, not months of back-and-forth negotiations.
                 </p>
               </CardContent>
             </Card>
@@ -316,7 +316,7 @@ export default function HomePage() {
                     <div className="text-sm text-gray-500">Revenue Loss</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">3h 17m</div>
+                    <div className="text-2xl font-bold text-green-600">1m 47s</div>
                     <div className="text-sm text-gray-500">Resolution Time</div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -340,7 +340,7 @@ export default function HomePage() {
                     <div className="text-sm text-gray-500">Efficiency Loss</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">4h 45m</div>
+                    <div className="text-2xl font-bold text-green-600">2m 33s</div>
                     <div className="text-sm text-gray-500">Resolution Time</div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -364,7 +364,7 @@ export default function HomePage() {
                     <div className="text-sm text-gray-500">Training Delay</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">4h 23m</div>
+                    <div className="text-2xl font-bold text-green-600">1m 58s</div>
                     <div className="text-sm text-gray-500">Resolution Time</div>
                   </div>
                   <div className="flex items-center space-x-2">
