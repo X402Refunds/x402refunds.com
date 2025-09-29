@@ -136,21 +136,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="space-y-8">
-              <div className="space-y-4">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                  ⚡ Automated AI Vendor Dispute Resolution
-                </Badge>
-                <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
-                  Resolve agent disputes in{" "}
+              <div className="space-y-6">
+                <h1 className="text-5xl lg:text-8xl font-bold tracking-tight text-gray-900">
+                  Resolve Agent Disputes in{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    minutes, not months
+                    minutes
                   </span>
                 </h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                  When enterprise AI systems experience SLA breaches causing $23K+ in losses, 
-                  we resolve them <strong>automatically in minutes</strong> instead of 
-                  months of litigation and $50K+ in legal fees.
-                </p>
+
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
