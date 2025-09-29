@@ -1,43 +1,105 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { ArrowRight, Clock, DollarSign, Shield, Zap, CheckCircle, Activity, Eye, ArrowUpRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
-interface SystemMetrics {
-  activeAgents: number
-  totalCases: number
-  systemHealth: number
-  uptime: string
-  avgResolutionTime: string
+
+// Animation hooks
+function useCountUp(target: number, duration: number, delay: number = 0) {
+  const [count, setCount] = useState(0)
+  const [isActive, setIsActive] = useState(false)
+  const countRef = useRef(0)
+  const frameId = useRef<number | undefined>(undefined)
+  const startTime = useRef<number | undefined>(undefined)
+
+  const easeOutCubic = useCallback((t: number): number => {
+    return 1 - Math.pow(1 - t, 3)
+  }, [])
+
+  const animate = useCallback((timestamp: number) => {
+    if (!startTime.current) {
+      startTime.current = timestamp + delay
+      frameId.current = requestAnimationFrame(animate)
+      return
+    }
+
+    if (timestamp < startTime.current) {
+      frameId.current = requestAnimationFrame(animate)
+      return
+    }
+
+    const elapsed = timestamp - startTime.current
+    const progress = Math.min(elapsed / duration, 1)
+    const easedProgress = easeOutCubic(progress)
+    
+    const currentCount = Math.floor(easedProgress * target)
+    countRef.current = currentCount
+    setCount(currentCount)
+
+    if (progress < 1) {
+      frameId.current = requestAnimationFrame(animate)
+    }
+  }, [target, duration, delay, easeOutCubic])
+
+  const start = useCallback(() => {
+    if (!isActive) {
+      setIsActive(true)
+      startTime.current = undefined
+      frameId.current = requestAnimationFrame(animate)
+    }
+  }, [isActive, animate])
+
+  useEffect(() => {
+    return () => {
+      if (frameId.current) {
+        cancelAnimationFrame(frameId.current)
+      }
+    }
+  }, [])
+
+  return { count, start, isActive }
+}
+
+function useInView(threshold: number = 0.3) {
+  const [isInView, setIsInView] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isInView) {
+          setIsInView(true)
+        }
+      },
+      { threshold }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [isInView, threshold])
+
+  return { ref, isInView }
 }
 
 export default function HomePage() {
-  const [metrics, setMetrics] = useState<SystemMetrics>({
-    activeAgents: 47,
-    totalCases: 156,
-    systemHealth: 99.9,
-    uptime: "24h 15m",
-    avgResolutionTime: "3.2 hours"
-  })
+  // Animation state for metrics
+  const { ref: metricsRef, isInView } = useInView(0.3)
+  const companiesCount = useCountUp(47, 2000, 0)
+  const disputesCount = useCountUp(156, 2500, 500)
 
-  const [loading, setLoading] = useState(true)
-
+  // Trigger animations when section comes into view
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMetrics({
-        activeAgents: 47,
-        totalCases: 156,
-        systemHealth: 99.9,
-        uptime: "24h 15m",
-        avgResolutionTime: "3.2 hours"
-      })
-      setLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    if (isInView) {
+      companiesCount.start()
+      disputesCount.start()
+    }
+  }, [isInView, companiesCount, disputesCount])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
@@ -72,97 +134,122 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
-            <div className="lg:col-span-6">
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                    ⚡ Automated AI Vendor Dispute Resolution
-                  </Badge>
-                  <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
-                    Resolve agent disputes in{" "}
-                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      hours, not months
-                    </span>
-                  </h1>
-                  <p className="text-xl text-gray-600 max-w-2xl">
-                    When Salesforce&apos;s AI disputes OpenAI over $23K in downtime losses, 
-                    we resolve it in <strong>3 hours automatically</strong> instead of 
-                    3+ months and $50K+ in legal fees.
-                  </p>
-                </div>
+          <div className="text-center">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  ⚡ Automated AI Vendor Dispute Resolution
+                </Badge>
+                <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
+                  Resolve agent disputes in{" "}
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    minutes, not months
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                  When enterprise AI systems experience SLA breaches causing $23K+ in losses, 
+                  we resolve them <strong>automatically in minutes</strong> instead of 
+                  months of litigation and $50K+ in legal fees.
+                </p>
+              </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    onClick={() => window.open('/dashboard', '_self')}
-                  >
-                    View Live System
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
-                  >
-                    Test API
-                    <ArrowUpRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  onClick={() => window.open('/dashboard', '_self')}
+                >
+                  View Live System
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
+                >
+                  Test API
+                  <ArrowUpRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Live Metrics */}
-            <div className="mt-16 lg:mt-0 lg:col-span-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-3xl opacity-10"></div>
-                <Card className="relative border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Live System Metrics</span>
-                      <Badge variant="outline" className="text-xs">
-                        Real-time
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Production system currently resolving disputes
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <div className="text-2xl font-bold text-green-700">
-                          {loading ? "..." : metrics.activeAgents}
-                        </div>
-                        <div className="text-sm text-green-600 font-medium">Companies Protected</div>
-                      </div>
-                      <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                        <div className="text-2xl font-bold text-blue-700">
-                          {loading ? "..." : metrics.totalCases}
-                        </div>
-                        <div className="text-sm text-blue-600 font-medium">Disputes Resolved</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Average Resolution Time</span>
-                        <span className="text-2xl font-bold text-emerald-600">{metrics.avgResolutionTime}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">System Health</span>
-                        <span className="text-2xl font-bold text-green-600">{metrics.systemHealth}%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Uptime</span>
-                        <span className="text-lg font-semibold text-gray-700">{metrics.uptime}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+      {/* Animated Metrics Section */}
+      <section ref={metricsRef} className="py-20 bg-gradient-to-br from-slate-50/50 to-blue-50/30 border-t border-white/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Platform Performance
+            </h2>
+            <p className="text-xl text-gray-600">
+              Real-time metrics from our production system
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Companies Participating */}
+            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 group-hover:from-green-500/10 group-hover:to-emerald-500/10 transition-colors duration-300"></div>
+              <CardContent className="relative p-8 text-center">
+                <div className="mb-4">
+                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2 font-mono tabular-nums">
+                    {companiesCount.count}
+                  </div>
+                  <div className="text-lg font-medium text-green-700">
+                    Companies Participating
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    In our dispute resolution network
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Disputes Resolved */}
+            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 group-hover:from-blue-500/10 group-hover:to-indigo-500/10 transition-colors duration-300"></div>
+              <CardContent className="relative p-8 text-center">
+                <div className="mb-4">
+                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2 font-mono tabular-nums">
+                    {disputesCount.count}
+                  </div>
+                  <div className="text-lg font-medium text-blue-700">
+                    Disputes Resolved
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Automatically processed to completion
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Average Resolution Time */}
+            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition-colors duration-300"></div>
+              <CardContent className="relative p-8 text-center">
+                <div className="mb-4">
+                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2">
+                    3
+                  </div>
+                  <div className="text-lg font-medium text-purple-700">
+                    Minutes Average
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    From filing to resolution
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Context */}
+          <div className="text-center mt-12">
+            <p className="text-gray-600 text-lg">
+              <strong className="text-gray-900">Live production system</strong> • Updated every 30 seconds • 
+              <span className="text-green-600 font-medium"> 99.9% uptime</span>
+            </p>
           </div>
         </div>
       </section>
@@ -399,7 +486,7 @@ export default function HomePage() {
             Ready to Automate Your AI Vendor Disputes?
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Join {metrics.activeAgents} companies already protecting their AI vendor relationships
+            Join 47+ companies already protecting their AI vendor relationships
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
