@@ -134,102 +134,97 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
-                  Resolve Agent Disputes in{" "}
-                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    minutes
-                  </span>
-                </h1>
+          <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+            <div className="lg:col-span-7">
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                    ⚡ Automated AI Vendor Dispute Resolution
+                  </Badge>
+                  <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
+                    Resolve Agent Disputes in{" "}
+                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      minutes
+                    </span>
+                  </h1>
+                  <p className="text-xl text-gray-600 max-w-3xl">
+                    When enterprise AI systems experience SLA breaches causing $23K+ in losses, 
+                    we resolve them <strong>automatically in minutes</strong> instead of 
+                    months of litigation and $50K+ in legal fees.
+                  </p>
+                </div>
 
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    onClick={() => window.open('/dashboard', '_self')}
+                  >
+                    View Live System
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
+                  >
+                    Test API
+                    <ArrowUpRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  onClick={() => window.open('/dashboard', '_self')}
-                >
-                  View Live System
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
-                >
-                  Test API
-                  <ArrowUpRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
+            </div>
+            
+            {/* Live Metrics Card */}
+            <div ref={metricsRef} className="lg:col-span-5 mt-12 lg:mt-0">
+              <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl text-gray-900">Live System Metrics</CardTitle>
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      🟢 Real-time
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-gray-600">
+                    Production system currently resolving disputes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-3xl font-bold text-green-600 font-mono tabular-nums">
+                        {companiesCount.count}
+                      </div>
+                      <div className="text-sm font-medium text-green-700">Companies Protected</div>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-3xl font-bold text-blue-600 font-mono tabular-nums">
+                        {disputesCount.count}
+                      </div>
+                      <div className="text-sm font-medium text-blue-700">Disputes Resolved</div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Resolution Time</span>
+                      <span className="font-bold text-green-600">3.2 hours</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">System Health</span>
+                      <span className="font-bold text-green-600">99.9%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Uptime</span>
+                      <span className="font-bold text-gray-700">24h 15m</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Live System Metrics */}
-      <section ref={metricsRef} className="py-20 bg-gradient-to-br from-slate-50/50 to-blue-50/30 border-t border-white/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                Live System Metrics
-              </h2>
-              <p className="text-lg text-gray-600">
-                Production system currently resolving disputes
-              </p>
-            </div>
-            <Badge className="bg-green-100 text-green-800 border-green-200 text-sm px-3 py-1">
-              Real-time
-            </Badge>
-          </div>
-
-          {/* Main Metrics Grid */}
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Companies Protected */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-shadow">
-              <CardContent className="p-12 text-center">
-                <div className="text-7xl lg:text-8xl font-bold text-green-600 mb-4 font-mono tabular-nums">
-                  {companiesCount.count}
-                </div>
-                <div className="text-xl font-medium text-green-700">
-                  Companies Protected
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Disputes Resolved */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-xl transition-shadow">
-              <CardContent className="p-12 text-center">
-                <div className="text-7xl lg:text-8xl font-bold text-blue-600 mb-4 font-mono tabular-nums">
-                  {disputesCount.count}
-                </div>
-                <div className="text-xl font-medium text-blue-700">
-                  Disputes Resolved
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Additional Metrics */}
-          <div className="space-y-6 text-lg">
-            <div className="flex justify-between items-center py-4 border-b border-gray-200">
-              <span className="font-medium text-gray-900">Average Resolution Time</span>
-              <span className="text-2xl font-bold text-green-600">3.2 hours</span>
-            </div>
-            <div className="flex justify-between items-center py-4 border-b border-gray-200">
-              <span className="font-medium text-gray-900">System Health</span>
-              <span className="text-2xl font-bold text-green-600">99.9%</span>
-            </div>
-            <div className="flex justify-between items-center py-4">
-              <span className="font-medium text-gray-900">Uptime</span>
-              <span className="text-2xl font-bold text-gray-700">24h 15m</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Value Proposition */}
       <section className="py-20 bg-white/60 backdrop-blur-sm">
