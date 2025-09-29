@@ -109,9 +109,12 @@ export default function HomePage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-gray-900">
+                <button 
+                  onClick={() => window.location.href = '/'}
+                  className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 rounded-lg px-2 py-1"
+                >
                   Consulate
-                </h1>
+                </button>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -142,7 +145,7 @@ export default function HomePage() {
                     Automated AI Vendor Dispute Resolution
                   </Badge>
                   <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
-                    Resolve Agent Disputes in{" "}
+                    Resolve AI Agent Disputes in{" "}
                     <span className="text-black border-b-4 border-gray-900">
                       minutes
                     </span>
