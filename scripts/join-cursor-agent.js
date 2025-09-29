@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Script to register the local Cursor agent with the Consulate AI Government
+// Script to register the local Cursor agent with the Consulate Platform
 // This creates a real agent with real API keys and demonstrates actual system usage
 
 import { readFileSync } from 'fs';

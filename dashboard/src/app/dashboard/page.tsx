@@ -59,7 +59,7 @@ export default function DashboardPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">System Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome to Consulate AI - Agent Management & Dispute Resolution
+            Welcome to Consulate - Agent Management & Dispute Resolution
           </p>
         </div>
 

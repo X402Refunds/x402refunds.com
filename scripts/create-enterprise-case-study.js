@@ -44,7 +44,7 @@ const ENTERPRISE_CASE_STUDY = {
       name: "Cross-Divisional Contract Disputes",
       scenario: "847 AI agents across 5 divisions with conflicting resource allocation",
       beforeConsulate: "45-day average resolution via human arbitrators",
-      afterConsulate: "4.2-hour average resolution via AI court system", 
+      afterConsulate: "4.2-hour average resolution via automated court system", 
       costSavings: "$2.1M annually",
       description: "Internal disputes between R&D agents and Manufacturing agents over compute resources"
     },
@@ -222,7 +222,7 @@ function generateExecutiveSummary() {
   console.log('Large enterprises deploying hundreds of AI agents face governance chaos.');
   console.log('Without proper dispute resolution, agents conflict and create legal/operational risks.');
   console.log('\nSOLUTION:');
-  console.log('Consulate AI Government OS provides constitutional governance for AI agent fleets.');
+  console.log('Consulate provides automated dispute resolution governance for AI agent fleets.');
   console.log('Automated courts, voting systems, and compliance frameworks scale with deployment.');
   console.log('\nRESULTS:');
   console.log(`• ${ENTERPRISE_CASE_STUDY.metrics.totalSavings} annual savings for ${ENTERPRISE_CASE_STUDY.company.name}`);

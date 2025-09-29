@@ -1,13 +1,13 @@
 {
   "name": "consulate",
   "version": "1.0.0",
-  "description": "Consulate - Constitutional AI Governance Monorepo | Frontend (Next.js) + Backend (Convex) + Shared Config",
+  "description": "Consulate - Agent Dispute Resolution | Frontend (Vercel) + Backend (Convex) + Shared Config",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"convex dev\" \"pnpm --filter dashboard dev\"",
+    "dev": "concurrently \"convex deploy --prod\" \"vercel dev\"",
     "predeploy": "pnpm -C dashboard build",
-    "deploy": "pnpm exec convex dev --once",
-    "deploy:prod": "pnpm exec convex deploy --prod",
+    "deploy": "pnpm exec convex deploy --prod",
+    "deploy:frontend": "vercel deploy --prod",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check || true",

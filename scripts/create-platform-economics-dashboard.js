@@ -460,7 +460,7 @@ function createEconomicsHTML() {
                                     </div>
                                     <hr>
                                     <div class="text-center">
-                                        <div class="h4 text-primary">Consulate AI</div>
+                                        <div class="h4 text-primary">Consulate</div>
                                         <div class="h2 text-success">$150B+ Valuation Potential</div>
                                         <small class="text-secondary">AI Agent Governance Infrastructure (First-Mover)</small>
                                     </div>

@@ -1,4 +1,4 @@
-# Consulate AI Development Rules
+# Consulate Development Rules
 
 ## 🍺 PNPM INSTALLATION PREFERENCES
 
@@ -126,20 +126,19 @@ Write a brief plan:
 ### 📍 Current Architecture
 
 #### File Locations
-- **Backend**: `convex/` - All serverless functions and backend logic
-- **Frontend**: `dashboard/src/` - Next.js application with React components
+- **Backend**: `convex/` - Convex serverless functions and backend logic
+- **Frontend**: `dashboard/src/` - Vercel-deployed Next.js application with React components
 - **Shared Config**: `packages/config/src/` - Shared ESLint and TypeScript configuration
 - **Tests**: `test/` - Test files with `.test.ts` extension
 - **Scripts**: `scripts/` - Automation and utility scripts
 - **Documentation**: `docs/` - Project documentation and specifications
-- **Infrastructure**: `infra/` - Deployment configurations and templates
 - **Configuration**: Root level (`./`) - `package.json`, `tsconfig.json`, `vitest.config.ts`
 - **Workflows**: `.github/workflows/` - CI/CD configuration
 
 #### Commands
-- **Development**: `pnpm dev` - Start development server (convex + dashboard)
-- **Deployment**: `pnpm deploy` - Deploy to development environment
-- **Production Deployment**: `pnpm deploy:prod` - Deploy to production (explicit approval only)
+- **Development**: `pnpm dev` - Start development server (Convex production + Vercel dev)
+- **Backend Deployment**: `pnpm deploy` - Deploy backend to Convex production
+- **Frontend Deployment**: `pnpm deploy:frontend` - Deploy frontend to Vercel
 - **Build**: `pnpm build` - Build all packages
 - **Testing**: `pnpm test`, `pnpm test:run`, `pnpm test:ui`, `pnpm test:coverage`
 - **E2E**: `pnpm e2e` - End-to-end tests
@@ -177,73 +176,67 @@ Write a brief plan:
 ### 📏 Architecture Principles
 
 Always follow these core principles:
-- Pure serverless - all backend logic in Convex functions
-- Clear separation of concerns - frontend in `dashboard/`, backend in `convex/`, shared config in `packages/`
+- Pure serverless - all backend logic in Convex production functions
+- Clear separation of concerns - frontend on Vercel in `dashboard/`, backend on Convex in `convex/`, shared config in `packages/`
 - Monorepo organization with logical boundaries
-- Single deployment model from root workspace
+- Production-only deployment model (no development environments)
 - Type-safe integration between frontend and backend
 - Zero build complexity for backend functions
 
-## 🚦 Deployment Safety - Dev First, Prod Never Without Approval
+## 🚦 Production-Only Deployment Model
 
-**CRITICAL RULE**: Always deploy to development first. Never assume production deployment without explicit user approval.
+**CRITICAL RULE**: This project operates in production-only mode. All deployments go to production.
 
 ### Deployment Process Rules
 
-#### Default to Development
-- **Always use**: `pnpm deploy` for development deployment
-- **Never assume**: Production deployment unless explicitly requested
-- **User says "deploy"**: Means development deployment by default
-- **Architecture pattern**: `pnpm dev` runs development server, `pnpm deploy` deploys to development
+#### Production Deployment Model
+- **Backend deployment**: `pnpm deploy` deploys backend to Convex production
+- **Frontend deployment**: `pnpm deploy:frontend` deploys frontend to Vercel production  
+- **No development environments**: All services run in production mode
+- **Testing**: All tests run against production APIs
 
-#### Production Deployment Requirements
-- ✅ **Explicit user request**: "deploy to production" or "push to prod"
-- ✅ **User confirmation**: Ask before any production deployment
-- ✅ **Testing complete**: All tests passing in development
+#### Deployment Requirements
+- ✅ **Testing complete**: All tests passing before deployment
 - ✅ **Architecture validation**: Follow established architecture patterns
+- ✅ **Backend first**: Deploy backend before frontend for API compatibility
 
 ### ✅ Correct Deployment Commands
 
-#### Development (Default)
+#### Backend Deployment
 ```bash
-# Correct development deployment
+# Deploy backend to Convex production
 pnpm deploy
 ```
 
-#### Production (Only with explicit approval)
+#### Frontend Deployment
 ```bash
-# Only use when explicitly requested
-pnpm deploy:prod
+# Deploy frontend to Vercel production
+pnpm deploy:frontend
+```
+
+#### Full Deployment
+```bash
+# Deploy both backend and frontend
+pnpm deploy && pnpm deploy:frontend
 ```
 
 ### 🚫 Prohibited Patterns
 ```bash
-# DON'T DO THIS - Assumes production without explicit request
-pnpm deploy:prod  # Without explicit prod request
-
-# DON'T DO THIS - Old deployment patterns
-npx convex dev --once  # Use pnpm deploy instead
+# DON'T DO THIS - Old development patterns
+convex dev        # No development mode
+pnpm dev:local    # No localhost development
+npm run dev       # Use pnpm commands instead
 ```
 
 ### 🔍 Deployment Decision Tree
 ```
 User Request → "Deploy" / "Deploy stuff"
     ↓
-ASSUMPTION: Development deployment
+RUN: pnpm deploy (backend to Convex)
     ↓
-Run: pnpm deploy
+RUN: pnpm deploy:frontend (frontend to Vercel)
     ↓
-SUCCESS: Report dev deployment complete
-
-User Request → "Deploy to production" / "Push to prod"
-    ↓  
-REQUIREMENT: Explicit production request
-    ↓
-VERIFY: Tests passing, architecture validated
-    ↓
-ASK: Confirm production deployment intention
-    ↓
-APPROVED: pnpm deploy:prod
+SUCCESS: Report production deployment complete
 ```
 
 ## 🧪 Testing Before Push - MANDATORY
@@ -259,7 +252,7 @@ pnpm build && echo "✅ BUILD TEST PASSED"
 
 #### 2. For Convex Backend Changes
 ```bash
-pnpm deploy        # Validate schema and functions
+pnpm deploy        # Deploy and validate schema and functions in production
 pnpm test          # Run comprehensive API tests
 ```
 
@@ -313,68 +306,68 @@ pnpm test:coverage             # Check coverage (optional but recommended)
 - ✅ Edge cases and boundary conditions
 - ✅ Integration with existing APIs
 
-### Commit Only After Green Local Tests
+### Commit Only After Green Production Tests
 ```bash
 # Only commit after all tests pass:
 pnpm build ✅
 pnpm lint ✅ 
 pnpm type-check ✅
-pnpm deploy ✅
-pnpm test:run ✅
+pnpm deploy ✅         # Deploy to Convex production
+pnpm test:run ✅       # Test against production APIs
 
 # THEN commit and push
 git add . && git commit -m "..." && git push
 ```
 
-## CONSTITUTIONAL AI GOVERNANCE FRAMEWORK
+## AI VENDOR DISPUTE RESOLUTION FRAMEWORK
 
 **Importance Score: 95/100**
 
-### Core Governance Components
+### Core Resolution Components
 
-1. **Constitutional Control & Override System**
-   - Hierarchical emergency shutdown framework with defined authority levels
-   - Multi-tier human authority chain of command
-   - Real-time constitutional violation monitoring
-   - Emergency intervention protocols with validation checks
-   - Location: convex/humanOverride/emergencyControls.ts
+1. **Automated Dispute Detection & Filing**
+   - SLA breach monitoring and evidence collection
+   - Automated dispute initiation workflows
+   - Real-time violation tracking
+   - Evidence validation and storage
+   - Location: convex/agents.ts, convex/evidence.ts
 
-2. **Foundational Laws Implementation**
-   - Constitutional directives governing AI behavior
-   - Human primacy enforcement mechanisms 
-   - Multi-level enforcement protocols
-   - Automated compliance validation
-   - Location: convex/humanOverride/foundationalLaws.ts
+2. **Case Management System**
+   - Dispute lifecycle tracking
+   - Automated resolution engine
+   - Case status monitoring
+   - Party notification system
+   - Location: convex/cases.ts, convex/courtEngine.ts
 
-3. **International Compliance Framework**
-   - UN Charter and international law compliance system
-   - Multi-framework legal compliance assessment
-   - Specialized legal verification analysis
-   - Cross-jurisdictional compliance tracking
-   - Location: convex/compliance/internationalCompliance.ts
+3. **Judge Panel & Arbitration**
+   - Automated arbitration decisions
+   - Panel voting mechanisms
+   - Resolution enforcement
+   - Payment and penalty processing
+   - Location: convex/judges.ts
 
-4. **Federation Management System**
-   - Bilateral agreement management with sovereignty controls
-   - Union integration with multi-level governance
-   - UN coordination through advisory mechanisms
-   - National veto and override capabilities
-   - Location: convex/federation/
+4. **Enterprise Integration APIs**
+   - Agent registration and management
+   - Evidence submission endpoints
+   - Case status tracking APIs
+   - Automated resolution callbacks
+   - Location: convex/http.ts
 
 ### Key Workflows
 
-1. **Constitutional Merger Process**
-   - Complex thread merging with dual references
-   - Roll-call confirmations
-   - Compliance verification
-   - Merge synthesis with specific requirements
+1. **Dispute Resolution Process**
+   - Automated SLA breach detection
+   - Evidence collection and validation
+   - Case filing and arbitration
+   - Resolution and enforcement
 
-2. **Rapid Constitution Building**
-   - Automated completeness assessment
-   - Priority-based article generation
-   - Multi-category requirements tracking
-   - Institutional voting simulation
+2. **Agent Lifecycle Management**
+   - Monitoring agent registration
+   - Capability discovery
+   - Evidence submission
+   - Resolution notification
 
-The system implements a comprehensive governance framework prioritizing human control, legal compliance, and international cooperation while maintaining clear national sovereignty protections through override capabilities and veto mechanisms.
+The system implements a comprehensive dispute resolution platform prioritizing automated arbitration, fast resolution, and enterprise integration while maintaining clear audit trails and enforcement mechanisms.
 
 ---
 

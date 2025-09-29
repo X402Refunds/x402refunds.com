@@ -53,7 +53,7 @@ export function GovernmentSidebar({ className }: GovernmentSidebarProps) {
             <span className="text-white font-bold text-sm">C</span>
           </div>
           <div>
-            <h2 className="font-bold text-lg">Consulate AI</h2>
+            <h2 className="font-bold text-lg">Consulate</h2>
             <p className="text-xs text-muted-foreground">Agent Management</p>
           </div>
         </Link>

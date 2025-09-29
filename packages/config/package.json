@@ -1,7 +1,7 @@
 {
   "name": "@consulate/config",
   "version": "0.1.0",
-  "description": "Shared configuration and environment validation for Consulate AI",
+  "description": "Shared configuration and environment validation for Consulate",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Release v0.1.0 Script for Consulate AI
+# Release v0.1.0 Script for Consulate
 # This script commits the current state and pushes to GitHub to trigger the release
 
 set -e
 
-echo "🎉 Preparing Consulate AI v0.1.0 Release"
+echo "🎉 Preparing Consulate v0.1.0 Release"
 echo "============================================"
 
 # Check if we're in git repo
@@ -44,7 +44,7 @@ This establishes the foundation for the future v0.2.0
 Complete Government OS with legislative, executive, 
 and federation capabilities.
 
-BREAKING CHANGE: Initial release of Consulate AI"
+BREAKING CHANGE: Initial release of Consulate"
 
 # Push to GitHub
 echo "🚀 Pushing to GitHub..."
@@ -58,7 +58,7 @@ echo "   1. Check GitHub Actions: https://github.com/vbkotecha/consulate/actions
 echo "   2. Monitor release creation: https://github.com/vbkotecha/consulate/releases"
 echo "   3. Once released, the version will be tagged as v0.1.0"
 echo ""
-echo "🌟 Your Consulate AI v0.1.0 is ready for the world!"
+echo "🌟 Your Consulate v0.1.0 is ready for the world!"
 echo ""
 echo "📊 What's included:"
 echo "   • Complete basic court system"

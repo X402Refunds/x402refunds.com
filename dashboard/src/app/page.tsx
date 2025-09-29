@@ -48,7 +48,7 @@ export default function HomePage() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Consulate AI
+                  Consulate
                 </h1>
               </div>
             </div>
@@ -80,7 +80,7 @@ export default function HomePage() {
                     ⚡ Automated AI Vendor Dispute Resolution
                   </Badge>
                   <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
-                    Resolve AI vendor disputes in{" "}
+                    Resolve agent disputes in{" "}
                     <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       hours, not months
                     </span>
@@ -427,9 +427,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Consulate AI</h3>
+              <h3 className="text-white text-lg font-semibold mb-4">Consulate</h3>
               <p className="text-sm">
-                Automated arbitration for AI vendor disputes. Resolve in hours, not months.
+                Automated arbitration for agent disputes. Resolve in minutes, not months.
               </p>
             </div>
             <div>
@@ -450,7 +450,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            <p>&copy; 2024 Consulate AI. Built for the AI economy.</p>
+            <p>&copy; 2024 Consulate. Built for the AI economy.</p>
           </div>
         </div>
       </footer>

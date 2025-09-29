@@ -3,7 +3,7 @@
 /**
  * Enterprise Demo Cases: Perfect Examples from Final MVP Strategy
  * 
- * This script demonstrates the complete enterprise AI vendor dispute resolution workflow:
+ * This script demonstrates the complete enterprise agent dispute resolution workflow:
  * 1. Salesforce vs OpenAI - API downtime ($23K loss)
  * 2. Uber vs Google Maps - Route latency ($38K loss) 
  * 3. Anthropic vs Azure - Compute failure ($45K loss)

@@ -106,7 +106,7 @@ async function callAI(systemPrompt, userPrompt, options = {}) {
     headers: {
       "Authorization": `Bearer ${envVars.OPENROUTER_API_KEY}`,
       "HTTP-Referer": "http://localhost:3000",
-      "X-Title": "Consulate AI",
+      "X-Title": "Consulate",
       "Content-Type": "application/json"
     },
     body: JSON.stringify({

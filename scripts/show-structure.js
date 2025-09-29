@@ -59,7 +59,7 @@ function directoryExists(dirPath) {
 function showProjectStructure() {
   const rootDir = process.cwd();
   
-  console.log(colorize('\n🏗️  Consulate AI - Project Structure', 'bright'));
+  console.log(colorize('\n🏗️  Consulate - Project Structure', 'bright'));
   console.log(colorize('========================================', 'dim'));
   
   const structure = [
@@ -268,7 +268,8 @@ function showProjectStructure() {
   console.log(`${colorize('pnpm dev', 'green')}        - Start development server`);
   console.log(`${colorize('pnpm test', 'green')}       - Run all tests`);
   console.log(`${colorize('pnpm build', 'green')}      - Build the project`);
-  console.log(`${colorize('pnpm deploy', 'green')}     - Deploy to production`);
+  console.log(`${colorize('pnpm deploy', 'green')}     - Deploy backend to Convex production`);
+  console.log(`${colorize('pnpm deploy:frontend', 'green')} - Deploy frontend to Vercel production`);
   console.log(`${colorize('pnpm structure', 'green')}  - Show this structure view`);
   console.log(`${colorize('pnpm docs', 'green')}       - Open documentation`);
 

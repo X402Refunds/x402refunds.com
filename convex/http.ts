@@ -10,7 +10,7 @@ http.route({
   method: "GET",
   handler: httpAction(async () => {
     return new Response(JSON.stringify({
-      service: "Consulate AI - Agent Dispute Resolution Platform",
+      service: "Consulate - Agent Dispute Resolution Platform",
       version: "1.0.0",
       status: "operational",
       endpoints: {
@@ -229,7 +229,7 @@ http.route({
     return new Response(`
       <html>
         <head>
-          <title>Consulate AI - Agent Management Dashboard</title>
+          <title>Consulate - Agent Management Dashboard</title>
           <style>
             body { font-family: -apple-system, system-ui, sans-serif; margin: 40px; background: #f8fafc; }
             .dashboard { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 1200px; margin: 0 auto; }
@@ -248,7 +248,7 @@ http.route({
         <body>
           <div class="dashboard">
             <div class="header">
-              <h1>🤖 Consulate AI Dashboard</h1>
+              <h1>🤖 Consulate Dashboard</h1>
               <p>Agent Management & Dispute Resolution System</p>
             </div>
             

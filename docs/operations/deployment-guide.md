@@ -1,13 +1,13 @@
 # Deployment Guide
 
-This guide explains the simplified deployment process for the Consulate Agent Governance OS using a single Convex-based deployment.
+This guide explains the production deployment process for the Consulate Vendor Dispute Resolution platform using Vercel frontend and Convex backend.
 
 ## Overview
 
-The system now uses a simplified structure with single-command deployment:
-- **Frontend**: Dashboard (Next.js static export)
-- **Backend**: Convex serverless functions  
-- **Deployment**: Single `pnpm deploy` command handles both frontend and backend
+The system uses a production-only architecture:
+- **Frontend**: Vercel-deployed Next.js dashboard
+- **Backend**: Convex production serverless functions  
+- **Deployment**: Separate commands for backend and frontend deployment
 
 ## Repository Structure
 
@@ -26,32 +26,42 @@ consulate/
 2. Install dependencies: `pnpm install`
 3. Start development: `pnpm dev`
 
-### Development Commands
-- **Start dev environment**: `pnpm dev` - Runs both Convex backend and dashboard frontend
+### Production Commands
+- **Start dev environment**: `pnpm dev` - Runs Convex production backend and Vercel dev frontend
 - **Build project**: `pnpm build` - Builds all components
-- **Run tests**: `pnpm test:run` - Executes test suite
+- **Run tests**: `pnpm test:run` - Executes test suite against production APIs
 - **Type checking**: `pnpm type-check` - Validates TypeScript
 
 ## Deployment Process
 
-### Single Command Deployment
+### Production Deployment Commands
+
+#### Backend Deployment
 ```bash
 pnpm deploy
 ```
 
-This single command:
-1. Automatically builds the dashboard as static files (via `predeploy` hook) 
-2. Deploys Convex backend functions with fresh dashboard assets
-3. Configures Convex to serve the dashboard static files
-4. Handles both development and production deployments
+#### Frontend Deployment  
+```bash
+pnpm deploy:frontend
+```
 
-The `predeploy` hook ensures the dashboard is built before `convex deploy` runs, guaranteeing that Convex serves the latest static assets.
+#### Full Deployment
+```bash
+pnpm deploy && pnpm deploy:frontend
+```
+
+The deployment process:
+1. Backend deploys to Convex production environment
+2. Frontend deploys to Vercel production environment
+3. Both services operate in production mode
+4. APIs tested against production Convex backend
 
 ### How It Works
-- **Dashboard**: Built as static export in `dashboard/out/`
-- **Static serving**: Convex serves dashboard files via `httpMounts` configuration
+- **Dashboard**: Deployed to Vercel production
+- **Backend**: Deployed to Convex production environment
 - **API integration**: Dashboard uses Convex client for backend communication
-- **Routing**: Convex handles both API requests and static file serving
+- **Routing**: Vercel handles frontend routing, Convex handles API requests
 
 ## Environment Configuration
 

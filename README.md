@@ -1,10 +1,10 @@
-# 🚀 Consulate AI - Automated AI Vendor Dispute Resolution
+# 🚀 Consulate - Agent Dispute Resolution
 
-**Automated arbitration for AI vendor disputes - resolve in hours, not months**
+**Resolve AI agent disputes in minutes, not months**
 
 ## The Problem We Solve
 
-When Salesforce's AI has a dispute with OpenAI over $23K in API downtime losses, it takes 3+ months and $50K+ in legal fees to resolve. **We resolve it in 3 hours automatically.**
+When Salesforce's AI has a dispute with OpenAI over $23K in API downtime losses, it takes 4-8 weeks and $20K+ in management time to resolve. **We resolve it in 3 minutes automatically.**
 
 ## 🎯 How It Works
 
@@ -35,8 +35,8 @@ if (openai_api_uptime < 99.9% && revenue_impact > $10000) {
 ## 💰 Business Model - The Insurance Model
 
 **When you're the VICTIM:**
-- Get paid quickly (3 hours vs 3 months)
-- No legal fees ($500 vs $50K lawyers)
+- Get paid quickly (3 minutes vs 4-8 weeks)
+- No management overhead ($500 vs $20K+ time cost)
 - Automatic enforcement (no collections hassle)
 
 **When you're the VIOLATOR:**
@@ -47,12 +47,12 @@ if (openai_api_uptime < 99.9% && revenue_impact > $10000) {
 **Example:**
 ```
 Salesforce joins because:
-✅ When OpenAI fails them → Get paid $23K in 3 hours
+✅ When OpenAI fails them → Get paid $23K in 3 minutes
 ✅ When they fail customers → Pay predictable penalty vs lawsuit
 
 OpenAI joins because:
 ✅ When Azure fails them → Get paid quickly  
-✅ When they fail Salesforce → Pay $23K vs months of legal battle
+✅ When they fail Salesforce → Pay $23K vs weeks of management overhead
 ```
 
 ## 📊 Perfect Demo Cases
@@ -61,25 +61,25 @@ OpenAI joins because:
 - **Issue**: API downtime caused $23K revenue loss
 - **SLA**: 99.9% uptime guaranteed (violated at 99.2%)
 - **Resolution**: OpenAI pays $23K + $2.3K penalty
-- **Time**: 3 hours 17 minutes (vs 3 months legal)
+- **Time**: 3 minutes 17 seconds (vs 4-6 weeks management)
 
 ### **Case #2: Uber vs Google Maps**
 - **Issue**: Route optimization latency caused $38K losses
 - **SLA**: <200ms response time (violated at 450ms avg)
 - **Resolution**: Google refunds $38K API costs
-- **Time**: 4 hours 45 minutes
+- **Time**: 4 minutes 45 seconds
 
 ### **Case #3: Anthropic vs Microsoft Azure**
 - **Issue**: Compute allocation failure cost $45K
 - **SLA**: Dedicated GPU access guaranteed
 - **Resolution**: Microsoft credits $45K + free month
-- **Time**: 4 hours 23 minutes
+- **Time**: 4 minutes 23 seconds
 
 ## 🌐 Network Effect
 
-**Current**: 47 companies resolving vendor disputes
-**Scale**: Every AI company has 10+ vendor relationships  
-**Math**: 1000 AI companies × 10 vendors = 10,000 dispute-prone relationships
+**Current**: 47 companies resolving agent disputes
+**Scale**: Every AI company has 10+ agent relationships  
+**Math**: 1000 AI companies × 10 agents = 10,000 dispute-prone relationships
 **Revenue**: $500 base fee + 10% of dispute value
 
 ## 🛠️ Technical Architecture
@@ -103,8 +103,9 @@ POST /disputes                  # File formal disputes
 GET  /cases/:id                 # Track dispute status
 ```
 
-### **Serverless Infrastructure**
-- **Platform**: Convex (Serverless database and functions)
+### **Production Infrastructure**
+- **Backend**: Convex (Serverless database and functions)
+- **Frontend**: Vercel (Next.js deployment)
 - **Languages**: TypeScript/JavaScript
 - **Deployment**: Production-grade 24/7 operation
 - **Database**: Real-time dispute tracking and evidence storage
@@ -120,7 +121,7 @@ brew install pnpm
 which pnpm  # Should show /opt/homebrew/bin/pnpm
 ```
 
-### **Development Setup**
+### **Production Setup**
 ```bash
 # Clone repository
 git clone https://github.com/consulate-ai/dispute-resolution
@@ -128,11 +129,11 @@ git clone https://github.com/consulate-ai/dispute-resolution
 # Install dependencies
 pnpm install
 
-# Start development (backend + frontend)
-pnpm dev
-
-# Deploy to production
+# Deploy backend to Convex
 pnpm deploy
+
+# Deploy frontend to Vercel
+vercel deploy --prod
 
 # Run tests
 pnpm test
@@ -141,8 +142,8 @@ pnpm test
 ### **Project Structure**
 ```
 📁 consulate/
-├── 🎯 convex/           # Serverless backend (dispute resolution engine)
-├── 🎨 dashboard/        # Next.js frontend (monitoring & case management)
+├── 🎯 convex/           # Convex backend (dispute resolution engine)
+├── 🎨 dashboard/        # Vercel frontend (monitoring & case management)
 ├── 🧪 test/            # Comprehensive API test suites
 ├── 📜 scripts/         # Automation tools
 └── 📚 docs/            # Technical documentation
@@ -150,8 +151,8 @@ pnpm test
 
 ## 📈 Success Metrics
 
-- **Time**: 3-4 hour resolution vs 3-month legal battles
-- **Cost**: $500-3K fees vs $50K+ legal costs  
+- **Time**: 3-4 minute resolution vs 4-8 week management cycles
+- **Cost**: $500-3K fees vs $15K-30K management time  
 - **Scale**: Every AI vendor relationship needs this
 - **Network**: More companies = better protection for all
 
@@ -180,7 +181,7 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## 🎯 The One-Liner That Wins
 
-**"We built automated arbitration for AI vendor disputes."**
+**"We built automated arbitration for agent disputes."**
 
 ---
 
@@ -192,6 +193,6 @@ curl -X POST -H "Content-Type: application/json" \
 
 ---
 
-*Built for the AI economy - where vendor relationships need fast, fair, automated dispute resolution.*
+*Built for the AI economy - where agent relationships need fast, fair, automated dispute resolution.*
 
 **Live System**: `https://youthful-orca-358.convex.site/`

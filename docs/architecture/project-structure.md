@@ -1,10 +1,10 @@
 # Project Structure
 
-This document provides a comprehensive overview of the Consulate AI monorepo structure and organization.
+This document provides a comprehensive overview of the Consulate monorepo structure and organization.
 
 ## Overview
 
-Consulate AI follows a well-organized monorepo structure with clear separation of concerns. The project is designed around a serverless architecture with a Next.js frontend and Convex backend, supported by shared configuration packages and comprehensive tooling.
+Consulate follows a well-organized monorepo structure with clear separation of concerns. The project is designed around a production architecture with a Vercel-deployed Next.js frontend and Convex backend, supported by shared configuration packages and comprehensive tooling.
 
 ## Directory Structure
 
@@ -67,21 +67,21 @@ consulate/
 ## Key Directories Explained
 
 ### `dashboard/` - Frontend Application
-- **Purpose**: Next.js-based web interface for the Consulate AI system
+- **Purpose**: Vercel-deployed Next.js web interface for the Consulate system
 - **Technology**: Next.js 13+ with App Router, React, TypeScript
 - **Entry Point**: `src/app/page.tsx`
 - **Components**: Reusable UI components in `src/components/`
 - **Styling**: Tailwind CSS with shadcn/ui components
 
 ### `convex/` - Backend Functions
-- **Purpose**: Serverless backend functions handling all business logic
-- **Technology**: Convex (serverless TypeScript functions)
+- **Purpose**: Convex production backend functions handling all business logic
+- **Technology**: Convex (production serverless TypeScript functions)
 - **Key Systems**:
-  - Constitutional AI governance framework
-  - Court engine and judge panel system
+  - Agent dispute resolution framework
+  - Automated arbitration engine and judge panel system
   - Agent lifecycle management
   - Evidence and case processing
-  - International compliance and federation
+  - Enterprise integration APIs
 
 ### `packages/config/` - Shared Configuration
 - **Purpose**: Centralized configuration for linting, TypeScript, and build tools
@@ -119,14 +119,15 @@ consulate/
 
 ### Frontend Development
 - Work in `dashboard/src/`
-- Start development: `pnpm dev`
+- Start development: `pnpm dev` (Vercel dev mode)
+- Deploy to production: `pnpm deploy:frontend`
 - Components in `src/components/`
 - Pages in `src/app/`
 
 ### Backend Development
 - Work in `convex/`
-- Start development: `pnpm dev` (includes convex dev)
-- Functions follow Convex patterns
+- Deploy to production: `pnpm deploy`
+- Functions run in Convex production environment
 - Schema defined in `schema.ts`
 
 ### Shared Configuration
@@ -178,11 +179,11 @@ pnpm test
 
 ### Deployment
 ```bash
-# Deploy to development
+# Deploy backend to Convex production
 pnpm deploy
 
-# Deploy to production (with confirmation)
-pnpm deploy:prod
+# Deploy frontend to Vercel production  
+pnpm deploy:frontend
 ```
 
 ## Adding New Components

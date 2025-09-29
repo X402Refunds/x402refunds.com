@@ -15,12 +15,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Consulate AI Government Portal",
-  description: "Constitutional AI Agent Oversight and Control System - Founded by Vivek Kotecha",
+  title: "Consulate Dispute Resolution Portal",
+  description: "AI Vendor Dispute Resolution Platform - Founded by Vivek Kotecha",
   keywords: ["AI Government", "Constitutional AI", "Agent Oversight", "Government Portal"],
   authors: [{ name: "Vivek Kotecha" }],
   creator: "Vivek Kotecha",
-  publisher: "Consulate AI",
+  publisher: "Consulate",
   robots: "noindex, nofollow", // Government portal - private access only
   viewport: "width=device-width, initial-scale=1",
 };

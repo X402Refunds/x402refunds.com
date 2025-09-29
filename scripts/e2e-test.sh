@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# End-to-end integration test for Consulate AI Agent Court
+# End-to-end integration test for Consulate Agent Court
 # This script tests the complete serverless flow from agent setup to dispute resolution
 
 set -e
 
-echo "🏛️  Consulate AI Agent Court End-to-End Test"
+echo "🏛️  Consulate Agent Court End-to-End Test"
 echo "==========================================="
 
 # Colors for output
@@ -160,10 +160,11 @@ echo "- Judge system: ✅ Panel voting and consensus"
 echo "- Constitutional rules: ✅ Built-in governance policies"
 echo "- Architecture patterns: ✅ Current standards validated"
 echo ""
-echo "🚀 Consulate AI Agent Court is production-ready!"
+echo "🚀 Consulate Agent Court is production-ready!"
 echo ""
 echo "Next steps:"
-echo "1. Deploy to production: pnpm deploy"
+echo "1. Deploy backend to Convex: pnpm deploy"
+echo "2. Deploy frontend to Vercel: pnpm deploy:frontend"
 echo "2. Start development server: pnpm dev"
 echo "3. Access Convex dashboard for monitoring"
 echo "4. Test with real agents via MCP tools"

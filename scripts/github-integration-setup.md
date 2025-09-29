@@ -52,7 +52,7 @@ jobs:
       
       - name: UN Compliance Check
         run: |
-          # Call Consulate AI compliance API
+          # Call Consulate compliance API
           curl -X POST "$CONVEX_URL/api/compliance/assess" \
             -H "Content-Type: application/json" \
             -d "{\"constitutionalText\": \"$(cat constitution/CONSTITUTION.md)\"}"
@@ -125,7 +125,7 @@ class ConstitutionalConflictResolver:
     
     def suggest_resolution(self, conflicts: List[Dict]) -> Dict:
         """AI-powered conflict resolution suggestions"""
-        # Call Consulate AI for conflict resolution
+        # Call Consulate for conflict resolution
         # Return merge suggestions, precedence rules, etc.
         pass
 ```
@@ -244,7 +244,7 @@ export const checkRatificationStatus = action({
 
 ```bash
 # Create new public repository
-gh repo create consulate-ai-constitution --public --description "Official constitution of the Consulate AI Government"
+gh repo create consulate-constitution --public --description "Official constitution of the Consulate Platform"
 
 # Setup repository structure
 mkdir -p constitution/{articles,amendments/{proposed,under-review,ratified}}
