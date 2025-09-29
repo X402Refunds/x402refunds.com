@@ -102,21 +102,21 @@ export default function HomePage() {
   }, [isInView, companiesCount, disputesCount])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold text-gray-900">
                   Consulate
                 </h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                🟢 System Operational
+              <Badge className="bg-gray-100 text-gray-700 border-gray-300">
+                ● System Operational
               </Badge>
               <Button 
                 variant="outline" 
@@ -132,32 +132,32 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
+      <section className="relative overflow-hidden py-24 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
             <div className="lg:col-span-7">
               <div className="space-y-8">
                 <div className="space-y-6">
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                    ⚡ Automated AI Vendor Dispute Resolution
+                  <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium">
+                    Automated AI Vendor Dispute Resolution
                   </Badge>
-                  <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
+                  <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
                     Resolve Agent Disputes in{" "}
-                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <span className="text-black border-b-4 border-gray-900">
                       minutes
                     </span>
                   </h1>
-                  <p className="text-xl text-gray-600 max-w-3xl">
-                    When enterprise AI systems experience SLA breaches causing $23K+ in losses, 
-                    we resolve them <strong>automatically in minutes</strong> instead of 
-                    months of litigation and $50K+ in legal fees.
+                  <p className="text-xl lg:text-2xl text-gray-600 max-w-4xl leading-relaxed">
+                    When enterprise AI systems experience SLA breaches causing <strong className="text-gray-900">$23K+ in losses</strong>, 
+                    we resolve them <strong className="text-gray-900">automatically in minutes</strong> instead of 
+                    months of litigation and <strong className="text-gray-900">$50K+ in legal fees</strong>.
                   </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    className="bg-gray-900 text-white hover:bg-gray-800 text-lg px-8 py-6 font-semibold"
                     onClick={() => window.open('/dashboard', '_self')}
                   >
                     View Live System
@@ -166,6 +166,7 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                     variant="outline"
+                    className="border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white text-lg px-8 py-6 font-semibold"
                     onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
                   >
                     Test API
@@ -176,13 +177,13 @@ export default function HomePage() {
             </div>
             
             {/* Live Metrics Card */}
-            <div ref={metricsRef} className="lg:col-span-5 mt-12 lg:mt-0">
-              <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl">
+            <div ref={metricsRef} className="lg:col-span-5 mt-16 lg:mt-0">
+              <Card className="bg-white border-2 border-gray-200 shadow-lg">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl text-gray-900">Live System Metrics</CardTitle>
-                    <Badge className="bg-green-100 text-green-800 border-green-200">
-                      🟢 Real-time
+                    <CardTitle className="text-xl font-bold text-gray-900">Live System Metrics</CardTitle>
+                    <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium">
+                      ● Real-time
                     </Badge>
                   </div>
                   <CardDescription className="text-gray-600">
@@ -191,31 +192,31 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-3xl font-bold text-green-600 font-mono tabular-nums">
+                    <div className="text-center p-6 border border-gray-200 rounded-lg">
+                      <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
                         {companiesCount.count}
                       </div>
-                      <div className="text-sm font-medium text-green-700">Companies Protected</div>
+                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Companies Registered</div>
                     </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-3xl font-bold text-blue-600 font-mono tabular-nums">
+                    <div className="text-center p-6 border border-gray-200 rounded-lg">
+                      <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
                         {disputesCount.count}
                       </div>
-                      <div className="text-sm font-medium text-blue-700">Disputes Resolved</div>
+                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Disputes Resolved</div>
                     </div>
                   </div>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Resolution Time</span>
-                      <span className="font-bold text-green-600">2.4 minutes</span>
+                  <div className="space-y-4 text-sm">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Resolution Time</span>
+                      <span className="font-bold text-gray-900 font-mono">2.4 minutes</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">System Health</span>
-                      <span className="font-bold text-green-600">99.9%</span>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">System Health</span>
+                      <span className="font-bold text-gray-900 font-mono">99.9%</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Uptime</span>
-                      <span className="font-bold text-gray-700">24h 15m</span>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-600 font-medium">Uptime</span>
+                      <span className="font-bold text-gray-900 font-mono">24h 15m</span>
                     </div>
                   </div>
                 </CardContent>
@@ -452,19 +453,19 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <section className="py-20 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">
             Ready to Automate Your AI Vendor Disputes?
           </h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Join 47+ companies already protecting their AI vendor relationships
+          <p className="text-xl mb-8 text-gray-300">
+            Join 47+ companies already registered on the platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
               variant="secondary"
-              className="bg-white text-blue-600 hover:bg-blue-50"
+              className="bg-white text-gray-900 hover:bg-gray-100"
               onClick={() => window.open('/dashboard', '_self')}
             >
               View Live Dashboard
@@ -473,7 +474,7 @@ export default function HomePage() {
             <Button 
               size="lg" 
               variant="outline"
-              className="border-white text-white hover:bg-white/10"
+              className="border-white text-white hover:bg-white hover:text-gray-900"
             >
               Request Enterprise Demo
             </Button>
