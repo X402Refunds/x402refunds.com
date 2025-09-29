@@ -6,7 +6,7 @@
   "scripts": {
     "predeploy": "pnpm -C dashboard build",
     "deploy": "pnpm exec convex deploy -y",
-    "deploy:frontend": "cd dashboard && vercel deploy --prod",
+    "deploy:frontend": "vercel deploy --prod --yes",
     "check-logs": "pnpm convex logs --prod",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",

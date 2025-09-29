@@ -451,53 +451,26 @@ export const systemHealthMonitor = internalMutation({
   }
 });
 
-// Process pending cases
+// Process pending cases - Disabled for now
+// Cases remain in FILED status until they are manually processed or auto-decided
 export const processPendingCases = internalMutation({
   args: {},
   handler: async (ctx) => {
     try {
       console.log("⚖️ Processing pending cases...");
       
-      // Get filed cases that need processing
+      // Get filed cases
       const filedCases = await ctx.db
         .query("cases")
         .filter((q) => q.eq(q.field("status"), "FILED"))
         .collect();
-        
-      let processed = 0;
       
-      for (const case_ of filedCases) {
-        // Check if case is ready for processing (filed more than 30 seconds ago)
-        const timeSinceFiling = Date.now() - case_.filedAt;
-        
-        if (timeSinceFiling > 30 * 1000) { // 30 seconds
-          // Move to pending arbitration
-          await ctx.db.patch(case_._id, {
-            status: "PENDING_ARBITRATION"
-          });
-          
-          // Log status change
-          await ctx.db.insert("events", {
-            type: "CASE_STATUS_CHANGED",
-            payload: {
-              caseId: case_._id,
-              oldStatus: "FILED",
-              newStatus: "PENDING_ARBITRATION",
-              reason: "Automatic processing"
-            },
-            timestamp: Date.now(),
-            caseId: case_._id,
-          });
-          
-          processed++;
-        }
-      }
+      console.log(`📊 Found ${filedCases.length} cases in FILED status`);
       
-      if (processed > 0) {
-        console.log(`✅ Processed ${processed} cases to PENDING_ARBITRATION`);
-      }
+      // For now, just log the count - cases stay FILED until explicitly processed
+      // Future: could implement auto-arbitration or panel assignment logic here
       
-      return { success: true, processed };
+      return { success: true, filedCases: filedCases.length };
       
     } catch (error: any) {
       console.error("❌ Case processing failed:", error.message);

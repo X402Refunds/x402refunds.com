@@ -7,8 +7,11 @@ import { Clock, Users, Gavel, TrendingUp, Activity } from "lucide-react";
 import { DisputeEvent } from "@/lib/convex-client";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useRouter } from "next/navigation";
 
 export default function LiveDisputeMonitor() {
+  const router = useRouter();
+  
   // REAL-TIME DATA FROM CONVEX
   const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 });
   const recentEvents = useQuery(api.events.getRecentEvents, { 
@@ -160,7 +163,11 @@ export default function LiveDisputeMonitor() {
               </p>
             ) : (
               recentEvents.slice(0, 8).map((event: DisputeEvent) => (
-                <div key={event._id} className="flex items-start space-x-3">
+                <div 
+                  key={event._id} 
+                  className={`flex items-start space-x-3 ${event.caseId ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                  onClick={() => event.caseId && router.push(`/dashboard/dispute/${event.caseId}`)}
+                >
                   <Badge variant="secondary" className={getEventColor(event.type)}>
                     {event.type.replace(/_/g, ' ')}
                   </Badge>
@@ -194,7 +201,11 @@ export default function LiveDisputeMonitor() {
               </p>
             ) : (
               activeCases.map((case_: Record<string, unknown>) => (
-                <div key={case_._id as string} className="space-y-2">
+                <div 
+                  key={case_._id as string} 
+                  className="space-y-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                  onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
+                >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">
                       {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
@@ -231,7 +242,10 @@ export default function LiveDisputeMonitor() {
             <div className="space-y-4">
               {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 5).map((case_: Record<string, unknown>, index: number) => (
                 <div key={case_._id as string}>
-                  <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                    onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
+                  >
                     <div>
                       <p className="text-sm font-medium">
                         {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}

@@ -272,6 +272,37 @@ export const getEvidenceByCase = query({
   },
 });
 
+// Alias for clarity in frontend
+export const getEvidenceByCaseId = query({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const evidenceManifests = await ctx.db
+      .query("evidenceManifests")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .collect();
+    
+    // Get functional evidence for each manifest
+    const evidenceWithContext = await Promise.all(
+      evidenceManifests.map(async (manifest) => {
+        const functionalEvidence = await ctx.db
+          .query("functionalEvidence")
+          .withIndex("by_evidence", (q) => q.eq("evidenceId", manifest._id))
+          .first();
+        
+        return {
+          ...manifest,
+          submittedBy: manifest.agentDid,
+          submittedAt: manifest.ts,
+          type: functionalEvidence?.functionalType || "general",
+          data: functionalEvidence,
+        };
+      })
+    );
+    
+    return evidenceWithContext;
+  },
+});
+
 export const getEvidenceByAgent = query({
   args: { agentDid: v.string() },
   handler: async (ctx, args) => {

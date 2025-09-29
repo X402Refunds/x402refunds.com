@@ -112,6 +112,14 @@ export const getCase = query({
   },
 });
 
+// Alias for clarity in frontend
+export const getCaseById = query({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.caseId);
+  },
+});
+
 export const getCasesByStatus = query({
   args: { 
     status: v.union(

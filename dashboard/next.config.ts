@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimal configuration for Vercel deployment
+  // Optimal configuration for Vercel deployment with SSR
   
-  // Enable trailing slash for consistent URL handling
+  // DO NOT use static export - we need dynamic routes
+  // output: 'export', // REMOVED - breaks dynamic routes
+  
+  // Enable trailing slash for consistent URL handling  
   trailingSlash: true,
   
   // Image optimization - let Vercel handle it in production
