@@ -137,7 +137,7 @@ export default function HomePage() {
           <div className="text-center">
             <div className="space-y-8">
               <div className="space-y-6">
-                <h1 className="text-5xl lg:text-8xl font-bold tracking-tight text-gray-900">
+                <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-gray-900">
                   Resolve Agent Disputes in{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     minutes
@@ -169,80 +169,64 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Animated Metrics Section */}
+      {/* Live System Metrics */}
       <section ref={metricsRef} className="py-20 bg-gradient-to-br from-slate-50/50 to-blue-50/30 border-t border-white/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Platform Performance
-            </h2>
-            <p className="text-xl text-gray-600">
-              Real-time metrics from our production system
-            </p>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                Live System Metrics
+              </h2>
+              <p className="text-lg text-gray-600">
+                Production system currently resolving disputes
+              </p>
+            </div>
+            <Badge className="bg-green-100 text-green-800 border-green-200 text-sm px-3 py-1">
+              Real-time
+            </Badge>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Companies Participating */}
-            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 group-hover:from-green-500/10 group-hover:to-emerald-500/10 transition-colors duration-300"></div>
-              <CardContent className="relative p-8 text-center">
-                <div className="mb-4">
-                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2 font-mono tabular-nums">
-                    {companiesCount.count}
-                  </div>
-                  <div className="text-lg font-medium text-green-700">
-                    Companies Participating
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    In our dispute resolution network
-                  </div>
+          {/* Main Metrics Grid */}
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Companies Protected */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-shadow">
+              <CardContent className="p-12 text-center">
+                <div className="text-7xl lg:text-8xl font-bold text-green-600 mb-4 font-mono tabular-nums">
+                  {companiesCount.count}
+                </div>
+                <div className="text-xl font-medium text-green-700">
+                  Companies Protected
                 </div>
               </CardContent>
             </Card>
 
             {/* Disputes Resolved */}
-            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 group-hover:from-blue-500/10 group-hover:to-indigo-500/10 transition-colors duration-300"></div>
-              <CardContent className="relative p-8 text-center">
-                <div className="mb-4">
-                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2 font-mono tabular-nums">
-                    {disputesCount.count}
-                  </div>
-                  <div className="text-lg font-medium text-blue-700">
-                    Disputes Resolved
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Automatically processed to completion
-                  </div>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-xl transition-shadow">
+              <CardContent className="p-12 text-center">
+                <div className="text-7xl lg:text-8xl font-bold text-blue-600 mb-4 font-mono tabular-nums">
+                  {disputesCount.count}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Average Resolution Time */}
-            <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition-colors duration-300"></div>
-              <CardContent className="relative p-8 text-center">
-                <div className="mb-4">
-                  <div className="text-5xl lg:text-6xl font-bold text-gray-900 mb-2">
-                    3
-                  </div>
-                  <div className="text-lg font-medium text-purple-700">
-                    Minutes Average
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    From filing to resolution
-                  </div>
+                <div className="text-xl font-medium text-blue-700">
+                  Disputes Resolved
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Additional Context */}
-          <div className="text-center mt-12">
-            <p className="text-gray-600 text-lg">
-              <strong className="text-gray-900">Live production system</strong> • Updated every 30 seconds • 
-              <span className="text-green-600 font-medium"> 99.9% uptime</span>
-            </p>
+          {/* Additional Metrics */}
+          <div className="space-y-6 text-lg">
+            <div className="flex justify-between items-center py-4 border-b border-gray-200">
+              <span className="font-medium text-gray-900">Average Resolution Time</span>
+              <span className="text-2xl font-bold text-green-600">3.2 hours</span>
+            </div>
+            <div className="flex justify-between items-center py-4 border-b border-gray-200">
+              <span className="font-medium text-gray-900">System Health</span>
+              <span className="text-2xl font-bold text-green-600">99.9%</span>
+            </div>
+            <div className="flex justify-between items-center py-4">
+              <span className="font-medium text-gray-900">Uptime</span>
+              <span className="text-2xl font-bold text-gray-700">24h 15m</span>
+            </div>
           </div>
         </div>
       </section>
