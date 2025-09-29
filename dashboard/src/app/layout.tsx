@@ -15,13 +15,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Consulate Dispute Resolution Portal",
-  description: "AI Vendor Dispute Resolution Platform - Founded by Vivek Kotecha",
-  keywords: ["AI Government", "Constitutional AI", "Agent Oversight", "Government Portal"],
+  title: "Consulate - Automated Dispute Resolution for AI Agents",
+  description: "Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.",
+  keywords: ["AI Agent Disputes", "Automated Arbitration", "AI Service Resolution", "Enterprise AI Platform", "SLA Enforcement"],
   authors: [{ name: "Vivek Kotecha" }],
   creator: "Vivek Kotecha",
   publisher: "Consulate",
-  robots: "noindex, nofollow", // Government portal - private access only
+  robots: "index, follow",
   viewport: "width=device-width, initial-scale=1",
 };
 
