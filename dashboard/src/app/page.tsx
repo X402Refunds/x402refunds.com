@@ -151,9 +151,8 @@ export default function HomePage() {
                     </span>
                   </h1>
                   <p className="text-xl lg:text-2xl text-gray-600 max-w-4xl leading-relaxed">
-                    When enterprise AI systems experience SLA breaches causing <strong className="text-gray-900">$23K+ in losses</strong>, 
-                    we resolve them <strong className="text-gray-900">automatically in minutes</strong> instead of 
-                    months of litigation and <strong className="text-gray-900">$50K+ in legal fees</strong>.
+                    When AI services fail to deliver what they promised, we resolve the disputes <strong className="text-gray-900">automatically in minutes</strong> instead of 
+                    months of <strong className="text-gray-900">expensive legal battles</strong>.
                   </p>
                 </div>
 
