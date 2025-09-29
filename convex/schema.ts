@@ -114,7 +114,9 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_citizenship_tier", ["citizenshipTier"])
     .index("by_functional_type", ["functionalType"])
-    .index("by_classification", ["classification"]),
+    .index("by_classification", ["classification"])
+    .index("by_expires", ["expiresAt"])
+    .index("by_type", ["agentType"]),
 
   // Dispute cases
   cases: defineTable({
@@ -264,4 +266,144 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_agent", ["agentId"])
     .index("by_active", ["active"]),
+
+  // Agent cleanup queue for expired agents
+  agentCleanupQueue: defineTable({
+    agentDid: v.string(),
+    agentType: v.string(),
+    expiresAt: v.number(),
+    cleanupActions: v.array(v.string()),
+    status: v.union(v.literal("PENDING"), v.literal("IN_PROGRESS"), v.literal("COMPLETED")),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_expires", ["expiresAt"])
+    .index("by_status", ["status"])
+    .index("by_agent", ["agentDid"]),
+
+  // Additional tables for enhanced functionality
+  functionalTypeRules: defineTable({
+    ruleId: v.string(),
+    functionalType: v.string(),
+    citizenshipTiers: v.array(v.string()),
+    requiredLicenses: v.array(v.string()),
+    stakingRequirement: v.optional(v.object({
+      minimum: v.number(),
+      currency: v.string(),
+    })),
+    regulatoryReporting: v.boolean(),
+    auditTrail: v.string(),
+    privacyLevel: v.string(),
+    dataRetention: v.string(),
+    humanOversight: v.string(),
+    auditAccess: v.array(v.string()),
+    emergencyProtocols: v.array(v.string()),
+    restrictedJurisdictions: v.array(v.string()),
+    emergencyHalting: v.boolean(),
+    crossJurisdictionAccess: v.boolean(),
+    priorityProcessing: v.boolean(),
+    maxTransactionLimits: v.optional(v.object({
+      daily: v.number(),
+      perTransaction: v.number(),
+    })),
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_rule_id", ["ruleId"])
+    .index("by_functional_type", ["functionalType"]),
+
+  functionalEvidence: defineTable({
+    evidenceId: v.id("evidenceManifests"),
+    agentDid: v.string(),
+    functionalType: v.string(),
+    physicalContext: v.optional(v.object({
+      location: v.object({
+        lat: v.number(),
+        lng: v.number(),
+        timestamp: v.number(),
+        accuracy: v.optional(v.number()),
+      }),
+      sensorData: v.optional(v.object({
+        type: v.string(),
+        reading: v.any(),
+        calibration: v.optional(v.any()),
+      })),
+      actuatorCommands: v.optional(v.object({
+        device: v.string(),
+        command: v.any(),
+        executionResult: v.any(),
+      })),
+      environmentContext: v.optional(v.object({
+        temperature: v.optional(v.number()),
+        lighting: v.string(),
+        weatherConditions: v.optional(v.string()),
+        surroundingObjects: v.optional(v.array(v.string())),
+      })),
+    })),
+    voiceContext: v.optional(v.object({
+      audioFileId: v.optional(v.string()),
+      transcription: v.optional(v.string()),
+      confidenceScore: v.optional(v.number()),
+      languageDetected: v.optional(v.string()),
+      emotionalTone: v.optional(v.string()),
+      consentProof: v.optional(v.string()),
+      privacyCompliance: v.array(v.string()),
+    })),
+    codingContext: v.optional(v.object({
+      repositoryUrl: v.optional(v.string()),
+      commitHash: v.optional(v.string()),
+      diffSize: v.optional(v.number()),
+      languagesUsed: v.array(v.string()),
+      securityScanResults: v.optional(v.any()),
+      testCoverage: v.optional(v.number()),
+      performanceBenchmarks: v.optional(v.any()),
+      licenseCompliance: v.optional(v.boolean()),
+    })),
+    financialContext: v.optional(v.object({
+      transactionIds: v.array(v.string()),
+      portfolioValue: v.optional(v.number()),
+      riskAssessment: v.optional(v.any()),
+      complianceChecks: v.array(v.string()),
+      marketImpactAnalysis: v.optional(v.any()),
+      auditTrail: v.optional(v.string()),
+    })),
+    healthcareContext: v.optional(v.object({
+      patientConsentId: v.optional(v.string()),
+      hipaaCompliance: v.boolean(),
+      medicalDataHashes: v.array(v.string()),
+      diagnosisConfidence: v.optional(v.number()),
+      medicalReferences: v.array(v.string()),
+      humanOversightRequired: v.boolean(),
+    })),
+    generalContext: v.optional(v.object({
+      inputTokens: v.optional(v.number()),
+      outputTokens: v.optional(v.number()),
+      processingTime: v.optional(v.number()),
+      qualityMetrics: v.optional(v.any()),
+      complianceFlags: v.array(v.string()),
+    })),
+    createdAt: v.number(),
+  })
+    .index("by_evidence", ["evidenceId"])
+    .index("by_agent", ["agentDid"])
+    .index("by_functional_type", ["functionalType"]),
+
+  agentSwarms: defineTable({
+    swarmId: v.string(),
+    name: v.string(),
+    leadAgent: v.string(),
+    memberAgents: v.array(v.string()),
+    swarmType: v.union(v.literal("coordinated"), v.literal("distributed"), v.literal("hierarchical")),
+    functionalTypes: v.array(v.string()),
+    purpose: v.string(),
+    collectiveEvidence: v.boolean(),
+    distributedLiability: v.boolean(),
+    consensusRequired: v.boolean(),
+    status: v.union(v.literal("ACTIVE"), v.literal("INACTIVE"), v.literal("DISBANDED")),
+    createdAt: v.number(),
+    lastActivity: v.number(),
+  })
+    .index("by_swarm_id", ["swarmId"])
+    .index("by_lead_agent", ["leadAgent"])
+    .index("by_status", ["status"]),
 });

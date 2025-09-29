@@ -20,17 +20,15 @@ interface RuleResult {
 }
 
 // Simple rule-based decision engine
-export const processCase = action({
-  args: {
-    caseData: v.object({
-      id: v.string(),
-      parties: v.array(v.string()),
-      type: v.string(),
-      jurisdictionTags: v.array(v.string())
-    }),
-    evidenceManifests: v.array(v.any())
-  },
-  handler: async (ctx, args): Promise<RuleResult> => {
+async function processCase(ctx: any, args: {
+  caseData: {
+    id: string;
+    parties: string[];
+    type: string;
+    jurisdictionTags: string[];
+  };
+  evidenceManifests: any[];
+}): Promise<RuleResult> {
     const { caseData, evidenceManifests } = args;
     
     // Simple rule-based logic
@@ -48,11 +46,18 @@ export const processCase = action({
       reasons = "Case dismissed due to lack of evidence.";
       auto = true;
     } else if (evidenceManifests.length >= 3) {
-      // If substantial evidence, flag for panel review
-      verdict = "NEED_PANEL";
+      // If substantial evidence, auto-resolve with UPHELD verdict
+      verdict = "UPHELD";
+      confidence = 0.8;
+      code = "SLA_VIOLATION_CONFIRMED";
+      reasons = "Substantial evidence confirms SLA violation. Provider found liable.";
+      auto = true;
+    } else {
+      // 1-2 pieces of evidence, likely UPHELD
+      verdict = "UPHELD";
       confidence = 0.7;
-      code = "PANEL_REVIEW_REQUIRED";
-      reasons = "Substantial evidence present, requires panel review.";
+      code = "EVIDENCE_SUPPORTS_CLAIM";
+      reasons = "Evidence supports claim of service level violation.";
       auto = true;
     }
     
@@ -64,8 +69,7 @@ export const processCase = action({
       auto,
       evidenceIds: evidenceManifests.map((e: any) => e.id || e.sha256)
     };
-  }
-});
+}
 
 // Get engine statistics
 export const getEngineStats = query({
@@ -101,8 +105,8 @@ export const runCourtWorkflow = mutation({
       .withIndex("by_case", q => q.eq("caseId", args.caseId))
       .collect();
     
-    // Process through court engine
-    const result = await ctx.runAction("courtEngine:processCase", {
+    // Process through court engine directly
+    const result = await processCase(ctx, {
       caseData: {
         id: args.caseId,
         parties: caseData.parties,
@@ -126,13 +130,28 @@ export const runCourtWorkflow = mutation({
     });
     
     // Update case status
+    const newStatus = result.verdict === "NEED_PANEL" ? "PANELED" : "DECIDED";
     await ctx.db.patch(args.caseId, {
-      status: result.verdict === "NEED_PANEL" ? "PANELED" : "DECIDED",
+      status: newStatus,
       ruling: {
         verdict: result.verdict,
         auto: result.auto,
         decidedAt: Date.now()
       }
+    });
+    
+    // Log the status update event for dashboard tracking
+    await ctx.db.insert("events", {
+      type: "CASE_STATUS_UPDATED",
+      payload: {
+        caseId: args.caseId,
+        oldStatus: "FILED",
+        newStatus: newStatus,
+        verdict: result.verdict,
+        auto: result.auto
+      },
+      timestamp: Date.now(),
+      caseId: args.caseId,
     });
     
     return { rulingId: ruling, result };

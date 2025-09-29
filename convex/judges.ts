@@ -471,13 +471,18 @@ export const deliberateWithAI = action({
     const systemPrompt = args.systemPrompt || JUDGE_SYSTEM_PROMPTS.GENERAL_JUDGE;
     const analysis = await analyzeCase(args.caseData, args.evidenceManifests, args.judgeSpecialties);
     
-    // Log deliberation for transparency
-    await ctx.runMutation(api.transparency.logDeliberation, {
-      caseId: args.caseData.id,
-      judgePrompt: systemPrompt.substring(0, 500) + "...",
-      analysisResult: analysis,
-      timestamp: Date.now()
-    });
+    // Log deliberation for transparency (commented out until events mutations are implemented)
+    // TODO: Implement events.logEvent mutation
+    // await ctx.runMutation(api.events.logEvent, {
+    //   type: "JUDGE_DELIBERATION", 
+    //   payload: {
+    //     caseId: args.caseData.id,
+    //     judgePrompt: systemPrompt.substring(0, 500) + "...",
+    //     analysisResult: analysis,
+    //   },
+    //   timestamp: Date.now(),
+    //   caseId: args.caseData.id,
+    // });
     
     return analysis;
   }

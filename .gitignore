@@ -35,3 +35,4 @@ _generated
 # Auto-generated cursor rules (regenerated automatically)
 .cursor/rules/01-auto-architecture.mdc
 .cursor/rules/02-auto-validation.mdc
+.vercel

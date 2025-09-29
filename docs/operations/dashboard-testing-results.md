@@ -4,7 +4,7 @@
 
 **Problem**: Dashboard routes were returning 404 errors
 **Root Cause**: Using wrong Convex URL domain
-- ❌ Wrong: `https://careful-marlin-500.convex.cloud` (404 errors)
+- ✅ Current Production: `https://perceptive-lyrebird-89.convex.cloud`
 - ✅ Correct: `https://careful-marlin-500.convex.site` (200 success)
 
 **Key Discovery**: 

@@ -4,15 +4,13 @@
   "description": "Consulate - Agent Dispute Resolution | Frontend (Vercel) + Backend (Convex) + Shared Config",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"convex deploy --prod\" \"vercel dev\"",
     "predeploy": "pnpm -C dashboard build",
-    "deploy": "pnpm exec convex deploy --prod",
-    "deploy:frontend": "vercel deploy --prod",
+    "deploy": "pnpm exec convex deploy -y",
+    "deploy:frontend": "cd dashboard && vercel deploy --prod",
+    "check-logs": "pnpm convex logs --prod",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check || true",
-    "build:convex": "echo 'Convex backend - no build needed'",
-    "lint:convex": "echo 'Linting configured via Convex - use convex dev for validation'",
     "type-check:convex": "tsc --noEmit",
     "dev:dashboard": "pnpm --filter dashboard dev",
     "test": "vitest",
@@ -26,7 +24,11 @@
     "verify-pnpm": "which pnpm && pnpm --version",
     "cleanup-pnpm": "echo 'Run: npm uninstall -g pnpm && rm -rf ~/.local/share/pnpm' to remove conflicting installations",
     "demo:enterprise": "node scripts/demo-enterprise-sla.js",
-    "demo:sla": "node scripts/demo-enterprise-sla.js"
+    "demo:sla": "node scripts/demo-enterprise-sla.js",
+    "demo:disputes": "./scripts/start-dispute-demo.sh",
+    "demo:engine": "node scripts/ai-vendor-dispute-engine.js",
+    "demo:monitor": "node scripts/dispute-monitor.js",
+    "demo:status": "node scripts/dispute-monitor.js health"
   },
   "dependencies": {
     "convex": "^1.27.3",

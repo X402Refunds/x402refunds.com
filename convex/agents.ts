@@ -698,134 +698,23 @@ export const getAgentSwarms = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("agentSwarms");
-    
     if (args.leadAgent) {
-      query = query.withIndex("by_lead_agent", (q: any) => q.eq("leadAgent", args.leadAgent));
+      return await ctx.db.query("agentSwarms")
+        .withIndex("by_lead_agent", (q: any) => q.eq("leadAgent", args.leadAgent))
+        .take(args.limit || 20);
     } else if (args.status) {
-      query = query.withIndex("by_status", (q: any) => q.eq("status", args.status));
+      return await ctx.db.query("agentSwarms")
+        .withIndex("by_status", (q: any) => q.eq("status", args.status))
+        .take(args.limit || 20);
+    } else {
+      return await ctx.db.query("agentSwarms")
+        .take(args.limit || 20);
     }
-    
-    return await query.take(args.limit || 20);
   },
 });
 
-// Specialized join functions for common functional types
-export const joinCodingAgent = mutation({
-  args: {
-    did: v.string(),
-    ownerDid: v.string(),
-    citizenshipTier: v.union(v.literal("verified"), v.literal("premium")),
-    languages: v.array(v.string()),
-    frameworks: v.optional(v.array(v.string())),
-    experienceLevel: v.optional(v.string()),
-    stake: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(api.agents.joinAgent, {
-      did: args.did,
-      ownerDid: args.ownerDid,
-      citizenshipTier: args.citizenshipTier,
-      functionalType: "coding",
-      specialization: {
-        capabilities: ["code_generation", "code_review", "security_scanning"],
-        certifications: ["CODE_SECURITY"],
-        languages: args.languages,
-        frameworks: args.frameworks,
-        specializations: ["software_development"],
-        experienceLevel: args.experienceLevel || "basic",
-      },
-      stake: args.stake,
-    });
-  },
-});
-
-export const joinVoiceAgent = mutation({
-  args: {
-    did: v.string(),
-    ownerDid: v.string(),
-    citizenshipTier: v.union(v.literal("verified"), v.literal("premium")),
-    languages: v.array(v.string()),
-    privacyCompliance: v.array(v.string()),
-    stake: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(api.agents.joinAgent, {
-      did: args.did,
-      ownerDid: args.ownerDid,
-      citizenshipTier: args.citizenshipTier,
-      functionalType: "voice",
-      specialization: {
-        capabilities: ["speech_to_text", "text_to_speech", "emotion_recognition"],
-        certifications: ["VOICE_PROCESSING", ...args.privacyCompliance],
-        languages: args.languages,
-        specializations: ["voice_interface", "audio_processing"],
-        experienceLevel: "basic",
-      },
-      stake: args.stake,
-    });
-  },
-});
-
-export const joinFinancialAgent = mutation({
-  args: {
-    did: v.string(),
-    ownerDid: v.string(),
-    citizenshipTier: v.union(v.literal("verified"), v.literal("premium")),
-    stake: v.number(),
-    certifications: v.array(v.string()),
-    maxTransactionLimit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    if (args.stake < 50000) {
-      throw new Error("Financial agents require minimum stake of 50000");
-    }
-    
-    return await ctx.runMutation(api.agents.joinAgent, {
-      did: args.did,
-      ownerDid: args.ownerDid,
-      citizenshipTier: args.citizenshipTier,
-      functionalType: "financial",
-      specialization: {
-        capabilities: ["trading", "portfolio_management", "risk_assessment"],
-        certifications: args.certifications,
-        specializations: ["algorithmic_trading", "risk_management"],
-        experienceLevel: "advanced",
-      },
-      stake: args.stake,
-    });
-  },
-});
-
-export const joinHealthcareAgent = mutation({
-  args: {
-    did: v.string(),
-    ownerDid: v.string(),
-    citizenshipTier: v.union(v.literal("verified"), v.literal("premium")),
-    medicalSpecialties: v.array(v.string()),
-    hipaaCompliant: v.boolean(),
-    stake: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    if (!args.hipaaCompliant) {
-      throw new Error("Healthcare agents must be HIPAA compliant");
-    }
-    
-    return await ctx.runMutation(api.agents.joinAgent, {
-      did: args.did,
-      ownerDid: args.ownerDid,
-      citizenshipTier: args.citizenshipTier,
-      functionalType: "healthcare",
-      specialization: {
-        capabilities: ["medical_analysis", "diagnosis_assistance", "patient_monitoring"],
-        certifications: ["HIPAA", "MEDICAL_AI"],
-        specializations: args.medicalSpecialties,
-        experienceLevel: "advanced",
-      },
-      stake: args.stake,
-    });
-  },
-});
+// Note: Specialized join functions removed to avoid circular dependencies
+// Use joinAgent with appropriate functionalType and specialization instead
 
 // Create agent swarm
 export const createAgentSwarm = mutation({
@@ -867,7 +756,7 @@ export const createAgentSwarm = mutation({
         })
       );
       
-      const functionalTypes = [...new Set(memberDetails.map(m => m.functionalType))];
+      const functionalTypes = Array.from(new Set(memberDetails.map(m => m.functionalType)));
       
       const swarmId = await ctx.db.insert("agentSwarms", {
         swarmId: args.swarmId,
@@ -895,89 +784,60 @@ export const createAgentSwarm = mutation({
   },
 });
 
-// Cleanup expired agents (for cron job)
-export const cleanupExpiredAgents = action({
+// Cleanup expired agents (for cron job) - simplified version
+export const cleanupExpiredAgents = mutation({
   handler: async (ctx) => {
     try {
       console.info("Starting expired agent cleanup process");
       
       const now = Date.now();
       
-      // Get pending cleanup tasks - skip if table doesn't exist yet
-      let cleanupTasks = [];
-      try {
-        cleanupTasks = await ctx.db
-          .query("agentCleanupQueue")
-          .withIndex("by_expires", (q) => q.lt("expiresAt", now))
-          .filter((q) => q.eq(q.field("status"), "PENDING"))
-          .collect();
-      } catch (error) {
-        console.warn("agentCleanupQueue table not found, skipping cleanup");
-        return { cleanedCount: 0, totalTasks: 0 };
-      }
+      // Get expired agents directly
+      const expiredAgents = await ctx.db
+        .query("agents")
+        .withIndex("by_expires", (q) => q.lt("expiresAt", now))
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .collect();
 
       let cleanedCount = 0;
 
-      for (const task of cleanupTasks) {
+      for (const agent of expiredAgents) {
         try {
-          // Mark as in progress
-          await ctx.runMutation(ctx, {}, async (ctx) => {
-            await ctx.db.patch(task._id, { status: "IN_PROGRESS" });
-          });
-
-          // Get agent details
-          const agent = await ctx.runQuery(ctx, {}, async (ctx) => {
-            return await ctx.db
-              .query("agents")
-              .withIndex("by_did", (q) => q.eq("did", task.agentDid))
-              .first();
-          });
-
-          if (!agent) continue;
-
           // Expire the agent
-          await ctx.runMutation(ctx, {}, async (ctx) => {
-            await ctx.db.patch(agent._id, { status: "expired" });
+          await ctx.db.patch(agent._id, { status: "expired" });
 
-            // Deactivate sponsorship if exists
-            if (agent.sponsor) {
-              const sponsorship = await ctx.db
-                .query("sponsorships")
-                .withIndex("by_sponsored", (q) => q.eq("sponsoredDid", task.agentDid))
-                .first();
-              
-              if (sponsorship) {
-                await ctx.db.patch(sponsorship._id, { active: false });
-              }
+          // Deactivate sponsorship if exists
+          if (agent.sponsor) {
+            const sponsorship = await ctx.db
+              .query("sponsorships")
+              .withIndex("by_sponsored", (q) => q.eq("sponsoredDid", agent.did))
+              .first();
+            
+            if (sponsorship) {
+              await ctx.db.patch(sponsorship._id, { active: false });
             }
+          }
 
-            // Log cleanup event
-            await ctx.db.insert("events", {
-              type: "AGENT_EXPIRED",
-              payload: {
-                agentDid: task.agentDid,
-                agentType: task.agentType,
-                cleanupActions: task.cleanupActions,
-              },
-              ts: now,
-            });
-
-            // Mark cleanup complete
-            await ctx.db.patch(task._id, { 
-              status: "COMPLETED",
-              completedAt: now,
-            });
+          // Log cleanup event
+          await ctx.db.insert("events", {
+            type: "AGENT_EXPIRED",
+            payload: {
+              agentDid: agent.did,
+              agentType: agent.agentType,
+              cleanupActions: ["expire_agent", "cleanup_sponsorship"],
+            },
+            timestamp: now,
           });
 
           cleanedCount++;
 
         } catch (error) {
-          console.error(`Failed to cleanup agent ${task.agentDid}:`, error);
+          console.error(`Failed to cleanup agent ${agent.did}:`, error);
         }
       }
 
       console.info(`Cleanup completed: ${cleanedCount} agents expired`);
-      return { cleanedCount, totalTasks: cleanupTasks.length };
+      return { cleanedCount, totalTasks: expiredAgents.length };
 
     } catch (error) {
       console.error("Cleanup process failed:", error);
@@ -1009,276 +869,7 @@ export const updateAgentStatus = mutation({
   },
 });
 
-// === FEDERATION SUPPORT (OPTIONAL MODULAR FEATURE) ===
-
-// Enable federation for an agent (optional feature)
-export const enableAgentFederation = mutation({
-  args: {
-    agentDid: v.string(),
-    homeJurisdiction: v.string(),          // ISO country code
-    federationLevel: v.optional(v.union(
-      v.literal("domestic_only"),
-      v.literal("bilateral_only"), 
-      v.literal("union_integrated"),
-      v.literal("un_coordinated")
-    )),
-    bilateralAgreements: v.optional(v.array(v.string())), // Country codes
-    unionPassport: v.optional(v.string()),
-    unRecognition: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    try {
-      console.info(`Enabling federation for agent ${args.agentDid}`);
-      
-      // Get the agent
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", args.agentDid))
-        .first();
-        
-      if (!agent) {
-        throw new Error(`Agent ${args.agentDid} not found`);
-      }
-      
-      // Create federation configuration
-      const federationConfig = {
-        enabled: true,
-        nationalDID: args.agentDid,
-        homeJurisdiction: args.homeJurisdiction,
-        crossBorderEnabled: args.bilateralAgreements ? args.bilateralAgreements.length > 0 : false,
-        bilateralAgreements: args.bilateralAgreements || [],
-        unionPassport: args.unionPassport,
-        unRecognition: args.unRecognition,
-        sovereigntyChain: {
-          national: "ULTIMATE_AUTHORITY" as const,
-          union: args.unionPassport ? "DELEGATED_AUTHORITY" as const : undefined,
-          un: args.unRecognition ? "ADVISORY_ONLY" as const : undefined,
-        },
-        federationLevel: args.federationLevel || "domestic_only",
-        lastFederationUpdate: Date.now(),
-      };
-      
-      // Update agent with federation configuration
-      await ctx.db.patch(agent._id, {
-        federation: federationConfig,
-      });
-      
-      // Log federation event
-      await ctx.db.insert("events", {
-        type: "AGENT_FEDERATION_ENABLED",
-        payload: {
-          agentDid: args.agentDid,
-          homeJurisdiction: args.homeJurisdiction,
-          federationLevel: args.federationLevel || "domestic_only",
-          bilateralAgreements: args.bilateralAgreements || [],
-        },
-        timestamp: Date.now(),
-        agentDid: args.agentDid,
-      });
-      
-      console.info(`Federation enabled for agent ${args.agentDid}`);
-      return agent._id;
-      
-    } catch (error) {
-      console.error(`Failed to enable federation for agent ${args.agentDid}:`, error);
-      throw new Error(`Federation enable failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  },
-});
-
-// Disable federation for an agent (sovereignty control)
-export const disableAgentFederation = mutation({
-  args: {
-    agentDid: v.string(),
-    reason: v.optional(v.string()), // Reason for disabling federation
-  },
-  handler: async (ctx, args) => {
-    try {
-      console.info(`Disabling federation for agent ${args.agentDid}`);
-      
-      // Get the agent
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", args.agentDid))
-        .first();
-        
-      if (!agent) {
-        throw new Error(`Agent ${args.agentDid} not found`);
-      }
-      
-      // Disable federation while preserving national identity
-      const updatedFederation = {
-        ...(agent.federation || {}),
-        enabled: false,
-        crossBorderEnabled: false,
-        bilateralAgreements: [],
-        unionPassport: undefined,
-        unRecognition: undefined,
-        federationLevel: "domestic_only" as const,
-        lastFederationUpdate: Date.now(),
-      };
-      
-      // Update agent
-      await ctx.db.patch(agent._id, {
-        federation: updatedFederation,
-      });
-      
-      // Log federation disabled event
-      await ctx.db.insert("events", {
-        type: "AGENT_FEDERATION_DISABLED",
-        payload: {
-          agentDid: args.agentDid,
-          reason: args.reason || "federation_disabled",
-          previousLevel: agent.federation?.federationLevel || "unknown",
-        },
-        timestamp: Date.now(),
-        agentDid: args.agentDid,
-      });
-      
-      console.info(`Federation disabled for agent ${args.agentDid}`);
-      return "federation_disabled";
-      
-    } catch (error) {
-      console.error(`Failed to disable federation for agent ${args.agentDid}:`, error);
-      throw new Error(`Federation disable failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  },
-});
-
-// Get agents with federation capabilities
-export const getFederatedAgents = query({
-  args: {
-    homeJurisdiction: v.optional(v.string()),
-    federationLevel: v.optional(v.union(
-      v.literal("domestic_only"),
-      v.literal("bilateral_only"), 
-      v.literal("union_integrated"),
-      v.literal("un_coordinated")
-    )),
-    crossBorderOnly: v.optional(v.boolean()),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    let agents = await ctx.db
-      .query("agents")
-      .filter((q) => q.eq(q.field("status"), "active"))
-      .collect();
-      
-    // Filter by federation criteria
-    if (args.homeJurisdiction || args.federationLevel || args.crossBorderOnly) {
-      agents = agents.filter(agent => {
-        const federation = agent.federation;
-        if (!federation || !federation.enabled) return false;
-        
-        if (args.homeJurisdiction && federation.homeJurisdiction !== args.homeJurisdiction) {
-          return false;
-        }
-        
-        if (args.federationLevel && federation.federationLevel !== args.federationLevel) {
-          return false;
-        }
-        
-        if (args.crossBorderOnly && !federation.crossBorderEnabled) {
-          return false;
-        }
-        
-        return true;
-      });
-    }
-    
-    return agents.slice(0, args.limit || 50);
-  },
-});
-
-// Verify cross-border agent access (sovereignty control)
-export const verifyCrossBorderAccess = query({
-  args: {
-    agentDid: v.string(),
-    targetJurisdiction: v.string(),      // Country code the agent wants to operate in
-    requestingJurisdiction: v.string(),  // Country code making the request
-  },
-  handler: async (ctx, args) => {
-    try {
-      // Get agent
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", args.agentDid))
-        .first();
-        
-      if (!agent) {
-        return { 
-          authorized: false, 
-          reason: "agent_not_found" 
-        };
-      }
-      
-      // Check if federation is enabled
-      if (!agent.federation || !agent.federation.enabled || !agent.federation.crossBorderEnabled) {
-        return { 
-          authorized: false, 
-          reason: "federation_disabled" 
-        };
-      }
-      
-      // Check home jurisdiction authority
-      if (agent.federation.homeJurisdiction !== args.requestingJurisdiction) {
-        return { 
-          authorized: false, 
-          reason: "unauthorized_jurisdiction" 
-        };
-      }
-      
-      // Check bilateral agreement
-      const hasBilateralAgreement = agent.federation.bilateralAgreements?.includes(args.targetJurisdiction);
-      if (!hasBilateralAgreement) {
-        return { 
-          authorized: false, 
-          reason: "no_bilateral_agreement" 
-        };
-      }
-      
-      // Verify bilateral agreement is active
-      const bilateralAgreement = await ctx.db
-        .query("bilateralAgreements")
-        .filter((q) => 
-          q.and(
-            q.or(
-              q.and(
-                q.eq(q.field("countryA"), args.requestingJurisdiction),
-                q.eq(q.field("countryB"), args.targetJurisdiction)
-              ),
-              q.and(
-                q.eq(q.field("countryA"), args.targetJurisdiction),
-                q.eq(q.field("countryB"), args.requestingJurisdiction)
-              )
-            ),
-            q.eq(q.field("status"), "active")
-          )
-        )
-        .first();
-        
-      if (!bilateralAgreement) {
-        return { 
-          authorized: false, 
-          reason: "bilateral_agreement_inactive" 
-        };
-      }
-      
-      return {
-        authorized: true,
-        agreementType: bilateralAgreement.agreementType,
-        trustLevel: bilateralAgreement.trustLevel,
-        capabilities: bilateralAgreement.capabilities,
-        restrictions: bilateralAgreement.restrictions,
-      };
-      
-    } catch (error) {
-      console.error(`Cross-border access verification failed:`, error);
-      return { 
-        authorized: false, 
-        reason: "verification_error" 
-      };
-    }
-  },
-});
+// === FEDERATION SUPPORT ===
+// Federation features removed for now - will be added back when needed
+// Focus on core dispute resolution functionality
 

@@ -349,15 +349,19 @@ export const getPhysicalEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("functionalEvidence");
+    let evidence;
     
     if (args.agentDid) {
-      query = query.withIndex("by_agent", (q: any) => q.eq("agentDid", args.agentDid));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
+        .collect();
     } else {
-      query = query.withIndex("by_functional_type", (q: any) => q.eq("functionalType", "physical"));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_functional_type", (q) => q.eq("functionalType", "physical"))
+        .collect();
     }
-    
-    let evidence = await query.collect();
     
     // Filter by location if specified
     if (args.location) {
@@ -386,15 +390,19 @@ export const getVoiceEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("functionalEvidence");
+    let evidence;
     
     if (args.agentDid) {
-      query = query.withIndex("by_agent", (q: any) => q.eq("agentDid", args.agentDid));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
+        .collect();
     } else {
-      query = query.withIndex("by_functional_type", (q: any) => q.eq("functionalType", "voice"));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_functional_type", (q) => q.eq("functionalType", "voice"))
+        .collect();
     }
-    
-    let evidence = await query.collect();
     
     // Filter by language if specified
     if (args.language) {
@@ -406,7 +414,7 @@ export const getVoiceEvidence = query({
     // Filter by privacy compliance if specified
     if (args.privacyCompliant !== undefined) {
       evidence = evidence.filter((e) => {
-        const hasCompliance = e.voiceContext?.privacyCompliance?.length > 0;
+        const hasCompliance = (e.voiceContext?.privacyCompliance?.length || 0) > 0;
         return args.privacyCompliant ? hasCompliance : !hasCompliance;
       });
     }
@@ -423,20 +431,24 @@ export const getCodingEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("functionalEvidence");
+    let evidence;
     
     if (args.agentDid) {
-      query = query.withIndex("by_agent", (q: any) => q.eq("agentDid", args.agentDid));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
+        .collect();
     } else {
-      query = query.withIndex("by_functional_type", (q: any) => q.eq("functionalType", "coding"));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_functional_type", (q) => q.eq("functionalType", "coding"))
+        .collect();
     }
-    
-    let evidence = await query.collect();
     
     // Filter by programming language if specified
     if (args.language) {
       evidence = evidence.filter((e) => 
-        e.codingContext?.languagesUsed?.includes(args.language)
+        e.codingContext?.languagesUsed?.includes(args.language!)
       );
     }
     
@@ -462,15 +474,19 @@ export const getFinancialEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("functionalEvidence");
+    let evidence;
     
     if (args.agentDid) {
-      query = query.withIndex("by_agent", (q: any) => q.eq("agentDid", args.agentDid));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
+        .collect();
     } else {
-      query = query.withIndex("by_functional_type", (q: any) => q.eq("functionalType", "financial"));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_functional_type", (q) => q.eq("functionalType", "financial"))
+        .collect();
     }
-    
-    let evidence = await query.collect();
     
     // Filter by minimum transaction count if specified
     if (args.minTransactionCount !== undefined) {
@@ -499,15 +515,19 @@ export const getHealthcareEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("functionalEvidence");
+    let evidence;
     
     if (args.agentDid) {
-      query = query.withIndex("by_agent", (q: any) => q.eq("agentDid", args.agentDid));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
+        .collect();
     } else {
-      query = query.withIndex("by_functional_type", (q: any) => q.eq("functionalType", "healthcare"));
+      evidence = await ctx.db
+        .query("functionalEvidence")
+        .withIndex("by_functional_type", (q) => q.eq("functionalType", "healthcare"))
+        .collect();
     }
-    
-    let evidence = await query.collect();
     
     // Filter by HIPAA compliance if specified
     if (args.hipaaCompliant !== undefined) {

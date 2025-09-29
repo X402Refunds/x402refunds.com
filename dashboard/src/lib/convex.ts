@@ -1,6 +1,6 @@
 // Get the Convex deployment URL from Next.js environment variables
 // NEXT_PUBLIC_ prefixed variables are automatically available in the browser
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'http://localhost:3001';
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyrebird-89.convex.cloud';
 
 // Note: We're not using ConvexHttpClient since we're accessing HTTP endpoints directly
 // ConvexHttpClient is for database queries, but we're accessing dashboard HTTP routes

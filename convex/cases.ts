@@ -69,6 +69,7 @@ export const fileDispute = mutation({
         parties: args.parties,
         type: args.type,
         evidenceCount: args.evidenceIds.length,
+        jurisdictionTags: args.jurisdictionTags,
       },
       timestamp: now,
       caseId,

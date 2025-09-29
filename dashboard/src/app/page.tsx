@@ -5,6 +5,8 @@ import { ArrowRight, Clock, DollarSign, Shield, Zap, CheckCircle, Activity, Eye,
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useQuery } from "convex/react"
+import { api } from "../convex/_generated/api"
 
 
 // Animation hooks
@@ -88,10 +90,18 @@ function useInView(threshold: number = 0.3) {
 }
 
 export default function HomePage() {
+  // Fetch real-time data
+  const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 })
+  
   // Animation state for metrics
   const { ref: metricsRef, isInView } = useInView(0.3)
-  const companiesCount = useCountUp(47, 2000, 0)
-  const disputesCount = useCountUp(156, 2500, 500)
+  
+  // Use real data or fallback to previous values while loading
+  const companiesTarget = systemStats?.agentRegistrations ?? 47
+  const disputesTarget = systemStats?.casesResolved ?? 156
+  
+  const companiesCount = useCountUp(companiesTarget, 2000, 0)
+  const disputesCount = useCountUp(disputesTarget, 2500, 500)
 
   // Trigger animations when section comes into view
   useEffect(() => {
@@ -198,7 +208,7 @@ export default function HomePage() {
                       <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
                         {companiesCount.count}
                       </div>
-                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Companies Registered</div>
+                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Agents</div>
                     </div>
                     <div className="text-center p-6 border border-gray-200 rounded-lg">
                       <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
@@ -461,7 +471,7 @@ export default function HomePage() {
             Ready to Automate Your AI Vendor Disputes?
           </h2>
           <p className="text-xl mb-8 text-gray-300">
-            Join 47+ companies already registered on the platform
+            Join {companiesTarget}+ agents already registered on the platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 

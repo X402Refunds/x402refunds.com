@@ -137,8 +137,8 @@ Write a brief plan:
 
 #### Commands
 - **Development**: `pnpm dev` - Start development server (Convex production + Vercel dev)
-- **Backend Deployment**: `pnpm deploy` - Deploy backend to Convex production
-- **Frontend Deployment**: `pnpm deploy:frontend` - Deploy frontend to Vercel
+- **Backend Deployment**: `pnpm run deploy` - Deploy backend to Convex production
+- **Frontend Deployment**: `pnpm run deploy:frontend` - Deploy frontend to Vercel
 - **Build**: `pnpm build` - Build all packages
 - **Testing**: `pnpm test`, `pnpm test:run`, `pnpm test:ui`, `pnpm test:coverage`
 - **E2E**: `pnpm e2e` - End-to-end tests
