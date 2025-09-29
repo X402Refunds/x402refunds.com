@@ -95,7 +95,7 @@ const AI_CONSUMERS = [
 // Generate LLM-powered dispute
 export const generateLLMDispute = internalAction({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ success: boolean; reason?: string; caseId?: any; disputeType?: string; parties?: string[]; llmGenerated?: boolean }> => {
     try {
       console.log("🧠 Starting LLM dispute generation...");
 
@@ -451,8 +451,7 @@ export const systemHealthMonitor = internalMutation({
   }
 });
 
-// Process pending cases - Disabled for now
-// Cases remain in FILED status until they are manually processed or auto-decided
+// Process pending cases - Auto-arbitration enabled
 export const processPendingCases = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -467,10 +466,90 @@ export const processPendingCases = internalMutation({
       
       console.log(`📊 Found ${filedCases.length} cases in FILED status`);
       
-      // For now, just log the count - cases stay FILED until explicitly processed
-      // Future: could implement auto-arbitration or panel assignment logic here
+      let processed = 0;
       
-      return { success: true, filedCases: filedCases.length };
+      // Process each filed case through the court engine
+      for (const caseData of filedCases) {
+        try {
+          // Get evidence for this case
+          const evidence = await ctx.db
+            .query("evidenceManifests")
+            .withIndex("by_case", q => q.eq("caseId", caseData._id))
+            .collect();
+          
+          // Simple rule-based decision logic
+          let verdict: "UPHELD" | "DISMISSED";
+          let code: string;
+          let reasons: string;
+          let auto = true;
+          
+          // Basic automated rules
+          if (evidence.length === 0) {
+            verdict = "DISMISSED";
+            code = "INSUFFICIENT_EVIDENCE";
+            reasons = "Case dismissed due to lack of evidence.";
+          } else if (evidence.length >= 3) {
+            verdict = "UPHELD";
+            code = "SLA_VIOLATION_CONFIRMED";
+            reasons = "Substantial evidence confirms SLA violation. Provider found liable.";
+          } else {
+            // 1-2 pieces of evidence, likely UPHELD
+            verdict = "UPHELD";
+            code = "EVIDENCE_SUPPORTS_CLAIM";
+            reasons = "Evidence supports claim of service level violation.";
+          }
+          
+          const decidedAt = Date.now();
+          
+          // Create ruling
+          await ctx.db.insert("rulings", {
+            caseId: caseData._id,
+            verdict,
+            code,
+            reasons,
+            auto,
+            decidedAt,
+            proof: {
+              merkleRoot: "simple_hash_" + caseData._id,
+            }
+          });
+          
+          // Update case status - all auto-decisions are DECIDED
+          const newStatus = "DECIDED" as const;
+          await ctx.db.patch(caseData._id, {
+            status: newStatus,
+            ruling: {
+              verdict,
+              auto,
+              decidedAt
+            }
+          });
+          
+          // Log the status update event for dashboard tracking
+          await ctx.db.insert("events", {
+            type: "CASE_STATUS_UPDATED",
+            payload: {
+              caseId: caseData._id,
+              oldStatus: "FILED",
+              newStatus: newStatus,
+              verdict: verdict,
+              auto: auto
+            },
+            timestamp: decidedAt,
+            caseId: caseData._id,
+          });
+          
+          processed++;
+          console.log(`✅ Case ${caseData._id} resolved - ${verdict} (${code})`);
+          
+        } catch (error: any) {
+          console.error(`❌ Failed to process case ${caseData._id}:`, error.message);
+        }
+      }
+      
+      console.log(`🎯 Processed ${processed}/${filedCases.length} cases`);
+      
+      return { success: true, filedCases: filedCases.length, processed };
       
     } catch (error: any) {
       console.error("❌ Case processing failed:", error.message);

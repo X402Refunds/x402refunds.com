@@ -11,3 +11,4 @@ export const simpleTest = action({
     return { success: true, message: "Test deployment successful" };
   }
 });
+
