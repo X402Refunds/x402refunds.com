@@ -19,7 +19,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
-    "preinstall": "only-allow pnpm",
+    "postinstall": "echo 'Use pnpm for package management'",
     "e2e": "bash scripts/e2e-test.sh",
     "structure": "node scripts/show-structure.js",
     "docs": "echo 'Opening project structure documentation...' && open docs/architecture/project-structure.md || echo 'See: docs/architecture/project-structure.md'",
