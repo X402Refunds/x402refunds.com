@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { GovernmentSidebar } from "./government-sidebar"
 import { GovernmentHeader } from "./government-header"
 import { cn } from "@/lib/utils"
@@ -11,7 +10,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, className }: DashboardLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const sidebarCollapsed = false
 
   return (
     <div className="h-screen flex flex-col bg-background">

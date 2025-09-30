@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Bell, Shield, User, Sun, Moon, AlertTriangle, CheckCircle } from "lucide-react"
+import { Bell, Shield, User, AlertTriangle, CheckCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { cn } from "@/lib/utils"
@@ -27,12 +27,12 @@ interface SystemStatus {
 
 export function GovernmentHeader() {
   const pathname = usePathname()
-  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
+  const systemStatus: SystemStatus = {
     status: "operational",
     uptime: 99.7,
     activeAgents: 6,
     lastUpdate: new Date()
-  })
+  }
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

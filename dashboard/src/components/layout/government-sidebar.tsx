@@ -14,27 +14,27 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   {
     title: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
   },
   {
     title: "Agents",
-    href: "/agents",
+    href: "/dashboard/agents",
     icon: Users,
   },
   {
     title: "Cases",
-    href: "/cases", 
+    href: "/dashboard/cases", 
     icon: FileText,
   },
   {
     title: "Activity",
-    href: "/activity",
+    href: "/dashboard/activity",
     icon: Activity,
   },
   {
     title: "Settings",
-    href: "/settings",
+    href: "/dashboard/settings",
     icon: Settings,
   },
 ]
@@ -48,7 +48,7 @@ export function GovernmentSidebar({ className }: GovernmentSidebarProps) {
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="p-6 border-b">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/dashboard" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">C</span>
           </div>
