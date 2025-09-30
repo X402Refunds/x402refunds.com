@@ -3,5 +3,13 @@
   "devCommand": "cd dashboard && pnpm dev",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "outputDirectory": "dashboard/.next"
+  "outputDirectory": "dashboard/.next",
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_CONVEX_URL": "https://perceptive-lyrebird-89.convex.cloud"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_CONVEX_URL": "https://perceptive-lyrebird-89.convex.cloud"
+  }
 }
