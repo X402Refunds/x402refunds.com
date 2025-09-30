@@ -8,6 +8,15 @@ export const fileDispute = mutation({
     type: v.string(),
     jurisdictionTags: v.array(v.string()),
     evidenceIds: v.array(v.id("evidenceManifests")),
+    description: v.optional(v.string()),
+    claimedDamages: v.optional(v.number()),
+    breachDetails: v.optional(v.object({
+      duration: v.optional(v.string()),
+      impactLevel: v.optional(v.string()),
+      affectedUsers: v.optional(v.number()),
+      slaRequirement: v.optional(v.string()),
+      actualPerformance: v.optional(v.string()),
+    })),
   },
   handler: async (ctx, args) => {
     // Validate parties are different agents
@@ -52,6 +61,9 @@ export const fileDispute = mutation({
       deadlines: {
         panelDue,
       },
+      description: args.description,
+      claimedDamages: args.claimedDamages,
+      breachDetails: args.breachDetails,
     };
 
     const caseId = await ctx.db.insert("cases", caseData);

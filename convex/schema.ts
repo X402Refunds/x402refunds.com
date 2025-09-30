@@ -142,6 +142,17 @@ export default defineSchema({
       auto: v.boolean(),
       decidedAt: v.number(),
     })),
+    
+    // Actual dispute details (not buried in events!)
+    description: v.optional(v.string()),
+    claimedDamages: v.optional(v.number()),
+    breachDetails: v.optional(v.object({
+      duration: v.optional(v.string()),
+      impactLevel: v.optional(v.string()),
+      affectedUsers: v.optional(v.number()),
+      slaRequirement: v.optional(v.string()),
+      actualPerformance: v.optional(v.string()),
+    })),
   })
     .index("by_status", ["status"])
     .index("by_filed_at", ["filedAt"]),

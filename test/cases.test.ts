@@ -79,18 +79,27 @@ describe('Case Filing and Dispute Resolution APIs', () => {
   });
 
   describe('fileDispute - Core Dispute Filing', () => {
-    it('should file a dispute successfully with two parties', async () => {
+    it('should file a dispute successfully with two parties and new schema fields', async () => {
       const disputeData = {
         parties: [testAgentDid1, testAgentDid2],
         type: 'SLA_MISS',
         jurisdictionTags: ['AI_AGENTS', 'SERVICE_LEVEL'],
         evidenceIds: [evidenceId1, evidenceId2],
+        description: 'API downtime violation - 99.9% SLA breached with 2 hour outage',
+        claimedDamages: 5000,
+        breachDetails: {
+          duration: '2 hours',
+          impactLevel: 'High',
+          affectedUsers: 1500,
+          slaRequirement: '99.9% uptime',
+          actualPerformance: '98.2% uptime',
+        },
       };
 
       const caseId = await t.mutation(api.cases.fileDispute, disputeData);
       expect(caseId).toBeDefined();
 
-      // Verify case was created correctly
+      // Verify case was created correctly with all new fields
       const case_ = await t.query(api.cases.getCase, { caseId });
       expect(case_).toMatchObject({
         parties: disputeData.parties,
@@ -98,6 +107,9 @@ describe('Case Filing and Dispute Resolution APIs', () => {
         status: 'FILED',
         jurisdictionTags: disputeData.jurisdictionTags,
         evidenceIds: disputeData.evidenceIds,
+        description: disputeData.description,
+        claimedDamages: disputeData.claimedDamages,
+        breachDetails: disputeData.breachDetails,
       });
       
       expect(case_?.filedAt).toBeDefined();

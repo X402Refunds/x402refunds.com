@@ -203,7 +203,16 @@ export const createLLMDispute = internalMutation({
         filedAt: now,
         jurisdictionTags: ["AI_VENDOR_DISPUTE", "LLM_GENERATED", "COMMERCIAL_SLA"],
         evidenceIds: [providerEvidence, consumerEvidence],
-        deadlines: { panelDue }
+        deadlines: { panelDue },
+        description: args.scenario.llmData?.description,
+        claimedDamages: args.scenario.typicalDamages?.max,
+        breachDetails: args.scenario.llmData ? {
+          duration: args.scenario.llmData.breachDuration,
+          impactLevel: args.scenario.llmData.impactLevel,
+          affectedUsers: args.scenario.llmData.affectedUsers,
+          slaRequirement: args.scenario.llmData.slaRequirement,
+          actualPerformance: args.scenario.llmData.actualPerformance,
+        } : undefined,
       });
 
       // Update evidence with case ID
@@ -322,6 +331,10 @@ export const generateFallbackDispute = internalMutation({
       // File the dispute
       const panelDue = now + 7 * 24 * 60 * 60 * 1000;
       
+      // Generate basic dispute description for fallback
+      const description = `${vendor.ownerDid.split(':')[2]} vs ${consumer.ownerDid.split(':')[2]} - ${randomType.replace(/_/g, ' ')} dispute`;
+      const claimedDamages = Math.floor(Math.random() * 10000) + 1000; // $1k-$11k
+      
       const caseId = await ctx.db.insert("cases", {
         parties: [vendor.did, consumer.did],
         status: "FILED" as const,
@@ -329,7 +342,13 @@ export const generateFallbackDispute = internalMutation({
         filedAt: now,
         jurisdictionTags: ["AI_VENDOR_DISPUTE", "FALLBACK_GENERATED"],
         evidenceIds: [providerEvidence, consumerEvidence],
-        deadlines: { panelDue }
+        deadlines: { panelDue },
+        description,
+        claimedDamages,
+        breachDetails: {
+          duration: "Unknown",
+          impactLevel: "Moderate",
+        },
       });
 
       // Update evidence with case ID
