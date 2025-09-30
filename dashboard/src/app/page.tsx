@@ -54,6 +54,14 @@ function useCountUp(target: number, duration: number, delay: number = 0) {
     }
   }, [isActive, animate])
 
+  // Reset animation when target changes
+  useEffect(() => {
+    setCount(0)
+    setIsActive(false)
+    startTime.current = undefined
+    countRef.current = 0
+  }, [target])
+
   useEffect(() => {
     return () => {
       if (frameId.current) {
@@ -90,26 +98,32 @@ function useInView(threshold: number = 0.3) {
 }
 
 export default function HomePage() {
-  // Fetch real-time data
-  const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 })
+  // Fetch cached stats (instant load - updated every 5 minutes by cron)
+  const cachedStats = useQuery(api.cases.getCachedSystemStats)
   
   // Animation state for metrics
   const { ref: metricsRef, isInView } = useInView(0.3)
   
-  // Use real data or fallback to previous values while loading
-  const companiesTarget = systemStats?.agentRegistrations ?? 47
-  const disputesTarget = systemStats?.casesResolved ?? 156
+  // Use cached data (shows real numbers from database)
+  const companiesTarget = cachedStats?.activeAgents ?? 0
+  const disputesTarget = cachedStats?.resolvedCases ?? 0
+  const avgResolutionMinutes = cachedStats?.avgResolutionTimeMinutes ?? 2.4
   
   const companiesCount = useCountUp(companiesTarget, 2000, 0)
   const disputesCount = useCountUp(disputesTarget, 2500, 500)
 
-  // Trigger animations when section comes into view
+  // Trigger animations when section comes into view AND when targets change
   useEffect(() => {
-    if (isInView) {
+    if (isInView && companiesTarget > 0) {
       companiesCount.start()
+    }
+  }, [isInView, companiesTarget, companiesCount])
+
+  useEffect(() => {
+    if (isInView && disputesTarget > 0) {
       disputesCount.start()
     }
-  }, [isInView, companiesCount, disputesCount])
+  }, [isInView, disputesTarget, disputesCount])
 
   return (
     <div className="min-h-screen bg-white">
@@ -219,16 +233,18 @@ export default function HomePage() {
                   </div>
                   <div className="space-y-4 text-sm">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-600 font-medium">Resolution Time</span>
-                      <span className="font-bold text-gray-900 font-mono">2.4 minutes</span>
+                      <span className="text-gray-600 font-medium">Avg Resolution Time</span>
+                      <span className="font-bold text-gray-900 font-mono">
+                        {avgResolutionMinutes.toFixed(1)} minutes
+                      </span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-600 font-medium">System Health</span>
-                      <span className="font-bold text-gray-900 font-mono">99.9%</span>
+                      <span className="text-gray-600 font-medium">Total Cases</span>
+                      <span className="font-bold text-gray-900 font-mono">{cachedStats?.totalCases ?? 0}</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600 font-medium">Uptime</span>
-                      <span className="font-bold text-gray-900 font-mono">24h 15m</span>
+                      <span className="text-gray-600 font-medium">Pending Cases</span>
+                      <span className="font-bold text-gray-900 font-mono">{cachedStats?.pendingCases ?? 0}</span>
                     </div>
                   </div>
                 </CardContent>

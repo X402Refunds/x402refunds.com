@@ -231,3 +231,38 @@ export const updateCaseRuling = mutation({
     console.info(`Case ${args.caseId} ruling updated`);
   },
 });
+
+// Get cached system statistics (fast query - no expensive calculations)
+export const getCachedSystemStats = query({
+  args: {},
+  handler: async (ctx) => {
+    // Read from cache table - this is instant!
+    const cachedStats = await ctx.db
+      .query("systemStats")
+      .withIndex("by_key", (q) => q.eq("key", "current"))
+      .first();
+    
+    if (!cachedStats) {
+      // Return default values if cache not yet populated
+      return {
+        totalAgents: 0,
+        activeAgents: 0,
+        totalCases: 0,
+        resolvedCases: 0,
+        pendingCases: 0,
+        avgResolutionTimeMs: 0,
+        avgResolutionTimeMinutes: 0,
+        agentRegistrationsLast24h: 0,
+        casesFiledLast24h: 0,
+        casesResolvedLast24h: 0,
+        lastUpdated: Date.now(),
+        isCached: false,
+      };
+    }
+    
+    return {
+      ...cachedStats,
+      isCached: true,
+    };
+  },
+});

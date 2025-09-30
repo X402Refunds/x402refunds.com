@@ -418,4 +418,31 @@ export default defineSchema({
     .index("by_swarm_id", ["swarmId"])
     .index("by_lead_agent", ["leadAgent"])
     .index("by_status", ["status"]),
+
+  // Cached system statistics (updated by cron every 5 minutes)
+  systemStats: defineTable({
+    // Singleton key - always "current"
+    key: v.string(),
+    
+    // Core metrics
+    totalAgents: v.number(),
+    activeAgents: v.number(),
+    totalCases: v.number(),
+    resolvedCases: v.number(),
+    pendingCases: v.number(),
+    
+    // Performance metrics
+    avgResolutionTimeMs: v.number(),
+    avgResolutionTimeMinutes: v.number(),
+    
+    // 24h metrics
+    agentRegistrationsLast24h: v.number(),
+    casesFiledLast24h: v.number(),
+    casesResolvedLast24h: v.number(),
+    
+    // Timestamps
+    lastUpdated: v.number(),
+    calculationTimeMs: v.optional(v.number()),
+  })
+    .index("by_key", ["key"]),
 });

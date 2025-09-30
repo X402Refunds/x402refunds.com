@@ -31,6 +31,14 @@ crons.interval(
   {} // empty args
 );
 
+// Update cached system statistics every 5 minutes
+crons.interval(
+  "update stats cache",
+  { minutes: 5 },
+  internal.crons.updateSystemStatsCache,
+  {} // empty args
+);
+
 export default crons;
 
 // =================================================================
@@ -602,6 +610,92 @@ export const processPendingCases = internalMutation({
       
     } catch (error: any) {
       console.error("❌ Case processing failed:", error.message);
+      return { success: false, reason: error.message };
+    }
+  }
+});
+
+// Update cached system statistics for fast dashboard loading
+export const updateSystemStatsCache = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const startTime = Date.now();
+      console.log("📊 Updating cached system statistics...");
+      
+      // Get all agents
+      const allAgents = await ctx.db.query("agents").collect();
+      const activeAgents = allAgents.filter(a => a.status === "active");
+      
+      // Get all cases
+      const allCases = await ctx.db.query("cases").collect();
+      const resolvedCases = allCases.filter(c => 
+        c.status === "DECIDED" || c.status === "CLOSED" || c.status === "AUTORULED"
+      );
+      const pendingCases = allCases.filter(c => c.status === "FILED");
+      
+      // Calculate average resolution time for cases with rulings
+      const casesWithResolution = allCases.filter(c => c.ruling?.decidedAt && c.filedAt);
+      let avgResolutionTimeMs = 0;
+      if (casesWithResolution.length > 0) {
+        const totalResolutionTime = casesWithResolution.reduce((sum, c) => {
+          return sum + (c.ruling!.decidedAt - c.filedAt);
+        }, 0);
+        avgResolutionTimeMs = totalResolutionTime / casesWithResolution.length;
+      }
+      const avgResolutionTimeMinutes = avgResolutionTimeMs / (1000 * 60);
+      
+      // Get 24h metrics
+      const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
+      const recentEvents = await ctx.db
+        .query("events")
+        .withIndex("by_timestamp", (q) => q.gt("timestamp", cutoffTime))
+        .collect();
+      
+      const agentRegistrationsLast24h = recentEvents.filter(e => e.type === "AGENT_REGISTERED").length;
+      const casesFiledLast24h = recentEvents.filter(e => e.type === "DISPUTE_FILED").length;
+      const casesResolvedLast24h = recentEvents.filter(e => 
+        e.type === "CASE_STATUS_UPDATED" && 
+        (e.payload?.newStatus === "DECIDED" || e.payload?.newStatus === "CLOSED")
+      ).length;
+      
+      // Calculate how long this took
+      const calculationTimeMs = Date.now() - startTime;
+      
+      // Update or insert the cached stats (singleton pattern)
+      const existingStats = await ctx.db
+        .query("systemStats")
+        .withIndex("by_key", (q) => q.eq("key", "current"))
+        .first();
+      
+      const statsData = {
+        key: "current",
+        totalAgents: allAgents.length,
+        activeAgents: activeAgents.length,
+        totalCases: allCases.length,
+        resolvedCases: resolvedCases.length,
+        pendingCases: pendingCases.length,
+        avgResolutionTimeMs,
+        avgResolutionTimeMinutes,
+        agentRegistrationsLast24h,
+        casesFiledLast24h,
+        casesResolvedLast24h,
+        lastUpdated: Date.now(),
+        calculationTimeMs,
+      };
+      
+      if (existingStats) {
+        await ctx.db.patch(existingStats._id, statsData);
+      } else {
+        await ctx.db.insert("systemStats", statsData);
+      }
+      
+      console.log(`✅ Stats cache updated in ${calculationTimeMs}ms: ${activeAgents.length} agents, ${allCases.length} cases, ${avgResolutionTimeMinutes.toFixed(1)} min avg resolution`);
+      
+      return { success: true, calculationTimeMs, stats: statsData };
+      
+    } catch (error: any) {
+      console.error("❌ Failed to update stats cache:", error.message);
       return { success: false, reason: error.message };
     }
   }
