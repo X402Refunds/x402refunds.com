@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, Users, Gavel, TrendingUp, Activity } from "lucide-react";
 import { DisputeEvent } from "@/lib/convex-client";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 
 export default function LiveDisputeMonitor() {
@@ -157,12 +157,12 @@ export default function LiveDisputeMonitor() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentEvents.length === 0 ? (
+            {!recentEvents || recentEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 No recent activity. Start the dispute engine to see live data.
               </p>
             ) : (
-              recentEvents.slice(0, 8).map((event: DisputeEvent) => (
+              recentEvents?.slice(0, 8).map((event: DisputeEvent) => (
                 <div 
                   key={event._id} 
                   className={`flex items-start space-x-3 ${event.caseId ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}

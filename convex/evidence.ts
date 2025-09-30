@@ -599,11 +599,13 @@ export const submitPhysicalEvidence = mutation({
     caseId: v.optional(v.id("cases")),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation(api.evidence.submitEvidence, {
+    // Create evidence manifest directly
+    const evidenceId = await ctx.db.insert("evidenceManifests", {
       agentDid: args.agentDid,
       sha256: args.sha256,
       uri: args.uri,
       signer: args.signer,
+      ts: Date.now(),
       model: {
         provider: "physical_device",
         name: "sensor_reading",
@@ -611,13 +613,9 @@ export const submitPhysicalEvidence = mutation({
       },
       tool: "physical_sensor",
       caseId: args.caseId,
-      functionalContext: {
-        physicalContext: {
-          location: args.location,
-          sensorData: args.sensorData,
-        },
-      },
     });
+
+    return { evidenceId, success: true };
   },
 });
 
@@ -635,11 +633,13 @@ export const submitVoiceEvidence = mutation({
     caseId: v.optional(v.id("cases")),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation(api.evidence.submitEvidence, {
+    // Create evidence manifest directly
+    const evidenceId = await ctx.db.insert("evidenceManifests", {
       agentDid: args.agentDid,
       sha256: args.sha256,
       uri: args.uri,
       signer: args.signer,
+      ts: Date.now(),
       model: {
         provider: "voice_ai",
         name: "speech_processing",
@@ -647,15 +647,8 @@ export const submitVoiceEvidence = mutation({
       },
       tool: "voice_analysis",
       caseId: args.caseId,
-      functionalContext: {
-        voiceContext: {
-          transcription: args.transcription,
-          confidenceScore: args.confidenceScore,
-          languageDetected: args.languageDetected,
-          consentProof: args.consentProof,
-          privacyCompliance: args.privacyCompliance,
-        },
-      },
     });
+
+    return { evidenceId, success: true };
   },
 });

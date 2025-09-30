@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useQuery } from "convex/react"
-import { api } from "../convex/_generated/api"
+import { api } from "../../../convex/_generated/api"
 
 
 // Animation hooks

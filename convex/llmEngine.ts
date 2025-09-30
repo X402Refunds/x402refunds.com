@@ -65,7 +65,7 @@ Keep under 300 words total.`;
       llmData: scenario
     };
     
-  } catch (error) {
+  } catch (error: any) {
     console.log(`⚠️ LLM failed: ${error.message}`);
     return null;
   }
@@ -107,7 +107,7 @@ Keep under 200 words total.`;
     
     return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
     
-  } catch (error) {
+  } catch (error: any) {
     console.log(`⚠️ Evidence generation failed: ${error.message}`);
     return null;
   }
