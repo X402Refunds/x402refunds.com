@@ -3,7 +3,7 @@ import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 
 // AI Vendor Configurations (same as script)
-const AI_VENDORS = [
+export const AI_VENDORS = [
   {
     did: "did:agent:stripe-payment-api",
     ownerDid: "did:enterprise:stripe", 
@@ -90,7 +90,7 @@ const AI_VENDORS = [
   }
 ];
 
-const AI_CONSUMERS = [
+export const AI_CONSUMERS = [
   {
     did: "did:agent:netflix-recommendation-engine",
     ownerDid: "did:enterprise:netflix",
