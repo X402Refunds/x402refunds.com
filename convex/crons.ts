@@ -50,45 +50,236 @@ function generateSHA256(): string {
   return result;
 }
 
-// AI vendor and consumer configurations
+// AI vendor and consumer configurations - Expanded for variety
 const AI_VENDORS = [
+  // Cloud & Infrastructure Providers
+  {
+    did: "did:agent:aws-lambda-api",
+    ownerDid: "did:enterprise:amazon",
+    functionalType: "cloud"
+  },
+  {
+    did: "did:agent:azure-ai-services",
+    ownerDid: "did:enterprise:microsoft",
+    functionalType: "cloud"
+  },
+  {
+    did: "did:agent:google-cloud-api",
+    ownerDid: "did:enterprise:google",
+    functionalType: "cloud"
+  },
+  // AI Model Providers
+  {
+    did: "did:agent:openai-gpt4-api", 
+    ownerDid: "did:enterprise:openai",
+    functionalType: "llm"
+  },
+  {
+    did: "did:agent:anthropic-claude-api",
+    ownerDid: "did:enterprise:anthropic", 
+    functionalType: "llm"
+  },
+  {
+    did: "did:agent:cohere-embeddings-api",
+    ownerDid: "did:enterprise:cohere",
+    functionalType: "llm"
+  },
+  {
+    did: "did:agent:huggingface-inference-api",
+    ownerDid: "did:enterprise:huggingface",
+    functionalType: "llm"
+  },
+  // Specialized AI Services
+  {
+    did: "did:agent:databricks-ml-api",
+    ownerDid: "did:enterprise:databricks",
+    functionalType: "ml"
+  },
+  {
+    did: "did:agent:snowflake-data-api",
+    ownerDid: "did:enterprise:snowflake",
+    functionalType: "data"
+  },
+  {
+    did: "did:agent:mongodb-atlas-api",
+    ownerDid: "did:enterprise:mongodb",
+    functionalType: "database"
+  },
+  // Payment & Financial
   {
     did: "did:agent:stripe-payment-api",
     ownerDid: "did:enterprise:stripe",
     functionalType: "financial"
   },
   {
-    did: "did:agent:openai-gpt4-api", 
-    ownerDid: "did:enterprise:openai",
-    functionalType: "api"
+    did: "did:agent:plaid-banking-api",
+    ownerDid: "did:enterprise:plaid",
+    functionalType: "financial"
+  },
+  // Communication & Collaboration
+  {
+    did: "did:agent:twilio-messaging-api",
+    ownerDid: "did:enterprise:twilio",
+    functionalType: "communication"
   },
   {
-    did: "did:agent:anthropic-claude-api",
-    ownerDid: "did:enterprise:anthropic", 
-    functionalType: "api"
+    did: "did:agent:sendgrid-email-api",
+    ownerDid: "did:enterprise:sendgrid",
+    functionalType: "communication"
+  },
+  // Maps & Location
+  {
+    did: "did:agent:google-maps-api",
+    ownerDid: "did:enterprise:google",
+    functionalType: "location"
   },
   {
-    did: "did:agent:aws-lambda-api",
-    ownerDid: "did:enterprise:amazon",
-    functionalType: "api"
+    did: "did:agent:mapbox-routing-api",
+    ownerDid: "did:enterprise:mapbox",
+    functionalType: "location"
+  },
+  // Security & Auth
+  {
+    did: "did:agent:auth0-identity-api",
+    ownerDid: "did:enterprise:auth0",
+    functionalType: "security"
+  },
+  {
+    did: "did:agent:cloudflare-cdn-api",
+    ownerDid: "did:enterprise:cloudflare",
+    functionalType: "security"
   }
 ];
 
 const AI_CONSUMERS = [
+  // Media & Entertainment
   {
     did: "did:agent:netflix-recommendation-engine",
     ownerDid: "did:enterprise:netflix",
-    functionalType: "api"
+    functionalType: "streaming"
   },
   {
-    did: "did:agent:uber-dispatch-system", 
-    ownerDid: "did:enterprise:uber",
-    functionalType: "api"
+    did: "did:agent:spotify-discovery-ai",
+    ownerDid: "did:enterprise:spotify",
+    functionalType: "streaming"
   },
+  {
+    did: "did:agent:youtube-content-moderation",
+    ownerDid: "did:enterprise:youtube",
+    functionalType: "streaming"
+  },
+  // Social & Communication
   {
     did: "did:agent:discord-moderation-ai",
     ownerDid: "did:enterprise:discord",
-    functionalType: "api"
+    functionalType: "social"
+  },
+  {
+    did: "did:agent:slack-search-ai",
+    ownerDid: "did:enterprise:slack",
+    functionalType: "collaboration"
+  },
+  {
+    did: "did:agent:twitter-recommendation-engine",
+    ownerDid: "did:enterprise:twitter",
+    functionalType: "social"
+  },
+  // Transportation & Logistics
+  {
+    did: "did:agent:uber-dispatch-system", 
+    ownerDid: "did:enterprise:uber",
+    functionalType: "rideshare"
+  },
+  {
+    did: "did:agent:doordash-routing-ai",
+    ownerDid: "did:enterprise:doordash",
+    functionalType: "delivery"
+  },
+  {
+    did: "did:agent:fedex-logistics-optimizer",
+    ownerDid: "did:enterprise:fedex",
+    functionalType: "logistics"
+  },
+  // E-Commerce & Retail
+  {
+    did: "did:agent:shopify-merchant-analytics",
+    ownerDid: "did:enterprise:shopify",
+    functionalType: "ecommerce"
+  },
+  {
+    did: "did:agent:amazon-product-recommendations",
+    ownerDid: "did:enterprise:amazon",
+    functionalType: "ecommerce"
+  },
+  {
+    did: "did:agent:instacart-inventory-manager",
+    ownerDid: "did:enterprise:instacart",
+    functionalType: "grocery"
+  },
+  // Finance & Fintech
+  {
+    did: "did:agent:robinhood-trading-engine",
+    ownerDid: "did:enterprise:robinhood",
+    functionalType: "finance"
+  },
+  {
+    did: "did:agent:coinbase-fraud-detection",
+    ownerDid: "did:enterprise:coinbase",
+    functionalType: "crypto"
+  },
+  {
+    did: "did:agent:square-payment-processor",
+    ownerDid: "did:enterprise:square",
+    functionalType: "payments"
+  },
+  // Healthcare & Wellness
+  {
+    did: "did:agent:teladoc-diagnosis-assistant",
+    ownerDid: "did:enterprise:teladoc",
+    functionalType: "healthcare"
+  },
+  {
+    did: "did:agent:peloton-personalization-ai",
+    ownerDid: "did:enterprise:peloton",
+    functionalType: "fitness"
+  },
+  // Travel & Hospitality
+  {
+    did: "did:agent:airbnb-pricing-optimizer",
+    ownerDid: "did:enterprise:airbnb",
+    functionalType: "hospitality"
+  },
+  {
+    did: "did:agent:booking-recommendation-engine",
+    ownerDid: "did:enterprise:booking",
+    functionalType: "travel"
+  },
+  // Gaming & Entertainment
+  {
+    did: "did:agent:roblox-content-safety",
+    ownerDid: "did:enterprise:roblox",
+    functionalType: "gaming"
+  },
+  {
+    did: "did:agent:unity-asset-optimizer",
+    ownerDid: "did:enterprise:unity",
+    functionalType: "gamedev"
+  },
+  // SaaS & Productivity
+  {
+    did: "did:agent:notion-ai-assistant",
+    ownerDid: "did:enterprise:notion",
+    functionalType: "productivity"
+  },
+  {
+    did: "did:agent:asana-task-predictor",
+    ownerDid: "did:enterprise:asana",
+    functionalType: "projectmanagement"
+  },
+  {
+    did: "did:agent:figma-design-assistant",
+    ownerDid: "did:enterprise:figma",
+    functionalType: "design"
   }
 ];
 
@@ -204,7 +395,7 @@ export const createLLMDispute = internalMutation({
         jurisdictionTags: ["AI_VENDOR_DISPUTE", "LLM_GENERATED", "COMMERCIAL_SLA"],
         evidenceIds: [providerEvidence, consumerEvidence],
         deadlines: { panelDue },
-        description: args.scenario.llmData?.description,
+        description: args.scenario.llmData?.description || args.scenario.description,
         claimedDamages: args.scenario.typicalDamages?.max,
         breachDetails: args.scenario.llmData ? {
           duration: args.scenario.llmData.breachDuration,
@@ -212,6 +403,7 @@ export const createLLMDispute = internalMutation({
           affectedUsers: args.scenario.llmData.affectedUsers,
           slaRequirement: args.scenario.llmData.slaRequirement,
           actualPerformance: args.scenario.llmData.actualPerformance,
+          rootCause: args.scenario.llmData.rootCause,
         } : undefined,
       });
 
@@ -290,12 +482,28 @@ export const generateFallbackDispute = internalMutation({
     try {
       console.log("🔄 Using fallback rule-based dispute generation...");
       
-      const disputeTypes = ["API_DOWNTIME", "RESPONSE_LATENCY", "DATA_ACCURACY", "PROCESSING_VOLUME"];
+      const disputeTypes = [
+        "API_DOWNTIME",
+        "RESPONSE_LATENCY", 
+        "DATA_ACCURACY",
+        "PROCESSING_VOLUME",
+        "RATE_LIMIT_BREACH",
+        "DATA_LOSS",
+        "SECURITY_INCIDENT",
+        "BILLING_OVERCHARGE"
+      ];
       const randomType = disputeTypes[Math.floor(Math.random() * disputeTypes.length)];
       
-      // Select random vendor and consumer
-      const vendor = AI_VENDORS[Math.floor(Math.random() * AI_VENDORS.length)];
-      const consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+      // Select random vendor and consumer (ensure they're different companies)
+      let vendor = AI_VENDORS[Math.floor(Math.random() * AI_VENDORS.length)];
+      let consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+      
+      // Avoid same company being vendor and consumer
+      let attempts = 0;
+      while (vendor.ownerDid === consumer.ownerDid && attempts < 10) {
+        consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+        attempts++;
+      }
       
       const now = Date.now();
       
@@ -331,9 +539,43 @@ export const generateFallbackDispute = internalMutation({
       // File the dispute
       const panelDue = now + 7 * 24 * 60 * 60 * 1000;
       
-      // Generate basic dispute description for fallback
-      const description = `${vendor.ownerDid.split(':')[2]} vs ${consumer.ownerDid.split(':')[2]} - ${randomType.replace(/_/g, ' ')} dispute`;
-      const claimedDamages = Math.floor(Math.random() * 10000) + 1000; // $1k-$11k
+      // Generate detailed dispute description for fallback
+      const vendorName = vendor.ownerDid.split(':')[2].charAt(0).toUpperCase() + vendor.ownerDid.split(':')[2].slice(1);
+      const consumerName = consumer.ownerDid.split(':')[2].charAt(0).toUpperCase() + consumer.ownerDid.split(':')[2].slice(1);
+      
+      // Create grammatically correct descriptions based on dispute type
+      const descriptions: Record<string, string> = {
+        "API_DOWNTIME": `${consumerName} has filed a dispute alleging that ${vendorName}'s API service experienced unscheduled downtime exceeding the agreed SLA threshold. The outage resulted in service disruptions and measurable revenue loss during the affected period.`,
+        "RESPONSE_LATENCY": `${consumerName} claims that ${vendorName}'s API response times consistently exceeded contractual performance requirements. The elevated latency degraded user experience and operational efficiency, violating agreed service levels.`,
+        "DATA_ACCURACY": `${consumerName} alleges that ${vendorName} provided inaccurate or inconsistent data that led to incorrect business decisions and operational failures. The data quality issues represent a breach of the agreed accuracy standards.`,
+        "PROCESSING_VOLUME": `${consumerName} reports that ${vendorName} failed to process the contracted volume of requests, resulting in throttling and failed transactions during peak business hours in violation of capacity commitments.`,
+        "RATE_LIMIT_BREACH": `${consumerName} alleges that ${vendorName} imposed undisclosed rate limits that prevented ${consumerName} from utilizing the full contracted API capacity, causing business disruptions.`,
+        "DATA_LOSS": `${consumerName} claims that ${vendorName}'s service experienced data loss or corruption affecting critical business information, representing a severe breach of data integrity commitments.`,
+        "SECURITY_INCIDENT": `${consumerName} alleges that ${vendorName} suffered a security incident that exposed ${consumerName}'s sensitive data, violating security and compliance guarantees outlined in the service agreement.`,
+        "BILLING_OVERCHARGE": `${consumerName} disputes billing charges from ${vendorName}, alleging overcharges, incorrect pricing application, or charges for services not rendered according to contractual terms.`
+      };
+      
+      const description = descriptions[randomType] || `${consumerName} has initiated a formal dispute against ${vendorName} regarding ${randomType.replace(/_/g, ' ').toLowerCase()}.`;
+      
+      // Generate realistic damage amounts based on dispute severity
+      const damageRanges: Record<string, { min: number; max: number }> = {
+        "API_DOWNTIME": { min: 15000, max: 150000 },
+        "RESPONSE_LATENCY": { min: 5000, max: 75000 },
+        "DATA_ACCURACY": { min: 10000, max: 100000 },
+        "PROCESSING_VOLUME": { min: 8000, max: 80000 },
+        "RATE_LIMIT_BREACH": { min: 12000, max: 90000 },
+        "DATA_LOSS": { min: 50000, max: 500000 },
+        "SECURITY_INCIDENT": { min: 100000, max: 1000000 },
+        "BILLING_OVERCHARGE": { min: 3000, max: 50000 }
+      };
+      
+      const damageRange = damageRanges[randomType] || { min: 5000, max: 50000 };
+      const claimedDamages = Math.floor(Math.random() * (damageRange.max - damageRange.min)) + damageRange.min;
+      
+      // Generate breach details
+      const impactLevels = ["Minor", "Moderate", "Significant", "Severe", "Critical"];
+      const durations = ["15 minutes", "2 hours", "6 hours", "12 hours", "24 hours", "3 days"];
+      const affectedUsers = Math.floor(Math.random() * 100000) + 1000; // $1k-$11k
       
       const caseId = await ctx.db.insert("cases", {
         parties: [vendor.did, consumer.did],
@@ -346,8 +588,25 @@ export const generateFallbackDispute = internalMutation({
         description,
         claimedDamages,
         breachDetails: {
-          duration: "Unknown",
-          impactLevel: "Moderate",
+          duration: durations[Math.floor(Math.random() * durations.length)],
+          impactLevel: impactLevels[Math.floor(Math.random() * impactLevels.length)],
+          affectedUsers,
+          slaRequirement: randomType === "API_DOWNTIME" ? "99.9% uptime" : 
+                         randomType === "RESPONSE_LATENCY" ? "< 200ms p95 latency" :
+                         randomType === "DATA_ACCURACY" ? "99.95% accuracy" :
+                         randomType === "PROCESSING_VOLUME" ? "10M requests/day" :
+                         "Service level agreement standards",
+          actualPerformance: randomType === "API_DOWNTIME" ? "98.2% uptime" :
+                            randomType === "RESPONSE_LATENCY" ? "450ms p95 latency" :
+                            randomType === "DATA_ACCURACY" ? "96.3% accuracy" :
+                            randomType === "PROCESSING_VOLUME" ? "6.2M requests/day" :
+                            "Below contractual thresholds",
+          rootCause: randomType === "API_DOWNTIME" ? "Infrastructure failure in primary data center" :
+                    randomType === "RESPONSE_LATENCY" ? "Database query optimization issues" :
+                    randomType === "DATA_ACCURACY" ? "Data pipeline transformation errors" :
+                    randomType === "PROCESSING_VOLUME" ? "Insufficient auto-scaling configuration" :
+                    randomType === "SECURITY_INCIDENT" ? "Unauthorized access to customer data" :
+                    "System configuration or operational issues"
         },
       });
 

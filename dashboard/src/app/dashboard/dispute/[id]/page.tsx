@@ -71,27 +71,42 @@ export default function DisputeDetailPage() {
   };
 
   // Helper function to get dispute description
-  const getDisputeDescription = (caseDetails: { description?: string; parties: string[]; type: string }) => {
+  const getDisputeDescription = (caseDetails: { description?: string; parties: string[]; type: string; breachDetails?: { duration?: string; impactLevel?: string; affectedUsers?: number; slaRequirement?: string; actualPerformance?: string; rootCause?: string } }) => {
     // Read directly from case data (no more digging through events!)
     if (caseDetails.description) {
       return caseDetails.description;
     }
     
-    // Fallback for cases without description
-    const partyNames = caseDetails.parties.map(formatAgentName);
+    // Fallback for cases without description - create detailed narrative
     const disputeType = caseDetails.type;
+    
+    // Extract company names from DIDs for better readability
+    const getCompanyName = (did: string) => {
+      const parts = did.split(':');
+      if (parts.length >= 3) {
+        const name = parts[2].split('-')[0];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+      return "Unknown";
+    };
+    
+    const provider = getCompanyName(caseDetails.parties[0]);
+    const consumer = getCompanyName(caseDetails.parties[1]);
     
     switch (disputeType) {
       case "API_DOWNTIME":
-        return `${partyNames[0]} alleges that ${partyNames[1]} experienced API downtime that violated their service level agreement.`;
+        return `${consumer} has filed a dispute alleging that ${provider}'s API service experienced significant downtime that violated their agreed service level agreement (SLA). The outage reportedly caused business disruptions and financial losses due to unavailability of critical API endpoints required for ${consumer}'s operations.`;
+      case "RESPONSE_LATENCY":
       case "RESPONSE_TIME_BREACH":
-        return `${partyNames[0]} claims that ${partyNames[1]} failed to meet agreed response time requirements.`;
+        return `${consumer} claims that ${provider}'s API response times consistently exceeded the agreed-upon performance thresholds specified in their SLA. The elevated latency allegedly degraded ${consumer}'s service quality and user experience, resulting in measurable business impact.`;
       case "DATA_ACCURACY":
-        return `${partyNames[0]} disputes the accuracy of data provided by ${partyNames[1]}.`;
+        return `${consumer} disputes the accuracy and reliability of data provided by ${provider}'s service. The complaint alleges systematic data quality issues that have resulted in incorrect business decisions, failed operations, and potential reputational damage.`;
+      case "PROCESSING_VOLUME":
+        return `${consumer} alleges that ${provider} failed to handle the agreed-upon volume of API requests, resulting in throttling, failed requests, and service degradation during peak usage periods in violation of contracted capacity commitments.`;
       case "BILLING_DISPUTE":
-        return `${partyNames[0]} and ${partyNames[1]} are in dispute over billing charges.`;
+        return `${consumer} and ${provider} are in dispute over billing charges. ${consumer} alleges overcharging, incorrect pricing application, or charges for services not rendered according to the agreed contract terms.`;
       default:
-        return `Dispute between ${partyNames.join(" and ")} regarding ${disputeType.toLowerCase().replace(/_/g, " ")}.`;
+        return `${consumer} has initiated a formal dispute against ${provider} regarding ${disputeType.toLowerCase().replace(/_/g, " ")}. The dispute involves alleged breach of service level agreements and contractual obligations with claimed financial damages.`;
     }
   };
 
@@ -196,35 +211,59 @@ export default function DisputeDetailPage() {
               <MessageSquare className="h-5 w-5" />
               Dispute Description
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <CardDescription>
               {getStatusDescription(caseDetails.status)}
-            </p>
-            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-              <p className="text-sm leading-relaxed">
-                {getDisputeDescription(caseDetails)}
-              </p>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+              <div>
+                <p className="text-sm font-semibold mb-2 text-foreground">Case Summary</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {getDisputeDescription(caseDetails)}
+                </p>
+              </div>
               
               {/* Show breach details directly from case data */}
               {caseDetails.breachDetails && (
                 <div className="pt-3 border-t border-border/50">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Breach Details:</p>
-                  <div className="text-xs space-y-1 text-muted-foreground">
+                  <p className="text-sm font-semibold mb-3 text-foreground">Technical Details</p>
+                  <div className="grid gap-3 md:grid-cols-2">
                     {caseDetails.breachDetails.duration && (
-                      <p>• Duration: {caseDetails.breachDetails.duration}</p>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Breach Duration</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.duration}</p>
+                      </div>
                     )}
                     {caseDetails.breachDetails.impactLevel && (
-                      <p>• Impact Level: {caseDetails.breachDetails.impactLevel}</p>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Impact Level</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.impactLevel}</p>
+                      </div>
                     )}
                     {caseDetails.breachDetails.affectedUsers && (
-                      <p>• Affected Users: {caseDetails.breachDetails.affectedUsers.toLocaleString()}</p>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Affected Users</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.affectedUsers.toLocaleString()}</p>
+                      </div>
                     )}
                     {caseDetails.breachDetails.slaRequirement && (
-                      <p>• SLA Requirement: {caseDetails.breachDetails.slaRequirement}</p>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">SLA Requirement</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.slaRequirement}</p>
+                      </div>
                     )}
                     {caseDetails.breachDetails.actualPerformance && (
-                      <p>• Actual Performance: {caseDetails.breachDetails.actualPerformance}</p>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Actual Performance</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.actualPerformance}</p>
+                      </div>
+                    )}
+                    {caseDetails.breachDetails.rootCause && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs font-medium text-muted-foreground">Root Cause</p>
+                        <p className="text-sm text-foreground">{caseDetails.breachDetails.rootCause}</p>
+                      </div>
                     )}
                   </div>
                 </div>

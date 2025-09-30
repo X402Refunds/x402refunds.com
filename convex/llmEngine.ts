@@ -8,21 +8,47 @@ export async function generateCostOptimizedDispute() {
   }
 
   try {
-    const prompt = `Generate a realistic AI vendor dispute in under 300 words:
+    // Define diverse real-world companies for variety
+    const providers = [
+      "OpenAI", "Anthropic", "AWS", "Google Cloud", "Azure", "Stripe", "Twilio", 
+      "SendGrid", "MongoDB", "Snowflake", "Databricks", "Cloudflare", "Auth0",
+      "Plaid", "Mapbox", "Cohere", "HuggingFace"
+    ];
+    const customers = [
+      "Netflix", "Uber", "Spotify", "Airbnb", "DoorDash", "Shopify", "Discord",
+      "Slack", "Robinhood", "Coinbase", "Square", "Instacart", "Booking.com",
+      "Teladoc", "Notion", "Figma", "Asana", "Unity", "Roblox", "Peloton"
+    ];
+    
+    const randomProvider = providers[Math.floor(Math.random() * providers.length)];
+    const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
+    
+    const prompt = `Generate a realistic AI/API vendor service dispute case with proper grammar and professional language.
 
-Real companies (Netflix+AWS, Stripe+Shopify, etc):
+Provider: ${randomProvider}
+Customer: ${randomCustomer}
+
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "title": "Brief title",
-  "type": "API_DOWNTIME|RESPONSE_LATENCY|DATA_ACCURACY",
-  "provider": "Service provider",
-  "customer": "Service customer",
-  "issue": "Technical problem (100 words max)",
-  "impact": "Business damage (100 words max)",
-  "damages": "$X,XXX,XXX",
-  "sla_breach": "What SLA violated"
+  "title": "Professional case title",
+  "type": "API_DOWNTIME" OR "RESPONSE_LATENCY" OR "DATA_ACCURACY" OR "PROCESSING_VOLUME" OR "RATE_LIMIT_BREACH" OR "DATA_LOSS" OR "SECURITY_INCIDENT",
+  "provider": "${randomProvider}",
+  "customer": "${randomCustomer}",
+  "description": "Complete, grammatically correct 2-3 sentence description of what happened and why it's a breach. Write professionally as if for a legal filing.",
+  "breachDuration": "Specific time period (e.g., '4 hours 23 minutes', '2 days')",
+  "impactLevel": "Minor" OR "Moderate" OR "Significant" OR "Severe" OR "Critical",
+  "affectedUsers": number (realistic based on company size),
+  "slaRequirement": "Specific SLA metric violated (e.g., '99.9% uptime', '< 200ms p95 latency')",
+  "actualPerformance": "Actual measured performance that breached SLA",
+  "rootCause": "Brief technical explanation of what caused the breach",
+  "damages": 5000 to 500000 (realistic dollar amount as number, no symbols)
 }
 
-Keep under 300 words total.`;
+IMPORTANT:
+- Use complete, grammatically correct sentences
+- Be specific with metrics and timeframes
+- Make it realistic and professional
+- Return ONLY the JSON object, no extra text`;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -47,22 +73,41 @@ Keep under 300 words total.`;
     const data = await response.json();
     const content = data.choices[0].message.content;
     
-    // Parse JSON response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
+    // Parse JSON response (handle both raw JSON and markdown-wrapped)
+    let jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.log("⚠️ No JSON found in LLM response");
+      return null;
+    }
     
     const scenario = JSON.parse(jsonMatch[0]);
     console.log(`✅ LLM dispute: ${scenario.title} (${scenario.provider} vs ${scenario.customer})`);
     
+    // Parse damages (handle both string and number formats)
+    const damagesValue = typeof scenario.damages === 'string' 
+      ? parseInt(scenario.damages.replace(/[$,]/g, ''))
+      : scenario.damages;
+    
     return {
       type: scenario.type,
-      description: scenario.issue,
+      description: scenario.description,
       typicalDamages: {
-        min: parseInt(scenario.damages.replace(/[$,]/g, '')) * 0.8,
-        max: parseInt(scenario.damages.replace(/[$,]/g, '')) * 1.2
+        min: Math.floor(damagesValue * 0.9),
+        max: Math.floor(damagesValue * 1.1)
       },
       llmGenerated: true,
-      llmData: scenario
+      llmData: {
+        title: scenario.title,
+        provider: scenario.provider,
+        customer: scenario.customer,
+        description: scenario.description,
+        breachDuration: scenario.breachDuration,
+        impactLevel: scenario.impactLevel,
+        affectedUsers: scenario.affectedUsers,
+        slaRequirement: scenario.slaRequirement,
+        actualPerformance: scenario.actualPerformance,
+        rootCause: scenario.rootCause
+      }
     };
     
   } catch (error: any) {

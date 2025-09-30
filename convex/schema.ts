@@ -152,6 +152,7 @@ export default defineSchema({
       affectedUsers: v.optional(v.number()),
       slaRequirement: v.optional(v.string()),
       actualPerformance: v.optional(v.string()),
+      rootCause: v.optional(v.string()),
     })),
   })
     .index("by_status", ["status"])
