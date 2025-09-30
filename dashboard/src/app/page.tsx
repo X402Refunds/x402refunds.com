@@ -159,76 +159,76 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 lg:py-40">
+      <section className="relative overflow-hidden py-12 sm:py-24 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
             <div className="lg:col-span-7">
-              <div className="space-y-8">
-                <div className="space-y-6">
-                  <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium">
+              <div className="space-y-6 sm:space-y-8">
+                <div className="space-y-4 sm:space-y-6">
+                  <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium text-xs sm:text-sm">
                     Automated AI Vendor Dispute Resolution
                   </Badge>
-                  <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
                     Resolve AI Agent Disputes in{" "}
                     <span className="text-black border-b-4 border-gray-900">
                       minutes
                     </span>
                   </h1>
-                  <p className="text-xl lg:text-2xl text-gray-600 max-w-4xl leading-relaxed">
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 max-w-4xl leading-relaxed">
                     When AI services fail to deliver what they promised, we resolve the disputes <strong className="text-gray-900">automatically in minutes</strong> instead of 
                     months of <strong className="text-gray-900">expensive legal battles</strong>.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <Button 
                     size="lg" 
-                    className="bg-gray-900 text-white hover:bg-gray-800 text-lg px-8 py-6 font-semibold"
+                    className="bg-gray-900 text-white hover:bg-gray-800 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 font-semibold w-full sm:w-auto"
                     onClick={() => window.open('/dashboard', '_self')}
                   >
                     View Live System
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
                   </Button>
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white text-lg px-8 py-6 font-semibold"
+                    className="border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 font-semibold w-full sm:w-auto"
                     onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
                   >
                     Test API
-                    <ArrowUpRight className="ml-2 h-5 w-5" />
+                    <ArrowUpRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
                   </Button>
                 </div>
               </div>
             </div>
             
             {/* Live Metrics Card */}
-            <div ref={metricsRef} className="lg:col-span-5 mt-16 lg:mt-0">
+            <div ref={metricsRef} className="lg:col-span-5 mt-8 sm:mt-12 lg:mt-0">
               <Card className="bg-white border-2 border-gray-200 shadow-lg">
-                <CardHeader className="pb-4">
+                <CardHeader className="pb-3 sm:pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold text-gray-900">Live System Metrics</CardTitle>
-                    <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium">
+                    <CardTitle className="text-lg sm:text-xl font-bold text-gray-900">Live System Metrics</CardTitle>
+                    <Badge className="bg-gray-100 text-gray-700 border-gray-300 font-medium text-xs sm:text-sm">
                       ● Real-time
                     </Badge>
                   </div>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-sm sm:text-base text-gray-600">
                     Production system currently resolving disputes
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-6 border border-gray-200 rounded-lg">
-                      <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="text-center p-3 sm:p-6 border border-gray-200 rounded-lg">
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
                         {companiesCount.count}
                       </div>
-                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Agents</div>
+                      <div className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide">Active Agents</div>
                     </div>
-                    <div className="text-center p-6 border border-gray-200 rounded-lg">
-                      <div className="text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
+                    <div className="text-center p-3 sm:p-6 border border-gray-200 rounded-lg">
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-mono tabular-nums mb-1">
                         {disputesCount.count}
                       </div>
-                      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Disputes Resolved</div>
+                      <div className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide">Disputes Resolved</div>
                     </div>
                   </div>
                   <div className="space-y-4 text-sm">
@@ -256,18 +256,18 @@ export default function HomePage() {
 
 
       {/* Value Proposition */}
-      <section className="py-20 bg-white/60 backdrop-blur-sm">
+      <section className="py-12 sm:py-16 md:py-20 bg-white/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Automated Dispute Resolution for AI Agents
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               Both sides win: victims get paid quickly, violators pay predictable penalties instead of facing unknown lawsuit exposure.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow">
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10"></div>
               <CardHeader className="relative">
@@ -320,37 +320,37 @@ export default function HomePage() {
       </section>
 
       {/* Demo Cases */}
-      <section className="py-20">
+      <section className="py-12 sm:py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Perfect Demo Cases
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600">
               Real scenarios where our platform saves time and money
             </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {/* Case 1 */}
             <Card className="border-l-4 border-l-green-500 shadow-lg">
-              <CardContent className="p-8">
-                <div className="grid lg:grid-cols-4 gap-6 items-center">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Salesforce vs OpenAI</h3>
-                    <p className="text-gray-600">API downtime SLA breach</p>
+              <CardContent className="p-4 sm:p-6 md:p-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-center">
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Salesforce vs OpenAI</h3>
+                    <p className="text-sm sm:text-base text-gray-600">API downtime SLA breach</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">$23K</div>
-                    <div className="text-sm text-gray-500">Revenue Loss</div>
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">$23K</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Revenue Loss</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">1m 47s</div>
-                    <div className="text-sm text-gray-500">Resolution Time</div>
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">1m 47s</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Resolution Time</div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="text-green-600 font-medium">Resolved Automatically</span>
+                  <div className="flex items-center space-x-2 sm:col-span-2 lg:col-span-1">
+                    <CheckCircle className="h-4 sm:h-5 w-4 sm:w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-green-600 font-medium">Resolved Automatically</span>
                   </div>
                 </div>
               </CardContent>
@@ -358,23 +358,23 @@ export default function HomePage() {
 
             {/* Case 2 */}
             <Card className="border-l-4 border-l-blue-500 shadow-lg">
-              <CardContent className="p-8">
-                <div className="grid lg:grid-cols-4 gap-6 items-center">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Uber vs Google Maps</h3>
-                    <p className="text-gray-600">Response time SLA violation</p>
+              <CardContent className="p-4 sm:p-6 md:p-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-center">
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Uber vs Google Maps</h3>
+                    <p className="text-sm sm:text-base text-gray-600">Response time SLA violation</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">$38K</div>
-                    <div className="text-sm text-gray-500">Efficiency Loss</div>
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">$38K</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Efficiency Loss</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">2m 33s</div>
-                    <div className="text-sm text-gray-500">Resolution Time</div>
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">2m 33s</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Resolution Time</div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="text-green-600 font-medium">API Credits Issued</span>
+                  <div className="flex items-center space-x-2 sm:col-span-2 lg:col-span-1">
+                    <CheckCircle className="h-4 sm:h-5 w-4 sm:w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-green-600 font-medium">API Credits Issued</span>
                   </div>
                 </div>
               </CardContent>
@@ -382,23 +382,23 @@ export default function HomePage() {
 
             {/* Case 3 */}
             <Card className="border-l-4 border-l-purple-500 shadow-lg">
-              <CardContent className="p-8">
-                <div className="grid lg:grid-cols-4 gap-6 items-center">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Anthropic vs Azure</h3>
-                    <p className="text-gray-600">Compute allocation failure</p>
+              <CardContent className="p-4 sm:p-6 md:p-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-center">
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Anthropic vs Azure</h3>
+                    <p className="text-sm sm:text-base text-gray-600">Compute allocation failure</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">$45K</div>
-                    <div className="text-sm text-gray-500">Training Delay</div>
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">$45K</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Training Delay</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">1m 58s</div>
-                    <div className="text-sm text-gray-500">Resolution Time</div>
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">1m 58s</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Resolution Time</div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="text-green-600 font-medium">Credits + Free Month</span>
+                  <div className="flex items-center space-x-2 sm:col-span-2 lg:col-span-1">
+                    <CheckCircle className="h-4 sm:h-5 w-4 sm:w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-green-600 font-medium">Credits + Free Month</span>
                   </div>
                 </div>
               </CardContent>
@@ -408,14 +408,14 @@ export default function HomePage() {
       </section>
 
       {/* Live API Section */}
-      <section className="py-20 bg-gray-900 text-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
-              <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">
                 Production-Ready API
               </h2>
-              <p className="text-xl text-gray-300 mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8">
                 Live system processing real disputes. Test it now or integrate directly.
               </p>
               <div className="space-y-4">
@@ -481,12 +481,12 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gray-900 text-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">
             Ready to Automate Your AI Vendor Disputes?
           </h2>
-          <p className="text-xl mb-8 text-gray-300">
+          <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-gray-300">
             Join {companiesTarget}+ agents already registered on the platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -511,33 +511,33 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-gray-900 text-gray-400 py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Consulate</h3>
-              <p className="text-sm">
+              <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Consulate</h3>
+              <p className="text-xs sm:text-sm">
                 Automated arbitration for agent disputes. Resolve in minutes, not months.
               </p>
             </div>
             <div>
-              <h4 className="text-white font-medium mb-4">Platform</h4>
-              <ul className="space-y-2 text-sm">
-                <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white">Dashboard</button></li>
-                <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white">API Status</button></li>
-                <li><button className="hover:text-white">Documentation</button></li>
+              <h4 className="text-white text-sm sm:text-base font-medium mb-3 sm:mb-4">Platform</h4>
+              <ul className="space-y-2 text-xs sm:text-sm">
+                <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
+                <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
+                <li><button className="hover:text-white transition-colors">Documentation</button></li>
               </ul>
             </div>
-            <div>
-              <h4 className="text-white font-medium mb-4">Contact</h4>
-              <ul className="space-y-2 text-sm">
+            <div className="sm:col-span-2 md:col-span-1">
+              <h4 className="text-white text-sm sm:text-base font-medium mb-3 sm:mb-4">Contact</h4>
+              <ul className="space-y-2 text-xs sm:text-sm">
                 <li>Enterprise Demo</li>
                 <li>Partnership Inquiries</li>
                 <li>Technical Support</li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+          <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm">
             <p>&copy; 2024 Consulate. Built for the AI economy.</p>
           </div>
         </div>

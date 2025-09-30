@@ -86,16 +86,16 @@ export default function LiveDisputeMonitor() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* System Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Disputes</CardTitle>
-            <Gavel className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Disputes</CardTitle>
+            <Gavel className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.disputesFiled}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{systemStats.disputesFiled}</div>
             <p className="text-xs text-muted-foreground">
               Last 24 hours
             </p>
@@ -103,12 +103,12 @@ export default function LiveDisputeMonitor() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cases Resolved</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Cases Resolved</CardTitle>
+            <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.casesResolved}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{systemStats.casesResolved}</div>
             <p className="text-xs text-muted-foreground">
               {systemStats.disputesFiled > 0 
                 ? `${((systemStats.casesResolved / systemStats.disputesFiled) * 100).toFixed(1)}% success rate`
@@ -118,12 +118,12 @@ export default function LiveDisputeMonitor() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Agents</CardTitle>
+            <Users className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.agentRegistrations}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{systemStats.agentRegistrations}</div>
             <p className="text-xs text-muted-foreground">
               Registered agents
             </p>
@@ -131,12 +131,12 @@ export default function LiveDisputeMonitor() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Activity</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">System Activity</CardTitle>
+            <Activity className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalEvents}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{systemStats.totalEvents}</div>
             <p className="text-xs text-muted-foreground">
               Total events
             </p>
@@ -144,7 +144,7 @@ export default function LiveDisputeMonitor() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         {/* Recent Activity Feed */}
         <Card>
           <CardHeader>

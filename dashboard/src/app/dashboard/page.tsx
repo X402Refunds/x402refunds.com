@@ -9,30 +9,30 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Live Dispute Resolution Monitor</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Live Dispute Resolution Monitor</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Real-time AI vendor dispute resolution at scale
           </p>
         </div>
 
         {/* Status Badge */}
-        <div className="flex items-center gap-4">
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs sm:text-sm">
             🟢 Dispute Engine Active
           </Badge>
-          <Badge variant="outline">
+          <Badge variant="outline" className="text-xs sm:text-sm">
             Last Updated: {new Date().toLocaleTimeString()}
           </Badge>
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs sm:text-sm">
             ⚡ Real-time Data
           </Badge>
           <Button 
             variant="outline"
             onClick={() => window.open('/', '_self')}
-            className="ml-auto"
+            className="ml-auto text-xs sm:text-sm"
           >
             ← Back to Landing
           </Button>
@@ -42,12 +42,12 @@ export default function DashboardPage() {
         <LiveDisputeMonitor />
 
         {/* Instructions */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-          <h3 className="text-amber-800 font-semibold mb-2">🚀 Start the Dispute Engine</h3>
-          <p className="text-amber-700 text-sm mb-3">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
+          <h3 className="text-amber-800 font-semibold mb-2 text-sm sm:text-base">🚀 Start the Dispute Engine</h3>
+          <p className="text-amber-700 text-xs sm:text-sm mb-3">
             To see live disputes, run the AI vendor dispute engine in your terminal:
           </p>
-          <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-sm">
+          <div className="bg-gray-900 text-green-400 p-2 sm:p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto">
             pnpm demo:disputes
           </div>
           <p className="text-amber-600 text-xs mt-2">
