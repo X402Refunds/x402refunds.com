@@ -23,7 +23,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
           variant="outline"
           size="icon"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="bg-background"
+          className="bg-background shadow-md border-2 hover:bg-accent"
         >
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -32,7 +32,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
       {/* Sidebar overlay on mobile */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -43,7 +43,8 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
         <div className={cn(
           "transition-all duration-300 ease-in-out z-40",
           "fixed lg:static inset-y-0 left-0",
-          "lg:w-72",
+          "lg:w-72 bg-background border-r",
+          "shadow-xl lg:shadow-none",
           sidebarOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full lg:translate-x-0"
         )}>
           <GovernmentSidebar className="h-full" />

@@ -48,7 +48,7 @@ export function GovernmentSidebar({ className }: GovernmentSidebarProps) {
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="p-6 border-b">
-        <Link href="/dashboard" className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">C</span>
           </div>
