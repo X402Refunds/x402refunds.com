@@ -14,6 +14,7 @@ export default function LiveDisputeMonitor() {
   
   // REAL-TIME DATA FROM CONVEX
   const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 });
+  const cachedStats = useQuery(api.cases.getCachedSystemStats); // For agent counts
   const recentEvents = useQuery(api.events.getRecentEvents, { 
     limit: 20 
   });
@@ -128,10 +129,10 @@ export default function LiveDisputeMonitor() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
-              {systemStats.agentRegistrations}
+              {cachedStats?.activeAgents ?? "—"}
             </div>
             <p className="text-xs text-slate-600">
-              Registered agents
+              Currently operational
             </p>
           </CardContent>
         </Card>
