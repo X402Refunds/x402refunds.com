@@ -44,84 +44,94 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  /* Government Theme Colors - Light Mode */
-  --background: oklch(0.98 0.005 220); /* Soft government white */
-  --foreground: oklch(0.15 0.02 255); /* Deep constitutional text */
-  --card: oklch(1 0 0); /* Pure white cards */
-  --card-foreground: oklch(0.15 0.02 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 255);
-  /* Constitutional Blue Primary */
-  --primary: oklch(0.35 0.15 255); /* #1e3a8a constitutional blue */
-  --primary-foreground: oklch(0.98 0.005 220);
-  /* Government Gold Secondary */
-  --secondary: oklch(0.78 0.12 85); /* #fbbf24 government gold */
-  --secondary-foreground: oklch(0.15 0.02 255);
-  --muted: oklch(0.96 0.01 240);
-  --muted-foreground: oklch(0.45 0.02 255);
-  /* Authority Red Accent */
-  --accent: oklch(0.55 0.22 25); /* #dc2626 authority red */
-  --accent-foreground: oklch(0.98 0.005 220);
-  --destructive: oklch(0.55 0.22 25); /* Authority red for destructive actions */
-  --border: oklch(0.92 0.01 240);
-  --input: oklch(0.96 0.01 240);
-  --ring: oklch(0.35 0.15 255); /* Constitutional blue ring */
-  /* Government Chart Colors */
-  --chart-1: oklch(0.35 0.15 255); /* Constitutional blue */
-  --chart-2: oklch(0.78 0.12 85); /* Government gold */
-  --chart-3: oklch(0.55 0.22 25); /* Authority red */
-  --chart-4: oklch(0.45 0.18 140); /* Approval green */
-  --chart-5: oklch(0.65 0.15 30); /* Alert orange */
-  /* Government Sidebar */
-  --sidebar: oklch(0.96 0.01 240);
-  --sidebar-foreground: oklch(0.15 0.02 255);
-  --sidebar-primary: oklch(0.35 0.15 255);
-  --sidebar-primary-foreground: oklch(0.98 0.005 220);
-  --sidebar-accent: oklch(0.92 0.01 240);
-  --sidebar-accent-foreground: oklch(0.15 0.02 255);
-  --sidebar-border: oklch(0.88 0.01 240);
-  --sidebar-ring: oklch(0.35 0.15 255);
+  --radius: 0.5rem;
+  
+  /* Sovereign Civic Design - Light Mode */
+  /* Institutional Slate - Authority & Foundation */
+  --background: 255 255 255; /* Pure white */
+  --foreground: 15 23 42; /* slate-900 - Deep institutional text */
+  --card: 255 255 255; /* Pure white cards */
+  --card-foreground: 15 23 42; /* slate-900 */
+  --popover: 255 255 255;
+  --popover-foreground: 15 23 42;
+  
+  /* Sovereign Blue Primary - Trust & Action */
+  --primary: 37 99 235; /* blue-600 - Sovereign blue for interactive elements */
+  --primary-foreground: 255 255 255;
+  
+  /* Neutral Secondary - Operational clarity */
+  --secondary: 241 245 249; /* slate-100 */
+  --secondary-foreground: 15 23 42;
+  --muted: 248 250 252; /* slate-50 */
+  --muted-foreground: 100 116 139; /* slate-500 */
+  
+  /* Semantic Colors - Status indicators */
+  --accent: 248 250 252; /* slate-50 for hover states */
+  --accent-foreground: 15 23 42;
+  --destructive: 220 38 38; /* red-600 - Critical actions */
+  --border: 226 232 240; /* slate-200 - Subtle divisions */
+  --input: 226 232 240; /* slate-200 */
+  --ring: 37 99 235; /* blue-600 - Focus ring */
+  
+  /* Government Chart Colors - Institutional palette */
+  --chart-1: 37 99 235; /* blue-600 - Primary data */
+  --chart-2: 5 150 105; /* emerald-600 - Success/resolved */
+  --chart-3: 220 38 38; /* red-600 - Critical/violations */
+  --chart-4: 217 119 6; /* amber-600 - Warning/pending */
+  --chart-5: 71 85 105; /* slate-600 - Neutral data */
+  
+  /* Government Sidebar - Constitutional navigation */
+  --sidebar: 255 255 255; /* white background */
+  --sidebar-foreground: 51 65 85; /* slate-700 */
+  --sidebar-primary: 37 99 235; /* blue-600 */
+  --sidebar-primary-foreground: 255 255 255;
+  --sidebar-accent: 248 250 252; /* slate-50 */
+  --sidebar-accent-foreground: 15 23 42;
+  --sidebar-border: 226 232 240; /* slate-200 */
+  --sidebar-ring: 37 99 235; /* blue-600 */
 }
 
 .dark {
-  /* Government Theme Colors - Dark Mode */
-  --background: oklch(0.08 0.02 255); /* Deep government dark */
-  --foreground: oklch(0.95 0.005 220); /* Light government text */
-  --card: oklch(0.12 0.02 255); /* Dark government cards */
-  --card-foreground: oklch(0.95 0.005 220);
-  --popover: oklch(0.12 0.02 255);
-  --popover-foreground: oklch(0.95 0.005 220);
-  /* Brighter Constitutional Blue for Dark Mode */
-  --primary: oklch(0.55 0.2 255); /* Brighter constitutional blue */
-  --primary-foreground: oklch(0.08 0.02 255);
-  /* Government Gold Secondary */
-  --secondary: oklch(0.7 0.15 85); /* Dimmed government gold */
-  --secondary-foreground: oklch(0.08 0.02 255);
-  --muted: oklch(0.15 0.02 255);
-  --muted-foreground: oklch(0.65 0.02 255);
-  /* Authority Red Accent */
-  --accent: oklch(0.65 0.25 25); /* Brighter authority red */
-  --accent-foreground: oklch(0.08 0.02 255);
-  --destructive: oklch(0.65 0.25 25); /* Authority red for destructive actions */
-  --border: oklch(0.2 0.02 255);
-  --input: oklch(0.15 0.02 255);
-  --ring: oklch(0.55 0.2 255); /* Constitutional blue ring */
-  /* Government Chart Colors - Dark Mode */
-  --chart-1: oklch(0.55 0.2 255); /* Bright constitutional blue */
-  --chart-2: oklch(0.7 0.15 85); /* Government gold */
-  --chart-3: oklch(0.65 0.25 25); /* Authority red */
-  --chart-4: oklch(0.6 0.2 140); /* Approval green */
-  --chart-5: oklch(0.7 0.18 30); /* Alert orange */
-  /* Government Sidebar - Dark Mode */
-  --sidebar: oklch(0.1 0.02 255);
-  --sidebar-foreground: oklch(0.9 0.005 220);
-  --sidebar-primary: oklch(0.55 0.2 255);
-  --sidebar-primary-foreground: oklch(0.08 0.02 255);
-  --sidebar-accent: oklch(0.15 0.02 255);
-  --sidebar-accent-foreground: oklch(0.9 0.005 220);
-  --sidebar-border: oklch(0.2 0.02 255);
-  --sidebar-ring: oklch(0.55 0.2 255);
+  /* Sovereign Civic Design - Dark Mode (for future use) */
+  --background: 15 23 42; /* slate-900 */
+  --foreground: 248 250 252; /* slate-50 */
+  --card: 30 41 59; /* slate-800 */
+  --card-foreground: 248 250 252;
+  --popover: 30 41 59;
+  --popover-foreground: 248 250 252;
+  
+  /* Brighter blue for dark mode visibility */
+  --primary: 59 130 246; /* blue-500 */
+  --primary-foreground: 15 23 42;
+  
+  --secondary: 51 65 85; /* slate-700 */
+  --secondary-foreground: 248 250 252;
+  --muted: 51 65 85;
+  --muted-foreground: 148 163 184; /* slate-400 */
+  
+  --accent: 51 65 85;
+  --accent-foreground: 248 250 252;
+  --destructive: 239 68 68; /* red-500 - Brighter for dark */
+  --border: 51 65 85;
+  --input: 51 65 85;
+  --ring: 59 130 246; /* blue-500 */
+  
+  /* Dark mode charts */
+  --chart-1: 59 130 246; /* blue-500 */
+  --chart-2: 16 185 129; /* emerald-500 */
+  --chart-3: 239 68 68; /* red-500 */
+  --chart-4: 245 158 11; /* amber-500 */
+  --chart-5: 148 163 184; /* slate-400 */
+  
+  /* Dark sidebar */
+  --sidebar: 30 41 59;
+  --sidebar-foreground: 226 232 240;
+  --sidebar-primary: 59 130 246;
+  --sidebar-primary-foreground: 15 23 42;
+  --sidebar-accent: 51 65 85;
+  --sidebar-accent-foreground: 226 232 240;
+  --sidebar-border: 51 65 85;
+  --sidebar-ring: 59 130 246;
 }
 
 @layer base {
@@ -132,91 +142,125 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  /* Prevent horizontal overflow on mobile */
-  html, body {
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
-  
-  /* Ensure all direct children respect viewport width */
-  body > * {
-    max-width: 100vw;
-  }
 }
 
-/* Government-specific CSS classes */
+/* Sovereign Civic Design - Component Classes */
 @layer components {
-  /* Constitutional Authority Header */
+  /* Institutional Headers */
   .gov-header {
-    @apply bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20;
+    @apply bg-white border-b border-slate-200;
   }
   
   .gov-brand {
-    @apply text-primary font-bold flex items-center gap-2;
+    @apply text-slate-900 font-bold flex items-center gap-2;
   }
   
-  /* Emergency Controls Styling */
-  .emergency-button {
-    @apply bg-gradient-to-r from-red-600 to-red-700 text-white;
-    @apply hover:from-red-700 hover:to-red-800 transition-all duration-300;
-    @apply shadow-lg shadow-red-500/20 hover:shadow-red-500/30;
-  }
-  
-  /* Government Authority Badge */
-  .authority-badge {
-    @apply bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-semibold;
-    @apply border border-primary/20 shadow-sm;
-  }
-  
-  /* Live Status Indicators */
-  .status-live {
-    @apply animate-pulse bg-green-500 text-white;
+  /* Status Indicators - Semantic colors */
+  .status-operational {
+    @apply bg-emerald-50 text-emerald-700 border-emerald-200;
   }
   
   .status-warning {
-    @apply bg-yellow-500 text-yellow-50;
+    @apply bg-amber-50 text-amber-700 border-amber-200;
   }
   
   .status-error {
-    @apply bg-red-500 text-red-50 animate-pulse;
+    @apply bg-red-50 text-red-700 border-red-200 animate-pulse;
   }
   
-  /* Constitutional Compliance Styling */
-  .compliance-card {
-    @apply border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent;
+  .status-info {
+    @apply bg-blue-50 text-blue-700 border-blue-200;
   }
   
-  /* Government-grade Dashboard Cards */
-  .dashboard-card {
-    @apply bg-card border border-border/50 rounded-lg shadow-sm;
-    @apply hover:shadow-md hover:border-primary/20 transition-all duration-200;
+  /* Institutional Cards */
+  .institutional-card {
+    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+    @apply hover:shadow-md hover:border-blue-200 transition-all duration-200;
   }
   
   /* Navigation Styling */
   .gov-nav {
-    @apply border-r border-border bg-sidebar;
+    @apply border-r border-slate-200 bg-white;
   }
   
   .nav-item {
-    @apply text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
+    @apply text-slate-700 hover:bg-slate-100 hover:text-slate-900;
     @apply transition-colors duration-200 rounded-md;
   }
   
   .nav-item-active {
-    @apply bg-sidebar-primary text-sidebar-primary-foreground;
+    @apply bg-blue-50 text-blue-700 border-blue-200;
   }
   
-  /* Typography Classes */
-  .heading-government {
-    @apply text-primary font-bold tracking-tight;
+  /* Typography Classes - Institutional hierarchy */
+  .heading-institutional {
+    @apply text-slate-900 font-bold tracking-tight;
   }
   
   .text-authority {
-    @apply text-destructive font-semibold;
+    @apply text-red-600 font-semibold;
   }
   
-  .text-approval {
-    @apply text-green-600 font-medium;
+  .text-success {
+    @apply text-emerald-600 font-medium;
+  }
+  
+  .text-sovereign {
+    @apply text-blue-600 font-semibold;
+  }
+  
+  /* Button Variants - Institutional actions */
+  .btn-institutional {
+    @apply bg-slate-900 text-white hover:bg-slate-800;
+    @apply px-6 py-3 rounded-lg font-semibold;
+    @apply transition-colors duration-200;
+  }
+  
+  .btn-sovereign {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+    @apply px-6 py-3 rounded-lg font-semibold;
+    @apply transition-colors duration-200;
+  }
+  
+  .btn-outline-sovereign {
+    @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white;
+    @apply px-6 py-3 rounded-lg font-semibold;
+    @apply transition-all duration-200;
+  }
+  
+  /* Badge variants - Semantic status */
+  .badge-operational {
+    @apply bg-emerald-50 text-emerald-700 border-emerald-200;
+  }
+  
+  .badge-warning {
+    @apply bg-amber-50 text-amber-700 border-amber-200;
+  }
+  
+  .badge-critical {
+    @apply bg-red-50 text-red-700 border-red-200;
+  }
+  
+  .badge-info {
+    @apply bg-blue-50 text-blue-700 border-blue-200;
+  }
+  
+  /* Metrics Display - Government data presentation */
+  .metric-value {
+    @apply text-4xl font-bold text-slate-900 font-mono tabular-nums;
+  }
+  
+  .metric-label {
+    @apply text-sm font-medium text-slate-600 uppercase tracking-wide;
+  }
+  
+  /* Constitutional Compliance Styling */
+  .compliance-section {
+    @apply border-2 border-blue-200 bg-blue-50/30 rounded-lg p-6;
+  }
+  
+  /* Accessibility - WCAG AAA compliance */
+  .focus-sovereign {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2;
   }
 }
