@@ -19,36 +19,37 @@ const navigationItems: NavigationItem[] = [
   },
   {
     title: "Agents",
-    href: "/agents",
+    href: "/dashboard/agents",
     icon: Users,
   },
   {
     title: "Cases",
-    href: "/cases", 
+    href: "/dashboard/cases", 
     icon: FileText,
   },
   {
     title: "Activity",
-    href: "/activity",
+    href: "/dashboard/activity",
     icon: Activity,
   },
   {
     title: "Settings",
-    href: "/settings",
+    href: "/dashboard/settings",
     icon: Settings,
   },
 ]
 
 interface GovernmentSidebarProps {
   className?: string
+  onClick?: () => void
 }
 
-export function GovernmentSidebar({ className }: GovernmentSidebarProps) {
+export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps) {
   return (
     <div className={cn("flex flex-col h-full bg-white border-r border-slate-200", className)}>
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2" onClick={onClick}>
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Shield className="text-white h-5 w-5" />
           </div>
@@ -68,6 +69,7 @@ export function GovernmentSidebar({ className }: GovernmentSidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onClick}
                 className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               >
                 <Icon className="w-4 h-4" />
