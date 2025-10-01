@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <rect width="512" height="512" rx="128" fill="#2563eb"/>
+  
+  <!-- Shield Icon -->
+  <path d="M256 96C256 96 192 112 160 144C160 144 144 240 160 336C176 432 256 416 256 416C256 416 336 432 352 336C368 240 352 144 352 144C320 112 256 96 256 96Z" fill="white" stroke="white" stroke-width="8" stroke-linejoin="round"/>
+  
+  <!-- Inner Shield Detail -->
+  <path d="M256 128C256 128 208 140 184 164C184 164 172 244 184 316C196 388 256 376 256 376C256 376 316 388 328 316C340 244 328 164 328 164C304 140 256 128 256 128Z" fill="#2563eb"/>
+  
+  <!-- Scale of Justice Symbol -->
+  <g transform="translate(256, 240)">
+    <!-- Center pillar -->
+    <rect x="-4" y="-40" width="8" height="120" fill="white" rx="2"/>
+    
+    <!-- Left scale -->
+    <line x1="-48" y1="-20" x2="48" y2="-20" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Left pan -->
+    <path d="M-48 -20 L-60 4 L-36 4 Z" fill="white"/>
+    
+    <!-- Right pan -->
+    <path d="M48 -20 L60 4 L36 4 Z" fill="white"/>
+    
+    <!-- Base -->
+    <rect x="-32" y="76" width="64" height="8" fill="white" rx="2"/>
+  </g>
+</svg>
+
