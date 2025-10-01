@@ -61,6 +61,36 @@ pnpm verify-pnpm
 - Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
+## 🚫 DEPLOYMENT RESTRICTIONS - DO NOT AUTO-DEPLOY
+
+**CRITICAL RULE**: NEVER deploy to Vercel/frontend automatically unless explicitly requested by the user.
+
+### ❌ Prohibited Actions:
+- **NEVER** run `pnpm run deploy:frontend` unless user explicitly asks
+- **NEVER** run `vercel deploy` commands automatically
+- **NEVER** assume deployment is needed after fixes
+
+### ✅ Allowed Workflow:
+1. Make code changes
+2. Run quality checks (`pnpm lint && pnpm type-check && pnpm build`)
+3. Commit to Git (`git commit && git push`)
+4. **STOP** - Do NOT deploy
+
+### 💡 When User Wants Deployment:
+- User must explicitly say "deploy" or "deploy to Vercel"
+- Ask for confirmation if unclear: "Would you like me to deploy this to Vercel?"
+- Only then run `pnpm run deploy:frontend`
+
+### 📝 Rationale:
+- Deployments should be intentional and controlled
+- User may want to test locally first
+- Multiple fixes may be batched before deployment
+- Debugging may require local testing only
+
+**Remember**: Commit ≠ Deploy. Always stop after pushing to Git unless told otherwise.
+
+---
+
 ## 🔍 MANDATORY Quality Checks - ALWAYS RUN AFTER CODE CHANGES
 
 **CRITICAL REQUIREMENT**: After writing or modifying ANY code, you MUST run all quality checks before committing.
