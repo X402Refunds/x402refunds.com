@@ -9,30 +9,30 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Live Dispute Resolution Monitor</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Real-time AI vendor dispute resolution at scale
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Live Dispute Resolution Monitor</h1>
+          <p className="text-slate-600">
+            Real-time AI vendor dispute resolution at institutional scale
           </p>
         </div>
 
         {/* Status Badge */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs sm:text-sm">
+        <div className="flex items-center gap-4">
+          <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">
             🟢 Dispute Engine Active
           </Badge>
-          <Badge variant="outline" className="text-xs sm:text-sm">
+          <Badge variant="outline" className="border-slate-300 text-slate-700">
             Last Updated: {new Date().toLocaleTimeString()}
           </Badge>
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs sm:text-sm">
+          <Badge className="bg-blue-50 text-blue-800 border-blue-200">
             ⚡ Real-time Data
           </Badge>
           <Button 
             variant="outline"
             onClick={() => window.open('/', '_self')}
-            className="ml-auto text-xs sm:text-sm"
+            className="ml-auto border-slate-300 text-slate-700 hover:bg-slate-50"
           >
             ← Back to Landing
           </Button>
@@ -42,15 +42,15 @@ export default function DashboardPage() {
         <LiveDisputeMonitor />
 
         {/* Instructions */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-amber-800 font-semibold mb-2 text-sm sm:text-base">🚀 Start the Dispute Engine</h3>
-          <p className="text-amber-700 text-xs sm:text-sm mb-3">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+          <h3 className="text-amber-900 font-semibold mb-2">🚀 Start the Dispute Engine</h3>
+          <p className="text-amber-800 text-sm mb-3">
             To see live disputes, run the AI vendor dispute engine in your terminal:
           </p>
-          <div className="bg-gray-900 text-green-400 p-2 sm:p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto">
+          <div className="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-sm">
             pnpm demo:disputes
           </div>
-          <p className="text-amber-600 text-xs mt-2">
+          <p className="text-amber-700 text-xs mt-2">
             This will generate 10-20 realistic AI vendor disputes per minute with automatic resolution.
           </p>
         </div>

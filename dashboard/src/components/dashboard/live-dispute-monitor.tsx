@@ -39,12 +39,12 @@ export default function LiveDisputeMonitor() {
   // Helper function to get event color
   const getEventColor = (type: string) => {
     const colors: Record<string, string> = {
-      "AGENT_REGISTERED": "bg-blue-100 text-blue-800",
-      "DISPUTE_FILED": "bg-red-100 text-red-800", 
-      "EVIDENCE_SUBMITTED": "bg-yellow-100 text-yellow-800",
-      "CASE_STATUS_UPDATED": "bg-green-100 text-green-800"
+      "AGENT_REGISTERED": "bg-blue-50 text-blue-700 border-blue-200",
+      "DISPUTE_FILED": "bg-red-50 text-red-700 border-red-200", 
+      "EVIDENCE_SUBMITTED": "bg-amber-50 text-amber-700 border-amber-200",
+      "CASE_STATUS_UPDATED": "bg-emerald-50 text-emerald-700 border-emerald-200"
     };
-    return colors[type] || "bg-gray-100 text-gray-800";
+    return colors[type] || "bg-slate-50 text-slate-700 border-slate-200";
   };
 
   const formatEventDescription = (event: DisputeEvent) => {
@@ -71,14 +71,14 @@ export default function LiveDisputeMonitor() {
   if (!systemStats) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Loading...</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground animate-pulse" />
+            <CardTitle className="text-sm font-medium text-slate-900">Loading...</CardTitle>
+            <Activity className="h-4 w-4 text-slate-400 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">Connecting to live backend...</p>
+            <div className="text-2xl font-bold text-slate-900">--</div>
+            <p className="text-xs text-slate-600">Connecting to live backend...</p>
           </CardContent>
         </Card>
       </div>
@@ -86,30 +86,30 @@ export default function LiveDisputeMonitor() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       {/* System Overview Cards */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Disputes</CardTitle>
-            <Gavel className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">Total Disputes</CardTitle>
+            <Gavel className="h-4 w-4 text-slate-600" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{systemStats.disputesFiled}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{systemStats.disputesFiled}</div>
+            <p className="text-xs text-slate-600">
               Last 24 hours
             </p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Cases Resolved</CardTitle>
-            <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
+        <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">Cases Resolved</CardTitle>
+            <TrendingUp className="h-4 w-4 text-slate-600" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{systemStats.casesResolved}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{systemStats.casesResolved}</div>
+            <p className="text-xs text-slate-600">
               {systemStats.disputesFiled > 0 
                 ? `${((systemStats.casesResolved / systemStats.disputesFiled) * 100).toFixed(1)}% success rate`
                 : "No disputes yet"}
@@ -117,63 +117,63 @@ export default function LiveDisputeMonitor() {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Active Agents</CardTitle>
-            <Users className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
+        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">Active Agents</CardTitle>
+            <Users className="h-4 w-4 text-slate-600" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{systemStats.agentRegistrations}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{systemStats.agentRegistrations}</div>
+            <p className="text-xs text-slate-600">
               Registered agents
             </p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">System Activity</CardTitle>
-            <Activity className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
+        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">System Activity</CardTitle>
+            <Activity className="h-4 w-4 text-slate-600" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{systemStats.totalEvents}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{systemStats.totalEvents}</div>
+            <p className="text-xs text-slate-600">
               Total events
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Recent Activity Feed */}
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-slate-900">
               <Activity className="h-5 w-5" />
               Live Activity Feed
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               Real-time dispute resolution events
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {!recentEvents || recentEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-sm text-slate-500 text-center py-4">
                 No recent activity. Start the dispute engine to see live data.
               </p>
             ) : (
               recentEvents?.slice(0, 8).map((event: DisputeEvent) => (
                 <div 
                   key={event._id} 
-                  className={`flex items-start space-x-3 ${event.caseId ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                  className={`flex items-start space-x-3 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors' : ''}`}
                   onClick={() => event.caseId && router.push(`/dashboard/dispute/${event.caseId}`)}
                 >
                   <Badge variant="secondary" className={getEventColor(event.type)}>
                     {event.type.replace(/_/g, ' ')}
                   </Badge>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm">{formatEventDescription(event)}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-slate-700">{formatEventDescription(event)}</p>
+                    <p className="text-xs text-slate-500">
                       {new Date(event.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
@@ -184,35 +184,35 @@ export default function LiveDisputeMonitor() {
         </Card>
 
         {/* Active Disputes */}
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-slate-900">
               <Gavel className="h-5 w-5" />
               Active Disputes
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               Currently processing cases
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {!activeCases || activeCases.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-sm text-slate-500 text-center py-4">
                 No active disputes. System is running efficiently! ✅
               </p>
             ) : (
               activeCases.map((case_: Record<string, unknown>) => (
                 <div 
                   key={case_._id as string} 
-                  className="space-y-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                  className="space-y-2 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
                   onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium text-slate-900">
                       {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
                     </p>
-                    <Badge variant="destructive">{case_.status as string}</Badge>
+                    <Badge className="bg-red-50 text-red-700 border-red-200">{case_.status as string}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-slate-600">
                     {case_.type as string} • Filed {Math.floor((Date.now() - (case_.filedAt as number)) / 1000)}s ago
                   </p>
                 </div>
@@ -223,19 +223,19 @@ export default function LiveDisputeMonitor() {
       </div>
 
       {/* Recent Resolutions */}
-      <Card>
+      <Card className="border-slate-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-slate-900">
             <Clock className="h-5 w-5" />
             Recent Resolutions
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-600">
             Recently completed dispute cases
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!recentCases || recentCases.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-sm text-slate-500 text-center py-4">
               No cases yet. Start the dispute engine to see resolutions.
             </p>
           ) : (
@@ -243,30 +243,30 @@ export default function LiveDisputeMonitor() {
               {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 5).map((case_: Record<string, unknown>, index: number) => (
                 <div key={case_._id as string}>
                   <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                    className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
                     onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
                   >
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium text-slate-900">
                         {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-slate-600">
                         {case_.type as string} • {case_.ruling ? `Verdict: ${(case_.ruling as { verdict: string }).verdict}` : 'Processing...'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <Badge variant={case_.status === "DECIDED" ? "default" : "secondary"}>
+                      <Badge className={case_.status === "DECIDED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-700 border-slate-200"}>
                         {case_.status as string}
                       </Badge>
                       {case_.ruling && typeof case_.ruling === 'object' && 'decidedAt' in case_.ruling ? (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                           {Math.floor((Date.now() - (case_.ruling as { decidedAt: number }).decidedAt) / 1000)}s ago
                         </p>
                       ) : null}
                     </div>
                   </div>
                   {index < recentCases.filter((c: Record<string, unknown>) => c.status === "DECIDED").length - 1 && (
-                    <Separator className="mt-4" />
+                    <Separator className="mt-4 bg-slate-200" />
                   )}
                 </div>
               ))}
