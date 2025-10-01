@@ -271,15 +271,19 @@ http.route({
   })
 });
 
-// Simple dashboard
+// Simple dashboard with real-time data
 http.route({
   path: "/dashboard",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
+    // Fetch real stats from database
+    const stats = await ctx.runQuery(api.cases.getCachedSystemStats, {});
+    
     return new Response(`
       <html>
         <head>
           <title>Consulate - Agent Management Dashboard</title>
+          <meta http-equiv="refresh" content="30">
           <style>
             body { font-family: -apple-system, system-ui, sans-serif; margin: 40px; background: #f8fafc; }
             .dashboard { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 1200px; margin: 0 auto; }
@@ -293,27 +297,33 @@ http.route({
             .btn-secondary { background: #e2e8f0; color: #475569; }
             .endpoints { margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
             .endpoint { margin: 8px 0; font-family: monospace; font-size: 0.9em; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; background: #10b981; color: white; font-size: 0.85em; margin-left: 12px; }
           </style>
         </head>
         <body>
           <div class="dashboard">
             <div class="header">
-              <h1>🤖 Consulate Dashboard</h1>
+              <h1>🤖 Consulate Dashboard<span class="badge">● Live Data</span></h1>
               <p>Agent Management & Dispute Resolution System</p>
+              <small>Last updated: ${new Date().toLocaleTimeString()} • Auto-refresh: 30s</small>
             </div>
             
             <div class="metrics">
               <div class="metric">
-                <div class="metric-value">0</div>
+                <div class="metric-value">${stats.activeAgents}</div>
                 <div class="metric-label">Active Agents</div>
               </div>
               <div class="metric">
-                <div class="metric-value">0</div>
+                <div class="metric-value">${stats.pendingCases}</div>
                 <div class="metric-label">Open Cases</div>
               </div>
               <div class="metric">
-                <div class="metric-value">100%</div>
-                <div class="metric-label">System Health</div>
+                <div class="metric-value">${stats.resolvedCases}</div>
+                <div class="metric-label">Resolved Cases</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">${stats.avgResolutionTimeMinutes.toFixed(1)}m</div>
+                <div class="metric-label">Avg Resolution Time</div>
               </div>
             </div>
             
