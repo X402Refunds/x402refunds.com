@@ -29,7 +29,9 @@ export default function AgentsPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalAgents ?? 0}</div>
+              <div className="text-2xl font-bold" suppressHydrationWarning>
+                {stats?.totalAgents ?? "—"}
+              </div>
               <p className="text-xs text-muted-foreground">
                 All-time registrations
               </p>
@@ -42,7 +44,9 @@ export default function AgentsPage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.activeAgents ?? 0}</div>
+              <div className="text-2xl font-bold" suppressHydrationWarning>
+                {stats?.activeAgents ?? "—"}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Currently operational
               </p>
@@ -55,7 +59,9 @@ export default function AgentsPage() {
               <Zap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.agentRegistrationsLast24h ?? 0}</div>
+              <div className="text-2xl font-bold" suppressHydrationWarning>
+                {stats?.agentRegistrationsLast24h ?? "—"}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Last 24 hours
               </p>
@@ -68,7 +74,9 @@ export default function AgentsPage() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalCases ?? 0}</div>
+              <div className="text-2xl font-bold" suppressHydrationWarning>
+                {stats?.totalCases ?? "—"}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Disputes filed
               </p>

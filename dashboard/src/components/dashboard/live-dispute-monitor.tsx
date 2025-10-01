@@ -95,7 +95,9 @@ export default function LiveDisputeMonitor() {
             <Gavel className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{systemStats.disputesFiled}</div>
+            <div className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
+              {systemStats.disputesFiled}
+            </div>
             <p className="text-xs text-slate-600">
               Last 24 hours
             </p>
@@ -108,8 +110,10 @@ export default function LiveDisputeMonitor() {
             <TrendingUp className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{systemStats.casesResolved}</div>
-            <p className="text-xs text-slate-600">
+            <div className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
+              {systemStats.casesResolved}
+            </div>
+            <p className="text-xs text-slate-600" suppressHydrationWarning>
               {systemStats.disputesFiled > 0 
                 ? `${((systemStats.casesResolved / systemStats.disputesFiled) * 100).toFixed(1)}% success rate`
                 : "No disputes yet"}
@@ -123,7 +127,9 @@ export default function LiveDisputeMonitor() {
             <Users className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{systemStats.agentRegistrations}</div>
+            <div className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
+              {systemStats.agentRegistrations}
+            </div>
             <p className="text-xs text-slate-600">
               Registered agents
             </p>
@@ -136,7 +142,9 @@ export default function LiveDisputeMonitor() {
             <Activity className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{systemStats.totalEvents}</div>
+            <div className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
+              {systemStats.totalEvents}
+            </div>
             <p className="text-xs text-slate-600">
               Total events
             </p>
