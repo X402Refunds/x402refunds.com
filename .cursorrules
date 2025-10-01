@@ -61,6 +61,40 @@ pnpm verify-pnpm
 - Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
+## 🔍 MANDATORY Quality Checks - ALWAYS RUN AFTER CODE CHANGES
+
+**CRITICAL REQUIREMENT**: After writing or modifying ANY code, you MUST run all quality checks before committing.
+
+### Required Checks (Run in Order):
+```bash
+pnpm lint          # ✅ Code quality and style
+pnpm type-check    # ✅ TypeScript type safety
+pnpm build         # ✅ Production build verification
+```
+
+### Complete Verification Command:
+```bash
+pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSED"
+```
+
+### When to Run:
+- ✅ **ALWAYS** after modifying `.ts`, `.tsx`, `.js`, `.jsx` files
+- ✅ **ALWAYS** after changing component structure or imports
+- ✅ **ALWAYS** after updating dependencies or configuration
+- ✅ **ALWAYS** before committing any code changes
+
+### Success Criteria:
+```
+✓ No linting errors or warnings
+✓ No TypeScript compilation errors
+✓ Production build completes successfully
+✓ All checks pass before git commit
+```
+
+**See `.cursor/rules/code-quality-checks.mdc` for complete details.**
+
+---
+
 ## 🚦 Process Discipline - STOP, CLASSIFY, CONSULT
 
 **CRITICAL PROCESS RULE**: Before implementing ANY solution, you MUST complete this classification checklist to prevent tunnel vision and ensure you follow all relevant rules.
@@ -245,13 +279,22 @@ SUCCESS: Report production deployment complete
 
 ### Required Testing Sequence
 
-#### 1. Local Build Test
+#### 1. ALWAYS Run Quality Checks First (MANDATORY)
 ```bash
-pnpm build && echo "✅ BUILD TEST PASSED"
+# REQUIRED for ALL code changes:
+pnpm lint          # ✅ MUST PASS - Code quality
+pnpm type-check    # ✅ MUST PASS - Type safety
+pnpm build         # ✅ MUST PASS - Production build
+
+# Quick verification:
+pnpm lint && pnpm type-check && pnpm build
 ```
+
+**STOP**: Do NOT proceed to commit if any of these fail. Fix issues first.
 
 #### 2. For Convex Backend Changes
 ```bash
+# After quality checks pass:
 pnpm deploy        # Deploy and validate schema and functions in production
 pnpm test          # Run comprehensive API tests
 ```
@@ -271,6 +314,9 @@ pnpm test:run                   # Must pass all tests
 rm pnpm-lock.yaml              # Remove old lockfile
 pnpm install                   # Regenerate
 pnpm install --frozen-lockfile # Test CI command works
+pnpm lint                      # ✅ Must pass
+pnpm type-check                # ✅ Must pass
+pnpm build                     # ✅ Must pass
 pnpm test:run                  # Ensure tests still work
 ```
 
@@ -306,18 +352,27 @@ pnpm test:coverage             # Check coverage (optional but recommended)
 - ✅ Edge cases and boundary conditions
 - ✅ Integration with existing APIs
 
-### Commit Only After Green Production Tests
+### Commit Only After All Checks Pass
 ```bash
-# Only commit after all tests pass:
-pnpm build ✅
-pnpm lint ✅ 
-pnpm type-check ✅
-pnpm deploy ✅         # Deploy to Convex production
-pnpm test:run ✅       # Test against production APIs
+# MANDATORY quality checks (ALWAYS required):
+pnpm lint ✅          # Code quality - MUST PASS
+pnpm type-check ✅    # Type safety - MUST PASS
+pnpm build ✅         # Production build - MUST PASS
 
-# THEN commit and push
+# Additional checks for backend changes:
+pnpm deploy ✅        # Deploy to Convex production
+pnpm test:run ✅      # Test against production APIs
+
+# ONLY commit when ALL checks pass:
 git add . && git commit -m "..." && git push
 ```
+
+**REMEMBER**: The workflow is ALWAYS:
+1. Write code
+2. Run `pnpm lint && pnpm type-check && pnpm build`
+3. Fix any errors
+4. Run additional tests if needed (deploy, test:run)
+5. Commit only when everything is green ✅
 
 ## AI VENDOR DISPUTE RESOLUTION FRAMEWORK
 

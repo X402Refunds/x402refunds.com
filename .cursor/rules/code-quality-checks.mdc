@@ -1,0 +1,388 @@
+---
+description: Mandatory code quality checks (lint, type-check, build) after any code changes
+globs: "**/*.{ts,tsx,js,jsx,css,json}"
+alwaysApply: true
+---
+
+# Code Quality Checks - MANDATORY
+
+## 🚨 **CRITICAL RULE**: Always Run Quality Checks After Code Changes
+
+**MANDATORY REQUIREMENT**: After writing or modifying ANY code, you MUST run all three quality checks before considering the work complete.
+
+### ✅ Required Quality Checks (In Order)
+
+#### 1. Lint Check - Code Quality
+```bash
+pnpm lint
+```
+
+**Purpose:**
+- Ensures code follows ESLint rules
+- Catches common mistakes and anti-patterns
+- Maintains consistent code style
+- Verifies no unused variables or imports
+
+**When to run:**
+- After modifying any `.ts`, `.tsx`, `.js`, `.jsx` files
+- Before committing changes
+- After adding/removing imports
+
+**Success criteria:**
+```
+✓ No linting errors
+✓ All warnings addressed or documented
+```
+
+---
+
+#### 2. Type Check - Type Safety
+```bash
+pnpm type-check
+```
+
+**Purpose:**
+- Validates TypeScript types across all packages
+- Catches type errors before runtime
+- Ensures type-safe integration between components
+- Verifies no TypeScript compilation errors
+
+**When to run:**
+- After modifying any `.ts` or `.tsx` files
+- After changing type definitions or interfaces
+- After updating dependencies
+- Before committing changes
+
+**Success criteria:**
+```
+✓ TypeScript compilation successful
+✓ No type errors in any package
+✓ All type definitions validated
+```
+
+---
+
+#### 3. Build - Production Readiness
+```bash
+pnpm build
+```
+
+**Purpose:**
+- Verifies code compiles for production
+- Catches build-time errors
+- Validates Next.js pages and routes
+- Ensures production bundle is valid
+
+**When to run:**
+- After any code changes
+- After modifying component structure
+- After changing imports or dependencies
+- Before committing changes
+
+**Success criteria:**
+```
+✓ Production build completed successfully
+✓ All pages compile without errors
+✓ Bundle sizes are reasonable
+✓ No build warnings (or documented)
+```
+
+---
+
+## 🔄 Complete Workflow
+
+### Standard Code Change Workflow
+```bash
+# 1. Make your code changes
+[edit files]
+
+# 2. Run quality checks (MANDATORY)
+pnpm lint          # ✓ Code quality
+pnpm type-check    # ✓ Type safety
+pnpm build         # ✓ Production readiness
+
+# 3. Fix any issues that arise
+[fix errors if any]
+
+# 4. Re-run checks after fixes
+pnpm lint && pnpm type-check && pnpm build
+
+# 5. Only commit when ALL checks pass
+git add .
+git commit -m "type: description"
+git push
+```
+
+### Quick Verification Command
+```bash
+# Run all checks in sequence
+pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSED"
+```
+
+---
+
+## 🚫 **NEVER Commit Without These Checks**
+
+### ❌ Anti-Patterns (DO NOT DO THIS)
+
+**DON'T skip checks:**
+```bash
+# ❌ WRONG - Skipping quality checks
+git add . && git commit -m "fix: something" && git push
+```
+
+**DON'T commit with errors:**
+```bash
+# ❌ WRONG - Committing with lint errors
+pnpm lint  # Shows errors
+git commit -m "fix: something anyway"  # NO!
+```
+
+**DON'T ignore type errors:**
+```bash
+# ❌ WRONG - Ignoring TypeScript errors
+pnpm type-check  # Shows type errors
+# "I'll fix it later" - NO!
+```
+
+**DON'T skip build verification:**
+```bash
+# ❌ WRONG - Not testing production build
+pnpm lint ✓
+pnpm type-check ✓
+git commit -m "done"  # Missing build check!
+```
+
+---
+
+### ✅ Correct Patterns (DO THIS)
+
+**Always run all checks:**
+```bash
+# ✅ CORRECT - Full quality verification
+pnpm lint          # Pass ✓
+pnpm type-check    # Pass ✓
+pnpm build         # Pass ✓
+git commit -m "feat: add new feature"
+```
+
+**Fix issues immediately:**
+```bash
+# ✅ CORRECT - Fix errors before committing
+pnpm lint          # Shows 2 warnings
+[fix warnings]
+pnpm lint          # Pass ✓
+pnpm type-check    # Pass ✓
+pnpm build         # Pass ✓
+git commit
+```
+
+**Verify after fixes:**
+```bash
+# ✅ CORRECT - Re-check after fixing
+[fix lint error]
+pnpm lint && pnpm type-check && pnpm build
+# All pass ✓ → Safe to commit
+```
+
+---
+
+## 🎯 Special Cases
+
+### Frontend Changes (dashboard/src/)
+```bash
+# MANDATORY for all frontend changes
+pnpm lint          # Check React/Next.js code
+pnpm type-check    # Verify component types
+pnpm build         # Ensure pages compile
+```
+
+### Backend Changes (convex/)
+```bash
+# MANDATORY for all backend changes
+pnpm lint          # Check Convex functions
+pnpm type-check    # Verify schema types
+pnpm build         # Validate production build
+pnpm deploy        # Deploy to test in production
+pnpm test:run      # Run API tests
+```
+
+### Configuration Changes (package.json, tsconfig.json)
+```bash
+# EXTRA MANDATORY for config changes
+rm pnpm-lock.yaml
+pnpm install
+pnpm install --frozen-lockfile  # Verify CI will work
+pnpm lint
+pnpm type-check
+pnpm build
+pnpm test:run      # Ensure nothing broke
+```
+
+### CSS/Style Changes (globals.css, components)
+```bash
+# MANDATORY for style changes
+pnpm lint          # Check CSS syntax
+pnpm build         # Ensure styles compile
+# Visual verification in browser
+pnpm dev           # Check in development
+```
+
+---
+
+## 📊 Quality Check Matrix
+
+| Change Type | Lint | Type Check | Build | Deploy | Test |
+|-------------|------|------------|-------|--------|------|
+| **Frontend Component** | ✅ | ✅ | ✅ | ⚪ | ⚪ |
+| **Backend Function** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Shared Config** | ✅ | ✅ | ✅ | ⚪ | ✅ |
+| **CSS/Styles** | ✅ | ⚪ | ✅ | ⚪ | ⚪ |
+| **Documentation** | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| **Package.json** | ✅ | ✅ | ✅ | ⚪ | ✅ |
+| **TypeScript Config** | ✅ | ✅ | ✅ | ⚪ | ✅ |
+
+Legend: ✅ Required | ⚪ Optional | 
+
+---
+
+## 🔧 Troubleshooting Quality Checks
+
+### Lint Errors
+
+**Common issues:**
+```bash
+# Unused imports
+→ Remove unused imports from files
+
+# Unused variables  
+→ Remove or use variables, or prefix with _ if intentional
+
+# Missing dependencies
+→ Add to package.json dependencies array
+
+# ESLint rule violations
+→ Fix code to comply with rules
+→ OR document why rule should be disabled (rare)
+```
+
+### Type Check Errors
+
+**Common issues:**
+```bash
+# Type mismatches
+→ Fix types to match expected interfaces
+
+# Missing type definitions
+→ Add proper TypeScript types/interfaces
+
+# Any types used
+→ Replace 'any' with proper types
+
+# Import errors
+→ Ensure imports have correct types
+→ Check convex/_generated/api types
+```
+
+### Build Errors
+
+**Common issues:**
+```bash
+# Next.js compilation errors
+→ Fix React component syntax
+→ Ensure proper imports
+
+# Module not found
+→ Install missing dependencies
+→ Fix import paths
+
+# CSS compilation errors
+→ Fix CSS syntax
+→ Check Tailwind class names
+
+# Environment variables
+→ Check .env.local configuration
+```
+
+---
+
+## 🎯 Success Criteria Summary
+
+Before ANY commit, ensure:
+
+```
+✓ pnpm lint passes with no errors
+✓ pnpm type-check passes with no errors  
+✓ pnpm build completes successfully
+✓ No warnings (or all warnings documented/explained)
+✓ Code follows project conventions
+✓ All imports are used and necessary
+✓ Types are properly defined
+✓ Production build is functional
+```
+
+---
+
+## 🚀 Automation Integration
+
+### Pre-commit Hook (Future)
+```bash
+# Automatically run checks before commit
+pnpm lint && pnpm type-check && pnpm build || exit 1
+```
+
+### CI/CD Pipeline
+All these checks run in GitHub Actions:
+- Lint failures → Block merge
+- Type check failures → Block merge
+- Build failures → Block merge
+
+**Local checks catch issues before CI** - saving time and preventing failed builds.
+
+---
+
+## 💡 Best Practices
+
+1. **Run checks frequently** - Not just before commit
+   ```bash
+   # After significant changes
+   pnpm lint && pnpm type-check
+   ```
+
+2. **Fix issues immediately** - Don't accumulate technical debt
+   ```bash
+   # See error → Fix error → Re-check
+   ```
+
+3. **Use editor integration** - Real-time feedback
+   ```
+   - ESLint extension in Cursor/VS Code
+   - TypeScript language server
+   ```
+
+4. **Understand errors** - Don't just suppress
+   ```bash
+   # Read error messages
+   # Understand root cause
+   # Fix properly, don't disable rules
+   ```
+
+5. **Keep builds fast** - Optimize for quick feedback
+   ```bash
+   # Incremental type checking
+   # Cached builds
+   ```
+
+---
+
+## 📝 Remember
+
+> **Quality checks are not optional - they are MANDATORY requirements for all code changes.**
+
+> **The 2 minutes spent running checks saves 20+ minutes debugging production issues.**
+
+> **Green checks = Safe to ship. Red checks = Do not commit.**
+
+---
+
+**ENFORCEMENT**: If quality checks are skipped, CI will fail and changes will be rejected. Always run lint, type-check, and build before committing.
