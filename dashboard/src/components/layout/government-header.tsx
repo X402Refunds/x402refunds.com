@@ -130,11 +130,11 @@ export function GovernmentHeader() {
           {/* System Status */}
           <StatusIndicator />
 
-          {/* Constitutional Authority */}
+          {/* Jurisdiction Authority */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
             <Shield className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-semibold text-blue-700">
-              Sovereign Instance
+              U.S. Federal Jurisdiction
             </span>
           </div>
 
@@ -161,7 +161,7 @@ export function GovernmentHeader() {
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 z-[60] bg-white shadow-xl border border-slate-200">
               <DropdownMenuLabel className="text-slate-900">Governance Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-slate-700">
