@@ -17,6 +17,111 @@
 
 ---
 
+## 🏷️ **Branding Consistency**
+
+### Logo and Name Usage
+
+**Strategic Decision**: Differentiated branding based on context
+
+#### **Public-Facing (Landing Page)**
+```jsx
+// Just "Consulate" - Clean, simple, memorable
+<h1>Consulate</h1>
+```
+
+**Rationale**: 
+- Simple for marketing and brand recognition
+- Easy to remember and pronounce
+- Professional and authoritative
+- Works internationally without translation issues
+
+#### **Operational Context (Dashboard)**
+```jsx
+// "Consulate" + "Governance OS" subtitle
+<div>
+  <h2>Consulate</h2>
+  <p className="text-xs">Governance OS</p>
+</div>
+```
+
+**Rationale**:
+- Maintains brand consistency with "Consulate" primary
+- Adds operational context with "Governance OS" subtitle
+- Helps users understand they're in the management interface
+- Mirrors government presentation: simple externally, detailed internally
+
+### Branding Rules
+
+**DO:**
+- ✅ Use "Consulate" as primary brand name everywhere
+- ✅ Add "Governance OS" subtitle in dashboard/operational contexts
+- ✅ Keep logo consistent: Shield icon + Brand name
+- ✅ Use blue-600 for logo background color
+
+**DON'T:**
+- ❌ Change "Consulate" to "Consulate Governance OS" on landing page
+- ❌ Remove subtitle from dashboard (adds important context)
+- ❌ Use different logo styles between landing and dashboard
+- ❌ Change brand colors (blue-600 shield, slate-900 text)
+
+---
+
+## ⚖️ **Jurisdiction & Authority Badges**
+
+### U.S. Deployment Standard
+
+**Strategic Decision**: Use "U.S. Federal Jurisdiction" as default
+
+```jsx
+// Jurisdiction Authority Badge
+<div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
+  <Shield className="h-4 w-4 text-blue-600" />
+  <span className="text-sm font-semibold text-blue-700">
+    U.S. Federal Jurisdiction
+  </span>
+</div>
+```
+
+**Rationale**:
+- Clear and legally accurate
+- Authoritative without being overly specific
+- Scalable to all U.S. states
+- Immediately conveys legal framework
+
+### Alternative Jurisdiction Badges
+
+#### **State-Specific Deployment**
+```jsx
+// If state-level specificity needed
+<span>U.S. Federal & California Jurisdiction</span>
+```
+
+#### **International Deployment** (Future)
+```jsx
+// For EU deployment
+<span>European Union Jurisdiction</span>
+
+// For specific countries
+<span>UK Jurisdiction</span>
+<span>Singapore Jurisdiction</span>
+```
+
+### Jurisdiction Badge Rules
+
+**DO:**
+- ✅ Always display jurisdiction badge in dashboard header
+- ✅ Use Shield icon to indicate legal authority
+- ✅ Use blue-50 background with blue-700 text
+- ✅ Update jurisdiction when deploying to new regions
+
+**DON'T:**
+- ❌ Use vague terms like "Sovereign Instance" without jurisdiction
+- ❌ Mix multiple jurisdictions in one badge
+- ❌ Remove jurisdiction badge (legal compliance requirement)
+- ❌ Change badge styling (maintains institutional consistency)
+
+---
+
 ## 🎨 **Color System**
 
 ### Primary Palette: Institutional Foundation
@@ -388,6 +493,9 @@ transition-all duration-200
 
 /* Shadow transition */
 hover:shadow-md transition-shadow
+
+/* Mobile menu animation */
+transition-all duration-300 ease-in-out
 ```
 
 ### Hover States
@@ -407,6 +515,44 @@ hover:shadow-md hover:border-blue-200  /* Elevate and accent */
 ```css
 hover:text-blue-600    /* Accent color */
 ```
+
+### Z-Index Hierarchy
+
+**CRITICAL**: Maintain proper z-index stacking to prevent overlay issues
+
+```css
+/* Z-Index Scale (from lowest to highest) */
+z-0:    Base content layer
+z-10:   Elevated cards, tooltips
+z-20:   Sticky headers, navigation
+z-30:   Mobile overlay/backdrop (slate-900/50)
+z-40:   Mobile sidebar panel
+z-50:   Mobile menu toggle button
+z-[60]: Dropdown menus, popovers (HIGHEST)
+```
+
+**Implementation:**
+```jsx
+// Mobile overlay
+className="fixed inset-0 bg-slate-900/50 z-30"
+
+// Mobile sidebar
+className="fixed lg:static z-40"
+
+// Mobile menu button
+className="fixed top-4 left-4 z-50"
+
+// Dropdown menus
+className="z-[60] bg-white shadow-xl"
+```
+
+**Rules:**
+- ✅ Dropdowns/popovers always at z-[60] or higher
+- ✅ Mobile menu button at z-50
+- ✅ Mobile sidebar at z-40
+- ✅ Overlay/backdrop at z-30
+- ❌ Never use arbitrary z-index values
+- ❌ Never exceed z-[60] without documentation
 
 ---
 
@@ -508,6 +654,53 @@ min-width: 48px     /* For mobile usability */
 padding: 12px 24px  /* Generous padding */
 ```
 
+### Mobile Navigation Pattern
+
+**Hamburger Menu Implementation:**
+
+```jsx
+// Mobile menu button (visible only on mobile)
+<div className="lg:hidden fixed top-4 left-4 z-50">
+  <Button
+    variant="outline"
+    size="icon"
+    onClick={() => setSidebarOpen(!sidebarOpen)}
+    className="bg-white shadow-lg border-slate-300 hover:bg-slate-50"
+    aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+  >
+    {sidebarOpen ? <X /> : <Menu />}
+  </Button>
+</div>
+
+// Backdrop overlay (click to close)
+{sidebarOpen && (
+  <div
+    className="lg:hidden fixed inset-0 bg-slate-900/50 z-30 backdrop-blur-sm"
+    onClick={() => setSidebarOpen(false)}
+    aria-hidden="true"
+  />
+)}
+
+// Mobile sidebar (slide in from left)
+<div className={cn(
+  "fixed lg:static z-40",
+  "transition-all duration-300 ease-in-out",
+  sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+)}>
+  {/* Sidebar content */}
+</div>
+```
+
+**Mobile Navigation Rules:**
+- ✅ Hamburger button visible only on mobile (lg:hidden)
+- ✅ Sidebar slides in from left with smooth animation
+- ✅ Backdrop overlay with blur effect
+- ✅ Click overlay or nav item to close
+- ✅ Add top padding to main content to clear button
+- ✅ Proper ARIA labels for accessibility
+- ❌ Don't block content with menu button
+- ❌ Don't forget to close menu on navigation
+
 ---
 
 ## 🎯 **Usage Guidelines**
@@ -520,6 +713,10 @@ padding: 12px 24px  /* Generous padding */
 - **Maintain generous whitespace** (8-point grid)
 - **Provide clear visual hierarchy** (typography scale)
 - **Ensure WCAG AAA compliance** (accessibility)
+- **Follow z-index hierarchy** (prevent overlay issues)
+- **Implement mobile-first responsive design**
+- **Use "Consulate" for brand, add context in dashboard**
+- **Display jurisdiction badge in all operational contexts**
 
 ### Don'ts ❌
 
@@ -529,6 +726,10 @@ padding: 12px 24px  /* Generous padding */
 - **Don't ignore spacing grid** (always use 8-point multiples)
 - **Don't create new colors** (use defined semantic palette)
 - **Don't use playful animations** (maintain institutional dignity)
+- **Don't let dropdowns show content underneath** (use proper z-index)
+- **Don't forget mobile menu close functionality**
+- **Don't change jurisdiction badge without legal review**
+- **Don't remove "Governance OS" subtitle from dashboard**
 
 ---
 
