@@ -139,9 +139,29 @@ export default function HomePage() {
                   Consulate
                 </button>
               </div>
+              <div className="hidden md:ml-6 md:flex md:space-x-8">
+                <button
+                  onClick={() => window.location.href = '/features'}
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+                >
+                  Features
+                </button>
+                <button
+                  onClick={() => window.location.href = '/pricing'}
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+                >
+                  Pricing
+                </button>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Removed System Operational badge and View Dashboard button */}
+              <Button 
+                variant="outline" 
+                className="border-slate-300 text-slate-700"
+                onClick={() => window.open('/dashboard', '_self')}
+              >
+                Dashboard
+              </Button>
             </div>
           </div>
         </div>
