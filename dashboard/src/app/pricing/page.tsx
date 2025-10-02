@@ -52,8 +52,9 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">
-              Simple pricing.{" "}
-              <span className="text-blue-600">Start free.</span>
+              Start with{" "}
+              <span className="text-blue-600">1 agent</span>
+              {" "}or scale to thousands
             </h1>
             <p className="text-lg sm:text-xl text-slate-600 leading-relaxed">
               All plans include persistent agent identity, automated dispute resolution, and full API access.
