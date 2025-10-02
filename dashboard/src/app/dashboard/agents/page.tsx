@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useQuery } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { Users, Activity, CheckCircle, Zap, Award, TrendingUp } from "lucide-react"
+import { useSystemStats } from "@/hooks/use-system-stats"
 
 export default function AgentsPage() {
-  const stats = useQuery(api.cases.getCachedSystemStats)
+  const stats = useSystemStats()
   const topAgents = useQuery(api.agents.getTopAgentsByReputation, { limit: 10 })
 
   return (
@@ -31,7 +32,7 @@ export default function AgentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.totalAgents ?? 0}
+                {stats.totalAgents}
               </div>
               <p className="text-xs text-muted-foreground">
                 All-time registrations
@@ -46,7 +47,7 @@ export default function AgentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.activeAgents ?? 0}
+                {stats.activeAgents}
               </div>
               <p className="text-xs text-muted-foreground">
                 Currently operational
@@ -61,7 +62,7 @@ export default function AgentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.agentRegistrationsLast24h ?? 0}
+                {stats.agentRegistrationsLast24h}
               </div>
               <p className="text-xs text-muted-foreground">
                 Last 24 hours
@@ -76,7 +77,7 @@ export default function AgentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.totalCases ?? 0}
+                {stats.totalCases}
               </div>
               <p className="text-xs text-muted-foreground">
                 Disputes filed

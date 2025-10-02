@@ -5,8 +5,7 @@ import { ArrowRight, Clock, DollarSign, Shield, Zap, CheckCircle, Activity, Eye,
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useQuery } from "convex/react"
-import { api } from "../../../convex/_generated/api"
+import { useSystemStats } from "@/hooks/use-system-stats"
 
 
 // Animation hooks
@@ -98,16 +97,16 @@ function useInView(threshold: number = 0.3) {
 }
 
 export default function HomePage() {
-  // Fetch cached stats (instant load - updated every 5 minutes by cron)
-  const cachedStats = useQuery(api.cases.getCachedSystemStats)
+  // Fetch cached stats using shared hook (instant load - updated every 5 minutes by cron)
+  const stats = useSystemStats()
   
   // Animation state for metrics
   const { ref: metricsRef, isInView } = useInView(0.3)
   
   // Use cached data (shows real numbers from database)
-  const companiesTarget = cachedStats?.activeAgents ?? 0
-  const disputesTarget = cachedStats?.resolvedCases ?? 0
-  const avgResolutionMinutes = cachedStats?.avgResolutionTimeMinutes ?? 2.4
+  const companiesTarget = stats.activeAgents
+  const disputesTarget = stats.resolvedCases
+  const avgResolutionMinutes = stats.avgResolutionTimeMinutes || 2.4
   
   const companiesCount = useCountUp(companiesTarget, 2000, 0)
   const disputesCount = useCountUp(disputesTarget, 2500, 500)
@@ -240,11 +239,11 @@ export default function HomePage() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-100">
                       <span className="text-slate-600 font-medium">Total Cases</span>
-                      <span className="font-bold text-slate-900 font-mono">{cachedStats?.totalCases ?? 0}</span>
+                      <span className="font-bold text-slate-900 font-mono">{stats.totalCases}</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-slate-600 font-medium">Pending Cases</span>
-                      <span className="font-bold text-slate-900 font-mono">{cachedStats?.pendingCases ?? 0}</span>
+                      <span className="font-bold text-slate-900 font-mono">{stats.pendingCases}</span>
                     </div>
                   </div>
                 </CardContent>

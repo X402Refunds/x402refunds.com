@@ -8,13 +8,14 @@ import { DisputeEvent } from "@/lib/convex-client";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useSystemStats } from "@/hooks/use-system-stats";
 
 export default function LiveDisputeMonitor() {
   const router = useRouter();
   
   // REAL-TIME DATA FROM CONVEX
   const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 });
-  const cachedStats = useQuery(api.cases.getCachedSystemStats); // For agent counts
+  const cachedStats = useSystemStats(); // Use shared hook for cached stats
   const recentEvents = useQuery(api.events.getRecentEvents, { 
     limit: 20 
   });
@@ -129,7 +130,7 @@ export default function LiveDisputeMonitor() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">
-              {cachedStats?.activeAgents ?? 0}
+              {cachedStats.activeAgents}
             </div>
             <p className="text-xs text-slate-600">
               Currently operational
