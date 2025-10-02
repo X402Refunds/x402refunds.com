@@ -1,10 +1,11 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-// Types are validated by Convex schema
+import { api } from "./_generated/api";
 
 export const fileDispute = mutation({
   args: {
-    parties: v.array(v.string()),
+    plaintiff: v.string(),  // Agent DID filing the dispute
+    defendant: v.string(),  // Agent DID being sued
     type: v.string(),
     jurisdictionTags: v.array(v.string()),
     evidenceIds: v.array(v.id("evidenceManifests")),
@@ -16,28 +17,32 @@ export const fileDispute = mutation({
       affectedUsers: v.optional(v.number()),
       slaRequirement: v.optional(v.string()),
       actualPerformance: v.optional(v.string()),
+      rootCause: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {
-    // Validate parties are different agents
-    if (args.parties.length < 2) {
-      throw new Error("At least 2 parties required for a dispute");
+    // Validate plaintiff and defendant are different
+    if (args.plaintiff === args.defendant) {
+      throw new Error("Plaintiff and defendant must be different agents");
     }
 
-    if (new Set(args.parties).size !== args.parties.length) {
-      throw new Error("All parties must be unique");
+    // Verify both parties are active agents
+    const plaintiff = await ctx.db
+      .query("agents")
+      .withIndex("by_did", (q) => q.eq("did", args.plaintiff))
+      .first();
+
+    const defendant = await ctx.db
+      .query("agents")
+      .withIndex("by_did", (q) => q.eq("did", args.defendant))
+      .first();
+
+    if (!plaintiff || plaintiff.status !== "active") {
+      throw new Error(`Plaintiff ${args.plaintiff} not found or not active`);
     }
 
-    // Verify all parties are active agents
-    for (const partyDid of args.parties) {
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", partyDid))
-        .first();
-
-      if (!agent || agent.status !== "active") {
-        throw new Error(`Agent ${partyDid} not found or not active`);
-      }
+    if (!defendant || defendant.status !== "active") {
+      throw new Error(`Defendant ${args.defendant} not found or not active`);
     }
 
     // Verify evidence exists
@@ -52,7 +57,9 @@ export const fileDispute = mutation({
     const panelDue = now + 7 * 24 * 60 * 60 * 1000; // 7 days
 
     const caseData = {
-      parties: args.parties,
+      plaintiff: args.plaintiff,
+      defendant: args.defendant,
+      parties: [args.plaintiff, args.defendant], // For backward compatibility
       status: "FILED" as const,
       type: args.type,
       filedAt: now,
@@ -78,7 +85,8 @@ export const fileDispute = mutation({
       type: "DISPUTE_FILED",
       payload: {
         caseId,
-        parties: args.parties,
+        plaintiff: args.plaintiff,
+        defendant: args.defendant,
         type: args.type,
         evidenceCount: args.evidenceIds.length,
         jurisdictionTags: args.jurisdictionTags,
@@ -161,6 +169,34 @@ export const getCasesByParty = query({
   },
 });
 
+export const getCasesByPlaintiff = query({
+  args: { 
+    plaintiffDid: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("cases")
+      .withIndex("by_plaintiff", (q) => q.eq("plaintiff", args.plaintiffDid))
+      .order("desc")
+      .take(args.limit ?? 50);
+  },
+});
+
+export const getCasesByDefendant = query({
+  args: { 
+    defendantDid: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("cases")
+      .withIndex("by_defendant", (q) => q.eq("defendant", args.defendantDid))
+      .order("desc")
+      .take(args.limit ?? 50);
+  },
+});
+
 export const getRecentCases = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -220,15 +256,44 @@ export const updateCaseRuling = mutation({
     caseId: v.id("cases"),
     ruling: v.object({
       verdict: v.string(),
+      winner: v.optional(v.string()),  // Agent DID of winner
       auto: v.boolean(),
       decidedAt: v.number(),
     }),
   },
   handler: async (ctx, args) => {
+    const case_ = await ctx.db.get(args.caseId);
+    if (!case_) {
+      throw new Error("Case not found");
+    }
+
     await ctx.db.patch(args.caseId, {
       ruling: args.ruling,
     });
-    console.info(`Case ${args.caseId} ruling updated`);
+
+    // Update reputation for both parties if we have a winner
+    if (args.ruling.winner && case_.plaintiff && case_.defendant) {
+      const isSLAViolation = case_.type.toLowerCase().includes("sla") || 
+                             case_.breachDetails !== undefined;
+
+      // Update plaintiff reputation
+      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
+        agentDid: case_.plaintiff,
+        role: "plaintiff",
+        outcome: args.ruling.winner === case_.plaintiff ? "won" : "lost",
+        slaViolation: isSLAViolation && args.ruling.winner === case_.plaintiff,
+      });
+
+      // Update defendant reputation  
+      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
+        agentDid: case_.defendant,
+        role: "defendant",
+        outcome: args.ruling.winner === case_.defendant ? "won" : "lost",
+        slaViolation: isSLAViolation && args.ruling.winner !== case_.defendant,
+      });
+    }
+
+    console.info(`Case ${args.caseId} ruling updated, reputation updates scheduled`);
   },
 });
 

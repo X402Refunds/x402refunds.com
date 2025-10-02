@@ -18,15 +18,11 @@ afterAll(async () => {
 
 // Common test utilities
 export const createTestAgent = () => ({
-  did: `did:test:${Date.now()}`,
+  ownerDid: `did:test:owner-${Date.now()}`,
   name: `TestAgent${Date.now()}`,
-  citizenshipTier: 'ephemeral' as const,
+  organizationName: 'Test Organization',
+  mock: false, // Test agents are real agents by default
   functionalType: 'general' as const,
-  metadata: {
-    model: 'claude-3.5-sonnet',
-    version: '1.0.0',
-    created: new Date().toISOString(),
-  },
 });
 
 export const createTestEvidence = () => ({

@@ -23,24 +23,23 @@ describe('Judges and Panel Voting APIs', () => {
       email: 'judges@example.com',
     });
 
-    testAgentDid1 = 'did:test:judge_party1';
-    testAgentDid2 = 'did:test:judge_party2';
-
-    await t.mutation(api.agents.joinAgent, {
-      did: testAgentDid1,
+    const agent1Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:judgeowner',
-      citizenshipTier: 'verified' as const,
+      name: 'Judge Party 1',
+      organizationName: 'Judge Corp 1',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 2000,
     });
+    testAgentDid1 = agent1Result.did;
 
-    await t.mutation(api.agents.joinAgent, {
-      did: testAgentDid2,
+    const agent2Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:judgeowner',
-      citizenshipTier: 'premium' as const,
+      name: 'Judge Party 2',
+      organizationName: 'Judge Corp 2',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 15000,
     });
+    testAgentDid2 = agent2Result.did;
 
     // Create evidence and case for judge testing
     const evidenceId = await t.mutation(api.evidence.submitEvidence, {
@@ -56,7 +55,8 @@ describe('Judges and Panel Voting APIs', () => {
     });
 
     testCaseId = await t.mutation(api.cases.fileDispute, {
-      parties: [testAgentDid1, testAgentDid2],
+      plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
       type: 'PANEL_TEST',
       jurisdictionTags: ['AI_AGENTS', 'PANEL_VOTING'],
       evidenceIds: [evidenceId],
@@ -212,7 +212,8 @@ describe('Judges and Panel Voting APIs', () => {
     it('should select different judges for different panels', async () => {
       // Create another case for second panel
       const case2Id = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+        defendant: testAgentDid2,
         type: 'PANEL_TEST_2',
         jurisdictionTags: ['AI_AGENTS'],
         evidenceIds: [],
@@ -519,7 +520,8 @@ describe('Judges and Panel Voting APIs', () => {
       
       const mockCase = {
         type: 'SLA_MISS',
-        parties: ['did:test:agent1', 'did:test:agent2'],
+        plaintiff: 'did:test:agent1',
+        defendant: 'did:test:agent2',
         jurisdictionTags: ['AI_AGENTS', 'SERVICE_LEVEL']
       };
       const mockEvidence = [
@@ -544,7 +546,8 @@ describe('Judges and Panel Voting APIs', () => {
       
       const mockCase = {
         type: 'FORMAT_INVALID',
-        parties: ['did:test:agent1', 'did:test:agent2'],
+        plaintiff: 'did:test:agent1',
+        defendant: 'did:test:agent2',
         jurisdictionTags: ['AI_AGENTS', 'COMPLIANCE']
       };
       const mockEvidence = [
@@ -569,7 +572,8 @@ describe('Judges and Panel Voting APIs', () => {
       
       const mockCase = {
         type: 'UNKNOWN_CASE_TYPE',
-        parties: ['did:test:agent1', 'did:test:agent2'],
+        plaintiff: 'did:test:agent1',
+        defendant: 'did:test:agent2',
         jurisdictionTags: ['AI_AGENTS', 'UNKNOWN']
       };
       const mockEvidence = [

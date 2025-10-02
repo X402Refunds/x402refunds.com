@@ -112,7 +112,13 @@ http.route({
     
     try {
       const result = await ctx.runMutation(api.agents.joinAgent, {
-        ...body
+        ownerDid: body.ownerDid,
+        name: body.name,
+        organizationName: body.organizationName,
+        mock: body.mock ?? false, // Default to false (real agent)
+        functionalType: body.functionalType,
+        buildHash: body.buildHash,
+        configHash: body.configHash,
       });
       
       return new Response(JSON.stringify(result), {
@@ -135,13 +141,77 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
-    const agentType = url.searchParams.get("type") || "general";
+    const functionalType = url.searchParams.get("type") || undefined;
     const limit = parseInt(url.searchParams.get("limit") || "50");
     
     try {
       const agents = await ctx.runQuery(api.agents.getAgentsByFunctionalType, {
-        functionalType: agentType as any,
+        functionalType: functionalType as any,
         limit
+      });
+      
+      return new Response(JSON.stringify(agents), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({ 
+        error: error.message 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  })
+});
+
+// Get agent reputation
+http.route({
+  path: "/agents/:did/reputation",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const did = request.url.split("/agents/")[1].split("/reputation")[0];
+    
+    try {
+      const reputation = await ctx.runQuery(api.agents.getAgentReputation, {
+        agentDid: did
+      });
+      
+      if (!reputation) {
+        return new Response(JSON.stringify({ 
+          error: "Reputation not found" 
+        }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      
+      return new Response(JSON.stringify(reputation), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({ 
+        error: error.message 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  })
+});
+
+// Get top agents by reputation
+http.route({
+  path: "/agents/top-reputation",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get("limit") || "10");
+    const sortBy = (url.searchParams.get("sortBy") || "overallScore") as "overallScore" | "winRate";
+    
+    try {
+      const agents = await ctx.runQuery(api.agents.getTopAgentsByReputation, {
+        limit,
+        sortBy
       });
       
       return new Response(JSON.stringify(agents), {
@@ -237,34 +307,6 @@ http.route({
         error: error.message 
       }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  })
-});
-
-// Simple agent registration (bypasses functional type rules)
-http.route({
-  path: "/agents/simple",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    
-    try {
-      // Direct database insert without complex validation
-      const agentId = await ctx.runMutation(api.agents.joinSession, {
-        did: body.did,
-        ownerDid: body.ownerDid
-      });
-      
-      return new Response(JSON.stringify({ success: true, agentId }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }

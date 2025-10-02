@@ -20,27 +20,28 @@ describe('Evidence APIs', () => {
       email: 'evidence@example.com',
     });
 
-    testAgentDid = 'did:test:evidenceagent';
-    await t.mutation(api.agents.joinAgent, {
-      did: testAgentDid,
+    const agent1Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:evidenceowner',
-      citizenshipTier: 'verified' as const,
+      name: 'Evidence Agent',
+      organizationName: 'Evidence Corp',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 2000,
     });
+    testAgentDid = agent1Result.did;
 
     // Create second agent for case parties
-    await t.mutation(api.agents.joinAgent, {
-      did: 'did:test:other',
+    const agent2Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:evidenceowner',
-      citizenshipTier: 'verified' as const,
+      name: 'Other Agent',
+      organizationName: 'Other Corp',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 2000,
     });
 
     // Create a test case for evidence linking
     testCaseId = await t.mutation(api.cases.fileDispute, {
-      parties: [testAgentDid, 'did:test:other'],
+      plaintiff: testAgentDid,
+      defendant: agent2Result.did,
       type: 'SLA_MISS',
       jurisdictionTags: ['AI_AGENTS'],
       evidenceIds: [], // No evidence initially

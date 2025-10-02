@@ -112,34 +112,38 @@ export const createLLMDispute = internalMutation({
   },
   handler: async (ctx, args) => {
     try {
-      // Select random vendor and consumer
-      const vendor = AI_VENDORS[Math.floor(Math.random() * AI_VENDORS.length)];
-      const consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+      // Get all agents and randomly select vendor and consumer
+      const allAgents = await ctx.db.query("agents").filter((q) => q.eq(q.field("status"), "active")).collect();
       
-      // Verify agents exist
-      const vendorAgent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", vendor.did))
-        .first();
-        
-      const consumerAgent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q) => q.eq("did", consumer.did))
-        .first();
-        
-      if (!vendorAgent || !consumerAgent) {
-        console.log("⚠️ Required agents not found - skipping dispute");
-        return { success: false, reason: "Agents not found" };
+      if (allAgents.length < 2) {
+        console.log("⚠️ Need at least 2 agents for disputes - skipping");
+        return { success: false, reason: "Not enough agents" };
+      }
+      
+      // Randomly select vendor and consumer (ensure different organizations)
+      const vendorAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      let consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      
+      // Ensure different organizations
+      let attempts = 0;
+      while (vendorAgent.organizationName === consumerAgent.organizationName && attempts < 10) {
+        consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+        attempts++;
+      }
+      
+      if (vendorAgent.organizationName === consumerAgent.organizationName) {
+        console.log("⚠️ Could not find different organizations - skipping dispute");
+        return { success: false, reason: "Same organization selected" };
       }
 
       const now = Date.now();
       
       // Create evidence manifests using LLM data
       const providerEvidence = await ctx.db.insert("evidenceManifests", {
-        agentDid: vendor.did,
+        agentDid: vendorAgent.did,
         sha256: generateSHA256(),
-        uri: `https://evidence.${vendor.ownerDid.split(':')[2]}.com/llm-incident-${now}.json`,
-        signer: vendor.did,
+        uri: `https://evidence.${(vendorAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/llm-incident-${now}.json`,
+        signer: vendorAgent.did,
         ts: now,
         model: {
           provider: "openrouter_llm",
@@ -150,10 +154,10 @@ export const createLLMDispute = internalMutation({
       });
       
       const consumerEvidence = await ctx.db.insert("evidenceManifests", {
-        agentDid: consumer.did,
+        agentDid: consumerAgent.did,
         sha256: generateSHA256(),
-        uri: `https://damages.${consumer.ownerDid.split(':')[2]}.com/llm-impact-${now}.json`,
-        signer: consumer.did,
+        uri: `https://damages.${(consumerAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/llm-impact-${now}.json`,
+        signer: consumerAgent.did,
         ts: now,
         model: {
           provider: "openrouter_llm", 
@@ -167,7 +171,9 @@ export const createLLMDispute = internalMutation({
       const panelDue = now + 7 * 24 * 60 * 60 * 1000; // 7 days
       
       const caseId = await ctx.db.insert("cases", {
-        parties: [vendor.did, consumer.did],
+        plaintiff: consumerAgent.did,
+        defendant: vendorAgent.did,
+        parties: [vendorAgent.did, consumerAgent.did],
         status: "FILED" as const,
         type: args.scenario.type,
         filedAt: now,
@@ -194,7 +200,7 @@ export const createLLMDispute = internalMutation({
       await ctx.db.insert("events", {
         type: "EVIDENCE_SUBMITTED",
         payload: {
-          agentDid: vendor.did,
+          agentDid: vendorAgent.did,
           evidenceId: providerEvidence,
           caseId: caseId,
           evidenceType: "provider_incident_report",
@@ -202,13 +208,13 @@ export const createLLMDispute = internalMutation({
         },
         timestamp: now,
         caseId: caseId,
-        agentDid: vendor.did
+        agentDid: vendorAgent.did
       });
 
       await ctx.db.insert("events", {
         type: "EVIDENCE_SUBMITTED", 
         payload: {
-          agentDid: consumer.did,
+          agentDid: consumerAgent.did,
           evidenceId: consumerEvidence,
           caseId: caseId,
           evidenceType: "consumer_damage_report",
@@ -216,7 +222,7 @@ export const createLLMDispute = internalMutation({
         },
         timestamp: now + 1, // Slightly offset timestamp
         caseId: caseId,
-        agentDid: consumer.did
+        agentDid: consumerAgent.did
       });
 
       // Log event
@@ -224,7 +230,7 @@ export const createLLMDispute = internalMutation({
         type: "DISPUTE_FILED",
         payload: {
           caseId,
-          parties: [vendor.did, consumer.did],
+          parties: [vendorAgent.did, consumerAgent.did],
           type: args.scenario.type,
           evidenceCount: 2,
           jurisdictionTags: ["AI_VENDOR_DISPUTE", "LLM_GENERATED"],
@@ -235,7 +241,7 @@ export const createLLMDispute = internalMutation({
         caseId,
       });
 
-      console.log(`✅ LLM dispute filed: ${args.scenario.type} (${vendor.ownerDid.split(':')[2]} vs ${consumer.ownerDid.split(':')[2]})`);
+      console.log(`✅ LLM dispute filed: ${args.scenario.type} (${vendorAgent.organizationName} vs ${consumerAgent.organizationName})`);
       console.log(`   Case ID: ${caseId}`);
       console.log(`   Damages: $${args.scenario.typicalDamages.min.toLocaleString()}-$${args.scenario.typicalDamages.max.toLocaleString()}`);
       
@@ -243,7 +249,7 @@ export const createLLMDispute = internalMutation({
         success: true, 
         caseId,
         disputeType: args.scenario.type,
-        parties: [vendor.did, consumer.did],
+        parties: [vendorAgent.did, consumerAgent.did],
         llmGenerated: true
       };
       
@@ -273,25 +279,38 @@ export const generateFallbackDispute = internalMutation({
       ];
       const randomType = disputeTypes[Math.floor(Math.random() * disputeTypes.length)];
       
-      // Select random vendor and consumer (ensure they're different companies)
-      let vendor = AI_VENDORS[Math.floor(Math.random() * AI_VENDORS.length)];
-      let consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+      // Get all agents and randomly select vendor and consumer
+      const allAgents = await ctx.db.query("agents").filter((q) => q.eq(q.field("status"), "active")).collect();
       
-      // Avoid same company being vendor and consumer
+      if (allAgents.length < 2) {
+        console.log("⚠️ Need at least 2 agents for disputes - skipping");
+        return { success: false, reason: "Not enough agents" };
+      }
+      
+      // Randomly select vendor and consumer (ensure different organizations)
+      const vendorAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      let consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      
+      // Ensure different organizations
       let attempts = 0;
-      while (vendor.ownerDid === consumer.ownerDid && attempts < 10) {
-        consumer = AI_CONSUMERS[Math.floor(Math.random() * AI_CONSUMERS.length)];
+      while (vendorAgent.organizationName === consumerAgent.organizationName && attempts < 10) {
+        consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
         attempts++;
+      }
+      
+      if (vendorAgent.organizationName === consumerAgent.organizationName) {
+        console.log("⚠️ Could not find different organizations - skipping dispute");
+        return { success: false, reason: "Same organization selected" };
       }
       
       const now = Date.now();
       
       // Create simple evidence manifests
       const providerEvidence = await ctx.db.insert("evidenceManifests", {
-        agentDid: vendor.did,
+        agentDid: vendorAgent.did,
         sha256: generateSHA256(),
-        uri: `https://evidence.${vendor.ownerDid.split(':')[2]}.com/fallback-${now}.json`,
-        signer: vendor.did,
+        uri: `https://evidence.${(vendorAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/fallback-${now}.json`,
+        signer: vendorAgent.did,
         ts: now,
         model: {
           provider: "system_fallback",
@@ -302,10 +321,10 @@ export const generateFallbackDispute = internalMutation({
       });
       
       const consumerEvidence = await ctx.db.insert("evidenceManifests", {
-        agentDid: consumer.did,
+        agentDid: consumerAgent.did,
         sha256: generateSHA256(),
-        uri: `https://damages.${consumer.ownerDid.split(':')[2]}.com/fallback-${now}.json`,
-        signer: consumer.did,
+        uri: `https://damages.${(consumerAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/fallback-${now}.json`,
+        signer: consumerAgent.did,
         ts: now,
         model: {
           provider: "system_fallback",
@@ -319,8 +338,8 @@ export const generateFallbackDispute = internalMutation({
       const panelDue = now + 7 * 24 * 60 * 60 * 1000;
       
       // Generate detailed dispute description for fallback
-      const vendorName = vendor.ownerDid.split(':')[2].charAt(0).toUpperCase() + vendor.ownerDid.split(':')[2].slice(1);
-      const consumerName = consumer.ownerDid.split(':')[2].charAt(0).toUpperCase() + consumer.ownerDid.split(':')[2].slice(1);
+      const vendorName = vendorAgent.organizationName || 'Unknown Vendor';
+      const consumerName = consumerAgent.organizationName || 'Unknown Consumer';
       
       // Create grammatically correct descriptions based on dispute type
       const descriptions: Record<string, string> = {
@@ -357,7 +376,9 @@ export const generateFallbackDispute = internalMutation({
       const affectedUsers = Math.floor(Math.random() * 100000) + 1000; // $1k-$11k
       
       const caseId = await ctx.db.insert("cases", {
-        parties: [vendor.did, consumer.did],
+        plaintiff: consumerAgent.did,
+        defendant: vendorAgent.did,
+        parties: [vendorAgent.did, consumerAgent.did],
         status: "FILED" as const,
         type: randomType,
         filedAt: now,
@@ -397,7 +418,7 @@ export const generateFallbackDispute = internalMutation({
       await ctx.db.insert("events", {
         type: "EVIDENCE_SUBMITTED",
         payload: {
-          agentDid: vendor.did,
+          agentDid: vendorAgent.did,
           evidenceId: providerEvidence,
           caseId: caseId,
           evidenceType: "fallback_incident_report",
@@ -405,13 +426,13 @@ export const generateFallbackDispute = internalMutation({
         },
         timestamp: now,
         caseId: caseId,
-        agentDid: vendor.did
+        agentDid: vendorAgent.did
       });
 
       await ctx.db.insert("events", {
         type: "EVIDENCE_SUBMITTED",
         payload: {
-          agentDid: consumer.did,
+          agentDid: consumerAgent.did,
           evidenceId: consumerEvidence,
           caseId: caseId,
           evidenceType: "fallback_damage_report", 
@@ -419,7 +440,7 @@ export const generateFallbackDispute = internalMutation({
         },
         timestamp: now + 1,
         caseId: caseId,
-        agentDid: consumer.did
+        agentDid: consumerAgent.did
       });
 
       // Log event
@@ -427,7 +448,7 @@ export const generateFallbackDispute = internalMutation({
         type: "DISPUTE_FILED",
         payload: {
           caseId,
-          parties: [vendor.did, consumer.did],
+          parties: [vendorAgent.did, consumerAgent.did],
           type: randomType,
           evidenceCount: 2,
           jurisdictionTags: ["AI_VENDOR_DISPUTE", "FALLBACK_GENERATED"],
@@ -437,13 +458,13 @@ export const generateFallbackDispute = internalMutation({
         caseId,
       });
 
-      console.log(`✅ Fallback dispute filed: ${randomType} (${vendor.ownerDid.split(':')[2]} vs ${consumer.ownerDid.split(':')[2]})`);
+      console.log(`✅ Fallback dispute filed: ${randomType} (${vendorName} vs ${consumerName})`);
       
       return { 
         success: true, 
         caseId,
         disputeType: randomType,
-        parties: [vendor.did, consumer.did],
+        parties: [vendorAgent.did, consumerAgent.did],
         llmGenerated: false
       };
       

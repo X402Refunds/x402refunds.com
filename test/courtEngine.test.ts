@@ -22,24 +22,23 @@ describe('Court Engine Decision Logic', () => {
       email: 'court@example.com',
     });
 
-    testAgentDid1 = 'did:test:court_party1';
-    testAgentDid2 = 'did:test:court_party2';
-
-    await t.mutation(api.agents.joinAgent, {
-      did: testAgentDid1,
+    const agent1Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:courtowner',
-      citizenshipTier: 'verified' as const,
+      name: 'Court Party 1',
+      organizationName: 'Court Corp 1',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 2000,
     });
+    testAgentDid1 = agent1Result.did;
 
-    await t.mutation(api.agents.joinAgent, {
-      did: testAgentDid2,
+    const agent2Result = await t.mutation(api.agents.joinAgent, {
       ownerDid: 'did:test:courtowner',
-      citizenshipTier: 'verified' as const,
+      name: 'Court Party 2',
+      organizationName: 'Court Corp 2',
+      mock: false,
       functionalType: 'general' as const,
-      stake: 1500,
     });
+    testAgentDid2 = agent2Result.did;
 
     // Create evidence for court engine processing
     evidenceId1 = await t.mutation(api.evidence.submitEvidence, {
@@ -71,7 +70,8 @@ describe('Court Engine Decision Logic', () => {
 
     // Create a test case for court engine processing
     testCaseId = await t.mutation(api.cases.fileDispute, {
-      parties: [testAgentDid1, testAgentDid2],
+      plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
       type: 'SLA_MISS',
       jurisdictionTags: ['AI_AGENTS', 'SERVICE_LEVEL'],
       evidenceIds: [evidenceId1, evidenceId2],
@@ -107,7 +107,8 @@ describe('Court Engine Decision Logic', () => {
     it('should handle FORMAT_VIOLATION cases', async () => {
       // Create a format violation case
       const formatCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'FORMAT_VIOLATION',
         jurisdictionTags: ['AI_AGENTS', 'FORMAT'],
         evidenceIds: [evidenceId1],
@@ -125,7 +126,8 @@ describe('Court Engine Decision Logic', () => {
     it('should handle unknown case types with default logic', async () => {
       // Create an unknown case type
       const unknownCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'UNKNOWN_VIOLATION_TYPE',
         jurisdictionTags: ['AI_AGENTS'],
         evidenceIds: [evidenceId2],
@@ -162,7 +164,8 @@ describe('Court Engine Decision Logic', () => {
 
       for (const [index, testCase] of cases.entries()) {
         const caseId = await t.mutation(api.cases.fileDispute, {
-          parties: [testAgentDid1, testAgentDid2],
+          plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
           type: testCase.type,
           jurisdictionTags: ['AI_AGENTS'],
           evidenceIds: [evidenceId1],
@@ -208,7 +211,8 @@ describe('Court Engine Decision Logic', () => {
 
       for (const [index, jurisdictionTags] of jurisdictionCases.entries()) {
         const caseId = await t.mutation(api.cases.fileDispute, {
-          parties: [testAgentDid1, testAgentDid2],
+          plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
           type: `JURISDICTION_TEST_${index}`,
           jurisdictionTags,
           evidenceIds: [evidenceId1],
@@ -243,7 +247,8 @@ describe('Court Engine Decision Logic', () => {
       });
 
       const complexCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'COMPLEX_ANALYSIS',
         jurisdictionTags: ['AI_AGENTS', 'ANALYSIS'],
         evidenceIds: [complexEvidenceId],
@@ -272,7 +277,8 @@ describe('Court Engine Decision Logic', () => {
       });
 
       const multiEvidenceCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'MULTI_EVIDENCE',
         jurisdictionTags: ['AI_AGENTS'],
         evidenceIds: [evidenceId1, evidenceId2, evidence3],
@@ -288,7 +294,8 @@ describe('Court Engine Decision Logic', () => {
 
     it('should handle cases with no evidence', async () => {
       const noEvidenceCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'NO_EVIDENCE_TEST',
         jurisdictionTags: ['AI_AGENTS'],
         evidenceIds: [],
@@ -313,7 +320,8 @@ describe('Court Engine Decision Logic', () => {
     it('should trigger panel assignment for complex cases', async () => {
       // Create a case that should need panel review
       const complexCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'COMPLEX_DISPUTE',
         jurisdictionTags: ['AI_AGENTS', 'COMPLEX'],
         evidenceIds: [evidenceId1, evidenceId2],
@@ -370,7 +378,8 @@ describe('Court Engine Decision Logic', () => {
     it('should handle corrupted case data', async () => {
       // Create a case and then corrupt some data
       const corruptCaseId = await t.mutation(api.cases.fileDispute, {
-        parties: [testAgentDid1, testAgentDid2],
+        plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
         type: 'CORRUPT_TEST',
         jurisdictionTags: ['AI_AGENTS'],
         evidenceIds: [evidenceId1],
@@ -393,7 +402,8 @@ describe('Court Engine Decision Logic', () => {
       for (let i = 0; i < 5; i++) {
         casePromises.push(
           t.mutation(api.cases.fileDispute, {
-            parties: [testAgentDid1, testAgentDid2],
+            plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
             type: `LOAD_TEST_${i}`,
             jurisdictionTags: ['AI_AGENTS'],
             evidenceIds: i % 2 === 0 ? [evidenceId1] : [evidenceId2],
@@ -439,7 +449,8 @@ describe('Court Engine Decision Logic', () => {
       // Process several cases to generate health data
       for (let i = 0; i < 3; i++) {
         const caseId = await t.mutation(api.cases.fileDispute, {
-          parties: [testAgentDid1, testAgentDid2],
+          plaintiff: testAgentDid1,
+      defendant: testAgentDid2,
           type: `HEALTH_TEST_${i}`,
           jurisdictionTags: ['AI_AGENTS'],
           evidenceIds: [evidenceId1],

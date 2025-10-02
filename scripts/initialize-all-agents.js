@@ -25,69 +25,69 @@ const TYPE_MAP = {
   "productivity": "workflow", "projectmanagement": "project"
 };
 
-// AI Vendors from crons.ts - mapped to valid schema functional types
+// AI Vendors - Verified Companies Only (DIDs auto-generated)
 const AI_VENDORS = [
   // Cloud & Infrastructure Providers  
-  { did: "did:agent:aws-lambda-api", ownerDid: "did:enterprise:amazon", functionalType: "api" },
-  { did: "did:agent:azure-ai-services", ownerDid: "did:enterprise:microsoft", functionalType: "api" },
-  { did: "did:agent:google-cloud-api", ownerDid: "did:enterprise:google", functionalType: "api" },
+  { ownerDid: "did:enterprise:amazon", name: "AWS Lambda API", organizationName: "Amazon Web Services", functionalType: "api" },
+  { ownerDid: "did:enterprise:microsoft", name: "Azure AI Services", organizationName: "Microsoft", functionalType: "api" },
+  { ownerDid: "did:enterprise:google", name: "Google Cloud API", organizationName: "Google", functionalType: "api" },
   // AI Model Providers
-  { did: "did:agent:openai-gpt4-api", ownerDid: "did:enterprise:openai", functionalType: "api" },
-  { did: "did:agent:anthropic-claude-api", ownerDid: "did:enterprise:anthropic", functionalType: "api" },
-  { did: "did:agent:cohere-embeddings-api", ownerDid: "did:enterprise:cohere", functionalType: "api" },
-  { did: "did:agent:huggingface-inference-api", ownerDid: "did:enterprise:huggingface", functionalType: "api" },
+  { ownerDid: "did:enterprise:openai", name: "OpenAI GPT-4 API", organizationName: "OpenAI", functionalType: "api" },
+  { ownerDid: "did:enterprise:anthropic", name: "Anthropic Claude API", organizationName: "Anthropic", functionalType: "api" },
+  { ownerDid: "did:enterprise:cohere", name: "Cohere Embeddings API", organizationName: "Cohere", functionalType: "api" },
+  { ownerDid: "did:enterprise:huggingface", name: "HuggingFace Inference API", organizationName: "Hugging Face", functionalType: "api" },
   // Specialized AI Services
-  { did: "did:agent:databricks-ml-api", ownerDid: "did:enterprise:databricks", functionalType: "data" },
-  { did: "did:agent:snowflake-data-api", ownerDid: "did:enterprise:snowflake", functionalType: "data" },
-  { did: "did:agent:mongodb-atlas-api", ownerDid: "did:enterprise:mongodb", functionalType: "data" },
+  { ownerDid: "did:enterprise:databricks", name: "Databricks ML API", organizationName: "Databricks", functionalType: "data" },
+  { ownerDid: "did:enterprise:snowflake", name: "Snowflake Data API", organizationName: "Snowflake", functionalType: "data" },
+  { ownerDid: "did:enterprise:mongodb", name: "MongoDB Atlas API", organizationName: "MongoDB", functionalType: "data" },
   // Payment & Financial
-  { did: "did:agent:stripe-payment-api", ownerDid: "did:enterprise:stripe", functionalType: "financial" },
-  { did: "did:agent:plaid-banking-api", ownerDid: "did:enterprise:plaid", functionalType: "financial" },
+  { ownerDid: "did:enterprise:stripe", name: "Stripe Payment API", organizationName: "Stripe", functionalType: "financial" },
+  { ownerDid: "did:enterprise:plaid", name: "Plaid Banking API", organizationName: "Plaid", functionalType: "financial" },
   // Communication & Collaboration
-  { did: "did:agent:twilio-messaging-api", ownerDid: "did:enterprise:twilio", functionalType: "chat" },
-  { did: "did:agent:sendgrid-email-api", ownerDid: "did:enterprise:sendgrid", functionalType: "chat" },
+  { ownerDid: "did:enterprise:twilio", name: "Twilio Messaging API", organizationName: "Twilio", functionalType: "chat" },
+  { ownerDid: "did:enterprise:sendgrid", name: "SendGrid Email API", organizationName: "SendGrid", functionalType: "chat" },
   // Maps & Location
-  { did: "did:agent:google-maps-api", ownerDid: "did:enterprise:google", functionalType: "api" },
-  { did: "did:agent:mapbox-routing-api", ownerDid: "did:enterprise:mapbox", functionalType: "api" },
+  { ownerDid: "did:enterprise:google-maps", name: "Google Maps API", organizationName: "Google Maps", functionalType: "api" },
+  { ownerDid: "did:enterprise:mapbox", name: "Mapbox Routing API", organizationName: "Mapbox", functionalType: "api" },
   // Security & Auth
-  { did: "did:agent:auth0-identity-api", ownerDid: "did:enterprise:auth0", functionalType: "security" },
-  { did: "did:agent:cloudflare-cdn-api", ownerDid: "did:enterprise:cloudflare", functionalType: "security" }
+  { ownerDid: "did:enterprise:auth0", name: "Auth0 Identity API", organizationName: "Auth0", functionalType: "security" },
+  { ownerDid: "did:enterprise:cloudflare", name: "Cloudflare CDN API", organizationName: "Cloudflare", functionalType: "security" }
 ];
 
 const AI_CONSUMERS = [
   // Media & Entertainment
-  { did: "did:agent:netflix-recommendation-engine", ownerDid: "did:enterprise:netflix", functionalType: "video" },
-  { did: "did:agent:spotify-discovery-ai", ownerDid: "did:enterprise:spotify", functionalType: "music" },
-  { did: "did:agent:youtube-content-moderation", ownerDid: "did:enterprise:youtube", functionalType: "video" },
+  { ownerDid: "did:enterprise:netflix", name: "Netflix Recommendation Engine", organizationName: "Netflix", functionalType: "video" },
+  { ownerDid: "did:enterprise:spotify", name: "Spotify Discovery AI", organizationName: "Spotify", functionalType: "music" },
+  { ownerDid: "did:enterprise:youtube", name: "YouTube Content Moderation", organizationName: "YouTube", functionalType: "video" },
   // Social & Communication
-  { did: "did:agent:discord-moderation-ai", ownerDid: "did:enterprise:discord", functionalType: "social" },
-  { did: "did:agent:slack-search-ai", ownerDid: "did:enterprise:slack", functionalType: "project" },
-  { did: "did:agent:twitter-recommendation-engine", ownerDid: "did:enterprise:twitter", functionalType: "social" },
+  { ownerDid: "did:enterprise:discord", name: "Discord Moderation AI", organizationName: "Discord", functionalType: "social" },
+  { ownerDid: "did:enterprise:slack", name: "Slack Search AI", organizationName: "Slack", functionalType: "project" },
+  { ownerDid: "did:enterprise:twitter", name: "Twitter Recommendation Engine", organizationName: "Twitter", functionalType: "social" },
   // Transportation & Logistics
-  { did: "did:agent:uber-dispatch-system", ownerDid: "did:enterprise:uber", functionalType: "transportation" },
-  { did: "did:agent:doordash-routing-ai", ownerDid: "did:enterprise:doordash", functionalType: "transportation" },
-  { did: "did:agent:fedex-logistics-optimizer", ownerDid: "did:enterprise:fedex", functionalType: "transportation" },
+  { ownerDid: "did:enterprise:uber", name: "Uber Dispatch System", organizationName: "Uber", functionalType: "transportation" },
+  { ownerDid: "did:enterprise:doordash", name: "DoorDash Routing AI", organizationName: "DoorDash", functionalType: "transportation" },
+  { ownerDid: "did:enterprise:fedex", name: "FedEx Logistics Optimizer", organizationName: "FedEx", functionalType: "transportation" },
   // E-Commerce & Retail
-  { did: "did:agent:shopify-merchant-analytics", ownerDid: "did:enterprise:shopify", functionalType: "sales" },
-  { did: "did:agent:amazon-product-recommendations", ownerDid: "did:enterprise:amazon", functionalType: "sales" },
-  { did: "did:agent:instacart-inventory-manager", ownerDid: "did:enterprise:instacart", functionalType: "sales" },
+  { ownerDid: "did:enterprise:shopify", name: "Shopify Merchant Analytics", organizationName: "Shopify", functionalType: "sales" },
+  { ownerDid: "did:enterprise:amazon-retail", name: "Amazon Product Recommendations", organizationName: "Amazon Retail", functionalType: "sales" },
+  { ownerDid: "did:enterprise:instacart", name: "Instacart Inventory Manager", organizationName: "Instacart", functionalType: "sales" },
   // Finance & Fintech
-  { did: "did:agent:robinhood-trading-engine", ownerDid: "did:enterprise:robinhood", functionalType: "financial" },
-  { did: "did:agent:coinbase-fraud-detection", ownerDid: "did:enterprise:coinbase", functionalType: "financial" },
-  { did: "did:agent:square-payment-processor", ownerDid: "did:enterprise:square", functionalType: "financial" },
+  { ownerDid: "did:enterprise:robinhood", name: "Robinhood Trading Engine", organizationName: "Robinhood", functionalType: "financial" },
+  { ownerDid: "did:enterprise:coinbase", name: "Coinbase Fraud Detection", organizationName: "Coinbase", functionalType: "financial" },
+  { ownerDid: "did:enterprise:square", name: "Square Payment Processor", organizationName: "Square", functionalType: "financial" },
   // Healthcare & Wellness
-  { did: "did:agent:teladoc-diagnosis-assistant", ownerDid: "did:enterprise:teladoc", functionalType: "healthcare" },
-  { did: "did:agent:peloton-personalization-ai", ownerDid: "did:enterprise:peloton", functionalType: "healthcare" },
+  { ownerDid: "did:enterprise:teladoc", name: "Teladoc Diagnosis Assistant", organizationName: "Teladoc", functionalType: "healthcare" },
+  { ownerDid: "did:enterprise:peloton", name: "Peloton Personalization AI", organizationName: "Peloton", functionalType: "healthcare" },
   // Travel & Hospitality
-  { did: "did:agent:airbnb-pricing-optimizer", ownerDid: "did:enterprise:airbnb", functionalType: "sales" },
-  { did: "did:agent:booking-recommendation-engine", ownerDid: "did:enterprise:booking", functionalType: "sales" },
+  { ownerDid: "did:enterprise:airbnb", name: "Airbnb Pricing Optimizer", organizationName: "Airbnb", functionalType: "sales" },
+  { ownerDid: "did:enterprise:booking", name: "Booking Recommendation Engine", organizationName: "Booking.com", functionalType: "sales" },
   // Gaming & Entertainment
-  { did: "did:agent:roblox-content-safety", ownerDid: "did:enterprise:roblox", functionalType: "gaming" },
-  { did: "did:agent:unity-asset-optimizer", ownerDid: "did:enterprise:unity", functionalType: "gaming" },
+  { ownerDid: "did:enterprise:roblox", name: "Roblox Content Safety", organizationName: "Roblox", functionalType: "gaming" },
+  { ownerDid: "did:enterprise:unity", name: "Unity Asset Optimizer", organizationName: "Unity", functionalType: "gaming" },
   // SaaS & Productivity
-  { did: "did:agent:notion-ai-assistant", ownerDid: "did:enterprise:notion", functionalType: "workflow" },
-  { did: "did:agent:asana-task-predictor", ownerDid: "did:enterprise:asana", functionalType: "project" },
-  { did: "did:agent:figma-design-assistant", ownerDid: "did:enterprise:figma", functionalType: "design" }
+  { ownerDid: "did:enterprise:notion", name: "Notion AI Assistant", organizationName: "Notion", functionalType: "workflow" },
+  { ownerDid: "did:enterprise:asana", name: "Asana Task Predictor", organizationName: "Asana", functionalType: "project" },
+  { ownerDid: "did:enterprise:figma", name: "Figma Design Assistant", organizationName: "Figma", functionalType: "design" }
 ];
 
 async function initializeAllAgents() {
@@ -105,31 +105,25 @@ async function initializeAllAgents() {
   for (const agent of allAgents) {
     try {
       const agentData = {
-        did: agent.did,
         ownerDid: agent.ownerDid,
-        citizenshipTier: "premium",
+        name: agent.name,
+        organizationName: agent.organizationName,
+        mock: true, // Mark all script-registered agents as mock data
         functionalType: agent.functionalType || "general",
-        stake: 50000,
-        specialization: {
-          capabilities: ["api_integration", "data_processing"],
-          certifications: agent.functionalType === "financial" ? ["TRADING"] : 
-                         agent.functionalType === "healthcare" ? ["HIPAA"] : [],
-          specializations: [agent.functionalType],
-          experienceLevel: "enterprise"
-        }
       };
       
-      await client.mutation("agents:joinAgent", agentData);
+      const result = await client.mutation("agents:joinAgent", agentData);
       registered++;
-      console.log(`✅ Registered: ${agent.did.split(':')[2]}`);
+      console.log(`✅ Registered: ${agent.name} (${agent.organizationName})`);
+      console.log(`   DID: ${result.did}`);
       
     } catch (error) {
       if (error.message && error.message.includes("already")) {
         skipped++;
-        console.log(`⏭️  Skipped (exists): ${agent.did.split(':')[2]}`);
+        console.log(`⏭️  Skipped (exists): ${agent.organizationName}`);
       } else {
         errors++;
-        console.error(`❌ Error: ${agent.did.split(':')[2]} - ${error.message}`);
+        console.error(`❌ Error: ${agent.organizationName} - ${error.message}`);
       }
     }
   }

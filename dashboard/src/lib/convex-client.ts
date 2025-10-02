@@ -16,20 +16,39 @@ export type DisputeEvent = {
   caseId?: string;
 };
 
+export type AgentReputation = {
+  _id: string;
+  agentDid: string;
+  casesFiled: number;
+  casesDefended: number;
+  casesWon: number;
+  casesLost: number;
+  slaViolations: number;
+  violationsAgainstThem: number;
+  winRate: number;
+  reliabilityScore: number;
+  overallScore: number;
+  lastUpdated: number;
+  createdAt: number;
+};
+
 export type Agent = {
   _id: string;
   did: string;
   ownerDid: string;
-  citizenshipTier: string;
-  functionalType: string;
-  classification: string;
+  name: string;
+  organizationName?: string;
+  mock: boolean; // true = test/demo data, false = real production agent
+  functionalType?: string;
   status: string;
-  stake?: number;
   createdAt: number;
+  reputation?: AgentReputation;
 };
 
 export type Case = {
   _id: string;
+  plaintiff: string;
+  defendant: string;
   parties: string[];
   status: "FILED" | "AUTORULED" | "PANELED" | "DECIDED" | "CLOSED";
   type: string;
@@ -38,6 +57,7 @@ export type Case = {
   evidenceIds: string[];
   ruling?: {
     verdict: string;
+    winner?: string;
     auto: boolean;
     decidedAt: number;
   };

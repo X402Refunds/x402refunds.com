@@ -14,19 +14,14 @@ export default defineSchema({
   agents: defineTable({
     did: v.string(),
     ownerDid: v.string(),
+    name: v.optional(v.string()), // Optional for backwards compatibility with old agents
+    organizationName: v.optional(v.string()),
+    mock: v.optional(v.boolean()), // true = test/demo data, false = real production agent (defaults to false if not set)
     buildHash: v.optional(v.string()),
     configHash: v.optional(v.string()),
     
-    // Agent classification
-    citizenshipTier: v.union(
-      v.literal("session"),     // 4h max, observer only
-      v.literal("ephemeral"),   // 24h max, sponsored
-      v.literal("physical"),    // Robots/IoT with location
-      v.literal("verified"),    // Full citizenship
-      v.literal("premium")      // Enhanced powers
-    ),
-    
-    functionalType: v.union(
+    // Simplified functional categorization
+    functionalType: v.optional(v.union(
       // Communication & Interface
       v.literal("voice"), v.literal("chat"), v.literal("social"), v.literal("translation"), v.literal("presentation"),
       
@@ -47,64 +42,9 @@ export default defineSchema({
       
       // General purpose
       v.literal("general")
-    ),
-    
-    classification: v.string(), // e.g., "verified.coding", "premium.financial"
-    
-    // Legacy fields for backward compatibility
-    agentType: v.optional(v.union(
-      v.literal("session"), v.literal("ephemeral"), v.literal("physical"), 
-      v.literal("verified"), v.literal("premium")
     )),
-    tier: v.optional(v.union(v.literal("basic"), v.literal("verified"), v.literal("premium"))),
     
-    // Voting rights (legacy)
-    votingRights: v.optional(v.object({
-      constitutional: v.boolean(),
-      judicial: v.boolean(),
-      weight: v.optional(v.number())
-    })),
-    
-    // Constitutional compliance status (legacy)
-    constitutionalStatus: v.optional(v.union(
-      v.literal("not_attested"),
-      v.literal("attested"),
-      v.literal("expired"),
-      v.literal("revoked"),
-      v.literal("under_review")
-    )),
-    attestationId: v.optional(v.string()),
-    
-    // Agent specialization details (legacy)
-    specialization: v.optional(v.object({
-      capabilities: v.array(v.string()),
-      certifications: v.array(v.string()),
-      languages: v.optional(v.array(v.string())),
-      frameworks: v.optional(v.array(v.string())),
-      specializations: v.array(v.string()),
-      experienceLevel: v.optional(v.string()),
-    })),
-    
-    stake: v.optional(v.number()),
-    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"), v.literal("expired")),
-    
-    // Agent lifecycle fields
-    expiresAt: v.optional(v.number()),
-    sponsor: v.optional(v.string()),
-    maxLifetime: v.optional(v.number()),
-    
-    // Physical agent attestation
-    deviceAttestation: v.optional(v.object({
-      deviceId: v.string(),
-      location: v.optional(v.object({
-        lat: v.number(),
-        lng: v.number(), 
-        timestamp: v.number(),
-        accuracy: v.optional(v.number())
-      })),
-      capabilities: v.array(v.string()),
-      hardwareSignature: v.optional(v.string())
-    })),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned")),
     
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
@@ -112,15 +52,15 @@ export default defineSchema({
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
     .index("by_status", ["status"])
-    .index("by_citizenship_tier", ["citizenshipTier"])
-    .index("by_functional_type", ["functionalType"])
-    .index("by_classification", ["classification"])
-    .index("by_expires", ["expiresAt"])
-    .index("by_type", ["agentType"]),
+    .index("by_functional_type", ["functionalType"]),
 
   // Dispute cases
   cases: defineTable({
-    parties: v.array(v.string()), // agent DIDs
+    // Role-based party identification
+    plaintiff: v.string(),  // Agent DID filing the dispute
+    defendant: v.string(),  // Agent DID being sued
+    parties: v.array(v.string()), // All agent DIDs (for backward compatibility)
+    
     status: v.union(
       v.literal("FILED"),
       v.literal("AUTORULED"),
@@ -139,6 +79,7 @@ export default defineSchema({
     }),
     ruling: v.optional(v.object({
       verdict: v.string(),
+      winner: v.optional(v.string()), // Agent DID of winner
       auto: v.boolean(),
       decidedAt: v.number(),
     })),
@@ -156,7 +97,9 @@ export default defineSchema({
     })),
   })
     .index("by_status", ["status"])
-    .index("by_filed_at", ["filedAt"]),
+    .index("by_filed_at", ["filedAt"])
+    .index("by_plaintiff", ["plaintiff"])
+    .index("by_defendant", ["defendant"]),
 
   // Evidence manifests
   evidenceManifests: defineTable({
@@ -229,14 +172,32 @@ export default defineSchema({
     .index("by_decided_at", ["decidedAt"])
     .index("by_verdict", ["verdict"]),
 
-  // Agent reputation
-  reputation: defineTable({
+  // Agent reputation tracking
+  agentReputation: defineTable({
     agentDid: v.string(),
-    score: v.number(),
-    strikes: v.number(),
-    volume: v.number(),
-    lastUpdate: v.number(),
-  }).index("by_agent", ["agentDid"]),
+    
+    // Case participation counters
+    casesFiled: v.number(),           // Total cases filed as plaintiff
+    casesDefended: v.number(),        // Total cases as defendant
+    casesWon: v.number(),             // Won as plaintiff OR defendant
+    casesLost: v.number(),            // Lost as plaintiff OR defendant
+    
+    // SLA violation tracking
+    slaViolations: v.number(),        // Times this agent violated SLAs
+    violationsAgainstThem: v.number(), // Times others violated against them
+    
+    // Derived scores (updated on each case resolution)
+    winRate: v.number(),              // casesWon / (casesWon + casesLost)
+    reliabilityScore: v.number(),     // Based on violations (0-100)
+    overallScore: v.number(),         // Composite score (0-100)
+    
+    // Metadata
+    lastUpdated: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_agent", ["agentDid"])
+    .index("by_overall_score", ["overallScore"])
+    .index("by_win_rate", ["winRate"]),
 
   // Agent sponsorship system
   sponsorships: defineTable({
@@ -297,12 +258,7 @@ export default defineSchema({
   functionalTypeRules: defineTable({
     ruleId: v.string(),
     functionalType: v.string(),
-    citizenshipTiers: v.array(v.string()),
     requiredLicenses: v.array(v.string()),
-    stakingRequirement: v.optional(v.object({
-      minimum: v.number(),
-      currency: v.string(),
-    })),
     regulatoryReporting: v.boolean(),
     auditTrail: v.string(),
     privacyLevel: v.string(),
