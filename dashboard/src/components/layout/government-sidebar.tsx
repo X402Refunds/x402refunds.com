@@ -3,12 +3,14 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Home, Users, FileText, Activity, Settings, Shield } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string
+  adminOnly?: boolean
 }
 
 const navigationItems: NavigationItem[] = [
@@ -31,11 +33,13 @@ const navigationItems: NavigationItem[] = [
     title: "Activity",
     href: "/dashboard/activity",
     icon: Activity,
+    adminOnly: true,
   },
   {
     title: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+    adminOnly: true,
   },
 ]
 
@@ -45,6 +49,25 @@ interface GovernmentSidebarProps {
 }
 
 export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps) {
+  let orgRole: string | null | undefined = null
+  
+  try {
+    const auth = useAuth()
+    orgRole = auth.orgRole
+  } catch {
+    // Clerk not initialized - show all items during build
+    orgRole = null
+  }
+  
+  // Check if user is admin - either has admin role in organization or is org:admin
+  // If orgRole is null/undefined (during build), show all items
+  const isAdmin = !orgRole || orgRole === 'org:admin' || orgRole === 'admin'
+  
+  // Filter navigation items based on admin status
+  const visibleItems = navigationItems.filter(item => 
+    !item.adminOnly || isAdmin
+  )
+
   return (
     <div className={cn("flex flex-col h-full bg-white border-r border-slate-200", className)}>
       {/* Header */}
@@ -63,7 +86,7 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <div className="space-y-2">
-          {navigationItems.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon
             return (
               <Link

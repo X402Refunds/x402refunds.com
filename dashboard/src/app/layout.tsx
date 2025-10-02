@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/lib/convex-provider";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,7 +36,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
+  const hasClerkKeys = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_') &&
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes('placeholder');
+
+  const content = (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
@@ -47,4 +52,11 @@ export default function RootLayout({
       </body>
     </html>
   );
+
+  // Only wrap with ClerkProvider if we have valid keys
+  if (hasClerkKeys) {
+    return <ClerkProvider>{content}</ClerkProvider>;
+  }
+
+  return content;
 }

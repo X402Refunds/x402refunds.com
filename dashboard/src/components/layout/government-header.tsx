@@ -1,19 +1,11 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Bell, Shield, User, AlertTriangle } from "lucide-react"
+import { Bell } from "lucide-react"
 import { useState, useEffect } from "react"
+import { UserButton, useUser } from "@clerk/nextjs"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 interface SystemStatus {
   status: "operational" | "warning" | "error"
@@ -24,6 +16,16 @@ interface SystemStatus {
 
 export function GovernmentHeader() {
   const pathname = usePathname()
+  let user = null
+  
+  try {
+    const userData = useUser()
+    user = userData.user
+  } catch {
+    // Clerk not initialized - show generic user during build
+    user = null
+  }
+  
   const [systemStatus] = useState<SystemStatus>({
     status: "operational",
     uptime: 99.7,
@@ -93,39 +95,26 @@ export function GovernmentHeader() {
             </div>
           </button>
 
-          {/* User Menu - Compact on mobile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-slate-900 text-white">
-                    VK
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-left hidden sm:block">
-                  <div className="text-sm font-semibold text-slate-900">Vivek Kotecha</div>
-                  <div className="text-xs text-slate-600">Admin</div>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 z-[60] bg-white shadow-xl border border-slate-200">
-              <DropdownMenuLabel className="text-slate-900">Governance Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-slate-700">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-slate-700">
-                <Shield className="mr-2 h-4 w-4" />
-                <span>Security Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                <span>Emergency Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* User Display Name - Hidden on mobile */}
+          {user && (
+            <div className="text-left hidden sm:block">
+              <div className="text-sm font-semibold text-slate-900">{user.fullName || user.firstName || 'User'}</div>
+              <div className="text-xs text-slate-600">{user.organizationMemberships?.[0]?.role === 'org:admin' ? 'Admin' : 'Organization Owner'}</div>
+            </div>
+          )}
+
+          {/* Clerk User Button - Only show if Clerk is initialized */}
+          {user !== null && (
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8",
+                  userButtonTrigger: "focus:shadow-none"
+                }
+              }}
+              afterSignOutUrl="/"
+            />
+          )}
         </div>
       </div>
 

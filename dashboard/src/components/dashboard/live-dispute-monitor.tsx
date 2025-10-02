@@ -138,14 +138,19 @@ export default function LiveDisputeMonitor() {
           </CardContent>
         </Card>
         
-        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
+        <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-700">System Activity</CardTitle>
             <Activity className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {systemStats?.totalEvents ?? 0}
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold text-slate-900">
+                {systemStats?.totalEvents ?? 0}
+              </div>
+              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+                🟢 Live
+              </Badge>
             </div>
             <p className="text-xs text-slate-600">
               Total events
@@ -160,7 +165,7 @@ export default function LiveDisputeMonitor() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-slate-900">
               <Activity className="h-5 w-5" />
-              Live Activity Feed
+              Activity Feed
             </CardTitle>
             <CardDescription className="text-slate-600">
               Real-time dispute resolution events
@@ -193,12 +198,12 @@ export default function LiveDisputeMonitor() {
           </CardContent>
         </Card>
 
-        {/* Active Disputes */}
+        {/* Active Cases */}
         <Card className="border-slate-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-slate-900">
               <Gavel className="h-5 w-5" />
-              Active Disputes
+              Active Cases
             </CardTitle>
             <CardDescription className="text-slate-600">
               Currently processing cases

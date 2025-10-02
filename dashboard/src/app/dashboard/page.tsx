@@ -1,8 +1,6 @@
 "use client"
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import LiveDisputeMonitor from "@/components/dashboard/live-dispute-monitor"
 
 export default function DashboardPage() {
@@ -18,24 +16,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Status Badges - Responsive */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
-              🟢 Live
-            </Badge>
-            <Badge variant="outline" className="border-slate-300 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
-              Last Updated: {new Date().toLocaleTimeString()}
-            </Badge>
-          </div>
-          <Button 
-            variant="outline"
-            onClick={() => window.open('/', '_self')}
-            className="border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto sm:ml-auto"
-          >
-            ← Back to Landing
-          </Button>
-        </div>
 
         {/* Live Dispute Monitor */}
         <LiveDisputeMonitor />

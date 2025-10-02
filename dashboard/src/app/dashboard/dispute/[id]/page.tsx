@@ -115,14 +115,14 @@ export default function DisputeDetailPage() {
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => router.push('/dashboard')}>
+            <Button variant="outline" onClick={() => router.push('/dashboard/cases')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Back to Cases
             </Button>
           </div>
           <Card>
             <CardContent className="py-8">
-              <p className="text-center text-muted-foreground">Loading dispute details...</p>
+              <p className="text-center text-muted-foreground">Loading case details...</p>
             </CardContent>
           </Card>
         </div>
@@ -148,12 +148,12 @@ export default function DisputeDetailPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => router.push('/dashboard')}>
+              <Button variant="outline" onClick={() => router.push('/dashboard/cases')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+                Back to Cases
               </Button>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Dispute Details</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Case Details</h1>
             <p className="text-muted-foreground">Case ID: {caseId}</p>
           </div>
           <Badge className={statusColor}>
@@ -204,12 +204,54 @@ export default function DisputeDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Dispute Description */}
+        {/* Financial Impact - Moved right below Case Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Financial Impact
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
+                </p>
+                {caseDetails.claimedDamages ? (
+                  <>
+                    <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold">To be determined</p>
+                    <p className="text-xs text-muted-foreground">Pending evidence review</p>
+                  </>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Filing Fee</p>
+                <p className="text-lg font-semibold">$150</p>
+                <p className="text-xs text-muted-foreground">Standard filing fee</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Potential Penalty</p>
+                <p className="text-lg font-semibold">
+                  ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">If found in violation</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Case Description */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Dispute Description
+              Case Description
             </CardTitle>
             <CardDescription>
               {getStatusDescription(caseDetails.status)}
@@ -268,48 +310,6 @@ export default function DisputeDetailPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Financial Impact */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Financial Impact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
-                </p>
-                {caseDetails.claimedDamages ? (
-                  <>
-                    <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-lg font-semibold">To be determined</p>
-                    <p className="text-xs text-muted-foreground">Pending evidence review</p>
-                  </>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Dispute Fee</p>
-                <p className="text-lg font-semibold">$150</p>
-                <p className="text-xs text-muted-foreground">Standard filing fee</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Potential Penalty</p>
-                <p className="text-lg font-semibold">
-                  ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">If found in violation</p>
-              </div>
             </div>
           </CardContent>
         </Card>
