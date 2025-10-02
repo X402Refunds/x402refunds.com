@@ -126,27 +126,30 @@ export function GovernmentHeader() {
         </div>
 
         {/* Right Section: Status and User */}
-        <div className="flex items-center gap-4">
-          {/* System Status */}
-          <StatusIndicator />
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* System Status - Hidden on small mobile, visible on tablet+ */}
+          <div className="hidden md:block">
+            <StatusIndicator />
+          </div>
 
-          {/* Jurisdiction Authority */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
-            <Shield className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-700">
-              U.S. Federal Jurisdiction
+          {/* Jurisdiction Authority - Responsive sizing */}
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold text-blue-700 whitespace-nowrap">
+              <span className="hidden sm:inline">U.S. Federal Jurisdiction</span>
+              <span className="sm:hidden">U.S. Federal</span>
             </span>
           </div>
 
-          {/* Notifications */}
-          <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
+          {/* Notifications - Hidden on smallest mobile */}
+          <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg hidden xs:block">
             <Bell className="h-4 w-4" />
             <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full flex items-center justify-center">
               <span className="text-xs text-white">3</span>
             </div>
           </button>
 
-          {/* User Menu */}
+          {/* User Menu - Compact on mobile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors">
@@ -155,7 +158,7 @@ export function GovernmentHeader() {
                     VK
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-left">
+                <div className="text-left hidden sm:block">
                   <div className="text-sm font-semibold text-slate-900">Vivek Kotecha</div>
                   <div className="text-xs text-slate-600">Admin</div>
                 </div>
@@ -182,16 +185,16 @@ export function GovernmentHeader() {
         </div>
       </div>
 
-      {/* Real-time Status Bar */}
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-        <div className="flex items-center gap-4">
-          <span>System Uptime: <span className="font-semibold text-slate-900">{systemStatus.uptime}%</span></span>
-          <span>•</span>
-          <span>Last Updated: <span className="font-semibold text-slate-900">{mounted ? systemStatus.lastUpdate.toLocaleTimeString() : "Loading..."}</span></span>
+      {/* Real-time Status Bar - Responsive */}
+      <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-600">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+          <span className="whitespace-nowrap">Uptime: <span className="font-semibold text-slate-900">{systemStatus.uptime}%</span></span>
+          <span className="hidden sm:inline">•</span>
+          <span className="whitespace-nowrap hidden sm:inline">Last Updated: <span className="font-semibold text-slate-900">{mounted ? systemStatus.lastUpdate.toLocaleTimeString() : "Loading..."}</span></span>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
-          <span>Live Monitoring Active</span>
+          <span className="whitespace-nowrap">Live Monitoring</span>
         </div>
       </div>
     </header>

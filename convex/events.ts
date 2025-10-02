@@ -76,7 +76,7 @@ export const getEventsByCase = query({
   }
 });
 
-// Get system statistics from events
+// Get system statistics from actual cases (not events)
 export const getSystemStats = query({
   args: {
     hoursBack: v.optional(v.number())
@@ -85,6 +85,20 @@ export const getSystemStats = query({
     const hoursBack = args.hoursBack ?? 24;
     const cutoffTime = Date.now() - (hoursBack * 60 * 60 * 1000);
     
+    // Count actual cases filed in the time period
+    const recentCases = await ctx.db
+      .query("cases")
+      .withIndex("by_filed_at", (q) => q.gt("filedAt", cutoffTime))
+      .collect();
+    
+    // Count resolved cases (DECIDED status) in the time period
+    const resolvedCases = recentCases.filter(c => 
+      c.status === "DECIDED" && 
+      c.ruling?.decidedAt && 
+      c.ruling.decidedAt > cutoffTime
+    );
+    
+    // Count events for activity metrics
     const recentEvents = await ctx.db
       .query("events")
       .withIndex("by_timestamp", (q) => q.gt("timestamp", cutoffTime))
@@ -93,10 +107,9 @@ export const getSystemStats = query({
     const stats = {
       totalEvents: recentEvents.length,
       agentRegistrations: recentEvents.filter(e => e.type === "AGENT_REGISTERED").length,
-      disputesFiled: recentEvents.filter(e => e.type === "DISPUTE_FILED").length,
+      disputesFiled: recentCases.length, // Count actual cases, not events
       evidenceSubmitted: recentEvents.filter(e => e.type === "EVIDENCE_SUBMITTED").length,
-      casesResolved: recentEvents.filter(e => e.type === "CASE_STATUS_UPDATED" && 
-        (e.payload?.newStatus === "DECIDED" || e.payload?.newStatus === "PANELED")).length,
+      casesResolved: resolvedCases.length, // Count actual resolved cases
       timeRange: hoursBack,
       periodStart: cutoffTime,
       periodEnd: Date.now()

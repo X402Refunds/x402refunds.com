@@ -18,21 +18,23 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Status Badge */}
-        <div className="flex items-center gap-4">
-          <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">
-            🟢 Dispute Engine Active
-          </Badge>
-          <Badge variant="outline" className="border-slate-300 text-slate-700">
-            Last Updated: {new Date().toLocaleTimeString()}
-          </Badge>
-          <Badge className="bg-blue-50 text-blue-800 border-blue-200">
-            ⚡ Real-time Data
-          </Badge>
+        {/* Status Badges - Responsive */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+              🟢 Dispute Engine Active
+            </Badge>
+            <Badge variant="outline" className="border-slate-300 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
+              Last Updated: {new Date().toLocaleTimeString()}
+            </Badge>
+            <Badge className="bg-blue-50 text-blue-800 border-blue-200 whitespace-nowrap">
+              ⚡ Real-time Data
+            </Badge>
+          </div>
           <Button 
             variant="outline"
             onClick={() => window.open('/', '_self')}
-            className="ml-auto border-slate-300 text-slate-700 hover:bg-slate-50"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto sm:ml-auto"
           >
             ← Back to Landing
           </Button>

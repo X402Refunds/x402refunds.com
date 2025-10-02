@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Settings, Database, Code, Shield, Zap } from "lucide-react"
 
 export default function SettingsPage() {
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://youthful-orca-358.convex.site"
+  const apiUrl = "https://api.consulate.hq.com"
   
   return (
     <DashboardLayout>
@@ -79,13 +79,13 @@ export default function SettingsPage() {
                 <div className="space-y-1">
                   <div className="text-sm font-medium">Base URL</div>
                   <code className="text-xs text-muted-foreground break-all">
-                    {convexUrl}
+                    {apiUrl}
                   </code>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => window.open(convexUrl + '/health', '_blank')}
+                  onClick={() => window.open(apiUrl + '/health', '_blank')}
                 >
                   Test
                 </Button>
