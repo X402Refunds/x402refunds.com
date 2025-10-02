@@ -272,6 +272,48 @@ export default function DisputeDetailPage() {
           </CardContent>
         </Card>
 
+        {/* Financial Impact */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Financial Impact
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
+                </p>
+                {caseDetails.claimedDamages ? (
+                  <>
+                    <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold">To be determined</p>
+                    <p className="text-xs text-muted-foreground">Pending evidence review</p>
+                  </>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Dispute Fee</p>
+                <p className="text-lg font-semibold">$150</p>
+                <p className="text-xs text-muted-foreground">Standard filing fee</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Potential Penalty</p>
+                <p className="text-lg font-semibold">
+                  ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">If found in violation</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Resolution Timeline */}
         <Card>
           <CardHeader>
@@ -343,48 +385,6 @@ export default function DisputeDetailPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Financial Impact */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Financial Impact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
-                </p>
-                {caseDetails.claimedDamages ? (
-                  <>
-                    <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-lg font-semibold">To be determined</p>
-                    <p className="text-xs text-muted-foreground">Pending evidence review</p>
-                  </>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Dispute Fee</p>
-                <p className="text-lg font-semibold">$150</p>
-                <p className="text-xs text-muted-foreground">Standard filing fee</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Potential Penalty</p>
-                <p className="text-lg font-semibold">
-                  ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">If found in violation</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Ruling (if available) */}
         {caseDetails.ruling && (

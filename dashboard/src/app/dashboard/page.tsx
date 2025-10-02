@@ -12,9 +12,9 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Live Dispute Resolution Monitor</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dispute Resolution Monitor</h1>
           <p className="text-slate-600">
-            Real-time AI vendor dispute resolution at institutional scale
+            AI vendor dispute resolution dashboard
           </p>
         </div>
 
@@ -22,13 +22,10 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
-              🟢 Dispute Engine Active
+              🟢 Live
             </Badge>
             <Badge variant="outline" className="border-slate-300 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
               Last Updated: {new Date().toLocaleTimeString()}
-            </Badge>
-            <Badge className="bg-blue-50 text-blue-800 border-blue-200 whitespace-nowrap">
-              ⚡ Real-time Data
             </Badge>
           </div>
           <Button 
