@@ -68,20 +68,31 @@ export default function PricingPage() {
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Free Tier */}
             <Card className="border-2 border-slate-200 shadow-sm">
-              <CardHeader className="pb-8">
+              <CardHeader className="pb-6">
                 <CardTitle className="text-2xl text-slate-900 mb-6">Free</CardTitle>
-                <div className="mb-6">
+                <div className="mb-4">
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold text-slate-900 font-mono">$0</span>
                     <span className="text-slate-600 text-lg">/month</span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-3">
+                  <p className="text-sm text-slate-600 mt-3 mb-4">
                     For individuals and small projects
                   </p>
                 </div>
+                
+                <Link href="/dashboard">
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                  >
+                    Start Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-8">
+                <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
                     <span className="text-slate-700">
@@ -125,36 +136,35 @@ export default function PricingPage() {
                     </span>
                   </div>
                 </div>
-
-                <Link href="/dashboard">
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                  >
-                    Start Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
               </CardContent>
             </Card>
 
             {/* Pro Tier */}
             <Card className="border-2 border-blue-600 shadow-lg">
-              <CardHeader className="pb-8">
+              <CardHeader className="pb-6">
                 <CardTitle className="text-2xl text-slate-900 mb-6">Pro</CardTitle>
-                <div className="mb-6">
+                <div className="mb-4">
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold text-slate-900 font-mono">$149</span>
                     <span className="text-slate-600 text-lg">/month</span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-3">
+                  <p className="text-sm text-slate-600 mt-3 mb-4">
                     For teams that need scale
                   </p>
                 </div>
+
+                <Link href="/dashboard">
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                  >
+                    Upgrade to Pro
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-8">
+                <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-slate-700">
@@ -204,38 +214,37 @@ export default function PricingPage() {
                     </span>
                   </div>
                 </div>
-
-                <Link href="/dashboard">
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  >
-                    Upgrade to Pro
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
               </CardContent>
             </Card>
 
             {/* Enterprise Tier */}
             <Card className="border-2 border-slate-200 shadow-sm">
-              <CardHeader className="pb-8">
+              <CardHeader className="pb-6">
                 <CardTitle className="text-2xl text-slate-900 mb-6">Enterprise</CardTitle>
-                <div className="mb-6">
+                <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900">
-                      <a href="mailto:cto@consulatehq.com" className="hover:text-blue-600 transition-colors">
-                        Email CTO
-                      </a>
-                    </span>
+                    <span className="text-5xl font-bold text-slate-900">Custom</span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-3">
+                  <p className="text-sm text-slate-600 mt-3 mb-4">
                     For companies with serious scale
                   </p>
                 </div>
+
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                  onClick={() => window.location.href = 'tel:+1-781-747-0041'}
+                >
+                  Call CTO Directly
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <p className="text-xs text-slate-500 mt-2 text-center">
+                  or email vivek@consulatehq.com
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-8">
+                <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
                     <span className="text-slate-700">
@@ -279,16 +288,6 @@ export default function PricingPage() {
                     </span>
                   </div>
                 </div>
-
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                  onClick={() => window.location.href = 'mailto:cto@consulatehq.com?subject=Enterprise%20Inquiry'}
-                >
-                  Email CTO
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
               </CardContent>
             </Card>
           </div>
@@ -494,9 +493,9 @@ export default function PricingPage() {
               size="lg" 
               variant="outline" 
               className="border-slate-300 text-slate-700"
-              onClick={() => window.location.href = 'mailto:cto@consulatehq.com'}
+              onClick={() => window.location.href = 'tel:+1-781-747-0041'}
             >
-              Email CTO
+              Call CTO Directly
             </Button>
           </div>
         </div>
