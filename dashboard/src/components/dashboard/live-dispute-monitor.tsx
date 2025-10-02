@@ -144,13 +144,8 @@ export default function LiveDisputeMonitor() {
             <Activity className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-slate-900">
-                {systemStats?.totalEvents ?? 0}
-              </div>
-              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
-                🟢 Live
-              </Badge>
+            <div className="text-2xl font-bold text-slate-900">
+              {systemStats?.totalEvents ?? 0}
             </div>
             <p className="text-xs text-slate-600">
               Total events
@@ -163,10 +158,15 @@ export default function LiveDisputeMonitor() {
         {/* Recent Activity Feed */}
         <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Activity className="h-5 w-5" />
-              Activity Feed
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Activity className="h-5 w-5" />
+                Activity Feed
+              </CardTitle>
+              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+                🟢 Live
+              </Badge>
+            </div>
             <CardDescription className="text-slate-600">
               Real-time dispute resolution events
             </CardDescription>

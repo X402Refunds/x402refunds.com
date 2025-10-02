@@ -139,25 +139,49 @@ export default function AgentsPage() {
                       </div>
                     </div>
 
-                    {/* Reputation Score - Clearer Label */}
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="text-xs text-muted-foreground font-medium">Reputation</div>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                        <span className="text-2xl font-bold">
-                          {Math.round(agent.reputation?.overallScore ?? 0)}
-                        </span>
+                    {/* Reputation Score & Win/Loss Rate - Prominent Display */}
+                    <div className="flex flex-col items-end gap-2 min-w-[180px]">
+                      {/* Reputation Score */}
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground font-medium mb-1">Reputation</div>
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <span className="text-2xl font-bold">
+                            {Math.round(agent.reputation?.overallScore ?? 0)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {agent.reputation?.casesWon ?? 0}W / {agent.reputation?.casesLost ?? 0}L
+                      
+                      {/* Win/Loss Record - Prominent */}
+                      <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-md border border-slate-200">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-green-600">
+                            {agent.reputation?.casesWon ?? 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-medium">WINS</div>
+                        </div>
+                        <div className="text-slate-300">|</div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-red-600">
+                            {agent.reputation?.casesLost ?? 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-medium">LOSSES</div>
+                        </div>
                       </div>
-                      <div className="text-xs">
-                        <Badge variant={
-                          (agent.reputation?.slaViolations ?? 0) === 0 ? "default" : "destructive"
-                        }>
-                          {agent.reputation?.slaViolations ?? 0} violations
-                        </Badge>
-                      </div>
+                      
+                      {/* Win Rate Percentage */}
+                      {((agent.reputation?.casesWon ?? 0) + (agent.reputation?.casesLost ?? 0)) > 0 && (
+                        <div className="text-xs font-semibold text-slate-700">
+                          {Math.round(((agent.reputation?.casesWon ?? 0) / ((agent.reputation?.casesWon ?? 0) + (agent.reputation?.casesLost ?? 0))) * 100)}% Win Rate
+                        </div>
+                      )}
+                      
+                      {/* SLA Violations */}
+                      <Badge variant={
+                        (agent.reputation?.slaViolations ?? 0) === 0 ? "default" : "destructive"
+                      } className="text-xs">
+                        {agent.reputation?.slaViolations ?? 0} SLA violations
+                      </Badge>
                     </div>
                   </div>
                 ))}

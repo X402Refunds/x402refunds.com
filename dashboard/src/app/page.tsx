@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { ArrowRight, Clock, DollarSign, Shield, Zap, CheckCircle, Activity, Eye, ArrowUpRight } from "lucide-react"
+import { ArrowRight, Clock, DollarSign, Shield, Zap, CheckCircle, Activity } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -141,17 +141,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                ● System Operational
-              </Badge>
-              <Button 
-                variant="outline" 
-                onClick={() => window.open('/dashboard', '_self')}
-                className="hidden sm:inline-flex border-slate-300 text-slate-700 hover:bg-slate-50"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Dashboard
-              </Button>
+              {/* Removed System Operational badge and View Dashboard button */}
             </div>
           </div>
         </div>
@@ -187,15 +177,6 @@ export default function HomePage() {
                   >
                     View Live System
                     <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 font-semibold w-full sm:w-auto"
-                    onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
-                  >
-                    Test API
-                    <ArrowUpRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
                   </Button>
                 </div>
               </div>
@@ -300,14 +281,14 @@ export default function HomePage() {
             <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader>
                 <Shield className="h-12 w-12 text-slate-700 mb-4" />
-                <CardTitle className="text-2xl text-slate-900">Sovereign Ready</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">Cryptographically Enforced</CardTitle>
                 <CardDescription className="text-base text-slate-600">
-                  Cryptographic evidence & enforcement
+                  Immutable evidence & automated enforcement
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">
-                  Deploy in your jurisdiction with full sovereignty. Cryptographic proof maintains business relationships and legal compliance.
+                  Every dispute is backed by cryptographic proof and automated enforcement. Transparent, tamper-proof, and legally binding resolutions.
                 </p>
               </CardContent>
             </Card>
@@ -467,7 +448,7 @@ export default function HomePage() {
                     onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')}
                   >
                     Test API Now
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -495,13 +476,6 @@ export default function HomePage() {
               View Live Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-slate-900"
-            >
-              Request Government Demo
-            </Button>
           </div>
         </div>
       </section>
@@ -527,14 +501,13 @@ export default function HomePage() {
             <div className="sm:col-span-2 md:col-span-1">
               <h4 className="text-white text-sm sm:text-base font-medium mb-3 sm:mb-4">Contact</h4>
               <ul className="space-y-2 text-xs sm:text-sm">
-                <li>Government Partnerships</li>
-                <li>Enterprise Integration</li>
                 <li>Technical Support</li>
+                <li>API Documentation</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-slate-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm">
-            <p>&copy; 2024 Consulate. Digital infrastructure for sovereign governance.</p>
+            <p>&copy; 2025 Consulate. Automated dispute resolution for AI agents.</p>
           </div>
         </div>
       </footer>
