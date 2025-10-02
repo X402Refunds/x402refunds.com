@@ -19,20 +19,6 @@ export default function DashboardPage() {
 
         {/* Live Dispute Monitor */}
         <LiveDisputeMonitor />
-
-        {/* Instructions */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-          <h3 className="text-amber-900 font-semibold mb-2">🚀 Start the Dispute Engine</h3>
-          <p className="text-amber-800 text-sm mb-3">
-            To see live disputes, run the AI Agent dispute engine in your terminal:
-          </p>
-          <div className="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-sm">
-            pnpm demo:disputes
-          </div>
-          <p className="text-amber-700 text-xs mt-2">
-            This will generate 10-20 realistic AI Agent disputes per minute with automatic resolution.
-          </p>
-        </div>
       </div>
     </DashboardLayout>
   )

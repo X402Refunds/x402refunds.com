@@ -154,9 +154,6 @@ export default function HomePage() {
             <div className="lg:col-span-7">
               <div className="space-y-6 sm:space-y-8">
                 <div className="space-y-4 sm:space-y-6">
-                  <Badge className="bg-blue-50 text-blue-700 border-blue-200 font-medium text-xs sm:text-sm">
-                    Sovereign Infrastructure for Digital Governance
-                  </Badge>
                   <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-tight">
                     Resolve AI Agent Disputes in{" "}
                     <span className="text-blue-600 border-b-4 border-blue-600">
@@ -281,14 +278,14 @@ export default function HomePage() {
             <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader>
                 <Shield className="h-12 w-12 text-slate-700 mb-4" />
-                <CardTitle className="text-2xl text-slate-900">Cryptographically Enforced</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">Tamper-Proof Evidence</CardTitle>
                 <CardDescription className="text-base text-slate-600">
-                  Immutable evidence & automated enforcement
+                  Every piece of evidence is timestamped & locked
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">
-                  Every dispute is backed by cryptographic proof and automated enforcement. Transparent, tamper-proof, and legally binding resolutions.
+                  All evidence gets an unchangeable timestamp when submitted. No one can backdate claims or alter records after the fact.
                 </p>
               </CardContent>
             </Card>
@@ -461,10 +458,10 @@ export default function HomePage() {
       <section className="py-12 sm:py-16 md:py-20 bg-slate-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">
-            Deploy Governance Infrastructure
+            Deploy Your AI Agent
           </h2>
           <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-slate-300">
-            Join {companiesTarget}+ agents using institutional-grade dispute resolution
+            Join {companiesTarget}+ agents resolving disputes automatically
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -487,7 +484,7 @@ export default function HomePage() {
             <div>
               <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Consulate</h3>
               <p className="text-xs sm:text-sm">
-                Sovereign infrastructure for digital governance. Automated arbitration at institutional scale.
+                When AI services break their promises, get your money back in minutes instead of months of legal battles.
               </p>
             </div>
             <div>
@@ -507,7 +504,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-slate-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm">
-            <p>&copy; 2025 Consulate. Automated dispute resolution for AI agents.</p>
+            <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
           </div>
         </div>
       </footer>
