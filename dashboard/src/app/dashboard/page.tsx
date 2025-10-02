@@ -3,6 +3,9 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import LiveDisputeMonitor from "@/components/dashboard/live-dispute-monitor"
 
+// Force dynamic rendering so middleware runs
+export const dynamic = 'force-dynamic'
+
 export default function DashboardPage() {
 
   return (
