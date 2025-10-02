@@ -1,19 +1,10 @@
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
+// Force all dashboard routes to be dynamic so middleware runs
+export const dynamic = 'force-dynamic'
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Server-side auth check
-  const { userId } = await auth()
-  
-  // Redirect to sign-in if not authenticated
-  if (!userId) {
-    redirect('/sign-in')
-  }
-
   return <>{children}</>
 }
-
