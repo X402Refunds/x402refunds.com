@@ -10,8 +10,27 @@ interface NavigationProps {
 
 export function Navigation({ currentPage }: NavigationProps) {
   const [featuresOpen, setFeaturesOpen] = useState(false)
+  const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  const handleMouseEnter = () => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout)
+      setCloseTimeout(null)
+    }
+    setFeaturesOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setFeaturesOpen(false)
+    }, 150) // 150ms delay before closing
+    setCloseTimeout(timeout)
+  }
 
   const handleFeatureClick = (sectionId: string) => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout)
+    }
     setFeaturesOpen(false)
     // If we're not on the home page, navigate to home first
     if (currentPage !== 'home') {
@@ -40,8 +59,8 @@ export function Navigation({ currentPage }: NavigationProps) {
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               <div 
                 className="relative"
-                onMouseEnter={() => setFeaturesOpen(true)}
-                onMouseLeave={() => setFeaturesOpen(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
               >
                 <button
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
@@ -61,7 +80,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 
                 {/* Dropdown Menu */}
                 {featuresOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-[600px] bg-white border border-slate-200 rounded-lg shadow-lg p-6">
+                  <div className="absolute left-0 top-full mt-1 w-[600px] bg-white border border-slate-200 rounded-lg shadow-lg p-6">
                     <div className="grid grid-cols-2 gap-6">
                       {/* Core Features Column */}
                       <div>
