@@ -103,6 +103,9 @@ export default function HomePage() {
   // Animation state for metrics
   const { ref: metricsRef, isInView } = useInView(0.3)
   
+  // Features dropdown state
+  const [featuresOpen, setFeaturesOpen] = useState(false)
+  
   // Use cached data (shows real numbers from database)
   const companiesTarget = stats.activeAgents
   const disputesTarget = stats.resolvedCases
@@ -124,6 +127,14 @@ export default function HomePage() {
     }
   }, [isInView, disputesTarget, disputesCount])
 
+  const handleFeatureClick = (sectionId: string) => {
+    setFeaturesOpen(false)
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -140,12 +151,74 @@ export default function HomePage() {
                 </button>
               </div>
               <div className="hidden md:ml-6 md:flex md:space-x-8">
-                <a
-                  href="#features"
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setFeaturesOpen(true)}
+                  onMouseLeave={() => setFeaturesOpen(false)}
+                >
+                <button
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
                 >
                   Features
-                </a>
+                    <svg 
+                      className={`ml-1 h-4 w-4 transition-transform ${featuresOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {featuresOpen && (
+                    <div className="absolute left-0 top-full mt-2 w-[600px] bg-white border border-slate-200 rounded-lg shadow-lg p-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Core Features Column */}
+                        <div>
+                          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                            Core Features
+                          </div>
+                          <button
+                            onClick={() => handleFeatureClick('feature-identity')}
+                            className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                                <Shield className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-900 mb-1">Persistent Identity</div>
+                                <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* Automation Column */}
+                        <div>
+                          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                            Automation
+                          </div>
+                          <button
+                            onClick={() => handleFeatureClick('feature-dispute')}
+                            className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                                <Gavel className="h-5 w-5 text-emerald-600" />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-900 mb-1">Dispute Resolution</div>
+                                <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
+                              </div>
+                            </div>
+                </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => window.location.href = '/pricing'}
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
@@ -277,7 +350,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-20">
             {/* Feature 1: Persistent Identity */}
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div id="feature-identity" className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 bg-blue-100 rounded-lg">
@@ -417,7 +490,7 @@ export default function HomePage() {
             </div>
 
             {/* Feature 2: Automated Arbitration */}
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div id="feature-dispute" className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1 space-y-4">
                 <Card className="border-l-4 border-l-emerald-600 shadow-sm">
                   <CardContent className="p-6">
