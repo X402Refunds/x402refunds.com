@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useSystemStats } from "@/hooks/use-system-stats"
+import { Navigation } from "@/components/Navigation"
+import { Footer } from "@/components/Footer"
 
 
 // Animation hooks
@@ -103,9 +105,6 @@ export default function HomePage() {
   // Animation state for metrics
   const { ref: metricsRef, isInView } = useInView(0.3)
   
-  // Features dropdown state
-  const [featuresOpen, setFeaturesOpen] = useState(false)
-  
   // Use cached data (shows real numbers from database)
   const companiesTarget = stats.activeAgents
   const disputesTarget = stats.resolvedCases
@@ -127,118 +126,9 @@ export default function HomePage() {
     }
   }, [isInView, disputesTarget, disputesCount])
 
-  const handleFeatureClick = (sectionId: string) => {
-    setFeaturesOpen(false)
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-14 sm:h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <button 
-                  onClick={() => window.location.href = '/'}
-                  className="text-lg sm:text-2xl font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
-                >
-                  Consulate
-                </button>
-              </div>
-              <div className="hidden md:ml-6 md:flex md:space-x-8">
-                <div 
-                  className="relative"
-                  onMouseEnter={() => setFeaturesOpen(true)}
-                  onMouseLeave={() => setFeaturesOpen(false)}
-                >
-                <button
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                >
-                  Features
-                    <svg 
-                      className={`ml-1 h-4 w-4 transition-transform ${featuresOpen ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {featuresOpen && (
-                    <div className="absolute left-0 top-full mt-2 w-[600px] bg-white border border-slate-200 rounded-lg shadow-lg p-6">
-                      <div className="grid grid-cols-2 gap-6">
-                        {/* Core Features Column */}
-                        <div>
-                          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                            Core Features
-                          </div>
-                          <button
-                            onClick={() => handleFeatureClick('feature-identity')}
-                            className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                                <Shield className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-slate-900 mb-1">Persistent Identity</div>
-                                <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
-                              </div>
-                            </div>
-                          </button>
-                        </div>
-
-                        {/* Automation Column */}
-                        <div>
-                          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                            Automation
-                          </div>
-                          <button
-                            onClick={() => handleFeatureClick('feature-dispute')}
-                            className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                                <Gavel className="h-5 w-5 text-emerald-600" />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-slate-900 mb-1">Dispute Resolution</div>
-                                <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
-                              </div>
-                            </div>
-                </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => window.location.href = '/pricing'}
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                >
-                  Pricing
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Button 
-                variant="outline" 
-                className="border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
-                onClick={() => window.open('/dashboard', '_self')}
-              >
-                Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation currentPage="home" />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 sm:py-20 lg:py-32">
@@ -879,37 +769,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 sm:py-16 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
-            <div>
-              <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Consulate</h3>
-              <p className="text-sm sm:text-base leading-relaxed">
-                When AI services break their promises, get your money back in minutes instead of months of legal battles.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-                <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
-                <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
-                <li><button className="hover:text-white transition-colors">Documentation</button></li>
-              </ul>
-            </div>
-            <div className="md:col-span-1">
-              <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Contact</h4>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-                <li>Technical Support</li>
-                <li>API Documentation</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10 text-center text-xs sm:text-sm">
-            <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

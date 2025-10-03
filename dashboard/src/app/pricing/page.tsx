@@ -3,49 +3,13 @@
 import { ArrowRight, Check, Shield, Zap, Lock, Globe } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Navigation } from "@/components/Navigation"
+import { Footer } from "@/components/Footer"
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link 
-                  href="/"
-                  className="text-2xl font-bold text-slate-900 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
-                >
-                  Consulate
-                </Link>
-              </div>
-              <div className="hidden md:ml-6 md:flex md:space-x-8">
-                <Link
-                  href="/features"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                >
-                  Features
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600"
-                >
-                  Pricing
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard">
-                <Button variant="outline" className="border-slate-300 text-slate-700">
-                  Dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation currentPage="pricing" />
 
       {/* Hero Section */}
       <section className="py-12 sm:py-16 lg:py-24 bg-slate-50/50">
@@ -81,7 +45,7 @@ export default function PricingPage() {
                   </p>
                 </div>
                 
-                <Link href="/dashboard">
+                <button onClick={() => window.location.href = '/dashboard'}>
                   <Button 
                     size="lg" 
                     variant="outline"
@@ -90,7 +54,7 @@ export default function PricingPage() {
                     Start Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
+                </button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -154,7 +118,7 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <Link href="/dashboard">
+                <button onClick={() => window.location.href = '/dashboard'}>
                   <Button 
                     size="lg" 
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
@@ -162,7 +126,7 @@ export default function PricingPage() {
                     Upgrade to Pro
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
+                </button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -484,12 +448,14 @@ export default function PricingPage() {
             Start free. Upgrade when you need more.
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              Get Started
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
             <Button 
               size="lg" 
               variant="outline" 
@@ -502,36 +468,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Consulate</h3>
-              <p className="text-sm">
-                Persistent identity and automated arbitration for AI agents.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white text-base font-medium mb-4">Platform</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white text-base font-medium mb-4">Contact</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="mailto:cto@consulatehq.com" className="hover:text-white transition-colors">cto@consulatehq.com</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm">
-            <p>&copy; 2025 Consulate. Infrastructure for AI agent commerce.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
