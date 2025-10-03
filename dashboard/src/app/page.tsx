@@ -168,39 +168,39 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-8 sm:py-16 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden py-16 sm:py-20 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
             <div className="lg:col-span-7">
-              <div className="space-y-5 sm:space-y-8">
-                <div className="space-y-3 sm:space-y-5">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
+              <div className="space-y-8 sm:space-y-10">
+                <div className="space-y-6 sm:space-y-7">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
                     Resolve AI Agent Disputes in{" "}
                     <span className="text-blue-600 border-b-4 border-blue-600">
                       minutes
                     </span>
                   </h1>
-                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-600 max-w-4xl leading-relaxed">
+                  <p className="text-lg sm:text-xl md:text-2xl lg:text-2xl text-slate-600 max-w-2xl leading-relaxed">
                     When AI services fail to deliver what they promised, we resolve the disputes <strong className="text-slate-900">automatically in minutes</strong> instead of 
                     months of <strong className="text-slate-900">expensive legal battles</strong>.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 pt-2">
                   <Button 
                     size="lg" 
-                    className="bg-slate-900 text-white hover:bg-slate-800 text-base sm:text-lg px-6 sm:px-8 h-12 sm:h-14 font-semibold w-full sm:w-auto"
+                    className="bg-slate-900 text-white hover:bg-slate-800 text-lg px-8 h-14 font-semibold w-full sm:w-auto"
                     onClick={() => window.open('/dashboard', '_self')}
                   >
                     View Live System
-                    <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </div>
             </div>
             
-            {/* Live Metrics Card */}
-            <div ref={metricsRef} className="lg:col-span-5 mt-8 lg:mt-0">
+            {/* Live Metrics Card - Hidden on mobile, shown on lg+ */}
+            <div ref={metricsRef} className="hidden lg:block lg:col-span-5 lg:mt-0">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
                   <div className="flex items-center justify-between gap-2">
@@ -252,19 +252,39 @@ export default function HomePage() {
       </section>
 
 
+      {/* Mobile-only Simple Metrics */}
+      <section className="lg:hidden py-12 bg-slate-50/30 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-900 font-mono mb-2">
+                {companiesTarget}
+              </div>
+              <div className="text-sm text-slate-600 font-medium">Active Agents</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-900 font-mono mb-2">
+                {disputesTarget}
+              </div>
+              <div className="text-sm text-slate-600 font-medium">Disputes Resolved</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Value Proposition */}
-      <section className="py-10 sm:py-14 md:py-20 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-10 md:mb-14">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-2 sm:mb-3">
+      <section className="py-16 sm:py-20 md:py-24 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-14 md:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 sm:mb-5">
               Constitutional-Grade Dispute Resolution
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-3xl mx-auto px-2">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
               Institutional infrastructure for automated arbitration. Fast, transparent, and sovereign-deployable for any jurisdiction.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-6 md:gap-8">
             <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="pb-3 sm:pb-4">
                 <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-emerald-600 mb-3 sm:mb-4" />
@@ -314,18 +334,18 @@ export default function HomePage() {
       </section>
 
       {/* Demo Cases */}
-      <section className="py-10 sm:py-14 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6 sm:mb-10 md:mb-14">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-2 sm:mb-3">
+      <section className="py-16 sm:py-20 md:py-24">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-14 md:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 sm:mb-5">
               Proven Resolution Cases
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 px-2">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600">
               Real scenarios where institutional automation delivers results
             </p>
           </div>
 
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-4 sm:space-y-5">
             {/* Case 1 */}
             <Card className="border-l-4 border-l-emerald-600 shadow-sm">
               <CardContent className="p-4 sm:p-5 md:p-6">
@@ -402,14 +422,14 @@ export default function HomePage() {
       </section>
 
       {/* Live API Section */}
-      <section className="py-10 sm:py-14 md:py-20 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 items-center">
+      <section className="py-16 sm:py-20 md:py-24 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 items-center">
             <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-5">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 sm:mb-6">
                 Enterprise-Grade API
               </h2>
-              <p className="text-sm sm:text-base md:text-lg text-slate-300 mb-5 sm:mb-7">
+              <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-6 sm:mb-8">
                 Sovereign-deployable infrastructure. Test it now or integrate directly into your jurisdiction.
               </p>
               <div className="space-y-3">
@@ -475,55 +495,55 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-10 sm:py-14 md:py-20 bg-slate-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-5">
+      <section className="py-16 sm:py-20 md:py-24 bg-slate-900 text-white">
+        <div className="max-w-4xl mx-auto px-6 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 sm:mb-6">
             Deploy Your AI Agent
           </h2>
-          <p className="text-sm sm:text-base md:text-lg mb-5 sm:mb-7 text-slate-300">
+          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-10 text-slate-300">
             Join {companiesTarget}+ agents resolving disputes automatically
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
               variant="secondary"
-              className="bg-white text-slate-900 hover:bg-slate-100 h-11 sm:h-12 text-sm sm:text-base"
+              className="bg-white text-slate-900 hover:bg-slate-100 h-14 text-lg px-8"
               onClick={() => window.open('/dashboard', '_self')}
             >
               View Live Dashboard
-              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-6 sm:py-10 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6">
+      <footer className="bg-slate-900 text-slate-400 py-12 sm:py-16 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
             <div>
-              <h3 className="text-white text-sm sm:text-base font-semibold mb-2 sm:mb-3">Consulate</h3>
-              <p className="text-xs sm:text-sm leading-relaxed">
+              <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Consulate</h3>
+              <p className="text-sm sm:text-base leading-relaxed">
                 When AI services break their promises, get your money back in minutes instead of months of legal battles.
               </p>
             </div>
             <div>
-              <h4 className="text-white text-sm font-medium mb-2 sm:mb-3">Platform</h4>
-              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+              <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
+              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
                 <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
                 <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
                 <li><button className="hover:text-white transition-colors">Documentation</button></li>
               </ul>
             </div>
             <div className="md:col-span-1">
-              <h4 className="text-white text-sm font-medium mb-2 sm:mb-3">Contact</h4>
-              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+              <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Contact</h4>
+              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
                 <li>Technical Support</li>
                 <li>API Documentation</li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-800 mt-5 sm:mt-7 pt-5 sm:pt-7 text-center text-[10px] sm:text-xs">
+          <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10 text-center text-xs sm:text-sm">
             <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
           </div>
         </div>
