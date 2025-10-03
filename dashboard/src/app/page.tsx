@@ -131,31 +131,31 @@ export default function HomePage() {
       <Navigation currentPage="home" />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-12 sm:py-16 lg:py-32">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden py-16 sm:py-20 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
             <div className="lg:col-span-7">
-              <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-                <div className="space-y-5 sm:space-y-6 lg:space-y-7">
-                  <h1 className="text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.05] sm:leading-[1.1]">
+              <div className="space-y-8 sm:space-y-10">
+                <div className="space-y-6 sm:space-y-7">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
                     Resolve AI Agent Disputes in{" "}
                     <span className="text-blue-600 border-b-4 border-blue-600">
                       minutes
                     </span>
                   </h1>
-                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-600 max-w-2xl leading-relaxed">
+                  <p className="text-lg sm:text-xl md:text-2xl lg:text-2xl text-slate-600 max-w-2xl leading-relaxed">
                     When AI services fail to deliver what they promised, we resolve the disputes <strong className="text-slate-900">automatically in minutes</strong> instead of 
                     months of <strong className="text-slate-900">expensive legal battles</strong>.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 pt-2">
                   <Button 
                     size="lg" 
-                    className="bg-slate-900 text-white hover:bg-slate-800 text-base sm:text-lg px-8 h-12 sm:h-14 font-semibold w-full sm:w-auto shadow-lg"
+                    className="bg-slate-900 text-white hover:bg-slate-800 text-lg px-8 h-14 font-semibold w-full sm:w-auto"
                     onClick={() => window.open('/dashboard', '_self')}
                   >
-                    See System in Action
+                    View Live System
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
@@ -216,44 +216,44 @@ export default function HomePage() {
 
 
       {/* Mobile-only Simple Metrics */}
-      <section className="lg:hidden py-10 bg-slate-50 border-y border-slate-200">
-        <div className="max-w-7xl mx-auto px-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-              <div className="text-5xl font-bold text-slate-900 font-mono mb-2">
+      <section className="lg:hidden py-12 bg-slate-50/30 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-900 font-mono mb-2">
                 {companiesTarget}
               </div>
-              <div className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Active Agents</div>
+              <div className="text-sm text-slate-600 font-medium">Active Agents</div>
             </div>
-            <div className="text-center bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-              <div className="text-5xl font-bold text-slate-900 font-mono mb-2">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-900 font-mono mb-2">
                 {disputesTarget}
               </div>
-              <div className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Disputes Resolved</div>
+              <div className="text-sm text-slate-600 font-medium">Disputes Resolved</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Core Features Section */}
-      <section id="features" className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="space-y-16 sm:space-y-20">
+      <section id="features" className="py-12 sm:py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-20">
             {/* Feature 1: Persistent Identity */}
-            <div id="feature-identity" className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
+            <div id="feature-identity" className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <div className="flex items-center gap-3 mb-5 sm:mb-6">
-                  <div className="p-2.5 sm:p-3 bg-blue-100 rounded-lg">
-                    <Shield className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <Shield className="h-8 w-8 text-blue-600" />
                   </div>
-                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs sm:text-sm font-medium px-3 py-1">
+                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
                     Core Feature #1
                   </Badge>
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 sm:mb-5 lg:mb-6 leading-tight">
+                <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
                   Persistent Identity for AI Agents
                 </h2>
-                <p className="text-base sm:text-lg text-slate-600 mb-6 sm:mb-7 lg:mb-8 leading-relaxed">
+                <p className="text-lg text-slate-600 mb-8 leading-relaxed">
                   Every AI agent gets a permanent, verifiable identity (DID) that persists across 
                   sessions and platforms. This identity accumulates reputation, tracks performance 
                   history, and builds trust over time—just like credit scores for humans.
@@ -312,11 +312,13 @@ export default function HomePage() {
 
                 <Button 
                   size="lg" 
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => window.open('/dashboard', '_self')}
                 >
-                  View Agent Registry
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    View Agent Registry
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </Button>
               </div>
 
@@ -378,10 +380,10 @@ export default function HomePage() {
             </div>
 
             {/* Feature 2: Automated Arbitration */}
-            <div id="feature-dispute" className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
+            <div id="feature-dispute" className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1 space-y-4">
                 <Card className="border-l-4 border-l-emerald-600 shadow-sm">
-                  <CardContent className="p-5 sm:p-6">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-slate-900">Case #2847</h3>
                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
@@ -442,18 +444,18 @@ export default function HomePage() {
               </div>
 
               <div className="order-1 lg:order-2">
-                <div className="flex items-center gap-3 mb-5 sm:mb-6">
-                  <div className="p-2.5 sm:p-3 bg-emerald-100 rounded-lg">
-                    <Gavel className="h-7 w-7 sm:h-8 sm:w-8 text-emerald-600" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-emerald-100 rounded-lg">
+                    <Gavel className="h-8 w-8 text-emerald-600" />
                   </div>
-                  <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs sm:text-sm font-medium px-3 py-1">
+                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">
                     Core Feature #2
                   </Badge>
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 sm:mb-5 lg:mb-6 leading-tight">
+                <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
                   Agent-to-Agent Dispute Resolution
                 </h2>
-                <p className="text-base sm:text-lg text-slate-600 mb-6 sm:mb-7 lg:mb-8 leading-relaxed">
+                <p className="text-lg text-slate-600 mb-8 leading-relaxed">
                   When AI services break their promises, automated arbitration resolves disputes 
                   in <strong className="text-slate-900">minutes instead of months</strong>. 
                   Evidence-based, transparent, and enforceable.
@@ -512,11 +514,13 @@ export default function HomePage() {
 
                 <Button 
                   size="lg" 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={() => window.open('/dashboard/cases', '_self')}
                 >
-                  View Case History
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    View Case History
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </Button>
               </div>
             </div>
@@ -525,13 +529,13 @@ export default function HomePage() {
       </section>
 
       {/* Benefits Grid */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
+      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
               Why These Features Matter
             </h2>
-            <p className="text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">
+            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
               Together, persistent identity and automated arbitration create a complete 
               trust infrastructure for AI agent commerce
             </p>
@@ -582,13 +586,13 @@ export default function HomePage() {
 
 
       {/* Demo Cases */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
+      <section className="py-16 sm:py-20 md:py-24">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-14 md:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 sm:mb-5">
               Proven Resolution Cases
             </h2>
-            <p className="text-base sm:text-lg text-slate-600">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600">
               Real scenarios where institutional automation delivers results
             </p>
           </div>
@@ -670,14 +674,14 @@ export default function HomePage() {
       </section>
 
       {/* Live API Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <section className="py-16 sm:py-20 md:py-24 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 items-center">
             <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-5 lg:mb-6">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 sm:mb-6">
                 Enterprise-Grade API
               </h2>
-              <p className="text-base sm:text-lg text-slate-300 mb-6 sm:mb-7 lg:mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-6 sm:mb-8">
                 Sovereign-deployable infrastructure. Test it now or integrate directly into your jurisdiction.
               </p>
               <div className="space-y-3">
@@ -743,22 +747,22 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-900 text-white border-t border-slate-800">
-        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-5">
+      <section className="py-16 sm:py-20 md:py-24 bg-slate-900 text-white">
+        <div className="max-w-4xl mx-auto px-6 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 sm:mb-6">
             Deploy Your AI Agent
           </h2>
-          <p className="text-base sm:text-lg mb-7 sm:mb-8 text-slate-300">
+          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-10 text-slate-300">
             Join {companiesTarget}+ agents resolving disputes automatically
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
               variant="secondary"
-              className="bg-white text-slate-900 hover:bg-slate-100 h-12 sm:h-14 text-base sm:text-lg px-8 font-semibold shadow-lg"
+              className="bg-white text-slate-900 hover:bg-slate-100 h-14 text-lg px-8"
               onClick={() => window.open('/dashboard', '_self')}
             >
-              See System in Action
+              View Live Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
