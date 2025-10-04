@@ -21,238 +21,179 @@ export default async function Image() {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#0f172a', // slate-900
-          backgroundImage: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          backgroundColor: '#0f172a',
           padding: '80px',
-          position: 'relative',
         }}
       >
-        {/* Decorative Elements */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '600px',
-            height: '600px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-            borderRadius: '50%',
-            transform: 'translate(30%, -30%)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
-            borderRadius: '50%',
-            transform: 'translate(-20%, 20%)',
-          }}
-        />
-
-        {/* Content */}
+        {/* Logo */}
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '32px',
-            position: 'relative',
-            zIndex: 1,
+            alignItems: 'center',
+            gap: '20px',
+            marginBottom: '60px',
           }}
         >
-          {/* Logo/Brand */}
           <div
             style={{
+              width: '64px',
+              height: '64px',
+              background: '#3b82f6',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
+              justifyContent: 'center',
+              fontSize: '36px',
             }}
           >
+            ⚖️
+          </div>
+          <div
+            style={{
+              fontSize: '48px',
+              fontWeight: '700',
+              color: 'white',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Consulate
+          </div>
+        </div>
+
+        {/* Main Headline */}
+        <h1
+          style={{
+            fontSize: '64px',
+            fontWeight: '700',
+            color: 'white',
+            lineHeight: 1.2,
+            margin: '0 0 32px 0',
+            textAlign: 'center',
+            maxWidth: '900px',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          AI Agent Disputes
+          <br />
+          Resolved in Minutes
+        </h1>
+
+        {/* Subtitle */}
+        <p
+          style={{
+            fontSize: '28px',
+            color: '#94a3b8',
+            lineHeight: 1.4,
+            margin: '0 0 60px 0',
+            textAlign: 'center',
+            maxWidth: '700px',
+          }}
+        >
+          Automated arbitration for enterprise AI vendors
+        </p>
+
+        {/* Stats */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '60px',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <div
               style={{
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: 'white',
+                fontSize: '40px',
+                fontWeight: '700',
+                color: '#10b981',
               }}
             >
-              ⚖️
+              2.4 min
             </div>
             <div
               style={{
-                fontSize: '42px',
-                fontWeight: 'bold',
-                color: 'white',
-                letterSpacing: '-0.02em',
+                fontSize: '14px',
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
               }}
             >
-              Consulate
+              Avg Resolution
             </div>
           </div>
 
-          {/* Main Headline */}
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              maxWidth: '900px',
+              width: '2px',
+              height: '60px',
+              backgroundColor: '#334155',
             }}
-          >
-            <h1
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div
               style={{
-                fontSize: '72px',
-                fontWeight: 'bold',
-                color: 'white',
-                lineHeight: 1.1,
-                margin: 0,
-                letterSpacing: '-0.03em',
+                fontSize: '40px',
+                fontWeight: '700',
+                color: '#3b82f6',
               }}
             >
-              Resolve AI Agent Disputes in{' '}
-              <span
-                style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  color: 'transparent',
-                }}
-              >
-                Minutes
-              </span>
-            </h1>
+              95%
+            </div>
+            <div
+              style={{
+                fontSize: '14px',
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+              }}
+            >
+              Cost Savings
+            </div>
           </div>
 
-          {/* Subtitle */}
-          <p
-            style={{
-              fontSize: '28px',
-              color: '#94a3b8', // slate-400
-              lineHeight: 1.5,
-              margin: 0,
-              maxWidth: '800px',
-            }}
-          >
-            Automated arbitration for enterprise AI service agreements and SLA violations
-          </p>
-
-          {/* Stats Bar */}
           <div
             style={{
-              display: 'flex',
-              gap: '48px',
-              marginTop: '16px',
+              width: '2px',
+              height: '60px',
+              backgroundColor: '#334155',
             }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  fontSize: '36px',
-                  fontWeight: 'bold',
-                  color: '#10b981', // emerald-500
-                }}
-              >
-                2.4 min
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#cbd5e1', // slate-300
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Avg Resolution
-              </div>
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                fontSize: '40px',
+                fontWeight: '700',
+                color: '#f59e0b',
+              }}
+            >
+              24/7
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  fontSize: '36px',
-                  fontWeight: 'bold',
-                  color: '#3b82f6', // blue-500
-                }}
-              >
-                95% Savings
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#cbd5e1', // slate-300
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                vs Legal Costs
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  fontSize: '36px',
-                  fontWeight: 'bold',
-                  color: '#f59e0b', // amber-500
-                }}
-              >
-                24/7 Live
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#cbd5e1', // slate-300
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Production API
-              </div>
+            <div
+              style={{
+                fontSize: '14px',
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+              }}
+            >
+              Live System
             </div>
           </div>
         </div>
 
-        {/* Bottom Badge */}
+        {/* URL */}
         <div
           style={{
-            position: 'absolute',
-            bottom: '60px',
-            right: '80px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            border: '2px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: '100px',
-            padding: '12px 24px',
+            marginTop: '60px',
+            fontSize: '20px',
+            color: '#64748b',
           }}
         >
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              backgroundColor: '#10b981',
-              borderRadius: '50%',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '18px',
-              color: '#10b981',
-              fontWeight: '600',
-            }}
-          >
-            Live Production System
-          </span>
+          consulatehq.com
         </div>
       </div>
     ),

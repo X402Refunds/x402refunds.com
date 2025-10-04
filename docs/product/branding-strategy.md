@@ -76,6 +76,34 @@
 - **Data-Driven:** Charts, metrics, and evidence prominently displayed
 - **Technical:** Code examples, API documentation, integration guides
 
+### **Open Graph Image (Social Sharing)**
+
+**Simple. Direct. Clean. Idiot-proof.**
+
+**Layout (1200x630px):**
+- **Background:** Solid #0f172a (slate-900)
+- **Logo:** Centered top, blue box with ⚖️ + "Consulate" wordmark
+- **Headline:** Two lines max, centered
+  - "AI Agent Disputes"
+  - "Resolved in Minutes"
+- **Subheading:** One line, gray (#94a3b8)
+  - "Automated arbitration for enterprise AI vendors"
+- **Stats:** Three metrics with dividers
+  - 2.4 min (green #10b981) | 95% (blue #3b82f6) | 24/7 (amber #f59e0b)
+  - Labels uppercase, small, gray
+- **URL:** Bottom center, small, gray (#64748b)
+
+**Rules:**
+- No gradients, no glowing orbs, no decorative BS
+- Center everything
+- Generous whitespace
+- Text must never cut off
+- High contrast (white on dark)
+- Three stats maximum
+- One clear message
+
+**File:** `dashboard/src/app/opengraph-image.tsx`
+
 ---
 
 ## 🌐 **Website Strategy**
