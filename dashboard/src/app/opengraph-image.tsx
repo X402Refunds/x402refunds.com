@@ -80,17 +80,18 @@ export default async function Image() {
         {/* Main Headline */}
         <h1
           style={{
-            fontSize: '88px',
+            fontSize: '84px',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             color: 'transparent',
-            lineHeight: 1.1,
+            lineHeight: 1.2,
             margin: '0 0 40px 0',
             textAlign: 'center',
-            maxWidth: '1000px',
-            letterSpacing: '-0.04em',
+            maxWidth: '1040px',
+            letterSpacing: '-0.02em',
+            padding: '0 20px',
           }}
         >
           Resolve AI Agent Disputes
