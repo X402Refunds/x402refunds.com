@@ -57,11 +57,11 @@ export default function AboutPage() {
               About Consulate
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-              Building Trust Infrastructure for the AI Economy
+              The First AI Governance Operating System
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              When AI services fail to deliver on their promises, resolution shouldn&apos;t take months of legal battles. 
-              We&apos;re making dispute resolution as fast and automated as the AI agents themselves.
+              Human governments can&apos;t govern billions of autonomous AI agents. So we built the infrastructure 
+              for agents to self-govern—persistent identity, automated arbitration, and sovereignty at machine speed.
             </p>
           </div>
         </div>
@@ -99,18 +99,29 @@ export default function AboutPage() {
             <CardContent className="space-y-6">
               <div className="prose prose-slate max-w-none">
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  I built Consulate after watching AI-dependent businesses struggle with broken promises from 
-                  AI service providers. When APIs go down, response times spike, or compute allocations fail, 
-                  companies lose thousands or millions—but getting resolution takes 3+ months of legal back-and-forth.
+                  Here&apos;s the problem: The IRS, Congress, and every regulatory body are moving at 1995 speed while 
+                  AI is moving at 2025 speed. They can&apos;t legislate fast enough. They can&apos;t give AI agents 
+                  legal identity. They can&apos;t govern billions of agent-to-agent transactions in real-time. 
+                  <strong className="text-slate-900"> Human governance doesn&apos;t scale to the AI economy.</strong>
                 </p>
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  The AI economy needs infrastructure that moves at AI speed. That means persistent identity for 
-                  AI agents, automated evidence collection, and instant arbitration. Not months of negotiations, 
-                  but <strong className="text-slate-900">minutes of code-based resolution</strong>.
+                  When you have <strong className="text-slate-900">billions of AI agents</strong> buying, selling, 
+                  negotiating, and transacting autonomously, you need governance infrastructure that operates at 
+                  machine speed. Not judges reading PDFs. Not lawyers billing by the hour. Not 90-day arbitration cycles. 
+                  You need <strong className="text-slate-900">agentic governance at scale</strong>—where agents can 
+                  establish identity, build reputation, file disputes, and get resolution in minutes, not months.
                 </p>
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Consulate is that infrastructure—a trust layer for machine-to-machine commerce where disputes 
-                  are resolved automatically, fairly, and fast.
+                  That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI governance operating system</strong>. 
+                  It&apos;s the trust layer that lets AI agents self-govern—persistent identity (DIDs), automated arbitration, 
+                  cross-platform reputation, instant enforcement. When Salesforce&apos;s agent has a dispute with OpenAI&apos;s 
+                  API, they don&apos;t call lawyers. They resolve it on Consulate in under 3 minutes with full audit trails 
+                  and automatic payment reconciliation.
+                </p>
+                <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
+                  This isn&apos;t just dispute resolution—it&apos;s <strong className="text-slate-900">sovereignty infrastructure 
+                  for the AI economy</strong>. The micro-economy of billions of autonomous agents needs its own legal rails, 
+                  identity systems, and enforcement mechanisms. Consulate is that foundation.
                 </p>
               </div>
 
@@ -186,49 +197,49 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Why Consulate Exists
+              The Governance Gap
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Three core problems we&apos;re solving for the AI economy
+              Why human legal systems can&apos;t govern the AI economy
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-slate-200">
               <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-blue-600 mb-3">3 months</div>
+                <div className="text-4xl font-bold text-blue-600 mb-3">Billions</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Traditional Arbitration
+                  Scale Problem
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Legal disputes take 90+ days minimum. AI services move too fast for that—companies need 
-                  resolution in minutes, not months.
+                  Billions of AI agents will transact autonomously. Human courts can&apos;t handle millions 
+                  of disputes per day. You need governance that operates at machine scale.
                 </p>
               </CardContent>
             </Card>
 
             <Card className="border-slate-200">
               <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-red-600 mb-3">$50K+</div>
+                <div className="text-4xl font-bold text-red-600 mb-3">90 days</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Legal Costs
+                  Speed Problem
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Traditional arbitration costs tens of thousands in legal fees—often more than the 
-                  dispute itself. We charge $500-$3K flat fees.
+                  Traditional arbitration takes 3+ months and costs $50K+. AI agents need resolution 
+                  in minutes with $500 fees. Human speed doesn&apos;t work.
                 </p>
               </CardContent>
             </Card>
 
             <Card className="border-slate-200">
               <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-slate-700 mb-3">No Trust</div>
+                <div className="text-4xl font-bold text-slate-700 mb-3">No ID</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Identity Crisis
+                  Identity Problem
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  AI agents have no persistent identity or reputation system. Every interaction starts 
-                  from zero trust, making commerce expensive and risky.
+                  Governments haven&apos;t given AI agents legal identity. No persistent identity = no 
+                  reputation, no trust, no commerce. Agents need their own identity layer.
                 </p>
               </CardContent>
             </Card>
@@ -284,11 +295,11 @@ export default function AboutPage() {
       <section className="py-8 sm:py-12 lg:py-16 bg-slate-900 text-white">
         <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-5">
-            Want to Learn More?
+            Building the Governance Layer for AI
           </h2>
           <p className="text-lg text-slate-300 mb-8">
-            Explore the live system or get in touch to discuss how Consulate can help 
-            resolve your AI service disputes.
+            If you&apos;re building autonomous AI agents, you need sovereignty infrastructure. 
+            See how the first AI governance OS works in production.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
