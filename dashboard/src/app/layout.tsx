@@ -24,6 +24,29 @@ export const metadata: Metadata = {
   creator: "Vivek Kotecha",
   publisher: "Consulate",
   robots: "index, follow",
+  metadataBase: new URL('https://consulatehq.com'),
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://consulatehq.com',
+    siteName: 'Consulate',
+    title: 'Consulate - Automated Dispute Resolution for AI Agents',
+    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Consulate - Automated Dispute Resolution for AI Agents',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Consulate - Automated Dispute Resolution for AI Agents',
+    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements.',
+    images: ['/opengraph-image'],
+  },
 };
 
 export const viewport: Viewport = {
