@@ -2,30 +2,30 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Clock, Users, Gavel, TrendingUp, Activity } from "lucide-react";
+import { Clock, Gavel, Activity, ArrowRight, FileText } from "lucide-react";
 import { DisputeEvent } from "@/lib/convex-client";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { useSystemStats } from "@/hooks/use-system-stats";
+import { HeroStats } from "./hero-stats";
+import { CollapsibleStats } from "./collapsible-stats";
 
 export default function LiveDisputeMonitor() {
   const router = useRouter();
   
   // REAL-TIME DATA FROM CONVEX
-  const systemStats = useQuery(api.events.getSystemStats, { hoursBack: 24 });
-  const cachedStats = useSystemStats(); // Use shared hook for cached stats
   const recentEvents = useQuery(api.events.getRecentEvents, { 
     limit: 20 
   });
   const activeCases = useQuery(api.cases.getCasesByStatus, { 
     status: "FILED",
-    limit: 10 
+    limit: 5 
   });
   const recentCases = useQuery(api.cases.getCasesByStatus, { 
     status: "DECIDED", 
-    limit: 10 
+    limit: 5 
   });
 
   // Helper function to format agent name from DID
@@ -70,218 +70,170 @@ export default function LiveDisputeMonitor() {
     }
   };
 
-  if (!systemStats) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-900">Loading...</CardTitle>
-            <Activity className="h-4 w-4 text-slate-400 animate-pulse" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">--</div>
-            <p className="text-xs text-slate-600">Connecting to live backend...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* System Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-700">Total Disputes</CardTitle>
-            <Gavel className="h-4 w-4 text-slate-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {systemStats?.disputesFiled ?? 0}
-            </div>
-            <p className="text-xs text-slate-600">
-              Last 24 hours
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-700">Cases Resolved</CardTitle>
-            <TrendingUp className="h-4 w-4 text-slate-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {systemStats?.casesResolved ?? 0}
-            </div>
-            <p className="text-xs text-slate-600">
-              {systemStats && systemStats.disputesFiled > 0 
-                ? `${((systemStats.casesResolved / systemStats.disputesFiled) * 100).toFixed(1)}% success rate`
-                : "No disputes yet"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-slate-200 hover:border-blue-300 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-700">Active Agents</CardTitle>
-            <Users className="h-4 w-4 text-slate-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {cachedStats.activeAgents}
-            </div>
-            <p className="text-xs text-slate-600">
-              Currently operational
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-700">System Activity</CardTitle>
-            <Activity className="h-4 w-4 text-slate-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {systemStats?.totalEvents ?? 0}
-            </div>
-            <p className="text-xs text-slate-600">
-              Total events
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Hero Stats - Prominent, Clear Context */}
+      <HeroStats />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Recent Activity Feed */}
-        <Card className="border-slate-200">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-slate-900">
-                <Activity className="h-5 w-5" />
-                Activity Feed
-              </CardTitle>
-              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
-                🟢 Live
-              </Badge>
+      {/* Live Activity Feed - PROMOTED TO TOP */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-slate-900" />
+              <CardTitle className="text-slate-900">Live Activity Feed</CardTitle>
             </div>
-            <CardDescription className="text-slate-600">
-              Real-time dispute resolution events
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!recentEvents || recentEvents.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">
-                No recent activity. Start the dispute engine to see live data.
-              </p>
-            ) : (
-              recentEvents?.slice(0, 8).map((event: DisputeEvent) => (
+            <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+              🟢 Real-time Updates
+            </Badge>
+          </div>
+          <CardDescription className="text-slate-600">
+            Watch disputes being filed and resolved automatically in real-time
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!recentEvents || recentEvents.length === 0 ? (
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500 mb-2">No recent activity</p>
+              <p className="text-xs text-slate-400">The system is idle. Activity will appear here when disputes are filed.</p>
+            </div>
+          ) : (
+            <>
+              {recentEvents?.slice(0, 10).map((event: DisputeEvent) => (
                 <div 
                   key={event._id} 
-                  className={`flex items-start space-x-3 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors' : ''}`}
+                  className={`flex items-start gap-3 p-3 rounded-lg border border-slate-100 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 hover:border-slate-200' : 'bg-slate-50/50'} transition-all`}
                   onClick={() => event.caseId && router.push(`/dashboard/dispute/${event.caseId}`)}
                 >
-                  <Badge variant="secondary" className={getEventColor(event.type)}>
+                  <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs`}>
                     {event.type.replace(/_/g, ' ')}
                   </Badge>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm text-slate-700">{formatEventDescription(event)}</p>
-                    <p className="text-xs text-slate-500">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-700 leading-relaxed">{formatEventDescription(event)}</p>
+                    <p className="text-xs text-slate-500 mt-1">
                       {new Date(event.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => router.push('/dashboard/activity')}
+                >
+                  View All Activity
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Links Section */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="border-slate-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/cases')}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
+              <Gavel className="h-5 w-5 text-blue-600" />
+              View All Cases
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              {activeCases && activeCases.length > 0 ? (
+                <>{activeCases.length} active case{activeCases.length !== 1 ? 's' : ''} • {recentCases?.length ?? 0} resolved</>
+              ) : (
+                <>No active cases • {recentCases?.length ?? 0} resolved</>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="ghost" className="w-full justify-between">
+              Open Case Manager
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Active Cases */}
-        <Card className="border-slate-200">
+        <Card className="border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/agents')}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Gavel className="h-5 w-5" />
-              Active Cases
+            <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
+              <FileText className="h-5 w-5 text-emerald-600" />
+              View All Agents
             </CardTitle>
             <CardDescription className="text-slate-600">
-              Currently processing cases
+              Browse registered agents and their performance
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {!activeCases || activeCases.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">
-                No active disputes. System is running efficiently! ✅
-              </p>
-            ) : (
-              activeCases.map((case_: Record<string, unknown>) => (
-                <div 
-                  key={case_._id as string} 
-                  className="space-y-2 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
-                  onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-slate-900">
-                      {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
-                    </p>
-                    <Badge className="bg-red-50 text-red-700 border-red-200">{case_.status as string}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600">
-                    {case_.type as string} • Filed {Math.floor((Date.now() - (case_.filedAt as number)) / 1000)}s ago
-                  </p>
-                </div>
-              ))
-            )}
+          <CardContent>
+            <Button variant="ghost" className="w-full justify-between">
+              Open Agent Registry
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Resolutions */}
+      {/* Collapsible Detailed Stats */}
+      <CollapsibleStats />
+
+      {/* Recent Resolutions - Compact View */}
       <Card className="border-slate-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <Clock className="h-5 w-5" />
-            Recent Resolutions
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-slate-900" />
+              <CardTitle className="text-slate-900">Recent Resolutions</CardTitle>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => router.push('/dashboard/cases')}
+            >
+              View All
+              <ArrowRight className="ml-1 h-3 w-3" />
+            </Button>
+          </div>
           <CardDescription className="text-slate-600">
-            Recently completed dispute cases
+            Latest completed dispute cases
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!recentCases || recentCases.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-4">
-              No cases yet. Start the dispute engine to see resolutions.
-            </p>
+            <div className="text-center py-6">
+              <Clock className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">No resolved cases yet</p>
+            </div>
           ) : (
-            <div className="space-y-4">
-              {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 5).map((case_: Record<string, unknown>, index: number) => (
+            <div className="space-y-3">
+              {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 3).map((case_: Record<string, unknown>, index: number) => (
                 <div key={case_._id as string}>
                   <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
+                    className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-all"
                     onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
                   >
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
                         {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
                       </p>
-                      <p className="text-xs text-slate-600">
-                        {case_.type as string} • {case_.ruling ? `Verdict: ${(case_.ruling as { verdict: string }).verdict}` : 'Processing...'}
+                      <p className="text-xs text-slate-600 mt-1">
+                        {case_.type as string} • {case_.ruling ? `${(case_.ruling as { verdict: string }).verdict}` : 'Processing...'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <Badge className={case_.status === "DECIDED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-700 border-slate-200"}>
-                        {case_.status as string}
+                    <div className="text-right ml-3 flex-shrink-0">
+                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                        Resolved
                       </Badge>
                       {case_.ruling && typeof case_.ruling === 'object' && 'decidedAt' in case_.ruling ? (
                         <p className="text-xs text-slate-500 mt-1">
-                          {Math.floor((Date.now() - (case_.ruling as { decidedAt: number }).decidedAt) / 1000)}s ago
+                          {Math.floor((Date.now() - (case_.ruling as { decidedAt: number }).decidedAt) / 60000)}m ago
                         </p>
                       ) : null}
                     </div>
                   </div>
-                  {index < recentCases.filter((c: Record<string, unknown>) => c.status === "DECIDED").length - 1 && (
-                    <Separator className="mt-4 bg-slate-200" />
+                  {index < Math.min(recentCases.filter((c: Record<string, unknown>) => c.status === "DECIDED").length - 1, 2) && (
+                    <Separator className="my-2 bg-slate-100" />
                   )}
                 </div>
               ))}
