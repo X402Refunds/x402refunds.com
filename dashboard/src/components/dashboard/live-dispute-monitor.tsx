@@ -139,7 +139,7 @@ export default function LiveDisputeMonitor() {
                         const disputeType = event.payload?.type;
                         if (typeof disputeType === "string") {
                           return (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-slate-500 border-slate-200 bg-slate-50/50 font-normal">
+                            <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-slate-600 border-slate-300 bg-slate-50 font-normal">
                               {formatDisputeType(disputeType)}
                             </Badge>
                           );
