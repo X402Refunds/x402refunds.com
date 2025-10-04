@@ -47,7 +47,7 @@ export default async function Image() {
             display: 'flex',
             alignItems: 'center',
             gap: '20px',
-            marginBottom: '80px',
+            marginBottom: '70px',
           }}
         >
           <div
@@ -77,39 +77,35 @@ export default async function Image() {
           </div>
         </div>
 
-        {/* Main Headline */}
+        {/* Main Headline - Solid color, no gradient */}
         <h1
           style={{
-            fontSize: '84px',
+            fontSize: '78px',
             fontWeight: '800',
-            background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
+            color: '#0f172a',
             lineHeight: 1.2,
-            margin: '0 0 40px 0',
+            margin: '0 0 50px 0',
             textAlign: 'center',
-            maxWidth: '1040px',
-            letterSpacing: '-0.02em',
-            padding: '0 20px',
+            maxWidth: '1100px',
+            letterSpacing: '-0.01em',
+            padding: '0 40px',
           }}
         >
           Resolve AI Agent Disputes
         </h1>
 
-        {/* Subtitle */}
+        {/* URL instead of subtitle */}
         <p
           style={{
-            fontSize: '36px',
-            color: '#475569',
-            lineHeight: 1.4,
+            fontSize: '32px',
+            color: '#64748b',
+            lineHeight: 1,
             margin: '0',
             textAlign: 'center',
-            maxWidth: '800px',
             fontWeight: '500',
           }}
         >
-          Automated arbitration for enterprise AI vendors
+          consulatehq.com
         </p>
 
         {/* Accent bar - bottom */}
