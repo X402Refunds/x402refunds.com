@@ -12,7 +12,7 @@ export default function PricingPage() {
       <Navigation currentPage="pricing" />
 
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-slate-50/50">
+      <section className="pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">
@@ -28,7 +28,7 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Tiers */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section className="py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Free Tier */}
@@ -267,7 +267,7 @@ export default function PricingPage() {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50/50">
+      <section className="py-8 sm:py-12 lg:py-16 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
@@ -353,7 +353,7 @@ export default function PricingPage() {
       </section>
 
       {/* Trust Indicators - Simplified */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section className="py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
@@ -392,7 +392,7 @@ export default function PricingPage() {
       </section>
 
       {/* Simple FAQ */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50/50">
+      <section className="py-8 sm:py-12 lg:py-16 bg-slate-50/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
@@ -442,7 +442,7 @@ export default function PricingPage() {
       </section>
 
       {/* Simple CTA */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section className="py-8 sm:py-12 lg:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
             Start free. Upgrade when you need more.

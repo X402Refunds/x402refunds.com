@@ -50,9 +50,9 @@ export default function AboutPage() {
       <Navigation currentPage="about" />
 
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-b from-slate-50 to-white">
+      <section className="pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
             <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 text-sm px-4 py-1.5">
               About Consulate
             </Badge>
@@ -68,7 +68,7 @@ export default function AboutPage() {
       </section>
 
       {/* Founder Section */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section className="py-8 sm:py-12 lg:py-16">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <Card className="border-2 border-slate-200 shadow-lg">
             <CardHeader className="pb-6">
@@ -182,7 +182,7 @@ export default function AboutPage() {
       </section>
 
       {/* Company Mission */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50">
+      <section className="py-8 sm:py-12 lg:py-16 bg-slate-50">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
@@ -237,7 +237,7 @@ export default function AboutPage() {
       </section>
 
       {/* Technology Stack */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section className="py-8 sm:py-12 lg:py-16">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
@@ -281,7 +281,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-slate-900 text-white">
+      <section className="py-8 sm:py-12 lg:py-16 bg-slate-900 text-white">
         <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-5">
             Want to Learn More?
