@@ -215,85 +215,172 @@ export default function HomePage() {
       </section>
 
       {/* Proven Results - Proof First */}
-      <section className="py-12 sm:py-16 bg-slate-50 border-y border-slate-200">
+      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
+          <div className="text-center mb-10 sm:mb-12 lg:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
               Real Disputes, Real Results
             </h2>
-            <p className="text-base sm:text-lg text-slate-600">
-              Production system resolving enterprise AI vendor disputes
+            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto">
+              Production system resolving enterprise AI vendor disputes in real-time
             </p>
           </div>
 
-          <div className="space-y-4">
-            {/* Case 1 */}
-            <Card className="border-l-4 border-l-emerald-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Salesforce vs OpenAI</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">API downtime SLA breach</p>
+          <div className="grid gap-6 lg:gap-8 max-w-5xl mx-auto">
+            {/* Case 1: Salesforce vs OpenAI */}
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 transition-all duration-200 shadow-sm hover:shadow-lg bg-white">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  {/* Left: Dispute Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+                          Salesforce vs OpenAI
+                        </h3>
+                        <p className="text-sm sm:text-base text-slate-600">
+                          API downtime SLA breach
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                      Resolved Automatically
+                    </Badge>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$23K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Revenue Loss</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 47s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Resolved Automatically</span>
+                  
+                  {/* Right: Metrics */}
+                  <div className="flex gap-6 sm:gap-8 lg:gap-12">
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Impact
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-red-600">
+                        $23K
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Revenue Loss
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Speed
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
+                        1m 47s
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Resolution
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Case 2 */}
-            <Card className="border-l-4 border-l-blue-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Uber vs Google Maps</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Response time SLA violation</p>
+            {/* Case 2: Uber vs Google Maps */}
+            <Card className="border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-lg bg-white">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  {/* Left: Dispute Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+                          Uber vs Google Maps
+                        </h3>
+                        <p className="text-sm sm:text-base text-slate-600">
+                          Response time SLA violation
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                      API Credits Issued
+                    </Badge>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$38K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Efficiency Loss</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">2m 33s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">API Credits Issued</span>
+                  
+                  {/* Right: Metrics */}
+                  <div className="flex gap-6 sm:gap-8 lg:gap-12">
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Impact
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-red-600">
+                        $38K
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Efficiency Loss
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Speed
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-blue-600">
+                        2m 33s
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Resolution
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Case 3 */}
-            <Card className="border-l-4 border-l-slate-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Anthropic vs Azure</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Compute allocation failure</p>
+            {/* Case 3: Anthropic vs Azure */}
+            <Card className="border-2 border-slate-200 hover:border-amber-300 transition-all duration-200 shadow-sm hover:shadow-lg bg-white">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  {/* Left: Dispute Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+                          Anthropic vs Azure
+                        </h3>
+                        <p className="text-sm sm:text-base text-slate-600">
+                          Compute allocation failure
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-medium">
+                      Credits + Free Month
+                    </Badge>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$45K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Training Delay</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 58s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Credits + Free Month</span>
+                  
+                  {/* Right: Metrics */}
+                  <div className="flex gap-6 sm:gap-8 lg:gap-12">
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Impact
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-red-600">
+                        $45K
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Training Delay
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        Speed
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-amber-600">
+                        1m 58s
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Resolution
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
