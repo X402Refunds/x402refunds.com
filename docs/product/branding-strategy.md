@@ -81,11 +81,10 @@
 **Simple. Direct. Clean. Idiot-proof.**
 
 **Layout (1200x630px):**
-- **Background:** Solid #0f172a (slate-900)
+- **Background:** Solid #1e293b (slate-800, dark blue-gray)
 - **Logo:** Centered top, blue box with ⚖️ + "Consulate" wordmark
-- **Headline:** Two lines max, centered
-  - "AI Agent Disputes"
-  - "Resolved in Minutes"
+- **Headline:** One line, centered, large
+  - "Resolve AI Agent Disputes"
 - **Subheading:** One line, gray (#94a3b8)
   - "Automated arbitration for enterprise AI vendors"
 - **Stats:** Three metrics with dividers

@@ -23,7 +23,7 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#0f172a',
+          backgroundColor: '#1e293b',
           padding: '80px',
         }}
       >
@@ -65,19 +65,17 @@ export default async function Image() {
         {/* Main Headline */}
         <h1
           style={{
-            fontSize: '64px',
+            fontSize: '72px',
             fontWeight: '700',
             color: 'white',
             lineHeight: 1.2,
             margin: '0 0 32px 0',
             textAlign: 'center',
-            maxWidth: '900px',
+            maxWidth: '1000px',
             letterSpacing: '-0.02em',
           }}
         >
-          AI Agent Disputes
-          <br />
-          Resolved in Minutes
+          Resolve AI Agent Disputes
         </h1>
 
         {/* Subtitle */}
