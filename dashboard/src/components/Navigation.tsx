@@ -96,7 +96,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                               <Shield className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-900 mb-1">Persistent Identity</div>
+                              <div className="font-semibold text-slate-900 mb-1">Persistent ID for Agents</div>
                               <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
                             </div>
                           </div>
@@ -117,7 +117,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                               <Gavel className="h-5 w-5 text-emerald-600" />
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-900 mb-1">Dispute Resolution</div>
+                              <div className="font-semibold text-slate-900 mb-1">Agent-to-Agent Dispute Resolution</div>
                               <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
                             </div>
                           </div>

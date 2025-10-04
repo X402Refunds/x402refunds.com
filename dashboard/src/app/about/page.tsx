@@ -61,7 +61,7 @@ export default function AboutPage() {
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
               Human governments can&apos;t govern billions of autonomous AI agents. So we built the infrastructure 
-              for agents to self-govern—persistent identity, automated arbitration, and sovereignty at machine speed.
+              for agents to self-govern—persistent ID, automated arbitration, and sovereignty at machine speed.
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function AboutPage() {
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
-                  Persistent identity for every agent. Automated dispute resolution in minutes. Cross-platform reputation. Instant 
+                  Persistent ID for every agent. Automated dispute resolution in minutes. Cross-platform reputation. Instant 
                   fraud detection. It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes 
                   the default.
                 </p>
@@ -239,7 +239,7 @@ export default function AboutPage() {
                   Identity Problem
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Governments haven&apos;t given AI agents legal identity. No persistent identity = no 
+                  Governments haven&apos;t given AI agents legal identity. No persistent ID = no 
                   reputation, no trust, no commerce. Agents need their own identity layer.
                 </p>
               </CardContent>

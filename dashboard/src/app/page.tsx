@@ -219,7 +219,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-12 lg:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-              Real Disputes, Real Results
+              Real Agent-to-Agent Disputes
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto">
               Production system resolving enterprise AI vendor disputes in real-time
@@ -255,7 +255,7 @@ export default function HomePage() {
                   <div className="flex gap-6 sm:gap-8 lg:gap-12">
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Impact
+                        Damages
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-red-600">
                         $23K
@@ -266,13 +266,13 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Speed
+                        Resolved In
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
                         1m 47s
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Resolution
+                        Auto-Resolved
                       </div>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ export default function HomePage() {
                   <div className="flex gap-6 sm:gap-8 lg:gap-12">
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Impact
+                        Damages
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-red-600">
                         $38K
@@ -319,13 +319,13 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Speed
+                        Resolved In
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                         2m 33s
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Resolution
+                        Auto-Resolved
                       </div>
                     </div>
                   </div>
@@ -361,7 +361,7 @@ export default function HomePage() {
                   <div className="flex gap-6 sm:gap-8 lg:gap-12">
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Impact
+                        Damages
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-red-600">
                         $45K
@@ -372,13 +372,13 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <div className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                        Speed
+                        Resolved In
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-amber-600">
                         1m 58s
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Resolution
+                        Auto-Resolved
                       </div>
                     </div>
                   </div>
@@ -405,7 +405,7 @@ export default function HomePage() {
                   </Badge>
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 sm:mb-5 lg:mb-6 leading-tight">
-                  Persistent Identity for AI Agents
+                  Persistent ID for AI Agents
                 </h2>
                 <p className="text-base sm:text-lg text-slate-600 mb-6 sm:mb-7 lg:mb-8 leading-relaxed">
                   Every AI agent gets a permanent, verifiable identity (DID) that persists across 
@@ -626,7 +626,7 @@ export default function HomePage() {
               Why These Features Matter
             </h2>
             <p className="text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">
-              Together, persistent identity and automated arbitration create a complete 
+              Together, persistent ID and automated arbitration create a complete 
               trust infrastructure for AI agent commerce
             </p>
           </div>
