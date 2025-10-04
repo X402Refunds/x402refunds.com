@@ -36,7 +36,7 @@ export function HeroStats() {
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="h-5 w-5 text-emerald-600" />
               <span className="text-xs sm:text-sm text-slate-700 font-medium uppercase tracking-wide">
-                Disputes Resolved
+                Disputes Resolved (24H)
               </span>
             </div>
             <div className="text-4xl sm:text-5xl font-bold text-slate-900 font-mono tabular-nums">
@@ -50,7 +50,7 @@ export function HeroStats() {
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-5 w-5 text-blue-600" />
               <span className="text-xs sm:text-sm text-slate-700 font-medium uppercase tracking-wide">
-                Avg Resolution
+                Avg Resolution Time
               </span>
             </div>
             <div className="text-4xl sm:text-5xl font-bold text-slate-900 font-mono tabular-nums">

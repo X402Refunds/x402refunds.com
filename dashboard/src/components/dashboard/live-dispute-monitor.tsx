@@ -127,6 +127,14 @@ export default function LiveDisputeMonitor() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-sm text-slate-700 leading-relaxed">{formatEventDescription(event)}</p>
                     <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">
+                        {new Date(event.timestamp).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit', 
+                          second: '2-digit',
+                          timeZoneName: 'short'
+                        })}
+                      </span>
                       {event.type === "DISPUTE_FILED" && (() => {
                         const disputeType = event.payload?.type;
                         if (typeof disputeType === "string") {
@@ -138,14 +146,6 @@ export default function LiveDisputeMonitor() {
                         }
                         return null;
                       })()}
-                      <span className="text-xs text-slate-500">
-                        {new Date(event.timestamp).toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
-                          minute: '2-digit', 
-                          second: '2-digit',
-                          timeZoneName: 'short'
-                        })}
-                      </span>
                     </div>
                   </div>
                 </div>
