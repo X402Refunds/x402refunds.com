@@ -28,14 +28,23 @@ export default function LiveDisputeMonitor() {
     limit: 5 
   });
 
-  // Helper function to format agent name from DID
+  // Helper function to format agent name from DID (without ID numbers)
   const formatAgentName = (did: string) => {
     if (!did) return "Unknown";
     const parts = did.split(':');
     if (parts.length >= 3) {
-      return parts[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      // Extract just the agent name without the ID number
+      const fullName = parts[2];
+      // Remove the timestamp/ID suffix (everything after the last hyphen)
+      const nameWithoutId = fullName.substring(0, fullName.lastIndexOf('-'));
+      return nameWithoutId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
     return did;
+  };
+
+  // Helper function to format dispute type
+  const formatDisputeType = (type: string) => {
+    return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
   // Helper function to get event color
@@ -49,22 +58,28 @@ export default function LiveDisputeMonitor() {
     return colors[type] || "bg-slate-50 text-slate-700 border-slate-200";
   };
 
+  // Helper function to get the badge label - just format the event type
+  const getEventBadge = (eventType: string) => {
+    return eventType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const formatEventDescription = (event: DisputeEvent) => {
     switch (event.type) {
       case "AGENT_REGISTERED":
         return `${formatAgentName(event.payload?.did as string)} joined the platform`;
       case "DISPUTE_FILED":
         const parties = (event.payload?.parties as string[])?.map((p: string) => formatAgentName(p)).join(" vs ");
-        const disputeType = event.payload?.type as string;
         // Highlight LLM-generated disputes by checking jurisdiction tags
         const jurisdictionTags = event.payload?.jurisdictionTags as string[] || [];
         const isLLMGenerated = jurisdictionTags.includes("LLM_GENERATED");
-        const llmPrefix = isLLMGenerated ? "🤖 AI-Generated: " : "";
-        return `${llmPrefix}${parties} dispute filed (${disputeType})`;
+        const llmPrefix = isLLMGenerated ? "🤖 " : "";
+        return `${llmPrefix}${parties}`;
       case "EVIDENCE_SUBMITTED":
-        return `Evidence submitted by ${formatAgentName(event.payload?.agentDid as string)}`;
+        return `${formatAgentName(event.payload?.agentDid as string)} submitted evidence`;
       case "CASE_STATUS_UPDATED":
-        return `Case ${event.payload?.caseId as string} updated to ${event.payload?.newStatus as string}`;
+        const caseId = event.payload?.caseId as string;
+        const shortId = caseId ? caseId.substring(0, 8) : "Unknown";
+        return `Case ${shortId}`;
       default:
         return event.type.replace(/_/g, ' ').toLowerCase();
     }
@@ -106,14 +121,32 @@ export default function LiveDisputeMonitor() {
                   className={`flex items-start gap-3 p-3 rounded-lg border border-slate-100 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 hover:border-slate-200' : 'bg-slate-50/50'} transition-all`}
                   onClick={() => event.caseId && router.push(`/dashboard/dispute/${event.caseId}`)}
                 >
-                  <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs`}>
-                    {event.type.replace(/_/g, ' ')}
+                  <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs font-medium`}>
+                    {getEventBadge(event.type)}
                   </Badge>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-sm text-slate-700 leading-relaxed">{formatEventDescription(event)}</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {new Date(event.timestamp).toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      {event.type === "DISPUTE_FILED" && (() => {
+                        const disputeType = event.payload?.type;
+                        if (typeof disputeType === "string") {
+                          return (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-slate-500 border-slate-200 bg-slate-50/50 font-normal">
+                              {formatDisputeType(disputeType)}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+                      <span className="text-xs text-slate-500">
+                        {new Date(event.timestamp).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit', 
+                          second: '2-digit',
+                          timeZoneName: 'short'
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
