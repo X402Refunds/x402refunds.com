@@ -74,21 +74,6 @@ export function HeroStats() {
             <p className="text-xs text-slate-600 mt-1">Currently operational</p>
           </div>
         </div>
-
-        {/* Status Message */}
-        <div className="mt-4 pt-4 border-t border-slate-200">
-          <p className="text-slate-700 text-sm text-center">
-            {isSystemActive ? (
-              <>
-                ✅ <strong className="text-slate-900">System operational</strong> — actively resolving disputes
-              </>
-            ) : (
-              <>
-                ⏸️ System idle — no active disputes
-              </>
-            )}
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
