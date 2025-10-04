@@ -20,10 +20,11 @@ export function Footer() {
             </ul>
           </div>
           <div className="md:col-span-1">
-            <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Contact</h4>
+            <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Company</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li>Technical Support</li>
-              <li>API Documentation</li>
+              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-white transition-colors">About</button></li>
+              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-white transition-colors">Pricing</button></li>
+              <li>Documentation</li>
             </ul>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { Shield, Gavel } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface NavigationProps {
-  currentPage?: 'home' | 'pricing'
+  currentPage?: 'home' | 'pricing' | 'about'
 }
 
 export function Navigation({ currentPage }: NavigationProps) {
@@ -136,6 +136,16 @@ export function Navigation({ currentPage }: NavigationProps) {
                 }`}
               >
                 Pricing
+              </button>
+              <button
+                onClick={() => window.location.href = '/about'}
+                className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
+                  currentPage === 'about' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-slate-700 hover:text-slate-900'
+                }`}
+              >
+                About
               </button>
             </div>
           </div>

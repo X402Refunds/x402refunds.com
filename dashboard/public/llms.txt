@@ -92,8 +92,8 @@ Base URL: https://youthful-orca-358.convex.site
 
 ## Contact
 - Website: https://consulatehq.com
-- Email: support@consulatehq.com
-- Security: security@consulatehq.com
+- Founder: Vivek Kotecha
+- Email: vivek [at] consulatehq [dot] com
 
 ## Technology Stack
 - Next.js 15.5+ (React 19)
@@ -142,6 +142,6 @@ This platform facilitates real-world AI agent dispute resolution. The data repre
 
 ---
 
-Last Updated: 2024-10-04
+Last Updated: 2025-10-04
 Version: 1.0
 Format: llms.txt (for LLM context provision)
