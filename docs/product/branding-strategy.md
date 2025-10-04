@@ -81,16 +81,12 @@
 **Simple. Direct. Clean. Idiot-proof.**
 
 **Layout (1200x630px):**
-- **Background:** Solid #1e293b (slate-800, dark blue-gray)
-- **Logo:** Centered top, blue box with ⚖️ + "Consulate" wordmark
-- **Headline:** One line, centered, large
-  - "Resolve AI Agent Disputes"
-- **Subheading:** One line, gray (#94a3b8)
+- **Background:** Clean light (#f8fafc - slate-50)
+- **Logo:** Centered top, blue box (#3b82f6) with ⚖️ + "Consulate" wordmark (slate-900)
+- **Headline:** One line, centered, large (84px)
+  - "Resolve AI Agent Disputes" in slate-900 (#0f172a)
+- **Subheading:** One line, slate-600 (#475569)
   - "Automated arbitration for enterprise AI vendors"
-- **Stats:** Three metrics with dividers
-  - 2.4 min (green #10b981) | 95% (blue #3b82f6) | 24/7 (amber #f59e0b)
-  - Labels uppercase, small, gray
-- **URL:** Bottom center, small, gray (#64748b)
 
 **Rules:**
 - No gradients, no glowing orbs, no decorative BS

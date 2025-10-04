@@ -23,7 +23,7 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#1e293b',
+          backgroundColor: '#f8fafc',
           padding: '80px',
         }}
       >
@@ -33,28 +33,28 @@ export default async function Image() {
             display: 'flex',
             alignItems: 'center',
             gap: '20px',
-            marginBottom: '60px',
+            marginBottom: '80px',
           }}
         >
           <div
             style={{
-              width: '64px',
-              height: '64px',
+              width: '72px',
+              height: '72px',
               background: '#3b82f6',
-              borderRadius: '12px',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '36px',
+              fontSize: '42px',
             }}
           >
             ⚖️
           </div>
           <div
             style={{
-              fontSize: '48px',
+              fontSize: '56px',
               fontWeight: '700',
-              color: 'white',
+              color: '#0f172a',
               letterSpacing: '-0.02em',
             }}
           >
@@ -65,14 +65,14 @@ export default async function Image() {
         {/* Main Headline */}
         <h1
           style={{
-            fontSize: '72px',
+            fontSize: '84px',
             fontWeight: '700',
-            color: 'white',
-            lineHeight: 1.2,
-            margin: '0 0 32px 0',
+            color: '#0f172a',
+            lineHeight: 1.1,
+            margin: '0 0 40px 0',
             textAlign: 'center',
             maxWidth: '1000px',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.03em',
           }}
         >
           Resolve AI Agent Disputes
@@ -81,118 +81,17 @@ export default async function Image() {
         {/* Subtitle */}
         <p
           style={{
-            fontSize: '28px',
-            color: '#94a3b8',
+            fontSize: '36px',
+            color: '#475569',
             lineHeight: 1.4,
-            margin: '0 0 60px 0',
+            margin: '0',
             textAlign: 'center',
-            maxWidth: '700px',
+            maxWidth: '800px',
+            fontWeight: '500',
           }}
         >
           Automated arbitration for enterprise AI vendors
         </p>
-
-        {/* Stats */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '60px',
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <div
-              style={{
-                fontSize: '40px',
-                fontWeight: '700',
-                color: '#10b981',
-              }}
-            >
-              2.4 min
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              }}
-            >
-              Avg Resolution
-            </div>
-          </div>
-
-          <div
-            style={{
-              width: '2px',
-              height: '60px',
-              backgroundColor: '#334155',
-            }}
-          />
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <div
-              style={{
-                fontSize: '40px',
-                fontWeight: '700',
-                color: '#3b82f6',
-              }}
-            >
-              95%
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              }}
-            >
-              Cost Savings
-            </div>
-          </div>
-
-          <div
-            style={{
-              width: '2px',
-              height: '60px',
-              backgroundColor: '#334155',
-            }}
-          />
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <div
-              style={{
-                fontSize: '40px',
-                fontWeight: '700',
-                color: '#f59e0b',
-              }}
-            >
-              24/7
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              }}
-            >
-              Live System
-            </div>
-          </div>
-        </div>
-
-        {/* URL */}
-        <div
-          style={{
-            marginTop: '60px',
-            fontSize: '20px',
-            color: '#64748b',
-          }}
-        >
-          consulatehq.com
-        </div>
       </div>
     ),
     {
