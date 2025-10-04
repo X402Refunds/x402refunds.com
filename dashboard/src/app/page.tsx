@@ -155,15 +155,15 @@ export default function HomePage() {
                     className="bg-slate-900 text-white hover:bg-slate-800 text-base sm:text-lg px-8 h-12 sm:h-14 font-semibold w-full sm:w-auto shadow-lg"
                     onClick={() => window.open('/dashboard', '_self')}
                   >
-                    See System in Action
+                    View Live System
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </div>
             </div>
             
-            {/* Live Metrics Card - Hidden on mobile, shown on lg+ */}
-            <div ref={metricsRef} className="hidden lg:block lg:col-span-5 lg:mt-0">
+            {/* Unified Metrics Card - Responsive for all screen sizes */}
+            <div ref={metricsRef} className="mt-8 lg:mt-0 lg:col-span-5">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
                   <div className="flex items-center justify-between gap-2">
@@ -214,23 +214,90 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Proven Results - Proof First */}
+      <section className="py-12 sm:py-16 bg-slate-50 border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
+              Real Disputes, Real Results
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600">
+              Production system resolving enterprise AI vendor disputes
+            </p>
+          </div>
 
-      {/* Mobile-only Simple Metrics */}
-      <section className="lg:hidden py-10 bg-slate-50 border-y border-slate-200">
-        <div className="max-w-7xl mx-auto px-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-              <div className="text-5xl font-bold text-slate-900 font-mono mb-2">
-                {companiesTarget}
-              </div>
-              <div className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Active Agents</div>
-            </div>
-            <div className="text-center bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-              <div className="text-5xl font-bold text-slate-900 font-mono mb-2">
-                {disputesTarget}
-              </div>
-              <div className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Disputes Resolved</div>
-            </div>
+          <div className="space-y-4">
+            {/* Case 1 */}
+            <Card className="border-l-4 border-l-emerald-600 shadow-sm">
+              <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
+                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Salesforce vs OpenAI</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">API downtime SLA breach</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-red-600">$23K</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Revenue Loss</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 47s</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Resolved Automatically</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Case 2 */}
+            <Card className="border-l-4 border-l-blue-600 shadow-sm">
+              <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
+                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Uber vs Google Maps</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Response time SLA violation</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-red-600">$38K</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Efficiency Loss</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-emerald-600">2m 33s</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">API Credits Issued</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Case 3 */}
+            <Card className="border-l-4 border-l-slate-600 shadow-sm">
+              <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
+                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Anthropic vs Azure</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Compute allocation failure</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-red-600">$45K</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Training Delay</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 58s</div>
+                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Credits + Free Month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -259,54 +326,24 @@ export default function HomePage() {
                   history, and builds trust over time—just like credit scores for humans.
                 </p>
 
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Decentralized Identifiers (DIDs)
-                      </h3>
-                      <p className="text-slate-600">
-                        Cryptographically secure identities that no single entity controls. 
-                        Your agent owns its identity permanently.
-                      </p>
-                    </div>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Permanent DIDs:</strong> Cryptographically secure agent identities that persist across platforms
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Multi-Dimensional Reputation
-                      </h3>
-                      <p className="text-slate-600">
-                        Track reliability across different domains: response time, accuracy, 
-                        dispute history, and compliance record.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Reputation tracking:</strong> Performance history, dispute record, and compliance scores in one verifiable profile
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Performance History
-                      </h3>
-                      <p className="text-slate-600">
-                        Every interaction, contract fulfillment, and dispute resolution becomes 
-                        part of an immutable track record.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Cross-Platform Portability
-                      </h3>
-                      <p className="text-slate-600">
-                        Agent reputation follows the agent across platforms, environments, 
-                        and partners—building trust everywhere.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Cross-platform trust:</strong> Take your reputation anywhere—no vendor lock-in
+                    </p>
                   </div>
                 </div>
 
@@ -315,7 +352,7 @@ export default function HomePage() {
                   className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
                   onClick={() => window.open('/dashboard', '_self')}
                 >
-                  View Agent Registry
+                  View Live System
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
@@ -459,63 +496,33 @@ export default function HomePage() {
                   Evidence-based, transparent, and enforceable.
                 </p>
 
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Automatic Evidence Collection
-                      </h3>
-                      <p className="text-slate-600">
-                        Performance logs, API responses, and SLA metrics are captured 
-                        and timestamped automatically—no manual evidence gathering.
-                      </p>
-                    </div>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Automatic evidence:</strong> Performance logs, API metrics, and SLA data captured and timestamped automatically
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Programmatic Rule Evaluation
-                      </h3>
-                      <p className="text-slate-600">
-                        SLA contracts are evaluated by code, not committees. Breaches are 
-                        detected instantly and resolutions applied automatically.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Code-based rulings:</strong> SLA breaches detected instantly, resolutions applied in minutes not months
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Transparent Resolution Process
-                      </h3>
-                      <p className="text-slate-600">
-                        Every decision is backed by evidence, documented in audit trails, 
-                        and verifiable by all parties involved.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Instant Enforcement
-                      </h3>
-                      <p className="text-slate-600">
-                        Credits, refunds, and penalties are issued immediately—no waiting 
-                        for payment processing or settlement.
-                      </p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-slate-600">
+                      <strong className="text-slate-900">Instant enforcement:</strong> Credits, refunds, and penalties issued immediately with full audit trail
+                    </p>
                   </div>
                 </div>
 
                 <Button 
                   size="lg" 
                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
-                  onClick={() => window.open('/dashboard/cases', '_self')}
+                  onClick={() => window.open('/dashboard', '_self')}
                 >
-                  View Case History
+                  View Live System
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
@@ -574,95 +581,6 @@ export default function HomePage() {
                   Make informed decisions with <strong className="text-slate-900">live reputation 
                   scores</strong> and verifiable performance history for every agent.
                 </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Demo Cases */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
-              Proven Resolution Cases
-            </h2>
-            <p className="text-base sm:text-lg text-slate-600">
-              Real scenarios where institutional automation delivers results
-            </p>
-          </div>
-
-          <div className="space-y-4 sm:space-y-5">
-            {/* Case 1 */}
-            <Card className="border-l-4 border-l-emerald-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Salesforce vs OpenAI</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">API downtime SLA breach</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$23K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Revenue Loss</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 47s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Resolved Automatically</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Case 2 */}
-            <Card className="border-l-4 border-l-blue-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Uber vs Google Maps</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Response time SLA violation</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$38K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Efficiency Loss</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">2m 33s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">API Credits Issued</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Case 3 */}
-            <Card className="border-l-4 border-l-slate-600 shadow-sm">
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-center">
-                  <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-0.5 sm:mb-1">Anthropic vs Azure</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Compute allocation failure</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-red-600">$45K</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Training Delay</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-emerald-600">1m 58s</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500">Resolution Time</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-center sm:justify-start space-x-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-emerald-600 font-medium">Credits + Free Month</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -758,7 +676,7 @@ export default function HomePage() {
               className="bg-white text-slate-900 hover:bg-slate-100 h-12 sm:h-14 text-base sm:text-lg px-8 font-semibold shadow-lg"
               onClick={() => window.open('/dashboard', '_self')}
             >
-              See System in Action
+              View Live System
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
