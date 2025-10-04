@@ -18,25 +18,15 @@ export function HeroStats() {
 
   return (
     <Card className="border-slate-200 shadow-sm bg-white">
-      <CardContent className="p-6 sm:p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
-              Overview Dashboard
-            </h1>
-            <p className="text-slate-600 text-sm">
-              Real-time dispute resolution metrics and system status
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <Badge className={`${isSystemActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-700 border-slate-200'} whitespace-nowrap`}>
-              {isSystemActive ? '● Live' : '○ Idle'}
-            </Badge>
-            <span className="text-xs text-slate-500">
-              Last updated: {new Date().toLocaleTimeString()}
-            </span>
-          </div>
+      <CardContent className="p-4 sm:p-6">
+        {/* Compact Status Bar */}
+        <div className="flex items-center justify-between mb-4">
+          <Badge className={`${isSystemActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+            {isSystemActive ? '● Live' : '○ Idle'}
+          </Badge>
+          <span className="text-xs text-slate-500">
+            Updated {new Date().toLocaleTimeString()}
+          </span>
         </div>
 
         {/* Key Metrics Grid */}
@@ -86,15 +76,15 @@ export function HeroStats() {
         </div>
 
         {/* Status Message */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
-          <p className="text-slate-700 text-sm sm:text-base text-center">
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <p className="text-slate-700 text-sm text-center">
             {isSystemActive ? (
               <>
-                ✅ <strong className="text-slate-900">System is operational</strong> and actively resolving disputes
+                ✅ <strong className="text-slate-900">System operational</strong> — actively resolving disputes
               </>
             ) : (
               <>
-                ⏸️ System is idle. No active disputes at this time.
+                ⏸️ System idle — no active disputes
               </>
             )}
           </p>

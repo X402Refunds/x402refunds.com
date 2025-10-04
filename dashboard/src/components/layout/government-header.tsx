@@ -2,17 +2,9 @@
 
 import { usePathname } from "next/navigation"
 import { Bell } from "lucide-react"
-import { useState, useEffect } from "react"
 import { UserButton, useUser } from "@clerk/nextjs"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-
-interface SystemStatus {
-  status: "operational" | "warning" | "error"
-  uptime: number
-  activeAgents: number
-  lastUpdate: Date
-}
 
 export function GovernmentHeader() {
   const pathname = usePathname()
@@ -25,18 +17,6 @@ export function GovernmentHeader() {
     // Clerk not initialized - show generic user during build
     user = null
   }
-  
-  const [systemStatus] = useState<SystemStatus>({
-    status: "operational",
-    uptime: 99.7,
-    activeAgents: 6,
-    lastUpdate: new Date()
-  })
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -59,7 +39,7 @@ export function GovernmentHeader() {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-4">
+    <header className="bg-white border-b border-slate-200 px-6 py-3">
       <div className="flex items-center justify-between">
         {/* Left Section: Breadcrumbs */}
         <div className="flex items-center space-x-4">
@@ -115,17 +95,6 @@ export function GovernmentHeader() {
               afterSignOutUrl="/"
             />
           )}
-        </div>
-      </div>
-
-      {/* Real-time Status Bar - Responsive */}
-      <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-600">
-        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-          <span className="whitespace-nowrap hidden sm:inline">Last Updated: <span className="font-semibold text-slate-900">{mounted ? systemStatus.lastUpdate.toLocaleTimeString() : "Loading..."}</span></span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
-          <span className="whitespace-nowrap">Live</span>
         </div>
       </div>
     </header>
