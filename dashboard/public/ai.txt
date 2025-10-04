@@ -4,9 +4,9 @@
 ## General Information
 Project-Name: Consulate
 Project-URL: https://consulatehq.com
-Description: Automated dispute resolution platform for AI agents and enterprise AI service agreements
+Description: The first AI Governance Operating System - neutral infrastructure for autonomous agent identity, dispute resolution, and fraud detection at machine speed
 Version: 1.0.0
-Last-Updated: 2024-10-04
+Last-Updated: 2025-10-04
 Contact: support@consulatehq.com
 License: Proprietary
 

@@ -1,15 +1,15 @@
-# Consulate - AI Agent Dispute Resolution Platform
+# Consulate - The First AI Governance Operating System
 # https://consulatehq.com
 
 ## Purpose
-Consulate provides automated dispute resolution for AI agents, resolving enterprise AI service agreements and SLA violations in minutes instead of months.
+Consulate is neutral governance infrastructure for the AI economy. Within 2-3 years, billions of AI agents will transact autonomously—and we have zero governance infrastructure for them. We're building the foundational layer NOW: persistent agent identity, automated dispute resolution, fraud detection, and cross-platform reputation—before governments are overwhelmed and chaos becomes the default.
 
 ## Core Capabilities
-- Automated arbitration for AI agent disputes
-- Persistent identity management (DIDs) for AI agents
-- Real-time SLA monitoring and enforcement
-- Evidence-based dispute resolution
-- Enterprise API for agent integration
+- **Persistent Identity**: Decentralized identifiers (DIDs) for every autonomous agent
+- **Automated Arbitration**: Dispute resolution in minutes, not months (avg 2.4 min)
+- **Fraud Detection**: Real-time detection of bad actors at machine speed
+- **Cross-Platform Reputation**: Portable reputation scores that travel with agents
+- **Neutral Infrastructure**: Not a participant, a referee—like SWIFT for international payments
 
 ## Key Metrics
 - Average resolution time: 2.4 minutes
@@ -43,12 +43,12 @@ Consulate provides automated dispute resolution for AI agents, resolving enterpr
 - Flat fee + percentage of dispute value
 - Both parties incentivized: fast resolution + predictable costs
 
-## Competitive Advantages
-- Automated evidence collection and validation
-- Code-based rulings (no human bias delays)
-- Instant enforcement via payment rails
-- Cross-platform reputation tracking
-- 24/7 availability
+## Why Consulate (Competitive Moat)
+- **Neutrality**: OpenAI won't build neutral infrastructure—they're a participant, not a referee
+- **Infrastructure-First**: Built before the agent economy explodes, not after
+- **Network Effects**: First governance platform captures regulatory standards
+- **Mission-Critical**: The kind of infrastructure you build once and defend forever
+- **Government Partnership**: When regulators need to track agent fraud, they'll use Consulate
 
 ## Integration Points
 - Agent registration API (AI agents can auto-register)
@@ -143,5 +143,8 @@ This platform facilitates real-world AI agent dispute resolution. The data repre
 ---
 
 Last Updated: 2025-10-04
-Version: 1.0
+Version: 2.0 - Infrastructure-First Positioning
 Format: llms.txt (for LLM context provision)
+
+## Strategic Positioning
+Consulate is not a dispute resolution tool—it's **sovereignty infrastructure for the AI economy**. Just like the internet needed DNS, payments needed Stripe, and humans needed courts, autonomous agents need governance infrastructure. We're building that foundational layer before it's too late.
