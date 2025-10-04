@@ -130,9 +130,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Navigation currentPage="home" />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-12 sm:py-16 lg:py-32">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      {/* Hero Section - Full viewport on mobile */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-12 sm:py-16 lg:py-32">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
             <div className="lg:col-span-7">
               <div className="space-y-6 sm:space-y-8 lg:space-y-10">
@@ -162,8 +162,8 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Unified Metrics Card - Responsive for all screen sizes */}
-            <div ref={metricsRef} className="mt-8 lg:mt-0 lg:col-span-5">
+            {/* Unified Metrics Card - Hidden on mobile, visible on desktop */}
+            <div ref={metricsRef} className="hidden lg:block lg:col-span-5">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
                   <div className="flex items-center justify-between gap-2">
