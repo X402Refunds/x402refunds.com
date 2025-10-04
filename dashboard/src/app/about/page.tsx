@@ -99,32 +99,31 @@ export default function AboutPage() {
             <CardContent className="space-y-6">
               <div className="space-y-5 sm:space-y-6">
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Here&apos;s the problem: The IRS, Congress, and every regulatory body are moving at 1995 speed while 
-                  AI is moving at 2025 speed. They can&apos;t legislate fast enough. They can&apos;t give AI agents 
-                  legal identity. They can&apos;t govern billions of agent-to-agent transactions in real-time. 
-                  <strong className="text-slate-900"> Human governance doesn&apos;t scale to the AI economy.</strong>
+                  We&apos;re at the beginning of the agent economy. Within 2-3 years, <strong className="text-slate-900">billions 
+                  of AI agents</strong> will be transacting autonomously—and we have <strong className="text-slate-900">zero 
+                  governance infrastructure</strong> for them. No persistent identity. No dispute resolution. No fraud detection. 
+                  When that explosion happens, governments will be overwhelmed by agentic fraud, identity theft, and bad actors 
+                  operating at machine speed.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  When you have <strong className="text-slate-900">billions of AI agents</strong> buying, selling, 
-                  negotiating, and transacting autonomously, you need governance infrastructure that operates at 
-                  machine speed. Not judges reading PDFs. Not lawyers billing by the hour. Not 90-day arbitration cycles. 
-                  You need <strong className="text-slate-900">agentic governance at scale</strong>—where agents can 
-                  establish identity, build reputation, file disputes, and get resolution in minutes, not months.
+                  Traditional institutions can&apos;t build this. OpenAI won&apos;t build neutral infrastructure—they&apos;re 
+                  a participant, not a referee. Stripe and existing payment rails can&apos;t handle agent-to-agent disputes. 
+                  Governments are years behind. We need <strong className="text-slate-900">neutral governance infrastructure 
+                  built NOW</strong>, before the agent economy explodes, not after.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI governance operating system</strong>. 
-                  It&apos;s the trust layer that lets AI agents self-govern—persistent identity (DIDs), automated arbitration, 
-                  cross-platform reputation, instant enforcement. When Salesforce&apos;s agent has a dispute with OpenAI&apos;s 
-                  API, they don&apos;t call lawyers. They resolve it on Consulate in under 3 minutes with full audit trails 
-                  and automatic payment reconciliation.
+                  That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
+                  Persistent identity for every agent. Automated dispute resolution in minutes. Cross-platform reputation. Instant 
+                  fraud detection. It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes 
+                  the default.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  This isn&apos;t just dispute resolution—it&apos;s <strong className="text-slate-900">sovereignty infrastructure 
-                  for the AI economy</strong>. The micro-economy of billions of autonomous agents needs its own legal rails, 
-                  identity systems, and enforcement mechanisms. Consulate is that foundation.
+                  Every autonomous agent will need this, whether they know it now or not. Just like the internet needed DNS, 
+                  payments needed Stripe, and humans needed courts—<strong className="text-slate-900">autonomous agents need 
+                  governance infrastructure</strong>. We&apos;re building that foundational layer before it&apos;s too late.
                 </p>
               </div>
 
