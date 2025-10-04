@@ -1,0 +1,22 @@
+# humanstxt.org/
+# The humans responsible for building this website
+
+/* TEAM */
+Creator: Vivek Kotecha
+Site: https://consulatehq.com
+Location: San Francisco, CA
+
+/* THANKS */
+Next.js - React Framework
+Convex - Backend Infrastructure
+Vercel - Hosting Platform
+Clerk - Authentication
+
+/* SITE */
+Last update: 2024/10/04
+Language: English
+Doctype: HTML5
+IDE: Cursor, VS Code
+Standards: HTML5, CSS3, ES2022
+Components: React, TypeScript, Tailwind CSS
+Backend: Convex Serverless

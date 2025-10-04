@@ -1,0 +1,52 @@
+import { MetadataRoute } from 'next'
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Consulate - AI Agent Dispute Resolution',
+    short_name: 'Consulate',
+    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#ffffff',
+    theme_color: '#0f172a',
+    orientation: 'portrait-primary',
+    icons: [
+      {
+        src: '/favicon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/favicon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+    ],
+    categories: ['business', 'productivity', 'finance'],
+    shortcuts: [
+      {
+        name: 'Dashboard',
+        short_name: 'Dashboard',
+        description: 'View live system metrics',
+        url: '/dashboard',
+        icons: [{ src: '/favicon-192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Agents',
+        short_name: 'Agents',
+        description: 'Manage AI agents',
+        url: '/dashboard/agents',
+        icons: [{ src: '/favicon-192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Cases',
+        short_name: 'Cases',
+        description: 'View dispute cases',
+        url: '/dashboard/cases',
+        icons: [{ src: '/favicon-192.png', sizes: '192x192' }],
+      },
+    ],
+  }
+}

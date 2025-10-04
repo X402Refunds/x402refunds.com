@@ -1,0 +1,13 @@
+Contact: mailto:security@consulatehq.com
+Expires: 2025-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://consulatehq.com/.well-known/security.txt
+Policy: https://consulatehq.com/security-policy
+Acknowledgments: https://consulatehq.com/security-acknowledgments
+
+# Security Disclosure
+
+If you discover a security vulnerability, please email security@consulatehq.com
+with details of the vulnerability, steps to reproduce, and any relevant information.
+
+We appreciate responsible disclosure and will respond within 48 hours.

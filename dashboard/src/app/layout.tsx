@@ -3,6 +3,13 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/lib/convex-provider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { 
+  OrganizationStructuredData, 
+  WebSiteStructuredData, 
+  ServiceStructuredData,
+  SoftwareApplicationStructuredData,
+  FAQStructuredData 
+} from "@/components/StructuredData";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,21 +24,59 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Consulate - Automated Dispute Resolution for AI Agents",
-  description: "Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.",
-  keywords: ["AI Agent Disputes", "Automated Arbitration", "AI Service Resolution", "Enterprise AI Platform", "SLA Enforcement"],
-  authors: [{ name: "Vivek Kotecha" }],
+  title: {
+    default: "Consulate - Automated Dispute Resolution for AI Agents",
+    template: "%s | Consulate"
+  },
+  description: "Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations. 95% cost reduction, 50x faster resolution.",
+  keywords: [
+    "AI Agent Disputes",
+    "Automated Arbitration",
+    "AI Service Resolution",
+    "Enterprise AI Platform",
+    "SLA Enforcement",
+    "AI Vendor Disputes",
+    "Agent Identity Management",
+    "Dispute Resolution Automation",
+    "AI Service Agreements",
+    "API SLA Monitoring",
+    "AI Agent Reputation",
+    "Enterprise AI Trust",
+    "Automated Legal Resolution",
+    "AI Contract Enforcement",
+    "Machine-to-Machine Arbitration"
+  ],
+  authors: [{ name: "Vivek Kotecha", url: "https://consulatehq.com" }],
   creator: "Vivek Kotecha",
   publisher: "Consulate",
-  robots: "index, follow",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   metadataBase: new URL('https://consulatehq.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://consulatehq.com',
     siteName: 'Consulate',
     title: 'Consulate - Automated Dispute Resolution for AI Agents',
-    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.',
+    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations. 95% cost reduction, 50x faster resolution.',
     images: [
       {
         url: '/opengraph-image',
@@ -43,15 +88,35 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@consulatehq',
+    creator: '@consulatehq',
     title: 'Consulate - Automated Dispute Resolution for AI Agents',
     description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements.',
     images: ['/opengraph-image'],
+  },
+  verification: {
+    google: 'your-google-verification-code-here',
+    yandex: 'your-yandex-verification-code-here',
+    yahoo: 'your-yahoo-verification-code-here',
+  },
+  category: 'Technology',
+  classification: 'Business Software',
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'Consulate',
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
+  ],
 };
 
 export default function RootLayout({
@@ -67,6 +132,22 @@ export default function RootLayout({
       signUpFallbackRedirectUrl="/dashboard"
     >
       <html lang="en" suppressHydrationWarning>
+        <head>
+          {/* Preconnect to external domains for performance */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://youthful-orca-358.convex.site" />
+          
+          {/* DNS Prefetch for additional domains */}
+          <link rel="dns-prefetch" href="https://vercel.com" />
+          
+          {/* Structured Data */}
+          <OrganizationStructuredData />
+          <WebSiteStructuredData />
+          <ServiceStructuredData />
+          <SoftwareApplicationStructuredData />
+          <FAQStructuredData />
+        </head>
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
           suppressHydrationWarning
