@@ -23,11 +23,24 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#e2e8f0',
+          background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%)',
           padding: '80px',
           fontFamily: 'Inter, sans-serif',
+          position: 'relative',
         }}
       >
+        {/* Accent bar - top */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '8px',
+            background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+          }}
+        />
+
         {/* Logo */}
         <div
           style={{
@@ -41,12 +54,13 @@ export default async function Image() {
             style={{
               width: '72px',
               height: '72px',
-              background: '#3b82f6',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '42px',
+              boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)',
             }}
           >
             ⚖️
@@ -66,14 +80,17 @@ export default async function Image() {
         {/* Main Headline */}
         <h1
           style={{
-            fontSize: '84px',
-            fontWeight: '700',
-            color: '#0f172a',
+            fontSize: '88px',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
             lineHeight: 1.1,
             margin: '0 0 40px 0',
             textAlign: 'center',
             maxWidth: '1000px',
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.04em',
           }}
         >
           Resolve AI Agent Disputes
@@ -93,6 +110,18 @@ export default async function Image() {
         >
           Automated arbitration for enterprise AI vendors
         </p>
+
+        {/* Accent bar - bottom */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '8px',
+            background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)',
+          }}
+        />
       </div>
     ),
     {
