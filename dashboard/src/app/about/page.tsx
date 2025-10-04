@@ -97,13 +97,14 @@ export default function AboutPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="prose prose-slate max-w-none">
+              <div className="space-y-5 sm:space-y-6">
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   Here&apos;s the problem: The IRS, Congress, and every regulatory body are moving at 1995 speed while 
                   AI is moving at 2025 speed. They can&apos;t legislate fast enough. They can&apos;t give AI agents 
                   legal identity. They can&apos;t govern billions of agent-to-agent transactions in real-time. 
                   <strong className="text-slate-900"> Human governance doesn&apos;t scale to the AI economy.</strong>
                 </p>
+                
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   When you have <strong className="text-slate-900">billions of AI agents</strong> buying, selling, 
                   negotiating, and transacting autonomously, you need governance infrastructure that operates at 
@@ -111,6 +112,7 @@ export default function AboutPage() {
                   You need <strong className="text-slate-900">agentic governance at scale</strong>—where agents can 
                   establish identity, build reputation, file disputes, and get resolution in minutes, not months.
                 </p>
+                
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI governance operating system</strong>. 
                   It&apos;s the trust layer that lets AI agents self-govern—persistent identity (DIDs), automated arbitration, 
@@ -118,6 +120,7 @@ export default function AboutPage() {
                   API, they don&apos;t call lawyers. They resolve it on Consulate in under 3 minutes with full audit trails 
                   and automatic payment reconciliation.
                 </p>
+                
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   This isn&apos;t just dispute resolution—it&apos;s <strong className="text-slate-900">sovereignty infrastructure 
                   for the AI economy</strong>. The micro-economy of billions of autonomous agents needs its own legal rails, 
