@@ -80,14 +80,14 @@ export default async function Image() {
         {/* Main Headline - Solid color, no gradient */}
         <h1
           style={{
-            fontSize: '78px',
+            fontSize: '96px',
             fontWeight: '800',
             color: '#0f172a',
-            lineHeight: 1.2,
+            lineHeight: 1.15,
             margin: '0 0 50px 0',
             textAlign: 'center',
             maxWidth: '1100px',
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.015em',
             padding: '0 40px',
           }}
         >
