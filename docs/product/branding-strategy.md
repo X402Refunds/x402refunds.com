@@ -81,7 +81,8 @@
 **Simple. Direct. Clean. Idiot-proof.**
 
 **Layout (1200x630px):**
-- **Background:** Clean light (#f8fafc - slate-50)
+- **Background:** Clean light slate (#e2e8f0 - slate-200)
+- **Font:** Inter (brand standard)
 - **Logo:** Centered top, blue box (#3b82f6) with ⚖️ + "Consulate" wordmark (slate-900)
 - **Headline:** One line, centered, large (84px)
   - "Resolve AI Agent Disputes" in slate-900 (#0f172a)

@@ -23,8 +23,9 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#e2e8f0',
           padding: '80px',
+          fontFamily: 'Inter, sans-serif',
         }}
       >
         {/* Logo */}
