@@ -39,7 +39,7 @@ export function GovernmentHeader() {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-3">
+    <header className="bg-white border-b border-slate-200 pl-16 pr-6 py-3 lg:pl-6">
       <div className="flex items-center justify-between">
         {/* Left Section: Breadcrumbs */}
         <div className="flex items-center space-x-4">
