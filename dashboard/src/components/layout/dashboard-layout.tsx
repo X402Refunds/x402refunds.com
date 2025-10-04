@@ -4,8 +4,6 @@ import { useState } from "react"
 import { GovernmentSidebar } from "./government-sidebar"
 import { GovernmentHeader } from "./government-header"
 import { cn } from "@/lib/utils"
-import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -17,23 +15,6 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Mobile menu button - visible only on mobile */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="bg-white shadow-lg border-slate-300 hover:bg-slate-50 hover:border-blue-600 transition-all"
-          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-        >
-          {sidebarOpen ? (
-            <X className="h-5 w-5 text-slate-900" />
-          ) : (
-            <Menu className="h-5 w-5 text-slate-900" />
-          )}
-        </Button>
-      </div>
-
       {/* Sidebar overlay on mobile - click to close */}
       {sidebarOpen && (
         <div
@@ -56,13 +37,16 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
           <GovernmentSidebar className="h-full" onClick={() => setSidebarOpen(false)} />
         </div>
 
-        {/* Main Content - adjusted for mobile menu button */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden w-full">
-          {/* Header */}
-          <GovernmentHeader />
+          {/* Header with integrated mobile menu button */}
+          <GovernmentHeader 
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
           
-          {/* Page Content - add top padding on mobile to clear menu button */}
-          <main className={cn("flex-1 overflow-auto p-4 sm:p-6 lg:pt-6 pt-16", className)}>
+          {/* Page Content */}
+          <main className={cn("flex-1 overflow-auto p-4 sm:p-6", className)}>
             {children}
           </main>
         </div>

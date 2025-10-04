@@ -1,12 +1,18 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Bell } from "lucide-react"
+import { Bell, Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
+import { Button } from "@/components/ui/button"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 
-export function GovernmentHeader() {
+interface GovernmentHeaderProps {
+  sidebarOpen?: boolean
+  onToggleSidebar?: () => void
+}
+
+export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: GovernmentHeaderProps = {}) {
   const pathname = usePathname()
   let user = null
   
@@ -39,10 +45,27 @@ export function GovernmentHeader() {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="bg-white border-b border-slate-200 pl-16 pr-6 py-3 lg:pl-6">
-      <div className="flex items-center justify-between">
+    <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3">
+      <div className="flex items-center justify-between gap-3">
+        {/* Mobile Menu Button - Integrated into header */}
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="lg:hidden flex-shrink-0 hover:bg-slate-100 transition-colors"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+          >
+            {sidebarOpen ? (
+              <X className="h-5 w-5 text-slate-900" />
+            ) : (
+              <Menu className="h-5 w-5 text-slate-900" />
+            )}
+          </Button>
+        )}
+
         {/* Left Section: Breadcrumbs */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 flex-1 min-w-0">
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbs.map((crumb, index) => (
