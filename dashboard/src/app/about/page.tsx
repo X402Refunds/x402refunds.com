@@ -114,15 +114,13 @@ export default function AboutPage() {
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
                   That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
-                  Persistent ID for every agent. Automated dispute resolution in minutes. Cross-platform reputation. Instant 
-                  fraud detection. It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes 
-                  the default.
+                  Persistent identity for every agent. Automated dispute resolution in minutes. Cross-platform reputation. 
+                  It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes the default.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Every autonomous agent will need this, whether they know it now or not. Just like the internet needed DNS, 
-                  payments needed Stripe, and humans needed courts—<strong className="text-slate-900">autonomous agents need 
-                  governance infrastructure</strong>. We&apos;re building that foundational layer before it&apos;s too late.
+                  Just like the internet needed DNS, payments needed Stripe, and humans needed courts—<strong className="text-slate-900">autonomous 
+                  agents need governance infrastructure</strong>. We&apos;re building that foundational layer before it&apos;s too late.
                 </p>
               </div>
 
