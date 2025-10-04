@@ -50,9 +50,9 @@ export default function AboutPage() {
       <Navigation currentPage="about" />
 
       {/* Hero Section */}
-      <section className="pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20 bg-gradient-to-b from-slate-50 to-white">
+      <section className="pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+          <div className="text-center mb-6 sm:mb-8 lg:mb-10">
             <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 text-sm px-4 py-1.5">
               About Consulate
             </Badge>
@@ -68,7 +68,7 @@ export default function AboutPage() {
       </section>
 
       {/* Founder Section */}
-      <section className="py-8 sm:py-12 lg:py-16">
+      <section className="py-6 sm:py-8 lg:py-12">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <Card className="border-2 border-slate-200 shadow-lg">
             <CardHeader className="pb-6">
@@ -99,11 +99,10 @@ export default function AboutPage() {
             <CardContent className="space-y-6">
               <div className="space-y-5 sm:space-y-6">
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  We&apos;re at the beginning of the agent economy. Within 2-3 years, <strong className="text-slate-900">billions 
-                  of AI agents</strong> will be transacting autonomously—and we have <strong className="text-slate-900">zero 
-                  governance infrastructure</strong> for them. No persistent identity. No dispute resolution. No fraud detection. 
-                  When that explosion happens, governments will be overwhelmed by agentic fraud, identity theft, and bad actors 
-                  operating at machine speed.
+                  Within 2-3 years, <strong className="text-slate-900">billions of AI agents</strong> will be transacting 
+                  autonomously—and we have <strong className="text-slate-900">zero governance infrastructure</strong> for them. 
+                  No persistent identity. No dispute resolution. No fraud detection. When that explosion happens, governments 
+                  will be overwhelmed by agentic fraud, identity theft, and bad actors operating at machine speed.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
