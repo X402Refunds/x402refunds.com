@@ -4,7 +4,15 @@
 
 ## 🚫 NEVER Create Random .md Files
 
-**DO NOT create .md files** outside designated locations without explicit user request.
+**ABSOLUTE PROHIBITION**: DO NOT create any `.md` files without EXPLICIT user request. This includes:
+
+- ❌ Summary documents (e.g., `how-X-works.md`, `X-explained.md`)
+- ❌ Completion reports (e.g., `X-complete.md`, `X-done.md`)
+- ❌ Setup guides you think are "helpful" (user didn't ask for it = don't create it)
+- ❌ Architecture explanations (goes in code comments or existing docs)
+- ❌ "Documentation" of what you just did (git commit message is enough)
+
+**If the user didn't explicitly say "create a document" or "write a guide", DO NOT CREATE IT.**
 
 ### The Problem
 AI agents frequently create documentation files that:
@@ -53,11 +61,13 @@ Documentation is **ONLY** allowed in these locations:
   - code-quality-checks.mdc
   - commit-standards.mdc
   - constitutional-governance.mdc
+  - context-trust.mdc
   - convex-patterns.mdc
   - legal-compliance.mdc
   - package-architecture.mdc
   - prompt-architecture.mdc
   - rule-enforcement.mdc
+  - rule-evolution.mdc
   - codebase-context.mdc (auto-generated)
   - documentation-discipline.mdc (this file)
 
@@ -79,11 +89,25 @@ Documentation is **ONLY** allowed in these locations:
 **DON'T**: Create `decisions.md`, `notes.md`
 **DO**: Use git commit messages, or formal ADR in `docs/architecture/decisions/`
 
-## 📝 .md File Creation Rules
+## 🛑 What To Do Instead of Creating Docs
 
-If you MUST create a .md file:
+**Instead of creating a summary document:**
+- ✅ Answer the user's question directly in chat
+- ✅ Let the auto-generated context graph handle structure
+- ✅ Update code comments for complex logic
+- ✅ Use git commit messages for change history
 
-1. **Get explicit user approval** - Don't create without asking
+**The urge to create a "helpful guide"?**
+- 🚫 RESIST IT
+- The Cursor rules ARE the guide
+- Your answers in chat ARE the explanation
+- Don't create redundant documentation
+
+## 📝 .md File Creation Rules (ONLY if user explicitly requests)
+
+If user explicitly says "create a document" or "write a guide":
+
+1. **Confirm with user** - "Where should I create this? `docs/setup/` or `docs/architecture/`?"
 2. **Choose proper location** - Use `docs/` subdirectory
 3. **Use descriptive names** - `payment-integration-guide.md` not `notes.md`
 4. **Include metadata header**:

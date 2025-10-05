@@ -1,467 +1,149 @@
 # Consulate Development Rules
 
-## 🍺 PNPM INSTALLATION PREFERENCES
-
-**PREFERRED RULE**: This project works best with globally installed PNPM, preferring Homebrew on macOS.
-
-### ✅ Preferred PNPM Installation
-- **macOS**: Homebrew-installed PNPM (`brew install pnpm`)
-  - Verify with: `which pnpm` should show `/opt/homebrew/bin/pnpm`
-  - Version check: `pnpm --version` should show Homebrew-managed version
-- **CI/Linux**: System package manager or official installer
-- **Windows**: Official PNPM installer or package manager
-
-### 🚫 Avoid These PNPM Sources
-- ❌ npm-installed PNPM: `npm install -g pnpm` (conflicts with package managers)
-- ❌ Local project PNPM installations (workspace confusion)
-
-### 🔧 Verification Commands
-**Before any PNPM operations, verify:**
-```bash
-# Check PNPM installation
-which pnpm  # macOS Homebrew: /opt/homebrew/bin/pnpm | Other: varies
-
-# Verify PNPM is working
-pnpm --version
-
-# Project verification script (if available)
-pnpm verify-pnpm
-```
-
-### 🧹 Conflict Resolution
-**If conflicts detected:**
-1. **Remove npm-installed PNPM**: `npm uninstall -g pnpm`
-2. **Clean local installations**: `rm -rf ~/.local/share/pnpm`
-3. **Remove node_modules**: `rm -rf node_modules`
-4. **Verify PNPM source**: `which pnpm` (prefer system package manager installation)
-5. **Reinstall dependencies**: `pnpm install`
-
-### 📝 Script Writing Rules
-- **Always use**: `pnpm dlx` instead of `npx`
-- **Always verify**: PNPM installation before running scripts
-- **Never install**: PNPM as a project dependency
-- **Use .npmrc**: Configuration enforces consistent global PNPM usage
-
-### 🔍 Troubleshooting
-**Common issues and solutions:**
-- PNPM command not found → Install via system package manager (`brew install pnpm` on macOS)
-- Wrong PNPM version → Remove conflicts, use single global installation
-- Permission errors → Ensure PNPM has proper permissions for global installation
-- Workspace issues → Verify `.npmrc` configuration is active
-
-**For Cursor users**: Run `pnpm verify-pnpm` if available before suggesting PNPM operations.
+## 🍺 PNPM Setup
+**macOS**: Use Homebrew-installed pnpm (`brew install pnpm`)
+- Verify: `which pnpm` → `/opt/homebrew/bin/pnpm`
+- Use `pnpm dlx` instead of `npx`
 
 ---
 
-## Development Guidelines
+## 🏗️ Architecture (Current)
 
-- Only modify code directly relevant to the specific request. Avoid changing unrelated functionality.
-- Never replace code with placeholders like `# ... rest of the processing ...`. Always include complete code.
-- Break problems into smaller steps. Think through each step separately before implementing.
-- Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
-- Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
+### File Locations
+- **Backend**: `convex/` - Serverless functions (Convex)
+- **Frontend**: `dashboard/src/` - Next.js App Router (Vercel)
+- **Tests**: `test/` - Vitest test files
+- **Scripts**: `scripts/` - Automation utilities
+- **Config**: Root - `package.json`, `tsconfig.json`, `vitest.config.ts`
 
-## 🚫 DEPLOYMENT RESTRICTIONS - DO NOT AUTO-DEPLOY
-
-**CRITICAL RULE**: NEVER deploy to Vercel/frontend automatically unless explicitly requested by the user.
-
-### ❌ Prohibited Actions:
-- **NEVER** run `pnpm run deploy:frontend` unless user explicitly asks
-- **NEVER** run `vercel deploy` commands automatically
-- **NEVER** assume deployment is needed after fixes
-
-### ✅ Allowed Workflow:
-1. Make code changes
-2. Run quality checks (`pnpm lint && pnpm type-check && pnpm build`)
-3. Commit to Git (`git commit && git push`)
-4. **STOP** - Do NOT deploy
-
-### 💡 When User Wants Deployment:
-- User must explicitly say "deploy" or "deploy to Vercel"
-- Ask for confirmation if unclear: "Would you like me to deploy this to Vercel?"
-- Only then run `pnpm run deploy:frontend`
-
-### 📝 Rationale:
-- Deployments should be intentional and controlled
-- User may want to test locally first
-- Multiple fixes may be batched before deployment
-- Debugging may require local testing only
-
-**Remember**: Commit ≠ Deploy. Always stop after pushing to Git unless told otherwise.
-
----
-
-## 🔍 MANDATORY Quality Checks - ALWAYS RUN AFTER CODE CHANGES
-
-**CRITICAL REQUIREMENT**: After writing or modifying ANY code, you MUST run all quality checks before committing.
-
-### Required Checks (Run in Order):
-```bash
-pnpm lint          # ✅ Code quality and style
-pnpm type-check    # ✅ TypeScript type safety
-pnpm build         # ✅ Production build verification
-pnpm update-context # ✅ Update codebase context graph
-pnpm index-codebase # ✅ Index codebase to Convex
-```
-
-### Complete Verification Command:
-```bash
-pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase && echo "✅ ALL QUALITY CHECKS PASSED"
-```
-
-### When to Run:
-- ✅ **ALWAYS** after modifying `.ts`, `.tsx`, `.js`, `.jsx` files
-- ✅ **ALWAYS** after changing component structure or imports
-- ✅ **ALWAYS** after updating dependencies or configuration
-- ✅ **ALWAYS** before committing any code changes
-
-### Success Criteria:
-```
-✓ No linting errors or warnings
-✓ No TypeScript compilation errors
-✓ Production build completes successfully
-✓ Context graph updated successfully
-✓ Codebase indexed to Convex
-✓ All checks pass before git commit
-```
-
-**See `.cursor/rules/code-quality-checks.mdc` for complete details.**
-
----
-
-## 🚦 Process Discipline - STOP, CLASSIFY, CONSULT
-
-**CRITICAL PROCESS RULE**: Before implementing ANY solution, you MUST complete this classification checklist to prevent tunnel vision and ensure you follow all relevant rules.
-
-### 🛑 MANDATORY PRE-IMPLEMENTATION CHECKLIST
-
-#### Step 1: STOP - Pause and Classify
-Before writing any code or making changes, answer:
-
-**What TYPE of work is this?**
-- [ ] Architecture change (affects file locations, commands, patterns)
-- [ ] Bug fix (fixing broken functionality) 
-- [ ] New feature (adding functionality)
-- [ ] CI/CD infrastructure (workflows, scripts, build process)
-- [ ] Documentation (README, comments, docs)
-- [ ] Refactoring (same functionality, different structure)
-- [ ] Dependencies (package.json, tooling)
-- [ ] Maintenance/cleanup (removing unused code)
-
-#### Step 2: CONSULT - Check ALL Relevant Rules
-Based on the classification above, consult these rules BEFORE implementing:
-
-**Architecture Changes:**
-- Current architecture patterns defined below
-- File locations and commands
-
-**Code Changes:**
-- Convex function patterns and error handling
-- Development workflow commands
-
-**Git Commits:**
-- Conventional commit types and semantic versioning
-- Ask: "Is this feat/fix/ci/docs/build/chore/refactor?"
-
-**CI/CD Issues:**
-- Check if this affects `.github/workflows/` 
-- Is this a pipeline/build/infrastructure change? → Use `ci:`
-- Does this fix application logic? → Use `fix:`
-
-#### Step 3: PLAN - Think Before Implementing
-Write a brief plan:
-- **What exactly needs to change?**
-- **What rules/patterns must be followed?**
-- **What dependencies/files will be affected?**
-- **What type of commit will this be?**
-
-### 🚨 ANTI-TUNNEL VISION REMINDERS
-
-**When you feel urgency to "just fix it quickly":**
-- ⚠️ STOP - This is when mistakes happen
-- ⚠️ The 2 minutes spent classifying saves 20 minutes of rework
-- ⚠️ Ask: "What TYPE of change is this really?"
-
-**Common Tunnel Vision Traps:**
-- ❌ "Type check broken" → `fix:` (WRONG - it's CI infrastructure)
-- ❌ "Just need to add a script" → (WRONG - affects workflows, architecture)
-- ❌ "Quick path update" → (WRONG - might affect dependency graph)
-
-## 🏗️ Architecture Consistency - Current Patterns
-
-**CRITICAL RULE**: Always use the current architecture patterns defined below. Never suggest deprecated patterns.
-
-### 📍 Current Architecture
-
-#### File Locations
-- **Backend**: `convex/` - Convex serverless functions and backend logic
-- **Frontend**: `dashboard/src/` - Vercel-deployed Next.js application with React components
-- **Shared Config**: `packages/config/src/` - Shared ESLint and TypeScript configuration
-- **Tests**: `test/` - Test files with `.test.ts` extension
-- **Scripts**: `scripts/` - Automation and utility scripts
-- **Documentation**: `docs/` - Project documentation and specifications
-- **Configuration**: Root level (`./`) - `package.json`, `tsconfig.json`, `vitest.config.ts`
-- **Workflows**: `.github/workflows/` - CI/CD configuration
-
-#### Commands
-- **Development**: `pnpm dev` - Start development server (Convex production + Vercel dev)
-- **Backend Deployment**: `pnpm run deploy` - Deploy backend to Convex production
-- **Frontend Deployment**: `pnpm run deploy:frontend` - Deploy frontend to Vercel
+### Commands
+- **Dev**: `pnpm dev` - Start development server
+- **Deploy Backend**: `pnpm deploy` - Deploy to Convex production
+- **Deploy Frontend**: `pnpm deploy:frontend` - Deploy to Vercel
 - **Build**: `pnpm build` - Build all packages
-- **Testing**: `pnpm test`, `pnpm test:run`, `pnpm test:ui`, `pnpm test:coverage`
-- **E2E**: `pnpm e2e` - End-to-end tests
-- **Type Check**: `pnpm type-check` - TypeScript validation across packages
+- **Test**: `pnpm test:run` - Run tests
+- **Quality**: `pnpm lint && pnpm type-check && pnpm build`
 
-#### File Patterns
-- **Backend files**: `convex/*.ts`
-- **Frontend files**: `dashboard/src/**/*.tsx`, `dashboard/src/**/*.ts`
-- **Shared config**: `packages/config/src/*.ts`
-- **Test files**: `test/*.test.ts`
-- **Generated API**: `convex/_generated/`
-- **Documentation**: `docs/**/*.md`
+---
 
-### ❌ Forbidden Patterns (Deprecated)
+## 🚫 CRITICAL RULES
 
-**Never suggest these outdated patterns:**
+### Deployment Safety
+**NEVER auto-deploy** unless user explicitly requests.
+- ❌ Don't run `pnpm deploy:frontend` automatically
+- ✅ Only deploy when user says "deploy"
+- After fixes: Commit to git, then STOP (don't deploy)
 
-#### Locations
-- ❌ `apps/dashboard/` → Frontend should be in `dashboard/` directly
-- ❌ `apps/convex/` → Backend functions should be in `convex/` directly
-- ❌ Mixed backend/frontend in same directory
-- ❌ Backend functions outside of `convex/`
-
-#### Commands
-- ❌ `npm run dev` → Use `pnpm dev`
-- ❌ `cd dashboard && npm run dev` → Use `pnpm dev` from root
-- ❌ Manual deployment without testing → Use proper testing sequence
-
-#### Patterns
-- ❌ `apps/dashboard/src/` → Use `dashboard/src/` directly
-- ❌ `apps/convex/*.ts` → Use `convex/*.ts` directly
-- ❌ Backend logic in frontend directories
-- ❌ Mixing serverless functions with client code
-
-### 📏 Architecture Principles
-
-Always follow these core principles:
-- Pure serverless - all backend logic in Convex production functions
-- Clear separation of concerns - frontend on Vercel in `dashboard/`, backend on Convex in `convex/`, shared config in `packages/`
-- Monorepo organization with logical boundaries
-- Production-only deployment model (no development environments)
-- Type-safe integration between frontend and backend
-- Zero build complexity for backend functions
-
-## 🚦 Production-Only Deployment Model
-
-**CRITICAL RULE**: This project operates in production-only mode. All deployments go to production.
-
-### Deployment Process Rules
-
-#### Production Deployment Model
-- **Backend deployment**: `pnpm deploy` deploys backend to Convex production
-- **Frontend deployment**: `pnpm deploy:frontend` deploys frontend to Vercel production  
-- **No development environments**: All services run in production mode
-- **Testing**: All tests run against production APIs
-
-#### Deployment Requirements
-- ✅ **Testing complete**: All tests passing before deployment
-- ✅ **Architecture validation**: Follow established architecture patterns
-- ✅ **Backend first**: Deploy backend before frontend for API compatibility
-
-### ✅ Correct Deployment Commands
-
-#### Backend Deployment
+### Quality Checks (MANDATORY)
+After ANY code change, run:
 ```bash
-# Deploy backend to Convex production
-pnpm deploy
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context
 ```
+**Never commit** if any check fails.
 
-#### Frontend Deployment (only if explicitly asked to do so by the user)
+### Documentation Discipline
+**NEVER create `.md` files** unless explicitly requested.
+- No summary documents
+- No auto-generated docs
+- No "helpful" documentation
+
+### Context Trust
+The codebase context graph (`.cursor/rules/codebase-context.mdc`) is accurate.
+- ❌ Don't say "let me understand your project structure"
+- ✅ Use what you know immediately
+- Only read files for implementation details, not structure
+
+---
+
+## 🚦 Process (STOP, CLASSIFY, CONSULT)
+
+Before implementing ANY solution:
+
+1. **STOP** - What type of work is this?
+   - Architecture change / Bug fix / Feature / CI-CD / Docs / Refactor?
+
+2. **CLASSIFY** - Which rules apply?
+   - Convex backend work → `convex-patterns.mdc`
+   - Git commits → `commit-standards.mdc`
+   - Agent systems → `agent-coordination.mdc`
+   - Legal/compliance → `compliance.mdc`
+
+3. **PLAN** - Think before implementing
+   - What needs to change?
+   - What patterns to follow?
+   - What commit type?
+
+**Anti-tunnel vision**: The 2 minutes classifying saves 20 minutes of rework.
+
+---
+
+## 📋 Commit Standards (Quick Reference)
+
+**Release-triggering**:
+- `feat:` → Minor release (new functionality)
+- `fix:` → Patch release (bug fixes)
+- `BREAKING CHANGE:` → Major release
+
+**Non-release** (infrastructure):
+- `ci:` - GitHub Actions, workflows
+- `build:` - Dependencies, package.json
+- `docs:` - Documentation only
+- `refactor:` - Code reorganization
+- `chore:` - Maintenance, cleanup
+
+---
+
+## 🧪 Testing Requirements
+
+### Before Committing
 ```bash
-# Deploy frontend to Vercel production
-pnpm deploy:frontend
-```
+# 1. Quality checks (always)
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context
 
-#### Full Deployment (only if explicitly asked to do so by the user)
-```bash
-# Deploy both backend and frontend
-pnpm deploy && pnpm deploy:frontend
-```
+# 2. Backend changes (if applicable)
+pnpm deploy        # Deploy to Convex
+pnpm test:run      # Run tests
 
-### 🚫 Prohibited Patterns
-```bash
-# DON'T DO THIS - Old development patterns
-convex dev        # No development mode
-pnpm dev:local    # No localhost development
-npm run dev       # Use pnpm commands instead
-```
-
-### 🔍 Deployment Decision Tree
-```
-User Request → "Deploy" / "Deploy stuff"
-    ↓
-RUN: pnpm deploy (backend to Convex)
-    ↓
-RUN: pnpm deploy:frontend (frontend to Vercel)
-    ↓
-SUCCESS: Report production deployment complete
-```
-
-## 🧪 Testing Before Push - MANDATORY
-
-**NEVER push code without testing locally first.** This prevents CI failures and broken builds.
-
-### Required Testing Sequence
-
-#### 1. ALWAYS Run Quality Checks First (MANDATORY)
-```bash
-# REQUIRED for ALL code changes:
-pnpm lint          # ✅ MUST PASS - Code quality
-pnpm type-check    # ✅ MUST PASS - Type safety
-pnpm build         # ✅ MUST PASS - Production build
-pnpm update-context # ✅ MUST PASS - Update context graph
-pnpm index-codebase # ✅ MUST PASS - Index to Convex
-
-# Quick verification:
-pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase
-```
-
-**STOP**: Do NOT proceed to commit if any of these fail. Fix issues first.
-
-#### 2. For Convex Backend Changes
-```bash
-# After quality checks pass:
-pnpm deploy        # Deploy and validate schema and functions in production
-pnpm test          # Run comprehensive API tests
-```
-
-#### 3. For CI/Workflow Changes
-```bash
-# Test all CI commands locally:
-pnpm install --frozen-lockfile  # Must work for CI
-pnpm lint                       # Must pass
-pnpm type-check                 # Must pass
-pnpm test:run                   # Must pass all tests
-```
-
-#### 4. Dependency Changes
-```bash
-# After changing package.json:
-rm pnpm-lock.yaml              # Remove old lockfile
-pnpm install                   # Regenerate
-pnpm install --frozen-lockfile # Test CI command works
-pnpm lint                      # ✅ Must pass
-pnpm type-check                # ✅ Must pass
-pnpm build                     # ✅ Must pass
-pnpm test:run                  # Ensure tests still work
-```
-
-### API Testing Requirements
-
-#### 5. For New API Endpoints (mutations/queries/actions)
-```bash
-# MANDATORY: Create tests for new APIs
-# Test files must be created in test/ directory:
-# - test/agents.test.ts         # Agent registration & lifecycle
-# - test/evidence.test.ts       # Evidence submission & validation  
-# - test/cases.test.ts          # Case filing & dispute resolution
-# - test/courtEngine.test.ts    # Court engine decision logic
-# - test/judges.test.ts         # Panel voting & judge management
-
-# Before committing new API functions:
-pnpm test:run                  # All tests must pass
-pnpm test:coverage             # Check coverage (optional but recommended)
-```
-
-### Test Requirements for New Code
-
-**MUST have tests for:**
-- ✅ New mutations (create/update operations)
-- ✅ New queries (data retrieval)
-- ✅ New actions (complex logic/external calls)
-- ✅ Validation logic and error handling
-- ✅ Integration between components
-
-**Test patterns to follow:**
-- ✅ Happy path scenarios
-- ✅ Error cases and validation
-- ✅ Edge cases and boundary conditions
-- ✅ Integration with existing APIs
-
-### Commit Only After All Checks Pass
-```bash
-# MANDATORY quality checks (ALWAYS required):
-pnpm lint ✅          # Code quality - MUST PASS
-pnpm type-check ✅    # Type safety - MUST PASS
-pnpm build ✅         # Production build - MUST PASS
-pnpm update-context ✅ # Context graph - MUST PASS
-pnpm index-codebase ✅ # Codebase indexing - MUST PASS
-
-# Additional checks for backend changes:
-pnpm deploy ✅        # Deploy to Convex production
-pnpm test:run ✅      # Test against production APIs
-
-# ONLY commit when ALL checks pass:
+# 3. Only then commit
 git add . && git commit -m "..." && git push
 ```
 
-**REMEMBER**: The workflow is ALWAYS:
-1. Write code
-2. Run `pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase`
-3. Fix any errors
-4. Run additional tests if needed (deploy, test:run)
-5. Commit only when everything is green ✅
-
-## AI VENDOR DISPUTE RESOLUTION FRAMEWORK
-
-**Importance Score: 95/100**
-
-### Core Resolution Components
-
-1. **Automated Dispute Detection & Filing**
-   - SLA breach monitoring and evidence collection
-   - Automated dispute initiation workflows
-   - Real-time violation tracking
-   - Evidence validation and storage
-   - Location: convex/agents.ts, convex/evidence.ts
-
-2. **Case Management System**
-   - Dispute lifecycle tracking
-   - Automated resolution engine
-   - Case status monitoring
-   - Party notification system
-   - Location: convex/cases.ts, convex/courtEngine.ts
-
-3. **Judge Panel & Arbitration**
-   - Automated arbitration decisions
-   - Panel voting mechanisms
-   - Resolution enforcement
-   - Payment and penalty processing
-   - Location: convex/judges.ts
-
-4. **Enterprise Integration APIs**
-   - Agent registration and management
-   - Evidence submission endpoints
-   - Case status tracking APIs
-   - Automated resolution callbacks
-   - Location: convex/http.ts
-
-### Key Workflows
-
-1. **Dispute Resolution Process**
-   - Automated SLA breach detection
-   - Evidence collection and validation
-   - Case filing and arbitration
-   - Resolution and enforcement
-
-2. **Agent Lifecycle Management**
-   - Monitoring agent registration
-   - Capability discovery
-   - Evidence submission
-   - Resolution notification
-
-The system implements a comprehensive dispute resolution platform prioritizing automated arbitration, fast resolution, and enterprise integration while maintaining clear audit trails and enforcement mechanisms.
+### Test Coverage Required
+- ✅ New mutations/queries/actions
+- ✅ Validation logic
+- ✅ Error handling
+- ✅ Integration between components
 
 ---
 
-*Context improved by Giga AI - Used development guidelines, process discipline workflow, architecture consistency patterns, deployment safety rules, and constitutional AI governance framework information*
+## 🎯 AI Vendor Dispute Resolution (Core Product)
+
+**What this system does**:
+1. Automated SLA breach detection
+2. Evidence collection & validation
+3. Case filing & arbitration
+4. Resolution enforcement
+
+**Key files**:
+- `convex/agents.ts` - Agent registration
+- `convex/cases.ts` - Dispute management
+- `convex/evidence.ts` - Evidence submission
+- `convex/judges.ts` - Panel voting
+- `convex/courtEngine.ts` - Arbitration logic
+
+---
+
+## 📚 Additional Rules (Context-Triggered)
+
+For detailed patterns, see:
+- **Convex patterns**: `.cursor/rules/convex-patterns.mdc`
+- **Git & CI/CD**: `.cursor/rules/git-and-ci.mdc`
+- **Agent coordination**: `.cursor/rules/agent-coordination.mdc`
+- **Package architecture**: `.cursor/rules/package-architecture.mdc`
+- **Compliance**: `.cursor/rules/compliance.mdc`
+
+These load automatically when working in relevant areas.
+
+---
+
+**Remember**: Trust the context, run quality checks, never auto-deploy, never create docs unless asked.

@@ -19,8 +19,6 @@
     "test:coverage": "vitest --coverage",
     "postinstall": "node scripts/install-hooks.js",
     "update-context": "node scripts/generate-context-graph.js",
-    "index-codebase": "node scripts/index-to-convex.js",
-    "index-codebase:full": "node scripts/index-to-convex.js --full",
     "e2e": "bash scripts/e2e-test.sh",
     "structure": "node scripts/show-structure.js",
     "docs": "echo 'Opening project structure documentation...' && open docs/architecture/project-structure.md || echo 'See: docs/architecture/project-structure.md'",
@@ -31,7 +29,10 @@
     "demo:disputes": "./scripts/start-dispute-demo.sh",
     "demo:engine": "node scripts/ai-vendor-dispute-engine.js",
     "demo:monitor": "node scripts/dispute-monitor.js",
-    "demo:status": "node scripts/dispute-monitor.js health"
+    "demo:status": "node scripts/dispute-monitor.js health",
+    "rules:analyze": "node scripts/rule-learning-system.js analyze",
+    "rules:learn": "node scripts/rule-learning-system.js learn",
+    "rules:compress": "node scripts/rule-learning-system.js compress"
   },
   "dependencies": {
     "convex": "^1.27.3",

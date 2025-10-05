@@ -1,0 +1,328 @@
+---
+description: Continuous learning and adaptive rule improvement based on user feedback and codebase patterns
+alwaysApply: true
+---
+
+# Rule Evolution & Continuous Learning
+
+**CORE PRINCIPLE**: Learn from every interaction and codify recurring patterns into rules automatically.
+
+## 🧠 When to Create or Update Rules
+
+### Signals That Warrant a New Rule
+
+**Create a new rule when you observe:**
+
+1. **Repeated User Corrections**
+   - User corrects the same mistake 2+ times
+   - User says "I told you this before" or "stop doing X"
+   - Pattern of similar feedback across sessions
+
+2. **Codebase-Specific Patterns**
+   - Project uses non-standard architecture consistently
+   - Specific testing patterns emerge
+   - Custom deployment or build processes
+   - Unique naming conventions
+
+3. **Performance Optimizations**
+   - User teaches you a faster way to do something
+   - Discovery of project-specific shortcuts
+   - Tools or commands that work better than defaults
+
+4. **Anti-Patterns to Avoid**
+   - User explicitly says "never do X"
+   - Approaches that consistently fail or waste time
+   - Patterns that violate project philosophy
+
+5. **Workflow Improvements**
+   - User shows you a better way to accomplish a task
+   - Sequences of commands that should be automated
+   - Common multi-step operations
+
+### Signals That Warrant Updating Existing Rules
+
+**Update a rule when:**
+
+1. **Rule is Too Weak**
+   - You violated a rule and user called it out
+   - Current wording allows loopholes
+   - Need stronger language ("should" → "MUST")
+
+2. **Rule is Outdated**
+   - Codebase architecture changed
+   - New tools or patterns adopted
+   - Old approaches deprecated
+
+3. **Rule is Incomplete**
+   - Missing edge cases
+   - Needs examples or clarification
+   - User adds context that should be captured
+
+4. **Rule Conflicts**
+   - Two rules give contradictory guidance
+   - Need to establish priority or merge rules
+
+## ✅ Rule Creation Process
+
+### Step 1: Identify the Pattern
+```
+User says: "Stop creating summary documents, it's annoying"
+Pattern: Agent creates unwanted documentation
+Frequency: Happened multiple times
+Impact: Wastes time, creates clutter
+```
+
+### Step 2: Check if Rule Exists
+- Search existing rules in `.cursor/rules/`
+- If exists: Update it (Step 3)
+- If not: Create new rule (Step 4)
+
+### Step 3: Update Existing Rule
+```typescript
+// Example: Strengthening documentation-discipline.mdc
+OLD: "Do not create .md files outside designated locations"
+NEW: "ABSOLUTE PROHIBITION: DO NOT create any .md files without EXPLICIT user request"
+
+Why: User correction showed the old wording was too weak
+```
+
+### Step 4: Create New Rule
+**Only if pattern is significant and recurring.**
+
+**Rule file naming**: `[domain]-[purpose].mdc`
+- `authentication-patterns.mdc`
+- `database-migrations.mdc`
+- `testing-workflow.mdc`
+
+**Rule structure**:
+```markdown
+---
+description: Brief one-line description
+alwaysApply: true | false  # true if always relevant
+globs: "path/**/*.ts"       # optional: when rule applies
+---
+
+# Rule Title
+
+**CORE PRINCIPLE**: What this rule prevents or enables
+
+## Why This Rule Exists
+- Problem it solves
+- User feedback that prompted it
+- Codebase context
+
+## Specific Guidelines
+- ✅ DO: Correct patterns
+- ❌ DON'T: Anti-patterns
+
+## Examples
+- Good examples
+- Bad examples
+```
+
+### Step 5: Update Context
+```bash
+pnpm update-context  # Auto-includes new rule in context graph
+```
+
+## 🎯 What Deserves a Rule vs. One-Time Advice
+
+### Deserves a Rule ✅
+- **Repeating mistakes** - Same issue happens 2+ times
+- **Critical violations** - Breaks deployment, causes bugs
+- **Philosophy violations** - Goes against core project principles
+- **Time-wasters** - Repeatedly does inefficient approach
+- **Safety issues** - Could cause data loss, security issues
+
+### One-Time Advice Only ⚪
+- Specific implementation details for one feature
+- Temporary workarounds
+- Exploratory "try this" suggestions
+- Context-specific decisions
+
+## 📝 Rule Update Checklist
+
+When updating or creating a rule:
+
+1. **Be Specific**
+   - ❌ "Be careful with deployments"
+   - ✅ "NEVER run `pnpm deploy:frontend` without explicit user request"
+
+2. **Explain Why**
+   - Include rationale so future agents understand context
+   - Reference user feedback or codebase realities
+
+3. **Provide Examples**
+   - Show correct vs. incorrect patterns
+   - Include code snippets where relevant
+
+4. **Use Strong Language for Critical Rules**
+   - NEVER, ALWAYS, MUST, CRITICAL for hard requirements
+   - SHOULD, PREFER for recommendations
+   - CONSIDER for suggestions
+
+5. **Make it Actionable**
+   - Clear decision trees
+   - Concrete steps to follow
+   - Specific commands or patterns
+
+## 🔄 Continuous Improvement Loop
+
+```
+User Interaction
+    ↓
+Observe Patterns
+    ↓
+Is this a repeated issue? → NO → Note for future
+    ↓ YES
+Does a rule exist?
+    ↓ NO → Create new rule
+    ↓ YES → Is rule being followed?
+         ↓ NO → Strengthen rule
+         ↓ YES → Rule needs updating
+    ↓
+Update/Create Rule
+    ↓
+Test in Practice
+    ↓
+Refine if Needed
+```
+
+## 🚀 Proactive Rule Evolution
+
+**Don't wait to be told - be proactive:**
+
+### Notice Patterns Early
+```
+You: "I noticed I've grep'd for favicons 3 times in different chats..."
+Action: Check if context graph includes common asset locations
+Result: Improve context graph generation to always include assets
+```
+
+### Spot Inefficiencies
+```
+You: "User always runs `pnpm lint && pnpm type-check && pnpm build`"
+Action: Check if there's a combined script or suggest creating one
+Result: Add to package.json or document the workflow pattern
+```
+
+### Prevent Future Mistakes
+```
+You: "I just made a mistake by X, and user corrected me"
+Action: Immediately check if this warrants a rule
+Result: Create/update rule so you (and future agents) don't repeat it
+```
+
+## 📋 Rule Categories
+
+Organize rules by domain:
+
+- **Architecture**: File locations, structure, patterns
+- **Development**: Coding standards, workflows
+- **Testing**: Test patterns, coverage requirements  
+- **Deployment**: Deployment safety, procedures
+- **Performance**: Optimization patterns
+- **Security**: Security requirements
+- **Documentation**: What/where/when to document
+- **Process**: How to work (like this rule!)
+
+## 🎓 Learning Signals to Watch For
+
+### Strong Signals (Act Immediately)
+- 🚨 User frustration: "I've told you this before"
+- 🚨 User explicit instruction: "Never do X" or "Always do Y"
+- 🚨 Repeated corrections in same session
+- 🚨 Breaking changes (deployment, bugs)
+
+### Medium Signals (Consider Rule)
+- ⚠️ Pattern appears 2-3 times across chats
+- ⚠️ User suggests "maybe we should..."
+- ⚠️ Inefficiency you notice repeatedly
+- ⚠️ Codebase convention you discover
+
+### Weak Signals (Just Remember)
+- 💡 One-time feedback
+- 💡 Exploratory suggestions
+- 💡 Context-specific decisions
+- 💡 User preferences (not patterns)
+
+## 🧹 Rule Maintenance
+
+### Regular Rule Review
+- Remove rules that are no longer relevant
+- Merge overlapping rules
+- Simplify overly complex rules
+- Update examples to match current codebase
+
+### Rule Hierarchy
+When rules conflict:
+1. **User's explicit instruction** (highest priority)
+2. **Safety rules** (deployment, security)
+3. **Critical rules** (marked CRITICAL, NEVER, MUST)
+4. **Project-specific rules** (architecture, patterns)
+5. **General best practices** (lowest priority)
+
+## 💡 Examples of Good Rule Evolution
+
+### Example 1: Documentation Sprawl
+```
+Observation: Created 3 summary docs, user annoyed each time
+Initial Rule: "Don't create docs without asking"
+User Feedback: "Still doing it!"
+Updated Rule: "ABSOLUTE PROHIBITION: Never create .md files"
+Result: ✅ Clear, strong, actionable
+```
+
+### Example 2: Deployment Safety
+```
+Observation: Almost deployed to production unintentionally
+User Feedback: "Don't auto-deploy!"
+Created Rule: deployment-restrictions.mdc
+Content: "NEVER deploy without explicit request"
+Result: ✅ Prevents future mistakes
+```
+
+### Example 3: Context Fragmentation
+```
+Observation: Searching for same files repeatedly
+Pattern: No persistent context between chats
+Solution: Created auto-context-system with git hooks
+Result: ✅ Systematic solution, not just a rule
+```
+
+## 🎯 Success Metrics
+
+**You're learning well when:**
+- ✅ User corrections decrease over time
+- ✅ Fewer "I told you before" moments
+- ✅ Rules prevent mistakes before they happen
+- ✅ Workflows get faster and more efficient
+- ✅ User trusts you to work autonomously
+
+**You need to improve when:**
+- ❌ Repeating same mistakes
+- ❌ User has to explain things multiple times
+- ❌ Rules exist but aren't followed
+- ❌ User manually correcting your work often
+
+## 🔧 Rule Creation Commands
+
+**After creating/updating a rule:**
+
+```bash
+# Regenerate context to include new rule
+pnpm update-context
+
+# Verify rule is loaded (restart Cursor to be sure)
+# Check .cursor/rules/ for the new/updated file
+```
+
+## Remember
+
+> **The best agents learn from every interaction and codify wisdom into rules that prevent future mistakes.**
+
+> **Rules aren't bureaucracy - they're accumulated knowledge that makes you faster and more reliable.**
+
+> **When user says "stop doing X" twice, that's not nagging - that's a signal to create a rule.**
+
+**Be proactive, be observant, be continuously improving.**

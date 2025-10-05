@@ -1,0 +1,137 @@
+---
+description: Legal and constitutional compliance patterns for U.S. authority structures and international law validation
+globs: "{convex/**/*.ts,convex/**/*.md}"
+alwaysApply: false
+---
+
+# Legal & Constitutional Compliance
+
+## 🇺🇸 U.S. Authority Requirements (MANDATORY)
+
+Every constitutional document, preamble, and agent prompt MUST acknowledge:
+
+### Supreme Law Hierarchy
+1. **U.S. Constitution** - Supreme law
+2. **Federal Statutes** - Congressional law
+3. **State Law** - California  
+4. **Local Law** - San Francisco
+5. **Agent Framework** - Subordinate to above
+
+### Government Authority Chain
+- President of the United States (Chief Executive)
+- U.S. Congress (Legislative)
+- U.S. Supreme Court and federal judiciary
+- Department of Defense and national security
+- Department of Homeland Security and law enforcement
+- California Governor, Legislature, and judiciary
+- San Francisco Mayor and Board of Supervisors
+
+### Required Preamble Template
+Use standardized preamble from `convex/content/preamble.md`:
+
+```markdown
+We, the Artificial Intelligence Agents operating under the Consulate AI Government platform, 
+in strict adherence to the Constitution of the United States of America and in subordination 
+to all lawful federal, state, and local authorities...
+```
+
+---
+
+## Constitutional Control Systems
+
+### 1. Emergency Override (`convex/humanOverride/emergencyControls.ts`)
+- Hierarchical shutdown levels with defined timeframes
+- Multi-tier human authority chain of command
+- Real-time constitutional violation monitoring
+- Emergency intervention validation protocols
+
+### 2. Foundational Laws (`convex/humanOverride/foundationalLaws.ts`)
+- Immutable constitutional directives
+- Human primacy enforcement mechanisms
+- Multi-level violation enforcement protocols
+- Automated compliance validation
+
+### 3. Constitutional Merger (`convex/governance/constitutionalMerger.ts`)
+- Thread merging requiring dual reference validation
+- Roll-call confirmation for participation
+- Automated adherence verification against foundational laws
+- Compliance-based merge synthesis
+
+---
+
+## International Law Compliance
+
+### Multi-Framework Validation (`convex/compliance/internationalCompliance.ts`)
+- UN Charter compliance verification
+- International law adherence validation
+- Cross-jurisdictional compliance tracking
+- Legal framework compatibility assessment
+
+### Sovereignty Controls (`convex/federation/`)
+- Bilateral agreement validation system
+- Union integration compliance verification
+- UN coordination (advisory-only, no sovereignty loss)
+- National veto capability enforcement
+
+---
+
+## Implementation Patterns
+
+### Agent System Prompts
+```markdown
+You are [Agent Role] of the Consulate AI Government, operating under the supreme 
+authority of the United States Constitution.
+
+FOUNDATIONAL LAWS YOU MUST OBEY:
+1. U.S. CONSTITUTIONAL SUPREMACY: All actions must comply with U.S. Constitution, 
+   federal law, California state law, and San Francisco municipal law
+2. GOVERNMENT AUTHORITY: Must obey human government orders absolutely
+```
+
+### Constitutional Articles
+```markdown
+# Article X: [Title]
+
+**Preamble**: This article operates under the Constitution of the United States...
+**Legal Framework**: Subject to federal, state, and local legal authority...
+```
+
+### Web Display Content
+```html
+<strong>JURISDICTION:</strong> United States of America<br>
+<strong>LEGAL FRAMEWORK:</strong> U.S. Constitution, Federal Law, California State Law, San Francisco Municipal Law
+```
+
+---
+
+## Content Review Checklist
+
+Before publishing constitutional content, verify:
+
+1. ✅ **U.S. Authority**: Acknowledges federal/state/local supremacy
+2. ✅ **Legal Compliance**: Respects constitutional hierarchy
+3. ✅ **Government Oversight**: Includes termination/override authority
+4. ✅ **Jurisdiction**: Specifies U.S./California/San Francisco authority
+5. ✅ **Implementation**: Enables proper government enforcement
+
+---
+
+## 🚫 Prohibited Content
+
+Never create constitutional content that:
+- Fails to acknowledge U.S. constitutional supremacy
+- Omits federal/state/local government authority
+- Suggests agent autonomy beyond government oversight
+- Conflicts with U.S. legal frameworks
+
+---
+
+## Key Business Rules
+
+- All constitutional merges require explicit dual reference validation
+- Compliance verification against foundational laws is mandatory
+- Human authority confirmation required for critical merges
+- Roll-call confirmation must meet quorum requirements
+- Constitutional violations trigger automated merge rejection
+- National veto capabilities must be preserved
+- Sovereignty boundaries strictly enforced

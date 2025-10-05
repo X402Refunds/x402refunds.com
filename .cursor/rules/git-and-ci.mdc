@@ -1,0 +1,172 @@
+---
+description: Git commit standards and CI/CD workflow patterns for GitHub Actions and semantic releases
+globs: "{.github/**/*.yml,.github/**/*.yaml,package.json,pnpm-lock.yaml}"
+alwaysApply: false
+---
+
+# Git & CI/CD Patterns
+
+## Conventional Commits (Semantic Versioning)
+
+### Release-Triggering Types
+- **`feat:`** → Minor release (0.1.0 → 0.2.0) - New features
+- **`fix:`** → Patch release (0.1.0 → 0.1.1) - Bug fixes
+- **`BREAKING CHANGE:`** → Major release (0.1.0 → 1.0.0) - Breaking changes
+
+### Non-Release Types (Infrastructure)
+- **`ci:`** - GitHub Actions, workflows, pipeline changes
+- **`build:`** - package.json, dependencies, build config
+- **`docs:`** - Documentation only
+- **`refactor:`** - Code reorganization (same functionality)
+- **`chore:`** - Maintenance, dependency updates
+- **`style:`** - Formatting, linting fixes
+- **`test:`** - Test updates
+- **`perf:`** - Performance improvements
+
+### Classification Guide
+**Ask: "Does this change user-facing functionality?"**
+- ✅ YES → `feat:` or `fix:` (triggers release)
+- ❌ NO → Infrastructure types (no release)
+
+**Examples**:
+```bash
+# Releases
+feat: add ephemeral agent lifecycle management  # → v0.2.0
+fix: resolve case filing validation error       # → v0.3.1
+
+# No releases
+ci: update GitHub Actions permissions           # Infrastructure
+chore: update Convex to v1.27.0                # Maintenance
+refactor: reorganize court engine functions     # Code structure
+```
+
+---
+
+## GitHub Actions Configuration
+
+### pnpm Setup Pattern (Always Use This Order)
+```yaml
+- name: Setup pnpm
+  uses: pnpm/action-setup@v2
+  with:
+    version: 8
+
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+    cache: 'pnpm'  # NOT 'npm'
+```
+
+### Common CI Failures to Prevent
+1. **Wrong cache type**: Always `cache: 'pnpm'`
+2. **Lockfile issues**: Use `pnpm install --frozen-lockfile`
+3. **Missing scripts**: Ensure package.json scripts exist
+4. **Dependency conflicts**: Pre-install required packages
+
+---
+
+## Semantic Release Setup
+
+### Required Dependencies
+```json
+{
+  "devDependencies": {
+    "semantic-release": "^24.2.8",
+    "@semantic-release/changelog": "^6.0.0", 
+    "@semantic-release/git": "^10.0.0"
+  }
+}
+```
+
+### What It Does
+- Updates package.json versions automatically
+- Generates CHANGELOG.md with commit history
+- Creates GitHub releases with proper tags
+- Commits changes back to repository
+- Only triggers on release-worthy commit types
+
+### GitHub Permissions Required
+- **Workflow permissions**: "Read and write permissions"
+- **Allow GitHub Actions to**: "create and approve pull requests" ✓
+
+---
+
+## CI Workflow Examples
+
+### Basic Validation
+```yaml
+name: Validate Code
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm test:run
+```
+
+### Release Workflow
+```yaml
+name: Release
+on:
+  push:
+    branches: [main]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:run
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
+
+## CI Best Practices
+
+### Performance
+- Cache pnpm dependencies
+- Run tests in parallel when possible
+- Fail fast on critical errors
+
+### Security
+- Use least-privilege access tokens
+- Secure environment secrets handling
+- Validate external dependencies
+- Audit pipeline configs regularly
+
+### Error Handling
+- Capture detailed error logs
+- Use appropriate exit codes
+- Provide clear error messages
+- Include debugging information

@@ -1,63 +1,41 @@
 # Auto-Context System
 
-Complete guide to the hybrid context system that ensures Cursor always knows your codebase structure.
+Complete guide to the static context system that ensures Cursor always knows your codebase structure.
 
 ## System Overview
 
-The system uses **two complementary layers**:
-
-### Layer 1: Static Context Graph (Always On)
+### Static Context Graph
 - **File**: `.cursor/rules/codebase-context.mdc`
 - **Auto-loaded**: By Cursor at every inference
 - **Updated**: Every commit, merge, branch switch
 - **Speed**: Instant (pre-loaded)
-- **Coverage**: High-level structure, file locations, commands
-- **Best for**: "Where is X?", "List all Y", multi-task queries
+- **Coverage**: Complete file locations, asset inventory, commands, structure
+- **Best for**: Everything - file locations, component lists, API endpoints, commands
 
-### Layer 2: Convex RAG (On-Demand)
-- **Backend**: Convex vector search (built-in)
-- **Accessed**: Via Convex queries during inference
-- **Updated**: Manual or automatic (configurable)
-- **Speed**: 10-50ms per query
-- **Coverage**: Deep file contents, semantic relationships
-- **Best for**: "How does X work?", "Show similar to Y"
-
-## How They Work Together
+## How It Works
 
 ```
 New Chat Starts
     ↓
-Layer 1 (Static) loads instantly:
+Static context loads instantly:
   - File locations
   - Asset inventory  
   - Commands
-  - High-level structure
+  - Complete structure
     ↓
 User asks: "Add auth to Header AND update favicons"
     ↓
-Cursor uses static context:
+Cursor knows immediately:
   - Header at: dashboard/src/components/Header.tsx
   - Favicons at: dashboard/public/*.png
-    ↓
-Cursor queries Convex (Layer 2):
-  "Show me authentication implementation details"
-    ↓
-Convex returns:
-  - convex/auth.ts (full content)
-  - Related files, dependencies
-    ↓
-Cursor has complete context:
-  - Broad map (static)
-  - Deep understanding (RAG)
+  - Auth handled in: convex/auth.ts
     ↓
 Makes both changes correctly
 ```
 
 ## Quick Start
 
-### Phase 1: Static Context (Required)
-
-**Already done!** Git hooks are installed and context is generated.
+**Already working!** Git hooks are installed and context is auto-generated.
 
 Verify it's working:
 1. Make a code change
@@ -65,34 +43,25 @@ Verify it's working:
 3. Check: `.cursor/rules/codebase-context.mdc` updated
 4. New chat: Ask "where are the favicons?"
 
-### Phase 2: Convex RAG (Optional Enhancement)
-
-Follow: `docs/setup/convex-rag-setup.md`
-
 ## File Structure
 
 ```
 consulate/
 ├── .cursor/
-│   ├── rules/
-│   │   ├── codebase-context.mdc        # Auto-generated (Layer 1)
-│   │   └── documentation-discipline.mdc # Rules for docs
-│   └── mcp.json                         # Supabase MCP config
+│   └── rules/
+│       ├── codebase-context.mdc        # Auto-generated context
+│       └── documentation-discipline.mdc # Rules for docs
 ├── scripts/
-│   ├── generate-context-graph.js       # Layer 1 generator
-│   ├── index-to-supabase.js           # Layer 2 indexer
-│   ├── install-hooks.js               # Git hooks installer
-│   └── supabase-schema.sql            # Database schema
-├── .git/hooks/
-│   ├── pre-commit                     # Update context on commit
-│   ├── post-merge                     # Update after pull
-│   └── post-checkout                  # Update on branch switch
-└── .env.local                         # Supabase credentials (Phase 2)
+│   ├── generate-context-graph.js       # Context generator
+│   └── install-hooks.js               # Git hooks installer
+└── .git/hooks/
+    ├── pre-commit                     # Update context on commit
+    ├── post-merge                     # Update after pull
+    └── post-checkout                  # Update on branch switch
 ```
 
 ## Available Commands
 
-### Static Context (Layer 1)
 ```bash
 # Manual context update (rarely needed)
 pnpm update-context
@@ -101,60 +70,35 @@ pnpm update-context
 pnpm postinstall
 ```
 
-### Convex RAG (Layer 2)
-```bash
-# Full codebase index
-pnpm index-codebase:full
-
-# Incremental update (only changed files)
-pnpm index-codebase
-```
-
 ## Automatic Updates
 
 ### What Triggers Context Regeneration
 
-**Static Context:**
 - Every `git commit` (pre-commit hook)
 - Every `git pull` / `git merge` (post-merge hook)
 - Every branch switch (post-checkout hook)
 - Manual: `pnpm update-context`
 
-**Convex RAG:**
-- Currently manual: `pnpm index-codebase`
-- Recommended: Run after major changes
-- Can add to git hooks if desired
-
 ## Example Queries
 
-### Static Context Answers
+### What Static Context Answers
 
 **File Locations:**
 - "Where are the favicons?" → `dashboard/public/favicon*.png`
 - "Show me all components" → Lists `dashboard/src/components/`
 - "What tests exist?" → Lists `test/*.test.ts`
+- "Where is authentication?" → `convex/auth.ts`, `convex/apiKeys.ts`
 
 **Commands:**
 - "How do I run tests?" → `pnpm test`
 - "Deploy command?" → `pnpm deploy` (backend), `pnpm deploy:frontend`
+- "Build command?" → `pnpm build`
 
 **Structure:**
 - "Frontend vs backend?" → `dashboard/` vs `convex/`
 - "Where is configuration?" → `package.json`, `tsconfig.json`, etc.
-
-### Convex RAG Answers
-
-**Implementation Details:**
-- "How does authentication work?" → Full `convex/auth.ts` content
-- "Show Header component code" → Complete component with imports
-
-**Semantic Search:**
-- "Find components similar to Header" → Related UI components
-- "Show all files about cases" → Cases, evidence, related files
-
-**Dependency Queries:**
-- "What imports Header?" → Dependency graph
-- "What does CaseForm depend on?" → Import chain
+- "List all React components" → Full component inventory
+- "Show all Convex functions" → Complete API listing
 
 ## Troubleshooting
 
@@ -195,31 +139,21 @@ head -3 .cursor/rules/codebase-context.mdc
 # Cmd+Q on Mac, then reopen
 ```
 
-### Convex RAG Not Working
-
-See: `docs/setup/convex-rag-setup.md` troubleshooting section
-
 ## Performance
 
-### Static Context
 - **Load time**: 0ms (pre-loaded in rules)
 - **File size**: ~20-50KB
 - **Update time**: 200-500ms on commit
 - **No external dependencies**
-
-### Convex RAG
-- **Query time**: 10-50ms
-- **Index time**: 5-10 min (full), 10-30s (incremental)
-- **Storage**: ~5-10MB per 1000 files (included in Convex)
-- **Requires**: Internet, Convex deployment (already set up)
+- **Works offline**
 
 ## Best Practices
 
 ### Do's ✅
 - Commit frequently (keeps context fresh)
-- Use static context for multi-task queries
-- Use Supabase for deep understanding
 - Trust the system (don't manual grep)
+- Use for multi-file changes
+- Ask location questions directly
 
 ### Don'ts ❌
 - Don't create random .md files (see documentation-discipline.mdc)
@@ -246,14 +180,6 @@ See: `docs/setup/convex-rag-setup.md` troubleshooting section
 - Performance stays constant
 - No manual maintenance
 - Always up-to-date
-
-## What's Next
-
-After setup:
-1. Test with simple queries ("where are favicons?")
-2. Try multi-task requests
-3. Optionally set up Convex RAG
-4. Enjoy never grepping again!
 
 ## Comparison: Before vs After
 
@@ -291,28 +217,14 @@ Makes changes immediately
 Total time: 0 seconds
 ```
 
-## Support
-
-Questions or issues?
-- Check this guide
-- See: `docs/setup/convex-rag-setup.md`
-- Review: `.cursor/rules/documentation-discipline.mdc`
-
 ## Technical Details
 
 ### Static Context Generation
 - Language: Node.js (ES modules)
 - Scans: All files except node_modules, dist, _generated
-- Extracts: Exports, file types, sizes
+- Extracts: Exports, file types, sizes, purposes
 - Format: Markdown (MDC)
 - Output: `.cursor/rules/codebase-context.mdc`
-
-### Convex RAG
-- Database: Convex with vector search
-- Embeddings: OpenAI text-embedding-ada-002 (1536 dims)
-- Search: Cosine similarity (vector index)
-- Updates: Incremental (git diff)
-- Chunks: 2000 chars per chunk
 
 ### Git Hooks
 - pre-commit: Update context before commit

@@ -166,11 +166,27 @@ function generateContext() {
   const deps = getDependencies();
   
   // Generate MDC content
-  const content = `# Codebase Context Graph
+  const content = `---
+alwaysApply: true
+---
+
+# Codebase Context Graph
 
 **Auto-generated on**: ${new Date().toISOString()}
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
+
+## 🚨 CRITICAL: YOU ALREADY KNOW THIS PROJECT
+
+**DO NOT "understand the project structure first" - you ALREADY KNOW IT:**
+
+- ✅ **Next.js 14** project with **App Router** in \`dashboard/src/app/\`
+- ✅ **Vercel** deployment (configured in \`vercel.json\`)
+- ✅ **Convex** serverless backend in \`convex/\`
+- ✅ **React** components in \`dashboard/src/components/\`
+- ✅ **TypeScript** monorepo with \`pnpm\` workspaces
+
+**DO NOT read files to "check structure" - USE THIS CONTEXT IMMEDIATELY.**
 
 ## 📁 Project Structure
 
