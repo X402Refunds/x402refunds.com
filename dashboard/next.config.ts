@@ -20,34 +20,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
   },
 
-  // Redirects - ensure all URLs redirect to preferred homepage with trailing slash
-  async redirects() {
-    return [
-      {
-        source: '/:path((?!.*\\.).*)', // Match paths without file extensions
-        has: [
-          {
-            type: 'host',
-            value: 'consulatehq.com',
-          },
-        ],
-        destination: 'https://consulatehq.com/:path/',
-        permanent: true,
-      },
-      {
-        source: '/:path((?!.*\\.).*)', // Match paths without file extensions
-        has: [
-          {
-            type: 'host',
-            value: 'www.consulatehq.com',
-          },
-        ],
-        destination: 'https://consulatehq.com/:path/',
-        permanent: true,
-      },
-    ];
-  },
-
   // Security Headers
   async headers() {
     return [
