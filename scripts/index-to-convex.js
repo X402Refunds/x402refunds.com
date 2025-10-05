@@ -21,6 +21,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = process.cwd();
 
+// Load environment variables from .env.local
+const envPath = path.join(ROOT_DIR, '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const match = line.match(/^([^=:#]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const value = match[2].trim();
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  });
+  console.log('✅ Loaded environment from .env.local');
+}
+
 // Configuration
 const CONVEX_URL = process.env.CONVEX_URL;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
