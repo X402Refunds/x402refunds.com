@@ -23,6 +23,16 @@ const nextConfig: NextConfig = {
   // Security Headers
   async headers() {
     return [
+      // Noindex for special informational files (not meant for search results)
+      {
+        source: '/(robots.txt|llms.txt|ai.txt|humans.txt|security.txt)',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [
