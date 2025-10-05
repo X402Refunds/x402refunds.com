@@ -158,6 +158,9 @@ export default function RootLayout({
           <ServiceStructuredData />
           <SoftwareApplicationStructuredData />
           <FAQStructuredData />
+          
+          {/* Ahrefs Analytics */}
+          <script src="https://analytics.ahrefs.com/analytics.js" data-key="t8J3APG0cO6rucq4JUwaWw" async></script>
         </head>
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
