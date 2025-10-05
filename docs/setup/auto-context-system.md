@@ -14,11 +14,11 @@ The system uses **two complementary layers**:
 - **Coverage**: High-level structure, file locations, commands
 - **Best for**: "Where is X?", "List all Y", multi-task queries
 
-### Layer 2: Supabase RAG (On-Demand)
-- **Backend**: Supabase PostgreSQL + pgvector
-- **Accessed**: Via MCP server during inference
-- **Updated**: Every commit (incremental)
-- **Speed**: 50-100ms per query
+### Layer 2: Convex RAG (On-Demand)
+- **Backend**: Convex vector search (built-in)
+- **Accessed**: Via Convex queries during inference
+- **Updated**: Manual or automatic (configurable)
+- **Speed**: 10-50ms per query
 - **Coverage**: Deep file contents, semantic relationships
 - **Best for**: "How does X work?", "Show similar to Y"
 
@@ -39,10 +39,10 @@ Cursor uses static context:
   - Header at: dashboard/src/components/Header.tsx
   - Favicons at: dashboard/public/*.png
     ↓
-Cursor asks Supabase (Layer 2):
+Cursor queries Convex (Layer 2):
   "Show me authentication implementation details"
     ↓
-Supabase returns:
+Convex returns:
   - convex/auth.ts (full content)
   - Related files, dependencies
     ↓
@@ -65,9 +65,9 @@ Verify it's working:
 3. Check: `.cursor/rules/codebase-context.mdc` updated
 4. New chat: Ask "where are the favicons?"
 
-### Phase 2: Supabase RAG (Optional Enhancement)
+### Phase 2: Convex RAG (Optional Enhancement)
 
-Follow: `docs/setup/supabase-rag-setup.md`
+Follow: `docs/setup/convex-rag-setup.md`
 
 ## File Structure
 
@@ -101,13 +101,13 @@ pnpm update-context
 pnpm postinstall
 ```
 
-### Supabase RAG (Layer 2)
+### Convex RAG (Layer 2)
 ```bash
 # Full codebase index
-pnpm index-supabase --full
+pnpm index-codebase:full
 
 # Incremental update (only changed files)
-pnpm index-supabase
+pnpm index-codebase
 ```
 
 ## Automatic Updates
@@ -120,8 +120,8 @@ pnpm index-supabase
 - Every branch switch (post-checkout hook)
 - Manual: `pnpm update-context`
 
-**Supabase RAG:**
-- Currently manual: `pnpm index-supabase`
+**Convex RAG:**
+- Currently manual: `pnpm index-codebase`
 - Recommended: Run after major changes
 - Can add to git hooks if desired
 
@@ -142,7 +142,7 @@ pnpm index-supabase
 - "Frontend vs backend?" → `dashboard/` vs `convex/`
 - "Where is configuration?" → `package.json`, `tsconfig.json`, etc.
 
-### Supabase RAG Answers
+### Convex RAG Answers
 
 **Implementation Details:**
 - "How does authentication work?" → Full `convex/auth.ts` content
@@ -195,9 +195,9 @@ head -3 .cursor/rules/codebase-context.mdc
 # Cmd+Q on Mac, then reopen
 ```
 
-### Supabase Not Working
+### Convex RAG Not Working
 
-See: `docs/setup/supabase-rag-setup.md` troubleshooting section
+See: `docs/setup/convex-rag-setup.md` troubleshooting section
 
 ## Performance
 
@@ -207,11 +207,11 @@ See: `docs/setup/supabase-rag-setup.md` troubleshooting section
 - **Update time**: 200-500ms on commit
 - **No external dependencies**
 
-### Supabase RAG
-- **Query time**: 50-100ms
+### Convex RAG
+- **Query time**: 10-50ms
 - **Index time**: 5-10 min (full), 10-30s (incremental)
-- **Storage**: ~5-10MB per 1000 files
-- **Requires**: Internet, Supabase account
+- **Storage**: ~5-10MB per 1000 files (included in Convex)
+- **Requires**: Internet, Convex deployment (already set up)
 
 ## Best Practices
 
@@ -252,7 +252,7 @@ See: `docs/setup/supabase-rag-setup.md` troubleshooting section
 After setup:
 1. Test with simple queries ("where are favicons?")
 2. Try multi-task requests
-3. Optionally set up Supabase RAG
+3. Optionally set up Convex RAG
 4. Enjoy never grepping again!
 
 ## Comparison: Before vs After
@@ -295,7 +295,7 @@ Total time: 0 seconds
 
 Questions or issues?
 - Check this guide
-- See: `docs/setup/supabase-rag-setup.md`
+- See: `docs/setup/convex-rag-setup.md`
 - Review: `.cursor/rules/documentation-discipline.mdc`
 
 ## Technical Details
@@ -307,10 +307,10 @@ Questions or issues?
 - Format: Markdown (MDC)
 - Output: `.cursor/rules/codebase-context.mdc`
 
-### Supabase RAG
-- Database: PostgreSQL with pgvector
+### Convex RAG
+- Database: Convex with vector search
 - Embeddings: OpenAI text-embedding-ada-002 (1536 dims)
-- Search: Cosine similarity (HNSW index)
+- Search: Cosine similarity (vector index)
 - Updates: Incremental (git diff)
 - Chunks: 2000 chars per chunk
 

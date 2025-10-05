@@ -19,7 +19,8 @@
     "test:coverage": "vitest --coverage",
     "postinstall": "node scripts/install-hooks.js",
     "update-context": "node scripts/generate-context-graph.js",
-    "index-supabase": "node scripts/index-to-supabase.js",
+    "index-codebase": "node scripts/index-to-convex.js",
+    "index-codebase:full": "node scripts/index-to-convex.js --full",
     "e2e": "bash scripts/e2e-test.sh",
     "structure": "node scripts/show-structure.js",
     "docs": "echo 'Opening project structure documentation...' && open docs/architecture/project-structure.md || echo 'See: docs/architecture/project-structure.md'",
@@ -33,7 +34,6 @@
     "demo:status": "node scripts/dispute-monitor.js health"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
     "convex": "^1.27.3",
     "convex-test": "^0.0.38",
     "zod": "^4.1.11"

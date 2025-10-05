@@ -1,29 +1,28 @@
 #!/usr/bin/env node
 
 /**
- * Supabase Codebase Indexer
+ * Convex Codebase Indexer
  * 
- * Generates embeddings for codebase files and uploads to Supabase
+ * Generates embeddings for codebase files and uploads to Convex
  * for semantic RAG queries. Supports incremental updates.
  * 
  * Environment variables required:
- * - SUPABASE_URL
- * - SUPABASE_KEY
+ * - CONVEX_URL (from .env.local)
  * - OPENAI_API_KEY or ANTHROPIC_API_KEY
  */
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createClient } from '@supabase/supabase-js';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '../convex/_generated/api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = process.cwd();
 
 // Configuration
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const CONVEX_URL = process.env.CONVEX_URL;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -36,8 +35,7 @@ const CHUNK_SIZE = 2000; // Characters per chunk for large files
 function checkEnvironment() {
   const missing = [];
   
-  if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-  if (!SUPABASE_KEY) missing.push('SUPABASE_KEY');
+  if (!CONVEX_URL) missing.push('CONVEX_URL');
   if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY) {
     missing.push('OPENAI_API_KEY or ANTHROPIC_API_KEY');
   }
@@ -82,7 +80,10 @@ async function generateEmbeddingOpenAI(text) {
 async function getChangedFiles() {
   try {
     const { execSync } = await import('child_process');
-    const output = execSync('git diff --name-only HEAD~1', { encoding: 'utf-8' });
+    const output = execSync('git diff --name-only HEAD~1 2>/dev/null || echo ""', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore']
+    });
     return output.trim().split('\n').filter(f => f.length > 0);
   } catch (error) {
     // If git diff fails, return empty (will do full scan)
@@ -170,11 +171,11 @@ function extractMetadata(filePath) {
     
     return {
       content: content.slice(0, MAX_FILE_SIZE), // Limit content size
-      size_bytes: stats.size,
-      file_type: fileType,
+      sizeBytes: stats.size,
+      fileType,
       exports,
       purpose,
-      last_modified: stats.mtime.toISOString()
+      lastModified: Math.floor(stats.mtimeMs),
     };
   } catch (error) {
     console.error(`Failed to read ${filePath}:`, error.message);
@@ -194,10 +195,10 @@ function chunkContent(content) {
 }
 
 /**
- * Index files to Supabase
+ * Index files to Convex
  */
-async function indexToSupabase(files, supabase) {
-  console.log(`\n📊 Indexing ${files.length} files to Supabase...\n`);
+async function indexToConvex(files, client) {
+  console.log(`\n📊 Indexing ${files.length} files to Convex...\n`);
   
   let indexed = 0;
   let errors = 0;
@@ -213,29 +214,21 @@ async function indexToSupabase(files, supabase) {
       }
       
       // Upsert file record
-      const { data: fileRecord, error: fileError } = await supabase
-        .from('codebase_files')
-        .upsert({
-          path: file.path,
-          name: path.basename(file.path),
-          content: metadata.content,
-          file_type: metadata.file_type,
-          size_bytes: metadata.size_bytes,
-          exports: metadata.exports,
-          purpose: metadata.purpose,
-          last_modified: metadata.last_modified,
-          indexed_at: new Date().toISOString()
-        }, {
-          onConflict: 'path'
-        })
-        .select()
-        .single();
+      const fileId = await client.mutation(api.codebaseIndex.upsertFile, {
+        path: file.path,
+        name: path.basename(file.path),
+        content: metadata.content,
+        fileType: metadata.fileType,
+        sizeBytes: metadata.sizeBytes,
+        exports: metadata.exports,
+        purpose: metadata.purpose,
+        lastModified: metadata.lastModified,
+      });
       
-      if (fileError) {
-        console.error(`  ❌ Failed to upsert file:`, fileError.message);
-        errors++;
-        continue;
-      }
+      // Delete old embeddings for this file
+      await client.mutation(api.codebaseIndex.deleteFileEmbeddings, {
+        fileId,
+      });
       
       // Generate embeddings for content chunks
       const chunks = chunkContent(metadata.content);
@@ -248,29 +241,15 @@ async function indexToSupabase(files, supabase) {
           // Generate embedding
           const embedding = await generateEmbeddingOpenAI(chunk);
           
-          // Delete old embeddings for this file
-          if (i === 0) {
-            await supabase
-              .from('codebase_embeddings')
-              .delete()
-              .eq('file_id', fileRecord.id);
-          }
-          
           // Insert new embedding
-          const { error: embError } = await supabase
-            .from('codebase_embeddings')
-            .insert({
-              file_id: fileRecord.id,
-              chunk_index: i,
-              chunk_content: chunk,
-              embedding
-            });
-          
-          if (embError) {
-            console.error(`  ⚠️  Failed to insert embedding:`, embError.message);
-          }
+          await client.mutation(api.codebaseIndex.insertEmbedding, {
+            fileId,
+            chunkIndex: i,
+            chunkContent: chunk,
+            embedding,
+          });
         } catch (embError) {
-          console.error(`  ⚠️  Failed to generate embedding:`, embError.message);
+          console.error(`  ⚠️  Failed to generate/insert embedding:`, embError.message);
         }
       }
       
@@ -294,10 +273,13 @@ async function indexToSupabase(files, supabase) {
 /**
  * Index package.json commands
  */
-async function indexCommands(supabase) {
+async function indexCommands(client) {
   console.log('\n📦 Indexing package.json commands...');
   
   try {
+    // Clear existing commands
+    await client.mutation(api.codebaseIndex.clearCommands);
+    
     const pkgPath = path.join(ROOT_DIR, 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
     const scripts = pkg.scripts || {};
@@ -313,17 +295,13 @@ async function indexCommands(supabase) {
       // Generate purpose
       const purpose = `Run ${script.split(' ')[0]} command`;
       
-      await supabase
-        .from('codebase_commands')
-        .upsert({
-          command: `pnpm ${command}`,
-          script,
-          package: 'root',
-          purpose,
-          category
-        }, {
-          onConflict: 'command'
-        });
+      await client.mutation(api.codebaseIndex.upsertCommand, {
+        command: `pnpm ${command}`,
+        script,
+        package: 'root',
+        purpose,
+        category,
+      });
     }
     
     console.log(`✅ Indexed ${Object.keys(scripts).length} commands`);
@@ -338,14 +316,14 @@ async function indexCommands(supabase) {
 async function main() {
   const fullScan = process.argv.includes('--full');
   
-  console.log('🚀 Supabase Codebase Indexer\n');
+  console.log('🚀 Convex Codebase Indexer\n');
   
   // Check environment
   checkEnvironment();
   
-  // Initialize Supabase client
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('✅ Connected to Supabase');
+  // Initialize Convex client
+  const client = new ConvexHttpClient(CONVEX_URL);
+  console.log('✅ Connected to Convex');
   
   // Get files to index
   const changedFiles = fullScan ? [] : await getChangedFiles();
@@ -364,16 +342,16 @@ async function main() {
   }
   
   // Index files
-  await indexToSupabase(files, supabase);
+  await indexToConvex(files, client);
   
   // Index commands
-  await indexCommands(supabase);
+  await indexCommands(client);
   
-  console.log('\n✨ Supabase indexing complete!');
+  console.log('\n✨ Convex indexing complete!');
   console.log('\nNext steps:');
-  console.log('1. Configure .cursor/mcp.json with Supabase MCP server');
-  console.log('2. Restart Cursor to load MCP server');
-  console.log('3. Ask questions like: "How does authentication work?"');
+  console.log('1. Deploy schema: pnpm deploy (if not already done)');
+  console.log('2. Query via Convex: ctx.runQuery(api.codebaseSearch.searchSimilar, ...)');
+  console.log('3. Or use semantic search: ctx.runAction(api.semanticSearch.searchByQuery, {query: "..."})');
 }
 
 // Run if called directly
@@ -384,4 +362,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   });
 }
 
-export { indexToSupabase, main };
+export { indexToConvex, main };
