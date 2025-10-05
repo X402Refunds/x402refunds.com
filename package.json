@@ -32,7 +32,8 @@
     "demo:status": "node scripts/dispute-monitor.js health",
     "rules:analyze": "node scripts/rule-learning-system.js analyze",
     "rules:learn": "node scripts/rule-learning-system.js learn",
-    "rules:compress": "node scripts/rule-learning-system.js compress"
+    "rules:compress": "node scripts/rule-learning-system.js compress",
+    "rules:optimize": "node scripts/llm-rule-optimizer.js"
   },
   "dependencies": {
     "convex": "^1.27.3",
