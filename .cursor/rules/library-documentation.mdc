@@ -1,0 +1,280 @@
+---
+description: Require using Context7 MCP to fetch latest library documentation before implementing any code with external libraries
+globs: "**/*.{ts,tsx,js,jsx,py}"
+alwaysApply: true
+---
+
+# Library Documentation - Context7 First
+
+**CRITICAL RULE**: Before implementing ANY code that uses external libraries, frameworks, or APIs, you MUST fetch the latest documentation using Context7 MCP.
+
+## 🚨 MANDATORY Process
+
+### Step 1: Identify External Dependencies
+
+Before writing code, ask yourself:
+- Am I using an external library? (React, Next.js, Convex, etc.)
+- Am I implementing a framework pattern?
+- Am I using a third-party API?
+- Am I following a specific library's conventions?
+
+**If YES to any** → Use Context7 FIRST
+
+### Step 2: Fetch Latest Documentation
+
+Use Context7 MCP to get current, accurate documentation:
+
+```typescript
+// MANDATORY: Use Context7 before implementing
+mcp_context7_resolve-library-id("library-name")
+mcp_context7_get-library-docs("/org/project", "specific topic")
+```
+
+**Examples**:
+- Using React hooks? → Get React docs from Context7
+- Implementing Convex mutations? → Get Convex docs from Context7
+- Writing Next.js routes? → Get Next.js docs from Context7
+- Using Tailwind classes? → Get Tailwind docs from Context7
+
+### Step 3: Implement Based on Documentation
+
+Only after receiving Context7 documentation:
+- Follow the EXACT patterns from docs
+- Use CURRENT APIs (not deprecated ones)
+- Match the ACTUAL syntax (not guessed syntax)
+- Implement CORRECT conventions
+
+---
+
+## Why This Matters
+
+### ❌ Without Context7 (Outdated Knowledge)
+```typescript
+// WRONG - Based on old knowledge, deprecated API
+useEffect(() => {
+  // Old pattern that may not work anymore
+}, []);
+```
+
+### ✅ With Context7 (Current Documentation)
+```typescript
+// CORRECT - Based on latest docs from Context7
+// Uses current best practices and APIs
+```
+
+---
+
+## When to Use Context7
+
+### Always Required For:
+- ✅ **New implementations** with external libraries
+- ✅ **Unfamiliar APIs** you haven't used recently
+- ✅ **Framework patterns** that may have changed
+- ✅ **Breaking changes** in major version updates
+- ✅ **Best practices** that evolve over time
+
+### Can Skip For:
+- Standard language features (JavaScript/TypeScript basics)
+- Internal codebase patterns (already documented in rules)
+- Simple utility functions (no external dependencies)
+
+---
+
+## Context7 Workflow
+
+### 1. Resolve Library ID
+```bash
+# Find the correct library identifier
+mcp_context7_resolve-library-id("library-name")
+# Returns: /org/project or /org/project/version
+```
+
+### 2. Get Documentation
+```bash
+# Fetch docs for specific topic
+mcp_context7_get-library-docs(
+  "/org/project", 
+  "topic: hooks, routing, etc.",
+  tokens: 2000-5000
+)
+```
+
+### 3. Implement Code
+- Follow the patterns from Context7 docs
+- Use the exact syntax shown
+- Match the conventions documented
+- Avoid guessing or assuming
+
+---
+
+## Examples
+
+### React Hook Implementation
+```typescript
+// STEP 1: Resolve library
+mcp_context7_resolve-library-id("react")
+// Result: /facebook/react
+
+// STEP 2: Get docs
+mcp_context7_get-library-docs("/facebook/react", "useEffect cleanup")
+
+// STEP 3: Implement based on latest docs
+useEffect(() => {
+  // Implementation follows current React docs
+  return () => {
+    // Cleanup follows current best practices
+  };
+}, [dependencies]);
+```
+
+### Next.js Routing
+```typescript
+// STEP 1: Check if Next.js routing changed
+mcp_context7_resolve-library-id("next.js")
+// Result: /vercel/next.js
+
+// STEP 2: Get current routing docs
+mcp_context7_get-library-docs("/vercel/next.js", "app router dynamic routes")
+
+// STEP 3: Implement using current App Router conventions
+// (Not Pages Router if App Router is current)
+```
+
+### Convex Mutations
+```typescript
+// STEP 1: Get Convex docs
+mcp_context7_resolve-library-id("convex")
+// Result: /get-convex/convex
+
+// STEP 2: Get mutation patterns
+mcp_context7_get-library-docs("/get-convex/convex", "mutations error handling")
+
+// STEP 3: Implement following current Convex patterns
+export const myMutation = mutation({
+  // Follows current Convex conventions from docs
+});
+```
+
+---
+
+## Ultrathink Before Implementing
+
+Before writing ANY code with external libraries:
+
+### ✅ Pre-Implementation Checklist
+
+1. **Library identified?** 
+   - What external library am I using?
+   
+2. **Context7 consulted?**
+   - Have I fetched the latest docs?
+   
+3. **Current patterns understood?**
+   - Do I know the CURRENT API (not old knowledge)?
+   
+4. **Breaking changes checked?**
+   - Has this library changed since my training data?
+   
+5. **Best practices confirmed?**
+   - Am I following CURRENT conventions?
+
+**If ANY answer is "No" or "Unsure"** → Use Context7
+
+---
+
+## Anti-Patterns to Avoid
+
+### ❌ Don't Guess
+```typescript
+// BAD - Guessing API based on old knowledge
+libraryFunction({ oldParam: "value" }); // May not exist anymore
+```
+
+### ❌ Don't Assume
+```typescript
+// BAD - Assuming pattern without checking
+// "I think this is how it works..."
+```
+
+### ❌ Don't Use Outdated Patterns
+```typescript
+// BAD - Using deprecated API from training data
+oldAPI.deprecatedMethod(); // Removed in latest version
+```
+
+### ✅ Do Verify First
+```typescript
+// GOOD - Verified against Context7 docs
+// Matches current API from latest documentation
+currentAPI.currentMethod(); // Confirmed in Context7
+```
+
+---
+
+## Special Cases
+
+### Major Version Updates
+If implementing code for a library that recently had a major version bump:
+- **MANDATORY**: Use Context7 to check breaking changes
+- Review migration guides from Context7
+- Verify APIs haven't changed
+
+### New Libraries
+If using a library for the first time in this project:
+- **MANDATORY**: Use Context7 to understand current patterns
+- Check installation requirements
+- Verify configuration steps
+
+### Framework Conventions
+If implementing framework-specific patterns (routing, state, etc.):
+- **MANDATORY**: Use Context7 for current conventions
+- Frameworks evolve quickly (React, Next.js, etc.)
+- Don't rely on old patterns
+
+---
+
+## Enforcement
+
+### Code Review Checklist
+Before committing code with external libraries, verify:
+
+1. ✅ Context7 was consulted for library documentation
+2. ✅ Implementation matches CURRENT APIs (not guessed)
+3. ✅ Patterns follow LATEST best practices
+4. ✅ No deprecated methods or APIs used
+5. ✅ Conventions match library's current standards
+
+**If you can't answer "yes" to all** → Go back and use Context7
+
+---
+
+## Benefits of Context7-First Development
+
+### Accuracy
+- ✅ Use current APIs, not deprecated ones
+- ✅ Follow latest best practices
+- ✅ Avoid breaking changes
+
+### Efficiency
+- ✅ Implement correctly the first time
+- ✅ Reduce debugging time
+- ✅ Avoid refactoring outdated code
+
+### Quality
+- ✅ Code matches library conventions
+- ✅ Uses recommended patterns
+- ✅ Follows current standards
+
+---
+
+## Remember
+
+> **Your training data is static. Libraries evolve. Always verify with Context7.**
+
+> **If you're about to write code with an external library, your first action should be using Context7.**
+
+> **Ultrathink = "Do I need Context7?" (Answer: Probably yes)**
+
+---
+
+**This is not optional. This is mandatory for all external library usage.**

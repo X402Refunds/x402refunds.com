@@ -1,3 +1,9 @@
+---
+description: Documentation discipline rules preventing file sprawl and maintaining organized information architecture
+globs: "**/*.md"
+alwaysApply: true
+---
+
 # Documentation Discipline
 
 **CRITICAL RULE**: Prevent documentation sprawl and maintain organized, discoverable information.
