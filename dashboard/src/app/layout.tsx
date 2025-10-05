@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/lib/convex-provider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/react";
 import { 
   OrganizationStructuredData, 
   WebSiteStructuredData, 
@@ -165,6 +166,7 @@ export default function RootLayout({
           <ConvexClientProvider>
             {children}
           </ConvexClientProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
