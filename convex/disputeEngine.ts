@@ -324,5 +324,3 @@ export const initializeAgents = mutation({
     return { success: true, registered };
   }
 });
-
-// All rule-based functions removed - LLM-only mode

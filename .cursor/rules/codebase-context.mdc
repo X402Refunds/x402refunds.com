@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T09:37:24.611Z
+**Auto-generated on**: 2025-10-05T09:43:29.533Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -68,7 +68,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (17 files)
+### Convex Files (14 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation
 - **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
@@ -79,12 +79,9 @@ consulate/
 - **events.ts** - getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
-- **intelligentDisputeEngine.ts** - testSimple, generateIntelligentDispute, intelligentSystemHealthCheck
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
-- **scheduler.ts** - Core logic
 - **schema.ts** - Core logic
-- **testLLM.ts** - simpleTest
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 
 ### Key Backend Functions
@@ -138,12 +135,9 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (5 test files)
+### Test Suites (2 test files)
 - test/agents.test.ts
 - test/cases.test.ts
-- test/courtEngine.test.ts
-- test/evidence.test.ts
-- test/judges.test.ts
 
 ## 📦 Package Scripts
 
@@ -257,13 +251,13 @@ Common HTTP routes exposed:
 - 31 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 17 TypeScript files with serverless functions
+- 14 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 5 test files using Vitest
+- 2 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -293,5 +287,5 @@ A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
 
 ## 🔄 Last Updated
 
-Generated: 10/5/2025, 2:37:24 AM
-Files scanned: 168
+Generated: 10/5/2025, 2:43:29 AM
+Files scanned: 161

@@ -16,32 +16,31 @@ afterAll(async () => {
   console.log('🧹 Cleaning up test environment...');
 });
 
-// Common test utilities
+// Common test utilities aligned with current schema
 export const createTestAgent = () => ({
   ownerDid: `did:test:owner-${Date.now()}`,
   name: `TestAgent${Date.now()}`,
-  organizationName: 'Test Organization',
-  mock: false, // Test agents are real agents by default
+  organizationName: `Test Org ${Date.now()}`,
+  mock: false, // false = real agent, true = test/demo data
   functionalType: 'general' as const,
 });
 
 export const createTestEvidence = () => ({
   sha256: `sha256_${Date.now()}`,
-  uri: `https://test.example.com/evidence_${Date.now()}`,
-  metadata: {
-    contentType: 'application/json',
-    size: 1024,
-    timestamp: new Date().toISOString(),
+  uri: `https://test.example.com/evidence/${Date.now()}.json`,
+  signer: `did:test:signer-${Date.now()}`,
+  model: {
+    provider: 'test-provider',
+    name: 'test-model',
+    version: '1.0.0',
   },
 });
 
-export const createTestCase = (parties: string[]) => ({
-  parties,
-  type: 'SLA_MISS' as const,
+export const createTestCase = (plaintiff: string, defendant: string) => ({
+  plaintiff,
+  defendant,
+  type: 'SLA_BREACH',
+  jurisdictionTags: ['AI_AGENTS', 'TEST'],
+  evidenceIds: [] as any[],
   description: 'Test case for SLA violation',
-  jurisdiction: 'AI_AGENTS' as const,
-  metadata: {
-    severity: 'medium',
-    automated: true,
-  },
 });
