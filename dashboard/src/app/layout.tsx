@@ -138,11 +138,10 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <head>
           {/* Favicon and Icons */}
-          <link rel="icon" href="/favicon.ico" sizes="any" />
+          <link rel="icon" href="/favicon.ico" sizes="32x32" />
           <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
           <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-          <link rel="icon" type="image/svg+xml" href="/consulate-icon-simple.svg" />
           
           {/* Preconnect to external domains for performance */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
