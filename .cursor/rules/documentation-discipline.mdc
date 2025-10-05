@@ -1,0 +1,162 @@
+# Documentation Discipline
+
+**CRITICAL RULE**: Prevent documentation sprawl and maintain organized, discoverable information.
+
+## 🚫 NEVER Create Random .md Files
+
+**DO NOT create .md files** outside designated locations without explicit user request.
+
+### The Problem
+AI agents frequently create documentation files that:
+- Get lost in the codebase
+- Contain outdated information
+- Are never discovered by future agents
+- Create documentation debt
+
+### The Solution
+**All codebase structure information** goes in the **auto-generated context graph**.
+
+## 📁 Designated Documentation Locations
+
+Documentation is **ONLY** allowed in these locations:
+
+### 1. Auto-Generated Context (Primary)
+- **Location**: `.cursor/rules/codebase-context.mdc`
+- **Purpose**: Complete codebase structure map
+- **Managed by**: `scripts/generate-context-graph.js`
+- **Never edit manually** - regenerated on every commit
+
+### 2. User-Facing Documentation
+- **Location**: `docs/` subdirectories
+- **Purpose**: Human-readable guides, specs, architecture
+- **Structure**:
+  - `docs/architecture/` - Technical architecture
+  - `docs/operations/` - Deployment, monitoring
+  - `docs/product/` - Product strategy
+  - `docs/specs/` - API specifications
+  - `docs/seo/` - SEO implementation guides
+  - `docs/setup/` - Setup instructions
+  - `docs/compliance/` - Legal compliance docs
+
+### 3. Project Overview
+- **Location**: `README.md` (root only)
+- **Purpose**: Project introduction and quick start
+- **DO NOT recreate** - only update if explicitly requested
+
+### 4. Development Rules
+- **Location**: `.cursor/rules/*.mdc`
+- **Purpose**: Agent behavior rules and patterns
+- **Managed carefully** - these affect all agent behavior
+- **Current rules**:
+  - agent-coordination.mdc
+  - ci-cd-workflow.mdc
+  - code-quality-checks.mdc
+  - commit-standards.mdc
+  - constitutional-governance.mdc
+  - convex-patterns.mdc
+  - legal-compliance.mdc
+  - package-architecture.mdc
+  - prompt-architecture.mdc
+  - rule-enforcement.mdc
+  - codebase-context.mdc (auto-generated)
+  - documentation-discipline.mdc (this file)
+
+## ✅ Correct Patterns
+
+### When Making Code Changes
+**DON'T**: Create `CHANGES.md`, `UPDATE_LOG.md`, `IMPLEMENTATION.md`
+**DO**: Update the context graph (happens automatically on commit)
+
+### When Documenting Architecture
+**DON'T**: Create `architecture-notes.md` at root
+**DO**: Add to `docs/architecture/` with proper naming
+
+### When Explaining Features
+**DON'T**: Create `feature-explanation.md`
+**DO**: Add comments in code, or create proper doc in `docs/specs/`
+
+### When Recording Decisions
+**DON'T**: Create `decisions.md`, `notes.md`
+**DO**: Use git commit messages, or formal ADR in `docs/architecture/decisions/`
+
+## 📝 .md File Creation Rules
+
+If you MUST create a .md file:
+
+1. **Get explicit user approval** - Don't create without asking
+2. **Choose proper location** - Use `docs/` subdirectory
+3. **Use descriptive names** - `payment-integration-guide.md` not `notes.md`
+4. **Include metadata header**:
+   ```markdown
+   ---
+   created: 2025-10-05
+   purpose: Guide for integrating payment APIs
+   status: current
+   ---
+   ```
+5. **Index in context graph** - Will be auto-discovered on next commit
+
+## 🧹 Documentation Cleanup
+
+### Identifying Stale Documentation
+Signs of documentation debt:
+- .md files at repository root (except README.md)
+- Files named `notes.md`, `TODO.md`, `CHANGES.md`
+- Documentation with dates older than 3 months
+- Files not indexed in context graph
+
+### Cleanup Process
+When encountering stale docs:
+1. Read to determine if content is still valuable
+2. If valuable: Move to appropriate `docs/` subdirectory
+3. If outdated: Delete and rely on context graph
+4. If redundant: Merge with existing documentation
+
+## 🎯 Benefits of This Discipline
+
+1. **Discoverable** - Context graph is always loaded, docs always found
+2. **Fresh** - Auto-regenerated, never stale
+3. **Organized** - Clear hierarchy, no guessing where things are
+4. **Efficient** - No time wasted creating/searching for docs
+5. **Team-friendly** - Everyone sees same context, no hidden docs
+
+## 📋 Quick Decision Tree
+
+**Need to document codebase structure?**
+→ It's in the auto-generated context graph (do nothing)
+
+**Need to document feature architecture?**
+→ Create in `docs/architecture/feature-name.md`
+
+**Need to document API endpoints?**
+→ Create in `docs/specs/api-endpoints.md`
+
+**Need to document deployment process?**
+→ Create in `docs/operations/deployment-guide.md`
+
+**Need to record what changed in this commit?**
+→ Use git commit message, not a .md file
+
+**Need to explain complex logic?**
+→ Add code comments, not separate documentation
+
+## 🚨 Enforcement
+
+**When you see**:
+- Agent creating random .md file at root
+- Documentation outside `docs/` or `.cursor/rules/`
+- Stale documentation accumulating
+
+**Take action**:
+- Stop the creation
+- Suggest proper location
+- Clean up existing violations
+- Update context graph instead
+
+## Remember
+
+> **The best documentation is code that documents itself, plus an auto-generated context graph that's always current.**
+
+> **If information isn't in the context graph or `docs/`, it doesn't exist to future agents.**
+
+**This is not bureaucracy - this is preventing documentation chaos.**
