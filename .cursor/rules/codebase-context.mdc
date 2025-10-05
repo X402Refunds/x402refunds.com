@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T08:24:07.807Z
+**Auto-generated on**: 2025-10-05T08:28:03.445Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -177,7 +177,11 @@ Common HTTP routes exposed:
 - `pnpm rules:analyze` - node
 - `pnpm rules:learn` - node
 - `pnpm rules:compress` - node
-- `pnpm rules:optimize` - node
+- `pnpm rules:llm-detect` - node
+- `pnpm rules:llm-compress` - node
+- `pnpm rules:llm-learn` - node
+- `pnpm rules:llm-merge` - node
+- `pnpm rules:llm-optimize` - node
 
 ### Dashboard Commands
 - `pnpm --filter dashboard dev`
@@ -197,7 +201,7 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (40 files)
+### Documentation (39 files)
 - CHANGELOG.md
 - DASHBOARD_FIX_GUIDE.md
 - FINAL_MVP_STRATEGY.md
@@ -214,7 +218,7 @@ Common HTTP routes exposed:
 - docs/compliance/enterprise-compliance-framework.md
 - docs/design/sovereign-civic-design-system.md
 
-... and 25 more in docs/
+... and 24 more in docs/
 
 ## 🔧 Configuration Files
 
@@ -294,5 +298,5 @@ A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
 
 ## 🔄 Last Updated
 
-Generated: 10/5/2025, 1:24:07 AM
+Generated: 10/5/2025, 1:28:03 AM
 Files scanned: 199

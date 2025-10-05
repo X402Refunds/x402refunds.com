@@ -103,40 +103,7 @@ See `quality-checks-reference.md` for troubleshooting.
 
 ---
 
-### Phase 3: LLM-Powered Optimization (IMPLEMENTED!)
-
-**✅ Now available**: Automated rule optimization using Claude API
-
-Instead of manual correction tracking, we now have:
-- **GitHub Actions workflow** that runs weekly
-- **Claude Sonnet 4** analyzes all rules semantically
-- **Learns from git history** (your correction patterns)
-- **Creates PRs** with optimizations for review
-
-See `docs/setup/llm-rule-optimization.md` for setup.
-
-**Quick start:**
-```bash
-# 1. Get Claude API key from console.anthropic.com
-# 2. Add to GitHub Secrets: ANTHROPIC_API_KEY
-# 3. Enable workflow permissions in repo settings
-# 4. Test manually:
-export ANTHROPIC_API_KEY="sk-ant-..."
-pnpm rules:optimize
-```
-
-**What it does:**
-- Detects semantic duplications (not just text matching)
-- Learns from your git commit history
-- Merges related content intelligently
-- Resolves contradictions
-- Rewrites for clarity
-
-**Cost**: ~$0.135 per run, ~$6.50/year for weekly optimization
-
----
-
-### Phase 3 (Original): Real-Time Learning Loop (Week 2)
+### Phase 3: Real-Time Learning Loop (Week 2)
 
 #### 3.1 Correction Tracking System
 
