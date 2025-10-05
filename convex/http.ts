@@ -700,7 +700,7 @@ http.route({
       return new Response(JSON.stringify({
         agentDid,
         notifications,
-        unreadCount: notifications.filter(n => !n.read).length,
+        unreadCount: notifications.filter((n: { read: boolean }) => !n.read).length,
         timestamp: Date.now()
       }), {
         headers: corsHeaders,

@@ -1,6 +1,287 @@
+---
+alwaysApply: true
+---
+
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T06:16:46.130Z
+**Auto-generated on**: 2025-10-05T07:05:49.148Z
+
+This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
+
+## 📁 Project Structure
+
+### Core Directories
+- **convex/** - Serverless backend functions (Convex)
+- **dashboard/** - Next.js frontend application (Vercel)
+- **dashboard/src/app/** - Next.js app router pages
+- **dashboard/src/components/** - React UI components
+- **dashboard/public/** - Static assets (favicons, images, etc.)
+- **packages/config/** - Shared ESLint & TypeScript configuration
+- **scripts/** - Automation and utility scripts
+- **test/** - Vitest test suites
+- **docs/** - Project documentation
+
+### Workspace Layout
+```
+consulate/
+├── convex/           # Backend (Convex serverless)
+├── dashboard/        # Frontend (Next.js + React)
+├── packages/config/  # Shared config
+├── scripts/          # Automation
+├── test/            # Tests
+└── docs/            # Documentation
+```
+
+## 🎨 Common Assets
+
+### Favicons (dashboard/public/)
+- dashboard/public/apple-touch-icon.png
+- dashboard/public/favicon-192.png
+- dashboard/public/favicon-512.png
+- dashboard/public/favicon.ico
+- dashboard/src/app/favicon.ico
+
+### Logos (public/)
+- public/consulate-logo-square.svg
+
+### Other Images
+- dashboard/public/apple-touch-icon.png
+- dashboard/public/file.svg
+- dashboard/public/globe.svg
+- dashboard/public/next.svg
+- dashboard/public/vercel.svg
+- dashboard/public/vivek-headshot.jpg
+- dashboard/public/window.svg
+- public/consulate-icon-simple.svg
+
+## ⚡ Backend API (Convex Functions)
+
+### Convex Files (20 files)
+- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation
+- **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed
+- **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
+- **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
+- **codebaseIndex.ts** - upsertFile, insertEmbedding, deleteFileEmbeddings, insertDependency, upsertCommand, deleteFileData, clearCommands
+- **codebaseSearch.ts** - searchSimilar, getFileDependencies, getFileDependents, getFilesByType, getFileByPath, getCommands, getCommandsByCategory, getIndexStats
+- **courtEngine.ts** - getEngineStats, runCourtWorkflow
+- **crons.ts** - generateLLMDispute, createLLMDispute, generateFallbackDispute, systemHealthMonitor, processPendingCases, updateSystemStatsCache
+- **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
+- **events.ts** - getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline
+- **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
+- **http.ts** - Core logic
+- **intelligentDisputeEngine.ts** - testSimple, generateIntelligentDispute, intelligentSystemHealthCheck
+- **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
+- **llmEngine.ts** - Core logic
+- **scheduler.ts** - Core logic
+- **schema.ts** - Core logic
+- **semanticSearch.ts** - searchByQuery, findSimilarFiles
+- **testLLM.ts** - simpleTest
+- **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
+
+### Key Backend Functions
+- **agents.ts** - Agent registration & management (joinAgent, listAgents, etc.)
+- **cases.ts** - Case filing & dispute resolution
+- **evidence.ts** - Evidence submission & validation
+- **courtEngine.ts** - Automated arbitration logic
+- **judges.ts** - Judge panel & voting system
+- **http.ts** - HTTP API endpoints for external integrations
+- **schema.ts** - Database schema definitions
+
+### HTTP Endpoints (convex/http.ts)
+Common HTTP routes exposed:
+- GET /health - Health check
+- GET /version - API version
+- GET /mcp/tools - MCP tool discovery
+- POST /evidence - Submit evidence
+- POST /disputes - File disputes
+
+## ⚛️ Frontend Components
+
+### React Components (31 components)
+- Footer
+- Navigation
+- StructuredData
+- collapsible-stats
+- hero-stats
+- live-dispute-monitor
+- dashboard-layout
+- government-header
+- government-sidebar
+- alert
+- avatar
+- badge
+- breadcrumb
+- button
+- card
+- dialog
+- dropdown-menu
+- form
+- input
+- label
+
+... and 11 more
+
+### Component Categories
+- **Layout**: Header, Footer, Navigation
+- **Forms**: Case forms, Evidence upload
+- **Display**: Case lists, Agent cards, Stats
+- **UI**: Buttons, Cards, Dialogs (shadcn/ui)
+
+## 🧪 Test Files
+
+### Test Suites (5 test files)
+- test/agents.test.ts
+- test/cases.test.ts
+- test/courtEngine.test.ts
+- test/evidence.test.ts
+- test/judges.test.ts
+
+## 📦 Package Scripts
+
+### Root Package Commands
+- `pnpm predeploy` - pnpm
+- `pnpm deploy` - pnpm
+- `pnpm deploy:frontend` - vercel
+- `pnpm check-logs` - pnpm
+- `pnpm build` - pnpm
+- `pnpm lint` - pnpm
+- `pnpm type-check` - pnpm
+- `pnpm type-check:convex` - tsc
+- `pnpm dev:dashboard` - pnpm
+- `pnpm test` - vitest
+- `pnpm test:ui` - vitest
+- `pnpm test:run` - vitest
+- `pnpm test:coverage` - vitest
+- `pnpm postinstall` - node
+- `pnpm update-context` - node
+- `pnpm index-codebase` - node
+- `pnpm index-codebase:full` - node
+- `pnpm e2e` - bash
+- `pnpm structure` - node
+- `pnpm docs` - echo
+- `pnpm verify-pnpm` - which
+- `pnpm cleanup-pnpm` - echo
+- `pnpm demo:enterprise` - node
+- `pnpm demo:sla` - node
+- `pnpm demo:disputes` - ./scripts/start-dispute-demo.sh
+- `pnpm demo:engine` - node
+- `pnpm demo:monitor` - node
+- `pnpm demo:status` - node
+
+
+### Common Workflows
+- **Development**: `pnpm dev` - Start dev server (Convex + Next.js)
+- **Build**: `pnpm build` - Build all packages
+- **Test**: `pnpm test` or `pnpm test:run` - Run tests
+- **Deploy Backend**: `pnpm deploy` - Deploy Convex functions
+- **Deploy Frontend**: `pnpm deploy:frontend` - Deploy to Vercel
+- **Type Check**: `pnpm type-check` - Validate TypeScript
+- **Lint**: `pnpm lint` - Run ESLint
+
+## 📚 Documentation Files
+
+### Documentation (40 files)
+- CHANGELOG.md
+- CONTEXT_SYSTEM_COMPLETE.md
+- DASHBOARD_FIX_GUIDE.md
+- FINAL_MVP_STRATEGY.md
+- README.md
+- dashboard/README.md
+- docs/AGENT_INTEGRATION_GUIDE.md
+- docs/AI-VENDOR-DISPUTE-RESOLUTION-DEMO.md
+- docs/DOCUMENTATION_UPDATE_SUMMARY.md
+- docs/LLM_POWERED_DEPLOYMENT_COMPLETE.md
+- docs/README.md
+- docs/REAL_WORLD_INTEGRATION_SUMMARY.md
+- docs/architecture/project-structure.md
+- docs/compliance/enterprise-compliance-framework.md
+- docs/design/sovereign-civic-design-system.md
+
+... and 25 more in docs/
+
+## 🔧 Configuration Files
+
+- **package.json** - Root workspace configuration
+- **pnpm-workspace.yaml** - Monorepo workspace definition
+- **tsconfig.json** - Root TypeScript configuration
+- **convex.json** - Convex backend configuration
+- **dashboard/package.json** - Frontend dependencies
+- **dashboard/next.config.ts** - Next.js configuration
+- **dashboard/tsconfig.json** - Frontend TypeScript config
+- **vercel.json** - Vercel deployment settings
+- **vitest.config.ts** - Test configuration
+
+## 📦 Dependencies
+
+### Production Dependencies (3)
+- convex@^1.27.3
+- convex-test@^0.0.38
+- zod@^4.1.11
+
+### Dev Dependencies (10)
+- @semantic-release/changelog@^6.0.0
+- @semantic-release/git@^10.0.0
+- @types/node@^20.10.0
+- @vitest/ui@^1.6.0
+- concurrently@^9.1.0
+- eslint@^9.0.0
+- glob@^10.3.0
+- semantic-release@^24.2.8
+- typescript@^5.6.0
+- vitest@^1.6.0
+
+## 🚀 Quick Reference
+
+### When working with...
+
+**Favicons/Icons**: Look in `dashboard/public/`
+- favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
+
+**React Components**: Look in `dashboard/src/components/`
+- 31 components organized by feature
+
+**Backend Logic**: Look in `convex/`
+- 20 TypeScript files with serverless functions
+
+**API Endpoints**: Check `convex/http.ts`
+- HTTP actions for external integrations
+
+**Tests**: Look in `test/`
+- 5 test files using Vitest
+
+**Scripts**: Look in `scripts/`
+- Automation, deployment, and utility scripts
+
+**Documentation**: Look in `docs/`
+- Architecture, specs, compliance guides
+
+### Common Questions Answered
+
+**Q: Where are the favicons?**
+A: `dashboard/public/favicon*.png` and `dashboard/public/apple-touch-icon.png`
+
+**Q: How do I add a new React component?**
+A: Create in `dashboard/src/components/YourComponent.tsx`
+
+**Q: Where is authentication handled?**
+A: `convex/auth.ts` for backend, check `convex/apiKeys.ts` for API key auth
+
+**Q: How do I add a new API endpoint?**
+A: Add HTTP action in `convex/http.ts` or mutation/query in relevant `convex/*.ts` file
+
+**Q: Where are the tests?**
+A: `test/*.test.ts` - Run with `pnpm test`
+
+**Q: How do I deploy?**
+A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
+
+## 🔄 Last Updated
+
+Generated: 10/5/2025, 12:05:49 AM
+Files scanned: 201
+# Codebase Context Graph
+
+**Auto-generated on**: 2025-10-05T07:05:49.148Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -279,5 +560,5 @@ A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
 
 ## 🔄 Last Updated
 
-Generated: 10/4/2025, 11:16:46 PM
+Generated: 10/5/2025, 12:05:49 AM
 Files scanned: 201

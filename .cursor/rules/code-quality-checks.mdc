@@ -89,6 +89,59 @@ pnpm build
 
 ---
 
+#### 4. Update Context - Codebase Documentation
+```bash
+pnpm update-context
+```
+
+**Purpose:**
+- Regenerates auto-updated codebase context graph
+- Updates file structure documentation
+- Ensures AI agents have current codebase map
+- Maintains searchable project structure
+
+**When to run:**
+- After any code changes
+- After adding/removing files
+- After restructuring directories
+- Before committing changes
+
+**Success criteria:**
+```
+✓ Context graph generated successfully
+✓ All files indexed and documented
+✓ .cursor/rules/codebase-context.mdc updated
+```
+
+---
+
+#### 5. Index Codebase - Convex Search
+```bash
+pnpm index-codebase
+```
+
+**Purpose:**
+- Indexes codebase to Convex for semantic search
+- Enables codebase search functionality
+- Updates file embeddings and dependencies
+- Maintains searchable code knowledge base
+
+**When to run:**
+- After any code changes
+- After modifying file structure
+- Before committing changes
+- When codebase search is needed
+
+**Success criteria:**
+```
+✓ Codebase indexed to Convex successfully
+✓ File embeddings updated
+✓ Dependencies tracked
+✓ Search functionality available
+```
+
+---
+
 ## 🔄 Complete Workflow
 
 ### Standard Code Change Workflow
@@ -100,12 +153,14 @@ pnpm build
 pnpm lint          # ✓ Code quality
 pnpm type-check    # ✓ Type safety
 pnpm build         # ✓ Production readiness
+pnpm update-context # ✓ Context graph
+pnpm index-codebase # ✓ Codebase indexing
 
 # 3. Fix any issues that arise
 [fix errors if any]
 
 # 4. Re-run checks after fixes
-pnpm lint && pnpm type-check && pnpm build
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase
 
 # 5. Only commit when ALL checks pass
 git add .
@@ -116,7 +171,7 @@ git push
 ### Quick Verification Command
 ```bash
 # Run all checks in sequence
-pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSED"
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase && echo "✅ ALL QUALITY CHECKS PASSED"
 ```
 
 ---
@@ -129,6 +184,9 @@ pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSE
 ```bash
 # ❌ WRONG - Skipping quality checks
 git add . && git commit -m "fix: something" && git push
+
+# ❌ WRONG - Skipping context updates
+pnpm lint && pnpm type-check && pnpm build && git commit  # Missing update-context & index-codebase!
 ```
 
 **DON'T commit with errors:**
@@ -163,6 +221,8 @@ git commit -m "done"  # Missing build check!
 pnpm lint          # Pass ✓
 pnpm type-check    # Pass ✓
 pnpm build         # Pass ✓
+pnpm update-context # Pass ✓
+pnpm index-codebase # Pass ✓
 git commit -m "feat: add new feature"
 ```
 
@@ -195,6 +255,8 @@ pnpm lint && pnpm type-check && pnpm build
 pnpm lint          # Check React/Next.js code
 pnpm type-check    # Verify component types
 pnpm build         # Ensure pages compile
+pnpm update-context # Update codebase context
+pnpm index-codebase # Index to Convex
 ```
 
 ### Backend Changes (convex/)
@@ -203,6 +265,8 @@ pnpm build         # Ensure pages compile
 pnpm lint          # Check Convex functions
 pnpm type-check    # Verify schema types
 pnpm build         # Validate production build
+pnpm update-context # Update codebase context
+pnpm index-codebase # Index to Convex
 pnpm deploy        # Deploy to test in production
 pnpm test:run      # Run API tests
 ```
@@ -216,6 +280,8 @@ pnpm install --frozen-lockfile  # Verify CI will work
 pnpm lint
 pnpm type-check
 pnpm build
+pnpm update-context
+pnpm index-codebase
 pnpm test:run      # Ensure nothing broke
 ```
 
@@ -232,15 +298,15 @@ pnpm dev           # Check in development
 
 ## 📊 Quality Check Matrix
 
-| Change Type | Lint | Type Check | Build | Deploy | Test |
-|-------------|------|------------|-------|--------|------|
-| **Frontend Component** | ✅ | ✅ | ✅ | ⚪ | ⚪ |
-| **Backend Function** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Shared Config** | ✅ | ✅ | ✅ | ⚪ | ✅ |
-| **CSS/Styles** | ✅ | ⚪ | ✅ | ⚪ | ⚪ |
-| **Documentation** | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| **Package.json** | ✅ | ✅ | ✅ | ⚪ | ✅ |
-| **TypeScript Config** | ✅ | ✅ | ✅ | ⚪ | ✅ |
+| Change Type | Lint | Type Check | Build | Context | Index | Deploy | Test |
+|-------------|------|------------|-------|---------|-------|--------|------|
+| **Frontend Component** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ⚪ |
+| **Backend Function** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Shared Config** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ✅ |
+| **CSS/Styles** | ✅ | ⚪ | ✅ | ✅ | ✅ | ⚪ | ⚪ |
+| **Documentation** | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
+| **Package.json** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ✅ |
+| **TypeScript Config** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ✅ |
 
 Legend: ✅ Required | ⚪ Optional | 
 
@@ -314,11 +380,14 @@ Before ANY commit, ensure:
 ✓ pnpm lint passes with no errors
 ✓ pnpm type-check passes with no errors  
 ✓ pnpm build completes successfully
+✓ pnpm update-context generates context graph
+✓ pnpm index-codebase indexes successfully
 ✓ No warnings (or all warnings documented/explained)
 ✓ Code follows project conventions
 ✓ All imports are used and necessary
 ✓ Types are properly defined
 ✓ Production build is functional
+✓ Codebase context is current
 ```
 
 ---
@@ -328,7 +397,7 @@ Before ANY commit, ensure:
 ### Pre-commit Hook (Future)
 ```bash
 # Automatically run checks before commit
-pnpm lint && pnpm type-check && pnpm build || exit 1
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase || exit 1
 ```
 
 ### CI/CD Pipeline

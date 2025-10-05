@@ -100,11 +100,13 @@ pnpm verify-pnpm
 pnpm lint          # ✅ Code quality and style
 pnpm type-check    # ✅ TypeScript type safety
 pnpm build         # ✅ Production build verification
+pnpm update-context # ✅ Update codebase context graph
+pnpm index-codebase # ✅ Index codebase to Convex
 ```
 
 ### Complete Verification Command:
 ```bash
-pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSED"
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase && echo "✅ ALL QUALITY CHECKS PASSED"
 ```
 
 ### When to Run:
@@ -118,6 +120,8 @@ pnpm lint && pnpm type-check && pnpm build && echo "✅ ALL QUALITY CHECKS PASSE
 ✓ No linting errors or warnings
 ✓ No TypeScript compilation errors
 ✓ Production build completes successfully
+✓ Context graph updated successfully
+✓ Codebase indexed to Convex
 ✓ All checks pass before git commit
 ```
 
@@ -315,9 +319,11 @@ SUCCESS: Report production deployment complete
 pnpm lint          # ✅ MUST PASS - Code quality
 pnpm type-check    # ✅ MUST PASS - Type safety
 pnpm build         # ✅ MUST PASS - Production build
+pnpm update-context # ✅ MUST PASS - Update context graph
+pnpm index-codebase # ✅ MUST PASS - Index to Convex
 
 # Quick verification:
-pnpm lint && pnpm type-check && pnpm build
+pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase
 ```
 
 **STOP**: Do NOT proceed to commit if any of these fail. Fix issues first.
@@ -388,6 +394,8 @@ pnpm test:coverage             # Check coverage (optional but recommended)
 pnpm lint ✅          # Code quality - MUST PASS
 pnpm type-check ✅    # Type safety - MUST PASS
 pnpm build ✅         # Production build - MUST PASS
+pnpm update-context ✅ # Context graph - MUST PASS
+pnpm index-codebase ✅ # Codebase indexing - MUST PASS
 
 # Additional checks for backend changes:
 pnpm deploy ✅        # Deploy to Convex production
@@ -399,7 +407,7 @@ git add . && git commit -m "..." && git push
 
 **REMEMBER**: The workflow is ALWAYS:
 1. Write code
-2. Run `pnpm lint && pnpm type-check && pnpm build`
+2. Run `pnpm lint && pnpm type-check && pnpm build && pnpm update-context && pnpm index-codebase`
 3. Fix any errors
 4. Run additional tests if needed (deploy, test:run)
 5. Commit only when everything is green ✅

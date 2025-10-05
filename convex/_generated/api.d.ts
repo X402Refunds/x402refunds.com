@@ -17,6 +17,8 @@ import type * as agents from "../agents.js";
 import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as cases from "../cases.js";
+import type * as codebaseIndex from "../codebaseIndex.js";
+import type * as codebaseSearch from "../codebaseSearch.js";
 import type * as courtEngine from "../courtEngine.js";
 import type * as crons from "../crons.js";
 import type * as disputeEngine from "../disputeEngine.js";
@@ -27,6 +29,7 @@ import type * as intelligentDisputeEngine from "../intelligentDisputeEngine.js";
 import type * as judges from "../judges.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as scheduler from "../scheduler.js";
+import type * as semanticSearch from "../semanticSearch.js";
 import type * as testLLM from "../testLLM.js";
 import type * as types from "../types.js";
 
@@ -43,6 +46,8 @@ declare const fullApi: ApiFromModules<{
   apiKeys: typeof apiKeys;
   auth: typeof auth;
   cases: typeof cases;
+  codebaseIndex: typeof codebaseIndex;
+  codebaseSearch: typeof codebaseSearch;
   courtEngine: typeof courtEngine;
   crons: typeof crons;
   disputeEngine: typeof disputeEngine;
@@ -53,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   judges: typeof judges;
   llmEngine: typeof llmEngine;
   scheduler: typeof scheduler;
+  semanticSearch: typeof semanticSearch;
   testLLM: typeof testLLM;
   types: typeof types;
 }>;

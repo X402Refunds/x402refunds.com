@@ -2,6 +2,13 @@ import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { v } from "convex/values";
 
+type SemanticSearchResult = {
+  file: any;
+  chunk: string;
+  chunkIndex: number;
+  score: number;
+};
+
 /**
  * Semantic search - takes natural language query, generates embedding, searches
  * This is an action because it needs to call external OpenAI API
@@ -11,7 +18,7 @@ export const searchByQuery = action({
     query: v.string(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<SemanticSearchResult[]> => {
     try {
       // Check for OpenAI API key
       const apiKey = process.env.OPENAI_API_KEY;
@@ -45,7 +52,7 @@ export const searchByQuery = action({
       console.log(`Generated embedding with ${embedding.length} dimensions`);
       
       // Search using the embedding
-      const results = await ctx.runQuery(api.codebaseSearch.searchSimilar, {
+      const results: SemanticSearchResult[] = await ctx.runQuery(api.codebaseSearch.searchSimilar, {
         embedding,
         limit: args.limit ?? 10,
       });
@@ -68,10 +75,10 @@ export const findSimilarFiles = action({
     path: v.string(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<SemanticSearchResult[]> => {
     try {
       // Get the file
-      const file = await ctx.runQuery(api.codebaseSearch.getFileByPath, {
+      const file: { content: string } | null = await ctx.runQuery(api.codebaseSearch.getFileByPath, {
         path: args.path,
       });
       

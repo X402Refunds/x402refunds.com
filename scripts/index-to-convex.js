@@ -43,10 +43,14 @@ const CONVEX_URL = process.env.CONVEX_URL;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'openrouter'; // 'openrouter', 'openai', 'anthropic'
+const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+const TOGETHER_EMBEDDING_MODEL = process.env.TOGETHER_EMBEDDING_MODEL || 'togethercomputer/m2-bert-80M-32k-retrieval';
+const NOMIC_API_KEY = process.env.NOMIC_API_KEY;
+const NOMIC_EMBEDDING_MODEL = process.env.NOMIC_EMBEDDING_MODEL || 'nomic-embed-text-v1';
+const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'together'; // 'together', 'nomic', 'openrouter', 'openai', 'anthropic'
 
 const MAX_FILE_SIZE = 100000; // 100KB max per file for embedding
-const CHUNK_SIZE = 2000; // Characters per chunk for large files
+const CHUNK_SIZE = 8000; // Characters per chunk (M2-BERT 32k supports up to 32,768 tokens!)
 
 /**
  * Check environment variables
@@ -57,14 +61,16 @@ function checkEnvironment() {
   if (!CONVEX_URL) missing.push('CONVEX_URL');
   
   // Check for at least one embedding provider
-  if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY && !OPENROUTER_API_KEY) {
+  if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY && !OPENROUTER_API_KEY && !TOGETHER_API_KEY && !NOMIC_API_KEY) {
     console.error('❌ Missing embedding provider API key!');
     console.error('\nYou need ONE of:');
-    console.error('  • OPENROUTER_API_KEY (recommended - supports multiple models)');
+    console.error('  • NOMIC_API_KEY (recommended - 8k context, high quality)');
+    console.error('  • TOGETHER_API_KEY (fast and affordable)');
+    console.error('  • OPENROUTER_API_KEY (supports multiple models)');
     console.error('  • OPENAI_API_KEY (OpenAI direct)');
     console.error('  • ANTHROPIC_API_KEY (Anthropic direct)');
     console.error('\nSet in .env.local or as environment variables.');
-    console.error('\n💡 Get OpenRouter key: https://openrouter.ai/keys');
+    console.error('\n💡 Get Nomic AI key: https://atlas.nomic.ai/cli-login');
     process.exit(1);
   }
   
@@ -77,11 +83,64 @@ function checkEnvironment() {
   
   // Determine which provider to use
   let provider = 'none';
-  if (OPENROUTER_API_KEY) provider = 'OpenRouter';
+  if (NOMIC_API_KEY) provider = `Nomic AI (${NOMIC_EMBEDDING_MODEL})`;
+  else if (TOGETHER_API_KEY) provider = `Together AI (${TOGETHER_EMBEDDING_MODEL})`;
+  else if (OPENROUTER_API_KEY) provider = 'OpenRouter';
   else if (OPENAI_API_KEY) provider = 'OpenAI';
   else if (ANTHROPIC_API_KEY) provider = 'Anthropic';
   
   console.log(`✅ Using ${provider} for embeddings`);
+}
+
+/**
+ * Generate embeddings using Nomic AI
+ */
+async function generateEmbeddingNomic(text) {
+  const response = await fetch('https://api-atlas.nomic.ai/v1/embedding/text', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${NOMIC_API_KEY}`
+    },
+    body: JSON.stringify({
+      texts: [text],
+      model: NOMIC_EMBEDDING_MODEL,
+      task_type: 'search_document' // Use search_document for indexing
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Nomic AI API error: ${response.status} - ${error}`);
+  }
+  
+  const data = await response.json();
+  return data.embeddings[0];
+}
+
+/**
+ * Generate embeddings using Together AI
+ */
+async function generateEmbeddingTogether(text) {
+  const response = await fetch('https://api.together.xyz/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TOGETHER_API_KEY}`
+    },
+    body: JSON.stringify({
+      input: text,
+      model: TOGETHER_EMBEDDING_MODEL
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Together AI API error: ${response.status} - ${error}`);
+  }
+  
+  const data = await response.json();
+  return data.data[0].embedding;
 }
 
 /**
@@ -140,7 +199,17 @@ async function generateEmbeddingOpenAI(text) {
  * Generate embedding using appropriate provider
  */
 async function generateEmbedding(text) {
-  // Prefer OpenRouter (most flexible)
+  // Prefer Nomic (8k context, high quality)
+  if (NOMIC_API_KEY) {
+    return await generateEmbeddingNomic(text);
+  }
+  
+  // Fall back to Together AI (fast and affordable)
+  if (TOGETHER_API_KEY) {
+    return await generateEmbeddingTogether(text);
+  }
+  
+  // Fall back to OpenRouter (most flexible)
   if (OPENROUTER_API_KEY) {
     return await generateEmbeddingOpenRouter(text);
   }
@@ -153,7 +222,7 @@ async function generateEmbedding(text) {
   // Note: Anthropic doesn't provide embeddings API yet
   // If they add it, we can support it here
   if (ANTHROPIC_API_KEY) {
-    throw new Error('Anthropic does not yet provide embeddings API. Use OpenRouter or OpenAI.');
+    throw new Error('Anthropic does not yet provide embeddings API. Use Nomic, Together AI, OpenRouter or OpenAI.');
   }
   
   throw new Error('No embedding provider available');

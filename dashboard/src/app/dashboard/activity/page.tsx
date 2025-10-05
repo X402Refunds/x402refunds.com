@@ -6,6 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useQuery } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { Activity, TrendingUp, Zap } from "lucide-react"
+import { Id } from "../../../../../convex/_generated/dataModel"
+
+type Event = {
+  _id: Id<"events">;
+  type: string;
+  payload: Record<string, unknown>;
+  timestamp: number;
+  agentDid?: string;
+  caseId?: Id<"cases">;
+}
 
 export default function ActivityPage() {
   const recentEvents = useQuery(api.events.getRecentEvents, { limit: 100 })
@@ -106,7 +116,7 @@ export default function ActivityPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {events.slice(0, 50).map((event) => (
+              {events.slice(0, 50).map((event: Event) => (
                 <div 
                   key={event._id}
                   className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"

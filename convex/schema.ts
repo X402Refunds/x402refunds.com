@@ -427,7 +427,7 @@ export default defineSchema({
     .index("by_file", ["fileId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1536,
+      dimensions: 768, // BAAI/bge-base-en-v1.5 produces 768-dim embeddings
       filterFields: ["fileId"],
     }),
 

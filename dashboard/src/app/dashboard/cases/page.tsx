@@ -7,14 +7,27 @@ import { useQuery } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { FileText, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { Id } from "../../../../../convex/_generated/dataModel"
+
+type Case = {
+  _id: Id<"cases">;
+  plaintiff: string;
+  defendant: string;
+  parties: string[];
+  status: "FILED" | "AUTORULED" | "PANELED" | "DECIDED" | "CLOSED";
+  type: string;
+  filedAt: number;
+  description?: string;
+  claimedDamages?: number;
+}
 
 export default function CasesPage() {
   const recentCases = useQuery(api.cases.getRecentCases, { limit: 100 })
   const stats = useQuery(api.cases.getCachedSystemStats)
 
   const cases = recentCases ?? []
-  const pendingCases = cases.filter(c => c.status === "FILED" || c.status === "PANELED").length
-  const resolvedCases = cases.filter(c => c.status === "DECIDED" || c.status === "CLOSED").length
+  const pendingCases = cases.filter((c: Case) => c.status === "FILED" || c.status === "PANELED").length
+  const resolvedCases = cases.filter((c: Case) => c.status === "DECIDED" || c.status === "CLOSED").length
   const totalCases = cases.length
 
   const getStatusBadge = (status: string) => {
@@ -109,7 +122,7 @@ export default function CasesPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {cases.slice(0, 20).map((case_) => (
+              {cases.slice(0, 20).map((case_: Case) => (
                 <Link
                   key={case_._id}
                   href={`/dashboard/dispute/${case_._id}`}

@@ -104,7 +104,7 @@ export default function AgentsPage() {
               <div className="text-sm text-muted-foreground">No agents yet</div>
             ) : (
               <div className="space-y-3">
-                {topAgents.map((agent, index) => (
+                {topAgents.map((agent, index: number) => (
                   <div 
                     key={agent.did} 
                     className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
