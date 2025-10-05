@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T08:40:31.412Z
+**Auto-generated on**: 2025-10-05T09:37:24.611Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -196,24 +196,24 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (39 files)
-- CHANGELOG.md
-- DASHBOARD_FIX_GUIDE.md
-- FINAL_MVP_STRATEGY.md
+### Documentation (30 files)
 - README.md
-- RULE_SYSTEM_REDESIGN.md
-- dashboard/README.md
 - docs/AGENT_INTEGRATION_GUIDE.md
-- docs/AI-VENDOR-DISPUTE-RESOLUTION-DEMO.md
-- docs/DOCUMENTATION_UPDATE_SUMMARY.md
-- docs/LLM_POWERED_DEPLOYMENT_COMPLETE.md
 - docs/README.md
-- docs/REAL_WORLD_INTEGRATION_SUMMARY.md
 - docs/architecture/project-structure.md
 - docs/compliance/enterprise-compliance-framework.md
 - docs/design/sovereign-civic-design-system.md
+- docs/operations/current-deployment-status.md
+- docs/operations/dashboard-system-summary.md
+- docs/operations/dashboard-testing-results.md
+- docs/operations/deployment-guide.md
+- docs/operations/fast-metrics-caching.md
+- docs/operations/monitor-logs.md
+- docs/product/branding-strategy.md
+- docs/product/competitive-analysis.md
+- docs/product/enterprise-mvp-summary.md
 
-... and 24 more in docs/
+... and 15 more in docs/
 
 ## 🔧 Configuration Files
 
@@ -293,5 +293,5 @@ A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
 
 ## 🔄 Last Updated
 
-Generated: 10/5/2025, 1:40:31 AM
-Files scanned: 197
+Generated: 10/5/2025, 2:37:24 AM
+Files scanned: 168

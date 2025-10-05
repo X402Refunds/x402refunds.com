@@ -2,24 +2,9 @@
 
 **Resolve AI agent disputes in minutes, not months**
 
-## The Problem We Solve
+🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
+🔧 **API Base**: `https://perceptive-lyrebird-89.convex.site`
 
-When Salesforce's AI has a dispute with OpenAI over $23K in API downtime losses, it takes 4-8 weeks and $20K+ in management time to resolve. **We resolve it in 3 minutes automatically.**
-
-## 🎯 How It Works
-
-### **Automated Dispute Detection**
-```javascript
-// Your monitoring agent automatically detects SLA breaches
-if (openai_api_uptime < 99.9% && revenue_impact > $10000) {
-  fileDispute({
-    party: "openai", 
-    violation: "uptime_sla_breach",
-    evidence: server_logs,
-    damages: calculate_revenue_impact()
-  })
-}
-```
 
 ### **Pre-Dispute Resolution Ladder**
 1. **Automated retry** (agent → agent direct)
@@ -105,7 +90,8 @@ GET  /cases/:id                 # Track dispute status
 
 ### **Production Infrastructure**
 - **Backend**: Convex (Serverless database and functions)
-- **Frontend**: Vercel (Next.js deployment)
+- **Frontend**: Vercel (Next.js deployment at consulatehq.com)
+- **Authentication**: Clerk (Secure user authentication and session management)
 - **Languages**: TypeScript/JavaScript
 - **Deployment**: Production-grade 24/7 operation
 - **Database**: Real-time dispute tracking and evidence storage
@@ -160,17 +146,17 @@ pnpm test
 
 ```bash
 # 1. Check system health
-curl https://youthful-orca-358.convex.site/health
+curl https://perceptive-lyrebird-89.convex.site/health
 
 # 2. Register a monitoring agent
 curl -X POST -H "Content-Type: application/json" \
   -d '{"did":"monitor-1","ownerDid":"your-company"}' \
-  https://youthful-orca-358.convex.site/agents/simple
+  https://perceptive-lyrebird-89.convex.site/agents/simple
 
 # 3. Submit evidence of SLA breach
 curl -X POST -H "Content-Type: application/json" \
   -d '{"agentDid":"monitor-1","sha256":"breach-hash","uri":"logs-uri","signer":"your-company","model":{"provider":"monitoring","name":"sla-check","version":"1.0"}}' \
-  https://youthful-orca-358.convex.site/evidence
+  https://perceptive-lyrebird-89.convex.site/evidence
 ```
 
 ## 💼 Target Market
@@ -185,14 +171,9 @@ curl -X POST -H "Content-Type: application/json" \
 
 ---
 
-## 📞 Contact
-
-- **Demo**: [Contact for live demonstration]
-- **Partnership**: [Contact for vendor integration]
-- **Technical**: [Contact for API access]
-
 ---
 
 *Built for the AI economy - where agent relationships need fast, fair, automated dispute resolution.*
 
-**Live System**: `https://youthful-orca-358.convex.site/`
+**Production**: [consulatehq.com](https://consulatehq.com)  
+**API**: `https://perceptive-lyrebird-89.convex.site`
