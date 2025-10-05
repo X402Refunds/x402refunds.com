@@ -219,42 +219,6 @@ await ctx.db.insert("sponsorships", {
 });
 ```
 
-## External System Prompts - File Structure
-
-**CRITICAL RULE**: Never hardcode system prompts in TypeScript/JavaScript files. Always use external files for maintainability and compliance.
-
-### Prompt File Structure
-- **Institutional Prompts**: `convex/prompts/institutional/[agent-name].md`  
-- **Constitutional Prompts**: `convex/prompts/constitutional/[type].md`
-- **Content Files**: `convex/content/[content-type].md`
-- **Loader**: `convex/prompts/promptLoader.ts`
-
-### ✅ Required Pattern - Use External Prompt Loader
-```typescript
-// DO THIS - Load from external files
-import { INSTITUTIONAL_SYSTEM_PROMPTS } from "./prompts/promptLoader";
-const systemPrompt = INSTITUTIONAL_SYSTEM_PROMPTS["agent-name"];
-```
-
-### 🚫 Forbidden Pattern - Hardcoded Prompts
-```typescript
-// DON'T DO THIS - No hardcoded prompts
-const systemPrompt = `You are an AI agent that does...`;
-const AGENT_PROMPTS = {
-  "agent-name": `Long hardcoded prompt string...`
-};
-```
-
-### Migration Checklist
-
-When you find hardcoded prompts:
-
-1. ✅ Create external `.md` file in appropriate directory
-2. ✅ Add prompt to `promptLoader.ts` 
-3. ✅ Update code to import and use external prompt
-4. ✅ Remove hardcoded prompt string
-5. ✅ Test deployment to ensure prompts load correctly
-
 ## Auto-Configuration Pattern
 
 Agents should discover system capabilities via:

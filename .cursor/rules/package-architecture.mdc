@@ -89,21 +89,6 @@ convex/
 └── transparency.ts        # Audit functions
 ```
 
-## Development Commands
-
-```bash
-# Everything runs from root
-pnpm dev                   # Start development (convex + dashboard)
-pnpm deploy                # Deploy everything
-pnpm build                 # Build all packages
-pnpm test                  # Run all tests
-
-# No complex package commands needed
-# No cd apps && pnpm dev
-# No lerna bootstrap  
-# No nx build all
-```
-
 ## Migration Prevention
 
 If you're tempted to create packages, ask:

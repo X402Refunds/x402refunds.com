@@ -57,16 +57,10 @@ Documentation is **ONLY** allowed in these locations:
 - **Managed carefully** - these affect all agent behavior
 - **Current rules**:
   - agent-coordination.mdc
-  - ci-cd-workflow.mdc
-  - code-quality-checks.mdc
-  - commit-standards.mdc
-  - constitutional-governance.mdc
-  - context-trust.mdc
+  - compliance.mdc
   - convex-patterns.mdc
-  - legal-compliance.mdc
+  - git-and-ci.mdc
   - package-architecture.mdc
-  - prompt-architecture.mdc
-  - rule-enforcement.mdc
   - rule-evolution.mdc
   - codebase-context.mdc (auto-generated)
   - documentation-discipline.mdc (this file)

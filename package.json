@@ -32,12 +32,7 @@
     "demo:status": "node scripts/dispute-monitor.js health",
     "rules:analyze": "node scripts/rule-learning-system.js analyze",
     "rules:learn": "node scripts/rule-learning-system.js learn",
-    "rules:compress": "node scripts/rule-learning-system.js compress",
-    "rules:llm-detect": "node scripts/llm-rule-manager.js detect",
-    "rules:llm-compress": "node scripts/llm-rule-manager.js compress",
-    "rules:llm-learn": "node scripts/llm-rule-manager.js learn",
-    "rules:llm-merge": "node scripts/llm-rule-manager.js merge",
-    "rules:llm-optimize": "node scripts/llm-rule-manager.js detect && echo '\n\n🎯 Run specific compress/merge commands based on recommendations above'"
+    "rules:compress": "node scripts/rule-learning-system.js compress"
   },
   "dependencies": {
     "convex": "^1.27.3",
