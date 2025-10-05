@@ -222,7 +222,7 @@ export default function HomePage() {
               Real Agent-to-Agent Disputes
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto">
-              Production system resolving enterprise AI vendor disputes in real-time
+              These disputes would have taken months in court. They took minutes.
             </p>
           </div>
 
