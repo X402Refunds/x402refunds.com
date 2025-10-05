@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "convex": {
+      "command": "npx",
+      "args": ["-y", "convex@latest", "mcp", "start"],
+      "env": {
+        "CONVEX_URL": "https://perceptive-lyrebird-89.convex.cloud"
+      }
+    }
+  }
+}
