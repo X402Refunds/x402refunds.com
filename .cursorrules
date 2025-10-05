@@ -55,7 +55,7 @@ The codebase context graph (`.cursor/rules/codebase-context.mdc`) is accurate.
 
 ---
 
-## 🚦 Process (STOP, CLASSIFY, CONSULT)
+## 🚦 Process (STOP, CLASSIFY, CONSULT, VERIFY)
 
 Before implementing ANY solution:
 
@@ -68,7 +68,13 @@ Before implementing ANY solution:
    - Agent systems → `agent-coordination.mdc`
    - Legal/compliance → `compliance.mdc`
 
-3. **PLAN** - Think before implementing
+3. **VERIFY** - Using external libraries?
+   - **MANDATORY**: Use Context7 MCP to get latest docs BEFORE implementing
+   - `mcp_context7_resolve-library-id("library-name")` → Get library ID
+   - `mcp_context7_get-library-docs("/org/project", "topic")` → Get current docs
+   - Don't guess APIs from training data - verify current syntax/patterns
+
+4. **PLAN** - Think before implementing
    - What needs to change?
    - What patterns to follow?
    - What commit type?
