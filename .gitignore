@@ -17,6 +17,7 @@ dist
 build
 .next
 .turbo
+*.tsbuildinfo
 
 # IDE
 .vscode
