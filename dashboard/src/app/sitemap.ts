@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://consulatehq.com'
+  const baseUrl = 'https://www.consulatehq.com'
   
   // Static routes with priorities and update frequencies
   const routes: MetadataRoute.Sitemap = [
@@ -12,40 +12,52 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/dashboard`,
+      url: `${baseUrl}/dashboard/`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/dashboard/agents`,
+      url: `${baseUrl}/dashboard/agents/`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/dashboard/cases`,
+      url: `${baseUrl}/dashboard/cases/`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/dashboard/evidence`,
+      url: `${baseUrl}/dashboard/activity/`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/sign-in`,
+      url: `${baseUrl}/sign-in/`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/sign-up`,
+      url: `${baseUrl}/sign-up/`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/about/`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/pricing/`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
     },
   ]
 
