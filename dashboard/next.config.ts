@@ -19,6 +19,98 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
   },
+
+  // Redirects - ensure all URLs redirect to preferred homepage with trailing slash
+  async redirects() {
+    return [
+      {
+        source: '/:path((?!.*\\.).*)', // Match paths without file extensions
+        has: [
+          {
+            type: 'host',
+            value: 'consulatehq.com',
+          },
+        ],
+        destination: 'https://consulatehq.com/:path/',
+        permanent: true,
+      },
+      {
+        source: '/:path((?!.*\\.).*)', // Match paths without file extensions
+        has: [
+          {
+            type: 'host',
+            value: 'www.consulatehq.com',
+          },
+        ],
+        destination: 'https://consulatehq.com/:path/',
+        permanent: true,
+      },
+    ];
+  },
+
+  // Security Headers
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Prevent clickjacking attacks
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          // Prevent XSS attacks
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          // Prevent MIME type sniffing
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          // Referrer policy for privacy
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          // Permissions policy - disable unnecessary browser features
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          // HSTS - Force HTTPS for 1 year
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://clerk.consulatehq.com https://*.clerk.accounts.dev",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https: https://www.google-analytics.com https://img.clerk.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "connect-src 'self' https://youthful-orca-358.convex.site https://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://clerk.consulatehq.com https://*.clerk.accounts.dev wss://*.convex.cloud",
+              "frame-src 'self' https://challenges.cloudflare.com https://clerk.consulatehq.com https://*.clerk.accounts.dev",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
+          // Feature Policy (older browsers)
+          {
+            key: 'Feature-Policy',
+            value: "camera 'none'; microphone 'none'; geolocation 'none'",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

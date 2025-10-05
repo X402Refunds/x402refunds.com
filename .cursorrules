@@ -272,13 +272,13 @@ Always follow these core principles:
 pnpm deploy
 ```
 
-#### Frontend Deployment
+#### Frontend Deployment (only if explicitly asked to do so by the user)
 ```bash
 # Deploy frontend to Vercel production
 pnpm deploy:frontend
 ```
 
-#### Full Deployment
+#### Full Deployment (only if explicitly asked to do so by the user)
 ```bash
 # Deploy both backend and frontend
 pnpm deploy && pnpm deploy:frontend

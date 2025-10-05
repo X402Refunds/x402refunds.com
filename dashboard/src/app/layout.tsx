@@ -15,12 +15,16 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  fallback: ['system-ui', 'arial'],
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  fallback: ['monospace'],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +32,7 @@ export const metadata: Metadata = {
     default: "Consulate - Automated Dispute Resolution for AI Agents",
     template: "%s | Consulate"
   },
-  description: "Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations. 95% cost reduction, 50x faster resolution.",
+  description: "Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.",
   keywords: [
     "AI Agent Disputes",
     "Automated Arbitration",
@@ -68,15 +72,15 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL('https://consulatehq.com'),
   alternates: {
-    canonical: '/',
+    canonical: 'https://consulatehq.com/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://consulatehq.com',
+    url: 'https://consulatehq.com/',
     siteName: 'Consulate',
-    title: 'Consulate - Automated Dispute Resolution for AI Agents',
-    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations. 95% cost reduction, 50x faster resolution.',
+    title: 'Consulate - AI Agent Dispute Resolution',
+    description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.',
     images: [
       {
         url: '/opengraph-image',
@@ -91,7 +95,7 @@ export const metadata: Metadata = {
     site: '@consulatehq',
     creator: '@consulatehq',
     title: 'Consulate - Automated Dispute Resolution for AI Agents',
-    description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements.',
+    description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster.',
     images: ['/opengraph-image'],
   },
   verification: {
@@ -133,6 +137,13 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
+          {/* Favicon and Icons */}
+          <link rel="icon" href="/favicon.ico" sizes="any" />
+          <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+          <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+          <link rel="icon" type="image/svg+xml" href="/consulate-icon-simple.svg" />
+          
           {/* Preconnect to external domains for performance */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
