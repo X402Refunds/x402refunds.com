@@ -114,8 +114,9 @@ This document summarizes all SEO and security improvements implemented to addres
 
 ### 1. `/dashboard/next.config.ts`
 - Added comprehensive security headers
-- Implemented URL redirect rules
+- ~~Implemented URL redirect rules~~ **REMOVED** - Caused infinite loop
 - Configured CSP, HSTS, and other security policies
+- Note: `trailingSlash: true` handles trailing slashes automatically
 
 ### 2. `/dashboard/src/app/layout.tsx`
 - Added favicon and icon meta tags
@@ -224,3 +225,21 @@ The implemented security headers provide protection against:
 **Status**: ✅ All fixes implemented and validated
 **Ready for Deployment**: Yes
 **Estimated Impact**: Significant improvement in security posture and SEO rankings
+
+---
+
+## ⚠️ Important Update: Redirect Rules Removed
+
+**Issue Discovered**: The initial redirect rules caused an infinite redirect loop.
+
+**Root Cause**: 
+- Redirects were trying to add trailing slashes to URLs
+- But `trailingSlash: true` already handles this automatically
+- This created a loop: `/` → `//` → `///` etc.
+
+**Solution**: 
+- Removed all custom redirect rules
+- `trailingSlash: true` configuration handles trailing slashes automatically
+- For www → non-www redirects, configure at Vercel DNS level instead
+
+**Status**: ✅ Fixed and deployed (commit: bdcc267)
