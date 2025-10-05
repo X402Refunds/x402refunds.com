@@ -19,7 +19,7 @@ The system uses **Convex vector search** to provide semantic code understanding,
 ## Prerequisites
 
 - Convex project (already set up)
-- OpenAI API key (for embeddings)
+- API key for embeddings (OpenRouter recommended, or OpenAI)
 - Node.js 20+
 - pnpm installed
 
@@ -52,11 +52,27 @@ This will push the new schema to your Convex deployment.
    - Go to Settings > URL
    - Copy the deployment URL (format: `https://xxx.convex.cloud`)
 
-3. Get OpenAI API key:
+3. Get embedding API key (choose ONE):
+
+   **Option A: OpenRouter (RECOMMENDED)**
+   - Go to: https://openrouter.ai/keys
+   - Create new key
+   - Benefits: Access to multiple providers, often cheaper, more flexible
+   
+   **Option B: OpenAI Direct**
    - Go to: https://platform.openai.com/api-keys
    - Create new key
+   - Note: More expensive than OpenRouter
 
 4. Update `.env.local`:
+   
+   **Using OpenRouter (recommended):**
+   ```bash
+   CONVEX_URL=https://your-deployment.convex.cloud
+   OPENROUTER_API_KEY=sk-or-...your_key_here
+   ```
+   
+   **Or using OpenAI:**
    ```bash
    CONVEX_URL=https://your-deployment.convex.cloud
    OPENAI_API_KEY=sk-proj-...your_key_here
@@ -202,7 +218,7 @@ Convex limits:
 **Check environment variables:**
 ```bash
 echo $CONVEX_URL
-echo $OPENAI_API_KEY
+echo $OPENROUTER_API_KEY  # or OPENAI_API_KEY
 ```
 
 **Verify Convex deployment:**
@@ -210,9 +226,10 @@ echo $OPENAI_API_KEY
 pnpm deploy
 ```
 
-**Check OpenAI API key:**
+**Check API key:**
 - Verify key is valid
-- Check rate limits (3,000 RPM for free tier)
+- OpenRouter: Check credits at openrouter.ai
+- OpenAI: Check rate limits (3,000 RPM for free tier)
 
 ### No Results from Queries
 
@@ -234,7 +251,7 @@ pnpm index-codebase:full
 **Set environment variable in Convex:**
 1. Go to Convex dashboard
 2. Settings > Environment Variables
-3. Add: `OPENAI_API_KEY=sk-...`
+3. Add: `OPENROUTER_API_KEY=sk-or-...` (or `OPENAI_API_KEY=sk-...`)
 4. Redeploy: `pnpm deploy`
 
 ## How It Works
@@ -313,13 +330,20 @@ else if (filePath.includes('/utils/')) fileType = 'utility';
 
 ## Cost Estimates
 
-### OpenAI Costs (Embeddings)
+### Embedding Costs
 
-- Model: text-embedding-ada-002
-- Cost: $0.0001 per 1K tokens
+**OpenRouter (Recommended):**
+- Model: openai/text-embedding-ada-002
+- Cost: ~$0.0001 per 1K tokens
 - Average file: ~500 tokens
 - **1000 files ≈ $0.05**
 - Incremental updates: ~$0.01/day
+- Often has promotional credits
+
+**OpenAI Direct:**
+- Model: text-embedding-ada-002
+- Cost: $0.0001 per 1K tokens
+- Same pricing but no promotional credits
 
 ### Convex Costs
 

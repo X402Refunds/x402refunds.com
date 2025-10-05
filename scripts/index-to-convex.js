@@ -25,6 +25,8 @@ const ROOT_DIR = process.cwd();
 const CONVEX_URL = process.env.CONVEX_URL;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'openrouter'; // 'openrouter', 'openai', 'anthropic'
 
 const MAX_FILE_SIZE = 100000; // 100KB max per file for embedding
 const CHUNK_SIZE = 2000; // Characters per chunk for large files
@@ -36,8 +38,17 @@ function checkEnvironment() {
   const missing = [];
   
   if (!CONVEX_URL) missing.push('CONVEX_URL');
-  if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY) {
-    missing.push('OPENAI_API_KEY or ANTHROPIC_API_KEY');
+  
+  // Check for at least one embedding provider
+  if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY && !OPENROUTER_API_KEY) {
+    console.error('❌ Missing embedding provider API key!');
+    console.error('\nYou need ONE of:');
+    console.error('  • OPENROUTER_API_KEY (recommended - supports multiple models)');
+    console.error('  • OPENAI_API_KEY (OpenAI direct)');
+    console.error('  • ANTHROPIC_API_KEY (Anthropic direct)');
+    console.error('\nSet in .env.local or as environment variables.');
+    console.error('\n💡 Get OpenRouter key: https://openrouter.ai/keys');
+    process.exit(1);
   }
   
   if (missing.length > 0) {
@@ -47,11 +58,44 @@ function checkEnvironment() {
     process.exit(1);
   }
   
-  console.log('✅ Environment variables configured');
+  // Determine which provider to use
+  let provider = 'none';
+  if (OPENROUTER_API_KEY) provider = 'OpenRouter';
+  else if (OPENAI_API_KEY) provider = 'OpenAI';
+  else if (ANTHROPIC_API_KEY) provider = 'Anthropic';
+  
+  console.log(`✅ Using ${provider} for embeddings`);
 }
 
 /**
- * Generate embeddings using OpenAI
+ * Generate embeddings using OpenRouter (supports multiple providers)
+ */
+async function generateEmbeddingOpenRouter(text) {
+  const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://github.com/consulate-ai/platform',
+      'X-Title': 'Consulate Codebase Indexer'
+    },
+    body: JSON.stringify({
+      input: text,
+      model: 'openai/text-embedding-ada-002' // Can also use other models
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${error}`);
+  }
+  
+  const data = await response.json();
+  return data.data[0].embedding;
+}
+
+/**
+ * Generate embeddings using OpenAI directly
  */
 async function generateEmbeddingOpenAI(text) {
   const response = await fetch('https://api.openai.com/v1/embeddings', {
@@ -67,11 +111,35 @@ async function generateEmbeddingOpenAI(text) {
   });
   
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${error}`);
   }
   
   const data = await response.json();
   return data.data[0].embedding;
+}
+
+/**
+ * Generate embedding using appropriate provider
+ */
+async function generateEmbedding(text) {
+  // Prefer OpenRouter (most flexible)
+  if (OPENROUTER_API_KEY) {
+    return await generateEmbeddingOpenRouter(text);
+  }
+  
+  // Fall back to OpenAI
+  if (OPENAI_API_KEY) {
+    return await generateEmbeddingOpenAI(text);
+  }
+  
+  // Note: Anthropic doesn't provide embeddings API yet
+  // If they add it, we can support it here
+  if (ANTHROPIC_API_KEY) {
+    throw new Error('Anthropic does not yet provide embeddings API. Use OpenRouter or OpenAI.');
+  }
+  
+  throw new Error('No embedding provider available');
 }
 
 /**
@@ -238,8 +306,8 @@ async function indexToConvex(files, client) {
         if (chunk.trim().length < 50) continue; // Skip tiny chunks
         
         try {
-          // Generate embedding
-          const embedding = await generateEmbeddingOpenAI(chunk);
+          // Generate embedding using configured provider
+          const embedding = await generateEmbedding(chunk);
           
           // Insert new embedding
           await client.mutation(api.codebaseIndex.insertEmbedding, {
