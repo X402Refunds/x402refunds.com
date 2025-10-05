@@ -42,18 +42,14 @@ pnpm deploy
 ```
 
 #### Frontend Deployment  
-```bash
-pnpm deploy:frontend
-```
-
-#### Full Deployment
-```bash
-pnpm deploy && pnpm deploy:frontend
-```
+Frontend automatically deploys to Vercel via GitHub integration:
+- Push to `main` branch triggers automatic deployment
+- Access: https://consulatehq.com
+- Vercel dashboard: https://vercel.com/dashboard
 
 The deployment process:
-1. Backend deploys to Convex production environment
-2. Frontend deploys to Vercel production environment
+1. Backend deploys to Convex production environment via `pnpm deploy`
+2. Frontend deploys automatically to Vercel on git push to main
 3. Both services operate in production mode
 4. APIs tested against production Convex backend
 

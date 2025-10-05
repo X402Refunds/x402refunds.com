@@ -278,7 +278,7 @@ ${Object.entries(dashboardScripts).map(([cmd, script]) => `- \`pnpm --filter das
 - **Build**: \`pnpm build\` - Build all packages
 - **Test**: \`pnpm test\` or \`pnpm test:run\` - Run tests
 - **Deploy Backend**: \`pnpm deploy\` - Deploy Convex functions
-- **Deploy Frontend**: \`pnpm deploy:frontend\` - Deploy to Vercel
+- **Deploy Frontend**: \`git push\` - Auto-deploys to Vercel via GitHub integration
 - **Type Check**: \`pnpm type-check\` - Validate TypeScript
 - **Lint**: \`pnpm lint\` - Run ESLint
 
@@ -351,7 +351,7 @@ A: Add HTTP action in \`convex/http.ts\` or mutation/query in relevant \`convex/
 A: \`test/*.test.ts\` - Run with \`pnpm test\`
 
 **Q: How do I deploy?**
-A: \`pnpm deploy\` (backend) or \`pnpm deploy:frontend\` (frontend)
+A: \`pnpm deploy\` (backend), \`git push\` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 

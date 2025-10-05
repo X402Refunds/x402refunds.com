@@ -269,7 +269,7 @@ function showProjectStructure() {
   console.log(`${colorize('pnpm test', 'green')}       - Run all tests`);
   console.log(`${colorize('pnpm build', 'green')}      - Build the project`);
   console.log(`${colorize('pnpm deploy', 'green')}     - Deploy backend to Convex production`);
-  console.log(`${colorize('pnpm deploy:frontend', 'green')} - Deploy frontend to Vercel production`);
+  console.log(`${colorize('git push', 'green')}        - Deploy frontend to Vercel (auto via GitHub)`);
   console.log(`${colorize('pnpm structure', 'green')}  - Show this structure view`);
   console.log(`${colorize('pnpm docs', 'green')}       - Open documentation`);
 

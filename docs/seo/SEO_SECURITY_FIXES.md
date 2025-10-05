@@ -166,7 +166,7 @@ All mandatory quality checks passed successfully:
 ### Deployment Command:
 ```bash
 # Frontend deployment (when ready)
-pnpm run deploy:frontend
+git push  # Auto-deploys to Vercel via GitHub integration
 ```
 
 ### Post-Deployment Validation:

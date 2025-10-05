@@ -91,7 +91,7 @@ pnpm postinstall
 
 **Commands:**
 - "How do I run tests?" → `pnpm test`
-- "Deploy command?" → `pnpm deploy` (backend), `pnpm deploy:frontend`
+- "Deploy command?" → `pnpm deploy` (backend auto-deploys frontend via Vercel on push)
 - "Build command?" → `pnpm build`
 
 **Structure:**

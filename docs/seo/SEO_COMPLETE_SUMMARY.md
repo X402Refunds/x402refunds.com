@@ -211,7 +211,7 @@ All files compile successfully. Ready for deployment once favicon files are adde
 3. **Deploy**:
    ```bash
    pnpm build
-   pnpm deploy:frontend
+   git push  # Auto-deploys to Vercel
    ```
 4. **Post-deployment**:
    - Submit sitemap to Google Search Console

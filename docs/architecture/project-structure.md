@@ -120,7 +120,7 @@ consulate/
 ### Frontend Development
 - Work in `dashboard/src/`
 - Start development: `pnpm dev` (Vercel dev mode)
-- Deploy to production: `pnpm deploy:frontend`
+- Deploy to production: `git push` (auto-deploys via Vercel)
 - Components in `src/components/`
 - Pages in `src/app/`
 
@@ -183,7 +183,7 @@ pnpm test
 pnpm deploy
 
 # Deploy frontend to Vercel production  
-pnpm deploy:frontend
+git push  # Auto-deploys via GitHub integration
 ```
 
 ## Adding New Components

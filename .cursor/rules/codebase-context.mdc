@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T10:04:28.714Z
+**Auto-generated on**: 2025-10-05T10:05:37.173Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -166,7 +166,7 @@ Common HTTP routes exposed:
 - **Build**: `pnpm build` - Build all packages
 - **Test**: `pnpm test` or `pnpm test:run` - Run tests
 - **Deploy Backend**: `pnpm deploy` - Deploy Convex functions
-- **Deploy Frontend**: `pnpm deploy:frontend` - Deploy to Vercel
+- **Deploy Frontend**: `git push` - Auto-deploys to Vercel via GitHub integration
 - **Type Check**: `pnpm type-check` - Validate TypeScript
 - **Lint**: `pnpm lint` - Run ESLint
 
@@ -262,9 +262,9 @@ A: Add HTTP action in `convex/http.ts` or mutation/query in relevant `convex/*.t
 A: `test/*.test.ts` - Run with `pnpm test`
 
 **Q: How do I deploy?**
-A: `pnpm deploy` (backend) or `pnpm deploy:frontend` (frontend)
+A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/5/2025, 3:04:28 AM
+Generated: 10/5/2025, 3:05:37 AM
 Files scanned: 160
