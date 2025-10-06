@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-05T10:05:37.173Z
+**Auto-generated on**: 2025-10-06T03:30:23.083Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -172,7 +172,8 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (30 files)
+### Documentation (31 files)
+- INVESTOR_PITCH_DECK_PROMPT.md
 - README.md
 - docs/AGENT_INTEGRATION_GUIDE.md
 - docs/README.md
@@ -187,9 +188,8 @@ Common HTTP routes exposed:
 - docs/operations/monitor-logs.md
 - docs/product/branding-strategy.md
 - docs/product/competitive-analysis.md
-- docs/product/enterprise-mvp-summary.md
 
-... and 15 more in docs/
+... and 16 more in docs/
 
 ## 🔧 Configuration Files
 
@@ -266,5 +266,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/5/2025, 3:05:37 AM
-Files scanned: 160
+Generated: 10/5/2025, 8:30:23 PM
+Files scanned: 164
