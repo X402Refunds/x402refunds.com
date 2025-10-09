@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-06T17:03:09.544Z
+**Auto-generated on**: 2025-10-09T19:06:50.749Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -155,6 +155,8 @@ Common HTTP routes exposed:
 - `pnpm test:run` - vitest
 - `pnpm postinstall` - node
 - `pnpm update-context` - node
+- `pnpm hash-rules` - node
+- `pnpm version-rules` - node
 
 ### Dashboard Commands
 - `pnpm --filter dashboard dev`
@@ -174,7 +176,7 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (31 files)
+### Documentation (46 files)
 - INVESTOR_PITCH_DECK_PROMPT.md
 - README.md
 - docs/AGENT_INTEGRATION_GUIDE.md
@@ -191,7 +193,7 @@ Common HTTP routes exposed:
 - docs/product/branding-strategy.md
 - docs/product/competitive-analysis.md
 
-... and 16 more in docs/
+... and 31 more in docs/
 
 ## 🔧 Configuration Files
 
@@ -268,5 +270,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/6/2025, 10:03:09 AM
-Files scanned: 166
+Generated: 10/9/2025, 12:06:50 PM
+Files scanned: 186

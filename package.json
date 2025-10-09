@@ -14,7 +14,9 @@
     "test": "vitest",
     "test:run": "vitest run",
     "postinstall": "node scripts/install-hooks.js",
-    "update-context": "node scripts/generate-context-graph.js"
+    "update-context": "node scripts/generate-context-graph.js",
+    "hash-rules": "node scripts/hash-and-timestamp-rules.js",
+    "version-rules": "node scripts/version-rules.js"
   },
   "dependencies": {
     "convex": "^1.27.3",

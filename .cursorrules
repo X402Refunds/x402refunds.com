@@ -259,6 +259,42 @@ git add . && git commit -m "..." && git push
 - `convex/courtEngine.ts` - Arbitration logic
 
 ---
+
+## 📜 Standards Document Management
+
+### Timestamp Storage
+- **Location**: `docs/standards/.timestamps/`
+- **Format**: RFC 3161 .tsr files named `consulate-arbitration-rules-v{version}.tsr`
+- **Purpose**: Cryptographic proof of document existence at specific time
+- **Auto-generated**: Pre-commit hook creates hash + timestamp before every commit
+
+### Version Management
+- **Filename pattern**: `consulate-arbitration-rules-v{major}.{minor}.md`
+- **Create new version**: Run `pnpm version-rules` (prompts for version type)
+  - Major (v2.0) - Breaking changes
+  - Minor (v1.1) - New features, backward compatible
+  - Patch (v1.0.1) - Bug fixes, minor corrections
+- **Old versions preserved**: Never delete previous versions
+- **Hash/timestamp**: Auto-computed on commit via pre-commit hook
+
+### Manual Operations
+- **Hash and timestamp**: Run `pnpm hash-rules` to manually hash/timestamp all rules
+- **Pre-commit hook**: Automatically runs when committing arbitration rules changes
+  - Computes SHA-256 hash
+  - Creates RFC 3161 timestamp from DigiCert TSA
+  - Updates document header with hash, timestamp, and .tsr file reference
+  - Stages updated files automatically
+
+### API Exposure
+- **Base endpoint**: `/api/standards`
+- **List all standards**: `GET /api/standards`
+- **List versions**: `GET /api/standards/arbitration-rules`
+- **Get specific version**: `GET /api/standards/arbitration-rules/v1.0`
+- **Get as markdown**: `GET /api/standards/arbitration-rules/v1.0?format=markdown`
+- **Auto-generated**: Dynamic routes read from `docs/standards/` directory
+- **Cache**: 1 hour for list endpoints, 24 hours for specific versions
+
+---
 ---
 
 **Remember**: Trust the context, run quality checks, never auto-deploy, never create docs unless asked.

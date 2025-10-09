@@ -19,7 +19,7 @@ const HOOKS_DIR = path.join(ROOT_DIR, '.git/hooks');
 // Define hooks
 const HOOKS = {
   'pre-commit': `#!/bin/bash
-# Auto-update codebase context on every commit
+# Auto-update codebase context and hash arbitration rules on every commit
 
 echo "📊 Updating codebase context..."
 
@@ -30,6 +30,22 @@ if node scripts/generate-context-graph.js; then
   echo "✅ Context updated and staged"
 else
   echo "⚠️  Context generation failed (continuing commit)"
+fi
+
+# Check if arbitration rules files are being committed
+if git diff --cached --name-only | grep -q "docs/standards/consulate-arbitration-rules-v.*\\.md"; then
+  echo ""
+  echo "🔐 Hashing and timestamping arbitration rules..."
+  
+  # Run hash and timestamp script
+  if node scripts/hash-and-timestamp-rules.js; then
+    # Stage updated files (with hash/timestamp)
+    git add docs/standards/consulate-arbitration-rules-v*.md
+    git add docs/standards/.timestamps/*.tsr 2>/dev/null || true
+    echo "✅ Arbitration rules hashed and timestamped"
+  else
+    echo "⚠️  Hashing/timestamping failed (continuing commit)"
+  fi
 fi
 `,
 
