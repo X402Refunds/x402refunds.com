@@ -19,15 +19,13 @@ import type * as auth from "../auth.js";
 import type * as cases from "../cases.js";
 import type * as courtEngine from "../courtEngine.js";
 import type * as crons from "../crons.js";
+import type * as custody from "../custody.js";
 import type * as disputeEngine from "../disputeEngine.js";
 import type * as events from "../events.js";
 import type * as evidence from "../evidence.js";
 import type * as http from "../http.js";
-import type * as intelligentDisputeEngine from "../intelligentDisputeEngine.js";
 import type * as judges from "../judges.js";
 import type * as llmEngine from "../llmEngine.js";
-import type * as scheduler from "../scheduler.js";
-import type * as testLLM from "../testLLM.js";
 import type * as types from "../types.js";
 
 /**
@@ -45,15 +43,13 @@ declare const fullApi: ApiFromModules<{
   cases: typeof cases;
   courtEngine: typeof courtEngine;
   crons: typeof crons;
+  custody: typeof custody;
   disputeEngine: typeof disputeEngine;
   events: typeof events;
   evidence: typeof evidence;
   http: typeof http;
-  intelligentDisputeEngine: typeof intelligentDisputeEngine;
   judges: typeof judges;
   llmEngine: typeof llmEngine;
-  scheduler: typeof scheduler;
-  testLLM: typeof testLLM;
   types: typeof types;
 }>;
 export declare const api: FilterApi<

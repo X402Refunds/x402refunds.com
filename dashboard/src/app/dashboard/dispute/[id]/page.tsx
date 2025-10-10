@@ -157,12 +157,9 @@ export default function DisputeDetailPage() {
             <h1 className="text-3xl font-bold tracking-tight">Case Details</h1>
             <p className="text-muted-foreground">Case ID: {caseId}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <ChainVerificationBadge caseId={caseId} />
-            <Badge className={statusColor}>
-              {caseDetails.status}
-            </Badge>
-          </div>
+          <Badge className={statusColor}>
+            {caseDetails.status}
+          </Badge>
         </div>
 
         {/* Case Overview */}
@@ -477,15 +474,12 @@ export default function DisputeDetailPage() {
         {/* Case Timeline - Visual History */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Case Timeline
-              </CardTitle>
-              <ChainVerificationBadge caseId={caseId} />
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Case Timeline
+            </CardTitle>
             <CardDescription>
-              Cryptographically verified audit trail of all case events
+              Complete history of all case events and updates
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -514,13 +508,6 @@ export default function DisputeDetailPage() {
                         <p className="text-xs text-muted-foreground">
                           {event.agentDid ? `${formatAgentName(event.agentDid)}` : "System action"}
                         </p>
-                        
-                        {/* Event hash for transparency */}
-                        {event.contentHash && (
-                          <div className="mt-2 text-[10px] text-muted-foreground font-mono">
-                            Hash: {event.contentHash.substring(0, 24)}...
-                          </div>
-                        )}
                         
                         {/* Show key details from payload */}
                         {event.payload && (
@@ -559,6 +546,13 @@ export default function DisputeDetailPage() {
               <p className="text-center text-muted-foreground py-8">
                 No activity recorded yet
               </p>
+            )}
+            
+            {/* Audit trail button - subtle, at the bottom */}
+            {caseEvents && caseEvents.length > 0 && (
+              <div className="pt-4 border-t flex justify-end">
+                <ChainVerificationBadge caseId={caseId} />
+              </div>
             )}
           </CardContent>
         </Card>
