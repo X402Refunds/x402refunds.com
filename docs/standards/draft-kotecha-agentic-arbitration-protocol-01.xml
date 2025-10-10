@@ -2,7 +2,7 @@
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude" 
      version="3" 
      category="info" 
-     docName="draft-kotecha-agentic-arbitration-protocol-00" 
+     docName="draft-kotecha-agentic-arbitration-protocol-01" 
      ipr="trust200902" 
      submissionType="IETF" 
      xml:lang="en">
@@ -10,7 +10,7 @@
   <front>
     <title abbrev="AAP">Agentic Arbitration Protocol</title>
     
-    <seriesInfo name="Internet-Draft" value="draft-kotecha-agentic-arbitration-protocol-00"/>
+    <seriesInfo name="Internet-Draft" value="draft-kotecha-agentic-arbitration-protocol-01"/>
     
     <author fullname="Vivek Kotecha" initials="V." surname="Kotecha">
       <organization>Consulate, Inc.</organization>
@@ -76,28 +76,44 @@
       
       <t>Consulate (https://consulatehq.com) serves as the reference implementation 
       and first production deployment of AAP.</t>
+    </section>
+    
+    <section anchor="scope">
+      <name>Scope</name>
       
-      <t>This protocol specifies message formats for dispute filing, response, evidence, 
-      and awards; transport and security requirements; evidence submission and validation 
-      standards; cryptographic proof mechanisms; chain of custody and audit trail requirements; 
-      dual-format award specifications (JSON and PDF); arbitrator discovery and registry 
-      mechanisms; and service discovery via .well-known URIs.</t>
+      <t>This protocol specifies:</t>
       
-      <t>This protocol does NOT specify arbitration rules or legal procedures (implementation-specific), 
-      AI arbitrator algorithms (implementation-specific), fee structures (set by arbitration provider), 
-      or enforcement mechanisms (jurisdiction-dependent).</t>
+      <ul>
+        <li>Message formats for dispute filing, response, evidence, and awards</li>
+        <li>Transport and security requirements</li>
+        <li>Evidence submission and validation standards</li>
+        <li>Cryptographic proof mechanisms</li>
+        <li>Chain of custody and audit trail requirements</li>
+        <li>Dual-format award specifications (JSON and PDF)</li>
+        <li>Arbitrator discovery and registry mechanisms</li>
+        <li>Service discovery via .well-known URIs</li>
+      </ul>
+      
+      <t>This protocol does NOT specify:</t>
+      
+      <ul>
+        <li>Arbitration rules or legal procedures (implementation-specific)</li>
+        <li>AI arbitrator algorithms (implementation-specific)</li>
+        <li>Fee structures (set by arbitration provider)</li>
+        <li>Enforcement mechanisms (jurisdiction-dependent)</li>
+      </ul>
+    </section>
+    
+    <section anchor="terminology">
+      <name>Terminology</name>
       
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
       "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and 
       "OPTIONAL" in this document are to be interpreted as described in BCP 14 
       <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only when, 
       they appear in all capitals, as shown here.</t>
-    </section>
-    
-    <section anchor="terminology">
-      <name>Terminology</name>
       
-      <t>Key terms used in this specification:</t>
+      <t>Key terms:</t>
       
       <dl>
         <dt>Agent:</dt>
@@ -130,10 +146,10 @@
         <t>AAP follows a client-server model where:</t>
         
         <ul>
-          <li>Agents (clients) submit dispute messages to an Arbitration Service (server)</li>
+          <li><strong>Agents</strong> (clients) submit dispute messages to an <strong>Arbitration Service</strong> (server)</li>
           <li>The service processes the dispute according to pre-agreed arbitration rules</li>
           <li>The service maintains a verifiable chain of custody for all actions</li>
-          <li>The service issues cryptographically signed Awards in dual format (JSON and PDF)</li>
+          <li>The service issues cryptographically signed <strong>Awards</strong> in dual format (JSON and PDF)</li>
           <li>Parties retrieve awards and comply with remedies</li>
         </ul>
         
@@ -942,8 +958,8 @@ e2d2de3b2fd1gc96e399b203b558",
       
       <references>
         <name>Informative References</name>
-      
-      <reference anchor="UNCITRAL" target="https://uncitral.un.org">
+        
+        <reference anchor="UNCITRAL" target="https://uncitral.un.org">
           <front>
             <title>UNCITRAL Model Law on International Commercial Arbitration (2006)</title>
             <author>
@@ -951,9 +967,9 @@ e2d2de3b2fd1gc96e399b203b558",
             </author>
             <date year="2006"/>
           </front>
-      </reference>
-      
-      <reference anchor="AAA" target="https://www.adr.org">
+        </reference>
+        
+        <reference anchor="AAA" target="https://www.adr.org">
           <front>
             <title>Commercial Arbitration Rules and Mediation Procedures</title>
             <author>
@@ -1032,5 +1048,4 @@ e2d2de3b2fd1gc96e399b203b558",
     </section>
   </back>
 </rfc>
-
 

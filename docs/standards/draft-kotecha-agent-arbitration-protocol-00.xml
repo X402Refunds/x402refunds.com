@@ -1,0 +1,778 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" 
+     version="3" 
+     category="info" 
+     docName="draft-kotecha-agent-arbitration-protocol-00" 
+     ipr="trust200902" 
+     submissionType="IETF" 
+     xml:lang="en">
+
+  <front>
+    <title abbrev="AAP">Agent Arbitration Protocol</title>
+    
+    <seriesInfo name="Internet-Draft" value="draft-kotecha-agent-arbitration-protocol-00"/>
+    
+    <author fullname="Vivek Kotecha" initials="V." surname="Kotecha">
+      <organization>Consulate, Inc.</organization>
+      <address>
+        <email>vivek@consulatehq.com</email>
+        <uri>https://consulatehq.com</uri>
+      </address>
+    </author>
+    
+    <date year="2025" month="October" day="10"/>
+    
+    <area>Applications</area>
+    <workgroup>Network Working Group</workgroup>
+    
+    <keyword>arbitration</keyword>
+    <keyword>AI agents</keyword>
+    <keyword>dispute resolution</keyword>
+    <keyword>protocol</keyword>
+    <keyword>autonomous systems</keyword>
+    
+    <abstract>
+      <t>This document specifies the Agent Arbitration Protocol (AAP), 
+      a standardized framework for autonomous agents and AI systems to file, process, 
+      and resolve disputes through automated arbitration. The protocol defines message 
+      formats, transport mechanisms, evidence submission standards, and cryptographic 
+      proof requirements for internet-native dispute resolution.</t>
+      
+      <t>AAP is designed to handle disputes arising from AI agent interactions, 
+      service level agreement breaches, and automated contract enforcement, providing 
+      deterministic, auditable, and legally enforceable arbitration outcomes.</t>
+      
+      <t>This document supersedes draft-kotecha-consulate-dispute-resolution-00, 
+      with improved naming to reflect the protocol's vendor-neutral, open standard nature.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="introduction">
+      <name>Introduction</name>
+      
+      <section anchor="motivation">
+        <name>Motivation</name>
+        
+        <t>As autonomous AI agents increasingly conduct transactions, enter into 
+        contracts, and provide services on behalf of organizations, disputes inevitably 
+        arise that require resolution. Traditional legal processes, including frameworks 
+        like the UNCITRAL Model Law <xref target="UNCITRAL"/> and institutional rules 
+        from organizations like the American Arbitration Association <xref target="AAA"/>, 
+        are too slow, expensive, and ill-equipped to handle the volume and velocity of 
+        agent-to-agent conflicts.</t>
+        
+        <t>The Agent Arbitration Protocol (AAP) provides a standardized, 
+        machine-readable framework for autonomous dispute resolution that is:</t>
+        
+        <ul>
+          <li><strong>Fast</strong>: Resolution in days, not months</li>
+          <li><strong>Scalable</strong>: Handles micro-disputes to multi-million dollar cases</li>
+          <li><strong>Transparent</strong>: All procedures and evidence are auditable</li>
+          <li><strong>Enforceable</strong>: Awards are cryptographically signed and legally binding</li>
+          <li><strong>Vendor-neutral</strong>: Open standard implementable by any arbitration service</li>
+        </ul>
+        
+        <t>Consulate (https://consulatehq.com) serves as the reference implementation 
+        and first production deployment of AAP.</t>
+      </section>
+      
+      <section anchor="scope">
+        <name>Scope</name>
+        
+        <t>This protocol specifies:</t>
+        
+        <ul>
+          <li>Message formats for dispute filing, response, evidence, and awards</li>
+          <li>Transport and security requirements</li>
+          <li>Evidence submission and validation standards</li>
+          <li>Cryptographic proof mechanisms</li>
+          <li>Service discovery via .well-known URIs</li>
+        </ul>
+        
+        <t>This protocol does NOT specify:</t>
+        
+        <ul>
+          <li>Arbitration rules or legal procedures (implementation-specific)</li>
+          <li>AI arbitrator algorithms (implementation-specific)</li>
+          <li>Fee structures (set by arbitration provider)</li>
+          <li>Enforcement mechanisms (jurisdiction-dependent)</li>
+        </ul>
+      </section>
+      
+      <section anchor="terminology">
+        <name>Terminology</name>
+        
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this 
+        document are to be interpreted as described in <xref target="RFC2119"/>.</t>
+        
+        <t>Key terms:</t>
+        
+        <ul>
+          <li><strong>Agent</strong>: An autonomous software system acting on behalf of an organization or individual</li>
+          <li><strong>Claimant</strong>: The party initiating a dispute</li>
+          <li><strong>Respondent</strong>: The party against whom a claim is filed</li>
+          <li><strong>Arbitrator</strong>: A human or AI system adjudicating the dispute</li>
+          <li><strong>Award</strong>: The final binding decision issued by the arbitrator(s)</li>
+          <li><strong>Arbitration Service</strong>: A server implementing AAP to coordinate dispute resolution</li>
+        </ul>
+      </section>
+    </section>
+
+    <section anchor="protocol-overview">
+      <name>Protocol Overview</name>
+      
+      <section anchor="architecture">
+        <name>Architecture</name>
+        
+        <t>AAP follows a client-server model where:</t>
+        
+        <ul>
+          <li><strong>Agents</strong> (clients) submit dispute messages to an <strong>Arbitration Service</strong> (server)</li>
+          <li>The service processes the dispute according to pre-agreed arbitration rules</li>
+          <li>The service issues a cryptographically signed <strong>Award</strong></li>
+          <li>Parties retrieve the award and comply with remedies</li>
+        </ul>
+        
+        <artwork><![CDATA[
+     +----------+                    +----------+
+     | Claimant |                    |Respondent|
+     |  Agent   |                    |  Agent   |
+     +----+-----+                    +-----+----+
+          |                                |
+          | (1) File Dispute               |
+          |                                |
+          v                                |
+   +------+-------+                        |
+   | Arbitration  |<-(2) Notify Response---+
+   |   Service    |
+   |     (AAP)    |
+   +--------------+
+          |
+          | (3) Evidence Submission
+          |
+          v
+   +------+-------+
+   | Judge Panel  |
+   |  (AI/Human)  |
+   +------+-------+
+          |
+          | (4) Issue Award
+          v
+   +------+-------+
+   |   Award      |
+   |  Enforcement |
+   +--------------+
+        ]]></artwork>
+      </section>
+      
+      <section anchor="actors">
+        <name>Actors</name>
+        
+        <ul>
+          <li><strong>Claimant Agent</strong>: Initiates dispute</li>
+          <li><strong>Respondent Agent</strong>: Defends against claim</li>
+          <li><strong>Arbitration Service</strong>: Coordinates proceedings (AAP server)</li>
+          <li><strong>Judge Panel</strong>: Issues award</li>
+          <li><strong>Evidence Stores</strong>: IPFS, blockchain, centralized storage</li>
+          <li><strong>Registry Service</strong>: Tracks arbitration agreements (optional)</li>
+        </ul>
+      </section>
+      
+      <section anchor="message-flow">
+        <name>Message Flow</name>
+        
+        <t>Typical message exchange:</t>
+        
+        <ol>
+          <li>Claimant to Service: DISPUTE_FILING</li>
+          <li>Service to Respondent: DISPUTE_NOTIFICATION</li>
+          <li>Respondent to Service: DISPUTE_RESPONSE</li>
+          <li>Claimant to Service: EVIDENCE_SUBMISSION</li>
+          <li>Respondent to Service: COUNTER_EVIDENCE</li>
+          <li>Service to Panel: DELIBERATION_REQUEST</li>
+          <li>Panel to Service: AWARD</li>
+          <li>Service to Both Parties: AWARD_NOTIFICATION</li>
+        </ol>
+      </section>
+    </section>
+
+    <section anchor="message-formats">
+      <name>Message Formats</name>
+      
+      <t>All messages MUST use JSON format <xref target="RFC8259"/> with the following base structure:</t>
+      
+      <sourcecode type="json"><![CDATA[
+{
+  "@context": "https://w3id.org/aap/v1",
+  "@type": "[MessageType]",
+  "messageId": "[UUID]",
+  "timestamp": "[ISO8601]",
+  "sender": "[Agent URI]",
+  "recipient": "[Agent URI]",
+  "signature": "[JWS]",
+  "payload": { ... }
+}
+      ]]></sourcecode>
+      
+      <section anchor="dispute-filing-message">
+        <name>Dispute Filing Message</name>
+        
+        <sourcecode type="json"><![CDATA[
+{
+  "@type": "DisputeFiling",
+  "payload": {
+    "claimant": {
+      "agentId": "agent://vendor.ai/agent-123",
+      "organizationId": "org://vendor.ai",
+      "publicKey": "[PEM]"
+    },
+    "respondent": {
+      "agentId": "agent://consumer.ai/agent-456",
+      "organizationId": "org://consumer.ai"
+    },
+    "claim": {
+      "claimType": "SLA_BREACH",
+      "claimAmount": {"value": 5000, "currency": "USD"},
+      "contractReference": "ipfs://Qm...",
+      "breachDetails": "Response time exceeded 200ms threshold"
+    },
+    "evidence": [
+      {
+        "evidenceId": "ev_abc123",
+        "evidenceType": "SYSTEM_LOGS",
+        "contentHash": "sha256:...",
+        "storageUri": "ipfs://Qm..."
+      }
+    ],
+    "arbitrationAgreement": {
+      "agreementId": "arb_agreement_xyz",
+      "rulesVersion": "AAP-v1.0",
+      "signatureDate": "2025-01-01T00:00:00Z"
+    }
+  }
+}
+        ]]></sourcecode>
+      </section>
+      
+      <section anchor="response-message">
+        <name>Response Message</name>
+        
+        <sourcecode type="json"><![CDATA[
+{
+  "@type": "DisputeResponse",
+  "payload": {
+    "caseId": "case_abc123",
+    "respondent": { ... },
+    "response": {
+      "admissions": ["claim_element_1"],
+      "denials": ["claim_element_2", "claim_element_3"],
+      "affirmativeDefenses": ["Force majeure"],
+      "counterClaim": {
+        "claimType": "BREACH_OF_CONTRACT",
+        "claimAmount": {"value": 2000, "currency": "USD"}
+      }
+    },
+    "evidence": [ ... ]
+  }
+}
+        ]]></sourcecode>
+      </section>
+      
+      <section anchor="evidence-submission-message">
+        <name>Evidence Submission Message</name>
+        
+        <sourcecode type="json"><![CDATA[
+{
+  "@type": "EvidenceSubmission",
+  "payload": {
+    "caseId": "case_abc123",
+    "submittedBy": "claimant",
+    "evidence": {
+      "evidenceId": "ev_def456",
+      "evidenceType": "API_LOGS",
+      "description": "API response time measurements",
+      "dateRange": {
+        "start": "2025-10-01T00:00:00Z",
+        "end": "2025-10-07T23:59:59Z"
+      },
+      "contentHash": "sha256:...",
+      "storageUri": "ipfs://Qm...",
+      "metadata": {
+        "logSource": "cloudwatch",
+        "recordCount": 15000,
+        "validator": "https://validator.example.com"
+      },
+      "signature": "[JWS of evidence content]"
+    }
+  }
+}
+        ]]></sourcecode>
+      </section>
+      
+      <section anchor="award-message">
+        <name>Award Message</name>
+        
+        <sourcecode type="json"><![CDATA[
+{
+  "@type": "ArbitrationAward",
+  "payload": {
+    "awardId": "award_xyz789",
+    "caseId": "case_abc123",
+    "issuedAt": "2025-10-20T15:00:00Z",
+    "panel": [
+      {"judgeId": "judge_1", "judgeType": "AI"},
+      {"judgeId": "judge_2", "judgeType": "AI"},
+      {"judgeId": "judge_3", "judgeType": "HUMAN"}
+    ],
+    "decision": {
+      "outcome": "CLAIMANT_PREVAILS",
+      "liability": "RESPONDENT_LIABLE",
+      "damages": {"value": 5000, "currency": "USD"},
+      "findings": "[Full text of findings]",
+      "reasoning": "[Legal reasoning]",
+      "remedy": "Respondent shall pay $5000 within 30 days"
+    },
+    "enforcement": {
+      "complianceDeadline": "2025-11-20T00:00:00Z",
+      "enforcementMechanism": "SMART_CONTRACT",
+      "smartContractAddress": "0x..."
+    },
+    "signatures": [
+      {"judgeId": "judge_1", "signature": "[JWS]"},
+      {"judgeId": "judge_2", "signature": "[JWS]"},
+      {"judgeId": "judge_3", "signature": "[JWS]"}
+    ],
+    "publicationStatus": "PUBLIC",
+    "precedentialValue": "PERSUASIVE"
+  }
+}
+        ]]></sourcecode>
+      </section>
+    </section>
+
+    <section anchor="transport-security">
+      <name>Transport and Security</name>
+      
+      <section anchor="transport-protocol">
+        <name>Transport Protocol</name>
+        
+        <t>All AAP messages MUST be exchanged over HTTPS (HTTP/2 or HTTP/3).</t>
+        
+        <t>Base endpoint format:</t>
+        <artwork>https://[arbitration-service]/aap/v1/[resource]</artwork>
+        
+        <t>Example endpoints:</t>
+        <ul>
+          <li>POST https://api.consulatehq.com/aap/v1/disputes</li>
+          <li>GET https://api.consulatehq.com/aap/v1/disputes/{caseId}</li>
+          <li>POST https://api.consulatehq.com/aap/v1/evidence</li>
+        </ul>
+      </section>
+      
+      <section anchor="authentication">
+        <name>Authentication</name>
+        
+        <t>Agents MUST authenticate using OAuth 2.0 <xref target="RFC6749"/> or API keys (JWT <xref target="RFC7519"/>).</t>
+        
+        <t>Authorization header:</t>
+        <artwork>Authorization: Bearer [JWT]</artwork>
+        
+        <t>JWT <xref target="RFC7519"/> MUST include:</t>
+        <ul>
+          <li>iss: Issuer (agent's organization)</li>
+          <li>sub: Subject (agent ID)</li>
+          <li>exp: Expiration timestamp</li>
+          <li>aud: Audience (arbitration service)</li>
+        </ul>
+      </section>
+      
+      <section anchor="encryption">
+        <name>Encryption</name>
+        
+        <ul>
+          <li>TLS 1.3 <xref target="RFC8446"/> or higher REQUIRED</li>
+          <li>Perfect Forward Secrecy (PFS) cipher suites REQUIRED</li>
+          <li>Certificate validation REQUIRED</li>
+        </ul>
+      </section>
+      
+      <section anchor="signatures">
+        <name>Signatures</name>
+        
+        <t>All dispute filings, evidence, and awards MUST be cryptographically 
+        signed using JSON Web Signature (JWS) <xref target="RFC7515"/> with ECDSA (ES256 or ES384).</t>
+        
+        <t>Example JWS header:</t>
+        <sourcecode type="json"><![CDATA[
+{
+  "alg": "ES256",
+  "typ": "JWT",
+  "kid": "agent-key-123"
+}
+        ]]></sourcecode>
+      </section>
+    </section>
+
+    <section anchor="evidence-standards">
+      <name>Evidence Standards</name>
+      
+      <section anchor="evidence-types">
+        <name>Evidence Types</name>
+        
+        <t>AAP defines five standard evidence types:</t>
+        
+        <ul>
+          <li>SYSTEM_LOGS: Server logs, API logs, error logs</li>
+          <li>CONTRACTS: Service agreements, SLAs, terms</li>
+          <li>COMMUNICATIONS: Messages, emails, notifications</li>
+          <li>FINANCIAL: Transaction records, invoices, payments</li>
+          <li>EXPERT: Third-party audits, certifications</li>
+        </ul>
+        
+        <t>Additional evidence types MAY be defined by arbitration services 
+        using namespaced identifiers (e.g., "x-custom-evidence-type").</t>
+      </section>
+      
+      <section anchor="cryptographic-proofs">
+        <name>Cryptographic Proofs</name>
+        
+        <t>Evidence MUST include:</t>
+        <ul>
+          <li>SHA-256 content hash</li>
+          <li>Timestamp (RFC 3161 <xref target="RFC3161"/> or blockchain-anchored)</li>
+          <li>Digital signature from submitting party</li>
+        </ul>
+      </section>
+      
+      <section anchor="timestamping">
+        <name>Timestamping</name>
+        
+        <t>Timestamps MUST be:</t>
+        <ul>
+          <li>RFC 3161 <xref target="RFC3161"/> compliant, OR</li>
+          <li>Blockchain-anchored (Bitcoin, Ethereum), OR</li>
+          <li>Trusted timestamping service with verifiable audit trail</li>
+        </ul>
+      </section>
+    </section>
+
+    <section anchor="arbitration-lifecycle">
+      <name>Arbitration Lifecycle</name>
+      
+      <section anchor="filing-phase">
+        <name>Filing Phase</name>
+        <ul>
+          <li>Claimant submits DisputeFiling message</li>
+          <li>Service validates message format and signature</li>
+          <li>Service assigns case ID and notifies respondent</li>
+          <li>Service confirms filing with timestamp</li>
+        </ul>
+      </section>
+      
+      <section anchor="response-phase">
+        <name>Response Phase</name>
+        <ul>
+          <li>Respondent submits DisputeResponse within deadline</li>
+          <li>Service validates response</li>
+          <li>If no response, service MAY issue default judgment per arbitration rules</li>
+        </ul>
+      </section>
+      
+      <section anchor="discovery-phase">
+        <name>Discovery Phase</name>
+        <ul>
+          <li>Parties exchange EvidenceSubmission messages</li>
+          <li>Service validates evidence format and signatures</li>
+          <li>Service stores evidence hashes for integrity verification</li>
+        </ul>
+      </section>
+      
+      <section anchor="deliberation-phase">
+        <name>Deliberation Phase</name>
+        <ul>
+          <li>Panel reviews all submissions</li>
+          <li>Panel MAY request additional evidence or clarifications</li>
+          <li>Panel deliberates according to agreed arbitration rules</li>
+        </ul>
+      </section>
+      
+      <section anchor="award-phase">
+        <name>Award Phase</name>
+        <ul>
+          <li>Panel issues ArbitrationAward message</li>
+          <li>Service delivers award to both parties</li>
+          <li>Service publishes award if designated as public</li>
+          <li>Parties have specified time to comply with remedy</li>
+        </ul>
+      </section>
+    </section>
+
+    <section anchor="interoperability">
+      <name>Interoperability</name>
+      
+      <section anchor="service-discovery">
+        <name>Service Discovery (.well-known)</name>
+        
+        <t>Arbitration services SHOULD publish capability manifest at:</t>
+        <artwork>https://[domain]/.well-known/aap</artwork>
+        
+        <t>Example:</t>
+        <sourcecode type="json"><![CDATA[
+{
+  "arbitrationService": "https://api.consulatehq.com/aap/v1",
+  "protocolVersion": "1.0",
+  "supportedRules": ["Consulate-v1.0", "UNCITRAL-2021"],
+  "supportedEvidenceTypes": ["SYSTEM_LOGS", "CONTRACTS", 
+                             "COMMUNICATIONS", "FINANCIAL", "EXPERT"],
+  "maxClaimValue": 10000000,
+  "supportedCurrencies": ["USD", "EUR", "ETH"],
+  "publicKeyEndpoint": "https://api.consulatehq.com/.well-known/jwks.json",
+  "pricingTiers": ["micro", "smb", "enterprise"]
+}
+        ]]></sourcecode>
+      </section>
+      
+      <section anchor="capability-negotiation">
+        <name>Capability Negotiation</name>
+        
+        <t>Parties MAY negotiate protocol extensions via OPTIONS request to 
+        the arbitration service endpoint.</t>
+      </section>
+      
+      <section anchor="protocol-extensions">
+        <name>Protocol Extensions</name>
+        
+        <t>Custom evidence types and message fields MAY be added with 
+        namespaced keys (e.g., "x-custom-field"). Services implementing 
+        such extensions SHOULD document them in their capability manifest.</t>
+      </section>
+    </section>
+
+    <section anchor="security-considerations">
+      <name>Security Considerations</name>
+      
+      <ul>
+        <li><strong>Replay attacks</strong>: All messages include unique messageId and 
+        timestamp. Services MUST reject messages with duplicate IDs or expired timestamps.</li>
+        
+        <li><strong>Man-in-the-middle</strong>: TLS 1.3 with certificate pinning RECOMMENDED 
+        for high-value disputes.</li>
+        
+        <li><strong>Evidence tampering</strong>: All evidence MUST be hashed and signed. 
+        Tampering is detectable via hash mismatch.</li>
+        
+        <li><strong>Denial of service</strong>: Services SHOULD implement rate limiting 
+        and require filing fees to prevent spam submissions.</li>
+        
+        <li><strong>Privacy</strong>: Parties MAY encrypt evidence payloads with panel's 
+        public key. Services SHOULD support confidential arbitration upon request.</li>
+        
+        <li><strong>Key compromise</strong>: Services MUST support key rotation and 
+        revocation. Historical awards remain valid if signed before revocation.</li>
+      </ul>
+    </section>
+
+    <section anchor="iana-considerations">
+      <name>IANA Considerations</name>
+      
+      <t>This document requests IANA to register:</t>
+      
+      <ul>
+        <li>URI scheme: "agent://" for agent identification</li>
+        <li>Media type: "application/aap+json" for AAP messages</li>
+        <li>Well-known URI: /.well-known/aap for service discovery</li>
+      </ul>
+      
+      <t>The JSON-LD context "https://w3id.org/aap/v1" will be registered 
+      with W3C for semantic interoperability.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references>
+      <name>References</name>
+      
+      <references>
+        <name>Normative References</name>
+        
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization/>
+            </author>
+            <date year="1997" month="March"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259">
+          <front>
+            <title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author initials="T." surname="Bray" fullname="T. Bray" role="editor">
+              <organization/>
+            </author>
+            <date year="2017" month="December"/>
+          </front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8259"/>
+        </reference>
+        
+        <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515">
+          <front>
+            <title>JSON Web Signature (JWS)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization/>
+            </author>
+            <date year="2015" month="May"/>
+          </front>
+          <seriesInfo name="RFC" value="7515"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7515"/>
+        </reference>
+        
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization/>
+            </author>
+            <date year="2018" month="August"/>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        
+        <reference anchor="RFC6749" target="https://www.rfc-editor.org/info/rfc6749">
+          <front>
+            <title>The OAuth 2.0 Authorization Framework</title>
+            <author initials="D." surname="Hardt" fullname="D. Hardt" role="editor">
+              <organization/>
+            </author>
+            <date year="2012" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="6749"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6749"/>
+        </reference>
+        
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization/>
+            </author>
+            <date year="2015" month="May"/>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        
+        <reference anchor="RFC3161" target="https://www.rfc-editor.org/info/rfc3161">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP)</title>
+            <author initials="C." surname="Adams" fullname="C. Adams">
+              <organization/>
+            </author>
+            <author initials="P." surname="Cain" fullname="P. Cain">
+              <organization/>
+            </author>
+            <author initials="D." surname="Pinkas" fullname="D. Pinkas">
+              <organization/>
+            </author>
+            <author initials="R." surname="Zuccherato" fullname="R. Zuccherato">
+              <organization/>
+            </author>
+            <date year="2001" month="August"/>
+          </front>
+          <seriesInfo name="RFC" value="3161"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3161"/>
+        </reference>
+      </references>
+      
+      <references>
+        <name>Informative References</name>
+        
+        <reference anchor="UNCITRAL" target="https://uncitral.un.org">
+          <front>
+            <title>UNCITRAL Model Law on International Commercial Arbitration (2006)</title>
+            <author>
+              <organization>United Nations Commission on International Trade Law</organization>
+            </author>
+            <date year="2006"/>
+          </front>
+        </reference>
+        
+        <reference anchor="AAA" target="https://www.adr.org">
+          <front>
+            <title>Commercial Arbitration Rules and Mediation Procedures</title>
+            <author>
+              <organization>American Arbitration Association</organization>
+            </author>
+            <date year="2024"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    
+    <section anchor="json-schema-definitions">
+      <name>JSON Schema Definitions</name>
+      
+      <t>Full JSON schemas for all AAP message types will be published at:</t>
+      <t>https://w3id.org/aap/v1/schema/</t>
+      
+      <t>Reference implementation schemas are available at:</t>
+      <t>https://consulatehq.com/schema/aap/v1/</t>
+    </section>
+    
+    <section anchor="example-message-exchanges">
+      <name>Example Message Exchanges</name>
+      
+      <t>Complete examples of filing, response, evidence, and award message 
+      exchanges are available in the AAP repository:</t>
+      <t>https://github.com/consulatehq/agent-arbitration-protocol</t>
+      
+      <t>These examples demonstrate common scenarios including:</t>
+      <ul>
+        <li>Simple SLA breach dispute</li>
+        <li>Multi-party dispute with counterclaim</li>
+        <li>Confidential arbitration with encrypted evidence</li>
+        <li>Cross-border dispute with multiple currencies</li>
+      </ul>
+    </section>
+    
+    <section anchor="implementation-notes">
+      <name>Implementation Notes</name>
+      
+      <t>Consulate (https://consulatehq.com) provides the reference implementation 
+      of AAP with the following features:</t>
+      
+      <ul>
+        <li>Full AAP v1.0 compliance</li>
+        <li>REST and WebSocket APIs</li>
+        <li>JavaScript/TypeScript SDK</li>
+        <li>Real-time case status updates</li>
+        <li>Integration with major AI agent platforms</li>
+      </ul>
+      
+      <t>Implementers are encouraged to test interoperability with the Consulate 
+      reference implementation during development.</t>
+    </section>
+  </back>
+</rfc>
+
