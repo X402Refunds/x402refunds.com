@@ -1,4 +1,4 @@
-import { FileText, BookOpen, Code, Gavel, Book, Settings, FileCode } from "lucide-react"
+import { FileText, BookOpen, Code, FileCode } from "lucide-react"
 import Link from "next/link"
 import { getAllDocs } from "@/lib/docs"
 
@@ -12,10 +12,7 @@ export default function DocsPage() {
   
   // Group docs by category
   const categories = {
-    setup: allDocs.filter(doc => doc.slug[0] === 'setup'),
-    operations: allDocs.filter(doc => doc.slug[0] === 'operations'),
-    specs: allDocs.filter(doc => doc.slug[0] === 'specs'),
-    architecture: allDocs.filter(doc => doc.slug[0] === 'architecture'),
+    api: allDocs.filter(doc => doc.slug[0] === 'api'),
   };
 
   return (
@@ -33,7 +30,7 @@ export default function DocsPage() {
       {/* Quick Links */}
       <div className="grid md:grid-cols-2 gap-6 mb-12">
         <Link 
-          href="/docs/api"
+          href="/docs/api/endpoints"
           className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 hover:shadow-lg transition-shadow border border-blue-200 group"
         >
           <div className="flex items-start gap-4">
@@ -69,87 +66,15 @@ export default function DocsPage() {
 
       {/* Documentation Categories */}
       <div className="space-y-8">
-        {/* Setup Guides */}
-        {categories.setup.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Settings className="h-5 w-5 text-slate-600" />
-              <h2 className="text-2xl font-bold text-slate-900">Setup & Configuration</h2>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {categories.setup.map(doc => (
-                <Link
-                  key={doc.slug.join('/')}
-                  href={`/docs/${doc.slug.join('/')}`}
-                  className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <div className="font-medium text-slate-900 mb-1">{doc.metadata.title}</div>
-                  {doc.metadata.description && (
-                    <div className="text-sm text-slate-600">{doc.metadata.description}</div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Operations */}
-        {categories.operations.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Gavel className="h-5 w-5 text-slate-600" />
-              <h2 className="text-2xl font-bold text-slate-900">Operations</h2>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {categories.operations.map(doc => (
-                <Link
-                  key={doc.slug.join('/')}
-                  href={`/docs/${doc.slug.join('/')}`}
-                  className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <div className="font-medium text-slate-900 mb-1">{doc.metadata.title}</div>
-                  {doc.metadata.description && (
-                    <div className="text-sm text-slate-600">{doc.metadata.description}</div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Specifications */}
-        {categories.specs.length > 0 && (
+        {/* API Documentation */}
+        {categories.api.length > 0 && (
           <div>
             <div className="flex items-center gap-3 mb-4">
               <FileCode className="h-5 w-5 text-slate-600" />
-              <h2 className="text-2xl font-bold text-slate-900">Specifications</h2>
+              <h2 className="text-2xl font-bold text-slate-900">API Documentation</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              {categories.specs.map(doc => (
-                <Link
-                  key={doc.slug.join('/')}
-                  href={`/docs/${doc.slug.join('/')}`}
-                  className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <div className="font-medium text-slate-900 mb-1">{doc.metadata.title}</div>
-                  {doc.metadata.description && (
-                    <div className="text-sm text-slate-600">{doc.metadata.description}</div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Architecture */}
-        {categories.architecture.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Book className="h-5 w-5 text-slate-600" />
-              <h2 className="text-2xl font-bold text-slate-900">Architecture</h2>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {categories.architecture.map(doc => (
+              {categories.api.map(doc => (
                 <Link
                   key={doc.slug.join('/')}
                   href={`/docs/${doc.slug.join('/')}`}

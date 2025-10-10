@@ -40,24 +40,34 @@ Documentation is **ONLY** allowed in these locations:
 - **Managed by**: `scripts/generate-context-graph.js`
 - **Never edit manually** - regenerated on every commit
 
-### 2. User-Facing Documentation
+### 2. Public Documentation
 - **Location**: `docs/` subdirectories
-- **Purpose**: Human-readable guides, specs, architecture
+- **Purpose**: Public-facing guides, API docs, standards
 - **Structure**:
-  - `docs/architecture/` - Technical architecture
-  - `docs/operations/` - Deployment, monitoring
-  - `docs/product/` - Product strategy
-  - `docs/specs/` - API specifications
-  - `docs/seo/` - SEO implementation guides
-  - `docs/setup/` - Setup instructions
-  - `docs/compliance/` - Legal compliance docs
+  - `docs/api/` - API endpoint documentation
+  - `docs/standards/` - Public arbitration rules & protocols
+  - `docs/AGENT_INTEGRATION_GUIDE.md` - Integration guide
 
-### 3. Project Overview
+### 3. Internal Documentation  
+- **Location**: `internal/` subdirectories
+- **Purpose**: Internal guides, strategy, operations
+- **Structure**:
+  - `internal/architecture/` - Technical architecture
+  - `internal/operations/` - Deployment, monitoring
+  - `internal/product/` - Product strategy
+  - `internal/specs/` - Internal specifications
+  - `internal/seo/` - SEO implementation
+  - `internal/setup/` - Setup instructions
+  - `internal/compliance/` - Legal compliance
+  - `internal/design/` - Design system
+  - `internal/standards/` - Draft standards & internal docs
+
+### 4. Project Overview
 - **Location**: `README.md` (root only)
 - **Purpose**: Project introduction and quick start
 - **DO NOT recreate** - only update if explicitly requested
 
-### 4. Development Rules
+### 5. Development Rules
 - **Location**: `.cursor/rules/*.mdc`
 - **Purpose**: Agent behavior rules and patterns
 - **Managed carefully** - these affect all agent behavior
@@ -79,15 +89,15 @@ Documentation is **ONLY** allowed in these locations:
 
 ### When Documenting Architecture
 **DON'T**: Create `architecture-notes.md` at root
-**DO**: Add to `docs/architecture/` with proper naming
+**DO**: Add to `internal/architecture/` with proper naming
 
 ### When Explaining Features
 **DON'T**: Create `feature-explanation.md`
-**DO**: Add comments in code, or create proper doc in `docs/specs/`
+**DO**: Add comments in code, or create proper doc in `internal/specs/`
 
 ### When Recording Decisions
 **DON'T**: Create `decisions.md`, `notes.md`
-**DO**: Use git commit messages, or formal ADR in `docs/architecture/decisions/`
+**DO**: Use git commit messages, or formal ADR in `internal/architecture/decisions/`
 
 ## 🛑 What To Do Instead of Creating Docs
 
@@ -150,13 +160,13 @@ When encountering stale docs:
 → It's in the auto-generated context graph (do nothing)
 
 **Need to document feature architecture?**
-→ Create in `docs/architecture/feature-name.md`
+→ Create in `internal/architecture/feature-name.md`
 
 **Need to document API endpoints?**
-→ Create in `docs/specs/api-endpoints.md`
+→ Create in `docs/api/endpoints.md` (public) or `internal/specs/` (internal)
 
 **Need to document deployment process?**
-→ Create in `docs/operations/deployment-guide.md`
+→ Create in `internal/operations/deployment-guide.md`
 
 **Need to record what changed in this commit?**
 → Use git commit message, not a .md file
@@ -168,7 +178,7 @@ When encountering stale docs:
 
 **When you see**:
 - Agent creating random .md file at root
-- Documentation outside `docs/` or `.cursor/rules/`
+- Documentation outside `docs/`, `internal/`, or `.cursor/rules/`
 - Stale documentation accumulating
 
 **Take action**:
@@ -181,6 +191,6 @@ When encountering stale docs:
 
 > **The best documentation is code that documents itself, plus an auto-generated context graph that's always current.**
 
-> **If information isn't in the context graph or `docs/`, it doesn't exist to future agents.**
+> **If information isn't in the context graph, `docs/`, or `internal/`, it doesn't exist to future agents.**
 
 **This is not bureaucracy - this is preventing documentation chaos.**

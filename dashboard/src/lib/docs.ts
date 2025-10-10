@@ -27,12 +27,18 @@ export interface SidebarItem {
 
 /**
  * Recursively get all markdown files from docs directory
+ * Excludes 'standards' directory as it's served separately
  */
 export function getAllDocs(dir: string = docsDirectory, baseSlug: string[] = []): DocFile[] {
   const files = fs.readdirSync(dir);
   const docs: DocFile[] = [];
 
   for (const file of files) {
+    // Skip standards directory - served separately at /rules
+    if (file === 'standards' && baseSlug.length === 0) {
+      continue;
+    }
+
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
 
@@ -51,7 +57,7 @@ export function getAllDocs(dir: string = docsDirectory, baseSlug: string[] = [])
       docs.push({
         slug,
         metadata: {
-          title: data.title || fileName.replace(/-/g, ' '),
+          title: data.title || fileName.replace(/-/g, ' ').replace(/([A-Z])/g, ' $1').trim(),
           ...data,
         },
         content,

@@ -70,7 +70,7 @@ OpenAI joins because:
 ## 🛠️ Technical Architecture
 
 ### **Live API Endpoints**
-**Base URL**: `https://perceptive-lyrebird-89.convex.site/`
+**Base URL**: `https://api.consulatehq.com/`
 
 ```bash
 # System Health

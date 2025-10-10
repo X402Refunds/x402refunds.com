@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-10T08:36:01.273Z
+**Auto-generated on**: 2025-10-10T09:14:38.291Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -31,7 +31,8 @@ This file is automatically regenerated on every commit. It provides a comprehens
 - **packages/config/** - Shared ESLint & TypeScript configuration
 - **scripts/** - Automation and utility scripts
 - **test/** - Vitest test suites
-- **docs/** - Project documentation
+- **docs/** - Public documentation (API docs, standards)
+- **internal/** - Internal documentation (architecture, operations, product)
 
 ### Workspace Layout
 ```
@@ -41,7 +42,8 @@ consulate/
 ├── packages/config/  # Shared config
 ├── scripts/          # Automation
 ├── test/            # Tests
-└── docs/            # Documentation
+├── docs/            # Public documentation
+└── internal/        # Internal documentation
 ```
 
 ## 🎨 Common Assets
@@ -177,24 +179,29 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (58 files)
-- INVESTOR_PITCH_DECK_PROMPT.md
-- README.md
-- agentic-arbitration-protocol/CHANGELOG.md
-- agentic-arbitration-protocol/CONTRIBUTING.md
-- agentic-arbitration-protocol/DEVELOPMENT.md
-- agentic-arbitration-protocol/IDNITS_GUIDE.md
-- agentic-arbitration-protocol/MAINTAINERS.md
-- agentic-arbitration-protocol/README.md
-- agentic-arbitration-protocol/changelog/unreleased.md
-- agentic-arbitration-protocol/draft/README.md
-- agentic-arbitration-protocol/examples/01-simple-sla-breach/README.md
-- agentic-arbitration-protocol/examples/well-known/README.md
-- agentic-arbitration-protocol/rfcs/rfc.001.agentic-arbitration-protocol.md
-- agentic-arbitration-protocol/rfcs/rfc.002.chain-of-custody.md
-- agentic-arbitration-protocol/rfcs/rfc.003.dual-format-awards.md
+### Public Documentation (7 files)
+- docs/AGENT_INTEGRATION_GUIDE.md
+- docs/README.md
+- docs/api/endpoints.md
+- docs/standards/README.md
+- docs/standards/code-of-ethics-ai-arbitrators.md
+- docs/standards/consulate-arbitration-rules-v1.0.md
+- docs/standards/evidence-format-specification.md
 
-... and 43 more in docs/
+
+### Internal Documentation (37 files)
+- internal/README.md
+- internal/architecture/project-structure.md
+- internal/compliance/enterprise-compliance-framework.md
+- internal/design/sovereign-civic-design-system.md
+- internal/operations/current-deployment-status.md
+- internal/operations/dashboard-system-summary.md
+- internal/operations/dashboard-testing-results.md
+- internal/operations/deployment-guide.md
+- internal/operations/fast-metrics-caching.md
+- internal/operations/monitor-logs.md
+
+... and 27 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -246,8 +253,11 @@ Common HTTP routes exposed:
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
 
-**Documentation**: Look in `docs/`
-- Architecture, specs, compliance guides
+**Public Documentation**: Look in `docs/`
+- API documentation, standards, integration guides
+
+**Internal Documentation**: Look in `internal/`
+- Architecture, operations, product strategy, setup guides
 
 ### Common Questions Answered
 
@@ -271,5 +281,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/10/2025, 1:36:01 AM
-Files scanned: 2657
+Generated: 10/10/2025, 2:14:38 AM
+Files scanned: 2662

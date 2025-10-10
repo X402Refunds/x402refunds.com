@@ -27,6 +27,7 @@ const SCAN_DIRS = {
   scripts: 'scripts',
   tests: 'test',
   docs: 'docs',
+  internal: 'internal',
   packages: 'packages'
 };
 
@@ -158,7 +159,8 @@ function generateContext() {
   const convexFiles = allFiles.filter(f => f.path.startsWith('convex/') && f.path.endsWith('.ts') && !f.path.includes('_generated'));
   const testFiles = allFiles.filter(f => FILE_PATTERNS.tests.test(f.name));
   const assets = allFiles.filter(f => FILE_PATTERNS.assets.test(f.name));
-  const docs = allFiles.filter(f => FILE_PATTERNS.docs.test(f.name));
+  const publicDocs = allFiles.filter(f => f.path.startsWith('docs/') && FILE_PATTERNS.docs.test(f.name));
+  const internalDocs = allFiles.filter(f => f.path.startsWith('internal/') && FILE_PATTERNS.docs.test(f.name));
   
   // Get package info
   const rootScripts = getPackageScripts();
@@ -199,7 +201,8 @@ This file is automatically regenerated on every commit. It provides a comprehens
 - **packages/config/** - Shared ESLint & TypeScript configuration
 - **scripts/** - Automation and utility scripts
 - **test/** - Vitest test suites
-- **docs/** - Project documentation
+- **docs/** - Public documentation (API docs, standards)
+- **internal/** - Internal documentation (architecture, operations, product)
 
 ### Workspace Layout
 \`\`\`
@@ -209,7 +212,8 @@ consulate/
 ├── packages/config/  # Shared config
 ├── scripts/          # Automation
 ├── test/            # Tests
-└── docs/            # Documentation
+├── docs/            # Public documentation
+└── internal/        # Internal documentation
 \`\`\`
 
 ## 🎨 Common Assets
@@ -284,9 +288,13 @@ ${Object.entries(dashboardScripts).map(([cmd, script]) => `- \`pnpm --filter das
 
 ## 📚 Documentation Files
 
-### Documentation (${docs.length} files)
-${docs.slice(0, 15).map(f => `- ${f.path}`).join('\n')}
-${docs.length > 15 ? `\n... and ${docs.length - 15} more in docs/` : ''}
+### Public Documentation (${publicDocs.length} files)
+${publicDocs.slice(0, 10).map(f => `- ${f.path}`).join('\n')}
+${publicDocs.length > 10 ? `\n... and ${publicDocs.length - 10} more in docs/` : ''}
+
+### Internal Documentation (${internalDocs.length} files)
+${internalDocs.slice(0, 10).map(f => `- ${f.path}`).join('\n')}
+${internalDocs.length > 10 ? `\n... and ${internalDocs.length - 10} more in internal/` : ''}
 
 ## 🔧 Configuration Files
 
@@ -330,8 +338,11 @@ ${Object.entries(deps.devDependencies).slice(0, 10).map(([name, version]) => `- 
 **Scripts**: Look in \`scripts/\`
 - Automation, deployment, and utility scripts
 
-**Documentation**: Look in \`docs/\`
-- Architecture, specs, compliance guides
+**Public Documentation**: Look in \`docs/\`
+- API documentation, standards, integration guides
+
+**Internal Documentation**: Look in \`internal/\`
+- Architecture, operations, product strategy, setup guides
 
 ### Common Questions Answered
 

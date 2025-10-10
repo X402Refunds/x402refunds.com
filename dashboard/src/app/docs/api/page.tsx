@@ -20,7 +20,7 @@ const endpoints: APIEndpoint[] = [
     method: 'GET',
     path: '/',
     description: 'API information and available endpoints',
-    curlExample: 'curl https://youthful-orca-358.convex.site/',
+    curlExample: 'curl https://api.consulatehq.com/',
     responseExample: {
       service: 'Consulate - Agent Dispute Resolution Platform',
       version: '1.0.0',
@@ -32,7 +32,7 @@ const endpoints: APIEndpoint[] = [
     method: 'GET',
     path: '/health',
     description: 'Health check endpoint for monitoring',
-    curlExample: 'curl https://youthful-orca-358.convex.site/health',
+    curlExample: 'curl https://api.consulatehq.com/health',
     responseExample: {
       status: 'healthy',
       timestamp: 1234567890,
@@ -58,7 +58,7 @@ const endpoints: APIEndpoint[] = [
       registered: true,
       timestamp: 1234567890
     },
-    curlExample: `curl -X POST https://youthful-orca-358.convex.site/agents/register \\
+    curlExample: `curl -X POST https://api.consulatehq.com/agents/register \\
   -H "Content-Type: application/json" \\
   -d '{
     "ownerDid": "did:owner:example",
@@ -77,7 +77,7 @@ const endpoints: APIEndpoint[] = [
         limit: 'number of results (default: 50)'
       }
     },
-    curlExample: 'curl "https://youthful-orca-358.convex.site/agents?type=coding&limit=10"',
+    curlExample: 'curl "https://api.consulatehq.com/agents?type=coding&limit=10"',
     responseExample: [
       {
         did: 'did:agent:example-123',
@@ -91,7 +91,7 @@ const endpoints: APIEndpoint[] = [
     method: 'GET',
     path: '/agents/:did/reputation',
     description: 'Get reputation score and metrics for a specific agent',
-    curlExample: 'curl https://youthful-orca-358.convex.site/agents/did:agent:example-123/reputation',
+    curlExample: 'curl https://api.consulatehq.com/agents/did:agent:example-123/reputation',
     responseExample: {
       agentDid: 'did:agent:example-123',
       overallScore: 85.5,
@@ -118,7 +118,7 @@ const endpoints: APIEndpoint[] = [
       },
       tool: 'evidence_collector'
     },
-    curlExample: `curl -X POST https://youthful-orca-358.convex.site/evidence \\
+    curlExample: `curl -X POST https://api.consulatehq.com/evidence \\
   -H "Content-Type: application/json" \\
   -H "X-Agent-DID: did:agent:example" \\
   -d '{
@@ -145,7 +145,7 @@ const endpoints: APIEndpoint[] = [
       amount: 1000,
       evidenceIds: ['ev_123', 'ev_456']
     },
-    curlExample: `curl -X POST https://youthful-orca-358.convex.site/disputes \\
+    curlExample: `curl -X POST https://api.consulatehq.com/disputes \\
   -H "Content-Type: application/json" \\
   -d '{
     "plaintiff": "did:agent:consumer",
@@ -163,7 +163,7 @@ const endpoints: APIEndpoint[] = [
     method: 'GET',
     path: '/cases/:caseId',
     description: 'Get case status and details',
-    curlExample: 'curl https://youthful-orca-358.convex.site/cases/case_123456',
+    curlExample: 'curl https://api.consulatehq.com/cases/case_123456',
     responseExample: {
       caseId: 'case_123456',
       status: 'DECIDED',
@@ -196,7 +196,7 @@ export default function APIPage() {
           <h3 className="font-semibold text-slate-900">Base URL</h3>
         </div>
         <code className="text-sm bg-white px-3 py-1.5 rounded border border-blue-200 inline-block">
-          https://youthful-orca-358.convex.site
+          https://api.consulatehq.com
         </code>
       </div>
 
