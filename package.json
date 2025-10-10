@@ -13,6 +13,8 @@
     "dev": "pnpm --filter dashboard dev",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:api": "vitest run test/api.test.ts",
+    "test:unit": "vitest run test/agents.test.ts test/cases.test.ts",
     "postinstall": "node scripts/install-hooks.js",
     "update-context": "node scripts/generate-context-graph.js",
     "hash-rules": "node scripts/hash-and-timestamp-rules.js",

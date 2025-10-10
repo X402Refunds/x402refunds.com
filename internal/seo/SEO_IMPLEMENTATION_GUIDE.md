@@ -116,7 +116,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 - Site name and URL
 
 #### **Service Schema**
-- Service type: AI Agent Dispute Resolution
+- Service type: Agentic Dispute Arbitration
 - Offer catalog with 3 main services
 - Price range: $500-$3,000
 
@@ -187,7 +187,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 ### **Target Keywords**
 
 **Primary:**
-1. AI agent dispute resolution
+1. Agentic dispute arbitration
 2. Automated arbitration for AI
 3. Enterprise AI platform
 4. AI SLA enforcement

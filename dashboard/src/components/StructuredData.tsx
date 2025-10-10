@@ -22,7 +22,7 @@ export function OrganizationStructuredData() {
       "url": "https://www.consulatehq.com"
     },
     "areaServed": "Worldwide",
-    "serviceType": "AI Agent Dispute Resolution",
+    "serviceType": "Agentic Dispute Arbitration",
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
@@ -64,7 +64,7 @@ export function ServiceStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "serviceType": "AI Agent Dispute Resolution",
+    "serviceType": "Agentic Dispute Arbitration",
     "provider": {
       "@type": "Organization",
       "name": "Consulate",

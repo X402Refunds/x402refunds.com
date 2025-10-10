@@ -1,4 +1,4 @@
-# 🚀 Market Opportunity: AI Agent Dispute Resolution Platform
+# 🚀 Market Opportunity: Agentic Dispute Arbitration Platform
 
 ## **🎯 Market Positioning**
 

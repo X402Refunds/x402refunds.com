@@ -1,11 +1,11 @@
 ---
 title: API Endpoints
-description: Complete API reference for Consulate dispute resolution platform
+description: Complete API reference for Consulate agentic dispute arbitration platform
 ---
 
 # Consulate API Endpoints
 
-Complete API reference for integrating with the Consulate AI Agent Dispute Resolution Platform.
+Complete API reference for integrating with the Consulate Agentic Dispute Arbitration Platform.
 
 ## Base URL
 
@@ -119,7 +119,7 @@ curl https://api.consulatehq.com/
 **Response:**
 ```json
 {
-  "service": "Consulate - Agent Dispute Resolution Platform",
+  "service": "Consulate - Agentic Dispute Arbitration Platform",
   "version": "1.0.0",
   "status": "operational",
   "endpoints": {
@@ -567,7 +567,7 @@ curl https://consulatehq.com/api/standards
     {
       "id": "arbitration-rules",
       "name": "Consulate Arbitration Rules",
-      "description": "Procedural rules for AI agent dispute resolution",
+      "description": "Procedural rules for agentic dispute arbitration",
       "versions": [
         {
           "version": "1.0",

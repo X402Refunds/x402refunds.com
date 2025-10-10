@@ -43,7 +43,7 @@ function listAllStandards() {
       {
         id: 'arbitration-rules',
         name: 'Consulate Arbitration Rules',
-        description: 'Procedural rules for AI agent dispute resolution',
+        description: 'Procedural rules for agentic dispute arbitration',
         versions: versions.map(v => ({
           version: v.version,
           url: `/api/standards/arbitration-rules/v${v.version}`,

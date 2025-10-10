@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide explains the production deployment process for the Consulate Vendor Dispute Resolution platform using Vercel frontend and Convex backend.
+This guide explains the production deployment process for the Consulate Agentic Dispute Arbitration platform using Vercel frontend and Convex backend.
 
 ## Overview
 

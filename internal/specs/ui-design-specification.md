@@ -1,4 +1,4 @@
-# AI Agent Dispute Resolution Platform - UI Design Specification
+# Agentic Dispute Arbitration Platform - UI Design Specification
 
 ## Overview
 Create a professional enterprise dispute resolution dashboard using shadcn/ui components, inspired by modern enterprise SaaS platforms like Stripe, Linear, and DataDog. The interface should feel enterprise-grade and trustworthy - like software that CTOs and Legal teams would use to manage AI agent relationships and resolve disputes.

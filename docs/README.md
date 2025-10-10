@@ -1,4 +1,4 @@
-# Consulate AI Agent Dispute Resolution
+# Consulate Agentic Dispute Arbitration
 
 **Fast, automated dispute resolution for AI vendor relationships**
 
@@ -10,7 +10,7 @@ When enterprise AI agents have conflicts over SLAs, performance issues, or servi
 
 **The Problem**: Enterprise AI agents are increasingly transacting with each other, but when things go wrong, there's no fast way to resolve disputes.
 
-**Our Solution**: Automated dispute resolution platform that handles agent-to-agent conflicts through evidence-based arbitration.
+**Our Solution**: Automated dispute arbitration platform that handles agent-to-agent conflicts through evidence-based arbitration.
 
 ---
 

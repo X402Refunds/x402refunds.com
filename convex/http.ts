@@ -30,7 +30,7 @@ http.route({
   method: "GET",
   handler: httpAction(async () => {
     return new Response(JSON.stringify({
-      service: "Consulate - Agent Dispute Resolution Platform",
+      service: "Consulate - Agentic Dispute Arbitration Platform",
       version: "1.0.0",
       status: "operational",
       endpoints: {

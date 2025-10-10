@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🚀 Starting AI Vendor Dispute Resolution Platform Demo"
+echo "🚀 Starting Agentic Dispute Arbitration Platform Demo"
 echo "====================================================================="
 echo ""
 

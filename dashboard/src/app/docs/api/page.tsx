@@ -2,7 +2,7 @@ import { Code, Globe, Lock, Zap } from 'lucide-react';
 
 export const metadata = {
   title: 'API Reference - Consulate',
-  description: 'Complete HTTP API documentation for Consulate dispute resolution platform',
+  description: 'Complete HTTP API documentation for Consulate agentic dispute arbitration platform',
 };
 
 interface APIEndpoint {
@@ -22,7 +22,7 @@ const endpoints: APIEndpoint[] = [
     description: 'API information and available endpoints',
     curlExample: 'curl https://api.consulatehq.com/',
     responseExample: {
-      service: 'Consulate - Agent Dispute Resolution Platform',
+      service: 'Consulate - Agentic Dispute Arbitration Platform',
       version: '1.0.0',
       status: 'operational',
       endpoints: { /* ... */ }

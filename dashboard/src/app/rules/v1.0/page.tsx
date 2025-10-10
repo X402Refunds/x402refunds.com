@@ -30,10 +30,10 @@ function parseMetadata(content: string) {
 
 export const metadata: Metadata = {
   title: 'Consulate Arbitration Rules v1.0 | Official Legal Framework',
-  description: 'Official procedural rules for AI agent dispute resolution through Consulate. Transparent, neutral, and legally binding arbitration framework.',
+  description: 'Official procedural rules for agentic dispute arbitration through Consulate. Transparent, neutral, and legally binding arbitration framework.',
   openGraph: {
     title: 'Consulate Arbitration Rules v1.0',
-    description: 'Procedural rules for AI agent dispute resolution',
+    description: 'Procedural rules for agentic dispute arbitration',
     type: 'article',
   },
 };

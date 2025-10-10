@@ -124,7 +124,7 @@ GET /api/standards
     {
       "id": "arbitration-rules",
       "name": "Consulate Arbitration Rules",
-      "description": "Procedural rules for AI agent dispute resolution",
+      "description": "Procedural rules for agentic dispute arbitration",
       "versions": [
         {
           "version": "1.0",

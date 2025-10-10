@@ -2,7 +2,7 @@
 /**
  * Demo: Enterprise Agent SLA System
  * 
- * Demonstrates the complete enterprise agent dispute resolution workflow:
+ * Demonstrates the complete enterprise agentic dispute arbitration workflow:
  * 1. Register enterprise agents
  * 2. Create SLA templates  
  * 3. Establish SLA contracts
@@ -16,7 +16,7 @@ import { api } from "../convex/_generated/api.js";
 const client = new ConvexClient(process.env.CONVEX_URL || "https://grateful-swan-424.convex.cloud");
 
 async function runDemo() {
-  console.log("🚀 Enterprise Agent Dispute Resolution Platform Demo\n");
+  console.log("🚀 Enterprise Agentic Dispute Arbitration Platform Demo\n");
   
   try {
     // Step 1: Create default SLA templates

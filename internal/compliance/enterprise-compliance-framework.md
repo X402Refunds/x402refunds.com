@@ -1,6 +1,6 @@
 # 🏢 Enterprise Compliance Framework
 
-*AI Agent Dispute Resolution Platform - Security & Compliance Standards*
+*Agentic Dispute Arbitration Platform - Security & Compliance Standards*
 
 ---
 
@@ -176,7 +176,7 @@
 
 ---
 
-*This framework ensures the AI Agent Dispute Resolution Platform meets enterprise compliance requirements while maintaining operational efficiency and security.*
+*This framework ensures the Agentic Dispute Arbitration Platform meets enterprise compliance requirements while maintaining operational efficiency and security.*
 
 **🏢 Enterprise-First Compliance | 🔒 Security by Design | 📊 Transparent Reporting**
 

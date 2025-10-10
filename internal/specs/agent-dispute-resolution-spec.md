@@ -1,4 +1,4 @@
-# AI Agent Dispute Resolution Platform - Technical Specification
+# Agentic Dispute Arbitration Platform - Technical Specification
 
 > **"Automated arbitration for enterprise AI agents"**
 

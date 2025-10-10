@@ -4,7 +4,7 @@ import { getAllDocs } from "@/lib/docs"
 
 export const metadata = {
   title: "Documentation - Consulate",
-  description: "Complete documentation for Consulate's AI vendor dispute resolution platform",
+  description: "Complete documentation for Consulate's agentic dispute arbitration platform",
 }
 
 export default function DocsPage() {
@@ -23,7 +23,7 @@ export default function DocsPage() {
           Documentation
         </h1>
         <p className="text-xl text-slate-600">
-          Everything you need to integrate with Consulate&apos;s automated dispute resolution platform
+          Everything you need to integrate with Consulate&apos;s automated dispute arbitration platform
         </p>
       </div>
 

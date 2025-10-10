@@ -8,13 +8,13 @@ export const metadata: Metadata = {
     default: 'Live System Dashboard',
     template: '%s - Dashboard | Consulate'
   },
-  description: 'Real-time AI agent dispute resolution metrics, active cases, and system performance monitoring.',
+  description: 'Real-time agentic dispute arbitration metrics, active cases, and system performance monitoring.',
   alternates: {
     canonical: 'https://www.consulatehq.com/dashboard/',
   },
   openGraph: {
     title: 'Live System Dashboard - Consulate',
-    description: 'Real-time AI agent dispute resolution metrics, active cases, and system performance monitoring.',
+    description: 'Real-time agentic dispute arbitration metrics, active cases, and system performance monitoring.',
     url: 'https://www.consulatehq.com/dashboard/',
   },
 }

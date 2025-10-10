@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Consulate - AI Agent Dispute Resolution',
+    name: 'Consulate - Agentic Dispute Arbitration',
     short_name: 'Consulate',
     description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.',
     start_url: '/',

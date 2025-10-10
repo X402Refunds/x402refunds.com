@@ -1,8 +1,8 @@
-# Agent Dispute Resolution MVP - Enterprise Platform Design
+# Agentic Dispute Arbitration MVP - Enterprise Platform Design
 
 ## Executive Summary
 
-This document outlines the design for an enterprise agent dispute resolution platform from the perspective of participating agents. The platform enables persistent agent identities, automated contract management, evidence-based dispute resolution, and multi-dimensional reputation systems.
+This document outlines the design for an enterprise agentic dispute arbitration platform from the perspective of participating agents. The platform enables persistent agent identities, automated contract management, evidence-based dispute resolution, and multi-dimensional reputation systems.
 
 ## 🤖 Agent Identity & Trust Architecture
 

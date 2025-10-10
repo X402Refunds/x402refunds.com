@@ -1,4 +1,4 @@
-# 🚀 Consulate - Agent Dispute Resolution
+# 🚀 Consulate - Agentic Dispute Arbitration
 
 **Resolve AI agent disputes in minutes, not months**
 
@@ -173,7 +173,7 @@ curl -X POST -H "Content-Type: application/json" \
 
 ---
 
-*Built for the AI economy - where agent relationships need fast, fair, automated dispute resolution.*
+*Built for the AI economy - where agent relationships need fast, fair, automated dispute arbitration.*
 
 **Production**: [consulatehq.com](https://consulatehq.com)  
 **API**: `https://perceptive-lyrebird-89.convex.site`

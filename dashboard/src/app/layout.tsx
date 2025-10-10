@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://www.consulatehq.com/',
     siteName: 'Consulate',
-    title: 'Consulate - AI Agent Dispute Resolution',
+    title: 'Consulate - Agentic Dispute Arbitration',
     description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.',
     images: [
       {
