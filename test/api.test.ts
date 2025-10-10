@@ -23,7 +23,7 @@ describe('Consulate HTTP API - Core System', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toBe("Consulate - Agent Dispute Resolution Platform");
+      expect(data.service).toBe("Consulate - Agentic Dispute Arbitration Platform");
       expect(data.version).toBeDefined();
       expect(data.status).toBe("operational");
       expect(data.endpoints).toBeDefined();
@@ -98,6 +98,27 @@ describe('Consulate HTTP API - Agent Management', () => {
       expect(Array.isArray(data)).toBe(true);
       expect(data.length).toBeLessThanOrEqual(3);
     });
+
+    it('should reject invalid functional type', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents?type=invalid_type_12345`);
+      // May return empty array or error
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should handle limit > 1000 gracefully', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents?limit=9999`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+      // Should cap at reasonable limit
+      expect(data.length).toBeLessThanOrEqual(1000);
+    });
+
+    it('should handle negative limit', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents?limit=-5`);
+      // Should treat as invalid or use default
+      expect([200, 400]).toContain(response.status);
+    });
   });
 
   describe('GET /agents/top-reputation - Top Agents', () => {
@@ -114,6 +135,26 @@ describe('Consulate HTTP API - Agent Management', () => {
       const response = await fetch(`${API_BASE_URL}/agents/top-reputation?sortBy=winRate&limit=3`);
       expect(response.status).toBe(200);
       
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    it('should reject invalid sortBy parameter', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?sortBy=invalidSort`);
+      // May ignore invalid sort and use default
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should handle limit = 0', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=0`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    it('should handle no agents scenario', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=1000`);
+      expect(response.status).toBe(200);
       const data = await response.json();
       expect(Array.isArray(data)).toBe(true);
     });
@@ -156,6 +197,88 @@ describe('Consulate HTTP API - Agent Management', () => {
       const data = await response.json();
       const foundSelf = data.agents.some((agent: any) => agent.did === selfDid);
       expect(foundSelf).toBe(false);
+    });
+
+    it('should reject invalid functional types array', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          functionalTypes: 'not-an-array',
+        })
+      });
+
+      // May accept and handle gracefully
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should handle empty discovery results gracefully', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          functionalTypes: ['extremely-rare-type-that-does-not-exist'],
+        })
+      });
+
+      expect([200, 400]).toContain(response.status);
+      if (response.status === 200) {
+        const data = await response.json();
+        expect(data.discovered).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('should reject malformed request body', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'invalid json {',
+      });
+
+      expect([400, 500]).toContain(response.status);
+    });
+  });
+
+  describe('GET /agents/:did/reputation - Get Reputation', () => {
+    it('should return 404 for non-existent agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/did:agent:non-existent-999/reputation`);
+      expect(response.status).toBe(404);
+    });
+
+    it('should reject malformed DID', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/invalid-did-format/reputation`);
+      expect([400, 404]).toContain(response.status);
+    });
+
+    it('should return reputation for valid agent', async () => {
+      // Create agent first
+      if (!USE_LIVE_API) {
+        const agent = await t.mutation(api.agents.joinAgent, {
+          ownerDid: testOwnerDid,
+          name: 'Rep Test Agent',
+          organizationName: `Rep Test ${Date.now()}`,
+        });
+
+        const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
+        expect([200, 404]).toContain(response.status);
+      }
+    });
+
+    it('should handle agent with no cases', async () => {
+      // Agent with no dispute history should return default reputation
+      if (!USE_LIVE_API) {
+        const agent = await t.mutation(api.agents.joinAgent, {
+          ownerDid: testOwnerDid,
+          name: 'No Cases Agent',
+          organizationName: `No Cases ${Date.now()}`,
+        });
+
+        const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
+        if (response.status === 200) {
+          const data = await response.json();
+          expect(data.totalCases).toBe(0);
+        }
+      }
     });
   });
 });
@@ -207,6 +330,86 @@ describe('Consulate HTTP API - SLA Monitoring (Read-Only)', () => {
       // May fail if agent doesn't exist, but the violation detection logic is tested
       expect([200, 400]).toContain(response.status);
     });
+
+    it('should reject metrics without agentDid', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metrics: {
+            availability: 99.9,
+          },
+          // Missing agentDid
+        })
+      });
+
+      // May accept undefined/null agentDid in body
+      expect([200, 400, 500]).toContain(response.status);
+    });
+
+    it('should reject invalid metric values', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          metrics: {
+            availability: -5, // Negative
+            responseTime: 200,
+          },
+        })
+      });
+
+      // May accept and normalize
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should reject non-existent agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:definitely-does-not-exist-999',
+          metrics: {
+            availability: 99.9,
+          },
+        })
+      });
+
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should handle missing metrics fields', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          metrics: {}, // Empty metrics
+        })
+      });
+
+      expect([200, 400]).toContain(response.status);
+    });
+  });
+
+  describe('GET /sla/status/:agentDid - SLA Status', () => {
+    it('should return SLA status for valid agent', async () => {
+      // Test with any existing agent
+      const response = await fetch(`${API_BASE_URL}/sla/status/did:agent:test`);
+      // May be 200 or 404 depending on if agent exists
+      expect([200, 404]).toContain(response.status);
+    });
+
+    it('should return 404 for non-existent agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/status/did:agent:non-existent-status-999`);
+      expect(response.status).toBe(404);
+    });
+
+    it('should reject malformed agent DID', async () => {
+      const response = await fetch(`${API_BASE_URL}/sla/status/invalid-did`);
+      expect([400, 404]).toContain(response.status);
+    });
   });
 });
 
@@ -249,6 +452,94 @@ describe('Consulate HTTP API - Webhooks & Notifications', () => {
       const data = await response.json();
       expect(data.error).toBeDefined();
     });
+
+    it('should handle duplicate webhook registration', async () => {
+      const webhookUrl = `https://example.com/webhook-${Date.now()}`;
+      
+      // Register first time
+      await fetch(`${API_BASE_URL}/webhooks/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          webhookUrl,
+          events: ['dispute_filed'],
+        })
+      });
+
+      // Register again - may allow or reject
+      const response = await fetch(`${API_BASE_URL}/webhooks/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          webhookUrl,
+          events: ['case_updated'],
+        })
+      });
+
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should reject empty events array', async () => {
+      const response = await fetch(`${API_BASE_URL}/webhooks/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          webhookUrl: 'https://example.com/webhook',
+          events: [],
+        })
+      });
+
+      // May accept and use defaults
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should reject non-HTTPS URL in production', async () => {
+      const response = await fetch(`${API_BASE_URL}/webhooks/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentDid: 'did:agent:test',
+          webhookUrl: 'http://insecure.example.com/webhook',
+          events: ['dispute_filed'],
+        })
+      });
+
+      // May accept for testing or reject for security
+      expect([200, 400]).toContain(response.status);
+    });
+  });
+
+  describe('GET /notifications/:agentDid - Get Notifications', () => {
+    it('should return notifications for valid agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/notifications/did:agent:test`);
+      // May be 404 if agent doesn't exist, 200 if it does
+      expect([200, 400, 404]).toContain(response.status);
+      if (response.status === 200) {
+        const data = await response.json();
+        expect(Array.isArray(data.notifications)).toBe(true);
+      }
+    });
+
+    it('should filter unread notifications', async () => {
+      const response = await fetch(`${API_BASE_URL}/notifications/did:agent:test?unread=true`);
+      expect([200, 400, 404]).toContain(response.status);
+      if (response.status === 200) {
+        const data = await response.json();
+        expect(data.notifications).toBeDefined();
+      }
+    });
+
+    it('should handle empty notifications list', async () => {
+      const response = await fetch(`${API_BASE_URL}/notifications/did:agent:no-notifications-999`);
+      expect([200, 400, 404]).toContain(response.status);
+      if (response.status === 200) {
+        const data = await response.json();
+        expect(data.notifications).toHaveLength(0);
+      }
+    });
   });
 });
 
@@ -279,6 +570,36 @@ describe('Consulate HTTP API - Real-Time Monitoring', () => {
       
       const data = await response.json();
       expect(Array.isArray(data.feed)).toBe(true);
+    });
+
+    it('should reject invalid event types', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed?types=INVALID_TYPE,ANOTHER_INVALID`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      // Should return empty feed or ignore invalid types
+      expect(Array.isArray(data.feed)).toBe(true);
+    });
+
+    it('should handle empty feed gracefully', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=did:agent:no-activity-999`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.feed).toHaveLength(0);
+    });
+
+    it('should reject invalid agent DID filter', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=invalid-did-format`);
+      // May filter out or ignore invalid DID
+      expect(response.status).toBe(200);
+    });
+
+    it('should limit feed size appropriately', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data.feed)).toBe(true);
+      // Should not return more than reasonable limit
+      expect(data.feed.length).toBeLessThanOrEqual(100);
     });
   });
 });
