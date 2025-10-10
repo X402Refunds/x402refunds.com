@@ -16,7 +16,7 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
               <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
-              <li><button className="hover:text-white transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-white transition-colors">Documentation</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">
@@ -24,12 +24,24 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/about', '_self')} className="hover:text-white transition-colors">About</button></li>
               <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-white transition-colors">Pricing</button></li>
-              <li>Documentation</li>
+              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-white transition-colors">Docs</button></li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10 text-center text-xs sm:text-sm">
-          <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
+        <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10">
+          <div className="text-center mb-6">
+            <div className="text-white font-semibold mb-2">Consulate, Inc.</div>
+            <div className="text-xs sm:text-sm space-y-1">
+              <p>101a Clay St PMB 201, San Francisco CA 94111</p>
+              <p>
+                Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-white transition-colors">vivek@consulatehq.com</a>
+              </p>
+              <p>Founder: Vivek Kotecha</p>
+            </div>
+          </div>
+          <div className="text-center text-xs sm:text-sm border-t border-slate-800 pt-6">
+            <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
+          </div>
         </div>
       </div>
     </footer>

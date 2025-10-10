@@ -147,6 +147,12 @@ export function Navigation({ currentPage }: NavigationProps) {
               >
                 About
               </button>
+              <button
+                onClick={() => window.location.href = '/docs'}
+                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                Docs
+              </button>
             </div>
           </div>
           <div className="flex items-center">
