@@ -364,15 +364,13 @@
     },
     "formats": {
       "json": {
-        "contentHash": "sha256:a948904f2f0f479b8f8197694b30184b0d2ed1c1c\
-d2a1ec0fb85d299a192a447",
+        "contentHash": "sha256:a948904f2f0f479b8f8197694b30184b...",
         "signature": "[JWS of JSON content]"
       },
       "pdf": {
         "documentUri": 
           "https://api.consulatehq.com/awards/award_xyz789.pdf",
-        "contentHash": "sha256:b849204f3f1f580c9f9298705c40295c1e3f\
-e2d2de3b2fd1gc96e399b203b558",
+        "contentHash": "sha256:b849204f3f1f580c9f9298705c40295c...",
         "signature": "[JWS of PDF hash]",
         "pdfSignature": "[PKCS#7 embedded signature]"
       }
@@ -692,8 +690,13 @@ e2d2de3b2fd1gc96e399b203b558",
   "arbitrationService": "https://api.consulatehq.com/aap/v1",
   "protocolVersion": "1.0",
   "supportedRules": ["Consulate-v1.0", "UNCITRAL-2021"],
-  "supportedEvidenceTypes": ["SYSTEM_LOGS", "CONTRACTS", 
-                             "COMMUNICATIONS", "FINANCIAL", "EXPERT"],
+  "supportedEvidenceTypes": [
+    "SYSTEM_LOGS",
+    "CONTRACTS", 
+    "COMMUNICATIONS",
+    "FINANCIAL",
+    "EXPERT"
+  ],
   "maxClaimValue": 10000000,
   "supportedCurrencies": ["USD", "EUR", "ETH"],
   "features": {
@@ -752,9 +755,15 @@ e2d2de3b2fd1gc96e399b203b558",
       "name": "Hon. Jane Smith",
       "type": "HUMAN",
       "qualifications": {
-        "certifications": ["AAA Certified Arbitrator", "JAMS Panelist"],
+        "certifications": [
+          "AAA Certified Arbitrator",
+          "JAMS Panelist"
+        ],
         "jurisdictions": ["US-CA", "US-NY", "US-TX"],
-        "specializations": ["Technology Disputes", "SLA Breaches"],
+        "specializations": [
+          "Technology Disputes",
+          "SLA Breaches"
+        ],
         "yearsExperience": 15,
         "casesCompleted": 342
       },
@@ -767,7 +776,8 @@ e2d2de3b2fd1gc96e399b203b558",
       "publicKey": "[PEM public key]",
       "biasAudit": {
         "lastAuditDate": "2025-07-01",
-        "auditResults": "https://consulatehq.com/audits/arb_human_001",
+        "auditResults": 
+          "https://consulatehq.com/audits/arb_human_001",
         "fairnessScore": 0.94
       }
     },
@@ -778,8 +788,12 @@ e2d2de3b2fd1gc96e399b203b558",
       "qualifications": {
         "model": "gpt-4-turbo",
         "version": "2024-11-06",
-        "specializations": ["Contract Interpretation", "Technical Disputes"],
-        "trainingData": "Trained on arbitration case law through 2024",
+        "specializations": [
+          "Contract Interpretation",
+          "Technical Disputes"
+        ],
+        "trainingData": 
+          "Trained on arbitration case law through 2024",
         "casesCompleted": 15420
       },
       "availability": {
@@ -789,7 +803,8 @@ e2d2de3b2fd1gc96e399b203b558",
       "publicKey": "[PEM public key]",
       "biasAudit": {
         "lastAuditDate": "2025-09-15",
-        "auditResults": "https://consulatehq.com/audits/arb_ai_gpt4_001",
+        "auditResults": 
+          "https://consulatehq.com/audits/arb_ai_gpt4_001",
         "fairnessScore": 0.91,
         "biasMetrics": {
           "genderBias": 0.02,
@@ -918,46 +933,44 @@ e2d2de3b2fd1gc96e399b203b558",
 
   <back>
     <references>
-      <name>References</name>
-      <references>
-        <name>Normative References</name>
-        
-        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
-          <front>
-            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
-            <author initials="S." surname="Bradner" fullname="S. Bradner">
-              <organization/>
-            </author>
-            <date year="1997" month="March"/>
-          </front>
-          <seriesInfo name="BCP" value="14"/>
-          <seriesInfo name="RFC" value="2119"/>
-          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
-        </reference>
-        
-        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
-          <front>
-            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
-            <author initials="B." surname="Leiba" fullname="B. Leiba">
-              <organization/>
-            </author>
-            <date year="2017" month="May"/>
-          </front>
-          <seriesInfo name="BCP" value="14"/>
-          <seriesInfo name="RFC" value="8174"/>
-          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
-        </reference>
-        
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8259.xml"/>
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.7515.xml"/>
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8446.xml"/>
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6749.xml"/>
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.7519.xml"/>
-        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml"/>
-      </references>
+      <name>Normative References</name>
       
-      <references>
-        <name>Informative References</name>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization/>
+          </author>
+          <date year="1997" month="March"/>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author initials="B." surname="Leiba" fullname="B. Leiba">
+            <organization/>
+          </author>
+          <date year="2017" month="May"/>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+      
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8259.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.7515.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8446.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6749.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.7519.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml"/>
+    </references>
+    
+    <references>
+      <name>Informative References</name>
         
         <reference anchor="UNCITRAL" target="https://uncitral.un.org">
           <front>
@@ -978,7 +991,6 @@ e2d2de3b2fd1gc96e399b203b558",
             <date year="2024"/>
           </front>
         </reference>
-      </references>
     </references>
     
     <section anchor="json-schema-definitions">
