@@ -10,6 +10,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { ArrowLeft, Gavel, Users, Clock, FileText, Scale, AlertTriangle, DollarSign, Calendar, MessageSquare, UserCheck } from "lucide-react";
+import { ChainVerificationBadge } from "@/components/chain-verification-badge";
 
 export default function DisputeDetailPage() {
   const params = useParams();
@@ -156,9 +157,12 @@ export default function DisputeDetailPage() {
             <h1 className="text-3xl font-bold tracking-tight">Case Details</h1>
             <p className="text-muted-foreground">Case ID: {caseId}</p>
           </div>
-          <Badge className={statusColor}>
-            {caseDetails.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <ChainVerificationBadge caseId={caseId} />
+            <Badge className={statusColor}>
+              {caseDetails.status}
+            </Badge>
+          </div>
         </div>
 
         {/* Case Overview */}
@@ -473,12 +477,15 @@ export default function DisputeDetailPage() {
         {/* Case Timeline - Visual History */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Case Timeline
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Case Timeline
+              </CardTitle>
+              <ChainVerificationBadge caseId={caseId} />
+            </div>
             <CardDescription>
-              Complete history of all case events and updates
+              Cryptographically verified audit trail of all case events
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -489,7 +496,7 @@ export default function DisputeDetailPage() {
                 
                 {caseEvents
                   .sort((a: { timestamp: number }, b: { timestamp: number }) => a.timestamp - b.timestamp)
-                  .map((event: { _id: string; type: string; timestamp: number; agentDid?: string; payload?: Record<string, unknown> }) => (
+                  .map((event: { _id: string; type: string; timestamp: number; agentDid?: string; payload?: Record<string, unknown>; contentHash?: string }) => (
                     <div key={event._id} className="relative pl-10">
                       {/* Timeline dot */}
                       <div className="absolute left-[7px] top-[5px] h-4 w-4 rounded-full bg-primary border-4 border-background" />
@@ -507,6 +514,13 @@ export default function DisputeDetailPage() {
                         <p className="text-xs text-muted-foreground">
                           {event.agentDid ? `${formatAgentName(event.agentDid)}` : "System action"}
                         </p>
+                        
+                        {/* Event hash for transparency */}
+                        {event.contentHash && (
+                          <div className="mt-2 text-[10px] text-muted-foreground font-mono">
+                            Hash: {event.contentHash.substring(0, 24)}...
+                          </div>
+                        )}
                         
                         {/* Show key details from payload */}
                         {event.payload && (

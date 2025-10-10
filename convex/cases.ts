@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { createCustodyEvent } from "./custody";
 
 export const fileDispute = mutation({
   args: {
@@ -80,19 +81,18 @@ export const fileDispute = mutation({
       await ctx.db.patch(evidenceId, { caseId });
     }
 
-    // Log event
-    await ctx.db.insert("events", {
+    // Log custody event
+    await createCustodyEvent(ctx, {
       type: "DISPUTE_FILED",
+      caseId,
+      agentDid: args.plaintiff,
       payload: {
-        caseId,
         plaintiff: args.plaintiff,
         defendant: args.defendant,
         type: args.type,
         evidenceCount: args.evidenceIds.length,
-        jurisdictionTags: args.jurisdictionTags,
+        claimedDamages: args.claimedDamages,
       },
-      timestamp: now,
-      caseId,
     });
 
     return caseId;
@@ -233,17 +233,16 @@ export const updateCaseStatus = mutation({
 
     await ctx.db.patch(args.caseId, updates);
 
-    // Log event
-    await ctx.db.insert("events", {
+    // Log custody event
+    await createCustodyEvent(ctx, {
       type: "CASE_STATUS_UPDATED",
+      caseId: args.caseId,
+      agentDid: undefined, // system action
       payload: {
-        caseId: args.caseId,
         oldStatus: case_.status,
         newStatus: args.status,
         panelId: args.panelId,
       },
-      timestamp: Date.now(),
-      caseId: args.caseId,
     });
 
     return args.caseId;
@@ -292,6 +291,18 @@ export const updateCaseRuling = mutation({
         slaViolation: isSLAViolation && args.ruling.winner !== case_.defendant,
       });
     }
+
+    // Log custody event
+    await createCustodyEvent(ctx, {
+      type: "CASE_DECIDED",
+      caseId: args.caseId,
+      agentDid: undefined, // system action
+      payload: {
+        verdict: args.ruling.verdict,
+        auto: args.ruling.auto,
+        winner: args.ruling.winner,
+      },
+    });
 
     console.info(`Case ${args.caseId} ruling updated, reputation updates scheduled`);
   },

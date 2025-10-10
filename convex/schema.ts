@@ -221,10 +221,16 @@ export default defineSchema({
     timestamp: v.number(),
     agentDid: v.optional(v.string()),
     caseId: v.optional(v.id("cases")),
+    
+    // Chain of custody fields
+    contentHash: v.optional(v.string()),              // SHA-256 of event content
+    previousEventHash: v.optional(v.string()),        // Links to previous event
+    sequenceNumber: v.optional(v.number()),           // Order within case
   })
     .index("by_type", ["type"])
     .index("by_timestamp", ["timestamp"])
-    .index("by_agent", ["agentDid"]),
+    .index("by_agent", ["agentDid"])
+    .index("by_case_sequence", ["caseId", "sequenceNumber"]),
 
   // API keys for Bearer token authentication
   apiKeys: defineTable({

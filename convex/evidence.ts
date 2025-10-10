@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { createCustodyEvent } from "./custody";
 // Types are validated by Convex schema
 
 // Functional type-specific evidence validation
@@ -229,21 +230,21 @@ export const submitEvidence = mutation({
       // Apply functional type-specific validation
       await validateFunctionalEvidence(ctx, agent.functionalType || "general", args.functionalContext);
 
-      // Log event
-      await ctx.db.insert("events", {
-        type: "EVIDENCE_SUBMITTED",
-        payload: {
-          evidenceId,
-          agentDid: args.agentDid,
-          functionalType: agent.functionalType,
-          sha256: args.sha256,
+      // Log custody event
+      if (args.caseId) {
+        await createCustodyEvent(ctx, {
+          type: "EVIDENCE_SUBMITTED",
           caseId: args.caseId,
-          hasContext: !!args.functionalContext,
-        },
-        timestamp: now,
-        agentDid: args.agentDid,
-        caseId: args.caseId,
-      });
+          agentDid: args.agentDid,
+          payload: {
+            evidenceId,
+            evidenceType: args.tool || "UNKNOWN",
+            functionalType: agent.functionalType,
+            sha256: args.sha256,
+            hasContext: !!args.functionalContext,
+          },
+        });
+      }
 
       console.info(`Evidence submitted successfully: ${evidenceId}`);
       return evidenceId;

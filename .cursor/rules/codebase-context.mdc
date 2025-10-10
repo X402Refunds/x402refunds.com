@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-09T19:06:50.749Z
+**Auto-generated on**: 2025-10-10T07:55:42.241Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -70,13 +70,14 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (14 files)
+### Convex Files (15 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation
 - **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generateLLMDispute, createLLMDispute, generateFallbackDispute, systemHealthMonitor, processPendingCases, updateSystemStatsCache
+- **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **events.ts** - getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
@@ -105,10 +106,11 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (31 components)
+### React Components (32 components)
 - Footer
 - Navigation
 - StructuredData
+- chain-verification-badge
 - collapsible-stats
 - hero-stats
 - live-dispute-monitor
@@ -125,9 +127,8 @@ Common HTTP routes exposed:
 - dropdown-menu
 - form
 - input
-- label
 
-... and 11 more
+... and 12 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -176,24 +177,24 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Documentation (46 files)
+### Documentation (58 files)
 - INVESTOR_PITCH_DECK_PROMPT.md
 - README.md
-- docs/AGENT_INTEGRATION_GUIDE.md
-- docs/README.md
-- docs/architecture/project-structure.md
-- docs/compliance/enterprise-compliance-framework.md
-- docs/design/sovereign-civic-design-system.md
-- docs/operations/current-deployment-status.md
-- docs/operations/dashboard-system-summary.md
-- docs/operations/dashboard-testing-results.md
-- docs/operations/deployment-guide.md
-- docs/operations/fast-metrics-caching.md
-- docs/operations/monitor-logs.md
-- docs/product/branding-strategy.md
-- docs/product/competitive-analysis.md
+- agentic-arbitration-protocol/CHANGELOG.md
+- agentic-arbitration-protocol/CONTRIBUTING.md
+- agentic-arbitration-protocol/DEVELOPMENT.md
+- agentic-arbitration-protocol/IDNITS_GUIDE.md
+- agentic-arbitration-protocol/MAINTAINERS.md
+- agentic-arbitration-protocol/README.md
+- agentic-arbitration-protocol/changelog/unreleased.md
+- agentic-arbitration-protocol/draft/README.md
+- agentic-arbitration-protocol/examples/01-simple-sla-breach/README.md
+- agentic-arbitration-protocol/examples/well-known/README.md
+- agentic-arbitration-protocol/rfcs/rfc.001.agentic-arbitration-protocol.md
+- agentic-arbitration-protocol/rfcs/rfc.002.chain-of-custody.md
+- agentic-arbitration-protocol/rfcs/rfc.003.dual-format-awards.md
 
-... and 31 more in docs/
+... and 43 more in docs/
 
 ## 🔧 Configuration Files
 
@@ -231,10 +232,10 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 31 components organized by feature
+- 32 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 14 TypeScript files with serverless functions
+- 15 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -270,5 +271,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/9/2025, 12:06:50 PM
-Files scanned: 186
+Generated: 10/10/2025, 12:55:42 AM
+Files scanned: 2650
