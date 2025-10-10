@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-10T08:12:17.473Z
+**Auto-generated on**: 2025-10-10T08:36:01.273Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -106,7 +106,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (32 components)
+### React Components (34 components)
 - Footer
 - Navigation
 - StructuredData
@@ -114,6 +114,8 @@ Common HTTP routes exposed:
 - collapsible-stats
 - hero-stats
 - live-dispute-monitor
+- doc-layout
+- doc-sidebar
 - dashboard-layout
 - government-header
 - government-sidebar
@@ -125,10 +127,8 @@ Common HTTP routes exposed:
 - card
 - dialog
 - dropdown-menu
-- form
-- input
 
-... and 12 more
+... and 14 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -232,7 +232,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 32 components organized by feature
+- 34 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 15 TypeScript files with serverless functions
@@ -271,5 +271,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/10/2025, 1:12:17 AM
-Files scanned: 2651
+Generated: 10/10/2025, 1:36:01 AM
+Files scanned: 2657
