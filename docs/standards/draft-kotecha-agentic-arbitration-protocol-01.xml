@@ -15,6 +15,9 @@
     <author fullname="Vivek Kotecha" initials="V." surname="Kotecha">
       <organization>Consulate, Inc.</organization>
       <address>
+        <postal>
+          <country>US</country>
+        </postal>
         <email>vivek@consulatehq.com</email>
         <uri>https://consulatehq.com</uri>
       </address>
