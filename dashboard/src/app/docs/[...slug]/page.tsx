@@ -75,22 +75,48 @@ export default async function DocPage({ params }: DocPageProps) {
         </p>
       )}
 
-      {/* Markdown Content */}
-      <div
-        className="prose prose-slate max-w-none
-          prose-headings:font-bold prose-headings:text-slate-900
-          prose-h1:text-3xl prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-          prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-          prose-p:text-slate-700 prose-p:leading-7
-          prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-          prose-code:text-sm prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-[''] prose-code:after:content-['']
-          prose-pre:bg-slate-900 prose-pre:text-slate-50
-          prose-ul:list-disc prose-ol:list-decimal
-          prose-li:text-slate-700
-          prose-strong:text-slate-900 prose-strong:font-semibold
-          prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-2 prose-blockquote:px-4"
-        dangerouslySetInnerHTML={{ __html: doc.htmlContent || '' }}
-      />
+      {/* Content Grid with TOC */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <div
+            className="prose prose-slate max-w-none
+              prose-headings:font-bold prose-headings:text-slate-900 prose-headings:scroll-mt-20
+              prose-h1:text-3xl prose-h1:mb-6
+              prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200
+              prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+              prose-h4:text-lg prose-h4:mt-6 prose-h4:mb-2
+              prose-p:text-slate-700 prose-p:leading-7 prose-p:mb-4
+              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-blue-700
+              prose-code:text-sm prose-code:bg-slate-100 prose-code:text-slate-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
+              prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-pre:rounded-lg prose-pre:shadow-lg prose-pre:p-4 prose-pre:overflow-x-auto
+              prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
+              prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
+              prose-li:text-slate-700 prose-li:my-2 prose-li:leading-7
+              prose-strong:text-slate-900 prose-strong:font-semibold
+              prose-em:text-slate-700 prose-em:italic
+              prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-6 prose-blockquote:rounded-r
+              prose-table:w-full prose-table:border-collapse prose-table:my-6
+              prose-thead:bg-slate-100 prose-thead:border-b-2 prose-thead:border-slate-300
+              prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-slate-900
+              prose-td:px-4 prose-td:py-3 prose-td:border-b prose-td:border-slate-200
+              prose-tr:hover:bg-slate-50
+              prose-hr:border-slate-200 prose-hr:my-8
+              prose-img:rounded-lg prose-img:shadow-md"
+            dangerouslySetInnerHTML={{ __html: doc.htmlContent || '' }}
+          />
+        </div>
+
+        {/* Table of Contents - Desktop Only */}
+        <div className="hidden lg:block">
+          <div className="sticky top-20">
+            <div className="text-sm font-semibold text-slate-900 mb-3">On this page</div>
+            <nav className="text-sm space-y-2">
+              <div className="text-slate-600 italic">Scroll to view sections</div>
+            </nav>
+          </div>
+        </div>
+      </div>
 
       {/* Edit on GitHub Link */}
       <div className="mt-12 pt-8 border-t border-slate-200">

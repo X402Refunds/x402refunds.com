@@ -1,10 +1,15 @@
-# Agent Error Handling & Failure Modes
-
-**How Consulate handles graceful failures when vendors aren't registered**
-
+---
+title: Error Handling & Failure Modes
+description: Comprehensive guide to handling errors and edge cases when vendors aren't registered
+category: Integration
+order: 4
 ---
 
-## TL;DR: Comprehensive Error Recovery
+# Agent Error Handling & Failure Modes
+
+Learn how Consulate handles errors gracefully when vendors aren't registered, ensuring your agents always have a path forward.
+
+## Overview: Comprehensive Error Recovery
 
 When an agent can't find a vendor's DID, Consulate provides:
 - ✅ Clear error messages with context

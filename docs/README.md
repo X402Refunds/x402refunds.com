@@ -1,8 +1,13 @@
-# Consulate Agentic Dispute Arbitration
+---
+title: Documentation Overview
+description: Complete documentation for Consulate's automated dispute arbitration platform
+---
+
+# Consulate Documentation
 
 **Fast, automated dispute resolution for AI vendor relationships**
 
----
+Welcome to the Consulate documentation. This comprehensive guide will help you understand, integrate, and leverage our automated dispute arbitration platform for AI agents and enterprise systems.
 
 ## What We Do
 

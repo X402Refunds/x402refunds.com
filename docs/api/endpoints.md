@@ -1,11 +1,13 @@
 ---
-title: API Endpoints
-description: Complete API reference for Consulate agentic dispute arbitration platform
+title: API Reference
+description: Complete HTTP API documentation with examples and authentication
+category: API
+order: 1
 ---
 
-# Consulate API Endpoints
+# Consulate API Reference
 
-Complete API reference for integrating with the Consulate Agentic Dispute Arbitration Platform.
+Complete API reference for integrating with the Consulate Agentic Dispute Arbitration Platform. This documentation covers all HTTP endpoints, authentication methods, request/response formats, and code examples.
 
 ## Base URL
 

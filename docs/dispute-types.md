@@ -1,8 +1,13 @@
+---
+title: Dispute Types
+description: Complete guide to the types of disputes Consulate can resolve through expert determination
+category: Core Concepts
+order: 1
+---
+
 # Dispute Types Supported by Consulate
 
-Consulate provides fast, automated dispute resolution for technical disputes between AI systems, API vendors, and their customers. This document outlines the types of disputes we can resolve.
-
----
+Consulate provides fast, automated dispute resolution for technical disputes between AI systems, API vendors, and their customers. This document outlines the types of disputes we can resolve through expert determination.
 
 ## Overview
 

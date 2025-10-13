@@ -113,39 +113,83 @@ export function generateSidebar(): SidebarItem[] {
   const docs = getAllDocs();
   const sidebar: SidebarItem[] = [];
 
-  // Group docs by their directory structure
-  const grouped = new Map<string, DocFile[]>();
+  // Group docs by category from metadata
+  const categorized = new Map<string, DocFile[]>();
+  const rootDocs: DocFile[] = [];
 
   for (const doc of docs) {
-    if (doc.slug.length === 1) {
-      // Root level doc
-      sidebar.push({
-        title: doc.metadata.title,
-        slug: doc.slug,
-      });
-    } else {
-      // Nested doc
-      const category = doc.slug[0];
-      if (!grouped.has(category)) {
-        grouped.set(category, []);
+    const category = (doc.metadata as { category?: string }).category;
+    
+    if (!category && doc.slug.length === 1) {
+      // Root level docs without category
+      rootDocs.push(doc);
+    } else if (category) {
+      // Categorized docs
+      if (!categorized.has(category)) {
+        categorized.set(category, []);
       }
-      grouped.get(category)!.push(doc);
+      categorized.get(category)!.push(doc);
+    } else {
+      // Fallback to directory structure
+      const dirCategory = doc.slug[0];
+      if (!categorized.has(dirCategory)) {
+        categorized.set(dirCategory, []);
+      }
+      categorized.get(dirCategory)!.push(doc);
     }
   }
 
-  // Build nested structure
-  for (const [category, categoryDocs] of grouped) {
-    const children: SidebarItem[] = categoryDocs.map(doc => ({
+  // Sort docs within categories by order metadata
+  categorized.forEach(catDocs => {
+    catDocs.sort((a, b) => {
+      const orderA = (a.metadata as { order?: number }).order || 999;
+      const orderB = (b.metadata as { order?: number }).order || 999;
+      return orderA - orderB;
+    });
+  });
+
+  // Define category order
+  const categoryOrder = ['Core Concepts', 'Integration', 'API', 'Standards'];
+  
+  // Build sidebar in order
+  for (const categoryName of categoryOrder) {
+    if (categorized.has(categoryName)) {
+      const children: SidebarItem[] = categorized.get(categoryName)!.map(doc => ({
+        title: doc.metadata.title,
+        slug: doc.slug,
+      }));
+
+      sidebar.push({
+        title: categoryName,
+        slug: [categoryName.toLowerCase().replace(/\s+/g, '-')],
+        children,
+      });
+    }
+  }
+
+  // Add any remaining categories not in the order list
+  for (const [category, categoryDocs] of categorized) {
+    if (!categoryOrder.includes(category)) {
+      const children: SidebarItem[] = categoryDocs.map(doc => ({
+        title: doc.metadata.title,
+        slug: doc.slug,
+      }));
+
+      sidebar.push({
+        title: category,
+        slug: [category.toLowerCase().replace(/\s+/g, '-')],
+        children,
+      });
+    }
+  }
+
+  // Add root docs at the end
+  rootDocs.forEach(doc => {
+    sidebar.push({
       title: doc.metadata.title,
       slug: doc.slug,
-    }));
-
-    sidebar.push({
-      title: category.charAt(0).toUpperCase() + category.slice(1),
-      slug: [category],
-      children,
     });
-  }
+  });
 
   return sidebar;
 }

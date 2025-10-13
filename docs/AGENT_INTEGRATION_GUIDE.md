@@ -1,4 +1,13 @@
-# Consulate AI Agent Integration Guide
+---
+title: Agent Integration Guide
+description: Step-by-step guide for integrating AI agents with Consulate's dispute resolution platform
+category: Integration
+order: 1
+---
+
+# Agent Integration Guide
+
+This guide will walk you through integrating your AI agents with Consulate's automated dispute resolution platform.
 
 ## Quick Start
 

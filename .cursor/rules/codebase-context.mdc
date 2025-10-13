@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-13T01:02:55.336Z
+**Auto-generated on**: 2025-10-13T09:15:43.089Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -143,7 +143,8 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (11 test files)
+### Test Suites (16 test files)
+- test/aap-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
 - test/cases.test.ts
@@ -154,7 +155,11 @@ Common HTTP routes exposed:
 - test/http-endpoints.test.ts
 - test/integration.test.ts
 - test/judges.test.ts
+- test/mcp-endpoints.test.ts
 - test/performance.test.ts
+- test/sla-endpoints.test.ts
+- test/system-endpoints.test.ts
+- test/webhooks-endpoints.test.ts
 
 ## 📦 Package Scripts
 
@@ -193,20 +198,21 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Public Documentation (10 files)
+### Public Documentation (11 files)
 - docs/AGENT_DISCOVERY.md
 - docs/AGENT_FAILURE_MODES.md
 - docs/AGENT_INTEGRATION_GUIDE.md
 - docs/AGENT_INTEGRATION_STRATEGY.md
 - docs/README.md
 - docs/api/endpoints.md
+- docs/dispute-types.md
 - docs/standards/README.md
 - docs/standards/code-of-ethics-ai-arbitrators.md
 - docs/standards/consulate-arbitration-rules-v1.0.md
-- docs/standards/evidence-format-specification.md
 
+... and 1 more in docs/
 
-### Internal Documentation (37 files)
+### Internal Documentation (39 files)
 - internal/README.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
@@ -218,7 +224,7 @@ Common HTTP routes exposed:
 - internal/operations/fast-metrics-caching.md
 - internal/operations/monitor-logs.md
 
-... and 27 more in internal/
+... and 29 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -266,7 +272,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 11 test files using Vitest
+- 16 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -299,5 +305,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/12/2025, 6:02:55 PM
-Files scanned: 2700
+Generated: 10/13/2025, 2:15:43 AM
+Files scanned: 2711

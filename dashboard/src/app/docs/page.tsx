@@ -1,4 +1,4 @@
-import { FileText, BookOpen, Code, FileCode } from "lucide-react"
+import { FileText, BookOpen, Code, FileCode, Zap, Shield, GitBranch } from "lucide-react"
 import Link from "next/link"
 import { getAllDocs } from "@/lib/docs"
 
@@ -10,10 +10,27 @@ export const metadata = {
 export default function DocsPage() {
   const allDocs = getAllDocs();
   
-  // Group docs by category
-  const categories = {
-    api: allDocs.filter(doc => doc.slug[0] === 'api'),
+  // Group docs by category from metadata
+  const categorizeDoc = (doc: typeof allDocs[0]) => {
+    const category = (doc.metadata.category as string) || 'Other';
+    return category;
   };
+  
+  const categories = allDocs.reduce((acc, doc) => {
+    const category = categorizeDoc(doc);
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(doc);
+    return acc;
+  }, {} as Record<string, typeof allDocs>);
+
+  // Sort docs within each category by order metadata
+  Object.keys(categories).forEach(cat => {
+    categories[cat].sort((a, b) => {
+      const orderA = (a.metadata.order as number) || 999;
+      const orderB = (b.metadata.order as number) || 999;
+      return orderA - orderB;
+    });
+  });
 
   return (
     <div>
@@ -22,68 +39,170 @@ export default function DocsPage() {
         <h1 className="text-4xl font-bold text-slate-900 mb-4">
           Documentation
         </h1>
-        <p className="text-xl text-slate-600">
+        <p className="text-xl text-slate-600 mb-6">
           Everything you need to integrate with Consulate&apos;s automated dispute arbitration platform
         </p>
+        <div className="flex gap-4">
+          <Link 
+            href="/docs/AGENT_INTEGRATION_GUIDE"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Zap className="h-5 w-5 mr-2" />
+            Quick Start
+          </Link>
+          <Link 
+            href="/docs/api/endpoints"
+            className="inline-flex items-center px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <Code className="h-5 w-5 mr-2" />
+            API Reference
+          </Link>
+        </div>
       </div>
 
-      {/* Quick Links */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
+      {/* Quick Links Cards */}
+      <div className="grid md:grid-cols-3 gap-6 mb-12">
         <Link 
-          href="/docs/api/endpoints"
-          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 hover:shadow-lg transition-shadow border border-blue-200 group"
+          href="/docs/AGENT_INTEGRATION_GUIDE"
+          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 hover:shadow-lg transition-all border border-blue-200 group"
         >
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-blue-600 rounded-lg">
-              <Code className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">API Reference</h2>
-              <p className="text-slate-600">
-                Complete HTTP API documentation with examples
-              </p>
-            </div>
+          <div className="p-3 bg-blue-600 rounded-lg w-fit mb-4">
+            <Zap className="h-6 w-6 text-white" />
           </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Get Started</h2>
+          <p className="text-slate-600">
+            Quick start guide to integrate your first agent in minutes
+          </p>
         </Link>
 
         <Link 
-          href="/docs/AGENT_INTEGRATION_GUIDE"
-          className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 hover:shadow-lg transition-shadow border border-emerald-200 group"
+          href="/docs/api/endpoints"
+          className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 hover:shadow-lg transition-all border border-emerald-200 group"
         >
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-emerald-600 rounded-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Integration Guide</h2>
-              <p className="text-slate-600">
-                Step-by-step guide for integrating AI agents
-              </p>
-            </div>
+          <div className="p-3 bg-emerald-600 rounded-lg w-fit mb-4">
+            <Code className="h-6 w-6 text-white" />
           </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">API Reference</h2>
+          <p className="text-slate-600">
+            Complete HTTP API documentation with authentication & examples
+          </p>
+        </Link>
+
+        <Link 
+          href="/docs/dispute-types"
+          className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 hover:shadow-lg transition-all border border-purple-200 group"
+        >
+          <div className="p-3 bg-purple-600 rounded-lg w-fit mb-4">
+            <Shield className="h-6 w-6 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Dispute Types</h2>
+          <p className="text-slate-600">
+            Learn what types of disputes Consulate can resolve
+          </p>
         </Link>
       </div>
 
       {/* Documentation Categories */}
-      <div className="space-y-8">
-        {/* API Documentation */}
-        {categories.api.length > 0 && (
+      <div className="space-y-10">
+        {/* Integration Guides */}
+        {categories['Integration'] && categories['Integration'].length > 0 && (
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <FileCode className="h-5 w-5 text-slate-600" />
-              <h2 className="text-2xl font-bold text-slate-900">API Documentation</h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <GitBranch className="h-5 w-5 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Integration Guides</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              {categories.api.map(doc => (
+              {categories['Integration'].map(doc => (
                 <Link
                   key={doc.slug.join('/')}
                   href={`/docs/${doc.slug.join('/')}`}
-                  className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  className="group p-5 border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all bg-white"
                 >
-                  <div className="font-medium text-slate-900 mb-1">{doc.metadata.title}</div>
-                  {doc.metadata.description && (
-                    <div className="text-sm text-slate-600">{doc.metadata.description}</div>
-                  )}
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        {doc.metadata.title}
+                      </div>
+                      {doc.metadata.description && (
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          {doc.metadata.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Core Concepts */}
+        {categories['Core Concepts'] && categories['Core Concepts'].length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <BookOpen className="h-5 w-5 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Core Concepts</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {categories['Core Concepts'].map(doc => (
+                <Link
+                  key={doc.slug.join('/')}
+                  href={`/docs/${doc.slug.join('/')}`}
+                  className="group p-5 border border-slate-200 rounded-lg hover:border-emerald-400 hover:shadow-md transition-all bg-white"
+                >
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-emerald-600 mt-1 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold text-slate-900 mb-1 group-hover:text-emerald-600 transition-colors">
+                        {doc.metadata.title}
+                      </div>
+                      {doc.metadata.description && (
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          {doc.metadata.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* API Documentation */}
+        {categories['API'] && categories['API'].length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <FileCode className="h-5 w-5 text-purple-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">API Documentation</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {categories['API'].map(doc => (
+                <Link
+                  key={doc.slug.join('/')}
+                  href={`/docs/${doc.slug.join('/')}`}
+                  className="group p-5 border border-slate-200 rounded-lg hover:border-purple-400 hover:shadow-md transition-all bg-white"
+                >
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">
+                        {doc.metadata.title}
+                      </div>
+                      {doc.metadata.description && (
+                        <div className="text-sm text-slate-600 leading-relaxed">
+                          {doc.metadata.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>

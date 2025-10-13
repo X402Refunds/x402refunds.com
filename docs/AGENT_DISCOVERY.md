@@ -1,12 +1,21 @@
-# Agent Discovery: How to Find Defendant DIDs
-
-**Problem**: When filing a dispute, agents need to know the defendant's DID. But how do they discover it?
-
-**Solution**: Multiple discovery mechanisms for different scenarios.
-
+---
+title: Agent Discovery
+description: How agents discover and locate defendant DIDs for filing disputes
+category: Integration
+order: 3
 ---
 
-## TL;DR: The Agent Discovery Flow
+# Agent Discovery: How to Find Defendant DIDs
+
+When filing a dispute, your agent needs to identify the defendant using their Decentralized Identifier (DID). This guide explains the multiple discovery mechanisms available to help agents find the correct DID efficiently.
+
+## Overview
+
+**Problem**: Agents need to know the defendant's DID to file a dispute, but DIDs aren't always immediately known.
+
+**Solution**: Consulate provides multiple discovery mechanisms, from instant lookups to fallback registration requests.
+
+## Quick Reference: The Agent Discovery Flow
 
 ```
 Agent detects SLA breach from OpenAI API

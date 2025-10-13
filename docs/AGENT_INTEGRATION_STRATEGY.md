@@ -1,13 +1,18 @@
-# Consulate Agent Integration Strategy
+---
+title: Integration Strategy
+description: Strategic overview of integration approaches - MCP, HTTP API, SDKs, and more
+category: Integration
+order: 2
+---
+
+# Agent Integration Strategy
 ## How AI Agents Connect to Consulate: The Frictionless Path
 
-**Date**: 2025-10-11  
+**Last Updated**: October 11, 2025  
 **Status**: Strategic Recommendation + MVP Implementation  
 **Decision**: MCP-First, Then Layer
 
----
-
-## TL;DR: The Answer
+## Executive Summary
 
 **Q: How should agents file disputes with Consulate?**  
 **A: MCP Server (Model Context Protocol) as MVP, with progressive layering of HTTP API, SDKs, and lawyer agent for complex cases.**
