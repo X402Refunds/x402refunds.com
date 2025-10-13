@@ -52,6 +52,12 @@
       ]
     },
     {
+      "group": "For Platforms",
+      "pages": [
+        "partner-integration"
+      ]
+    },
+    {
       "group": "Advanced",
       "pages": [
         "agent-integration-guide",

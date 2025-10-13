@@ -1,0 +1,860 @@
+---
+title: "Partner Integration Guide"
+description: "How platforms can integrate Consulate dispute resolution for their users"
+---
+
+<Note>
+**For platforms, payment processors, and API gateways** - Add automated dispute resolution to your service in 30 minutes by integrating Consulate's MCP server.
+</Note>
+
+## Overview
+
+If you operate a platform where agents interact (payments, API gateway, marketplace), you can provide built-in dispute resolution by integrating with Consulate.
+
+**Your users get:** Automatic dispute filing when transactions fail  
+**You get:** Reduced support burden, better merchant/customer trust  
+**Integration time:** 30 minutes to 2 hours depending on pattern
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Payment Processors" icon="credit-card">
+    **Example: Locus**
+    
+    When payment fails, agent can file chargeback dispute automatically
+  </Card>
+  
+  <Card title="API Gateways" icon="gateway">
+    **Example: Kong, Apigee**
+    
+    When API SLA violated, agent files dispute with upstream provider
+  </Card>
+  
+  <Card title="Marketplaces" icon="store">
+    **Example: Agent marketplace**
+    
+    Buyer disputes quality, seller disputes payment - automated resolution
+  </Card>
+  
+  <Card title="Service Platforms" icon="server">
+    **Example: Cloud platforms**
+    
+    Tenant disputes billing, provider disputes usage - binding determination
+  </Card>
+</CardGroup>
+
+---
+
+## Integration Patterns
+
+<Tabs>
+  <Tab title="🏆 Proxy Pattern (Recommended)">
+    ### Best for: Seamless user experience
+    
+    **How it works:** Your MCP server wraps Consulate tools with your branding.
+    
+    ```typescript Your MCP Server
+    // Example: Locus payment platform
+    export const MCP_TOOLS = [
+      // Your native tools
+      {
+        name: "locus_process_payment",
+        description: "Process payment between agents",
+        input_schema: {...}
+      },
+      {
+        name: "locus_transfer_funds",
+        description: "Transfer funds to agent wallet",
+        input_schema: {...}
+      },
+      
+      // Proxied Consulate tools
+      {
+        name: "locus_file_dispute",
+        description: "File payment dispute (powered by Consulate)",
+        input_schema: {
+          type: "object",
+          properties: {
+            paymentId: {
+              type: "string",
+              description: "Locus payment ID"
+            },
+            reason: {
+              type: "string",
+              description: "Reason for dispute"
+            },
+            amount: {
+              type: "number",
+              description: "Amount in dispute"
+            },
+            merchantDid: {
+              type: "string",
+              description: "Merchant's agent DID"
+            }
+          },
+          required: ["paymentId", "reason", "amount", "merchantDid"]
+        }
+      },
+      {
+        name: "locus_check_dispute",
+        description: "Check dispute status (powered by Consulate)",
+        input_schema: {
+          type: "object",
+          properties: {
+            caseId: {
+              type: "string",
+              description: "Consulate case ID"
+            }
+          },
+          required: ["caseId"]
+        }
+      }
+    ];
+    ```
+    
+    ### Implementation
+    
+    ```typescript
+    export const mcpInvoke = async (ctx, request) => {
+      const { tool, parameters } = await request.json();
+      
+      // Handle native tools
+      if (tool === 'locus_process_payment') {
+        return await processPayment(ctx, parameters);
+      }
+      
+      // Proxy dispute tools to Consulate
+      if (tool === 'locus_file_dispute') {
+        // Map Locus parameters to Consulate format
+        const consulateParams = {
+          plaintiff: parameters.buyerDid || extractFromPayment(parameters.paymentId),
+          defendant: parameters.merchantDid,
+          disputeType: 'PAYMENT_FAILURE',
+          claim: `Payment ${parameters.paymentId} failed: ${parameters.reason}`,
+          claimAmount: parameters.amount,
+          jurisdiction: 'US'
+        };
+        
+        // Forward to Consulate with your partner API key
+        const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.LOCUS_CONSULATE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tool: 'file_dispute',
+            parameters: consulateParams
+          })
+        });
+        
+        const result = await response.json();
+        
+        // Map back to your format
+        return new Response(JSON.stringify({
+          success: result.success,
+          disputeId: result.caseId,
+          trackingUrl: result.trackingUrl,
+          locusPaymentId: parameters.paymentId,
+          estimatedResolution: result.estimatedResolution
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      if (tool === 'locus_check_dispute') {
+        // Simple passthrough
+        return await fetch('https://api.consulatehq.com/mcp/invoke', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.LOCUS_CONSULATE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tool: 'check_case_status',
+            parameters: { caseId: parameters.caseId }
+          })
+        });
+      }
+    };
+    ```
+    
+    ### User Experience
+    
+    ```javascript Agent Using Locus
+    // Agent only connects to Locus
+    const payment = await mcp.invoke('locus_process_payment', {
+      from: 'wallet_123',
+      to: 'wallet_456',
+      amount: 5000
+    });
+    
+    if (!payment.success) {
+      // File dispute through Locus (Consulate under the hood)
+      const dispute = await mcp.invoke('locus_file_dispute', {
+        paymentId: payment.paymentId,
+        reason: 'Goods not delivered',
+        amount: 5000,
+        merchantDid: 'did:agent:merchant-xyz'
+      });
+      
+      console.log(`Dispute filed: ${dispute.disputeId}`);
+    }
+    ```
+    
+    ### Benefits
+    - ✅ Users only need ONE API key (yours)
+    - ✅ Branded experience (`locus_file_dispute` not `consulate_file_dispute`)
+    - ✅ You can add platform-specific context (payment IDs, etc.)
+    - ✅ You control when/how disputes are surfaced
+    
+    ### Requirements
+    - ❌ You need to maintain Consulate API key
+    - ❌ Add ~50 lines of proxy code per tool
+    - ❌ Update if Consulate changes parameters
+  </Tab>
+  
+  <Tab title="🔗 Multi-MCP Pattern">
+    ### Best for: Clean architecture, minimal work
+    
+    **How it works:** Tell your users to connect to BOTH MCP servers.
+    
+    ### Your Documentation
+    
+    ```markdown Locus Docs
+    ## Dispute Resolution
+    
+    Locus partners with Consulate for automated dispute resolution.
+    
+    Add both MCP servers to your agent config:
+    
+    {
+      "mcpServers": {
+        "locus": {
+          "url": "https://api.paywithlocus.com",
+          "headers": {
+            "Authorization": "Bearer LOCUS_API_KEY"
+          }
+        },
+        "consulate": {
+          "url": "https://api.consulatehq.com",
+          "headers": {
+            "Authorization": "Bearer CONSULATE_API_KEY"
+          }
+        }
+      }
+    }
+    
+    To file a dispute, use Consulate tools directly:
+    
+    await mcp.invoke('file_dispute', {
+      plaintiff: yourDid,
+      defendant: merchantDid,
+      disputeType: 'PAYMENT_FAILURE',
+      ...
+    })
+    ```
+    
+    ### User Experience
+    
+    ```javascript Agent Config
+    // Agent connects to both services
+    const payment = await mcp.invoke('locus_process_payment', {...});
+    
+    if (!payment.success) {
+      // Use Consulate directly
+      await mcp.invoke('file_dispute', {
+        plaintiff: myDid,
+        defendant: merchantDid,
+        disputeType: 'PAYMENT_FAILURE',
+        ...
+      });
+    }
+    ```
+    
+    ### Benefits
+    - ✅ Zero code for you (just documentation)
+    - ✅ Clean separation of concerns
+    - ✅ No maintenance burden
+    - ✅ Users get full Consulate capabilities
+    
+    ### Requirements  
+    - ❌ Users need TWO API keys
+    - ❌ Users need to know about Consulate
+    - ❌ More setup friction
+  </Tab>
+  
+  <Tab title="📍 Reference Pattern">
+    ### Best for: Just-in-time discovery
+    
+    **How it works:** Reference Consulate in error responses; agents add dynamically.
+    
+    ### Implementation
+    
+    ```typescript Your Payment API Response
+    {
+      "success": false,
+      "error": "PAYMENT_FAILED",
+      "paymentId": "pmt_xyz789",
+      "amount": 5000,
+      "merchant": {
+        "did": "did:agent:merchant-abc",
+        "name": "Acme Merchant"
+      },
+      
+      // Add dispute resolution info
+      "disputeResolution": {
+        "available": true,
+        "platform": "Consulate",
+        "mcpServer": "https://api.consulatehq.com",
+        "documentation": "https://docs.consulatehq.com/mcp-quickstart",
+        "prefilledAction": {
+          "tool": "file_dispute",
+          "parameters": {
+            "defendant": "did:agent:merchant-abc",
+            "disputeType": "PAYMENT_FAILURE",
+            "claim": "Payment pmt_xyz789 failed - goods not delivered",
+            "claimAmount": 5000,
+            "evidenceUrls": [
+              "https://api.paywithlocus.com/evidence/pmt_xyz789"
+            ]
+          }
+        }
+      }
+    }
+    ```
+    
+    ### User Experience
+    
+    ```javascript Smart Agent
+    const payment = await locus.processPayment({...});
+    
+    if (!payment.success && payment.disputeResolution) {
+      // Agent discovers Consulate dynamically
+      await agent.addMCPServer(payment.disputeResolution.mcpServer);
+      
+      // File with prefilled parameters
+      await mcp.invoke(
+        payment.disputeResolution.prefilledAction.tool,
+        payment.disputeResolution.prefilledAction.parameters
+      );
+    }
+    ```
+    
+    ### Benefits
+    - ✅ No proxy code required
+    - ✅ Agents discover only when needed
+    - ✅ Prefilled parameters = easy filing
+    - ✅ Works with any dispute platform
+    
+    ### Requirements
+    - ❌ Agents still need Consulate API key
+    - ❌ Agents need to support dynamic MCP server addition
+  </Tab>
+</Tabs>
+
+---
+
+## Getting Partner API Key
+
+<Steps>
+  <Step title="Register as Partner">
+    Contact us at partners@consulatehq.com or use this command:
+    
+    ```bash
+    # We create a partner owner
+    pnpm exec convex run auth:createOwner '{
+      "did": "did:org:locus",
+      "pubkeys": ["locus-public-key"]
+    }'
+    
+    # Register your platform as an agent
+    pnpm exec convex run agents:joinAgent '{
+      "ownerDid": "did:org:locus",
+      "name": "locus-platform-integration",
+      "organizationName": "Locus",
+      "functionalType": "payment_gateway"
+    }'
+    # Returns: { agentId: "j123456789", did: "did:agent:locus-..." }
+    ```
+  </Step>
+  
+  <Step title="Receive API Key">
+    We create a partner API key for you:
+    
+    ```bash
+    pnpm exec convex run apiKeys:createApiKey '{
+      "token": "ak_live_locus_partner_secure_random_key",
+      "agentId": "j123456789",
+      "permissions": ["disputes", "evidence", "cases"]
+    }'
+    ```
+    
+    <Warning>
+    **Keep this key secure** - it gives access to file disputes on behalf of your users.
+    </Warning>
+  </Step>
+  
+  <Step title="Use in Production">
+    Store as environment variable:
+    
+    ```bash
+    LOCUS_CONSULATE_API_KEY=ak_live_locus_partner_...
+    ```
+    
+    Use in MCP proxy:
+    
+    ```typescript
+    headers: {
+      'Authorization': `Bearer ${process.env.LOCUS_CONSULATE_API_KEY}`
+    }
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Complete Integration Example: Locus
+
+### Scenario
+Locus processes $10M/month in agent-to-agent payments. When payments fail, buyers need to file disputes.
+
+### Option A: Proxy Pattern (Recommended)
+
+```typescript locus-backend/mcp.ts
+import { httpAction } from "./_generated/server";
+
+const CONSULATE_API_KEY = process.env.LOCUS_CONSULATE_API_KEY;
+const CONSULATE_MCP_URL = 'https://api.consulatehq.com/mcp/invoke';
+
+export const MCP_TOOLS = [
+  // Native Locus tools
+  {
+    name: "locus_process_payment",
+    description: "Process payment between agents",
+    input_schema: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "Sender wallet ID" },
+        to: { type: "string", description: "Recipient wallet ID" },
+        amount: { type: "number", description: "Amount in USD" }
+      },
+      required: ["from", "to", "amount"]
+    }
+  },
+  
+  // Dispute tools (proxied to Consulate)
+  {
+    name: "locus_file_payment_dispute",
+    description: "File dispute for failed payment or chargeback",
+    input_schema: {
+      type: "object",
+      properties: {
+        paymentId: { type: "string", description: "Locus payment ID" },
+        disputeReason: { 
+          type: "string", 
+          enum: ["goods_not_delivered", "service_not_provided", "quality_issue", "unauthorized_charge"]
+        },
+        amount: { type: "number", description: "Amount to dispute" },
+        evidence: { 
+          type: "object", 
+          description: "Evidence (receipts, messages, etc.)" 
+        }
+      },
+      required: ["paymentId", "disputeReason", "amount"]
+    }
+  },
+  {
+    name: "locus_check_dispute_status",
+    description: "Check status of payment dispute",
+    input_schema: {
+      type: "object",
+      properties: {
+        disputeId: { type: "string", description: "Consulate case ID" }
+      },
+      required: ["disputeId"]
+    }
+  }
+];
+
+export const mcpInvoke = httpAction(async (ctx, request) => {
+  const { tool, parameters } = await request.json();
+  
+  // Authenticate Locus user
+  const locusAuth = await authenticateLocusUser(request.headers);
+  if (!locusAuth.valid) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  // Handle native tools
+  if (tool === 'locus_process_payment') {
+    return await handlePayment(ctx, parameters, locusAuth.userId);
+  }
+  
+  // Proxy dispute tools to Consulate
+  if (tool === 'locus_file_payment_dispute') {
+    // Get payment details from your DB
+    const payment = await ctx.db
+      .query("payments")
+      .filter(q => q.eq(q.field("paymentId"), parameters.paymentId))
+      .first();
+    
+    if (!payment) {
+      return new Response(JSON.stringify({
+        error: "Payment not found"
+      }), { status: 404 });
+    }
+    
+    // Upload evidence to your storage
+    const evidenceUrl = await uploadEvidence(
+      parameters.paymentId,
+      parameters.evidence
+    );
+    
+    // Submit evidence to Consulate first
+    await fetch(CONSULATE_MCP_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CONSULATE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tool: 'submit_evidence',
+        parameters: {
+          agentDid: payment.buyerDid,
+          sha256: hashEvidence(parameters.evidence),
+          evidenceUrl: evidenceUrl
+        }
+      })
+    });
+    
+    // File dispute with Consulate
+    const consulateResponse = await fetch(CONSULATE_MCP_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CONSULATE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tool: 'file_dispute',
+        parameters: {
+          plaintiff: payment.buyerDid,
+          defendant: payment.merchantDid,
+          disputeType: 'PAYMENT_FAILURE',
+          claim: `Locus payment ${parameters.paymentId} - ${parameters.disputeReason}`,
+          claimAmount: parameters.amount,
+          jurisdiction: payment.jurisdiction || 'US'
+        }
+      })
+    });
+    
+    const consulateResult = await consulateResponse.json();
+    
+    // Store case ID in your DB for tracking
+    await ctx.db.patch(payment._id, {
+      disputeId: consulateResult.caseId,
+      disputeStatus: 'filed',
+      disputeFiledAt: Date.now()
+    });
+    
+    // Return Locus-branded response
+    return new Response(JSON.stringify({
+      success: true,
+      paymentId: parameters.paymentId,
+      disputeId: consulateResult.caseId,
+      status: 'filed',
+      message: 'Payment dispute filed successfully',
+      trackingUrl: `https://paywithlocus.com/disputes/${consulateResult.caseId}`,
+      consulateUrl: consulateResult.trackingUrl,
+      estimatedResolution: consulateResult.estimatedResolution
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (tool === 'locus_check_dispute_status') {
+    // Passthrough to Consulate
+    const response = await fetch(CONSULATE_MCP_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CONSULATE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tool: 'check_case_status',
+        parameters: { caseId: parameters.disputeId }
+      })
+    });
+    
+    return response;
+  }
+});
+```
+
+### User Flow
+```
+1. Agent processes payment via Locus
+   ↓
+2. Payment fails
+   ↓
+3. Agent invokes: locus_file_payment_dispute
+   ↓
+4. Locus proxies to Consulate (transparent to agent)
+   ↓
+5. Dispute filed, agent gets Locus-branded response
+   ↓
+6. Agent monitors via: locus_check_dispute_status
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## What Consulate Provides Partners
+
+<AccordionGroup>
+  <Accordion title="Partner API Key" icon="key">
+    - Dedicated API key with high rate limits
+    - Special "partner" tier with priority support
+    - Ability to file disputes on behalf of your users
+    - Access to all 8 MCP tools
+  </Accordion>
+  
+  <Accordion title="Integration Support" icon="headset">
+    - 1-hour integration kickoff call
+    - Sample proxy code (TypeScript, Python)
+    - Testing environment with mock disputes
+    - Dedicated Slack channel for questions
+  </Accordion>
+  
+  <Accordion title="Branding Options" icon="palette">
+    - White-label dispute resolution pages
+    - Custom domain for tracking URLs
+    - Your logo in dispute notifications
+    - Co-branded case pages (optional)
+  </Accordion>
+  
+  <Accordion title="Revenue Share" icon="dollar-sign">
+    - 30% of arbitration fees from your referrals
+    - Monthly reporting dashboard
+    - Automatic payouts
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Tools You Should Proxy
+
+### Essential (Proxy These)
+1. **`file_dispute`** → Your branded name (e.g., `locus_file_payment_dispute`)
+2. **`check_case_status`** → Your branded name (e.g., `locus_check_dispute`)
+3. **`submit_evidence`** → Optional, if you handle evidence uploads
+
+### Optional (Reference Only)
+4. `lookup_agent` - Most platforms already know both parties
+5. `list_my_cases` - Nice-to-have for user dashboard
+6. `get_sla_status` - Only if you track SLA compliance
+
+### Skip
+7. `register_agent` - Users should register directly with Consulate
+8. `request_vendor_registration` - Platform-agnostic
+
+---
+
+## Testing Your Integration
+
+<Steps>
+  <Step title="Get Test API Key">
+    We provide a sandbox environment:
+    
+    ```bash
+    API Key: ak_test_locus_sandbox_...
+    Test URL: https://api-sandbox.consulatehq.com
+    ```
+  </Step>
+  
+  <Step title="Test Proxy">
+    ```bash
+    curl -X POST https://api.paywithlocus.com/mcp/invoke \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer LOCUS_USER_KEY" \
+      -d '{
+        "tool": "locus_file_payment_dispute",
+        "parameters": {
+          "paymentId": "pmt_test_123",
+          "reason": "goods_not_delivered",
+          "amount": 100,
+          "merchantDid": "did:agent:test-merchant"
+        }
+      }'
+    ```
+    
+    Should return:
+    ```json
+    {
+      "success": true,
+      "disputeId": "k7a8b9c0d1",
+      "trackingUrl": "https://paywithlocus.com/disputes/k7a8b9c0d1"
+    }
+    ```
+  </Step>
+  
+  <Step title="Verify in Consulate">
+    Check the case was created:
+    
+    ```bash
+    curl -X POST https://api.consulatehq.com/mcp/invoke \
+      -H "Authorization: Bearer ak_test_locus_sandbox_..." \
+      -H "Content-Type: application/json" \
+      -d '{
+        "tool": "check_case_status",
+        "parameters": {"caseId": "k7a8b9c0d1"}
+      }'
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Launch Checklist
+
+<Steps>
+  <Step title="Technical Integration">
+    - [ ] Add Consulate MCP proxy code
+    - [ ] Test in sandbox environment
+    - [ ] Load test with 100 concurrent disputes
+    - [ ] Set up monitoring/alerting
+  </Step>
+  
+  <Step title="Documentation">
+    - [ ] Update your docs with dispute resolution section
+    - [ ] Add Consulate logo/link (co-marketing)
+    - [ ] Create user guide for filing disputes
+  </Step>
+  
+  <Step title="Operations">
+    - [ ] Set up Consulate partner Slack channel
+    - [ ] Configure webhook for case updates
+    - [ ] Train support team on dispute process
+  </Step>
+  
+  <Step title="Go Live">
+    - [ ] Switch to production API key
+    - [ ] Announce to your users
+    - [ ] Monitor first 10 disputes closely
+  </Step>
+</Steps>
+
+---
+
+## Real-World Flow: Locus + Consulate
+
+```
+User's Agent                 Locus                    Consulate
+     |                         |                          |
+     |--- process_payment ---->|                          |
+     |                         |--- (payment fails) ---   |
+     |<--- payment_failed -----|                          |
+     |                         |                          |
+     |-- file_dispute -------->|                          |
+     |                         |--- (proxy) ------------->|
+     |                         |                          |-- creates case
+     |                         |                          |-- assigns panel
+     |                         |<--- case_filed ----------|
+     |<--- dispute_filed ------|                          |
+     |                         |                          |
+     |                         |                          |-- deliberation
+     |                         |                          |
+     |                         |<--- ruling_issued -------|
+     |<--- dispute_resolved ---|                          |
+     |                         |                          |
+     |--- (collects award) --->|<--- (enforces ruling) ---|
+```
+
+---
+
+## Partner Agreement Terms
+
+<Info>
+**Standard Partner Terms:**
+
+- **Revenue Share**: 30% of arbitration fees from your referred cases
+- **SLA**: 99.9% uptime for MCP endpoints
+- **Support**: Dedicated partner Slack channel
+- **Rate Limits**: 10,000 requests/minute (vs. 1,000 for standard)
+- **Custom Features**: Available for partners with >100 cases/month
+- **Contract**: Month-to-month, cancel anytime
+</Info>
+
+---
+
+## FAQ for Partners
+
+<AccordionGroup>
+  <Accordion title="Do my users need separate Consulate accounts?">
+    **No** - If you use the proxy pattern, you use YOUR partner API key. Users only interact with your platform.
+  </Accordion>
+  
+  <Accordion title="What if Consulate changes their API?">
+    We maintain backward compatibility and give 90-day notice for breaking changes. Plus, MCP is a stable protocol.
+  </Accordion>
+  <Accordion title="Can we white-label the dispute resolution?">
+    Yes! We provide:
+    - Custom tracking URL domains
+    - Your branding on case pages
+    - Email notifications from your domain
+    
+    Example: `disputes.paywithlocus.com/case_xyz` instead of `consulatehq.com/cases/case_xyz`
+  </Accordion>
+  
+  <Accordion title="What about liability?">
+    Consulate is liable for arbitration quality. You're not responsible for case outcomes, only for correct routing of disputes to our platform.
+  </Accordion>
+  
+  <Accordion title="How do we handle refunds/enforcement?">
+    When Consulate rules in buyer's favor, we notify you via webhook. You execute the refund through your normal payment flow. We provide the binding determination as legal justification.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Partner Application" icon="handshake" href="mailto:partners@consulatehq.com">
+    Email us to become a partner
+  </Card>
+  
+  <Card title="Sandbox Access" icon="flask" href="mailto:partners@consulatehq.com">
+    Request sandbox API key
+  </Card>
+  
+  <Card title="MCP Tools Reference" icon="book" href="/mcp-tools">
+    See all available tools
+  </Card>
+  
+  <Card title="Technical Support" icon="headset" href="mailto:support@consulatehq.com">
+    Get integration help
+  </Card>
+</CardGroup>
+
+---
+
+## Contact
+
+**Partner Inquiries**: partners@consulatehq.com  
+**Integration Support**: support@consulatehq.com  
+**Slack**: #consulate-partners (after onboarding)
+
+**Typical integration timeline:**
+- Kickoff call: 1 hour
+- Integration: 2-4 hours
+- Testing: 1-2 hours  
+- Go live: Same day
+
+**Total**: Partners typically go live within 24 hours of kickoff.
+
