@@ -46,6 +46,7 @@ export const createTestJudge = (suffix = Date.now()) => ({
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const API_BASE_URL = process.env.API_BASE_URL || 'https://api.consulatehq.com';
+export const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || 'https://consulatehq.com';
 // USE_LIVE_API is true when testing against production (default), false when explicitly targeting test env
 export const USE_LIVE_API = !process.env.API_BASE_URL || API_BASE_URL.includes('consulatehq.com') || API_BASE_URL.includes('convex.site');
 
