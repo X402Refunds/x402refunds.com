@@ -1,14 +1,18 @@
 import { FileText, BookOpen, Code, FileCode, Zap, Shield, GitBranch } from "lucide-react"
 import Link from "next/link"
-import { getAllDocs } from "@/lib/docs"
+import { getAllDocs, getDocBySlug } from "@/lib/docs"
 
 export const metadata = {
   title: "Documentation - Consulate",
   description: "Complete documentation for Consulate's agentic dispute arbitration platform",
 }
 
-export default function DocsPage() {
+export default async function DocsPage() {
   const allDocs = getAllDocs();
+  const readmeDoc = await getDocBySlug(['README']);
+  
+  // Filter out README from docs list (it's displayed separately as main content)
+  const docsWithoutReadme = allDocs.filter(doc => doc.slug.join('/') !== 'README');
   
   // Group docs by category from metadata
   const categorizeDoc = (doc: typeof allDocs[0]) => {
@@ -16,7 +20,7 @@ export default function DocsPage() {
     return category;
   };
   
-  const categories = allDocs.reduce((acc, doc) => {
+  const categories = docsWithoutReadme.reduce((acc, doc) => {
     const category = categorizeDoc(doc);
     if (!acc[category]) acc[category] = [];
     acc[category].push(doc);
@@ -34,30 +38,41 @@ export default function DocsPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-slate-900 mb-4">
-          Documentation
-        </h1>
-        <p className="text-xl text-slate-600 mb-6">
-          Everything you need to integrate with Consulate&apos;s automated dispute arbitration platform
-        </p>
-        <div className="flex gap-4">
-          <Link 
-            href="/docs/AGENT_INTEGRATION_GUIDE"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Zap className="h-5 w-5 mr-2" />
-            Quick Start
-          </Link>
-          <Link 
-            href="/docs/api/endpoints"
-            className="inline-flex items-center px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <Code className="h-5 w-5 mr-2" />
-            API Reference
-          </Link>
+      {/* README Content */}
+      {readmeDoc && (
+        <div className="mb-12">
+          <div
+            className="prose prose-slate max-w-none
+              prose-headings:font-bold prose-headings:text-slate-900
+              prose-h1:text-4xl prose-h1:mb-6
+              prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2
+              prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+              prose-p:text-slate-700 prose-p:leading-7 prose-p:mb-4
+              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+              prose-strong:text-slate-900 prose-strong:font-semibold
+              prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
+              prose-li:text-slate-700 prose-li:my-2"
+            dangerouslySetInnerHTML={{ __html: readmeDoc.htmlContent || '' }}
+          />
         </div>
+      )}
+
+      {/* Quick Action Buttons */}
+      <div className="flex gap-4 mb-12">
+        <Link 
+          href="/docs/AGENT_INTEGRATION_GUIDE"
+          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Zap className="h-5 w-5 mr-2" />
+          Quick Start
+        </Link>
+        <Link 
+          href="/docs/api/endpoints"
+          className="inline-flex items-center px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+        >
+          <Code className="h-5 w-5 mr-2" />
+          API Reference
+        </Link>
       </div>
 
       {/* Quick Links Cards */}
