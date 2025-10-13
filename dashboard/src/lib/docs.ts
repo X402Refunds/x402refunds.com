@@ -4,7 +4,7 @@ import matter from 'gray-matter';
 import { remark } from 'remark';
 import remarkHtml from 'remark-html';
 
-const docsDirectory = path.join(process.cwd(), '..', 'docs');
+const docsDirectory = path.join(process.cwd(), '..', 'mintlify-docs');
 
 export interface DocMetadata {
   title: string;

@@ -16,7 +16,7 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
               <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-white transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-white transition-colors">Documentation</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">
@@ -24,7 +24,7 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/about', '_self')} className="hover:text-white transition-colors">About</button></li>
               <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-white transition-colors">Pricing</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-white transition-colors">Docs</button></li>
+              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-white transition-colors">Docs</button></li>
             </ul>
           </div>
         </div>

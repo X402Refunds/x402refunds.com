@@ -124,7 +124,7 @@ export default async function DocPage({ params }: DocPageProps) {
       {/* Edit on GitHub Link */}
       <div className="mt-12 pt-8 border-t border-slate-200">
         <a
-          href={`https://github.com/consulatehq/consulate/edit/main/docs/${slug.join('/')}.md`}
+          href={`https://github.com/consulatehq/consulate/edit/main/mintlify-docs/${slug.join('/')}.mdx`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-slate-600 hover:text-blue-600 inline-flex items-center gap-2"
