@@ -82,27 +82,30 @@ export default async function DocPage({ params }: DocPageProps) {
           <div
             className="prose prose-slate max-w-none
               prose-headings:font-bold prose-headings:text-slate-900 prose-headings:scroll-mt-20
-              prose-h1:text-3xl prose-h1:mb-6
-              prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200
-              prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-              prose-h4:text-lg prose-h4:mt-6 prose-h4:mb-2
-              prose-p:text-slate-700 prose-p:leading-7 prose-p:mb-4
-              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-blue-700
-              prose-code:text-sm prose-code:bg-slate-100 prose-code:text-slate-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
-              prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-pre:rounded-lg prose-pre:shadow-lg prose-pre:p-4 prose-pre:overflow-x-auto
-              prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
-              prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
-              prose-li:text-slate-700 prose-li:my-2 prose-li:leading-7
-              prose-strong:text-slate-900 prose-strong:font-semibold
+              prose-h1:text-4xl prose-h1:mb-8 prose-h1:leading-tight
+              prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h2:pb-3 prose-h2:border-b-2 prose-h2:border-slate-300
+              prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-slate-800
+              prose-h4:text-xl prose-h4:mt-8 prose-h4:mb-3 prose-h4:text-slate-700
+              prose-p:text-base prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-5
+              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-blue-700 prose-a:transition-colors
+              prose-code:text-sm prose-code:bg-slate-100 prose-code:text-rose-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:font-medium prose-code:before:content-[''] prose-code:after:content-['']
+              prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-pre:rounded-xl prose-pre:shadow-xl prose-pre:p-5 prose-pre:overflow-x-auto prose-pre:my-6 prose-pre:border prose-pre:border-slate-700
+              prose-ul:list-none prose-ul:pl-0 prose-ul:my-6 prose-ul:space-y-3
+              prose-ol:list-none prose-ol:pl-0 prose-ol:my-6 prose-ol:space-y-3 prose-ol:counter-reset-[item]
+              prose-li:text-slate-700 prose-li:leading-relaxed prose-li:pl-8 prose-li:relative prose-li:before:absolute prose-li:before:left-0 prose-li:before:text-blue-600 prose-li:before:font-bold
+              prose-ul>li:before:content-['→'] prose-ul>li:before:text-lg
+              prose-ol>li:before:counter-increment-[item] prose-ol>li:before:content-[counter(item)'.']
+              prose-strong:text-slate-900 prose-strong:font-bold
               prose-em:text-slate-700 prose-em:italic
-              prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-6 prose-blockquote:rounded-r
-              prose-table:w-full prose-table:border-collapse prose-table:my-6
-              prose-thead:bg-slate-100 prose-thead:border-b-2 prose-thead:border-slate-300
-              prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-slate-900
-              prose-td:px-4 prose-td:py-3 prose-td:border-b prose-td:border-slate-200
-              prose-tr:hover:bg-slate-50
-              prose-hr:border-slate-200 prose-hr:my-8
-              prose-img:rounded-lg prose-img:shadow-md"
+              prose-blockquote:border-l-4 prose-blockquote:border-blue-600 prose-blockquote:bg-gradient-to-r prose-blockquote:from-blue-50 prose-blockquote:to-transparent prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:shadow-sm prose-blockquote:not-italic
+              prose-blockquote>p:text-slate-800 prose-blockquote>p:font-medium
+              prose-table:w-full prose-table:border-collapse prose-table:my-8 prose-table:shadow-md prose-table:rounded-lg prose-table:overflow-hidden
+              prose-thead:bg-gradient-to-r prose-thead:from-slate-700 prose-thead:to-slate-800 prose-thead:text-white
+              prose-th:px-6 prose-th:py-4 prose-th:text-left prose-th:font-bold prose-th:text-sm prose-th:uppercase prose-th:tracking-wider
+              prose-td:px-6 prose-td:py-4 prose-td:border-b prose-td:border-slate-200 prose-td:text-slate-700
+              prose-tr:even:bg-slate-50 prose-tr:hover:bg-blue-50 prose-tr:transition-colors
+              prose-hr:border-slate-300 prose-hr:my-12 prose-hr:border-t-2
+              prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8 prose-img:border prose-img:border-slate-200"
             dangerouslySetInnerHTML={{ __html: doc.htmlContent || '' }}
           />
         </div>
