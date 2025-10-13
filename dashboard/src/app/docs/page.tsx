@@ -246,18 +246,20 @@ export default function DocsPage() {
       <div className="mt-16 p-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200">
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Additional Resources</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link 
-            href="/rules"
+          <a 
+            href="https://docs.consulatehq.com/expert-determination-rules"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-3 p-4 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-200"
           >
             <div className="p-2 bg-slate-200 rounded-lg">
               <FileText className="h-5 w-5 text-slate-700" />
             </div>
             <div>
-              <div className="font-semibold text-slate-900">Arbitration Rules</div>
-              <div className="text-sm text-slate-600">Published standards v1.0</div>
+              <div className="font-semibold text-slate-900">Expert Determination Rules</div>
+              <div className="text-sm text-slate-600">Published standards</div>
             </div>
-          </Link>
+          </a>
           <a 
             href="https://github.com/consulatehq/consulate"
             target="_blank"
