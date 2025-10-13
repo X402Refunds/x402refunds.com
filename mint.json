@@ -83,6 +83,14 @@
   "theme": "maple",
   "api": {
     "baseUrl": "https://perceptive-lyrebird-89.convex.site"
-  }
+  },
+  "ignore": [
+    "docs/standards/**/*.xml",
+    "docs/standards/**/*.md",
+    "docs/**/*.md",
+    "docs/api/README.md",
+    "docs/api/endpoints.md",
+    "docs/README.md"
+  ]
 }
 
