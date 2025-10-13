@@ -76,10 +76,16 @@ export async function getDocBySlug(slug: string[]): Promise<DocFile | null> {
     // Build file path from slug
     const fileName = slug[slug.length - 1] + '.md';
     const dirPath = slug.slice(0, -1);
-    const filePath = path.join(docsDirectory, ...dirPath, fileName);
+    let filePath = path.join(docsDirectory, ...dirPath, fileName);
 
+    // If file doesn't exist, check for README.md in that directory
     if (!fs.existsSync(filePath)) {
-      return null;
+      const readmePath = path.join(docsDirectory, ...slug, 'README.md');
+      if (fs.existsSync(readmePath)) {
+        filePath = readmePath;
+      } else {
+        return null;
+      }
     }
 
     const fileContents = fs.readFileSync(filePath, 'utf8');

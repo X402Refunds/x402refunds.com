@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-13T13:52:26.074Z
+**Auto-generated on**: 2025-10-13T14:00:13.959Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -198,19 +198,19 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Public Documentation (11 files)
+### Public Documentation (12 files)
 - docs/AGENT_DISCOVERY.md
 - docs/AGENT_FAILURE_MODES.md
 - docs/AGENT_INTEGRATION_GUIDE.md
 - docs/AGENT_INTEGRATION_STRATEGY.md
 - docs/README.md
+- docs/api/README.md
 - docs/api/endpoints.md
 - docs/dispute-types.md
 - docs/standards/README.md
 - docs/standards/code-of-ethics-ai-arbitrators.md
-- docs/standards/consulate-arbitration-rules-v1.0.md
 
-... and 1 more in docs/
+... and 2 more in docs/
 
 ### Internal Documentation (39 files)
 - internal/README.md
@@ -305,5 +305,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/13/2025, 6:52:26 AM
-Files scanned: 2713
+Generated: 10/13/2025, 7:00:13 AM
+Files scanned: 2711
