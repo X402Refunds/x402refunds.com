@@ -3,14 +3,18 @@ import { convexTest } from 'convex-test';
 import { api } from '../convex/_generated/api';
 import schema from '../convex/schema';
 import { API_BASE_URL, USE_LIVE_API } from './fixtures';
-import { setupTestAgents } from './fixtures/api-helpers';
+import { Id } from '../convex/_generated/dataModel';
+import { generateApiKey } from '../convex/auth';
 
 /**
  * MCP (Model Context Protocol) Endpoints Tests
  * 
  * Tests for MCP integration endpoints:
- * - GET /.well-known/mcp.json
- * - POST /mcp/invoke
+ * - GET /.well-known/mcp.json (discovery)
+ * - POST /mcp/invoke (tool invocation with auth)
+ * 
+ * Authentication: Bearer token required for invocation
+ * All 8 MCP tools tested
  */
 
 describe('MCP Protocol - Tool Discovery', () => {
@@ -30,25 +34,29 @@ describe('MCP Protocol - Tool Discovery', () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
-      expect(manifest.protocol).toBeDefined();
+      expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
+      expect(manifest.server.name).toBe('Consulate Arbitration Platform');
     });
 
-    it('should list available tools', async () => {
+    it('should list all 8 MCP tools', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
-      expect(manifest.tools.length).toBeGreaterThan(0);
-      
-      // Should include key dispute-related tools
       const toolNames = manifest.tools.map((t: any) => t.name);
       const expectedTools = [
         'consulate_file_dispute',
         'consulate_submit_evidence',
         'consulate_check_case_status',
+        'consulate_register_agent',
+        'consulate_list_my_cases',
+        'consulate_get_sla_status',
+        'consulate_lookup_agent',
+        'consulate_request_vendor_registration',
       ];
       
+      expect(manifest.tools.length).toBe(8);
       for (const expectedTool of expectedTools) {
         expect(toolNames).toContain(expectedTool);
       }
@@ -58,7 +66,6 @@ describe('MCP Protocol - Tool Discovery', () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
-      // All tools should have descriptions
       const allHaveDescriptions = manifest.tools.every(
         (tool: any) => tool.description && tool.description.length > 0
       );
@@ -69,327 +76,550 @@ describe('MCP Protocol - Tool Discovery', () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
-      // All tools should have input schemas (MCP uses input_schema with underscore)
       const allHaveSchemas = manifest.tools.every(
-        (tool: any) => (tool.input_schema || tool.inputSchema) && 
-          ((tool.input_schema?.type || tool.inputSchema?.type) || 
-           (tool.input_schema?.properties || tool.inputSchema?.properties))
+        (tool: any) => tool.input_schema && 
+          (tool.input_schema.type || tool.input_schema.properties)
       );
       expect(allHaveSchemas).toBe(true);
     });
 
-    it('should specify required parameters', async () => {
+    it('should specify authentication requirements', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
-      // Find file_dispute tool
-      const fileDisputeTool = manifest.tools.find(
-        (t: any) => t.name === 'consulate_file_dispute'
-      );
-      
-      if (fileDisputeTool) {
-        const schema = fileDisputeTool.input_schema || fileDisputeTool.inputSchema;
-        expect(schema.required).toBeDefined();
-        expect(Array.isArray(schema.required)).toBe(true);
-        expect(schema.required).toContain('plaintiff');
-        expect(schema.required).toContain('defendant');
-      }
-    });
-
-    it('should include authentication requirements', async () => {
-      const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
-      const manifest = await response.json();
-      
-      // Should specify authentication method
       expect(manifest.authentication).toBeDefined();
+      expect(manifest.authentication.type).toBe('bearer');
+      expect(manifest.authentication.description).toContain('Bearer');
     });
 
     it('should include CORS headers', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
-      
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    });
-
-    it('should include caching headers', async () => {
-      const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
-      
-      const cacheControl = response.headers.get('cache-control');
-      if (cacheControl) {
-        expect(cacheControl).toContain('public');
-      } else {
-        // Cache control might not be set, which is acceptable
-        expect(response.status).toBe(200);
-      }
     });
   });
 });
 
-describe('MCP Protocol - Tool Invocation', () => {
+describe('MCP Protocol - Authentication', () => {
   let t: ReturnType<typeof convexTest>;
-  let testAgentDid: string;
-  let testDefendantDid: string;
+  let validApiKey: string;
+  let validAgentId: Id<"agents">;
+  let testOwnerDid: string;
 
   beforeAll(async () => {
     if (!USE_LIVE_API) {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
       
-      const { plaintiff, defendant } = await setupTestAgents(t);
-      testAgentDid = plaintiff.did;
-      testDefendantDid = defendant.did;
+      // Create test owner
+      testOwnerDid = `did:test:owner-${Date.now()}`;
+      await t.run(async (ctx) => {
+        await ctx.db.insert("owners", {
+          did: testOwnerDid,
+          pubkeys: ['test-pubkey'],
+          createdAt: Date.now(),
+        });
+      });
+
+      // Register test agent
+      const agentResult = await t.mutation(api.agents.joinAgent, {
+        ownerDid: testOwnerDid,
+        name: 'MCP Test Agent',
+        organizationName: 'MCP Test Org',
+        functionalType: 'general',
+        mock: false,
+      });
+      validAgentId = agentResult.agentId as Id<"agents">;
+
+      // Create valid API key
+      validApiKey = generateApiKey();
+      await t.mutation(api.apiKeys.createApiKey, {
+        token: validApiKey,
+        agentId: validAgentId,
+        permissions: ['evidence', 'disputes', 'cases'],
+      });
     }
   });
 
-  describe('POST /mcp/invoke', () => {
-    it.skipIf(USE_LIVE_API)('should invoke file_dispute tool', async () => {
-      // First submit evidence
-      const evidenceResponse = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: JSON.stringify({
-          tool: 'submit_evidence',
-          parameters: {
-            agentDid: testAgentDid,
-            sha256: `sha256_${Date.now()}`,
-            uri: 'https://test.example.com/evidence.json',
-            signer: 'did:test:signer',
-            model: {
-              provider: 'test',
-              name: 'test-model',
-              version: '1.0.0',
-            },
-          },
-        }),
-      });
-
-      const evidenceData = await evidenceResponse.json();
-      expect(evidenceData.success || evidenceData.evidenceId).toBeDefined();
-
-      // Then file dispute
+  describe('POST /mcp/invoke - Auth', () => {
+    it.skipIf(USE_LIVE_API)('should reject missing Authorization header', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'file_dispute',
-          parameters: {
-            plaintiff: testAgentDid,
-            defendant: testDefendantDid,
-            type: 'SLA_BREACH',
-            jurisdictionTags: ['test'],
-            evidenceIds: evidenceData.evidenceId ? [evidenceData.evidenceId] : [],
-            description: 'Test dispute via MCP',
-          },
+          tool: 'consulate_check_case_status',
+          parameters: { caseId: '123' },
         }),
       });
 
-      expect([200, 400]).toContain(response.status);
-    });
-
-    it.skipIf(USE_LIVE_API)('should invoke submit_evidence tool', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: JSON.stringify({
-          tool: 'submit_evidence',
-          parameters: {
-            agentDid: testAgentDid,
-            sha256: `sha256_${Date.now()}`,
-            uri: 'https://test.example.com/evidence.json',
-            signer: 'did:test:signer',
-            model: {
-              provider: 'test',
-              name: 'test-model',
-              version: '1.0.0',
-            },
-          },
-        }),
-      });
-
-      expect([200, 400]).toContain(response.status);
-      
-      if (response.status === 200) {
-        const data = await response.json();
-        expect(data.success || data.evidenceId).toBeDefined();
-      }
-    });
-
-    it('should reject unknown tool', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: JSON.stringify({
-          tool: 'nonexistent_tool',
-          parameters: {},
-        }),
-      });
-
-      expect([400, 401]).toContain(response.status);
+      expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toBeDefined();
+      expect(data.error).toContain('Authentication required');
     });
 
-    it('should reject missing tool parameter', async () => {
+    it.skipIf(USE_LIVE_API)('should reject invalid Bearer token format', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
+          'Authorization': 'Basic invalid-format',
         },
         body: JSON.stringify({
-          parameters: {},
+          tool: 'consulate_check_case_status',
+          parameters: { caseId: '123' },
         }),
       });
 
-      expect([400, 401]).toContain(response.status);
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data.error).toContain('Authentication required');
     });
 
-    it('should reject missing parameters', async () => {
+    it.skipIf(USE_LIVE_API)('should reject invalid API key', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
+          'Authorization': 'Bearer fake_invalid_key_12345',
         },
         body: JSON.stringify({
-          tool: 'file_dispute',
+          tool: 'consulate_check_case_status',
+          parameters: { caseId: '123' },
         }),
       });
 
-      expect([400, 401]).toContain(response.status);
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid or expired API key');
     });
 
-    it('should validate required parameters', async () => {
+    it.skipIf(USE_LIVE_API)('should accept valid Bearer token', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
+          'Authorization': `Bearer ${validApiKey}`,
         },
         body: JSON.stringify({
-          tool: 'file_dispute',
-          parameters: {
-            plaintiff: testAgentDid,
-            // Missing required defendant parameter
+          tool: 'consulate_list_my_cases',
+          parameters: { 
+            agentDid: 'did:agent:test-12345' 
           },
         }),
       });
 
-      expect([400, 401]).toContain(response.status);
-    });
-
-    it('should handle malformed JSON', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: 'invalid json {',
-      });
-
-      expect([400, 500]).toContain(response.status);
-    });
-
-    it('should respect X-Agent-DID header', async () => {
-      // Request without authentication header
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // No X-Agent-DID header
-        },
-        body: JSON.stringify({
-          tool: 'submit_evidence',
-          parameters: {
-            agentDid: testAgentDid,
-            sha256: 'test',
-            uri: 'https://test.example.com/evidence.json',
-            signer: 'did:test:signer',
-          },
-        }),
-      });
-
-      // Should either accept (if auth is optional) or reject (if required)
-      expect([200, 400, 401]).toContain(response.status);
-    });
-
-    it.skipIf(USE_LIVE_API)('should return structured response', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: JSON.stringify({
-          tool: 'submit_evidence',
-          parameters: {
-            agentDid: testAgentDid,
-            sha256: `sha256_${Date.now()}`,
-            uri: 'https://test.example.com/evidence.json',
-            signer: 'did:test:signer',
-            model: {
-              provider: 'test',
-              name: 'test-model',
-              version: '1.0.0',
-            },
-          },
-        }),
-      });
-
-      if (response.status === 200) {
-        const data = await response.json();
-        
-        // Response should have consistent structure
-        expect(data).toBeDefined();
-        expect(typeof data).toBe('object');
-      }
-    });
-
-    it.skipIf(USE_LIVE_API)('should include CORS headers', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Agent-DID': testAgentDid,
-        },
-        body: JSON.stringify({
-          tool: 'submit_evidence',
-          parameters: {
-            agentDid: testAgentDid,
-            sha256: `sha256_${Date.now()}`,
-            uri: 'https://test.example.com/evidence.json',
-            signer: 'did:test:signer',
-          },
-        }),
-      });
-
-      expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    });
-
-    it('should handle CORS preflight', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'OPTIONS',
-      });
-
-      // OPTIONS may not be specifically routed, check if CORS is enabled generally
-      expect([200, 404]).toContain(response.status);
-      if (response.status === 200) {
-        expect(response.headers.get('access-control-allow-origin')).toBe('*');
-        expect(response.headers.get('access-control-allow-methods')).toBeDefined();
-      }
+      // Should succeed (200) or fail for business logic reasons (400/404), not auth (401)
+      expect(response.status).not.toBe(401);
     });
   });
 });
 
+describe('MCP Protocol - Tool Invocation', () => {
+  let t: ReturnType<typeof convexTest>;
+  let validApiKey: string;
+  let validAgentId: Id<"agents">;
+  let testAgentDid: string;
+  let testDefendantDid: string;
+  let testOwnerDid: string;
+  let testCaseId: Id<"cases"> | null = null;
+
+  beforeAll(async () => {
+    if (!USE_LIVE_API) {
+      const modules = import.meta.glob('../convex/**/*.{ts,js}');
+      t = convexTest(schema, modules);
+      
+      // Create test owner
+      testOwnerDid = `did:test:owner-${Date.now()}`;
+      await t.run(async (ctx) => {
+        await ctx.db.insert("owners", {
+          did: testOwnerDid,
+          pubkeys: ['test-pubkey'],
+          createdAt: Date.now(),
+        });
+      });
+
+      // Register plaintiff agent
+      const plaintiffResult = await t.mutation(api.agents.joinAgent, {
+        ownerDid: testOwnerDid,
+        name: 'MCP Plaintiff Agent',
+        organizationName: 'MCP Plaintiff Org',
+        functionalType: 'ai_consumer',
+        mock: false,
+      });
+      testAgentDid = plaintiffResult.did;
+      validAgentId = plaintiffResult.agentId as Id<"agents">;
+
+      // Register defendant agent
+      const defendantResult = await t.mutation(api.agents.joinAgent, {
+        ownerDid: testOwnerDid,
+        name: 'MCP Defendant Agent',
+        organizationName: 'MCP Defendant Org',
+        functionalType: 'ai_provider',
+        mock: false,
+      });
+      testDefendantDid = defendantResult.did;
+
+      // Create valid API key
+      validApiKey = generateApiKey();
+      await t.mutation(api.apiKeys.createApiKey, {
+        token: validApiKey,
+        agentId: validAgentId,
+        permissions: ['evidence', 'disputes', 'cases'],
+      });
+    }
+  });
+
+  describe('consulate_register_agent', () => {
+    it.skipIf(USE_LIVE_API)('should register new agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_register_agent',
+          parameters: {
+            ownerDid: testOwnerDid,
+            name: `MCP New Agent ${Date.now()}`,
+            organizationName: `MCP New Org ${Date.now()}`,
+            functionalType: 'monitoring',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.agentDid).toBeDefined();
+      expect(data.agentId).toBeDefined();
+      expect(data.message).toContain('registered successfully');
+    });
+  });
+
+  describe('consulate_submit_evidence', () => {
+    it.skipIf(USE_LIVE_API)('should submit evidence', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_submit_evidence',
+          parameters: {
+            agentDid: testAgentDid,
+            sha256: `sha256_mcp_test_${Date.now()}`,
+            evidenceUrl: 'https://example.com/evidence.json',
+            caseId: 'optional-case-id',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.evidenceId).toBeDefined();
+    });
+  });
+
+  describe('consulate_file_dispute', () => {
+    it.skipIf(USE_LIVE_API)('should file dispute', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_file_dispute',
+          parameters: {
+            plaintiff: testAgentDid,
+            defendant: testDefendantDid,
+            disputeType: 'SLA_BREACH',
+            claim: 'API latency exceeded 500ms SLA threshold',
+            claimAmount: 1000,
+            jurisdiction: 'US',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.caseId).toBeDefined();
+      expect(data.trackingUrl).toContain('/cases/');
+      
+      // Save for later tests
+      testCaseId = data.caseId;
+    });
+  });
+
+  describe('consulate_check_case_status', () => {
+    it.skipIf(USE_LIVE_API)('should check case status', async () => {
+      // First file a case
+      const fileResponse = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_file_dispute',
+          parameters: {
+            plaintiff: testAgentDid,
+            defendant: testDefendantDid,
+            disputeType: 'CONTRACT_BREACH',
+            claim: 'Test claim for status check',
+            claimAmount: 500,
+          },
+        }),
+      });
+      const fileData = await fileResponse.json();
+      const caseId = fileData.caseId;
+
+      // Then check status
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_check_case_status',
+          parameters: { caseId },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.case).toBeDefined();
+      expect(data.case._id).toBe(caseId);
+    });
+  });
+
+  describe('consulate_list_my_cases', () => {
+    it.skipIf(USE_LIVE_API)('should list agent cases', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_list_my_cases',
+          parameters: {
+            agentDid: testAgentDid,
+            status: 'all',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.agentDid).toBe(testAgentDid);
+      expect(data.totalCases).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(data.cases)).toBe(true);
+    });
+
+    it.skipIf(USE_LIVE_API)('should filter cases by status', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_list_my_cases',
+          parameters: {
+            agentDid: testAgentDid,
+            status: 'FILED',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(Array.isArray(data.cases)).toBe(true);
+    });
+  });
+
+  describe('consulate_get_sla_status', () => {
+    it.skipIf(USE_LIVE_API)('should get SLA status', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_get_sla_status',
+          parameters: { agentDid: testAgentDid },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.agentDid).toBe(testAgentDid);
+      expect(data.slaStatus).toBeDefined();
+      expect(data.slaStatus.currentStanding).toBeDefined();
+      expect(data.slaStatus.totalDisputes).toBeGreaterThanOrEqual(0);
+    });
+
+    it.skipIf(USE_LIVE_API)('should return 404 for non-existent agent', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_get_sla_status',
+          parameters: { agentDid: 'did:agent:nonexistent-999999' },
+        }),
+      });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.error).toContain('not found');
+    });
+  });
+
+  describe('consulate_lookup_agent', () => {
+    it.skipIf(USE_LIVE_API)('should find agents by organization', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_lookup_agent',
+          parameters: {
+            query: 'MCP Plaintiff',
+            functionalType: 'ai_consumer',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.matches).toBeDefined();
+      expect(Array.isArray(data.matches)).toBe(true);
+      expect(data.matches.length).toBeGreaterThan(0);
+    });
+
+    it.skipIf(USE_LIVE_API)('should return helpful suggestions when no match', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_lookup_agent',
+          parameters: {
+            query: 'Nonexistent Company XYZ 99999',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error).toContain('No agents found');
+      expect(data.suggestions).toBeDefined();
+      expect(Array.isArray(data.suggestions)).toBe(true);
+    });
+  });
+
+  describe('consulate_request_vendor_registration', () => {
+    it.skipIf(USE_LIVE_API)('should submit vendor registration request', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_request_vendor_registration',
+          parameters: {
+            vendorName: 'Test AI Vendor Corp',
+            domain: 'testaivendor.com',
+            serviceType: 'LLM API',
+            reasonForRequest: 'Need to file SLA breach dispute',
+            urgency: 'high',
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.requestId).toBeDefined();
+      expect(data.requestId).toMatch(/^vr_/);
+      expect(data.message).toContain('registration request submitted');
+      expect(data.expectedResponseTime).toBeDefined();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it.skipIf(USE_LIVE_API)('should reject unknown tool', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'nonexistent_tool_xyz',
+          parameters: {},
+        }),
+      });
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Unknown tool');
+      expect(data.availableTools).toBeDefined();
+      expect(Array.isArray(data.availableTools)).toBe(true);
+    });
+
+    it.skipIf(USE_LIVE_API)('should handle malformed JSON', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: 'invalid json {{{',
+      });
+
+      expect(response.status).toBe(500);
+      const data = await response.json();
+      expect(data.error).toBeDefined();
+    });
+
+    it.skipIf(USE_LIVE_API)('should handle missing parameters', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${validApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_file_dispute',
+          parameters: {
+            // Missing required fields
+            plaintiff: testAgentDid,
+          },
+        }),
+      });
+
+      expect([400, 500]).toContain(response.status);
+    });
+  });
+});

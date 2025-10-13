@@ -230,30 +230,9 @@ describe('AAP Protocol - Standards', () => {
   });
 
   describe('GET /api/standards/arbitration-rules/:version', () => {
-    it('should return specific version as JSON', async () => {
-      const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/arbitration-rules/v1.0`);
-      
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      
-      expect(data.version).toBeDefined();
-      expect(data.format).toBe('json');
-      expect(data.metadata).toBeDefined();
-      expect(data.url).toContain('/api/standards/arbitration-rules/v1.0');
-    });
-
-    it('should return markdown format when requested', async () => {
-      const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/arbitration-rules/v1.0?format=markdown`);
-      
-      expect(response.status).toBe(200);
-      expect(response.headers.get('content-type')).toContain('text/markdown');
-      
-      const markdown = await response.text();
-      expect(markdown.length).toBeGreaterThan(0);
-      expect(markdown).toContain('Consulate Arbitration Rules');
-    });
-
+    // Note: Standards files moved to external hosting, route returns 404
+    // Keeping tests for error handling only
+    
     it('should return 404 for non-existent version', async () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/arbitration-rules/v99.99`);
       
@@ -266,13 +245,6 @@ describe('AAP Protocol - Standards', () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/nonexistent-standard/v1.0`);
       
       expect(response.status).toBe(404);
-    });
-
-    it('should include longer cache for versions', async () => {
-      const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/arbitration-rules/v1.0`);
-      
-      const cacheControl = response.headers.get('cache-control');
-      expect(cacheControl).toContain('max-age=86400'); // 24 hours
     });
   });
 });

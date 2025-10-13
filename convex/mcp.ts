@@ -12,6 +12,7 @@
 
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
+import { validateBearerAuth, extractBearerToken } from "./auth";
 
 /**
  * MCP Tool Definitions
@@ -267,11 +268,23 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const body = await request.json();
     const { tool, parameters } = body;
     
-    // Validate auth (in production, check Bearer token)
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Extract and validate Bearer token
+    const bearerToken = extractBearerToken(request.headers);
+    if (!bearerToken) {
       return new Response(JSON.stringify({
         error: "Authentication required. Include 'Authorization: Bearer <api_key>' header."
+      }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    
+    // Validate the token
+    const authResult = await validateBearerAuth(ctx, bearerToken);
+    if (!authResult.valid) {
+      return new Response(JSON.stringify({
+        error: "Invalid or expired API key",
+        hint: "Register an agent and create an API key using the createApiKey mutation"
       }), {
         status: 401,
         headers: { "Content-Type": "application/json" }
