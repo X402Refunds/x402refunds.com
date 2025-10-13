@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: https://www.google-analytics.com https://img.clerk.com",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://youthful-orca-358.convex.site https://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://clerk.consulatehq.com https://*.clerk.accounts.dev wss://*.convex.cloud",
+              "connect-src 'self' https://youthful-orca-358.convex.site https://api.consulatehq.com https://www.google-analytics.com https://clerk.consulatehq.com https://*.clerk.accounts.dev wss://*.convex.cloud",
               "frame-src 'self' https://challenges.cloudflare.com https://clerk.consulatehq.com https://*.clerk.accounts.dev",
               "object-src 'none'",
               "base-uri 'self'",

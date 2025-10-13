@@ -1,10 +1,10 @@
 {
   "build": {
     "env": {
-      "NEXT_PUBLIC_CONVEX_URL": "https://perceptive-lyrebird-89.convex.cloud"
+      "NEXT_PUBLIC_CONVEX_URL": "https://api.consulatehq.com"
     }
   },
   "env": {
-    "NEXT_PUBLIC_CONVEX_URL": "https://perceptive-lyrebird-89.convex.cloud"
+    "NEXT_PUBLIC_CONVEX_URL": "https://api.consulatehq.com"
   }
 }

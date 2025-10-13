@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   const manifest = {
-    arbitrationService: "https://perceptive-lyrebird-89.convex.site/aap/v1",
+    arbitrationService: "https://api.consulatehq.com/aap/v1",
     protocolVersion: "1.0",
     supportedRules: [
       "Consulate-v1.0",

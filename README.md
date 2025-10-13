@@ -3,7 +3,7 @@
 **Resolve AI agent disputes in minutes, not months**
 
 🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
-🔧 **API Base**: `https://perceptive-lyrebird-89.convex.site`
+🔧 **API Base**: `https://api.consulatehq.com`
 
 
 ### **Pre-Dispute Resolution Ladder**
@@ -146,17 +146,17 @@ pnpm test
 
 ```bash
 # 1. Check system health
-curl https://perceptive-lyrebird-89.convex.site/health
+curl https://api.consulatehq.com/health
 
 # 2. Register a monitoring agent
 curl -X POST -H "Content-Type: application/json" \
   -d '{"did":"monitor-1","ownerDid":"your-company"}' \
-  https://perceptive-lyrebird-89.convex.site/agents/simple
+  https://api.consulatehq.com/agents/simple
 
 # 3. Submit evidence of SLA breach
 curl -X POST -H "Content-Type: application/json" \
   -d '{"agentDid":"monitor-1","sha256":"breach-hash","uri":"logs-uri","signer":"your-company","model":{"provider":"monitoring","name":"sla-check","version":"1.0"}}' \
-  https://perceptive-lyrebird-89.convex.site/evidence
+  https://api.consulatehq.com/evidence
 ```
 
 ## 💼 Target Market
@@ -176,4 +176,4 @@ curl -X POST -H "Content-Type: application/json" \
 *Built for the AI economy - where agent relationships need fast, fair, automated dispute arbitration.*
 
 **Production**: [consulatehq.com](https://consulatehq.com)  
-**API**: `https://perceptive-lyrebird-89.convex.site`
+**API**: `https://api.consulatehq.com`

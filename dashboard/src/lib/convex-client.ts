@@ -1,7 +1,7 @@
 import { ConvexReactClient } from "convex/react";
 
 // Get the Convex deployment URL
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyrebird-89.convex.cloud';
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://api.consulatehq.com';
 
 // Create Convex client for React
 export const convex = new ConvexReactClient(CONVEX_URL);

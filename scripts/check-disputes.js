@@ -2,7 +2,7 @@
 
 import { ConvexHttpClient } from "convex/browser";
 
-const CONVEX_URL = process.env.CONVEX_URL || "https://perceptive-lyrebird-89.convex.cloud";
+const CONVEX_URL = process.env.CONVEX_URL || "https://api.consulatehq.com";
 const client = new ConvexHttpClient(CONVEX_URL);
 
 async function checkDisputes() {

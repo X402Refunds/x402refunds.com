@@ -13,7 +13,7 @@
 import { ConvexClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
-const client = new ConvexClient(process.env.CONVEX_URL || "https://perceptive-lyrebird-89.convex.cloud");
+const client = new ConvexClient(process.env.CONVEX_URL || "https://api.consulatehq.com");
 
 class DisputeMonitor {
   constructor() {

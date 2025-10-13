@@ -44,7 +44,7 @@ export async function GET() {
         },
         contact: {
           email: "arbitration@consulatehq.com",
-          endpoint: "https://perceptive-lyrebird-89.convex.site"
+          endpoint: "https://api.consulatehq.com"
         }
       }
     ],
