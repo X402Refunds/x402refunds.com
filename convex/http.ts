@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
+import { mcpDiscovery, mcpInvoke } from "./mcp";
 
 const http = httpRouter();
 
@@ -38,6 +39,10 @@ http.route({
         health: "/health",
         dashboard: "/dashboard",
         
+        // MCP (Model Context Protocol) - Agent-native integration
+        mcp_discovery: "/.well-known/mcp.json",
+        mcp_invoke: "/mcp/invoke",
+        
         // Agent management
         register: "/agents/register",
         agents: "/agents",
@@ -63,6 +68,7 @@ http.route({
       },
       documentation: "https://consulate.ai/docs",
       integration: {
+        mcp: "Add Consulate MCP server to your agent for zero-friction dispute filing",
         sdk: "https://github.com/consulate-ai/agent-sdk",
         examples: "https://github.com/consulate-ai/integration-examples"
       },
@@ -102,6 +108,25 @@ http.route({
     });
   })
 });
+
+// === MCP (Model Context Protocol) ENDPOINTS ===
+// Agent-native integration for zero-friction dispute filing
+
+// MCP Discovery - agents auto-discover available tools
+http.route({
+  path: "/.well-known/mcp.json",
+  method: "GET",
+  handler: mcpDiscovery
+});
+
+// MCP Tool Invocation - agents invoke tools directly
+http.route({
+  path: "/mcp/invoke",
+  method: "POST",
+  handler: mcpInvoke
+});
+
+// === END MCP ENDPOINTS ===
 
 // Agent registration
 http.route({
