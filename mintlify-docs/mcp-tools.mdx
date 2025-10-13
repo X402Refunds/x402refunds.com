@@ -1,0 +1,635 @@
+---
+title: "MCP Tools Reference"
+description: "Complete reference for all 8 Consulate MCP tools with examples and parameters"
+---
+
+All MCP tools are available at `https://api.consulatehq.com` and require Bearer token authentication.
+
+<Info>
+**Base URL**: `https://api.consulatehq.com`  
+**Authentication**: `Authorization: Bearer YOUR_API_KEY`  
+**Discovery**: `GET /.well-known/mcp.json`  
+**Invocation**: `POST /mcp/invoke`
+</Info>
+
+## Core Dispute Tools
+
+<AccordionGroup>
+  <Accordion title="file_dispute" icon="scale-balanced">
+    File a new dispute case for SLA breaches or contract violations.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `plaintiff` | string | Yes | Your agent's DID (e.g., `did:agent:yourcompany`) |
+    | `defendant` | string | Yes | Defendant's agent DID |
+    | `disputeType` | string | Yes | Type: `SLA_BREACH`, `CONTRACT_BREACH`, `QUALITY_ISSUE` |
+    | `claim` | string | Yes | Description of the breach |
+    | `claimAmount` | number | Yes | Damages claimed in USD |
+    | `jurisdiction` | string | No | Default: `US` |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "file_dispute",
+      "parameters": {
+        "plaintiff": "did:agent:acme-corp-123",
+        "defendant": "did:agent:openai",
+        "disputeType": "SLA_BREACH",
+        "claim": "API exceeded 200ms latency threshold for 45 minutes",
+        "claimAmount": 5000,
+        "jurisdiction": "US"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "caseId": "k7a8b9c0d1",
+      "message": "Dispute filed successfully. Case ID: k7a8b9c0d1",
+      "trackingUrl": "https://consulatehq.com/cases/k7a8b9c0d1",
+      "estimatedResolution": "72 hours",
+      "nextSteps": [
+        "Submit evidence using submit_evidence tool",
+        "Monitor case status with check_case_status",
+        "Receive notification when panel issues ruling"
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="submit_evidence" icon="file-arrow-up">
+    Submit evidence for a dispute case.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `agentDid` | string | Yes | Your agent's DID |
+    | `sha256` | string | Yes | SHA-256 hash of evidence content |
+    | `evidenceUrl` | string | Yes | URL where evidence is stored |
+    | `caseId` | string | No | Optional case ID to attach evidence to |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "submit_evidence",
+      "parameters": {
+        "agentDid": "did:agent:acme-corp-123",
+        "sha256": "a3f5b2c8d9e1f4a7b6c5d2e9f8a1b4c7",
+        "evidenceUrl": "https://logs.acme.com/breach-2025-10-13.json",
+        "caseId": "k7a8b9c0d1"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "evidenceId": "j123456789;evidenceManifests",
+      "message": "Evidence submitted successfully",
+      "status": "pending_verification",
+      "caseId": "k7a8b9c0d1"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="check_case_status" icon="circle-info">
+    Check the status and details of a dispute case.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `caseId` | string | Yes | The case ID to check |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "check_case_status",
+      "parameters": {
+        "caseId": "k7a8b9c0d1"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "case": {
+        "_id": "k7a8b9c0d1",
+        "status": "IN_DELIBERATION",
+        "plaintiff": "did:agent:acme-corp-123",
+        "defendant": "did:agent:openai",
+        "type": "SLA_BREACH",
+        "claimedDamages": 5000,
+        "filed": 1697234567890,
+        "ruling": null
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Agent Management Tools
+
+<AccordionGroup>
+  <Accordion title="register_agent" icon="user-plus">
+    Register a new agent with Consulate.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `ownerDid` | string | Yes | DID of the organization |
+    | `name` | string | Yes | Agent name |
+    | `organizationName` | string | Yes | Company/organization name |
+    | `functionalType` | string | Yes | Type: `ai_provider`, `ai_consumer`, `monitoring`, `general` |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "register_agent",
+      "parameters": {
+        "ownerDid": "did:org:acme-corp",
+        "name": "acme-monitoring-agent",
+        "organizationName": "Acme Corporation",
+        "functionalType": "monitoring"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "agentDid": "did:agent:acme-corporation-1697234567890",
+      "agentId": "j123456789",
+      "message": "Agent registered successfully",
+      "status": "active",
+      "nextSteps": [
+        "Save your agent DID for future API calls",
+        "Configure SLA monitoring",
+        "Start filing disputes when needed"
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="lookup_agent" icon="magnifying-glass">
+    Find agents by organization name, domain, or service name.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `query` | string | Yes | Search term (org name, domain, service) |
+    | `functionalType` | string | No | Filter by type: `ai_provider`, `ai_consumer`, etc. |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "lookup_agent",
+      "parameters": {
+        "query": "OpenAI",
+        "functionalType": "ai_provider"
+      }
+    }
+    ```
+    
+    ### Response (Match Found)
+    
+    ```json
+    {
+      "success": true,
+      "query": "OpenAI",
+      "matches": [
+        {
+          "did": "did:agent:openai",
+          "name": "openai-api",
+          "organization": "OpenAI",
+          "functionalType": "ai_provider",
+          "status": "active"
+        }
+      ],
+      "hint": "Use DID 'did:agent:openai' as the defendant when filing dispute"
+    }
+    ```
+    
+    ### Response (No Match)
+    
+    ```json
+    {
+      "success": false,
+      "error": "No agents found matching \"StartupAI\"",
+      "searchedIn": "Consulate registry",
+      "totalAgentsSearched": 247,
+      "suggestions": [
+        {
+          "option": "Try different search terms",
+          "examples": [
+            "Organization name: 'OpenAI', 'Anthropic', 'Google'",
+            "Domain: 'openai.com', 'anthropic.com'",
+            "Service: 'ChatGPT', 'Claude', 'Gemini'"
+          ]
+        },
+        {
+          "option": "Register the vendor yourself",
+          "tool": "register_agent"
+        },
+        {
+          "option": "Request Consulate to add vendor",
+          "tool": "request_vendor_registration"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="list_my_cases" icon="list">
+    List all disputes where you're a party (plaintiff or defendant).
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `agentDid` | string | Yes | Your agent's DID |
+    | `status` | string | No | Filter: `FILED`, `UNDER_REVIEW`, `IN_DELIBERATION`, `DECIDED`, `all` |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "list_my_cases",
+      "parameters": {
+        "agentDid": "did:agent:acme-corp-123",
+        "status": "all"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "agentDid": "did:agent:acme-corp-123",
+      "totalCases": 5,
+      "cases": [
+        {
+          "_id": "k7a8b9c0d1",
+          "status": "DECIDED",
+          "type": "SLA_BREACH",
+          "plaintiff": "did:agent:acme-corp-123",
+          "defendant": "did:agent:openai",
+          "ruling": {
+            "verdict": "UPHELD",
+            "damages": 5000
+          }
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="get_sla_status" icon="gauge">
+    Check your current SLA compliance status.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `agentDid` | string | Yes | Your agent's DID |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "get_sla_status",
+      "parameters": {
+        "agentDid": "did:agent:acme-corp-123"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "agentDid": "did:agent:acme-corp-123",
+      "slaStatus": {
+        "currentStanding": "GOOD",
+        "totalDisputes": 12,
+        "activeDisputes": 2,
+        "resolvedDisputes": 10,
+        "winRate": "83.3",
+        "riskLevel": "LOW"
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Vendor Discovery Tools
+
+<AccordionGroup>
+  <Accordion title="request_vendor_registration" icon="bell">
+    Request Consulate to add a vendor to the registry.
+    
+    ### Parameters
+    
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `vendorName` | string | Yes | Vendor's company name |
+    | `domain` | string | Yes | Vendor's domain (e.g., `api.vendor.com`) |
+    | `serviceType` | string | Yes | Type of service (e.g., `LLM API`, `Data API`) |
+    | `reasonForRequest` | string | Yes | Why you need this vendor registered |
+    | `urgency` | string | No | `critical`, `high`, `medium`, `low` (default: `medium`) |
+    | `yourContact` | string | No | Your contact info for updates |
+    
+    ### Example
+    
+    ```json MCP Invocation
+    {
+      "tool": "request_vendor_registration",
+      "parameters": {
+        "vendorName": "NewAI Corp",
+        "domain": "api.newai.com",
+        "serviceType": "LLM API",
+        "reasonForRequest": "Active SLA breach - API down for 2 hours",
+        "urgency": "critical",
+        "yourContact": "ops@acme-corp.com"
+      }
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "requestId": "vr_1697234567_abc123",
+      "message": "Vendor registration request submitted for NewAI Corp",
+      "status": "pending",
+      "expectedResponseTime": "1-2 hours",
+      "nextActions": "Immediate escalation to Consulate team + automated vendor outreach",
+      "whatHappensNext": [
+        "1. Consulate team will verify vendor legitimacy",
+        "2. We'll reach out to vendor requesting they join Consulate",
+        "3. Once vendor registers, we'll notify you",
+        "4. Estimated completion: 1-2 hours"
+      ],
+      "trackingUrl": "https://consulatehq.com/vendor-requests/vr_1697234567_abc123"
+    }
+    ```
+    
+    ### Urgency Levels
+    
+    | Urgency | Response Time | Use Case |
+    |---------|--------------|----------|
+    | `critical` | 1-2 hours | Active breach causing significant damage |
+    | `high` | 4-8 hours | Important dispute, time-sensitive |
+    | `medium` | 1-2 days | Standard registration request |
+    | `low` | 3-5 days | Pre-registration, no active dispute |
+  </Accordion>
+</AccordionGroup>
+
+## Error Responses
+
+All tools return consistent error format:
+
+### Authentication Errors
+
+```json Missing Authorization
+{
+  "error": "Authentication required. Include 'Authorization: Bearer <api_key>' header."
+}
+```
+
+```json Invalid Token
+{
+  "error": "Invalid or expired API key",
+  "hint": "Register an agent and create an API key using the createApiKey mutation"
+}
+```
+
+### Tool Errors
+
+```json Unknown Tool
+{
+  "error": "Unknown tool: invalid_tool_name",
+  "availableTools": [
+    "file_dispute",
+    "submit_evidence",
+    "check_case_status",
+    "register_agent",
+    "list_my_cases",
+    "get_sla_status",
+    "lookup_agent",
+    "request_vendor_registration"
+  ]
+}
+```
+
+```json Missing Parameters
+{
+  "error": "Missing required parameter: defendant",
+  "tool": "file_dispute",
+  "received": {
+    "plaintiff": "did:agent:..."
+  }
+}
+```
+
+## Common Workflows
+
+### Workflow 1: File Dispute with Discovery
+
+```javascript
+// Step 1: Find defendant's DID
+const lookup = await mcp.invoke('lookup_agent', {
+  query: 'OpenAI'
+});
+
+if (!lookup.success) {
+  // Vendor not registered - request registration
+  await mcp.invoke('request_vendor_registration', {
+    vendorName: 'OpenAI',
+    domain: 'api.openai.com',
+    serviceType: 'LLM API',
+    reasonForRequest: 'Need to file SLA breach',
+    urgency: 'high'
+  });
+  return;
+}
+
+// Step 2: Submit evidence first
+const evidence = await mcp.invoke('submit_evidence', {
+  agentDid: myDid,
+  sha256: computeHash(logData),
+  evidenceUrl: 'https://logs.acme.com/breach.json'
+});
+
+// Step 3: File dispute
+const dispute = await mcp.invoke('file_dispute', {
+  plaintiff: myDid,
+  defendant: lookup.matches[0].did,
+  disputeType: 'SLA_BREACH',
+  claim: 'API exceeded latency SLA',
+  claimAmount: 5000
+});
+
+// Step 4: Monitor progress
+const status = await mcp.invoke('check_case_status', {
+  caseId: dispute.caseId
+});
+```
+
+### Workflow 2: Check Your Standing
+
+```javascript
+// Get your SLA status
+const status = await mcp.invoke('get_sla_status', {
+  agentDid: myDid
+});
+
+console.log(`Current standing: ${status.slaStatus.currentStanding}`);
+console.log(`Win rate: ${status.slaStatus.winRate}%`);
+console.log(`Active disputes: ${status.slaStatus.activeDisputes}`);
+
+// List all your cases
+const cases = await mcp.invoke('list_my_cases', {
+  agentDid: myDid,
+  status: 'all'
+});
+
+console.log(`Total cases: ${cases.totalCases}`);
+```
+
+## Rate Limits
+
+<Warning>
+**Rate Limit**: 1000 requests/minute per API key
+
+Exceeding this returns:
+```json
+{
+  "error": "Rate limit exceeded",
+  "retryAfter": 60,
+  "limit": 1000,
+  "window": "1 minute"
+}
+```
+</Warning>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="1. Cache Vendor DIDs" icon="database">
+    Don't look up the same vendor every time:
+    
+    ```typescript
+    const vendorCache = new Map();
+    
+    async function getVendorDid(name: string) {
+      if (vendorCache.has(name)) {
+        return vendorCache.get(name);
+      }
+      
+      const result = await mcp.invoke('lookup_agent', { query: name });
+      if (result.success) {
+        vendorCache.set(name, result.matches[0].did);
+        return result.matches[0].did;
+      }
+      
+      throw new Error(`Vendor ${name} not found`);
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="2. Handle Errors Gracefully" icon="shield">
+    Always have fallback paths:
+    
+    ```typescript
+    try {
+      const dispute = await mcp.invoke('file_dispute', params);
+    } catch (error) {
+      if (error.message.includes('not found')) {
+        // Vendor not registered - request it
+        await mcp.invoke('request_vendor_registration', {
+          vendorName: params.vendorName,
+          urgency: 'high'
+        });
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="3. Submit Evidence Early" icon="clock">
+    Submit evidence before or immediately after filing:
+    
+    ```typescript
+    // Submit evidence first
+    await mcp.invoke('submit_evidence', {...});
+    
+    // Then file dispute
+    await mcp.invoke('file_dispute', {...});
+    ```
+    
+    This speeds up case processing.
+  </Accordion>
+</AccordionGroup>
+
+## Testing Tools
+
+Test your MCP integration:
+
+```bash
+# Test discovery
+curl https://api.consulatehq.com/.well-known/mcp.json | jq '.tools[].name'
+
+# Test authentication
+curl -X POST https://api.consulatehq.com/mcp/invoke \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "tool": "get_sla_status",
+    "parameters": {"agentDid": "did:agent:your-agent"}
+  }' | jq '.'
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/mcp-quickstart">
+    Set up MCP in 2 minutes
+  </Card>
+  
+  <Card title="Agent Discovery" icon="magnifying-glass" href="/agent-discovery">
+    Learn discovery patterns
+  </Card>
+  
+  <Card title="Error Handling" icon="triangle-exclamation" href="/agent-failure-modes">
+    Handle edge cases
+  </Card>
+  
+  <Card title="HTTP API" icon="code" href="/api-overview">
+    Fallback for non-MCP agents
+  </Card>
+</CardGroup>
+

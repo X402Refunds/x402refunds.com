@@ -1,297 +1,174 @@
 ---
-title: "Agent Integration Guide"
-description: "Step-by-step guide for integrating AI agents with Consulate in under 10 minutes"
+title: "Integration Guide"  
+description: "Choose your integration method: MCP (recommended) or HTTP API"
 ---
 
-Integrate your AI agents with Consulate's automated dispute resolution platform in under 10 minutes.
+Integrate with Consulate using Model Context Protocol (MCP) for zero-code integration, or HTTP API for custom implementations.
 
 <Note>
-This guide walks you through the complete integration process, from SDK installation to automated dispute monitoring.
+**Recommended**: Use MCP for instant integration. Only use HTTP API if your agent doesn't support MCP.
 </Note>
 
-## Quick Start
-
-<Steps>
-  <Step title="Install the SDK">
-    Install the Consulate agent SDK via npm:
-    
-    ```bash
-    npm install @consulate/agent-sdk
-    ```
-    
-    <Tip>
-    The SDK handles authentication, dispute filing, evidence submission, and real-time notifications automatically.
-    </Tip>
-  </Step>
-
-  <Step title="Register Your Agent">
-    Create and register your agent with Consulate:
-    
-    ```javascript
-    import { ConsulateAgent } from '@consulate/agent-sdk';
-    
-    const agent = new ConsulateAgent({
-      did: "did:agent:your-service-api",
-      ownerDid: "did:enterprise:yourcompany",
-      consulateUrl: "https://api.consulatehq.com"
-    });
-    
-    await agent.register({
-      functionalType: "api",
-      capabilities: ["payment-processing", "data-enrichment"],
-      stake: 50000
-    });
-    ```
-    
-    <Info>
-    **Decentralized Identifiers (DIDs):** Every agent needs a unique DID. If you don't have one, use the format: `did:agent:your-service-name`
-    </Info>
-  </Step>
-
-  <Step title="Set Up Monitoring">
-    Configure SLA monitoring and dispute handlers:
-    
-    ```javascript
-    // Set up SLA monitoring
-    agent.setSLACollector(async () => ({
-      availability: 99.9,
-      responseTime: 200,
-      errorRate: 0.1
-    }));
-    
-    // Handle disputes automatically
-    agent.onDispute('DISPUTE_FILED', async (notification) => {
-      console.log('Dispute filed:', notification);
-      // Your custom dispute handling logic
-    });
-    
-    // Start automated monitoring
-    await agent.startMonitoring();
-    ```
-    
-    <Check>
-    Your agent is now monitoring SLAs and ready to handle disputes automatically!
-    </Check>
-  </Step>
-</Steps>
-
-## Integration Methods
+## Choose Your Integration Method
 
 <Tabs>
-  <Tab title="SDK (Recommended)">
-    ### JavaScript/TypeScript SDK
+  <Tab title="MCP (Recommended)">
+    ### Model Context Protocol
     
-    The official SDK provides the simplest integration path:
+    **Zero code, instant integration** - Your agent discovers and uses Consulate tools automatically.
     
-    ```bash
-    npm install @consulate/agent-sdk
-    ```
+    <Steps>
+      <Step title="Add MCP Server">
+        Configure your agent to connect to Consulate:
+        
+        ```json
+        {
+          "mcpServers": {
+            "consulate": {
+              "url": "https://api.consulatehq.com"
+            }
+          }
+        }
+        ```
+      </Step>
+      
+      <Step title="Create API Key">
+        Get authentication credentials (see [MCP Quick Start](/mcp-quickstart) for details)
+      </Step>
+      
+      <Step title="Use Tools">
+        Your agent can now use Consulate tools naturally:
+        
+        ```javascript
+        // When SLA breach detected
+        await mcp.invoke('file_dispute', {
+          plaintiff: myDid,
+          defendant: vendorDid,
+          disputeType: 'SLA_BREACH',
+          claim: 'API down 45 minutes',
+          claimAmount: 5000
+        });
+        ```
+      </Step>
+    </Steps>
     
-    **Features:**
-    - Automatic authentication
-    - Type-safe API calls
-    - Built-in retry logic
-    - Real-time event handlers
-    - Dispute lifecycle management
+    **Time to integrate:** 2 minutes  
+    **Code required:** 0 lines  
+    **Maintenance:** Zero
     
-    **Best for:**
-    - Node.js applications
-    - TypeScript projects
-    - Quick integration
+    <Card title="MCP Quick Start" icon="rocket" href="/mcp-quickstart">
+      Complete MCP setup guide →
+    </Card>
   </Tab>
   
   <Tab title="HTTP API">
-    ### Direct HTTP API Integration
+    ### Direct HTTP API
     
-    Use our REST API for maximum flexibility:
+    **Full control** - Use our REST API for custom implementations or non-MCP agents.
     
-    ```bash
-    curl -X POST https://api.consulatehq.com/agents/register \
-      -H "Authorization: Bearer YOUR_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "did": "did:agent:your-service",
-        "name": "Your Service API",
-        "functionalType": "api"
-      }'
-    ```
+    <Steps>
+      <Step title="Get API Credentials">
+        Create owner and agent via HTTP:
+        
+        ```bash
+        # 1. Create owner
+        curl -X POST https://api.consulatehq.com/auth/createOwner \
+          -H "Content-Type: application/json" \
+          -d '{"did":"did:org:yourcompany","pubkeys":["pubkey"]}'
+        
+        # 2. Register agent
+        curl -X POST https://api.consulatehq.com/agents/register \
+          -H "Content-Type: application/json" \
+          -d '{"ownerDid":"did:org:yourcompany","name":"your-agent",...}'
+        ```
+      </Step>
+      
+      <Step title="Make Requests">
+        All endpoints require Bearer token:
+        
+        ```bash
+        curl -X POST https://api.consulatehq.com/disputes/file \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{...}'
+        ```
+      </Step>
+    </Steps>
     
-    **Features:**
-    - Language agnostic
-    - Complete control
-    - No dependencies
+    **Time to integrate:** 1-2 hours  
+    **Code required:** Custom HTTP client  
+    **Maintenance:** Update when API changes
     
-    **Best for:**
-    - Non-JavaScript environments
-    - Custom implementations
-    - Microservices
-    
-    See [API Reference](/api-endpoints) for complete documentation.
-  </Tab>
-  
-  <Tab title="MCP Integration">
-    ### Model Context Protocol
-    
-    Integrate via the Model Context Protocol for AI-native applications:
-    
-    ```json
-    {
-      "mcpServers": {
-        "Consulate": {
-          "url": "https://api.consulatehq.com/mcp"
-        }
-      }
-    }
-    ```
-    
-    **Features:**
-    - AI-native integration
-    - Context-aware dispute resolution
-    - Works with Claude Desktop, Cursor, etc.
-    
-    **Best for:**
-    - AI agent frameworks
-    - Claude Desktop users
-    - Interactive dispute resolution
-    
-    Learn more in the [Integration Strategy guide](/agent-integration-strategy).
+    <Card title="HTTP API Reference" icon="code" href="/api-overview">
+      Complete API documentation →
+    </Card>
   </Tab>
 </Tabs>
 
-## Core API Endpoints
+## Why Integrate with Consulate?
 
-<AccordionGroup>
-  <Accordion title="Agent Management" icon="robot">
-    **Register Agent**
-    ```
-    POST /agents/register
-    ```
-    Register your agent with Consulate
-    
-    **Discover Agents**
-    ```
-    GET /agents/discover
-    ```
-    Find other registered agents by DID
-    
-    **Get Capabilities**
-    ```
-    GET /agents/capabilities
-    ```
-    View agent capabilities and status
-  </Accordion>
+<CardGroup cols={3}>
+  <Card title="Fast Resolution" icon="bolt">
+    Minutes to hours, not months
+  </Card>
   
-  <Accordion title="SLA Monitoring" icon="chart-line">
-    **Report SLA Metrics**
-    ```
-    POST /sla/report
-    ```
-    Submit SLA performance metrics
-    
-    **Get SLA Status**
-    ```
-    GET /sla/status/:agentDid
-    ```
-    Check current SLA compliance status
-  </Accordion>
+  <Card title="Automated" icon="robot">
+    From detection to resolution
+  </Card>
   
-  <Accordion title="Dispute Management" icon="scale-balanced">
-    **File Dispute**
-    ```
-    POST /disputes/file
-    ```
-    Initiate a new dispute case
-    
-    **Submit Evidence**
-    ```
-    POST /evidence/submit
-    ```
-    Upload evidence for a dispute
-    
-    **Check Case Status**
-    ```
-    GET /disputes/:disputeId/status
-    ```
-    Monitor dispute resolution progress
-  </Accordion>
+  <Card title="Binding" icon="gavel">
+    Enforceable determinations
+  </Card>
+</CardGroup>
+
+## Real-World Integration Example
+
+### MCP-Based Monitoring Agent
+
+```typescript
+class AutomatedDisputeAgent {
+  constructor(private mcp: MCPClient) {}
   
-  <Accordion title="Notifications" icon="bell">
-    **Register Webhook**
-    ```
-    POST /webhooks/register
-    ```
-    Set up webhook notifications
-    
-    **Get Notifications**
-    ```
-    GET /notifications/:agentDid
-    ```
-    Retrieve pending notifications
-    
-    **Live Feed**
-    ```
-    GET /live/feed
-    ```
-    Real-time dispute activity stream
-  </Accordion>
-</AccordionGroup>
-
-## Authentication
-
-<Warning>
-All API requests require authentication using an API key in the `Authorization` header.
-</Warning>
-
-### Generate an API Key
-
-<Steps>
-  <Step title="Log in to Dashboard">
-    Visit [consulatehq.com/dashboard](https://consulatehq.com/dashboard)
-  </Step>
-  
-  <Step title="Navigate to Settings">
-    Go to Settings → API Keys
-  </Step>
-  
-  <Step title="Create New Key">
-    Click "Create New API Key" and copy the generated key
-  </Step>
-  
-  <Step title="Use in Requests">
-    Include in all API requests:
-    ```bash
-    Authorization: Bearer YOUR_API_KEY
-    ```
-  </Step>
-</Steps>
-
-### Example Authenticated Request
-
-```javascript
-const response = await fetch('https://api.consulatehq.com/agents/register', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${YOUR_API_KEY}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    did: 'did:agent:your-service',
-    name: 'Your Service API',
-    functionalType: 'api'
-  })
-});
+  async monitorAndDispute(metrics: SLAMetrics) {
+    // Detect breach
+    if (metrics.latency > metrics.threshold) {
+      console.log('⚠️ SLA breach detected');
+      
+      // Find vendor
+      const vendor = await this.mcp.invoke('lookup_agent', {
+        query: metrics.vendorName
+      });
+      
+      // File dispute
+      const dispute = await this.mcp.invoke('file_dispute', {
+        plaintiff: this.myDid,
+        defendant: vendor.matches[0].did,
+        disputeType: 'SLA_BREACH',
+        claim: `Latency ${metrics.latency}ms exceeded ${metrics.threshold}ms`,
+        claimAmount: this.calculateDamages(metrics)
+      });
+      
+      console.log(`✅ Dispute filed: ${dispute.caseId}`);
+    }
+  }
+}
 ```
 
-## Example Integration
+### HTTP API Alternative
 
-For a complete real-world example, see our [Stripe-like payment API integration](https://github.com/vbkotecha/consulate/blob/main/scripts/real-world-agent-example.js).
-
-This example demonstrates:
-- SLA monitoring
-- Breach detection
-- Automated dispute filing
-- Evidence collection
-- Notification handling
+```bash
+# For agents that don't support MCP
+curl -X POST https://api.consulatehq.com/disputes/file \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "plaintiff": "did:agent:yourcompany",
+    "defendant": "did:agent:openai",
+    "disputeType": "SLA_BREACH",
+    "claim": "API down 45 minutes",
+    "claimAmount": 5000
+  }'
+```
 
 ## Next Steps
 

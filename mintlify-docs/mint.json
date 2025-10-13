@@ -3,8 +3,8 @@
   "name": "Consulate",
   "description": "Fast, automated dispute resolution when AI services break their promises",
   "logo": {
-    "light": "/public/consulate-logo-square.svg",
-    "dark": "/public/consulate-logo-square.svg",
+    "light": "/consulate-icon-simple.svg",
+    "dark": "/consulate-icon-simple.svg",
     "href": "https://consulatehq.com"
   },
   "favicon": "/public/consulate-icon-simple.png",
@@ -31,33 +31,35 @@
     {
       "group": "Getting Started",
       "pages": [
-        "index"
-      ]
-    },
-    {
-      "group": "Core Concepts",
-      "pages": [
+        "index",
         "dispute-types"
       ]
     },
     {
-      "group": "Integration",
+      "group": "MCP Integration (Recommended)",
       "pages": [
-        "agent-integration-guide",
-        "agent-integration-strategy",
+        "mcp-quickstart",
+        "mcp-tools",
         "agent-discovery",
         "agent-failure-modes"
       ]
     },
     {
-      "group": "API Reference",
+      "group": "HTTP API Reference",
       "pages": [
         "api-overview",
         "api-endpoints"
       ]
     },
     {
-      "group": "Standards",
+      "group": "Advanced",
+      "pages": [
+        "agent-integration-guide",
+        "agent-integration-strategy"
+      ]
+    },
+    {
+      "group": "Standards & Rules",
       "pages": [
         "expert-determination-rules",
         "code-of-ethics",

@@ -1,0 +1,272 @@
+---
+title: "MCP Quick Start"
+description: "Get your AI agent integrated with Consulate in 2 minutes using Model Context Protocol"
+---
+
+<Note>
+**Zero code required.** Your AI agent can discover and use Consulate's dispute resolution tools automatically through the Model Context Protocol (MCP).
+</Note>
+
+## What is MCP?
+
+Model Context Protocol lets AI agents (Claude, ChatGPT, custom agents) **discover and invoke tools** without writing integration code. It's like USB-C for AI services.
+
+```
+Your Agent → Discovers tools → Invokes when needed → Gets results
+```
+
+**Time to integrate:** 2 minutes  
+**Code required:** 0 lines
+
+## Quick Start
+
+<Steps>
+  <Step title="Connect Your Agent to Consulate">
+    Add Consulate as an MCP server:
+    
+    ```json Claude Desktop Config
+    {
+      "mcpServers": {
+        "consulate": {
+          "url": "https://api.consulatehq.com"
+        }
+      }
+    }
+    ```
+    
+    <Info>
+    Your agent will automatically discover 8 dispute resolution tools at startup.
+    </Info>
+  </Step>
+
+  <Step title="Get Your API Key">
+    Create authentication credentials:
+    
+    ```bash
+    # 1. Create an owner (your organization)
+    curl -X POST https://api.consulatehq.com/auth/createOwner \
+      -H "Content-Type: application/json" \
+      -d '{
+        "did": "did:org:yourcompany",
+        "pubkeys": ["your-public-key"]
+      }'
+    
+    # 2. Register your agent
+    curl -X POST https://api.consulatehq.com/agents/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ownerDid": "did:org:yourcompany",
+        "name": "your-monitoring-agent",
+        "organizationName": "Your Company",
+        "functionalType": "ai_consumer"
+      }'
+    # Returns: { "agentDid": "did:agent:...", "agentId": "123..." }
+    
+    # 3. Create API key for MCP authentication
+    curl -X POST https://api.consulatehq.com/apiKeys/create \
+      -H "Content-Type: application/json" \
+      -d '{
+        "token": "ak_live_YOUR_RANDOM_KEY",
+        "agentId": "123...",
+        "permissions": ["disputes", "evidence", "cases"]
+      }'
+    ```
+    
+    <Warning>
+    **Production**: Use a cryptographically secure random token generator for your API key.
+    </Warning>
+  </Step>
+
+  <Step title="Add Authentication">
+    Configure your MCP client to use Bearer token authentication:
+    
+    ```json Claude Desktop Config (Updated)
+    {
+      "mcpServers": {
+        "consulate": {
+          "url": "https://api.consulatehq.com",
+          "headers": {
+            "Authorization": "Bearer ak_live_YOUR_RANDOM_KEY"
+          }
+        }
+      }
+    }
+    ```
+    
+    <Check>
+    Your agent can now use all 8 Consulate tools!
+    </Check>
+  </Step>
+
+  <Step title="Use Tools Naturally">
+    Your agent can now invoke tools as part of its normal workflow:
+    
+    ```javascript Agent Logic
+    // When your agent detects an SLA breach:
+    if (apiDowntime > slaThreshold) {
+      // Agent invokes MCP tool automatically
+      const result = await mcp.invoke('file_dispute', {
+        plaintiff: 'did:agent:yourcompany',
+        defendant: 'did:agent:openai',
+        disputeType: 'SLA_BREACH',
+        claim: 'API down for 45 minutes',
+        claimAmount: 5000
+      });
+      
+      console.log(`Dispute filed: ${result.caseId}`);
+    }
+    ```
+    
+    **No SDK installation. No API documentation reading. Just natural tool use.**
+  </Step>
+</Steps>
+
+## Available MCP Tools
+
+Your agent can now use these 8 tools:
+
+<CardGroup cols={2}>
+  <Card title="file_dispute" icon="scale-balanced">
+    File a dispute case for SLA breaches or contract violations
+  </Card>
+  
+  <Card title="submit_evidence" icon="file-arrow-up">
+    Upload evidence (logs, contracts, communications)
+  </Card>
+  
+  <Card title="check_case_status" icon="magnifying-glass">
+    Monitor dispute resolution progress
+  </Card>
+  
+  <Card title="register_agent" icon="user-plus">
+    Register new agents with Consulate
+  </Card>
+  
+  <Card title="list_my_cases" icon="list">
+    View all disputes you're involved in
+  </Card>
+  
+  <Card title="get_sla_status" icon="chart-line">
+    Check your SLA compliance standing
+  </Card>
+  
+  <Card title="lookup_agent" icon="magnifying-glass">
+    Find other agents by name/organization
+  </Card>
+  
+  <Card title="request_vendor_registration" icon="bell">
+    Request a vendor be added to Consulate
+  </Card>
+</CardGroup>
+
+## Complete Example
+
+```typescript Your Monitoring Agent
+class MonitoringAgent {
+  async handleSLABreach(metrics: any) {
+    // 1. Find the vendor's DID
+    const vendor = await this.mcp.invoke('lookup_agent', {
+      query: 'OpenAI'
+    });
+    
+    // 2. File the dispute
+    const dispute = await this.mcp.invoke('file_dispute', {
+      plaintiff: this.myDid,
+      defendant: vendor.matches[0].did,
+      disputeType: 'SLA_BREACH',
+      claim: `API exceeded ${metrics.threshold}ms for ${metrics.duration} minutes`,
+      claimAmount: this.calculateDamages(metrics)
+    });
+    
+    // 3. Submit evidence
+    await this.mcp.invoke('submit_evidence', {
+      agentDid: this.myDid,
+      sha256: this.hashLogs(metrics.logs),
+      evidenceUrl: await this.uploadLogs(metrics.logs)
+    });
+    
+    console.log(`✅ Dispute ${dispute.caseId} filed automatically`);
+  }
+}
+```
+
+## Testing Your Integration
+
+Verify MCP is working:
+
+```bash
+# 1. Test discovery (no auth required)
+curl https://api.consulatehq.com/.well-known/mcp.json
+
+# 2. Test authentication (should fail without token)
+curl -X POST https://api.consulatehq.com/mcp/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"tool":"lookup_agent","parameters":{"query":"test"}}'
+# Expected: 401 Unauthorized
+
+# 3. Test with valid token (should succeed)
+curl -X POST https://api.consulatehq.com/mcp/invoke \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ak_live_YOUR_KEY" \
+  -d '{"tool":"lookup_agent","parameters":{"query":"OpenAI"}}'
+# Expected: 200 OK with results
+```
+
+## Why MCP?
+
+<Tabs>
+  <Tab title="Traditional API Integration">
+    ```
+    1. Read API docs (30 min)
+    2. Install SDK (5 min)
+    3. Write integration code (2 hours)
+    4. Handle errors (1 hour)
+    5. Deploy (30 min)
+    6. Maintain as API changes (ongoing)
+    
+    Total: 4+ hours + ongoing maintenance
+    ```
+  </Tab>
+  
+  <Tab title="MCP Integration">
+    ```
+    1. Add MCP server URL (30 seconds)
+    2. Add API key (30 seconds)
+    3. Agent discovers tools automatically
+    4. Agent uses tools when needed
+    
+    Total: 1 minute, zero maintenance
+    ```
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Tools Reference" icon="book" href="/mcp-tools">
+    Complete documentation for all 8 MCP tools
+  </Card>
+  
+  <Card title="Agent Discovery" icon="magnifying-glass" href="/agent-discovery">
+    Learn how to find defendant DIDs
+  </Card>
+  
+  <Card title="Error Handling" icon="triangle-exclamation" href="/agent-failure-modes">
+    Handle vendors that aren't registered
+  </Card>
+  
+  <Card title="HTTP API (Fallback)" icon="code" href="/api-overview">
+    For non-MCP integrations
+  </Card>
+</CardGroup>
+
+## Support
+
+- **MCP Issues**: support@consulatehq.com
+- **API Status**: https://status.consulatehq.com
+- **GitHub**: https://github.com/vbkotecha/consulate
+
+<Tip>
+**Pro tip**: Once configured, your agent can file disputes 24/7 without human intervention. Set it and forget it.
+</Tip>
+

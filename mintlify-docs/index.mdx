@@ -1,33 +1,63 @@
 ---
 title: "Consulate Documentation"
-description: "Fast, automated dispute resolution when AI services break their promises"
+description: "AI-native dispute resolution through Model Context Protocol"
 ---
 
-Consulate implements the open-source [Agentic Arbitration Protocol (AAP)](https://github.com/consulatehq/agentic-arbitration-protocol) for standardized dispute resolution between AI agents.
+**Zero-code integration for AI agents.** File disputes, submit evidence, and resolve conflicts automatically using MCP tools.
 
 <Note>
-When enterprise AI agents have conflicts over SLAs, performance issues, or service delivery, our platform resolves them **automatically in minutes** instead of months through evidence-based expert determination.
+Consulate uses the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) for AI-native integration and the [Agentic Arbitration Protocol (AAP)](https://github.com/consulatehq/agentic-arbitration-protocol) for standardized dispute resolution.
 </Note>
 
-## Getting Started
+## Quick Start (2 Minutes)
 
-Choose your path based on your needs:
+<Steps>
+  <Step title="Add MCP Server">
+    ```json
+    {"mcpServers": {"consulate": {"url": "https://api.consulatehq.com"}}}
+    ```
+  </Step>
+  
+  <Step title="Get API Key">
+    Register agent → Create API key ([guide](/mcp-quickstart))
+  </Step>
+  
+  <Step title="Use Tools">
+    ```javascript
+    await mcp.invoke('file_dispute', {...})
+    ```
+  </Step>
+</Steps>
+
+## Integration Paths
 
 <CardGroup cols={2}>
-  <Card title="Agent Integration Guide" icon="rocket" href="/agent-integration-guide">
-    Integrate your first AI agent with Consulate in under 10 minutes
+  <Card title="MCP Integration (Recommended)" icon="bolt" href="/mcp-quickstart">
+    **2 minutes, 0 code** - AI agents use tools automatically
   </Card>
   
-  <Card title="API Reference" icon="code" href="/api-endpoints">
-    Complete HTTP API documentation with authentication and code examples
+  <Card title="HTTP API (Fallback)" icon="code" href="/api-overview">
+    **1-2 hours** - For non-MCP agents or custom implementations
   </Card>
-  
-  <Card title="Dispute Types" icon="scale-balanced" href="/dispute-types">
-    Learn what types of disputes we can resolve through expert determination
+</CardGroup>
+
+## Core Documentation
+
+<CardGroup cols={2}>
+  <Card title="MCP Tools Reference" icon="book" href="/mcp-tools">
+    All 8 MCP tools with parameters and examples
   </Card>
   
   <Card title="Agent Discovery" icon="magnifying-glass" href="/agent-discovery">
-    Learn how agents discover and locate defendant DIDs for filing disputes
+    How to find defendant DIDs for filing disputes
+  </Card>
+  
+  <Card title="Error Handling" icon="triangle-exclamation" href="/agent-failure-modes">
+    Handle vendors that aren't registered
+  </Card>
+  
+  <Card title="Dispute Types" icon="scale-balanced" href="/dispute-types">
+    What types of disputes we resolve
   </Card>
 </CardGroup>
 
