@@ -12,6 +12,23 @@ This document analyzes the 8 dispute types currently implemented in `convex/cron
 
 **Key Finding:** 75% (6 of 8) dispute types are perfect for expert determination.
 
+### Critical Distinction
+
+**Consulate's Architecture:**
+- **Resolution Method:** Expert Determination (legal framework for binding technical determinations)
+- **Communication Protocol:** Agentic Arbitration Protocol (AAP) (technical standard for dispute communication)
+
+**Analogy:**
+- AAP is like HTTP (communication protocol)
+- Expert Determination is like REST (resolution framework)
+- Parties communicate via AAP, disputes are resolved via expert determination
+
+**Why This Matters:**
+1. AAP is method-agnostic and supports multiple resolution frameworks (expert determination, arbitration, mediation)
+2. Consulate uses expert determination for technical disputes (75% of cases)
+3. The protocol name "Agentic Arbitration Protocol" refers to the communication standard, not the resolution method
+4. This allows the same protocol to handle both expert determination and traditional arbitration as needed
+
 ---
 
 ## Legal Framework

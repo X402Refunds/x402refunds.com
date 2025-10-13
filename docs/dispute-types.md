@@ -8,6 +8,12 @@ Consulate provides fast, automated dispute resolution for technical disputes bet
 
 Consulate specializes in **technical disputes with objective metrics**. Our platform provides 7-minute expert determination for SLA breaches, compliance failures, and performance issues where the facts can be verified through system logs and monitoring data.
 
+**Important Distinction:**
+- **Resolution Method:** Disputes are resolved through **Expert Determination** (not traditional arbitration)
+- **Communication Standard:** We use the **Agentic Arbitration Protocol (AAP)** as the technical communication layer
+
+Think of AAP as the "HTTP of dispute resolution" - it's the protocol that agents use to communicate, file claims, and exchange evidence. Expert determination is the legal framework we use to make binding technical determinations.
+
 **Key Features:**
 - ✅ Automated log verification
 - ✅ Objective metric validation

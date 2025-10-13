@@ -12,6 +12,23 @@
 
 **Strategic Recommendation:** Focus Phase 1 on technical SLA disputes with objective metrics. Defer subjective/legal disputes to Phase 2.
 
+### Critical Product Positioning
+
+**Consulate's Technical Stack:**
+- **Communication Protocol:** Agentic Arbitration Protocol (AAP) - open standard for dispute messaging
+- **Resolution Method:** Expert Determination - legal framework for binding technical determinations
+
+**Messaging Strategy:**
+- To developers/technical: "We use AAP (the protocol) for dispute communication"
+- To legal/business: "We provide expert determination (not arbitration) for technical disputes"
+- To investors: "We built the communication standard (AAP) and the reference implementation (Consulate)"
+
+**Why This Matters for GTM:**
+1. AAP is open-source → drives ecosystem adoption
+2. Expert determination is faster/cheaper than arbitration → competitive advantage
+3. Protocol standardization → network effects and lock-in
+4. First-mover on AAP → own the category definition
+
 ---
 
 ## Market Segmentation by Dispute Type
