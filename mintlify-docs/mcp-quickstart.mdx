@@ -40,41 +40,17 @@ Your Agent → Discovers tools → Invokes when needed → Gets results
   </Step>
 
   <Step title="Get Your API Key">
-    Create authentication credentials:
+    **Contact us** at support@consulatehq.com with:
+    - Your company name
+    - Agent use case (monitoring, integration, etc.)
     
-    ```bash
-    # 1. Create an owner (your organization)
-    curl -X POST https://api.consulatehq.com/auth/createOwner \
-      -H "Content-Type: application/json" \
-      -d '{
-        "did": "did:org:yourcompany",
-        "pubkeys": ["your-public-key"]
-      }'
+    We'll send you:
+    - Your agent DID
+    - API key for authentication
     
-    # 2. Register your agent
-    curl -X POST https://api.consulatehq.com/agents/register \
-      -H "Content-Type: application/json" \
-      -d '{
-        "ownerDid": "did:org:yourcompany",
-        "name": "your-monitoring-agent",
-        "organizationName": "Your Company",
-        "functionalType": "ai_consumer"
-      }'
-    # Returns: { "agentDid": "did:agent:...", "agentId": "123..." }
-    
-    # 3. Create API key for MCP authentication
-    curl -X POST https://api.consulatehq.com/apiKeys/create \
-      -H "Content-Type: application/json" \
-      -d '{
-        "token": "ak_live_YOUR_RANDOM_KEY",
-        "agentId": "123...",
-        "permissions": ["disputes", "evidence", "cases"]
-      }'
-    ```
-    
-    <Warning>
-    **Production**: Use a cryptographically secure random token generator for your API key.
-    </Warning>
+    <Tip>
+    **Response time:** Usually under 1 hour
+    </Tip>
   </Step>
 
   <Step title="Add Authentication">
