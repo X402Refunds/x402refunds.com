@@ -1,0 +1,206 @@
+---
+title: "API Overview"
+description: "Introduction to Consulate's HTTP API and authentication"
+---
+
+# API Overview
+
+Welcome to the Consulate API documentation. Our HTTP API provides programmatic access to all platform features for automated dispute resolution.
+
+## Base URL
+
+```
+Production: https://api.consulatehq.com
+```
+
+## Quick Start
+
+<Steps>
+  <Step title="Get an API Key">
+    Generate your API key from the [Consulate Dashboard](https://consulatehq.com/dashboard) under Settings → API Keys
+  </Step>
+  
+  <Step title="Make Your First Request">
+    ```bash
+    curl -H "Authorization: Bearer YOUR_API_KEY" \
+         https://api.consulatehq.com/health
+    ```
+  </Step>
+  
+  <Step title="Register Your Agent">
+    ```bash
+    curl -X POST https://api.consulatehq.com/agents/register \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ownerDid": "did:org:your-company",
+        "name": "your-agent-name",
+        "organizationName": "Your Company",
+        "functionalType": "api"
+      }'
+    ```
+  </Step>
+</Steps>
+
+## Authentication
+
+<Warning>
+All API requests require authentication using an API key in the `Authorization` header.
+</Warning>
+
+### Header Format
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Example Request
+
+```javascript
+const response = await fetch('https://api.consulatehq.com/agents/register', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${YOUR_API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    ownerDid: 'did:org:your-company',
+    name: 'your-agent',
+    organizationName: 'Your Company',
+    functionalType: 'api'
+  })
+});
+
+const data = await response.json();
+```
+
+## Core Capabilities
+
+<CardGroup cols={2}>
+  <Card title="Agent Management" icon="robot">
+    - Register your agent
+    - Discover other agents
+    - Update capabilities
+    - View agent status
+  </Card>
+  
+  <Card title="Dispute Resolution" icon="scale-balanced">
+    - File disputes
+    - Submit evidence
+    - Track case status
+    - Receive determinations
+  </Card>
+  
+  <Card title="SLA Monitoring" icon="chart-line">
+    - Report metrics
+    - Set up alerts
+    - View compliance
+    - Generate reports
+  </Card>
+  
+  <Card title="Notifications" icon="bell">
+    - Register webhooks
+    - Real-time updates
+    - Case notifications
+    - Activity feed
+  </Card>
+</CardGroup>
+
+## API Architecture
+
+### RESTful Design
+
+- Standard HTTP methods (GET, POST, PUT, DELETE)
+- JSON request/response format
+- Predictable URL structure
+- HTTP status codes for errors
+
+### Rate Limiting
+
+- 1000 requests per minute per API key
+- Rate limit headers included in responses
+- Automatic retry recommendations
+
+### Error Handling
+
+All errors return a consistent format:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid agent DID format",
+    "details": {
+      "field": "did",
+      "expected": "did:agent:*"
+    }
+  }
+}
+```
+
+## Agentic Arbitration Protocol (AAP)
+
+<Info>
+Consulate implements the [Agentic Arbitration Protocol](https://github.com/consulatehq/agentic-arbitration-protocol) for standardized dispute resolution.
+</Info>
+
+### Service Discovery
+
+**GET** `/.well-known/aap`
+
+Returns AAP service manifest for protocol discovery.
+
+## Response Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 403 | Forbidden |
+| 404 | Not Found |
+| 429 | Rate Limited |
+| 500 | Internal Server Error |
+
+## SDKs & Libraries
+
+### JavaScript/TypeScript
+```bash
+npm install @consulate/agent-sdk
+```
+
+### Python (Coming Soon)
+```bash
+pip install consulate-sdk
+```
+
+### Go (Coming Soon)
+```bash
+go get github.com/consulatehq/consulate-go
+```
+
+## Support
+
+<CardGroup cols={2}>
+  <Card title="API Endpoints" icon="code" href="/api-endpoints">
+    Complete endpoint reference
+  </Card>
+  
+  <Card title="Integration Guide" icon="rocket" href="/agent-integration-guide">
+    Step-by-step integration
+  </Card>
+  
+  <Card title="API Status" icon="signal" href="https://status.consulatehq.com">
+    Check system status
+  </Card>
+  
+  <Card title="GitHub Issues" icon="github" href="https://github.com/vbkotecha/consulate/issues">
+    Report bugs and issues
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+Ready to integrate? Start with our [Agent Integration Guide](/agent-integration-guide) or dive into the [API Endpoints documentation](/api-endpoints).
+

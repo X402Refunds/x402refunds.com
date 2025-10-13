@@ -1,0 +1,340 @@
+---
+title: "Dispute Types"
+description: "Complete guide to the types of disputes Consulate can resolve through expert determination"
+---
+
+# Dispute Types Supported by Consulate
+
+Consulate provides fast, automated dispute resolution for technical disputes between AI systems, API vendors, and their customers.
+
+## Overview
+
+Consulate specializes in **technical disputes with objective metrics**. Our platform provides 7-minute expert determination for SLA breaches, compliance failures, and performance issues where the facts can be verified through system logs and monitoring data.
+
+<Info>
+**Important Distinction:**
+- **Resolution Method:** Disputes are resolved through **Expert Determination** (not traditional arbitration)
+- **Communication Standard:** We use the **Agentic Arbitration Protocol (AAP)** as the technical communication layer
+
+Think of AAP as the "HTTP of dispute resolution" - it's the protocol that agents use to communicate, file claims, and exchange evidence. Expert determination is the legal framework we use to make binding technical determinations.
+</Info>
+
+### Key Features
+
+- ✅ Automated log verification
+- ✅ Objective metric validation
+- ✅ Liquidated damages calculation
+- ✅ Binding expert determination
+- ✅ Enforceable via contract law
+
+## Supported Dispute Types
+
+<AccordionGroup>
+  <Accordion title="1. API Uptime & Availability" icon="arrow-up">
+    **What We Resolve:**
+    - SLA uptime breaches (e.g., guaranteed 99.9% uptime not met)
+    - Service outages and downtime incidents
+    - Feature availability violations
+
+    **How It Works:**
+    <Steps>
+      <Step title="File Claim">
+        Customer files claim with monitoring logs
+      </Step>
+      <Step title="Verify Uptime">
+        Consulate verifies actual uptime from logs
+      </Step>
+      <Step title="Calculate Damages">
+        System calculates damages based on SLA terms
+      </Step>
+      <Step title="Issue Determination">
+        Binding determination issued in 7 minutes
+      </Step>
+    </Steps>
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "API was down 2.3 hours in March, breaching 99.9% uptime SLA"
+    - **Evidence:** Datadog monitoring logs, incident reports
+    - **Determination:** Breach confirmed. 98.7% uptime vs. 99.9% guarantee
+    - **Damages:** 25% monthly credit ($12,500) per liquidated damages clause
+    </Note>
+
+    **Common SLA Terms:**
+    - 99.9% uptime guarantees
+    - Maximum downtime thresholds (e.g., &lt;43 minutes/month)
+    - Feature-specific availability requirements
+  </Accordion>
+
+  <Accordion title="2. API Performance & Latency" icon="gauge">
+    **What We Resolve:**
+    - Response time SLA breaches (e.g., &lt;200ms guarantee not met)
+    - Throughput/rate limit violations
+    - Performance degradation claims
+
+    **How It Works:**
+    <Steps>
+      <Step title="Provide Data">
+        Customer provides latency monitoring data
+      </Step>
+      <Step title="Analyze Metrics">
+        Consulate analyzes p50/p95/p99 metrics
+      </Step>
+      <Step title="Verify Breach">
+        System verifies SLA breach and calculates impact
+      </Step>
+      <Step title="Issue Determination">
+        Determination issued with credit amount
+      </Step>
+    </Steps>
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "API p95 latency exceeded 200ms guarantee for 4 days"
+    - **Evidence:** New Relic APM data showing 487ms p95 latency
+    - **Determination:** Breach confirmed. 487ms vs. 200ms requirement
+    - **Damages:** $5,000 credit (10% of monthly fee)
+    </Note>
+
+    **Common SLA Terms:**
+    - p95/p99 latency thresholds
+    - API requests per second (RPS) guarantees
+    - Time to first byte (TTFB) requirements
+  </Accordion>
+
+  <Accordion title="3. Data Quality & Accuracy" icon="database">
+    **What We Resolve:**
+    - Data accuracy SLA breaches (e.g., 99% accuracy guarantee)
+    - Missing or incomplete data delivery
+    - Data freshness violations (e.g., real-time data delayed)
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "Enrichment API returned inaccurate data 3.2% of the time"
+    - **Evidence:** Validation report on 10,000 sample records
+    - **Determination:** Breach confirmed. 96.8% accuracy vs. 99% guarantee
+    - **Damages:** $8,000 refund per contract terms
+    </Note>
+
+    **Common SLA Terms:**
+    - Minimum data accuracy percentages
+    - Data completeness requirements
+    - Freshness/latency guarantees for real-time data
+  </Accordion>
+
+  <Accordion title="4. Rate Limiting & Throttling" icon="traffic-light">
+    **What We Resolve:**
+    - API rate limit violations (requests throttled below guaranteed rate)
+    - Unexpected throttling during peak usage
+    - Fair usage policy disputes
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "API throttled at 7,500 req/min vs. 10,000 req/min guarantee"
+    - **Evidence:** Request logs showing 429 errors during peak traffic
+    - **Determination:** Breach confirmed. 25% capacity reduction
+    - **Damages:** $3,750 credit (25% of monthly fee)
+    </Note>
+
+    **Common SLA Terms:**
+    - Guaranteed requests per minute/second
+    - Burst capacity allowances
+    - Peak traffic handling guarantees
+  </Accordion>
+
+  <Accordion title="5. Security & Compliance" icon="shield">
+    **What We Resolve:**
+    - Data breach notification failures
+    - Security standard violations (SOC 2, ISO 27001)
+    - Encryption/compliance requirement breaches
+
+    <Warning>
+    Security and compliance disputes may require human expert review for complex cases. Resolution may take longer than the standard 7-minute timeframe.
+    </Warning>
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "Vendor failed to maintain SOC 2 Type II compliance"
+    - **Evidence:** Expired SOC 2 report, lack of current certification
+    - **Determination:** Breach confirmed. No valid certification during contract period
+    - **Damages:** $50,000 penalty per liquidated damages clause
+    </Note>
+
+    **Common SLA Terms:**
+    - Mandatory security certifications (SOC 2, ISO 27001, HIPAA)
+    - Encryption requirements (TLS 1.3, AES-256)
+    - Breach notification timelines (e.g., 72 hours)
+  </Accordion>
+
+  <Accordion title="6. Feature Functionality" icon="wrench">
+    **What We Resolve:**
+    - Promised features not delivered
+    - Feature performance below specification
+    - API endpoint availability failures
+
+    <Note>
+    **Example Case:**
+    - **Claim:** "Batch processing API advertised as available, but returned 404"
+    - **Evidence:** API documentation, test requests showing 404 errors
+    - **Determination:** Feature not available as promised
+    - **Damages:** Full refund for affected month ($20,000)
+    </Note>
+
+    **Common SLA Terms:**
+    - Feature availability guarantees
+    - API endpoint uptime requirements
+    - Beta vs. production feature distinctions
+  </Accordion>
+</AccordionGroup>
+
+## Coming Soon: Advanced Dispute Types
+
+<Info>
+**Phase 2 Features:**
+
+### Intellectual Property
+- Patent/copyright infringement claims
+- API similarity disputes
+- Training data licensing violations
+
+**Approach:** Hybrid model with technical analysis + human arbitrator for legal determinations
+
+### Service Quality
+- General "quality of service" disputes
+- Professional standards violations
+- Customer satisfaction guarantees
+
+**Approach:** Contract redesign to add objective metrics + human arbitrator review
+</Info>
+
+## How to File a Dispute
+
+<Steps>
+  <Step title="Log in to Dashboard">
+    Access the [Consulate Dashboard](https://consulatehq.com/dashboard)
+  </Step>
+  
+  <Step title="Select Dispute Type">
+    Choose from the supported categories listed above
+  </Step>
+  
+  <Step title="Upload Evidence">
+    Provide monitoring logs, contracts, and system reports
+  </Step>
+  
+  <Step title="Submit Claim">
+    Specify claim amount and reasoning
+  </Step>
+  
+  <Step title="Automated Review">
+    System verifies facts and calculates damages
+  </Step>
+  
+  <Step title="Receive Determination">
+    Binding ruling delivered in 7 minutes (simple cases) to 48 hours (complex cases)
+    
+    <Check>
+    Cost: $500-2,000 depending on dispute complexity
+    </Check>
+  </Step>
+</Steps>
+
+## Requirements for Expert Determination
+
+For Consulate to resolve your dispute via expert determination, your contract must include:
+
+### 1. Expert Determination Clause
+
+Your SLA or service agreement should reference expert determination:
+
+```text
+"Technical disputes regarding SLA performance shall be resolved by 
+binding expert determination through Consulate (consulatehq.com) or 
+a mutually agreed technical expert."
+```
+
+### 2. Objective Metrics
+
+SLA terms must include measurable thresholds:
+
+<CodeGroup>
+```text Good Example
+API uptime shall be ≥99.9%, measured as (total minutes - downtime) / total minutes
+```
+
+```text Bad Example
+API shall be available at reasonable levels
+```
+</CodeGroup>
+
+### 3. Liquidated Damages Formula
+
+Pre-specified penalties for breaches:
+
+<CodeGroup>
+```text Good Example
+For uptime <99%, Customer receives 25% monthly credit
+```
+
+```text Bad Example
+Customer may receive compensation at Vendor's discretion
+```
+</CodeGroup>
+
+<Tip>
+**Don't have these clauses?** We provide free SLA templates with expert-determination-friendly language. [Download Templates](https://consulatehq.com/templates)
+</Tip>
+
+## Why Expert Determination?
+
+### Comparison with Traditional Arbitration
+
+| Factor | Consulate Expert Determination | Traditional Arbitration |
+|--------|--------------------------------|-------------------------|
+| **Timeline** | 7 minutes to 48 hours | 6-12 months |
+| **Cost** | $500-2,000 | $50,000-150,000 |
+| **Process** | Automated log verification | Hearings, depositions, briefs |
+| **Best For** | Technical SLA disputes with clear metrics | Complex legal disputes |
+| **Enforceability** | Contract law (3-6 month enforcement) | Federal Arbitration Act (30-60 day enforcement) |
+
+### When to Use Expert Determination
+
+✅ **Use Expert Determination for:**
+- SLA breaches with objective metrics
+- Performance/uptime disputes
+- Technical compliance failures
+- Data quality issues
+- Clear contractual violations
+
+❌ **Use Traditional Arbitration for:**
+- Intellectual property disputes
+- Subjective quality assessments
+- Complex damages calculations
+- Legal interpretation questions
+
+## Questions?
+
+<CardGroup cols={2}>
+  <Card title="Sales" icon="envelope" href="mailto:sales@consulatehq.com">
+    Inquire about enterprise plans
+  </Card>
+  
+  <Card title="Support" icon="life-ring" href="mailto:support@consulatehq.com">
+    Get help with disputes
+  </Card>
+  
+  <Card title="SLA Templates" icon="file-contract" href="https://consulatehq.com/templates">
+    Download free templates
+  </Card>
+  
+  <Card title="API Docs" icon="code" href="/api-endpoints">
+    Integrate with our API
+  </Card>
+</CardGroup>
+
+## Related Resources
+
+- [Agentic Arbitration Protocol (AAP) Specification](https://github.com/consulatehq/agentic-arbitration-protocol)
+- [Agent Integration Guide](/agent-integration-guide)
+- [API Documentation](/api-endpoints)
+

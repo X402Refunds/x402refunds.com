@@ -1,0 +1,85 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Consulate",
+  "description": "Fast, automated dispute resolution when AI services break their promises",
+  "logo": {
+    "light": "/public/consulate-logo-square.svg",
+    "dark": "/public/consulate-logo-square.svg",
+    "href": "https://consulatehq.com"
+  },
+  "favicon": "/public/consulate-icon-simple.png",
+  "colors": {
+    "primary": "#3B82F6",
+    "light": "#F8FAFC",
+    "dark": "#0F172A",
+    "anchors": {
+      "from": "#3B82F6",
+      "to": "#1D4ED8"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://consulatehq.com/dashboard"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://consulatehq.com/dashboard"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "index"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "dispute-types"
+      ]
+    },
+    {
+      "group": "Integration",
+      "pages": [
+        "agent-integration-guide",
+        "agent-integration-strategy",
+        "agent-discovery",
+        "agent-failure-modes"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-overview",
+        "api-endpoints"
+      ]
+    },
+    {
+      "group": "Standards",
+      "pages": [
+        "arbitration-rules"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/vbkotecha/consulate",
+    "linkedin": "https://www.linkedin.com/company/consulatehq",
+    "x": "https://x.com/consulatehq"
+  },
+  "theme": "quill",
+  "api": {
+    "baseUrl": "https://api.consulatehq.com"
+  },
+  "ignore": [
+    "agentic-arbitration-protocol",
+    "docs/standards",
+    "docs/**/*.md",
+    "docs/api/README.md",
+    "docs/api/endpoints.md",
+    "docs/README.md",
+    "**/*.xml"
+  ]
+}
+
