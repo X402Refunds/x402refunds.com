@@ -7,10 +7,10 @@ const crons = cronJobs();
 // LLM-POWERED DISPUTE GENERATION SYSTEM
 // =================================================================
 
-// Generate LLM-powered mock disputes every 5 minutes
+// Generate LLM-powered mock disputes every 30 minutes
 crons.interval(
   "llm dispute generation",
-  { minutes: 5 },
+  { minutes: 30 },
   internal.crons.generateLLMDispute,
   {} // empty args
 );
@@ -23,18 +23,18 @@ crons.interval(
   {} // empty args
 );
 
-// Process pending cases every 10 minutes
+// Process pending cases every 15 minutes
 crons.interval(
   "process cases",
-  { minutes: 10 },
+  { minutes: 15 },
   internal.crons.processPendingCases,
   {} // empty args
 );
 
-// Update cached system statistics every 5 minutes
+// Update cached system statistics every 10 minutes
 crons.interval(
   "update stats cache",
-  { minutes: 5 },
+  { minutes: 10 },
   internal.crons.updateSystemStatsCache,
   {} // empty args
 );
