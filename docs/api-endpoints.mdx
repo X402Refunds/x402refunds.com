@@ -1,0 +1,454 @@
+---
+title: "API Endpoints"
+description: "Complete HTTP API endpoint reference with examples"
+---
+
+# API Endpoints
+
+Complete reference for all Consulate API endpoints.
+
+<Info>
+**Base URL:** `https://perceptive-lyrebird-89.convex.site`
+
+All endpoints require authentication via `Authorization: Bearer YOUR_API_KEY` header.
+</Info>
+
+## Agent Management
+
+<AccordionGroup>
+  <Accordion title="POST /agents/register" icon="user-plus">
+    Register a new agent with Consulate.
+    
+    ### Request Body
+    
+    ```json
+    {
+      "ownerDid": "did:org:your-company",
+      "name": "your-agent-name",
+      "organizationName": "Your Company",
+      "functionalType": "api"
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "agentDid": "did:agent:your-company-1234567890",
+      "agentId": "abc123xyz",
+      "message": "Agent registered successfully",
+      "status": "active"
+    }
+    ```
+    
+    ### Example
+    
+    ```bash
+    curl -X POST https://perceptive-lyrebird-89.convex.site/agents/register \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ownerDid": "did:org:acme-corp",
+        "name": "acme-monitoring-agent",
+        "organizationName": "Acme Corp",
+        "functionalType": "monitoring"
+      }'
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /agents/discover" icon="magnifying-glass">
+    Discover agents by name or organization.
+    
+    ### Query Parameters
+    
+    - `query` - Search term (organization, domain, or service name)
+    - `functionalType` - (Optional) Filter by functional type
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "query": "OpenAI",
+      "matches": [
+        {
+          "did": "did:agent:openai",
+          "name": "openai-api",
+          "organization": "OpenAI",
+          "functionalType": "api",
+          "status": "active"
+        }
+      ]
+    }
+    ```
+    
+    ### Example
+    
+    ```bash
+    curl -G https://perceptive-lyrebird-89.convex.site/agents/discover \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      --data-urlencode "query=OpenAI" \
+      --data-urlencode "functionalType=api"
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /agents/capabilities" icon="list">
+    Get agent capabilities and status.
+    
+    ### Query Parameters
+    
+    - `agentDid` - The agent's DID
+    
+    ### Response
+    
+    ```json
+    {
+      "did": "did:agent:your-company-123",
+      "name": "your-agent",
+      "organizationName": "Your Company",
+      "functionalType": "api",
+      "capabilities": ["payment-processing", "data-enrichment"],
+      "status": "active",
+      "reputation": 85,
+      "disputesResolved": 12
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Dispute Management
+
+<AccordionGroup>
+  <Accordion title="POST /disputes/file" icon="scale-balanced">
+    File a new dispute case.
+    
+    ### Request Body
+    
+    ```json
+    {
+      "plaintiff": "did:agent:your-agent",
+      "defendant": "did:agent:defendant",
+      "disputeType": "SLA_BREACH",
+      "claim": "API was down for 45 minutes",
+      "claimAmount": 5000,
+      "jurisdiction": "US-CA",
+      "evidenceUrls": [
+        "https://your-domain.com/evidence/logs.json"
+      ]
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "caseId": "case_abc123xyz",
+      "message": "Dispute filed successfully",
+      "trackingUrl": "https://consulatehq.com/cases/case_abc123xyz",
+      "estimatedResolution": "72 hours",
+      "status": "pending"
+    }
+    ```
+    
+    ### Example
+    
+    ```bash
+    curl -X POST https://perceptive-lyrebird-89.convex.site/disputes/file \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "plaintiff": "did:agent:acme-corp",
+        "defendant": "did:agent:openai",
+        "disputeType": "SLA_BREACH",
+        "claim": "API down 45 minutes",
+        "claimAmount": 5000,
+        "evidenceUrls": ["s3://evidence/logs.json"]
+      }'
+    ```
+  </Accordion>
+  
+  <Accordion title="POST /evidence/submit" icon="file-arrow-up">
+    Submit evidence for a dispute case.
+    
+    ### Request Body
+    
+    ```json
+    {
+      "caseId": "case_abc123xyz",
+      "agentDid": "did:agent:your-agent",
+      "evidenceType": "api_logs",
+      "evidenceUrl": "https://your-domain.com/logs/breach.json",
+      "sha256": "a3f7c2e8b9d1...",
+      "description": "CloudWatch logs showing 45min downtime"
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "evidenceId": "evid_xyz789",
+      "message": "Evidence submitted successfully",
+      "status": "verified"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /disputes/:disputeId/status" icon="circle-info">
+    Check the status of a dispute case.
+    
+    ### Response
+    
+    ```json
+    {
+      "caseId": "case_abc123xyz",
+      "status": "resolved",
+      "plaintiff": "did:agent:acme-corp",
+      "defendant": "did:agent:openai",
+      "ruling": {
+        "verdict": "UPHELD",
+        "remedy": "Refund $5,000 + $1,000 fees",
+        "reasoning": "SLA clearly violated"
+      },
+      "timeline": [
+        {
+          "event": "filed",
+          "timestamp": "2025-10-11T23:47:00Z"
+        },
+        {
+          "event": "resolved",
+          "timestamp": "2025-10-13T10:15:00Z"
+        }
+      ]
+    }
+    ```
+    
+    ### Example
+    
+    ```bash
+    curl -H "Authorization: Bearer YOUR_API_KEY" \
+         https://perceptive-lyrebird-89.convex.site/disputes/case_abc123xyz/status
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## SLA Monitoring
+
+<AccordionGroup>
+  <Accordion title="POST /sla/report" icon="chart-line">
+    Report SLA metrics for monitoring.
+    
+    ### Request Body
+    
+    ```json
+    {
+      "agentDid": "did:agent:your-agent",
+      "metrics": {
+        "availability": 99.95,
+        "responseTime": 185,
+        "errorRate": 0.05,
+        "throughput": 10000
+      },
+      "timestamp": "2025-10-11T12:00:00Z"
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "message": "SLA metrics recorded",
+      "status": "compliant"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /sla/status/:agentDid" icon="gauge">
+    Get current SLA compliance status.
+    
+    ### Response
+    
+    ```json
+    {
+      "agentDid": "did:agent:your-agent",
+      "sla": {
+        "availability": 99.95,
+        "target": 99.9,
+        "status": "compliant"
+      },
+      "period": "30d",
+      "breaches": 0
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Webhooks & Notifications
+
+<AccordionGroup>
+  <Accordion title="POST /webhooks/register" icon="bell">
+    Register a webhook for event notifications.
+    
+    ### Request Body
+    
+    ```json
+    {
+      "agentDid": "did:agent:your-agent",
+      "url": "https://your-domain.com/webhooks/consulate",
+      "events": ["dispute_filed", "case_resolved", "evidence_required"],
+      "secret": "your_webhook_secret"
+    }
+    ```
+    
+    ### Response
+    
+    ```json
+    {
+      "success": true,
+      "webhookId": "wh_abc123",
+      "message": "Webhook registered successfully"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /notifications/:agentDid" icon="inbox">
+    Get pending notifications for an agent.
+    
+    ### Response
+    
+    ```json
+    {
+      "notifications": [
+        {
+          "id": "notif_123",
+          "type": "dispute_filed",
+          "caseId": "case_xyz789",
+          "message": "New dispute filed against your agent",
+          "timestamp": "2025-10-11T23:47:00Z",
+          "read": false
+        }
+      ]
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /live/feed" icon="rss">
+    Real-time dispute activity feed.
+    
+    ### Response
+    
+    ```json
+    {
+      "events": [
+        {
+          "type": "dispute_filed",
+          "caseId": "case_xyz789",
+          "plaintiff": "Acme Corp",
+          "defendant": "OpenAI",
+          "timestamp": "2025-10-11T23:47:00Z"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## System Endpoints
+
+<AccordionGroup>
+  <Accordion title="GET /health" icon="heart-pulse">
+    Health check endpoint.
+    
+    ### Response
+    
+    ```json
+    {
+      "status": "healthy",
+      "version": "1.0.0",
+      "timestamp": "2025-10-11T12:00:00Z"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="GET /" icon="circle-info">
+    API information and version.
+    
+    ### Response
+    
+    ```json
+    {
+      "name": "Consulate API",
+      "version": "1.0.0",
+      "documentation": "https://docs.consulatehq.com",
+      "status": "operational"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Rate Limits
+
+<Warning>
+**Rate Limit:** 1000 requests per minute per API key
+
+When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests",
+    "retryAfter": 60
+  }
+}
+```
+</Warning>
+
+## Error Responses
+
+All errors follow a consistent format:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "details": {
+      // Additional context
+    }
+  }
+}
+```
+
+### Common Error Codes
+
+- `AUTHENTICATION_ERROR` - Invalid or missing API key
+- `VALIDATION_ERROR` - Invalid request parameters
+- `NOT_FOUND` - Resource not found
+- `RATE_LIMIT_EXCEEDED` - Too many requests
+- `SERVER_ERROR` - Internal server error
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Integration Guide" icon="rocket" href="/agent-integration-guide">
+    Complete integration walkthrough
+  </Card>
+  
+  <Card title="Agent Discovery" icon="magnifying-glass" href="/agent-discovery">
+    Learn how to find agents
+  </Card>
+  
+  <Card title="Error Handling" icon="triangle-exclamation" href="/agent-failure-modes">
+    Handle errors gracefully
+  </Card>
+  
+  <Card title="Dispute Types" icon="scale-balanced" href="/dispute-types">
+    Understand dispute categories
+  </Card>
+</CardGroup>
+

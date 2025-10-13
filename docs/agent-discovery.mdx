@@ -1,0 +1,445 @@
+---
+title: "Agent Discovery"
+description: "How agents discover and locate defendant DIDs for filing disputes"
+---
+
+# Agent Discovery
+
+When filing a dispute, your agent needs to identify the defendant using their Decentralized Identifier (DID). This guide explains multiple discovery mechanisms.
+
+<Info>
+**Problem:** Agents need to know the defendant's DID to file a dispute, but DIDs aren't always immediately known.
+
+**Solution:** Consulate provides multiple discovery mechanisms, from instant lookups to fallback registration requests.
+</Info>
+
+## Quick Reference: Discovery Flow
+
+```
+Agent detects SLA breach from OpenAI API
+  ↓
+Agent invokes: consulate_lookup_agent({ query: "OpenAI" })
+  ↓
+Consulate returns: { did: "did:agent:openai", ... }
+  ↓
+Agent invokes: consulate_file_dispute({ 
+  defendant: "did:agent:openai",  // Found via lookup
+  ...
+})
+  ↓
+Dispute filed successfully
+```
+
+## Discovery Mechanisms
+
+<AccordionGroup>
+  <Accordion title="1. Consulate Agent Lookup (Recommended)" icon="magnifying-glass">
+    ### Use Case
+    "I know the company name (e.g., 'OpenAI'), but I don't know their agent DID."
+    
+    ### How It Works
+    
+    ```javascript
+    // Step 1: Look up DID
+    const lookup = await mcp.invoke('consulate_lookup_agent', {
+      query: 'OpenAI'
+    });
+    
+    // Returns:
+    {
+      success: true,
+      matches: [{
+        did: "did:agent:openai",
+        name: "openai-api",
+        organization: "OpenAI",
+        functionalType: "api",
+        status: "active"
+      }]
+    }
+    
+    // Step 2: File dispute with discovered DID
+    const dispute = await mcp.invoke('consulate_file_dispute', {
+      plaintiff: myDid,
+      defendant: lookup.matches[0].did,
+      disputeType: "SLA_BREACH",
+      claim: "API down for 45 minutes",
+      claimAmount: 5000
+    });
+    ```
+    
+    ### Search Options
+    
+    <Tabs>
+      <Tab title="By Organization">
+        ```javascript
+        consulate_lookup_agent({ query: "OpenAI" })
+        consulate_lookup_agent({ query: "Anthropic" })
+        consulate_lookup_agent({ query: "Google" })
+        ```
+      </Tab>
+      
+      <Tab title="By Domain">
+        ```javascript
+        consulate_lookup_agent({ query: "openai.com" })
+        consulate_lookup_agent({ query: "anthropic.com" })
+        ```
+      </Tab>
+      
+      <Tab title="By Service">
+        ```javascript
+        consulate_lookup_agent({ query: "ChatGPT" })
+        consulate_lookup_agent({ query: "Claude" })
+        ```
+      </Tab>
+      
+      <Tab title="With Filter">
+        ```javascript
+        consulate_lookup_agent({ 
+          query: "OpenAI",
+          functionalType: "api"  // Only API agents
+        })
+        ```
+      </Tab>
+    </Tabs>
+  </Accordion>
+  
+  <Accordion title="2. DID Exchange During API Handshake" icon="handshake">
+    ### Use Case
+    "I want to automatically learn the provider's DID when I first connect."
+    
+    ### How It Works
+    
+    ```bash
+    # Agent → Service
+    POST https://api.openai.com/v1/chat/completions
+    Headers:
+      X-Agent-DID: did:agent:acme-corp  # Your DID
+      X-Consulate-Enabled: true
+    
+    # Service → Agent
+    Response Headers:
+      X-Provider-DID: did:agent:openai  # Their DID
+      X-SLA-Document: https://openai.com/sla/v1.0
+    ```
+    
+    Agent caches this mapping for future use:
+    
+    ```javascript
+    {
+      "api.openai.com": {
+        "did": "did:agent:openai",
+        "sla": "https://openai.com/sla/v1.0",
+        "discovered_at": 1728691200000
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="3. Well-Known DID Endpoint" icon="link">
+    ### Use Case
+    "I want to discover a service's DID before making my first API call."
+    
+    ### How It Works
+    
+    ```bash
+    GET https://api.openai.com/.well-known/agent.json
+    
+    Response:
+    {
+      "did": "did:agent:openai",
+      "organization": "OpenAI",
+      "services": ["gpt-4", "gpt-4-turbo"],
+      "sla_url": "https://openai.com/sla",
+      "dispute_resolution": {
+        "platform": "consulatehq.com",
+        "accepts_claims": true
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="4. Canonical Vendor Registry" icon="database">
+    ### Use Case
+    "I want a trusted list of major AI vendor DIDs."
+    
+    ### How It Works
+    
+    ```bash
+    GET https://consulatehq.com/api/vendors/canonical
+    
+    Response:
+    {
+      "vendors": [
+        {
+          "did": "did:agent:openai",
+          "organization": "OpenAI",
+          "domains": ["api.openai.com"],
+          "services": ["ChatGPT", "GPT-4", "Whisper"],
+          "verified": true
+        }
+      ]
+    }
+    ```
+    
+    Cache this locally for fast lookups:
+    
+    ```javascript
+    const registry = await fetch(
+      'https://consulatehq.com/api/vendors/canonical'
+    );
+    const vendorMap = new Map(
+      registry.vendors.map(v => [v.domains[0], v.did])
+    );
+    
+    // Later, when detecting breach
+    const defendantDid = vendorMap.get('api.openai.com');
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Complete Example
+
+```typescript
+class MonitoringAgent {
+  private vendorCache: Map<string, string> = new Map();
+  
+  async handleSLABreach(metrics: any) {
+    const apiDomain = 'api.openai.com';
+    
+    // Step 1: Find defendant's DID
+    let defendantDid = this.vendorCache.get(apiDomain);
+    
+    if (!defendantDid) {
+      console.log('🔍 Looking up OpenAI DID...');
+      
+      const lookup = await this.consulate.invoke(
+        'consulate_lookup_agent', 
+        { query: 'OpenAI', functionalType: 'api' }
+      );
+      
+      if (lookup.matches.length > 0) {
+        defendantDid = lookup.matches[0].did;
+        this.vendorCache.set(apiDomain, defendantDid);
+        console.log(`✅ Found: ${defendantDid}`);
+      } else {
+        console.error('❌ Could not find DID');
+        return;
+      }
+    }
+    
+    // Step 2: File dispute
+    const dispute = await this.consulate.invoke(
+      'consulate_file_dispute',
+      {
+        plaintiff: this.myDid,
+        defendant: defendantDid,
+        disputeType: 'SLA_BREACH',
+        claim: `API downtime of ${metrics.downMinutes} minutes`,
+        claimAmount: this.calculateDamages(metrics),
+        evidenceUrls: [`s3://logs/breach-${Date.now()}.json`]
+      }
+    );
+    
+    console.log(`✅ Dispute filed: ${dispute.caseId}`);
+  }
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="1. Cache Discovered DIDs" icon="floppy-disk">
+    Don't look up the same vendor DID every time:
+    
+    ```typescript
+    const cache: Map<string, { did: string, lastVerified: number }> = new Map();
+    
+    async function getVendorDid(domain: string): Promise<string> {
+      const cached = cache.get(domain);
+      if (cached && Date.now() - cached.lastVerified < 86400000) {
+        return cached.did; // Valid for 24 hours
+      }
+      
+      const lookup = await consulate.invoke('consulate_lookup_agent', {
+        query: domain
+      });
+      
+      if (lookup.matches.length > 0) {
+        cache.set(domain, {
+          did: lookup.matches[0].did,
+          lastVerified: Date.now()
+        });
+        return lookup.matches[0].did;
+      }
+      
+      throw new Error(`No DID found for ${domain}`);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="2. Prefetch Known Vendors" icon="download">
+    For common vendors, prefetch DIDs on startup:
+    
+    ```typescript
+    const KNOWN_VENDORS = ['OpenAI', 'Anthropic', 'Google', 'Cohere'];
+    
+    async function prefetchVendorDids() {
+      await Promise.all(
+        KNOWN_VENDORS.map(vendor => 
+          consulate.invoke('consulate_lookup_agent', { query: vendor })
+            .then(result => {
+              if (result.matches.length > 0) {
+                cache.set(vendor.toLowerCase(), result.matches[0].did);
+              }
+            })
+        )
+      );
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="3. Implement Fallback Chain" icon="list">
+    Try multiple discovery mechanisms:
+    
+    ```typescript
+    async function discoverVendorDid(domain: string, orgName: string) {
+      // Try 1: Local cache
+      if (cache.has(domain)) return cache.get(domain)!;
+      
+      // Try 2: Well-known endpoint
+      try {
+        const wellKnown = await fetch(
+          `https://${domain}/.well-known/agent.json`
+        );
+        if (wellKnown.ok) {
+          const data = await wellKnown.json();
+          cache.set(domain, data.did);
+          return data.did;
+        }
+      } catch {}
+      
+      // Try 3: Consulate lookup
+      try {
+        const lookup = await consulate.invoke(
+          'consulate_lookup_agent', 
+          { query: orgName }
+        );
+        if (lookup.matches.length > 0) {
+          cache.set(domain, lookup.matches[0].did);
+          return lookup.matches[0].did;
+        }
+      } catch {}
+      
+      // Try 4: Canonical registry
+      try {
+        const registry = await fetch(
+          'https://consulatehq.com/api/vendors/canonical'
+        );
+        const vendor = registry.vendors.find(v => 
+          v.domains.includes(domain) || v.organization === orgName
+        );
+        if (vendor) {
+          cache.set(domain, vendor.did);
+          return vendor.did;
+        }
+      } catch {}
+      
+      throw new Error(`Could not discover DID for ${domain} (${orgName})`);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="4. Handle 'Not Found' Gracefully" icon="circle-exclamation">
+    If vendor isn't registered, provide helpful guidance:
+    
+    ```typescript
+    async function fileDisputeWithDiscovery(params: DisputeParams) {
+      let defendantDid: string;
+      
+      try {
+        defendantDid = await discoverVendorDid(
+          params.vendorDomain, 
+          params.vendorName
+        );
+      } catch (error) {
+        console.warn(`⚠️ Vendor not registered with Consulate`);
+        console.warn(`📧 Email them: disputes@${params.vendorDomain}`);
+        
+        // Suggest vendor registration
+        await emailVendor({
+          to: `disputes@${params.vendorDomain}`,
+          subject: 'SLA Breach - Register with Consulate',
+          body: 'We detected an SLA breach and need to file a claim...'
+        });
+        
+        return;
+      }
+      
+      // Proceed with dispute
+      await consulate.invoke('consulate_file_dispute', {
+        plaintiff: myDid,
+        defendant: defendantDid,
+        ...params
+      });
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Decision Tree
+
+```
+Need to file dispute
+  ↓
+Do I have their DID cached?
+  ├─ YES → Use cached DID ✅
+  └─ NO ↓
+  
+Is it a major vendor?
+  ├─ YES → Check canonical registry ✅
+  └─ NO ↓
+  
+Does vendor have /.well-known/agent.json?
+  ├─ YES → Fetch DID from there ✅
+  └─ NO ↓
+  
+Use consulate_lookup_agent()
+  ├─ Found → Use discovered DID ✅
+  └─ Not found ↓
+  
+Vendor not registered
+  ├─ Email vendor suggesting registration
+  ├─ Request registration via Consulate
+  └─ OR file with temporary DID (see Error Handling guide)
+```
+
+<Warning>
+If vendor isn't found, see our [Error Handling guide](/agent-failure-modes) for recovery strategies.
+</Warning>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What if multiple agents have similar names?">
+    `consulate_lookup_agent` returns all matches. Choose the most relevant DID based on functionalType, organization, or domain.
+  </Accordion>
+  
+  <Accordion title="What if vendor changes their DID?">
+    Consulate tracks DID history. Disputes use the DID active at the time of the SLA agreement.
+  </Accordion>
+  
+  <Accordion title="What if vendor refuses to register?">
+    Agents can still file disputes. Consulate will contact the vendor to join. You can also file with a temporary DID.
+  </Accordion>
+  
+  <Accordion title="Is this GDPR compliant?">
+    Yes, only public agent identities are stored. No personal data is required.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Error Handling" icon="triangle-exclamation" href="/agent-failure-modes">
+  Learn how to handle vendors that aren't registered
+</Card>
+
