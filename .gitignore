@@ -34,3 +34,6 @@ _generated
 
 # Vercel
 .vercel
+
+# Test coverage
+coverage
