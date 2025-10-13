@@ -26,6 +26,7 @@ import type * as evidence from "../evidence.js";
 import type * as http from "../http.js";
 import type * as judges from "../judges.js";
 import type * as llmEngine from "../llmEngine.js";
+import type * as mcp from "../mcp.js";
 import type * as types from "../types.js";
 
 /**
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   judges: typeof judges;
   llmEngine: typeof llmEngine;
+  mcp: typeof mcp;
   types: typeof types;
 }>;
 export declare const api: FilterApi<
