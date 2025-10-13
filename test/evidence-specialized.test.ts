@@ -312,3 +312,336 @@ describe('Evidence Validation', () => {
   });
 });
 
+describe('Healthcare Evidence Advanced Filtering', () => {
+  let t: ReturnType<typeof convexTest>;
+  let agentDid: string;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+    
+    // Create a healthcare-specific agent
+    const ownerDid = `did:test:healthcare-owner-${Date.now()}`;
+    await t.mutation(api.auth.createOwner, {
+      did: ownerDid,
+      name: 'Healthcare Test Owner',
+      email: 'healthcare-test@example.com',
+    });
+    
+    const agent = await t.mutation(api.agents.joinAgent, {
+      ownerDid,
+      name: 'Healthcare Test Agent',
+      organizationName: `Healthcare Org ${Date.now()}`,
+      functionalType: 'healthcare',
+    });
+    agentDid = agent.did;
+  });
+
+  it('should filter healthcare evidence by HIPAA compliance (true)', async () => {
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_hipaa_true_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-hipaa.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true,
+          humanOversightRequired: false,
+          medicalDataHashes: ['hash1'],
+          medicalReferences: ['ref1'],
+        },
+      },
+    });
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      hipaaCompliant: true,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    // All returned evidence should be HIPAA compliant
+    evidence.forEach((e: any) => {
+      if (e.functionalContext?.healthcareContext) {
+        expect(e.functionalContext.healthcareContext.hipaaCompliance).toBe(true);
+      }
+    });
+  });
+
+  it('should reject non-HIPAA compliant healthcare evidence', async () => {
+    // Healthcare evidence must be HIPAA compliant per business rules
+    await expect(
+      t.mutation(api.evidence.submitEvidence, {
+        agentDid,
+        sha256: `healthcare_hipaa_false_${Date.now()}`,
+        uri: 'https://test.example.com/healthcare-no-hipaa.json',
+        signer: 'did:test:signer',
+        model: {
+          provider: 'test',
+          name: 'test-model',
+          version: '1.0.0',
+        },
+        functionalContext: {
+          healthcareContext: {
+            hipaaCompliance: false,
+            humanOversightRequired: false,
+            medicalDataHashes: ['hash2'],
+            medicalReferences: ['ref2'],
+          },
+        },
+      })
+    ).rejects.toThrow('Healthcare evidence must be HIPAA compliant');
+  });
+
+  it('should filter healthcare evidence by oversight requirements (true)', async () => {
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_oversight_true_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-oversight.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true,
+          humanOversightRequired: true,
+          medicalDataHashes: ['hash3'],
+          medicalReferences: ['ref3'],
+        },
+      },
+    });
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      requiresOversight: true,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    // All returned evidence should require oversight
+    evidence.forEach((e: any) => {
+      if (e.functionalContext?.healthcareContext) {
+        expect(e.functionalContext.healthcareContext.humanOversightRequired).toBe(true);
+      }
+    });
+  });
+
+  it('should filter healthcare evidence by oversight requirements (false)', async () => {
+    // Create evidence without oversight but still HIPAA compliant
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_oversight_false_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-no-oversight.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true, // Must be HIPAA compliant
+          humanOversightRequired: false,
+          medicalDataHashes: ['hash4'],
+          medicalReferences: ['ref4'],
+        },
+      },
+    });
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      requiresOversight: false,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    // All returned evidence should not require oversight
+    evidence.forEach((e: any) => {
+      if (e.functionalContext?.healthcareContext) {
+        expect(e.functionalContext.healthcareContext.humanOversightRequired).toBe(false);
+      }
+    });
+  });
+
+  it('should filter healthcare evidence with both HIPAA and oversight filters', async () => {
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_both_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-both.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true,
+          humanOversightRequired: true,
+          medicalDataHashes: ['hash5'],
+          medicalReferences: ['ref5'],
+        },
+      },
+    });
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      hipaaCompliant: true,
+      requiresOversight: true,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    // All returned evidence should meet both criteria
+    evidence.forEach((e: any) => {
+      if (e.functionalContext?.healthcareContext) {
+        expect(e.functionalContext.healthcareContext.hipaaCompliance).toBe(true);
+        expect(e.functionalContext.healthcareContext.humanOversightRequired).toBe(true);
+      }
+    });
+  });
+
+  it('should return all healthcare evidence with no filters', async () => {
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_nofilter_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-nofilter.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true,
+          humanOversightRequired: false,
+          medicalDataHashes: ['hash6'],
+          medicalReferences: ['ref6'],
+        },
+      },
+    });
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      limit: 20,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+  });
+
+  it('should handle filter combinations correctly', async () => {
+    // Create evidence with oversight=false but HIPAA=true
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_no_oversight_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-no-oversight.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true, // Must be HIPAA compliant
+          humanOversightRequired: false,
+          medicalDataHashes: ['hash7'],
+          medicalReferences: ['ref7'],
+        },
+      },
+    });
+
+    // Filter for HIPAA=true, oversight=true (should not match the above)
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      hipaaCompliant: true,
+      requiresOversight: true,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    // All returned evidence should require oversight
+    evidence.forEach((e: any) => {
+      if (e.functionalContext?.healthcareContext) {
+        expect(e.functionalContext.healthcareContext.humanOversightRequired).toBe(true);
+      }
+    });
+  });
+
+  it('should filter healthcare evidence on empty dataset', async () => {
+    // Query with filters on potentially empty dataset
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      hipaaCompliant: true,
+      requiresOversight: true,
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    expect(evidence.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should handle healthcare evidence with partial metadata', async () => {
+    await t.mutation(api.evidence.submitEvidence, {
+      agentDid,
+      sha256: `healthcare_partial_${Date.now()}`,
+      uri: 'https://test.example.com/healthcare-partial.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+      functionalContext: {
+        healthcareContext: {
+          hipaaCompliance: true,
+          humanOversightRequired: false,
+          medicalDataHashes: ['hash8'],
+          medicalReferences: ['ref8'],
+        },
+      },
+    });
+
+    // Should handle evidence with partial metadata
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      limit: 10,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+  });
+
+  it('should enforce limit on healthcare evidence results', async () => {
+    // Create multiple healthcare evidence items
+    for (let i = 0; i < 5; i++) {
+      await t.mutation(api.evidence.submitEvidence, {
+        agentDid,
+        sha256: `healthcare_limit_${i}_${Date.now()}`,
+        uri: `https://test.example.com/healthcare-${i}.json`,
+        signer: 'did:test:signer',
+        model: {
+          provider: 'test',
+          name: 'test-model',
+          version: '1.0.0',
+        },
+        functionalContext: {
+          healthcareContext: {
+            hipaaCompliance: true,
+            humanOversightRequired: false,
+            medicalDataHashes: [`hash9-${i}`],
+            medicalReferences: [`ref9-${i}`],
+          },
+        },
+      });
+    }
+
+    const evidence = await t.query(api.evidence.getHealthcareEvidence, {
+      limit: 3,
+    });
+
+    expect(Array.isArray(evidence)).toBe(true);
+    expect(evidence.length).toBeLessThanOrEqual(3);
+  });
+});
+

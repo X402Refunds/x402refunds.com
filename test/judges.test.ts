@@ -387,3 +387,307 @@ describe('AI Deliberation', () => {
   });
 });
 
+describe('Judge Stats Edge Cases', () => {
+  let t: ReturnType<typeof convexTest>;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+  });
+
+  it('should return null for non-existent judge', async () => {
+    const stats = await t.query(api.judges.getJudgeStats, {
+      judgeId: 'did:judge:nonexistent',
+    });
+
+    expect(stats).toBeNull();
+  });
+
+  it('should return stats for judge with no votes', async () => {
+    const judgeDid = `did:judge:novotes-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Judge No Votes',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const stats = await t.query(api.judges.getJudgeStats, {
+      judgeId: judgeDid,
+    });
+
+    expect(stats).toBeDefined();
+    expect(stats?.recentVotes).toBe(0);
+  });
+
+  it('should return stats for judge with multiple votes', async () => {
+    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
+    const { caseId } = await createTestCaseWithEvidence(t, plaintiff, defendant, 2);
+
+    // Create judge and panel
+    const judgeDid = `did:judge:multivotes-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Judge Multi Votes',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const panelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judgeDid],
+    });
+
+    // Submit vote
+    await t.mutation(api.judges.submitVote, {
+      panelId,
+      judgeId: judgeDid,
+      code: 'UPHELD',
+      reasons: 'Test vote',
+      confidence: 0.9,
+    });
+
+    const stats = await t.query(api.judges.getJudgeStats, {
+      judgeId: judgeDid,
+    });
+
+    expect(stats).toBeDefined();
+    expect(stats?.recentVotes).toBeGreaterThan(0);
+  });
+});
+
+describe('Panel Creation Direct', () => {
+  let t: ReturnType<typeof convexTest>;
+  let caseId: any;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+
+    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
+    const { caseId: testCaseId } = await createTestCaseWithEvidence(t, plaintiff, defendant, 1);
+    caseId = testCaseId;
+  });
+
+  it('should create panel with valid judges', async () => {
+    const judge1Did = `did:judge:panel1-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judge1Did,
+      name: 'Judge Panel 1',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const judge2Did = `did:judge:panel2-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judge2Did,
+      name: 'Judge Panel 2',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const panelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judge1Did, judge2Did],
+    });
+
+    expect(panelId).toBeDefined();
+
+    const panel = await t.query(api.judges.getPanel, { panelId });
+    expect(panel).toBeDefined();
+    expect(panel?.judgeIds).toHaveLength(2);
+  });
+
+  it('should handle empty judge list', async () => {
+    await expect(
+      t.mutation(api.judges.createPanel, {
+        caseId,
+        judgeIds: [],
+      })
+    ).resolves.toBeDefined(); // System allows empty panels
+  });
+
+  it('should create panel with specified panel size', async () => {
+    const judgeDid = `did:judge:sized-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Judge Sized',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const panelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judgeDid],
+      panelSize: 3,
+    });
+
+    expect(panelId).toBeDefined();
+  });
+});
+
+describe('Panel Status and Retrieval', () => {
+  let t: ReturnType<typeof convexTest>;
+  let caseId: any;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+
+    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
+    const { caseId: testCaseId } = await createTestCaseWithEvidence(t, plaintiff, defendant, 1);
+    caseId = testCaseId;
+  });
+
+  it('should get panel status after creation', async () => {
+    const judgeDid = `did:judge:status-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Judge Status',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const panelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judgeDid],
+    });
+
+    const status = await t.query(api.judges.getPanelStatus, { panelId });
+    expect(status).toBeDefined();
+    expect(status?.isComplete).toBe(false);
+    expect(status?.remainingVotes).toBe(1);
+    expect(status?.judgeIds).toHaveLength(1);
+  });
+
+  it('should track votes in panel status', async () => {
+    const judgeDid = `did:judge:tracked-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Judge Tracked',
+      specialties: ['SLA_BREACH'],
+    });
+
+    const panelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judgeDid],
+    });
+
+    await t.mutation(api.judges.submitVote, {
+      panelId,
+      judgeId: judgeDid,
+      code: 'UPHELD',
+      reasons: 'Test tracking',
+      confidence: 0.9,
+    });
+
+    const status = await t.query(api.judges.getPanelStatus, { panelId });
+    expect(status?.isComplete).toBe(true);
+    expect(status?.remainingVotes).toBe(0);
+    expect(status?.voteCounts).toBeDefined();
+  });
+
+  it('should return null for non-existent panel', async () => {
+    // Create a valid panel first to get proper ID format
+    const judgeDid = `did:judge:fake-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeDid,
+      name: 'Fake Judge',
+      specialties: ['SLA_BREACH'],
+    });
+    
+    const realPanelId = await t.mutation(api.judges.createPanel, {
+      caseId,
+      judgeIds: [judgeDid],
+    });
+    
+    // Modify the ID to make it non-existent
+    const fakePanelId = realPanelId.replace(/\d+/, '999999999999999');
+    
+    const panel = await t.query(api.judges.getPanel, {
+      panelId: fakePanelId as any,
+    });
+
+    expect(panel).toBeNull();
+  });
+});
+
+describe('Vote Validation Edge Cases', () => {
+  let t: ReturnType<typeof convexTest>;
+  let caseId: any;
+  let panelId: any;
+  let judgeId: string;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+
+    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
+    const { caseId: testCaseId } = await createTestCaseWithEvidence(t, plaintiff, defendant, 1);
+    caseId = testCaseId;
+
+    judgeId = `did:judge:validation-${Date.now()}`;
+    await t.mutation(api.judges.registerJudge, {
+      did: judgeId,
+      name: 'Judge Validation',
+      specialties: ['SLA_BREACH'],
+    });
+
+    panelId = await t.mutation(api.judges.assignPanel, {
+      caseId,
+      panelSize: 1,
+    });
+  });
+
+  it('should reject vote with invalid judge ID', async () => {
+    await expect(
+      t.mutation(api.judges.submitVote, {
+        panelId,
+        judgeId: 'did:judge:invalid',
+        code: 'UPHELD',
+        reasons: 'Invalid judge',
+        confidence: 0.9,
+      })
+    ).rejects.toThrow();
+  });
+
+  it('should reject vote from non-panel judge', async () => {
+    const otherJudge = await t.mutation(api.judges.registerJudge, {
+      did: `did:judge:other-${Date.now()}`,
+      name: 'Judge Other',
+      specialties: ['SLA_BREACH'],
+    });
+
+    await expect(
+      t.mutation(api.judges.submitVote, {
+        panelId,
+        judgeId: otherJudge.did,
+        code: 'UPHELD',
+        reasons: 'Not on panel',
+        confidence: 0.9,
+      })
+    ).rejects.toThrow();
+  });
+
+  it('should handle various vote codes', async () => {
+    for (const code of ['UPHELD', 'DISMISSED', 'REMANDED', 'MODIFIED']) {
+      const judgeDid = `did:judge:code-${code}-${Date.now()}`;
+      await t.mutation(api.judges.registerJudge, {
+        did: judgeDid,
+        name: `Judge ${code}`,
+        specialties: ['SLA_BREACH'],
+      });
+
+      const newPanelId = await t.mutation(api.judges.createPanel, {
+        caseId,
+        judgeIds: [judgeDid],
+      });
+
+      await t.mutation(api.judges.submitVote, {
+        panelId: newPanelId,
+        judgeId: judgeDid,
+        code: code as any,
+        reasons: `Test ${code}`,
+        confidence: 0.85,
+      });
+
+      const updatedPanel = await t.query(api.judges.getPanel, { panelId: newPanelId });
+      expect(updatedPanel?.votes[0].code).toBe(code);
+    }
+  });
+});
+
