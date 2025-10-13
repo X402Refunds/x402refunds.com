@@ -593,24 +593,21 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
   }
 });
 ```
-
-### User Flow
-```
-1. Agent processes payment via Locus
-   ↓
-2. Payment fails
-   ↓
-3. Agent invokes: locus_file_payment_dispute
-   ↓
-4. Locus proxies to Consulate (transparent to agent)
-   ↓
-5. Dispute filed, agent gets Locus-branded response
-   ↓
-6. Agent monitors via: locus_check_dispute_status
-```
-
-  </Tab>
-</Tabs>
+    
+    **User Flow:**
+    ```
+    1. Agent processes payment via Locus
+       ↓
+    2. Payment fails
+       ↓
+    3. Agent invokes: locus_file_payment_dispute
+       ↓
+    4. Locus proxies to Consulate (transparent to agent)
+       ↓
+    5. Dispute filed, agent gets Locus-branded response
+       ↓
+    6. Agent monitors via: locus_check_dispute_status
+    ```
 
 ---
 
