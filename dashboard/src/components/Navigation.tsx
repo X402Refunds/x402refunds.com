@@ -153,6 +153,12 @@ export function Navigation({ currentPage }: NavigationProps) {
               >
                 Docs
               </button>
+              <button
+                onClick={() => window.open('https://github.com/consulatehq/agentic-arbitration-protocol', '_blank')}
+                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                Agentic Arbitration Protocol
+              </button>
             </div>
           </div>
           <div className="flex items-center">
