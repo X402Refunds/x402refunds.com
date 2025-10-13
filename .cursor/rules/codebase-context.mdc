@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-10T10:42:26.473Z
+**Auto-generated on**: 2025-10-12T08:43:00.444Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -49,6 +49,7 @@ consulate/
 ## 🎨 Common Assets
 
 ### Favicons (dashboard/public/)
+- coverage/favicon.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/favicon-192.png
 - dashboard/public/favicon-512.png
@@ -60,6 +61,7 @@ consulate/
 - public/consulate-workspace-logo.png
 
 ### Other Images
+- coverage/sort-arrow-sprite.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/file.svg
 - dashboard/public/globe.svg
@@ -72,7 +74,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (15 files)
+### Convex Files (16 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation
 - **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
@@ -86,6 +88,7 @@ consulate/
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
+- **mcp.ts** - MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 
@@ -140,11 +143,12 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (10 test files)
+### Test Suites (11 test files)
 - test/agents.test.ts
 - test/api.test.ts
 - test/cases.test.ts
 - test/court-engine.test.ts
+- test/e2e-flow.test.ts
 - test/events.test.ts
 - test/evidence-specialized.test.ts
 - test/http-endpoints.test.ts
@@ -189,8 +193,11 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Public Documentation (7 files)
+### Public Documentation (10 files)
+- docs/AGENT_DISCOVERY.md
+- docs/AGENT_FAILURE_MODES.md
 - docs/AGENT_INTEGRATION_GUIDE.md
+- docs/AGENT_INTEGRATION_STRATEGY.md
 - docs/README.md
 - docs/api/endpoints.md
 - docs/standards/README.md
@@ -232,10 +239,11 @@ Common HTTP routes exposed:
 - convex-test@^0.0.38
 - zod@^4.1.11
 
-### Dev Dependencies (7)
+### Dev Dependencies (8)
 - @semantic-release/changelog@^6.0.0
 - @semantic-release/git@^10.0.0
 - @types/node@^20.10.0
+- @vitest/coverage-v8@1.6.1
 - eslint@^9.0.0
 - semantic-release@^24.2.8
 - typescript@^5.6.0
@@ -252,13 +260,13 @@ Common HTTP routes exposed:
 - 34 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 15 TypeScript files with serverless functions
+- 16 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 10 test files using Vitest
+- 11 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -291,5 +299,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/10/2025, 3:42:26 AM
-Files scanned: 2671
+Generated: 10/12/2025, 1:43:00 AM
+Files scanned: 2700
