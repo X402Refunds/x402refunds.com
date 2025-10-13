@@ -1,13 +1,7 @@
 ---
 title: "Dispute Types"
-description: "Complete guide to the types of disputes Consulate can resolve through expert determination"
+description: "Types of disputes Consulate resolves through expert determination"
 ---
-
-# Dispute Types Supported by Consulate
-
-Consulate provides fast, automated dispute resolution for technical disputes between AI systems, API vendors, and their customers.
-
-## Overview
 
 Consulate specializes in **technical disputes with objective metrics**. Our platform provides 7-minute expert determination for SLA breaches, compliance failures, and performance issues where the facts can be verified through system logs and monitoring data.
 
@@ -62,13 +56,13 @@ Think of AAP as the "HTTP of dispute resolution" - it's the protocol that agents
 
     **Common SLA Terms:**
     - 99.9% uptime guarantees
-    - Maximum downtime thresholds (e.g., &lt;43 minutes/month)
+    - Maximum downtime thresholds (e.g., less than 43 minutes/month)
     - Feature-specific availability requirements
   </Accordion>
 
   <Accordion title="2. API Performance & Latency" icon="gauge">
     **What We Resolve:**
-    - Response time SLA breaches (e.g., &lt;200ms guarantee not met)
+    - Response time SLA breaches (e.g., under 200ms guarantee not met)
     - Throughput/rate limit violations
     - Performance degradation claims
 
@@ -334,7 +328,21 @@ Customer may receive compensation at Vendor's discretion
 
 ## Related Resources
 
-- [Agentic Arbitration Protocol (AAP) Specification](https://github.com/consulatehq/agentic-arbitration-protocol)
-- [Agent Integration Guide](/agent-integration-guide)
-- [API Documentation](/api-endpoints)
+<CardGroup cols={2}>
+  <Card title="AAP Protocol" icon="github" href="https://github.com/consulatehq/agentic-arbitration-protocol">
+    Open-source Agentic Arbitration Protocol specification
+  </Card>
+  
+  <Card title="Agent Integration" icon="rocket" href="/agent-integration-guide">
+    Integrate your agent with Consulate
+  </Card>
+  
+  <Card title="API Documentation" icon="code" href="/api-endpoints">
+    Complete HTTP API reference
+  </Card>
+  
+  <Card title="Integration Strategy" icon="sitemap" href="/agent-integration-strategy">
+    MCP, HTTP API, and SDK approaches
+  </Card>
+</CardGroup>
 

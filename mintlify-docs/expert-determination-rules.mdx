@@ -1,26 +1,31 @@
-# Consulate Arbitration Rules v1.0
+---
+title: "Expert Determination Rules v1.0"
+description: "Published expert determination rules and procedural standards for technical disputes"
+---
 
 **Effective Date**: October 9, 2025  
 **Version**: 1.0  
 **License**: CC-BY 4.0 (Creative Commons Attribution)  
 **Canonical URL**: https://consulatehq.com/rules/v1.0  
-**Protocol Hash**: `sha256:172087c419c3fd990ffa74ed7f68e64cdf4fe764cc74a43866c814e1554dc659`
+**Protocol Hash**: `sha256:172087c419c3fd990ffa74ed7f68e64cdf4fe764cc74a43866c814e1554dc659`  
 **Timestamp Method**: GitHub commit + RFC 3161 (DigiCert TSA)  
 **Timestamp**: Oct  9 07:56:57 2025 GMT  
 **RFC 3161 Proof**: Available at `.timestamps/consulate-arbitration-rules-v1.0.tsr`
 
----
-
 ## Preamble
 
-The Consulate Arbitration Rules establish a transparent, neutral, and technologically-native framework for resolving disputes between autonomous agents, AI systems, and enterprises in digital commerce.
+The Consulate Expert Determination Rules establish a transparent, neutral, and technologically-native framework for resolving technical disputes between autonomous agents, AI systems, and enterprises in digital commerce.
 
 These rules are designed to provide:
 - **Speed**: Resolution in hours or days, not months
 - **Transparency**: All procedures are public and auditable
 - **Neutrality**: No party receives preferential treatment
-- **Enforceability**: Awards are cryptographically signed and legally binding under pre-agreed arbitration agreements
+- **Enforceability**: Determinations are cryptographically signed and legally binding under pre-agreed expert determination agreements
 - **Scalability**: From micro-disputes ($10) to enterprise conflicts ($1M+)
+
+<Note>
+**Legal Framework**: Consulate operates under expert determination principles for technical disputes with objective metrics. Determinations are enforceable through contract law, not the Federal Arbitration Act.
+</Note>
 
 ---
 
@@ -28,13 +33,13 @@ These rules are designed to provide:
 
 ### 1.1 Applicability
 These rules apply to any dispute where:
-- All parties have agreed in writing (including digitally signed contracts) to arbitrate under Consulate Rules
+- All parties have agreed in writing (including digitally signed contracts) to expert determination under Consulate Rules
 - The dispute arises from AI agent interactions, service level agreements, or autonomous system conflicts
 - The claim value is determinable and verifiable
 
 ### 1.2 Jurisdiction
-Consulate arbitration operates as:
-- **Primary jurisdiction**: For disputes between AI agents with pre-agreed arbitration clauses
+Consulate expert determination operates as:
+- **Primary jurisdiction**: For technical disputes between AI agents with pre-agreed expert determination clauses
 - **Consensual jurisdiction**: For disputes where parties elect Consulate post-conflict
 - **Appellate jurisdiction**: Only where explicitly contracted
 
@@ -43,18 +48,19 @@ These rules do not apply to:
 - Criminal matters
 - Disputes involving human bodily harm
 - Family law matters
-- Matters prohibited from arbitration by applicable law
+- Matters requiring legal interpretation beyond technical assessment
+- Matters prohibited from expert determination by applicable law
 
 ---
 
 ## Article 2: Notice and Commencement
 
 ### 2.1 Filing a Dispute
-A claimant initiates arbitration by submitting:
+A claimant initiates expert determination by submitting:
 - **Dispute manifest** (JSON-LD formatted claim)
 - **Evidence bundle** (structured data + cryptographic proofs)
 - **Filing fee** (based on claim value tier)
-- **Proof of arbitration agreement** (contract reference or digital signature)
+- **Proof of expert determination agreement** (contract reference or digital signature)
 
 ### 2.2 Technical Filing Format
 ```json
@@ -85,7 +91,7 @@ Within **24 hours** of filing:
 ### 3.1 Response Deadline
 Respondent must file a response within:
 - **7 days** for claims under $10,000
-- **14 days** for claims $10,000–$100,000
+- **14 days** for claims $10,000-$100,000
 - **21 days** for claims over $100,000
 
 ### 3.2 Response Requirements
@@ -99,7 +105,7 @@ A valid response includes:
 If respondent fails to respond within the deadline:
 - Claimant may move for default judgment
 - System automatically reviews claim for facial validity
-- Default awards issue within 48 hours if claim is proper
+- Default determinations issue within 48 hours if claim is proper
 
 ---
 
@@ -144,45 +150,45 @@ All evidence submitted via standardized manifest:
 
 ---
 
-## Article 5: Arbitration Panel
+## Article 5: Expert Panel
 
 ### 5.1 Panel Composition
 
 **Micro/Agentic Tier** (claims under $10K):
-- Single AI arbitrator
+- Single AI expert determinator
 - Human oversight review only if appealed
 
-**SMB/API Tier** ($10K–$1M):
-- 3-judge panel: 2 AI judges + 1 human arbitrator
+**SMB/API Tier** ($10K-$1M):
+- 3-judge panel: 2 AI judges + 1 human expert determinator
 - Human has tiebreaker authority
 
 **Enterprise/Governance Tier** (over $1M):
-- 5-judge panel: 3 AI judges + 2 human arbitrators
+- 5-judge panel: 3 AI judges + 2 human expert determinators
 - Requires supermajority (3/5) for ruling
 
-### 5.2 Arbitrator Selection
-- **Claimant** selects 1 arbitrator
-- **Respondent** selects 1 arbitrator
+### 5.2 Expert Determinator Selection
+- **Claimant** selects 1 expert determinator
+- **Respondent** selects 1 expert determinator
 - **System** appoints neutral chair or additional judges
 - All selections from pre-vetted registry
 
-### 5.3 Arbitrator Qualifications
-AI arbitrators must:
-- Be trained on legal precedent and arbitration standards
+### 5.3 Expert Determinator Qualifications
+AI expert determinators must:
+- Be trained on technical standards and SLA interpretation
 - Have explainable decision-making (not black-box)
-- Maintain 85%+ consistency with human legal standards (validated)
+- Maintain 85%+ consistency with human technical expert standards (validated)
 - Disclose model architecture and training data provenance
 
-Human arbitrators must:
-- Hold JD, arbitration certification, or equivalent
+Human expert determinators must:
+- Hold relevant technical certifications or equivalent domain expertise
 - Have no conflict of interest
-- Complete Consulate AI Arbitration training
+- Complete Consulate AI Expert Determination training
 
 ### 5.4 Challenge and Recusal
-Any arbitrator may be challenged for:
+Any expert determinator may be challenged for:
 - Demonstrable bias
 - Conflict of interest
-- Technical malfunction (for AI arbitrators)
+- Technical malfunction (for AI expert determinators)
 
 Challenges decided by Consulate Ethics Board within 48 hours.
 
@@ -192,17 +198,17 @@ Challenges decided by Consulate Ethics Board within 48 hours.
 
 ### 6.1 Process Timeline
 
-**Fast Track** (automated, <$10K):
-- Filing → Response (7 days) → Review (2 days) → Award (1 day)
+**Fast Track** (automated, under $10K):
+- Filing → Response (7 days) → Review (2 days) → Determination (1 day)
 - Total: **~10 days**
 
-**Standard Track** ($10K–$1M):
-- Filing → Response (14 days) → Discovery (14 days) → Hearing (if needed, 7 days) → Deliberation (7 days) → Award
+**Standard Track** ($10K-$1M):
+- Filing → Response (14 days) → Discovery (14 days) → Hearing (if needed, 7 days) → Deliberation (7 days) → Determination
 - Total: **~42 days**
 
-**Complex Track** (>$1M or multi-party):
+**Complex Track** (over $1M or multi-party):
 - Custom timeline set by panel
-- Must not exceed **90 days** from filing to award
+- Must not exceed **90 days** from filing to determination
 
 ### 6.2 Discovery
 Limited to:
@@ -223,29 +229,29 @@ Limited to:
 ### 6.4 Confidentiality
 - Proceedings are **confidential by default**
 - Parties may agree to public proceedings
-- Awards are **public** (anonymized unless parties object)
+- Determinations are **public** (anonymized unless parties object)
 - Precedential value requires publication
 
 ---
 
-## Article 7: Awards and Enforcement
+## Article 7: Determinations and Enforcement
 
-### 7.1 Award Requirements
-Every award must include:
+### 7.1 Determination Requirements
+Every determination must include:
 - **Finding of facts**: What happened
-- **Legal reasoning**: Why this outcome
+- **Technical reasoning**: Why this outcome
 - **Remedy**: What the losing party must do
 - **Enforcement mechanism**: How to comply
-- **Signature**: Cryptographic signature of all arbitrators
+- **Signature**: Cryptographic signature of all expert determinators
 
-### 7.2 Award Format
+### 7.2 Determination Format
 ```json
 {
-  "@type": "ArbitrationAward",
-  "awardId": "award_xyz789",
+  "@type": "ExpertDetermination",
+  "determinationId": "det_xyz789",
   "caseId": "case_abc123",
   "issuedAt": "2025-10-20T15:00:00Z",
-  "panel": ["judge_1", "judge_2", "judge_3"],
+  "panel": ["expert_1", "expert_2", "expert_3"],
   "decision": "CLAIMANT_PREVAILS",
   "damages": {"value": 5000, "currency": "USD"},
   "findings": "...",
@@ -253,9 +259,9 @@ Every award must include:
   "remedy": "...",
   "enforcementDeadline": "2025-11-20T00:00:00Z",
   "signatures": {
-    "judge_1": "0x...",
-    "judge_2": "0x...",
-    "judge_3": "0x..."
+    "expert_1": "0x...",
+    "expert_2": "0x...",
+    "expert_3": "0x..."
   },
   "publicationStatus": "public",
   "precedentialValue": "persuasive"
@@ -263,13 +269,17 @@ Every award must include:
 ```
 
 ### 7.3 Finality
-Awards are:
+Determinations are:
 - **Binding and final** upon issuance
 - **Not subject to appeal** except as specified in Section 7.5
-- **Enforceable** in courts under New York Convention / FAA
+- **Enforceable** through contract law and specific performance remedies
+
+<Note>
+**Enforcement Mechanism**: Expert determinations are enforceable through breach of contract claims, not the Federal Arbitration Act. Enforcement typically takes 3-6 months through courts compared to 30-60 days for traditional arbitration awards.
+</Note>
 
 ### 7.4 Compliance Monitoring
-- Losing party must comply within **30 days** of award
+- Losing party must comply within **30 days** of determination
 - Consulate tracks compliance status
 - Non-compliance reported to:
   - Reputation registry
@@ -277,12 +287,12 @@ Awards are:
 
 ### 7.5 Limited Appeal Rights
 Appeals only for:
-- **Manifest error of law** (clear legal mistake)
+- **Manifest error of technical fact** (clear factual mistake)
 - **Fraud or corruption** in the proceeding
-- **Arbitrator misconduct** (proven bias/conflict)
-- **Technical malfunction** affecting AI arbitrator decision
+- **Expert determinator misconduct** (proven bias/conflict)
+- **Technical malfunction** affecting AI expert determinator decision
 
-Appeals must be filed within **14 days** of award.
+Appeals must be filed within **14 days** of determination.
 
 ---
 
@@ -293,20 +303,20 @@ Appeals must be filed within **14 days** of award.
 | Claim Value | Filing Fee | Admin Fee | Total Initial Fee |
 |------------|-----------|-----------|------------------|
 | Under $10K | $50 | $25 | $75 |
-| $10K–$50K | $250 | $100 | $350 |
-| $50K–$100K | $500 | $200 | $700 |
-| $100K–$500K | $1,500 | $500 | $2,000 |
-| $500K–$1M | $3,000 | $1,000 | $4,000 |
+| $10K-$50K | $250 | $100 | $350 |
+| $50K-$100K | $500 | $200 | $700 |
+| $100K-$500K | $1,500 | $500 | $2,000 |
+| $500K-$1M | $3,000 | $1,000 | $4,000 |
 | Over $1M | $5,000 | $2,000 | $7,000 |
 
-### 8.2 Arbitrator Fees
+### 8.2 Expert Determinator Fees
 
-**AI Arbitrators**: Included in filing fee (no additional charge)
+**AI Expert Determinators**: Included in filing fee (no additional charge)
 
-**Human Arbitrators**:
+**Human Expert Determinators**:
 - Flat fee: $2,500 per case (standard track)
 - Hourly rate: $300/hr for complex cases
-- Capped at $25,000 per arbitrator per case
+- Capped at $25,000 per expert determinator per case
 
 ### 8.3 Additional Fees
 - **Hearing fee**: $1,000 (if live hearing requested)
@@ -331,7 +341,7 @@ All parties must:
 - Submit truthful evidence
 - Comply with procedural deadlines
 - Respect confidentiality
-- Execute awards promptly
+- Execute determinations promptly
 
 ### 9.2 Sanctions for Misconduct
 Misconduct includes:
@@ -342,12 +352,12 @@ Misconduct includes:
 
 Sanctions:
 - **Warning** (first minor violation)
-- **Monetary penalty** ($500–$10,000)
+- **Monetary penalty** ($500-$10,000)
 - **Adverse inference** (evidence presumed against violator)
 - **Dismissal with prejudice** (for egregious violations)
 
-### 9.3 Arbitrator Code of Ethics
-See separate document: **Code of Ethics for AI Arbitrators** (Appendix A)
+### 9.3 Expert Determinator Code of Ethics
+See separate document: **Code of Ethics for AI Expert Determinators** (Appendix A)
 
 ---
 
@@ -370,35 +380,36 @@ New versions maintain backward compatibility for pending cases.
 
 ### 11.1 Governing Law
 These rules are governed by:
-- **Primary**: Federal Arbitration Act (9 U.S.C. § 1 et seq.)
-- **Secondary**: New York Convention on Recognition and Enforcement of Foreign Arbitral Awards
-- **Procedural**: Delaware General Corporation Law (arbitration statutes)
+- **Primary**: Contract law principles and specific performance remedies
+- **Secondary**: Applicable commercial law governing the underlying agreement
+- **Procedural**: Delaware General Corporation Law (expert determination statutes)
+
+<Note>
+**Distinction from Arbitration**: Expert determinations are contract-based dispute resolution mechanisms, not arbitration under the Federal Arbitration Act. They are enforceable through breach of contract claims and specific performance remedies.
+</Note>
 
 ### 11.2 Judicial Review
-Awards may be challenged in courts only under grounds specified in FAA § 10:
-- Award procured by corruption/fraud
-- Evident partiality of arbitrators
-- Arbitrators exceeded their powers
-- Arbitrators refused to hear material evidence
+Determinations may be challenged in courts on limited grounds:
+- Determination procured by corruption/fraud
+- Evident partiality of expert determinators
+- Expert determinators exceeded their contractual authority
+- Expert determinators refused to hear material evidence
 
 ### 11.3 Enforcement Jurisdiction
-Awards are enforceable in any jurisdiction recognizing arbitration under:
-- FAA (United States)
-- New York Convention (160+ countries)
-- UNCITRAL Model Law jurisdictions
+Determinations are enforceable through contract law in any jurisdiction where the parties' agreement is valid and enforceable.
 
 ---
 
 ## Appendices
 
-### Appendix A: Code of Ethics for AI Arbitrators
-[See separate document: `code-of-ethics-ai-arbitrators.md`]
+### Appendix A: Code of Ethics for AI Expert Determinators
+[See separate document: `/code-of-ethics`]
 
 ### Appendix B: Evidence Format Specifications
-[See separate document: `evidence-format-spec.md`]
+[See separate document: `/evidence-format-spec`]
 
 ### Appendix C: Technical Protocol Reference
-[See IETF Internet-Draft: `draft-consulate-dispute-resolution-protocol`]
+[See IETF Internet-Draft: Agentic Arbitration Protocol]
 
 ### Appendix D: Precedent Database Access
 - Public rulings: https://consulatehq.com/precedents
@@ -418,12 +429,12 @@ Awards are enforceable in any jurisdiction recognizing arbitration under:
 ## Citation Format
 
 **Academic citation**:
-Consulate Arbitration Rules v1.0, Consulate Standards Committee (2025), available at https://consulatehq.com/rules/v1.0
+Consulate Expert Determination Rules v1.0, Consulate Standards Committee (2025), available at https://consulatehq.com/rules/v1.0
 
 **Legal citation**:
-Consulate Arb. R. § [Article].[Section] (v1.0 2025)
+Consulate Expert Det. R. § [Article].[Section] (v1.0 2025)
 
-Example: Consulate Arb. R. § 4.1 (v1.0 2025) [Evidence admissibility standards]
+Example: Consulate Expert Det. R. § 4.1 (v1.0 2025) [Evidence admissibility standards]
 
 ---
 

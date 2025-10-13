@@ -1,0 +1,568 @@
+---
+title: "Evidence Format Specification"
+description: "Technical specification for machine-readable evidence submission in expert determination proceedings"
+---
+
+**Version**: 1.0  
+**Protocol**: Consulate Dispute Resolution Protocol  
+**Specification Status**: Production  
+**Target Standards Bodies**: W3C Community Group, IETF  
+**Last Updated**: October 9, 2025
+
+## Abstract
+
+This specification defines machine-readable formats for evidence submission in autonomous agent expert determination. It establishes standards for evidence metadata, cryptographic integrity proofs, storage references, and validation mechanisms.
+
+---
+
+## 1. Introduction
+
+### 1.1 Purpose
+Traditional dispute resolution relies on paper documents, scanned PDFs, and human-curated evidence. AI agent disputes require structured, machine-readable evidence that can be:
+- **Automatically validated** (cryptographic integrity)
+- **Programmatically analyzed** (structured metadata)
+- **Verifiably timestamped** (immutable records)
+- **Cross-platform exchanged** (interoperability)
+
+### 1.2 Design Goals
+- **JSON-LD format** for semantic interoperability
+- **Cryptographic proofs** (hashes, signatures, timestamps)
+- **Storage-agnostic** (IPFS, S3, blockchain, centralized DB)
+- **Human-readable** (can be rendered for human expert determinators)
+- **Extensible** (custom evidence types via namespacing)
+
+---
+
+## 2. Core Evidence Manifest Schema
+
+### 2.1 Base Structure
+Every evidence submission MUST include:
+
+```json
+{
+  "@context": "https://consulatehq.com/schema/evidence/v1",
+  "@type": "EvidenceManifest",
+  "evidenceId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+  "caseId": "case_abc123",
+  "submittedBy": {
+    "@type": "Party",
+    "role": "claimant",
+    "agentId": "did:agent:vendor-ai:agent-123",
+    "organizationId": "https://vendor.ai"
+  },
+  "evidenceType": "SystemLogs",
+  "description": "API response time logs showing SLA breach",
+  "submittedAt": "2025-10-09T10:00:00Z",
+  "dateRange": {
+    "start": "2025-10-01T00:00:00Z",
+    "end": "2025-10-07T23:59:59Z"
+  },
+  "integrity": {
+    "contentHash": "sha256:abcd1234567890...",
+    "timestampedAt": "2025-10-09T10:00:00Z",
+    "timestampAuthority": "https://timestamp.digicert.com",
+    "timestampProof": "rfc3161:base64encodedtoken...",
+    "signature": {
+      "@type": "JsonWebSignature2020",
+      "creator": "did:agent:vendor-ai:agent-123#key-1",
+      "created": "2025-10-09T10:00:00Z",
+      "signatureValue": "base64encodedSignature..."
+    }
+  },
+  "storage": {
+    "primaryUri": "ipfs://QmXyZ123...",
+    "backupUri": "https://evidence.vendor.ai/ev_abc123",
+    "mimeType": "application/json",
+    "size": 1048576,
+    "compression": "gzip"
+  },
+  "metadata": {
+    "recordCount": 15000,
+    "logSource": "AWS CloudWatch",
+    "collectionMethod": "automated",
+    "validator": "https://validator.example.com"
+  }
+}
+```
+
+### 2.2 Required Fields
+- `@context`, `@type`: JSON-LD linking
+- `evidenceId`: Unique identifier (UUID or URN)
+- `caseId`: Reference to the case
+- `submittedBy`: Party identification
+- `evidenceType`: Category (from standard taxonomy)
+- `description`: Human-readable summary
+- `submittedAt`: ISO 8601 timestamp
+- `integrity`: Hash, signature, timestamp proof
+- `storage`: Where evidence is stored
+
+### 2.3 Optional Fields
+- `dateRange`: Time period covered by evidence
+- `metadata`: Evidence-type-specific details
+- `relatedEvidence`: Links to other evidence items
+- `chain`: For blockchain-anchored evidence
+
+---
+
+## 3. Evidence Types
+
+### 3.1 Standard Evidence Taxonomy
+
+<AccordionGroup>
+  <Accordion title="Type 1: System Logs" icon="terminal">
+    **Use case**: API logs, server logs, error logs, performance metrics
+
+    ```json
+    {
+      "evidenceType": "SystemLogs",
+      "metadata": {
+        "logSource": "AWS CloudWatch",
+        "logFormat": "JSON",
+        "recordCount": 15000,
+        "timeResolution": "milliseconds",
+        "aggregation": "none"
+      }
+    }
+    ```
+
+    **Example content** (stored at `storage.primaryUri`):
+    ```json
+    [
+      {
+        "timestamp": "2025-10-05T14:32:01.234Z",
+        "endpoint": "/api/v1/predict",
+        "requestId": "req_abc123",
+        "responseTime": 850,
+        "statusCode": 200,
+        "slaThreshold": 200,
+        "breach": true
+      }
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Type 2: Contracts and Agreements" icon="file-contract">
+    **Use case**: Service agreements, SLAs, terms of service
+
+    ```json
+    {
+      "evidenceType": "Contract",
+      "metadata": {
+        "contractType": "ServiceLevelAgreement",
+        "parties": ["vendor.ai", "consumer.ai"],
+        "effectiveDate": "2025-01-01",
+        "expirationDate": "2026-01-01",
+        "signatories": [
+          {
+            "party": "vendor.ai",
+            "signedBy": "did:agent:vendor-ai:ceo",
+            "signedAt": "2025-01-01T00:00:00Z",
+            "signature": "0x..."
+          }
+        ]
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Type 3: Communications" icon="envelope">
+    **Use case**: Agent-to-agent messages, emails, notifications
+
+    ```json
+    {
+      "evidenceType": "Communications",
+      "metadata": {
+        "communicationType": "AgentMessage",
+        "protocol": "HTTPS",
+        "messageCount": 45
+      }
+    }
+    ```
+
+    **Example content**:
+    ```json
+    [
+      {
+        "messageId": "msg_xyz789",
+        "from": "agent://vendor.ai/agent-123",
+        "to": "agent://consumer.ai/agent-456",
+        "timestamp": "2025-10-05T14:30:00Z",
+        "subject": "SLA Breach Notification",
+        "body": "Your API response time exceeded 200ms threshold 15 times on 2025-10-05.",
+        "signature": "0x..."
+      }
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Type 4: Financial Records" icon="dollar-sign">
+    **Use case**: Invoices, payments, transaction logs
+
+    ```json
+    {
+      "evidenceType": "FinancialRecords",
+      "metadata": {
+        "recordType": "Invoice",
+        "currency": "USD",
+        "totalAmount": 5000,
+        "transactionCount": 12
+      }
+    }
+    ```
+
+    **Example content**:
+    ```json
+    [
+      {
+        "invoiceId": "inv_202510_001",
+        "date": "2025-10-01",
+        "amount": 5000,
+        "currency": "USD",
+        "description": "API usage charges",
+        "paymentStatus": "unpaid",
+        "dueDate": "2025-10-15"
+      }
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Type 5: Expert Analysis" icon="flask">
+    **Use case**: Third-party validation, audits, expert reports
+
+    ```json
+    {
+      "evidenceType": "ExpertAnalysis",
+      "metadata": {
+        "expertName": "TechAudit Inc.",
+        "expertCredentials": "ISO 27001 Certified",
+        "analysisDate": "2025-10-08",
+        "methodology": "Independent log analysis"
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 4. Cryptographic Integrity
+
+### 4.1 Content Hashing
+All evidence content MUST be hashed using SHA-256 (or stronger):
+
+```json
+{
+  "integrity": {
+    "algorithm": "sha256",
+    "contentHash": "sha256:a3f5b2c8d9e1f4a7b6c5d2e9f8a1b4c7d6e3f2a9b8c5d4e1"
+  }
+}
+```
+
+**Validation process**:
+1. Retrieve evidence from `storage.primaryUri`
+2. Compute SHA-256 hash of content
+3. Compare with `integrity.contentHash`
+4. If mismatch → evidence tampered, reject
+
+<Warning>
+**Security**: SHA-256 is the minimum required hash algorithm. For high-value disputes, SHA-512 is recommended.
+</Warning>
+
+### 4.2 Timestamping
+Evidence MUST be timestamped to prove existence at a specific time:
+
+**Option 1: RFC 3161 Timestamp**
+```json
+{
+  "integrity": {
+    "timestampAuthority": "https://timestamp.digicert.com",
+    "timestampProof": "rfc3161:base64encodedtoken...",
+    "timestampedAt": "2025-10-09T10:00:00Z"
+  }
+}
+```
+
+**Option 2: Blockchain Anchor**
+```json
+{
+  "integrity": {
+    "blockchainAnchor": {
+      "chain": "ethereum",
+      "network": "mainnet",
+      "txHash": "0xabc123...",
+      "blockNumber": 18500000,
+      "blockTimestamp": "2025-10-09T10:00:00Z"
+    }
+  }
+}
+```
+
+### 4.3 Digital Signatures
+Evidence MUST be digitally signed using JSON Web Signature (JWS):
+
+```json
+{
+  "integrity": {
+    "signature": {
+      "@type": "JsonWebSignature2020",
+      "creator": "did:agent:vendor-ai:agent-123#key-1",
+      "created": "2025-10-09T10:00:00Z",
+      "signatureValue": "base64encodedSignature...",
+      "proofPurpose": "assertionMethod"
+    }
+  }
+}
+```
+
+**Supported algorithms**:
+- **ES256** (ECDSA with P-256) - Recommended
+- **ES384** (ECDSA with P-384) - High security
+- **EdDSA** (Ed25519) - Modern alternative
+- **RS256** (RSA-2048) - Compatibility
+
+---
+
+## 5. Storage and Retrieval
+
+### 5.1 Storage Options
+
+<CardGroup cols={2}>
+  <Card title="IPFS" icon="cube">
+    **Decentralized, content-addressed storage**
+    - URI format: `ipfs://QmXyZ123...`
+    - Immutability: High
+    - Cost: ~$0.15/GB/month (Pinata)
+    - Speed: Medium
+  </Card>
+
+  <Card title="AWS S3" icon="aws">
+    **Centralized cloud storage**
+    - URI format: `https://s3.amazonaws.com/bucket/key`
+    - Immutability: Low (requires versioning)
+    - Cost: $0.023/GB/month
+    - Speed: Fast
+  </Card>
+
+  <Card title="Arweave" icon="database">
+    **Permanent blockchain storage**
+    - URI format: `ar://txId`
+    - Immutability: Maximum
+    - Cost: $7/GB (one-time)
+    - Speed: Slow
+  </Card>
+
+  <Card title="Hybrid" icon="layer-group">
+    **Best practice: IPFS + S3 backup**
+    - Primary: IPFS for immutability
+    - Backup: S3 for fast retrieval
+    - Redundancy: Multiple storage layers
+  </Card>
+</CardGroup>
+
+### 5.2 Retrieval Requirements
+Evidence storage MUST:
+- Be accessible for the duration of the case + 7 years (retention period)
+- Support cryptographic verification (content-addressing preferred)
+- Provide redundancy (at least one backup URI)
+- Return evidence in original format (no server-side modifications)
+
+---
+
+## 6. Validation Rules
+
+### 6.1 Automated Validation
+Expert determination services MUST validate:
+
+<Steps>
+  <Step title="Schema Compliance">
+    Verify evidence conforms to JSON-LD schema
+  </Step>
+  
+  <Step title="Signature Verification">
+    Validate digital signature using submitter's public key
+  </Step>
+  
+  <Step title="Hash Verification">
+    Retrieve content and verify SHA-256 hash matches
+  </Step>
+  
+  <Step title="Timestamp Verification">
+    Verify RFC 3161 timestamp or blockchain anchor
+  </Step>
+  
+  <Step title="Storage Accessibility">
+    Confirm evidence is retrievable from primary URI
+  </Step>
+</Steps>
+
+### 6.2 Rejection Criteria
+Evidence MUST be rejected if:
+- Hash mismatch detected (tampering)
+- Signature invalid or missing
+- Storage URI returns 404 or timeout
+- Timestamp is after case filing date
+- Schema validation fails
+
+<Warning>
+**Critical**: Rejected evidence cannot be re-submitted with the same evidenceId. A new submission with a different ID is required.
+</Warning>
+
+---
+
+## 7. Privacy and Confidentiality
+
+### 7.1 Encrypted Evidence
+For confidential cases, evidence MAY be encrypted:
+
+```json
+{
+  "storage": {
+    "primaryUri": "ipfs://QmEncrypted...",
+    "encryption": {
+      "algorithm": "AES-256-GCM",
+      "keyId": "case_abc123_key",
+      "recipients": [
+        {
+          "role": "expert_panel",
+          "publicKey": "..."
+        }
+      ]
+    }
+  }
+}
+```
+
+### 7.2 Redaction
+Sensitive information MAY be redacted:
+
+```json
+{
+  "metadata": {
+    "redacted": true,
+    "redactionReason": "Trade secret protection",
+    "redactedFields": ["apiKey", "internalNotes"]
+  }
+}
+```
+
+---
+
+## 8. Implementation Guide
+
+### 8.1 For Developers
+To submit evidence:
+
+```typescript
+import { submitEvidence } from '@consulate/sdk';
+
+const evidence = {
+  caseId: 'case_abc123',
+  evidenceType: 'SystemLogs',
+  description: 'API response time logs',
+  contentUri: 'ipfs://QmXyZ...',
+  contentHash: 'sha256:abcd...',
+  signature: await signEvidence(evidenceData, privateKey)
+};
+
+await submitEvidence(evidence);
+```
+
+### 8.2 For Expert Determination Services
+To validate evidence:
+
+```typescript
+import { validateEvidence } from '@consulate/validator';
+
+const result = await validateEvidence(evidenceManifest);
+if (result.status === 'VALID') {
+  // Accept evidence
+} else {
+  // Reject with errors
+  console.error(result.errors);
+}
+```
+
+---
+
+## 9. JSON Schema
+
+Full JSON Schema available at:
+
+```
+https://consulatehq.com/schema/evidence/v1/schema.json
+```
+
+Validate evidence with:
+```bash
+ajv validate -s evidence-schema.json -d evidence.json
+```
+
+<Tip>
+Use our [online validator](https://consulatehq.com/validator) to test evidence submissions before filing.
+</Tip>
+
+---
+
+## Appendix A: Hash Algorithms
+
+| Algorithm | Security | Speed | Recommended |
+|-----------|---------|-------|-------------|
+| SHA-256 | Strong | Fast | ✅ Yes (default) |
+| SHA-512 | Stronger | Medium | ✅ Yes (high security) |
+| SHA-1 | Weak | Fast | ❌ No (deprecated) |
+| MD5 | Broken | Fast | ❌ No (never use) |
+
+---
+
+## Appendix B: Signature Algorithms
+
+| Algorithm | Key Type | Recommended |
+|-----------|---------|-------------|
+| ES256 (ECDSA) | P-256 | ✅ Yes (default) |
+| ES384 (ECDSA) | P-384 | ✅ Yes (high security) |
+| RS256 (RSA) | 2048-bit | ✅ Yes (compatibility) |
+| EdDSA (Ed25519) | Curve25519 | ✅ Yes (modern) |
+
+---
+
+## Appendix C: Storage Cost Comparison
+
+| Storage | Cost/GB/Month | Immutability | Speed |
+|---------|--------------|--------------|-------|
+| IPFS (Pinata) | $0.15 | High | Medium |
+| AWS S3 | $0.023 | Low | Fast |
+| Arweave | $7 (one-time) | Maximum | Slow |
+| Ethereum | $100,000+ | Maximum | Slow |
+
+**Recommendation**: IPFS + S3 backup
+
+---
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Expert Determination Rules" icon="scale-balanced" href="/expert-determination-rules">
+    View full procedural rules
+  </Card>
+  
+  <Card title="Code of Ethics" icon="shield" href="/code-of-ethics">
+    AI Expert Determinator ethics
+  </Card>
+  
+  <Card title="API Documentation" icon="code" href="/api-endpoints">
+    Evidence submission API
+  </Card>
+  
+  <Card title="Agent Integration" icon="robot" href="/agent-integration-guide">
+    Integrate your agent
+  </Card>
+</CardGroup>
+
+---
+
+**Document Status**: Production v1.0  
+**Next Review**: January 2026  
+**Maintainer**: Consulate Standards Committee  
+**Contact**: standards@consulatehq.com
+

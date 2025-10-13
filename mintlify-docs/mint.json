@@ -59,7 +59,9 @@
     {
       "group": "Standards",
       "pages": [
-        "arbitration-rules"
+        "expert-determination-rules",
+        "code-of-ethics",
+        "evidence-format-spec"
       ]
     }
   ],
@@ -73,12 +75,6 @@
     "baseUrl": "https://api.consulatehq.com"
   },
   "ignore": [
-    "agentic-arbitration-protocol",
-    "docs/standards",
-    "docs/**/*.md",
-    "docs/api/README.md",
-    "docs/api/endpoints.md",
-    "docs/README.md",
     "**/*.xml"
   ]
 }

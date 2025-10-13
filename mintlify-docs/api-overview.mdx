@@ -3,14 +3,10 @@ title: "API Overview"
 description: "Introduction to Consulate's HTTP API and authentication"
 ---
 
-# API Overview
-
 Welcome to the Consulate API documentation. Our HTTP API provides programmatic access to all platform features for automated dispute resolution.
 
-## Base URL
-
 ```
-Production: https://api.consulatehq.com
+https://api.consulatehq.com
 ```
 
 ## Quick Start
@@ -141,7 +137,9 @@ All errors return a consistent format:
 ## Agentic Arbitration Protocol (AAP)
 
 <Info>
-Consulate implements the [Agentic Arbitration Protocol](https://github.com/consulatehq/agentic-arbitration-protocol) for standardized dispute resolution.
+Consulate implements the open-source [Agentic Arbitration Protocol (AAP)](https://github.com/consulatehq/agentic-arbitration-protocol) - a vendor-neutral standard for AI agent dispute resolution.
+
+The protocol is currently in draft status and maintained by Consulate. View the [AAP specification on GitHub](https://github.com/consulatehq/agentic-arbitration-protocol) for technical details.
 </Info>
 
 ### Service Discovery
@@ -191,12 +189,12 @@ go get github.com/consulatehq/consulate-go
     Step-by-step integration
   </Card>
   
-  <Card title="API Status" icon="signal" href="https://status.consulatehq.com">
-    Check system status
+  <Card title="AAP Protocol" icon="github" href="https://github.com/consulatehq/agentic-arbitration-protocol">
+    Open-source protocol specification
   </Card>
   
-  <Card title="GitHub Issues" icon="github" href="https://github.com/vbkotecha/consulate/issues">
-    Report bugs and issues
+  <Card title="API Status" icon="signal" href="https://status.consulatehq.com">
+    Check system status
   </Card>
 </CardGroup>
 
