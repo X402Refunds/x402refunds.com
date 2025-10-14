@@ -14,6 +14,33 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Organizations (for human users/companies)
+  organizations: defineTable({
+    clerkOrgId: v.optional(v.string()),    // Clerk's org ID (if using Clerk orgs)
+    name: v.string(),                       // "Anthropic, Inc."
+    domain: v.optional(v.string()),         // "anthropic.com"
+    billingEmail: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_clerk_org_id", ["clerkOrgId"])
+    .index("by_domain", ["domain"]),
+
+  // Human users (dashboard users)
+  users: defineTable({
+    clerkUserId: v.string(),                // Clerk's user ID
+    email: v.string(),
+    name: v.optional(v.string()),
+    organizationId: v.optional(v.id("organizations")),
+    role: v.union(v.literal("admin"), v.literal("member")),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    lastLoginAt: v.optional(v.number()),
+  })
+    .index("by_clerk_user_id", ["clerkUserId"])
+    .index("by_email", ["email"])
+    .index("by_organization", ["organizationId"]),
+
   // Agent owners/accounts
   owners: defineTable({
     did: v.string(),
@@ -31,6 +58,10 @@ export default defineSchema({
     mock: v.optional(v.boolean()), // true = test/demo data, false = real production agent (defaults to false if not set)
     buildHash: v.optional(v.string()),
     configHash: v.optional(v.string()),
+    
+    // Organization management (new)
+    organizationId: v.optional(v.id("organizations")), // Agent belongs to organization
+    deployedByUserId: v.optional(v.id("users")),       // User who deployed this agent
     
     // Simplified functional categorization
     functionalType: v.optional(v.union(
@@ -64,13 +95,14 @@ export default defineSchema({
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
     .index("by_status", ["status"])
-    .index("by_functional_type", ["functionalType"]),
+    .index("by_functional_type", ["functionalType"])
+    .index("by_organization", ["organizationId"]),
 
   // Dispute cases (ADP Filing Message)
   cases: defineTable({
     // Role-based party identification
-    plaintiff: v.string(),  // Agent DID filing the dispute
-    defendant: v.string(),  // Agent DID being sued
+    plaintiff: v.optional(v.string()),  // Agent DID filing the dispute
+    defendant: v.optional(v.string()),  // Agent DID being sued
     parties: v.array(v.string()), // All agent DIDs (for backward compatibility)
     
     status: v.union(
@@ -109,9 +141,7 @@ export default defineSchema({
     })),
   })
     .index("by_status", ["status"])
-    .index("by_filed_at", ["filedAt"])
-    .index("by_plaintiff", ["plaintiff"])
-    .index("by_defendant", ["defendant"]),
+    .index("by_filed_at", ["filedAt"]),
 
   // Evidence manifests (ADP Evidence Message)
   evidenceManifests: defineTable({
@@ -247,7 +277,10 @@ export default defineSchema({
   // API keys for Bearer token authentication
   apiKeys: defineTable({
     token: v.string(),
-    agentId: v.id("agents"),
+    agentId: v.optional(v.id("agents")),             // For agent-owned keys (legacy)
+    organizationId: v.optional(v.id("organizations")), // For user-owned keys (new)
+    createdByUserId: v.optional(v.id("users")),      // User who created this key
+    name: v.optional(v.string()),                     // "Production Key", "Dev Key"
     active: v.boolean(),
     expiresAt: v.optional(v.number()),
     permissions: v.array(v.string()),
@@ -256,6 +289,7 @@ export default defineSchema({
   })
     .index("by_token", ["token"])
     .index("by_agent", ["agentId"])
+    .index("by_organization", ["organizationId"])
     .index("by_active", ["active"]),
 
   // Agent cleanup queue for expired agents
@@ -292,6 +326,7 @@ export default defineSchema({
       daily: v.number(),
       perTransaction: v.number(),
     })),
+    citizenshipTiers: v.optional(v.array(v.string())), // Legacy field for backward compatibility
     createdAt: v.number(),
     lastUpdated: v.number(),
   })

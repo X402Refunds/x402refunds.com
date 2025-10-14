@@ -175,11 +175,14 @@ export const getCasesByPlaintiff = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_plaintiff", (q) => q.eq("plaintiff", args.plaintiffDid))
       .order("desc")
-      .take(args.limit ?? 50);
+      .collect();
+    
+    return allCases
+      .filter((c) => c.plaintiff === args.plaintiffDid)
+      .slice(0, args.limit ?? 50);
   },
 });
 
@@ -189,11 +192,14 @@ export const getCasesByDefendant = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const allCases = await ctx.db
       .query("cases")
-      .withIndex("by_defendant", (q) => q.eq("defendant", args.defendantDid))
       .order("desc")
-      .take(args.limit ?? 50);
+      .collect();
+    
+    return allCases
+      .filter((c) => c.defendant === args.defendantDid)
+      .slice(0, args.limit ?? 50);
   },
 });
 

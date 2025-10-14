@@ -28,6 +28,7 @@ import type * as judges from "../judges.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
 import type * as types from "../types.js";
+import type * as users from "../users.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;
   types: typeof types;
+  users: typeof users;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

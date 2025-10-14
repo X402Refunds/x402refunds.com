@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Shield } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, Shield, Key } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -28,6 +28,11 @@ const navigationItems: NavigationItem[] = [
     title: "Cases",
     href: "/demo/cases", 
     icon: FileText,
+  },
+  {
+    title: "API Keys",
+    href: "/dashboard/api-keys",
+    icon: Key,
   },
   {
     title: "Activity",
