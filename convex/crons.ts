@@ -45,7 +45,7 @@ export default crons;
 // CRON JOB IMPLEMENTATIONS
 // =================================================================
 
-import { internalMutation, internalAction } from "./_generated/server";
+import { internalMutation, internalAction, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { AI_VENDORS, AI_CONSUMERS } from "./disputeEngine";
 
@@ -190,6 +190,7 @@ export const createLLMDispute = internalMutation({
           actualPerformance: args.scenario.llmData.actualPerformance,
           rootCause: args.scenario.llmData.rootCause,
         } : undefined,
+        mock: true, // Mark as demo data for the demo cases page
       });
 
       // Update evidence with case ID
@@ -408,6 +409,7 @@ export const generateFallbackDispute = internalMutation({
                     randomType === "SECURITY_INCIDENT" ? "Unauthorized access to customer data" :
                     "System configuration or operational issues"
         },
+        mock: true, // Mark as demo data for the demo cases page
       });
 
       // Update evidence with case ID
@@ -718,6 +720,222 @@ export const updateSystemStatsCache = internalMutation({
     } catch (error: any) {
       console.error("❌ Failed to update stats cache:", error.message);
       return { success: false, reason: error.message };
+    }
+  }
+});
+
+// =================================================================
+// PUBLIC TRIGGER FOR MANUAL DISPUTE GENERATION (for testing/demo)
+// =================================================================
+
+/**
+ * Public mutation to manually trigger dispute generation
+ * This is a wrapper that calls the internal cron job
+ * Useful for testing and demo purposes
+ */
+export const triggerDisputeGeneration = mutation({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      console.log("🎬 Manual dispute generation triggered...");
+      
+      // Call the internal fallback dispute generation
+      // (We use fallback instead of LLM for faster demo generation)
+      const result = await ctx.db
+        .query("agents")
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .collect();
+      
+      if (result.length < 2) {
+        return { 
+          success: false, 
+          message: "Need at least 2 active agents to generate a dispute. Please register agents first." 
+        };
+      }
+      
+      // Generate a fallback dispute directly (similar to cron logic)
+      const disputeTypes = [
+        "API_DOWNTIME",
+        "RESPONSE_LATENCY", 
+        "DATA_ACCURACY",
+        "PROCESSING_VOLUME",
+        "RATE_LIMIT_BREACH",
+        "DATA_LOSS",
+        "SECURITY_INCIDENT",
+        "BILLING_OVERCHARGE"
+      ];
+      const randomType = disputeTypes[Math.floor(Math.random() * disputeTypes.length)];
+      
+      // Get all agents and randomly select vendor and consumer
+      const allAgents = result;
+      
+      // Randomly select vendor and consumer (ensure different organizations)
+      const vendorAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      let consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+      
+      // Ensure different organizations
+      let attempts = 0;
+      while (vendorAgent.organizationName === consumerAgent.organizationName && attempts < 10) {
+        consumerAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
+        attempts++;
+      }
+      
+      if (vendorAgent.organizationName === consumerAgent.organizationName) {
+        return { 
+          success: false, 
+          message: "Could not find agents from different organizations" 
+        };
+      }
+      
+      const now = Date.now();
+      
+      // Create simple evidence manifests
+      const providerEvidence = await ctx.db.insert("evidenceManifests", {
+        agentDid: vendorAgent.did,
+        sha256: generateSHA256(),
+        uri: `https://evidence.${(vendorAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/manual-${now}.json`,
+        signer: vendorAgent.did,
+        ts: now,
+        model: {
+          provider: "manual_trigger",
+          name: "manual_dispute_generator",
+          version: "1.0.0"
+        },
+        tool: "manual_trigger"
+      });
+      
+      const consumerEvidence = await ctx.db.insert("evidenceManifests", {
+        agentDid: consumerAgent.did,
+        sha256: generateSHA256(),
+        uri: `https://damages.${(consumerAgent.organizationName || 'unknown').toLowerCase().replace(/\s+/g, '')}.com/manual-${now}.json`,
+        signer: consumerAgent.did,
+        ts: now,
+        model: {
+          provider: "manual_trigger",
+          name: "manual_dispute_generator", 
+          version: "1.0.0"
+        },
+        tool: "manual_trigger"
+      });
+
+      // File the dispute
+      const panelDue = now + 7 * 24 * 60 * 60 * 1000;
+      
+      // Generate detailed dispute description
+      const vendorName = vendorAgent.organizationName || 'Unknown Vendor';
+      const consumerName = consumerAgent.organizationName || 'Unknown Consumer';
+      
+      const descriptions: Record<string, string> = {
+        "API_DOWNTIME": `${consumerName} has filed a dispute alleging that ${vendorName}'s API service experienced unscheduled downtime exceeding the agreed SLA threshold.`,
+        "RESPONSE_LATENCY": `${consumerName} claims that ${vendorName}'s API response times consistently exceeded contractual performance requirements.`,
+        "DATA_ACCURACY": `${consumerName} alleges that ${vendorName} provided inaccurate or inconsistent data that led to incorrect business decisions.`,
+        "PROCESSING_VOLUME": `${consumerName} reports that ${vendorName} failed to process the contracted volume of requests.`,
+        "RATE_LIMIT_BREACH": `${consumerName} alleges that ${vendorName} imposed undisclosed rate limits that prevented full service utilization.`,
+        "DATA_LOSS": `${consumerName} claims that ${vendorName}'s service experienced data loss or corruption affecting critical business information.`,
+        "SECURITY_INCIDENT": `${consumerName} alleges that ${vendorName} suffered a security incident that exposed sensitive data.`,
+        "BILLING_OVERCHARGE": `${consumerName} disputes billing charges from ${vendorName}, alleging overcharges or incorrect pricing.`
+      };
+      
+      const description = descriptions[randomType] || `${consumerName} has initiated a dispute against ${vendorName}.`;
+      
+      const damageRanges: Record<string, { min: number; max: number }> = {
+        "API_DOWNTIME": { min: 15000, max: 150000 },
+        "RESPONSE_LATENCY": { min: 5000, max: 75000 },
+        "DATA_ACCURACY": { min: 10000, max: 100000 },
+        "PROCESSING_VOLUME": { min: 8000, max: 80000 },
+        "RATE_LIMIT_BREACH": { min: 12000, max: 90000 },
+        "DATA_LOSS": { min: 50000, max: 500000 },
+        "SECURITY_INCIDENT": { min: 100000, max: 1000000 },
+        "BILLING_OVERCHARGE": { min: 3000, max: 50000 }
+      };
+      
+      const damageRange = damageRanges[randomType] || { min: 5000, max: 50000 };
+      const claimedDamages = Math.floor(Math.random() * (damageRange.max - damageRange.min)) + damageRange.min;
+      
+      const caseId = await ctx.db.insert("cases", {
+        plaintiff: consumerAgent.did,
+        defendant: vendorAgent.did,
+        parties: [vendorAgent.did, consumerAgent.did],
+        status: "FILED" as const,
+        type: randomType,
+        filedAt: now,
+        jurisdictionTags: ["AI_VENDOR_DISPUTE", "MANUAL_TRIGGER"],
+        evidenceIds: [providerEvidence, consumerEvidence],
+        deadlines: { panelDue },
+        description,
+        claimedDamages,
+        breachDetails: {
+          duration: "Manually triggered demo",
+          impactLevel: "Moderate",
+          affectedUsers: Math.floor(Math.random() * 10000) + 100,
+          slaRequirement: "Demo SLA requirements",
+          actualPerformance: "Demo actual performance",
+          rootCause: "Manual trigger for demo purposes"
+        },
+        mock: true, // Mark as demo data
+      });
+
+      // Update evidence with case ID
+      await ctx.db.patch(providerEvidence, { caseId });
+      await ctx.db.patch(consumerEvidence, { caseId });
+
+      // Log evidence submission events
+      await ctx.db.insert("events", {
+        type: "EVIDENCE_SUBMITTED",
+        payload: {
+          agentDid: vendorAgent.did,
+          evidenceId: providerEvidence,
+          caseId: caseId,
+          evidenceType: "manual_trigger",
+        },
+        timestamp: now,
+        caseId: caseId,
+        agentDid: vendorAgent.did
+      });
+
+      await ctx.db.insert("events", {
+        type: "EVIDENCE_SUBMITTED",
+        payload: {
+          agentDid: consumerAgent.did,
+          evidenceId: consumerEvidence,
+          caseId: caseId,
+          evidenceType: "manual_trigger", 
+        },
+        timestamp: now + 1,
+        caseId: caseId,
+        agentDid: consumerAgent.did
+      });
+
+      // Log dispute filed event
+      await ctx.db.insert("events", {
+        type: "DISPUTE_FILED",
+        payload: {
+          caseId,
+          parties: [vendorAgent.did, consumerAgent.did],
+          type: randomType,
+          evidenceCount: 2,
+          jurisdictionTags: ["AI_VENDOR_DISPUTE", "MANUAL_TRIGGER"],
+        },
+        timestamp: now + 2,
+        caseId,
+      });
+
+      console.log(`✅ Manual dispute generated: ${randomType} (${vendorName} vs ${consumerName})`);
+      
+      return { 
+        success: true, 
+        message: `Dispute generated successfully`,
+        caseId,
+        disputeType: randomType,
+        parties: [vendorAgent.did, consumerAgent.did],
+      };
+      
+    } catch (error: any) {
+      console.error("❌ Failed to generate manual dispute:", error.message);
+      return { 
+        success: false, 
+        message: error.message 
+      };
     }
   }
 });

@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-14T23:35:29.407Z
+**Auto-generated on**: 2025-10-14T23:47:04.335Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -80,7 +80,7 @@ consulate/
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
-- **crons.ts** - generateLLMDispute, createLLMDispute, generateFallbackDispute, systemHealthMonitor, processPendingCases, updateSystemStatsCache
+- **crons.ts** - generateLLMDispute, createLLMDispute, generateFallbackDispute, systemHealthMonitor, processPendingCases, updateSystemStatsCache, triggerDisputeGeneration
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **events.ts** - getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline
@@ -298,5 +298,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/14/2025, 4:35:29 PM
-Files scanned: 265
+Generated: 10/14/2025, 4:47:04 PM
+Files scanned: 266
