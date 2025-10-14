@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Shield, Gavel } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 interface NavigationProps {
   currentPage?: 'home' | 'pricing' | 'about'
@@ -160,15 +159,6 @@ export function Navigation({ currentPage }: NavigationProps) {
                 Agentic Dispute Protocol
               </button>
             </div>
-          </div>
-          <div className="flex items-center">
-            <Button 
-              variant="outline" 
-              className="border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
-              onClick={() => window.open('/demo', '_self')}
-            >
-              Demo
-            </Button>
           </div>
         </div>
       </div>
