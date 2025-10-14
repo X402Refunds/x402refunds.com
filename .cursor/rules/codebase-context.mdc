@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-14T08:59:56.826Z
+**Auto-generated on**: 2025-10-14T18:10:11.943Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -74,9 +74,9 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (16 files)
+### Convex Files (17 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation
-- **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed
+- **apiKeys.ts** - createApiKey, getApiKey, listApiKeys, deactivateApiKey, updateLastUsed, createUserApiKey, listUserApiKeys, getUserApiKey, revokeUserApiKey, updateUserApiKeyName
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, generateApiKey, extractBearerToken, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -91,6 +91,7 @@ consulate/
 - **mcp.ts** - MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
+- **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats
 
 ### Key Backend Functions
 - **agents.ts** - Agent registration & management (joinAgent, listAgents, etc.)
@@ -111,12 +112,14 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (34 components)
+### React Components (38 components)
 - Footer
 - Navigation
 - StructuredData
 - chain-verification-badge
+- api-key-list
 - collapsible-stats
+- create-api-key-dialog
 - hero-stats
 - live-dispute-monitor
 - doc-layout
@@ -124,16 +127,14 @@ Common HTTP routes exposed:
 - dashboard-layout
 - government-header
 - government-sidebar
+- alert-dialog
 - alert
 - avatar
 - badge
 - breadcrumb
 - button
-- card
-- dialog
-- dropdown-menu
 
-... and 14 more
+... and 18 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -143,7 +144,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (16 test files)
+### Test Suites (18 test files)
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
@@ -159,6 +160,8 @@ Common HTTP routes exposed:
 - test/performance.test.ts
 - test/sla-endpoints.test.ts
 - test/system-endpoints.test.ts
+- test/user-api-keys.test.ts
+- test/users.test.ts
 - test/webhooks-endpoints.test.ts
 
 ## 📦 Package Scripts
@@ -253,16 +256,16 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 34 components organized by feature
+- 38 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 16 TypeScript files with serverless functions
+- 17 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 16 test files using Vitest
+- 18 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -295,5 +298,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/14/2025, 1:59:56 AM
-Files scanned: 252
+Generated: 10/14/2025, 11:10:11 AM
+Files scanned: 260
