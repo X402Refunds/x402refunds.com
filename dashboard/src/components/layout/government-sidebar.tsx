@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Home, Users, FileText, Activity, Settings, Shield, Key, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
@@ -69,6 +70,7 @@ interface GovernmentSidebarProps {
 }
 
 export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps) {
+  const pathname = usePathname()
   let orgRole: string | null | undefined = null
   
   try {
@@ -87,6 +89,10 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
   const visibleDemoItems = demoNavigationItems.filter(item => 
     !item.adminOnly || isAdmin
   )
+  
+  // Determine which section to show based on current route
+  const isOnDashboard = pathname?.startsWith('/dashboard')
+  const isOnDemo = pathname?.startsWith('/demo')
 
   return (
     <div className={cn("flex flex-col h-full bg-white border-r border-slate-200", className)}>
@@ -105,64 +111,65 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
 
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
-        {/* Organization Section */}
-        <div className="mb-6">
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Organization
-          </h3>
-          <div className="space-y-1">
-            {orgNavigationItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClick}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
+        {/* Organization Section - only show on dashboard routes */}
+        {isOnDashboard && (
+          <div className="mb-6">
+            <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Organization
+            </h3>
+            <div className="space-y-1">
+              {orgNavigationItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClick}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
         
-        {/* Divider */}
-        <div className="border-t border-slate-200 my-4" />
-        
-        {/* Demo/Public Section */}
-        <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Public Demo
-          </h3>
-          <div className="space-y-1">
-            {visibleDemoItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClick}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
+        {/* Demo/Public Section - only show on demo routes */}
+        {isOnDemo && (
+          <div>
+            <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Public Demo
+            </h3>
+            <div className="space-y-1">
+              {visibleDemoItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClick}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Footer */}
