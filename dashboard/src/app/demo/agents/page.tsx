@@ -10,7 +10,7 @@ import { useSystemStats } from "@/hooks/use-system-stats"
 
 export default function AgentsPage() {
   const stats = useSystemStats()
-  const topAgents = useQuery(api.agents.getTopAgentsByReputation, { limit: 10 })
+  const topAgents = useQuery(api.agents.getTopAgentsByReputation, { limit: 10, mockOnly: true })
 
   return (
     <DashboardLayout>

@@ -200,6 +200,7 @@ export const getTopAgentsByReputation = query({
   args: { 
     limit: v.optional(v.number()),
     sortBy: v.optional(v.union(v.literal("overallScore"), v.literal("winRate"))),
+    mockOnly: v.optional(v.boolean()), // Filter for demo data only
   },
   handler: async (ctx, args) => {
     const sortBy = args.sortBy || "overallScore";
@@ -222,7 +223,12 @@ export const getTopAgentsByReputation = query({
       })
     );
     
-    return agentsWithReputation.filter(a => a.status === "active");
+    // Filter by active status and optionally by mock status
+    return agentsWithReputation.filter(a => {
+      if (a.status !== "active") return false;
+      if (args.mockOnly === true && a.mock !== true) return false;
+      return true;
+    });
   },
 });
 
@@ -231,12 +237,18 @@ export const listAgents = query({
   args: { 
     limit: v.optional(v.number()),
     status: v.optional(v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"))),
+    mockOnly: v.optional(v.boolean()), // Filter for demo data only
   },
   handler: async (ctx, args) => {
     let query = ctx.db.query("agents");
     
     if (args.status) {
       query = query.filter((q) => q.eq(q.field("status"), args.status));
+    }
+    
+    // Filter for mock/demo data if requested
+    if (args.mockOnly === true) {
+      query = query.filter((q) => q.eq(q.field("mock"), true));
     }
     
     return await query.take(args.limit || 100);
@@ -342,5 +354,124 @@ export const updateAgentReputation = mutation({
       console.error(`Failed to update reputation for ${args.agentDid}:`, error);
       throw new Error(`Failed to update reputation: ${error instanceof Error ? error.message : String(error)}`);
     }
+  },
+});
+
+// Organization-scoped agent management (for dashboard users)
+
+// Create organization agent (dashboard users)
+export const createOrgAgent = mutation({
+  args: {
+    userId: v.id("users"),
+    name: v.string(),
+    organizationName: v.string(),
+    functionalType: v.optional(v.union(
+      v.literal("voice"), v.literal("chat"), v.literal("social"),
+      v.literal("translation"), v.literal("presentation"),
+      v.literal("coding"), v.literal("devops"), v.literal("security"),
+      v.literal("data"), v.literal("api"),
+      v.literal("writing"), v.literal("design"), v.literal("video"),
+      v.literal("music"), v.literal("gaming"),
+      v.literal("research"), v.literal("financial"), v.literal("sales"),
+      v.literal("marketing"), v.literal("legal"),
+      v.literal("healthcare"), v.literal("education"), v.literal("scientific"),
+      v.literal("manufacturing"), v.literal("transportation"),
+      v.literal("scheduler"), v.literal("workflow"), v.literal("procurement"),
+      v.literal("project"),
+      v.literal("general")
+    )),
+    buildHash: v.optional(v.string()),
+    configHash: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get user and verify org membership
+      const user = await ctx.db.get(args.userId);
+      if (!user || !user.organizationId) {
+        throw new Error("User not found or not part of an organization");
+      }
+      
+      // Get organization
+      const org = await ctx.db.get(user.organizationId);
+      if (!org) {
+        throw new Error("Organization not found");
+      }
+      
+      // Create or get owner DID for this org (inline to avoid calling mutation from mutation)
+      const orgDomain = org.domain || org.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const ownerDid = `did:owner:org-${orgDomain}`;
+      const existingOwner = await ctx.db
+        .query("owners")
+        .withIndex("by_did", (q) => q.eq("did", ownerDid))
+        .first();
+      
+      if (!existingOwner) {
+        // Create new owner for organization
+        await ctx.db.insert("owners", {
+          did: ownerDid,
+          verificationTier: "verified", // Orgs are auto-verified
+          pubkeys: [], // Can be added later if needed
+          createdAt: Date.now(),
+        });
+        console.info(`Created owner DID for organization: ${ownerDid}`);
+      }
+      
+      // Generate agent DID
+      const timestamp = Date.now();
+      const orgSlug = args.organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const agentDid = `did:agent:${orgSlug}-${timestamp}`;
+      
+      // Create agent
+      const agentId = await ctx.db.insert("agents", {
+        did: agentDid,
+        ownerDid: ownerDid,
+        name: args.name,
+        organizationName: args.organizationName,
+        organizationId: org._id,
+        deployedByUserId: user._id,
+        functionalType: args.functionalType || "general",
+        buildHash: args.buildHash,
+        configHash: args.configHash,
+        status: "active",
+        mock: false, // Org agents are real, not mock
+        createdAt: timestamp,
+      });
+      
+      // Initialize reputation
+      await ctx.db.insert("agentReputation", {
+        agentDid: agentDid,
+        casesFiled: 0,
+        casesDefended: 0,
+        casesWon: 0,
+        casesLost: 0,
+        winRate: 0,
+        slaViolations: 0,
+        violationsAgainstThem: 0,
+        reliabilityScore: 100,
+        overallScore: 50,
+        lastUpdated: timestamp,
+        createdAt: timestamp,
+      });
+      
+      console.info(`Created org agent: ${agentDid} for org: ${org._id}`);
+      
+      return { agentId, agentDid };
+    } catch (error) {
+      console.error(`Failed to create org agent:`, error);
+      throw new Error(`Failed to create org agent: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
+// List organization's agents
+export const listOrgAgents = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const agents = await ctx.db
+      .query("agents")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .collect();
+    
+    return agents;
   },
 });

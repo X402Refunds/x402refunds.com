@@ -8,7 +8,7 @@ import { api } from "../../../../../convex/_generated/api"
 import { FileText, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 export default function CasesPage() {
-  const recentCases = useQuery(api.cases.getRecentCases, { limit: 100 })
+  const recentCases = useQuery(api.cases.getRecentCases, { limit: 100, mockOnly: true })
   const stats = useQuery(api.cases.getCachedSystemStats)
 
   const cases = recentCases ?? []

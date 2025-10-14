@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Shield, Key } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, Shield, Key, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -13,26 +13,41 @@ interface NavigationItem {
   adminOnly?: boolean
 }
 
-const navigationItems: NavigationItem[] = [
+// Organization-scoped navigation (user's own org data)
+const orgNavigationItems: NavigationItem[] = [
   {
-    title: "Demo",
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "My Agents",
+    href: "/dashboard/agents",
+    icon: Users,
+  },
+  {
+    title: "My API Keys",
+    href: "/dashboard/api-keys",
+    icon: Key,
+  },
+]
+
+// Demo/public navigation (mock data only)
+const demoNavigationItems: NavigationItem[] = [
+  {
+    title: "System Demo",
     href: "/demo",
     icon: Home,
   },
   {
-    title: "Agents",
+    title: "All Agents",
     href: "/demo/agents",
     icon: Users,
   },
   {
-    title: "Cases",
-    href: "/demo/cases", 
+    title: "All Cases",
+    href: "/demo/cases",
     icon: FileText,
-  },
-  {
-    title: "API Keys",
-    href: "/dashboard/api-keys",
-    icon: Key,
   },
   {
     title: "Activity",
@@ -68,8 +83,8 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
   // If orgRole is null/undefined (during build), show all items
   const isAdmin = !orgRole || orgRole === 'org:admin' || orgRole === 'admin'
   
-  // Filter navigation items based on admin status
-  const visibleItems = navigationItems.filter(item => 
+  // Filter demo navigation items based on admin status
+  const visibleDemoItems = demoNavigationItems.filter(item => 
     !item.adminOnly || isAdmin
   )
 
@@ -89,27 +104,64 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <div className="space-y-2">
-          {visibleItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClick}
-                className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-              >
-                <Icon className="w-4 h-4" />
-                <span>{item.title}</span>
-                {item.badge && (
-                  <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {/* Organization Section */}
+        <div className="mb-6">
+          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            Organization
+          </h3>
+          <div className="space-y-1">
+            {orgNavigationItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClick}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Divider */}
+        <div className="border-t border-slate-200 my-4" />
+        
+        {/* Demo/Public Section */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            Public Demo
+          </h3>
+          <div className="space-y-1">
+            {visibleDemoItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClick}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </nav>
 

@@ -204,13 +204,22 @@ export const getCasesByDefendant = query({
 });
 
 export const getRecentCases = query({
-  args: { limit: v.optional(v.number()) },
+  args: { 
+    limit: v.optional(v.number()),
+    mockOnly: v.optional(v.boolean()), // Filter for demo data only
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
+    let query = ctx.db
       .query("cases")
       .withIndex("by_filed_at")
-      .order("desc")
-      .take(args.limit ?? 20);
+      .order("desc");
+    
+    // Filter for mock/demo data if requested
+    if (args.mockOnly === true) {
+      query = query.filter((q) => q.eq(q.field("mock"), true));
+    }
+    
+    return await query.take(args.limit ?? 20);
   },
 });
 

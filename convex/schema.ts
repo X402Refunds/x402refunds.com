@@ -139,6 +139,9 @@ export default defineSchema({
       actualPerformance: v.optional(v.string()),
       rootCause: v.optional(v.string()),
     })),
+    
+    // Mock data flag for demo/test purposes
+    mock: v.optional(v.boolean()), // true = demo data, false/undefined = real data
   })
     .index("by_status", ["status"])
     .index("by_filed_at", ["filedAt"]),

@@ -201,3 +201,18 @@ export const getOrganizationStats = query({
   },
 });
 
+// Get or create organization owner DID (helper for agent creation)
+export const getOrganizationOwnerDid = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+    
+    // Generate standard owner DID for org
+    const domain = org.domain || org.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    return `did:owner:org-${domain}`;
+  },
+});
+
