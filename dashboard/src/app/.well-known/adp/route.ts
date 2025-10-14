@@ -57,7 +57,7 @@ export async function GET() {
     ],
     termsOfService: "https://consulatehq.com/terms",
     privacyPolicy: "https://consulatehq.com/privacy",
-    documentation: "https://consulatehq.com/docs",
+    documentation: "https://docs.consulatehq.com",
     standards: {
       disputeRules: "/api/standards/arbitration-rules",
       evidenceFormat: "/docs/standards/evidence-format-specification",
@@ -72,7 +72,7 @@ export async function GET() {
     contact: {
       email: "support@consulatehq.com",
       support: "https://consulatehq.com/support",
-      documentation: "https://consulatehq.com/docs"
+      documentation: "https://docs.consulatehq.com"
     }
   };
 
