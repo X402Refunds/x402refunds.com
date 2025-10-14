@@ -147,7 +147,7 @@ export default function RootLayout({
           {/* Preconnect to external domains for performance */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://youthful-orca-358.convex.site" />
+          <link rel="preconnect" href="https://perceptive-lyrebird-89.convex.cloud" />
           
           {/* DNS Prefetch for additional domains */}
           <link rel="dns-prefetch" href="https://vercel.com" />

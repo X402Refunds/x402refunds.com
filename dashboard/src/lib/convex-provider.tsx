@@ -3,7 +3,7 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 
 const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL || 'https://api.consulatehq.com'
+  process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyrebird-89.convex.cloud'
 );
 
 export default function ConvexClientProvider({
