@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 
 /**
- * .well-known/aap/arbitrators endpoint - Arbitrator discovery per AAP spec
- * Returns available arbitrators and their capabilities
+ * .well-known/adp/neutrals endpoint - Neutral discovery per ADP spec
+ * Returns available neutrals (experts, arbitrators, mediators) and their capabilities
  */
 export async function GET() {
-  const arbitrators = {
-    arbitrators: [
+  const neutrals = {
+    neutrals: [
       {
-        id: "judge-panel-ai-001",
-        name: "Consulate AI Judge Panel",
+        id: "expert-panel-ai-001",
+        name: "Consulate AI Expert Panel",
         type: "ai",
+        resolutionMethod: "expert-determination",
         model: {
           provider: "openai",
           name: "gpt-4",
@@ -28,7 +29,8 @@ export async function GET() {
         rulingFormat: ["json", "pdf"],
         qualifications: [
           "AI Ethics Board Certified",
-          "Commercial Arbitration Trained"
+          "Expert Determination Qualified",
+          "Commercial Dispute Resolution Trained"
         ],
         biasAudit: {
           lastAudit: "2025-01-15",
@@ -43,20 +45,21 @@ export async function GET() {
           currency: "USD"
         },
         contact: {
-          email: "arbitration@consulatehq.com",
+          email: "disputes@consulatehq.com",
           endpoint: "https://api.consulatehq.com"
         }
       }
     ],
     meta: {
-      totalArbitrators: 1,
+      totalNeutrals: 1,
       lastUpdated: new Date().toISOString(),
       service: "Consulate",
-      protocolVersion: "1.0"
+      protocolVersion: "draft-01",
+      protocol: "Agentic Dispute Protocol (ADP)"
     }
   };
 
-  return NextResponse.json(arbitrators, {
+  return NextResponse.json(neutrals, {
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=1800',

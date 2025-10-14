@@ -118,7 +118,7 @@ export function validateAAPFormat(response: any, expectedFields: string[]) {
 /**
  * Validate AAP service manifest format
  */
-export function validateAAPManifest(manifest: any) {
+export function validateADPManifest(manifest: any) {
   const requiredFields = [
     'arbitrationService',
     'protocolVersion',

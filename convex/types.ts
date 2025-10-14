@@ -1,4 +1,13 @@
-// Type definitions for Agent Court
+/**
+ * Type definitions for Agentic Dispute Protocol (ADP) Implementation
+ * 
+ * Implements ADP message formats:
+ * - EvidenceManifest: ADP Evidence Message with chain of custody
+ * - Ruling: ADP Award Message (dual-format: JSON + PDF)
+ * - Panel: Expert determination panel (ADP resolution method)
+ * 
+ * Protocol: https://github.com/consulatehq/agentic-dispute-protocol
+ */
 import { z } from "zod";
 
 export interface Owner {
@@ -60,6 +69,7 @@ export interface Constitution {
 
 // Note: Case validation is handled by Convex schema, not Zod
 
+// ADP Evidence Message Schema
 export const EvidenceManifestSchema = z.object({
   caseId: z.string().optional(),
   agentDid: z.string(),
@@ -77,6 +87,7 @@ export const EvidenceManifestSchema = z.object({
   tool: z.string().optional(),
 });
 
+// Expert Determination Panel (ADP Resolution Method)
 export const PanelSchema = z.object({
   judgeIds: z.array(z.string()),
   assignedAt: z.number(),
@@ -88,6 +99,7 @@ export const PanelSchema = z.object({
   })).optional(),
 });
 
+// ADP Award Message Schema (dual-format output)
 export const RulingSchema = z.object({
   caseId: z.string(),
   verdict: z.enum(["UPHELD", "DISMISSED", "SPLIT", "NEED_PANEL"]),

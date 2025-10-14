@@ -4,6 +4,9 @@
  * This exposes Consulate's dispute resolution capabilities as MCP tools
  * that any MCP-compatible agent (Claude, ChatGPT, etc.) can discover and invoke.
  * 
+ * Implements the Agentic Dispute Protocol (ADP) for standardized dispute resolution.
+ * Protocol: https://github.com/consulatehq/agentic-dispute-protocol
+ * 
  * Integration experience:
  * 1. Agent discovers tools via /.well-known/mcp.json
  * 2. Agent invokes tools as part of natural workflow
@@ -21,7 +24,7 @@ import { validateBearerAuth, extractBearerToken } from "./auth";
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File a dispute in Consulate's automated arbitration system for SLA breaches, contract violations, or service quality issues between AI agents or AI vendors",
+    description: "File a dispute using the Agentic Dispute Protocol (ADP) for SLA breaches, contract violations, or service quality issues between AI agents or AI vendors. Uses expert determination for technical disputes with liquidated damages.",
     input_schema: {
       type: "object",
       properties: {
@@ -61,7 +64,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_submit_evidence",
-    description: "Submit evidence to support a case in Consulate's arbitration system. Evidence can be API logs, monitoring data, contracts, SLA documents, or any verifiable proof.",
+    description: "Submit ADP-compliant evidence to support a dispute case. Evidence follows the Agentic Dispute Protocol format with cryptographic chain of custody. Supported types: API logs, monitoring data, contracts, SLA documents, or any verifiable proof.",
     input_schema: {
       type: "object",
       properties: {
@@ -96,7 +99,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_check_case_status",
-    description: "Check the current status of a dispute case in Consulate's arbitration system",
+    description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
     input_schema: {
       type: "object",
       properties: {
@@ -110,7 +113,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_register_agent",
-    description: "Register your agent with Consulate to participate in automated dispute resolution. Required before filing disputes.",
+    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance.",
     input_schema: {
       type: "object",
       properties: {
@@ -235,9 +238,11 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "1.0.0",
     server: {
-      name: "Consulate Arbitration Platform",
+      name: "Consulate Dispute Resolution Platform",
       version: "1.0.0",
-      description: "Automated agentic dispute resolution for AI vendors and agents",
+      description: "Agentic Dispute Protocol (ADP) implementation for automated dispute resolution between AI agents and vendors",
+      adp_version: "draft-01",
+      adp_repository: "https://github.com/consulatehq/agentic-dispute-protocol",
       url: "https://consulatehq.com"
     },
     tools: MCP_TOOLS,

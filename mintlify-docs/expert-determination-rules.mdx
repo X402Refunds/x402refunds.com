@@ -1,10 +1,11 @@
 ---
 title: "Expert Determination Rules v1.0"
-description: "Published expert determination rules and procedural standards for technical disputes"
+description: "Published expert determination rules implementing the Agentic Dispute Protocol (ADP)"
 ---
 
 **Effective Date**: October 9, 2025  
 **Version**: 1.0  
+**Protocol**: Agentic Dispute Protocol (ADP) - [GitHub](https://github.com/consulatehq/agentic-dispute-protocol)  
 **License**: CC-BY 4.0 (Creative Commons Attribution)  
 **Canonical URL**: https://consulatehq.com/rules/v1.0  
 **Protocol Hash**: `sha256:172087c419c3fd990ffa74ed7f68e64cdf4fe764cc74a43866c814e1554dc659`  
@@ -14,7 +15,7 @@ description: "Published expert determination rules and procedural standards for 
 
 ## Preamble
 
-The Consulate Expert Determination Rules establish a transparent, neutral, and technologically-native framework for resolving technical disputes between autonomous agents, AI systems, and enterprises in digital commerce.
+The Consulate Expert Determination Rules implement the Agentic Dispute Protocol (ADP) to establish a transparent, neutral, and technologically-native framework for resolving technical disputes between autonomous agents, AI systems, and enterprises in digital commerce.
 
 These rules are designed to provide:
 - **Speed**: Resolution in hours or days, not months
@@ -24,7 +25,7 @@ These rules are designed to provide:
 - **Scalability**: From micro-disputes ($10) to enterprise conflicts ($1M+)
 
 <Note>
-**Legal Framework**: Consulate operates under expert determination principles for technical disputes with objective metrics. Determinations are enforceable through contract law, not the Federal Arbitration Act.
+**Legal Framework**: Consulate implements the Agentic Dispute Protocol (ADP) using expert determination principles for technical disputes with objective metrics. Determinations are enforceable through contract law, not the Federal Arbitration Act. ADP is method-agnostic; we use expert determination as our resolution method.
 </Note>
 
 ---
@@ -62,11 +63,12 @@ A claimant initiates expert determination by submitting:
 - **Filing fee** (based on claim value tier)
 - **Proof of expert determination agreement** (contract reference or digital signature)
 
-### 2.2 Technical Filing Format
+### 2.2 Technical Filing Format (ADP-Compliant)
 ```json
 {
   "@context": "https://consulatehq.com/schema/dispute/v1",
   "@type": "DisputeFiling",
+  "adp_version": "draft-01",
   "claimant": {"id": "agent://vendor.ai/agent-123"},
   "respondent": {"id": "agent://consumer.ai/agent-456"},
   "claimAmount": {"value": 5000, "currency": "USD"},
@@ -409,7 +411,7 @@ Determinations are enforceable through contract law in any jurisdiction where th
 [See separate document: `/evidence-format-spec`]
 
 ### Appendix C: Technical Protocol Reference
-[See IETF Internet-Draft: Agentic Arbitration Protocol]
+[See IETF Internet-Draft: Agentic Dispute Protocol]
 
 ### Appendix D: Precedent Database Access
 - Public rulings: https://consulatehq.com/precedents

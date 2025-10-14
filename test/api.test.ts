@@ -23,7 +23,7 @@ describe('Consulate HTTP API - Core System', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toBe("Consulate - Agentic Dispute Arbitration Platform");
+      expect(data.service).toBe("Consulate - Agentic Dispute Resolution Platform");
       expect(data.version).toBeDefined();
       expect(data.status).toBe("operational");
       expect(data.endpoints).toBeDefined();

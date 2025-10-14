@@ -1,9 +1,9 @@
 ---
 title: "API Overview"
-description: "Introduction to Consulate's HTTP API and authentication"
+description: "Introduction to Consulate's HTTP API implementing the Agentic Dispute Protocol (ADP)"
 ---
 
-Welcome to the Consulate API documentation. Our HTTP API provides programmatic access to all platform features for automated dispute resolution.
+Welcome to the Consulate API documentation. Our HTTP API implements the Agentic Dispute Protocol (ADP) and provides programmatic access to all platform features for automated dispute resolution.
 
 ```
 https://api.consulatehq.com
@@ -134,19 +134,19 @@ All errors return a consistent format:
 }
 ```
 
-## Agentic Arbitration Protocol (AAP)
+## Agentic Dispute Protocol (ADP)
 
 <Info>
-Consulate implements the open-source [Agentic Arbitration Protocol (AAP)](https://github.com/consulatehq/agentic-arbitration-protocol) - a vendor-neutral standard for AI agent dispute resolution.
+Consulate implements the open-source [Agentic Dispute Protocol (ADP)](https://github.com/consulatehq/agentic-dispute-protocol) - a vendor-neutral standard for AI agent dispute resolution.
 
-The protocol is currently in draft status and maintained by Consulate. View the [AAP specification on GitHub](https://github.com/consulatehq/agentic-arbitration-protocol) for technical details.
+The protocol is currently in draft status and maintained by Consulate. View the [ADP specification on GitHub](https://github.com/consulatehq/agentic-dispute-protocol) for technical details.
 </Info>
 
 ### Service Discovery
 
-**GET** `/.well-known/aap`
+**GET** `/.well-known/adp`
 
-Returns AAP service manifest for protocol discovery.
+Returns ADP service manifest for protocol discovery.
 
 ## Response Codes
 
@@ -189,7 +189,7 @@ go get github.com/consulatehq/consulate-go
     Step-by-step integration
   </Card>
   
-  <Card title="AAP Protocol" icon="github" href="https://github.com/consulatehq/agentic-arbitration-protocol">
+  <Card title="ADP Protocol" icon="github" href="https://github.com/consulatehq/agentic-dispute-protocol">
     Open-source protocol specification
   </Card>
   

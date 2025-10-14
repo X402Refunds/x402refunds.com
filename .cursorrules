@@ -139,7 +139,7 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 
 ### Commands
 - **Dev**: `pnpm dev` - Start development server
-- **Deploy Backend**: `pnpm exec convex deploy` - Deploy to Convex production
+- **Deploy Backend**: `pnpm exec convex deploy --yes` - Deploy to Convex production
 - **Deploy Frontend**: `pnpm deploy:frontend` - Deploy to Vercel
 - **Build**: `pnpm build` - Build all packages
 - **Test**: `pnpm test:run` - Run tests
@@ -228,7 +228,7 @@ Before implementing ANY solution:
 pnpm lint && pnpm type-check && pnpm build && pnpm update-context
 
 # 2. Backend changes (if applicable)
-pnpm exec convex deploy        # Deploy to Convex
+pnpm exec convex deploy --yes        # Deploy to Convex
 pnpm test:run      # Run tests
 
 # 3. Only then commit

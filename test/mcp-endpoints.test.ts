@@ -37,7 +37,7 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(manifest.server.name).toBe('Consulate Arbitration Platform');
+      expect(manifest.server.name).toBe('Consulate Dispute Resolution Platform');
     });
 
     it('should list all 8 MCP tools', async () => {

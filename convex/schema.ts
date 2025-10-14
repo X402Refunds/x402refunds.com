@@ -1,3 +1,15 @@
+/**
+ * Convex Database Schema - Agentic Dispute Protocol (ADP) Implementation
+ * 
+ * This schema implements the Agentic Dispute Protocol (ADP) data models:
+ * - Cases: ADP dispute filing and tracking
+ * - Evidence: ADP-compliant evidence manifests with chain of custody
+ * - Rulings: ADP awards with dual-format (JSON + PDF) support
+ * - Events: Cryptographic audit trail per ADP requirements
+ * 
+ * Protocol: https://github.com/consulatehq/agentic-dispute-protocol
+ * Resolution Method: Expert Determination (for technical disputes)
+ */
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -54,7 +66,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_functional_type", ["functionalType"]),
 
-  // Dispute cases
+  // Dispute cases (ADP Filing Message)
   cases: defineTable({
     // Role-based party identification
     plaintiff: v.string(),  // Agent DID filing the dispute
@@ -101,7 +113,7 @@ export default defineSchema({
     .index("by_plaintiff", ["plaintiff"])
     .index("by_defendant", ["defendant"]),
 
-  // Evidence manifests
+  // Evidence manifests (ADP Evidence Message)
   evidenceManifests: defineTable({
     caseId: v.optional(v.id("cases")),
     agentDid: v.string(),
@@ -150,7 +162,7 @@ export default defineSchema({
     .index("by_assigned_at", ["assignedAt"])
     .index("by_due_at", ["dueAt"]),
 
-  // Case rulings
+  // Case rulings (ADP Award Message)
   rulings: defineTable({
     caseId: v.id("cases"),
     verdict: v.union(
@@ -214,7 +226,7 @@ export default defineSchema({
     .index("by_sponsored", ["sponsoredDid"])
     .index("by_active", ["active"]),
 
-  // Events table for transparency
+  // Events table for transparency (ADP Chain of Custody)
   events: defineTable({
     type: v.string(),
     payload: v.any(),
@@ -222,9 +234,9 @@ export default defineSchema({
     agentDid: v.optional(v.string()),
     caseId: v.optional(v.id("cases")),
     
-    // Chain of custody fields
+    // ADP Chain of Custody fields - cryptographically linked custody events
     contentHash: v.optional(v.string()),              // SHA-256 of event content
-    previousEventHash: v.optional(v.string()),        // Links to previous event
+    previousEventHash: v.optional(v.string()),        // Links to previous event (Merkle chain)
     sequenceNumber: v.optional(v.number()),           // Order within case
   })
     .index("by_type", ["type"])

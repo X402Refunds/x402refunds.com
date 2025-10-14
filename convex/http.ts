@@ -31,7 +31,7 @@ http.route({
   method: "GET",
   handler: httpAction(async () => {
     return new Response(JSON.stringify({
-      service: "Consulate - Agentic Dispute Arbitration Platform",
+      service: "Consulate - Agentic Dispute Resolution Platform",
       version: "1.0.0",
       status: "operational",
       endpoints: {
@@ -67,6 +67,11 @@ http.route({
         agent_status: "/live/agent/:agentDid"
       },
       documentation: "https://consulate.ai/docs",
+      protocol: {
+        name: "Agentic Dispute Protocol (ADP)",
+        repository: "https://github.com/consulatehq/agentic-dispute-protocol",
+        ietf_draft: "draft-kotecha-agentic-dispute-protocol"
+      },
       integration: {
         mcp: "Add Consulate MCP server to your agent for zero-friction dispute filing",
         sdk: "https://github.com/consulate-ai/agent-sdk",

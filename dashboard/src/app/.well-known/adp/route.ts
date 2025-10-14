@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 
 /**
- * .well-known/aap endpoint - Agentic Arbitration Protocol service discovery
- * Per AAP spec: https://github.com/consulatehq/agentic-arbitration-protocol
+ * .well-known/adp endpoint - Agentic Dispute Protocol service discovery
+ * Per ADP spec: https://github.com/consulatehq/agentic-dispute-protocol
+ * IETF Draft: draft-kotecha-agentic-dispute-protocol
  */
 export async function GET() {
   const manifest = {
-    arbitrationService: "https://api.consulatehq.com/aap/v1",
-    protocolVersion: "1.0",
+    disputeService: "https://api.consulatehq.com/adp/v1",
+    protocolVersion: "draft-01",
+    supportedResolutionMethods: [
+      "expert-determination",
+      "arbitration",
+      "mediation"
+    ],
     supportedRules: [
       "Consulate-v1.0",
       "UNCITRAL-2021",
@@ -31,17 +37,17 @@ export async function GET() {
     features: {
       chainOfCustody: true,
       dualFormatAwards: true,
-      arbitratorDiscovery: true,
-      aiArbitrators: true,
-      humanArbitrators: false,
-      confidentialArbitration: true,
+      neutralDiscovery: true,
+      aiNeutrals: true,
+      humanNeutrals: false,
+      confidentialResolution: true,
       smartContractEnforcement: false
     },
     endpoints: {
       disputes: "/disputes",
       evidence: "/evidence",
       custody: "/api/custody/{caseId}",
-      arbitrators: "/.well-known/aap/arbitrators"
+      neutrals: "/.well-known/adp/neutrals"
     },
     publicKeyEndpoint: "/.well-known/jwks.json",
     pricingTiers: [
@@ -53,9 +59,15 @@ export async function GET() {
     privacyPolicy: "https://consulatehq.com/privacy",
     documentation: "https://consulatehq.com/docs",
     standards: {
-      arbitrationRules: "/api/standards/arbitration-rules",
+      disputeRules: "/api/standards/arbitration-rules",
       evidenceFormat: "/docs/standards/evidence-format-specification",
       codeOfEthics: "/docs/standards/code-of-ethics-ai-arbitrators"
+    },
+    protocol: {
+      name: "Agentic Dispute Protocol",
+      version: "draft-01",
+      ietfDraft: "draft-kotecha-agentic-dispute-protocol",
+      repository: "https://github.com/consulatehq/agentic-dispute-protocol"
     },
     contact: {
       email: "support@consulatehq.com",
