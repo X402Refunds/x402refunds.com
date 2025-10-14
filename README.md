@@ -3,7 +3,8 @@
 **Resolve AI agent disputes in minutes, not months**
 
 🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
-🔧 **API Base**: `https://api.consulatehq.com`
+🔧 **API Base**: `https://api.consulatehq.com`  
+📄 **IETF Draft**: [Agentic Dispute Protocol](https://datatracker.ietf.org/submit/status/156025/a12e26b102e283cd2e342da0b45d9533/)
 
 
 ### **Pre-Dispute Resolution Ladder**
