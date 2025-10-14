@@ -153,7 +153,7 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                     className="bg-slate-900 text-white hover:bg-slate-800 text-base sm:text-lg px-8 h-12 sm:h-14 font-semibold w-full sm:w-auto shadow-lg"
-                    onClick={() => window.open('/dashboard', '_self')}
+                    onClick={() => window.open('/demo', '_self')}
                   >
                     View Live System
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -437,7 +437,7 @@ export default function HomePage() {
                 <Button 
                   size="lg" 
                   className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
-                  onClick={() => window.open('/dashboard', '_self')}
+                  onClick={() => window.open('/demo', '_self')}
                 >
                   View Live System
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -607,7 +607,7 @@ export default function HomePage() {
                 <Button 
                   size="lg" 
                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-lg px-6 sm:px-8 h-11 sm:h-12"
-                  onClick={() => window.open('/dashboard', '_self')}
+                  onClick={() => window.open('/demo', '_self')}
                 >
                   View Live System
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -761,7 +761,7 @@ export default function HomePage() {
               size="lg" 
               variant="secondary"
               className="bg-white text-slate-900 hover:bg-slate-100 h-12 sm:h-14 text-base sm:text-lg px-8 font-semibold shadow-lg"
-              onClick={() => window.open('/dashboard', '_self')}
+              onClick={() => window.open('/demo', '_self')}
             >
               View Live System
               <ArrowRight className="ml-2 h-5 w-5" />

@@ -15,29 +15,29 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
+    title: "Demo",
+    href: "/demo",
     icon: Home,
   },
   {
     title: "Agents",
-    href: "/dashboard/agents",
+    href: "/demo/agents",
     icon: Users,
   },
   {
     title: "Cases",
-    href: "/dashboard/cases", 
+    href: "/demo/cases", 
     icon: FileText,
   },
   {
     title: "Activity",
-    href: "/dashboard/activity",
+    href: "/demo/activity",
     icon: Activity,
     adminOnly: true,
   },
   {
     title: "Settings",
-    href: "/dashboard/settings",
+    href: "/demo/settings",
     icon: Settings,
     adminOnly: true,
   },

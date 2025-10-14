@@ -125,7 +125,7 @@ export default function CasesPage() {
               {cases.slice(0, 20).map((case_: Case) => (
                 <Link
                   key={case_._id}
-                  href={`/dashboard/dispute/${case_._id}`}
+                  href={`/demo/dispute/${case_._id}`}
                   className="block"
                 >
                   <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">

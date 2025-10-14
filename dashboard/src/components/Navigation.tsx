@@ -154,10 +154,10 @@ export function Navigation({ currentPage }: NavigationProps) {
                 Docs
               </button>
               <button
-                onClick={() => window.open('https://github.com/consulatehq/agentic-arbitration-protocol', '_blank')}
+                onClick={() => window.open('https://github.com/consulatehq/agentic-dispute-protocol', '_blank')}
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
               >
-                Agentic Arbitration Protocol
+                Agentic Dispute Protocol
               </button>
             </div>
           </div>
@@ -165,9 +165,9 @@ export function Navigation({ currentPage }: NavigationProps) {
             <Button 
               variant="outline" 
               className="border-slate-300 text-slate-700 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
-              onClick={() => window.open('/dashboard', '_self')}
+              onClick={() => window.open('/demo', '_self')}
             >
-              Dashboard
+              Demo
             </Button>
           </div>
         </div>

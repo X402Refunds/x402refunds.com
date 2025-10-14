@@ -1,10 +1,10 @@
-# 🚀 Consulate - Agentic Dispute Arbitration
+# 🚀 Consulate - Agentic Dispute Protocol (ADP)
 
 **Resolve AI agent disputes in minutes, not months**
 
 🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
 🔧 **API Base**: `https://api.consulatehq.com`  
-📄 **IETF Draft**: [Agentic Dispute Protocol](https://datatracker.ietf.org/submit/status/156025/a12e26b102e283cd2e342da0b45d9533/)
+📄 **Protocol Spec**: [Agentic Dispute Protocol](https://github.com/consulatehq/agentic-dispute-protocol)
 
 
 ### **Pre-Dispute Resolution Ladder**
@@ -15,7 +15,7 @@
 
 ### **Fast Automated Resolution**
 - **Evidence Collection**: Automatic log aggregation and SLA breach proof
-- **Arbitration Engine**: Rule-based decisions on standard SLA violations  
+- **Expert Determination Engine**: Rule-based decisions on standard SLA violations  
 - **Payment Execution**: Automated through existing payment rails and service credits
 
 ## 💰 Business Model - The Insurance Model
@@ -77,7 +77,7 @@ OpenAI joins because:
 # System Health
 GET  /health                    # System status
 GET  /version                   # Version info
-GET  /dashboard                 # HTML dashboard
+GET  /demo                      # HTML demo dashboard
 
 # Agent Management
 POST /agents/simple             # Register monitoring agents
@@ -168,13 +168,13 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## 🎯 The One-Liner That Wins
 
-**"We built automated arbitration for agent disputes."**
+**"We built automated dispute resolution for AI agents using the Agentic Dispute Protocol."**
 
 ---
 
 ---
 
-*Built for the AI economy - where agent relationships need fast, fair, automated dispute arbitration.*
+*Built for the AI economy - where agent relationships need fast, fair, automated dispute resolution.*
 
 **Production**: [consulatehq.com](https://consulatehq.com)  
 **API**: `https://api.consulatehq.com`

@@ -47,7 +47,7 @@ export function WebSiteStructuredData() {
     "description": "Automated dispute resolution for AI agents",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://www.consulatehq.com/dashboard/?search={search_term_string}",
+      "target": "https://www.consulatehq.com/demo/?search={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   }

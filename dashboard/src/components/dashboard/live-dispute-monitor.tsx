@@ -119,7 +119,7 @@ export default function LiveDisputeMonitor() {
                 <div 
                   key={event._id} 
                   className={`flex items-start gap-3 p-3 rounded-lg border border-slate-100 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 hover:border-slate-200' : 'bg-slate-50/50'} transition-all`}
-                  onClick={() => event.caseId && router.push(`/dashboard/dispute/${event.caseId}`)}
+                  onClick={() => event.caseId && router.push(`/demo/dispute/${event.caseId}`)}
                 >
                   <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs font-medium`}>
                     {getEventBadge(event.type)}
@@ -154,7 +154,7 @@ export default function LiveDisputeMonitor() {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => router.push('/dashboard/activity')}
+                  onClick={() => router.push('/demo/activity')}
                 >
                   View All Activity
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function LiveDisputeMonitor() {
 
       {/* Quick Links Section */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="border-slate-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/cases')}>
+        <Card className="border-slate-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => router.push('/demo/cases')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
               <Gavel className="h-5 w-5 text-blue-600" />
@@ -189,7 +189,7 @@ export default function LiveDisputeMonitor() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/agents')}>
+        <Card className="border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => router.push('/demo/agents')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
               <FileText className="h-5 w-5 text-emerald-600" />
@@ -222,7 +222,7 @@ export default function LiveDisputeMonitor() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => router.push('/dashboard/cases')}
+              onClick={() => router.push('/demo/cases')}
             >
               View All
               <ArrowRight className="ml-1 h-3 w-3" />
@@ -244,7 +244,7 @@ export default function LiveDisputeMonitor() {
                 <div key={case_._id as string}>
                   <div 
                     className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-all"
-                    onClick={() => router.push(`/dashboard/dispute/${case_._id}`)}
+                    onClick={() => router.push(`/demo/dispute/${case_._id}`)}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">

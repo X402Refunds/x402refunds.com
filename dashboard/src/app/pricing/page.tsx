@@ -45,7 +45,7 @@ export default function PricingPage() {
                   </p>
                 </div>
                 
-                <button onClick={() => window.location.href = '/dashboard'}>
+                <button onClick={() => window.location.href = '/demo'}>
                   <Button 
                     size="lg" 
                     variant="outline"
@@ -118,7 +118,7 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <button onClick={() => window.location.href = '/dashboard'}>
+                <button onClick={() => window.location.href = '/demo'}>
                   <Button 
                     size="lg" 
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
@@ -451,7 +451,7 @@ export default function PricingPage() {
             <Button 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => window.location.href = '/demo'}
             >
               Get Started
               <ArrowRight className="ml-2 h-5 w-5" />

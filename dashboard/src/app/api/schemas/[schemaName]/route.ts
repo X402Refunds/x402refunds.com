@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
-const SCHEMAS_DIR = join(process.cwd(), '..', 'agentic-arbitration-protocol', 'spec', 'json-schema');
+const SCHEMAS_DIR = join(process.cwd(), '..', 'agentic-dispute-protocol', 'spec', 'json-schema');
 
 /**
- * GET /api/schemas/[schemaName] - Expose JSON schemas from AAP protocol
+ * GET /api/schemas/[schemaName] - Expose JSON schemas from ADP protocol
  */
 export async function GET(
   request: NextRequest,

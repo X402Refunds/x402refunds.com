@@ -8,14 +8,14 @@ const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyr
 // Dashboard endpoints mapping
 export const DASHBOARD_ENDPOINTS = {
   // Real-time monitoring endpoints
-  monitoring: "/dashboard/monitoring",
-  override: "/dashboard/override", 
-  tasks: "/dashboard/tasks",
-  discussions: "/dashboard/discussions",
-  emergency: "/dashboard/emergency",
+  monitoring: "/demo/monitoring",
+  override: "/demo/override", 
+  tasks: "/demo/tasks",
+  discussions: "/demo/discussions",
+  emergency: "/demo/emergency",
   
   // Legacy dashboard
-  legacy: "/dashboard/legacy",
+  legacy: "/demo/legacy",
   
   // Data endpoints (we'll create these)
   activityFeed: "/api/activity-feed",

@@ -43,7 +43,7 @@ export default function NotFound() {
             size="lg"
             variant="outline"
           >
-            <Link href="/dashboard">
+            <Link href="/demo">
               View Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>

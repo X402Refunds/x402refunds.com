@@ -304,7 +304,7 @@ export default function AboutPage() {
             <Button
               size="lg"
               className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold"
-              onClick={() => window.open('/dashboard', '_self')}
+              onClick={() => window.open('/demo', '_self')}
             >
               View Live System
             </Button>

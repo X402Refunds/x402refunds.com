@@ -14,7 +14,7 @@ export function Footer() {
           <div>
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/dashboard', '_self')} className="hover:text-white transition-colors">Dashboard</button></li>
+              <li><button onClick={() => window.open('/demo', '_self')} className="hover:text-white transition-colors">Demo</button></li>
               <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
               <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-white transition-colors">Documentation</button></li>
             </ul>

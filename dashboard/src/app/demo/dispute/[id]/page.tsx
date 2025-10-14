@@ -116,7 +116,7 @@ export default function DisputeDetailPage() {
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => router.push('/dashboard/cases')}>
+            <Button variant="outline" onClick={() => router.push('/demo/cases')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Cases
             </Button>
@@ -149,7 +149,7 @@ export default function DisputeDetailPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => router.push('/dashboard/cases')}>
+              <Button variant="outline" onClick={() => router.push('/demo/cases')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Cases
               </Button>

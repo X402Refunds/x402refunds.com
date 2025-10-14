@@ -90,14 +90,14 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
 
         {/* Right Section: Status and User */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Agentic Arbitration Protocol Link */}
+          {/* Agentic Dispute Protocol Link */}
           <a 
-            href="https://github.com/consulatehq/agentic-arbitration-protocol"
+            href="https://github.com/consulatehq/agentic-dispute-protocol"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex"
           >
-            <span>Agentic Arbitration Protocol</span>
+            <span>Agentic Dispute Protocol</span>
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
 

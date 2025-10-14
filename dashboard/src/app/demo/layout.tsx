@@ -10,12 +10,12 @@ export const metadata: Metadata = {
   },
   description: 'Real-time agentic dispute arbitration metrics, active cases, and system performance monitoring.',
   alternates: {
-    canonical: 'https://www.consulatehq.com/dashboard/',
+    canonical: 'https://www.consulatehq.com/demo/',
   },
   openGraph: {
     title: 'Live System Dashboard - Consulate',
     description: 'Real-time agentic dispute arbitration metrics, active cases, and system performance monitoring.',
-    url: 'https://www.consulatehq.com/dashboard/',
+    url: 'https://www.consulatehq.com/demo/',
   },
 }
 
