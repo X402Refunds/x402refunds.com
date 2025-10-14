@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
           // Permissions policy - disable unnecessary browser features
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
           // HSTS - Force HTTPS for 1 year
           {
@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: https://www.google-analytics.com https://img.clerk.com",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://clerk.consulatehq.com https://*.clerk.accounts.dev wss://*.convex.cloud https://*.convex.cloud",
+              "connect-src 'self' https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://clerk.consulatehq.com https://*.clerk.accounts.dev wss://*.convex.cloud https://*.convex.cloud https://analytics.ahrefs.com",
               "worker-src 'self' blob:",
               "frame-src 'self' https://challenges.cloudflare.com https://clerk.consulatehq.com https://*.clerk.accounts.dev",
               "object-src 'none'",
@@ -84,11 +84,6 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'none'",
               "upgrade-insecure-requests",
             ].join('; '),
-          },
-          // Feature Policy (older browsers)
-          {
-            key: 'Feature-Policy',
-            value: "camera 'none'; microphone 'none'; geolocation 'none'",
           },
         ],
       },
