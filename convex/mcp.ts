@@ -251,7 +251,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       description: "Use API key in Authorization: Bearer <key> header",
       registration_url: "https://consulatehq.com/api/agents/register"
     },
-    documentation: "https://consulatehq.com/docs/mcp",
+    documentation: "https://docs.consulatehq.com/mcp-quickstart",
     support: "support@consulatehq.com"
   }), {
     headers: {

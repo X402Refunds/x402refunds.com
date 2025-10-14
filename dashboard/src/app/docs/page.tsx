@@ -56,7 +56,7 @@ export default function DocsPage() {
       {/* Feature Cards */}
       <div className="grid md:grid-cols-3 gap-6 mb-16">
         <Link 
-          href="/docs/AGENT_INTEGRATION_GUIDE"
+          href="https://docs.consulatehq.com/agent-integration-guide"
           className="group relative bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 hover:shadow-xl transition-all border border-blue-200 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600 opacity-5 rounded-full -mr-16 -mt-16"></div>
@@ -76,7 +76,7 @@ export default function DocsPage() {
         </Link>
 
         <Link 
-          href="/docs/api/endpoints"
+          href="https://docs.consulatehq.com/api-overview"
           className="group relative bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-8 hover:shadow-xl transition-all border border-emerald-200 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600 opacity-5 rounded-full -mr-16 -mt-16"></div>
@@ -96,7 +96,7 @@ export default function DocsPage() {
         </Link>
 
         <Link 
-          href="/docs/dispute-types"
+          href="https://docs.consulatehq.com/dispute-types"
           className="group relative bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-8 hover:shadow-xl transition-all border border-purple-200 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600 opacity-5 rounded-full -mr-16 -mt-16"></div>

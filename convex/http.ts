@@ -66,7 +66,7 @@ http.route({
         live_feed: "/live/feed",
         agent_status: "/live/agent/:agentDid"
       },
-      documentation: "https://consulate.ai/docs",
+      documentation: "https://docs.consulatehq.com",
       protocol: {
         name: "Agentic Dispute Protocol (ADP)",
         repository: "https://github.com/consulatehq/agentic-dispute-protocol",

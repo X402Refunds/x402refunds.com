@@ -256,12 +256,12 @@ export default function DashboardPage() {
           <CardContent>
             <div className="flex gap-4">
               <Button variant="outline" asChild>
-                <a href="/docs/api" target="_blank" rel="noopener noreferrer">
+                <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
                   API Documentation
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="/docs/agent-integration-guide" target="_blank" rel="noopener noreferrer">
+                <a href="https://docs.consulatehq.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
                   Integration Guide
                 </a>
               </Button>
