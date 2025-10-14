@@ -2,9 +2,15 @@
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 
-const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyrebird-89.convex.cloud'
-);
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://perceptive-lyrebird-89.convex.cloud';
+
+// Debug logging
+if (typeof window !== 'undefined') {
+  console.log('[Convex] Initializing with URL:', convexUrl);
+  console.log('[Convex] Environment variable:', process.env.NEXT_PUBLIC_CONVEX_URL);
+}
+
+const convex = new ConvexReactClient(convexUrl);
 
 export default function ConvexClientProvider({
   children,

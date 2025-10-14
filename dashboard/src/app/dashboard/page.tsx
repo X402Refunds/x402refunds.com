@@ -44,21 +44,48 @@ export default function DashboardPage() {
   // Sync user if not exists
   useEffect(() => {
     if (user && isLoaded && !currentUser) {
+      console.log("Syncing user:", user.id, user.primaryEmailAddress?.emailAddress);
       syncUser({
         clerkUserId: user.id,
         email: user.primaryEmailAddress?.emailAddress || "",
         name: user.fullName || undefined,
+      }).then(() => {
+        console.log("User synced successfully");
       }).catch((error) => {
-        console.error("Failed to sync user:", error)
+        console.error("Failed to sync user:", error);
       })
     }
   }, [user, isLoaded, currentUser, syncUser])
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("Dashboard state:", { 
+      isLoaded, 
+      hasUser: !!user, 
+      currentUser: currentUser?._id,
+      organization: organization?._id 
+    });
+  }, [isLoaded, user, currentUser, organization])
   
   if (!isLoaded || !user) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading...</div>
+          <div className="text-slate-600">Loading user...</div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+  
+  // Show a different loading state while waiting for Convex queries
+  if (!currentUser) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-600">
+            <p>Syncing user data...</p>
+            <p className="text-sm text-slate-400 mt-2">Check browser console for details</p>
+          </div>
         </div>
       </DashboardLayout>
     )
