@@ -133,8 +133,8 @@ export default function RootLayout({
     <ClerkProvider
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/demo"
-      signUpFallbackRedirectUrl="/demo"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       <html lang="en" suppressHydrationWarning>
         <head>
