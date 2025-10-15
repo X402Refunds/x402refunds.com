@@ -64,6 +64,9 @@ export const joinAgent = mutation({
 
       const now = Date.now();
       
+      // Generate one-time registration token for secure public key registration
+      const registrationToken = crypto.randomUUID();
+      
       // Create simplified agent record
       const agentId = await ctx.db.insert("agents", {
         did,
@@ -75,6 +78,8 @@ export const joinAgent = mutation({
         buildHash: args.buildHash,
         configHash: args.configHash,
         status: "active",
+        registrationToken: registrationToken,
+        registrationTokenUsed: false,
         createdAt: now,
       });
 
@@ -108,7 +113,12 @@ export const joinAgent = mutation({
       });
 
       console.info(`Agent registration successful: ${agentId} with DID: ${did}`);
-      return { agentId, did };
+      return { 
+        agentId, 
+        did,
+        registrationToken, // CRITICAL: Return token once - needed for addAgentPublicKey
+        message: "Agent registered successfully. Save the registration token to register your public key later."
+      };
 
     } catch (error) {
       console.error(`Agent registration failed for ${args.name} (${args.organizationName}):`, error);
@@ -421,6 +431,9 @@ export const createOrgAgent = mutation({
       const orgSlug = args.organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const agentDid = `did:agent:${orgSlug}-${timestamp}`;
       
+      // Generate one-time registration token for secure public key registration
+      const registrationToken = crypto.randomUUID();
+      
       // Create agent
       const agentId = await ctx.db.insert("agents", {
         did: agentDid,
@@ -434,6 +447,8 @@ export const createOrgAgent = mutation({
         configHash: args.configHash,
         status: "active",
         mock: false, // Org agents are real, not mock
+        registrationToken: registrationToken,
+        registrationTokenUsed: false,
         createdAt: timestamp,
       });
       
@@ -455,7 +470,12 @@ export const createOrgAgent = mutation({
       
       console.info(`Created org agent: ${agentDid} for org: ${org._id}`);
       
-      return { agentId, agentDid };
+      return { 
+        agentId, 
+        did: agentDid,
+        registrationToken, // CRITICAL: Return token once - needed for addAgentPublicKey
+        message: "Agent created successfully. Save the registration token to register your public key later."
+      };
     } catch (error) {
       console.error(`Failed to create org agent:`, error);
       throw new Error(`Failed to create org agent: ${error instanceof Error ? error.message : String(error)}`);
@@ -484,6 +504,7 @@ export const addAgentPublicKey = mutation({
     publicKey: v.string(),
     signature: v.string(),
     timestamp: v.number(),
+    registrationToken: v.string(), // Required: one-time token from agent creation
   },
   handler: async (ctx, args) => {
     try {
@@ -499,7 +520,16 @@ export const addAgentPublicKey = mutation({
         throw new Error(`Agent ${args.agentDid} not found`);
       }
       
-      // Check if agent already has a public key
+      // SECURITY: Validate registration token (prevents unauthorized key registration)
+      if (agent.registrationTokenUsed) {
+        throw new Error("Registration token already used. Public key is already registered.");
+      }
+      
+      if (!agent.registrationToken || agent.registrationToken !== args.registrationToken) {
+        throw new Error("Invalid registration token. Unauthorized to register key for this agent.");
+      }
+      
+      // Check if agent already has a public key (belt-and-suspenders)
       if (agent.publicKey) {
         throw new Error(`Agent ${args.agentDid} already has a public key registered. Use updatePublicKey to rotate keys.`);
       }
@@ -522,9 +552,11 @@ export const addAgentPublicKey = mutation({
         throw new Error("Invalid signature. Could not verify ownership of private key.");
       }
       
-      // Add public key to agent
+      // Add public key to agent and mark token as used
       await ctx.db.patch(agent._id, {
         publicKey: args.publicKey,
+        registrationToken: undefined,      // Clear token for security
+        registrationTokenUsed: true,       // Mark as consumed (prevents reuse)
         updatedAt: now,
       });
       

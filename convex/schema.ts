@@ -64,6 +64,10 @@ export default defineSchema({
     // Signature-based authentication
     publicKey: v.optional(v.string()), // Ed25519 public key for signature verification
     
+    // Registration token security (prevents unauthorized key registration)
+    registrationToken: v.optional(v.string()),      // One-time token for first key registration
+    registrationTokenUsed: v.optional(v.boolean()), // Track if token has been consumed
+    
     // Organization management (new)
     organizationId: v.optional(v.id("organizations")), // Agent belongs to organization
     deployedByUserId: v.optional(v.id("users")),       // User who deployed this agent

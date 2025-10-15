@@ -196,7 +196,7 @@ http.route({
       // For now, we'll be permissive and allow registration
       // In production, we'd verify the org exists and is verified
       
-      // Register agent with public key
+      // Register agent (this generates a registrationToken)
       const result = await ctx.runMutation(api.agents.joinAgent, {
         ownerDid,
         name,
@@ -205,14 +205,21 @@ http.route({
         mock: false
       });
       
-      // Add public key to the agent (need to create this mutation)
-      // For now, we'll include publicKey in the response
+      // Immediately add public key using the registration token
+      // This makes the registration atomic and marks token as used
+      await ctx.runMutation(api.agents.addAgentPublicKey, {
+        agentDid: result.did,
+        publicKey,
+        signature,
+        timestamp,
+        registrationToken: result.registrationToken
+      });
       
       return new Response(JSON.stringify({
         success: true,
         agentId: result.agentId,
         agentDid: result.did,
-        publicKey,
+        publicKeyRegistered: true,
         message: "Agent registered successfully with signature-based authentication",
         authenticationMethod: "Ed25519 signatures",
         nextSteps: [
