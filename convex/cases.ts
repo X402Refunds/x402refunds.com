@@ -223,6 +223,35 @@ export const getRecentCases = query({
   },
 });
 
+export const getOrganizationCases = query({
+  args: { 
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Get all agents in the organization
+    const orgAgents = await ctx.db
+      .query("agents")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .collect();
+    
+    const agentDids = orgAgents.map(a => a.did);
+    
+    // Get cases where any org agent is plaintiff or defendant
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_filed_at")
+      .order("desc")
+      .take(args.limit ?? 10);
+    
+    // Filter to only cases involving org agents
+    return cases.filter(c => 
+      (c.plaintiff && agentDids.includes(c.plaintiff)) || 
+      (c.defendant && agentDids.includes(c.defendant))
+    );
+  },
+});
+
 export const updateCaseStatus = mutation({
   args: {
     caseId: v.id("cases"),

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useQuery, useMutation } from "convex/react"
 import { useRouter } from "next/navigation"
@@ -8,11 +8,13 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2 } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2, Scale, Clock } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   
   // Sync user on page load
   const syncUser = useMutation(api.users.syncUser)
@@ -36,6 +38,34 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
   )
   
+  const orgCases = useQuery(
+    api.cases.getOrganizationCases,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
+  )
+  
+  // Helper to format case status
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      FILED: "bg-blue-100 text-blue-800",
+      PANELED: "bg-yellow-100 text-yellow-800",
+      DECIDED: "bg-green-100 text-green-800",
+      CLOSED: "bg-slate-100 text-slate-800",
+    }
+    return colors[status] || "bg-slate-100 text-slate-800"
+  }
+  
+  // Helper to get relative time
+  const getRelativeTime = (timestamp: number) => {
+    const now = Date.now()
+    const diff = now - timestamp
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+    
+    if (minutes < 60) return `${minutes}m ago`
+    if (hours < 24) return `${hours}h ago`
+    return `${days}d ago`
+  }
   
   // Sync user if not exists
   useEffect(() => {
@@ -119,9 +149,14 @@ export default function DashboardPage() {
           </Card>
         )}
         
-        {/* Stats Cards */}
+        {/* Stats Cards with Hover Effect */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card 
+            className="relative cursor-pointer hover:border-slate-400 transition-all hover:shadow-md group"
+            onClick={() => router.push('/dashboard/agents')}
+            onMouseEnter={() => setHoveredCard('agents')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Agents</CardTitle>
               <Users className="h-4 w-4 text-slate-600" />
@@ -134,10 +169,22 @@ export default function DashboardPage() {
                 {orgStats?.activeAgents ?? 0} active
               </p>
             </CardContent>
+            {hoveredCard === 'agents' && (
+              <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center rounded-lg">
+                <Button variant="secondary" size="sm" className="shadow-lg">
+                  Manage Agents
+                </Button>
+              </div>
+            )}
           </Card>
           
           
-          <Card>
+          <Card 
+            className="relative cursor-pointer hover:border-slate-400 transition-all hover:shadow-md group"
+            onClick={() => router.push('/dashboard/team')}
+            onMouseEnter={() => setHoveredCard('team')}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Team Members</CardTitle>
               <Activity className="h-4 w-4 text-slate-600" />
@@ -150,30 +197,73 @@ export default function DashboardPage() {
                 {orgStats?.adminUsers ?? 0} admin{(orgStats?.adminUsers ?? 0) !== 1 ? 's' : ''}
               </p>
             </CardContent>
+            {hoveredCard === 'team' && (
+              <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center rounded-lg">
+                <Button variant="secondary" size="sm" className="shadow-lg">
+                  Manage Team
+                </Button>
+              </div>
+            )}
           </Card>
         </div>
         
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/agents')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900">
-                <Users className="h-5 w-5 text-emerald-600" />
-                Manage Agents
-              </CardTitle>
-              <CardDescription className="text-slate-600">
-                Deploy and manage your organization&apos;s AI agents
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="ghost" className="w-full justify-between">
-                {orgAgents && orgAgents.length > 0 ? "View Agents" : "Create Your First Agent"}
-                <ArrowRight className="h-4 w-4" />
+        {/* Live Case Activity */}
+        <Card className="border-slate-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Scale className="h-5 w-5 text-slate-600" />
+                  Live Case Activity
+                </CardTitle>
+                <CardDescription className="text-slate-600">
+                  Recent cases involving your organization&apos;s agents
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => router.push('/demo/cases')}>
+                View All <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
-            </CardContent>
-          </Card>
-          
-        </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {orgCases && orgCases.length > 0 ? (
+              <div className="space-y-3">
+                {orgCases.map((case_) => (
+                  <div 
+                    key={case_._id}
+                    className="flex items-start justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/demo/dispute/${case_._id}`)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className={getStatusColor(case_.status)}>
+                          {case_.status}
+                        </Badge>
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {getRelativeTime(case_.filedAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {case_.type}
+                      </p>
+                      <p className="text-xs text-slate-600 truncate">
+                        {case_.description || `${case_.plaintiff} vs ${case_.defendant}`}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <Scale className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                <p className="text-sm">No case activity yet</p>
+                <p className="text-xs text-slate-400 mt-1">Cases will appear here when your agents file or receive disputes</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
         
         
         {/* Documentation Link */}
