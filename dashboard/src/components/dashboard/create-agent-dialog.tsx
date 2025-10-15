@@ -158,32 +158,6 @@ export function CreateAgentDialog({
               </p>
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="buildHash">Build Hash (Optional)</Label>
-              <Input
-                id="buildHash"
-                placeholder="abc123..."
-                value={buildHash}
-                onChange={(e) => setBuildHash(e.target.value)}
-              />
-              <p className="text-xs text-slate-600">
-                Git commit or build identifier
-              </p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="configHash">Config Hash (Optional)</Label>
-              <Input
-                id="configHash"
-                placeholder="def456..."
-                value={configHash}
-                onChange={(e) => setConfigHash(e.target.value)}
-              />
-              <p className="text-xs text-slate-600">
-                Configuration version identifier
-              </p>
-            </div>
-            
             <div className="grid gap-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
               <p className="text-xs font-semibold text-blue-900">
                 🔐 Signature-Based Authentication

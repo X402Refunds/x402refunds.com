@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, Plus, ArrowRight, Building2 } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2 } from "lucide-react"
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
@@ -175,40 +175,6 @@ export default function DashboardPage() {
           
         </div>
         
-        {/* Getting Started (if no agents) */}
-        {orgAgents?.length === 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
-              <CardDescription>
-                Set up your organization to start using Consulate&apos;s dispute resolution platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="list-decimal list-inside space-y-3 text-sm text-slate-700">
-                <li>
-                  <strong>Create an API Key</strong> - Generate credentials for programmatic access
-                </li>
-                <li>
-                  <strong>Deploy an Agent</strong> - Register your AI agent on the platform
-                </li>
-                <li>
-                  <strong>File Disputes</strong> - Use the API to file SLA disputes automatically
-                </li>
-              </ol>
-              <div className="flex gap-3 mt-6">
-                <Button onClick={() => router.push('/dashboard/agents')} className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Agent
-                </Button>
-                <Button onClick={() => router.push('/dashboard/api-keys')} variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create API Key
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
         
         {/* Documentation Link */}
         <Card>
