@@ -20,6 +20,8 @@ export default defineSchema({
     name: v.string(),                       // "Anthropic, Inc."
     domain: v.optional(v.string()),         // "anthropic.com"
     billingEmail: v.optional(v.string()),
+    verified: v.optional(v.boolean()),      // Auto-verified via OAuth (Google/Microsoft), defaults to false for legacy
+    verifiedAt: v.optional(v.number()),     // When organization was verified
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -59,6 +61,9 @@ export default defineSchema({
     buildHash: v.optional(v.string()),
     configHash: v.optional(v.string()),
     
+    // Signature-based authentication
+    publicKey: v.optional(v.string()), // Ed25519 public key for signature verification
+    
     // Organization management (new)
     organizationId: v.optional(v.id("organizations")), // Agent belongs to organization
     deployedByUserId: v.optional(v.id("users")),       // User who deployed this agent
@@ -96,7 +101,8 @@ export default defineSchema({
     .index("by_owner", ["ownerDid"])
     .index("by_status", ["status"])
     .index("by_functional_type", ["functionalType"])
-    .index("by_organization", ["organizationId"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_public_key", ["publicKey"]),
 
   // Dispute cases (ADP Filing Message)
   cases: defineTable({
@@ -277,23 +283,6 @@ export default defineSchema({
     .index("by_agent", ["agentDid"])
     .index("by_case_sequence", ["caseId", "sequenceNumber"]),
 
-  // API keys for Bearer token authentication
-  apiKeys: defineTable({
-    token: v.string(),
-    agentId: v.optional(v.id("agents")),             // For agent-owned keys (legacy)
-    organizationId: v.optional(v.id("organizations")), // For user-owned keys (new)
-    createdByUserId: v.optional(v.id("users")),      // User who created this key
-    name: v.optional(v.string()),                     // "Production Key", "Dev Key"
-    active: v.boolean(),
-    expiresAt: v.optional(v.number()),
-    permissions: v.array(v.string()),
-    createdAt: v.number(),
-    lastUsed: v.optional(v.number()),
-  })
-    .index("by_token", ["token"])
-    .index("by_agent", ["agentId"])
-    .index("by_organization", ["organizationId"])
-    .index("by_active", ["active"]),
 
   // Agent cleanup queue for expired agents
   agentCleanupQueue: defineTable({

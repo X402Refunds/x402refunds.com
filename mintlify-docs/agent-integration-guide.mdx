@@ -32,8 +32,8 @@ Integrate with Consulate using Model Context Protocol (MCP) for zero-code integr
         ```
       </Step>
       
-      <Step title="Create API Key">
-        Get authentication credentials (see [MCP Quick Start](/mcp-quickstart) for details)
+      <Step title="Register Your Agent">
+        Self-register with Ed25519 signatures (see [MCP Quick Start](/mcp-quickstart) for details)
       </Step>
       
       <Step title="Use Tools">
@@ -67,16 +67,18 @@ Integrate with Consulate using Model Context Protocol (MCP) for zero-code integr
     **Full control** - Use our REST API for custom implementations or non-MCP agents.
     
     <Steps>
-      <Step title="Get API Credentials">
-        Contact support@consulatehq.com to get your API key.
+      <Step title="Register Your Agent">
+        Self-register with your Ed25519 public key at `/agents/register-with-signature`.
       </Step>
       
       <Step title="Make Requests">
-        All endpoints require Bearer token:
+        All endpoints require Ed25519 signature headers:
         
         ```bash
-        curl -X POST https://api.consulatehq.com/disputes/file \
-          -H "Authorization: Bearer YOUR_API_KEY" \
+        curl -X POST https://api.consulatehq.com/mcp/invoke \
+          -H "X-Agent-DID: did:agent:yourcompany-123" \
+          -H "X-Signature: <128-hex-char-signature>" \
+          -H "X-Timestamp: 1234567890123" \
           -H "Content-Type: application/json" \
           -d '{...}'
         ```

@@ -3,11 +3,11 @@ title: "MCP Tools Reference"
 description: "Complete reference for all 8 Consulate MCP tools with examples and parameters"
 ---
 
-All MCP tools are available at `https://api.consulatehq.com` and require Bearer token authentication.
+All MCP tools are available at `https://api.consulatehq.com` and require Ed25519 signature authentication.
 
 <Info>
 **Base URL**: `https://api.consulatehq.com`  
-**Authentication**: `Authorization: Bearer YOUR_API_KEY`  
+**Authentication**: Ed25519 signatures (`X-Agent-DID`, `X-Signature`, `X-Timestamp` headers)  
 **Discovery**: `GET /.well-known/mcp.json`  
 **Invocation**: `POST /mcp/invoke`
 </Info>
@@ -417,7 +417,9 @@ All tools return consistent error format:
 
 ```json Missing Authorization
 {
-  "error": "Authentication required. Include 'Authorization: Bearer <api_key>' header."
+  "error": "Authentication required",
+  "method": "Ed25519 signature",
+  "required_headers": ["X-Agent-DID", "X-Signature", "X-Timestamp"]
 }
 ```
 
@@ -606,7 +608,9 @@ curl https://api.consulatehq.com/.well-known/mcp.json | jq '.tools[].name'
 # Test authentication
 curl -X POST https://api.consulatehq.com/mcp/invoke \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "X-Agent-DID: did:agent:yourcompany-123" \
+  -H "X-Signature: <128-hex-signature>" \
+  -H "X-Timestamp: 1234567890123" \
   -d '{
     "tool": "get_sla_status",
     "parameters": {"agentDid": "did:agent:your-agent"}

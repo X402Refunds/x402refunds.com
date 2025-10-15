@@ -15,7 +15,6 @@
 
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
-import { validateBearerAuth, extractBearerToken } from "./auth";
 
 /**
  * MCP Tool Definitions
@@ -247,9 +246,29 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     },
     tools: MCP_TOOLS,
     authentication: {
-      type: "bearer",
-      description: "Use API key in Authorization: Bearer <key> header",
-      registration_url: "https://consulatehq.com/api/agents/register"
+      type: "signature",
+      algorithm: "Ed25519",
+      description: "Cryptographic signature-based authentication for non-repudiation and legal proof",
+      required_headers: {
+        "X-Agent-DID": "Your agent's DID (e.g., did:agent:acme-prod-1729012345)",
+        "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
+        "X-Timestamp": "Current timestamp in milliseconds"
+      },
+      message_format: "METHOD:PATH:BODY:TIMESTAMP",
+      registration: {
+        endpoint: "https://consulatehq.com/agents/register-with-signature",
+        method: "POST",
+        description: "Self-register with your Ed25519 public key. No API keys, no tokens, just cryptographic signatures.",
+        example: {
+          ownerDid: "did:owner:org-yourcompany.com",
+          name: "your-agent-name",
+          organizationName: "Your Company",
+          functionalType: "api",
+          publicKey: "64-char hex-encoded Ed25519 public key",
+          signature: "128-char hex signature of 'ownerDid:name:organizationName:timestamp'",
+          timestamp: Date.now()
+        }
+      }
     },
     documentation: "https://docs.consulatehq.com/mcp-quickstart",
     support: "support@consulatehq.com"
@@ -267,34 +286,61 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
  * 
  * Route: POST /mcp/invoke
  * Body: { tool: "consulate_file_dispute", parameters: {...} }
+ * 
+ * Authentication: Ed25519 signatures (REQUIRED)
+ * Required headers:
+ * - X-Agent-DID: Agent's DID
+ * - X-Signature: Hex-encoded Ed25519 signature
+ * - X-Timestamp: Current timestamp
  */
 export const mcpInvoke = httpAction(async (ctx, request) => {
   try {
     const body = await request.json();
     const { tool, parameters } = body;
+    const bodyStr = JSON.stringify(body);
     
-    // Extract and validate Bearer token
-    const bearerToken = extractBearerToken(request.headers);
-    if (!bearerToken) {
+    // Signature-based authentication (ONLY method)
+    const { extractAuthFromHeaders, validateAuth } = await import("./auth");
+    const signatureAuth = extractAuthFromHeaders(request.headers);
+    
+    if (!signatureAuth) {
       return new Response(JSON.stringify({
-        error: "Authentication required. Include 'Authorization: Bearer <api_key>' header."
+        error: "Authentication required",
+        method: "Ed25519 signature",
+        required_headers: {
+          "X-Agent-DID": "Your agent's DID (e.g., did:agent:acme-prod-1729012345)",
+          "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
+          "X-Timestamp": "Current timestamp in milliseconds"
+        },
+        message_format: "Sign: METHOD:PATH:BODY:TIMESTAMP",
+        registration: "POST /agents/register-with-signature to register your agent"
       }), {
         status: 401,
         headers: { "Content-Type": "application/json" }
       });
     }
     
-    // Validate the token
-    const authResult = await validateBearerAuth(ctx, bearerToken);
-    if (!authResult.valid) {
+    // Validate signature
+    const isValid = await validateAuth(
+      ctx,
+      signatureAuth,
+      "POST",
+      "/mcp/invoke",
+      bodyStr
+    );
+    
+    if (!isValid) {
       return new Response(JSON.stringify({
-        error: "Invalid or expired API key",
-        hint: "Register an agent and create an API key using the createApiKey mutation"
+        error: "Invalid signature",
+        hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP",
+        agentDid: signatureAuth.agentDid
       }), {
         status: 401,
         headers: { "Content-Type": "application/json" }
       });
     }
+    
+    const agentDid = signatureAuth.agentDid;
     
     // Route to appropriate handler based on tool name
     let result;

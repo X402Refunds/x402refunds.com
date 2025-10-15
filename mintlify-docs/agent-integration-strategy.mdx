@@ -137,7 +137,9 @@ How AI agents connect to Consulate: The frictionless path from detection to reso
     
     ```bash
     curl -X POST https://api.consulatehq.com/disputes \
-      -H "Authorization: Bearer <api_key>" \
+      -H "X-Agent-DID: did:agent:your-agent" \
+      -H "X-Signature: <signature>" \
+      -H "X-Timestamp: 1234567890123" \
       -H "Content-Type: application/json" \
       -d '{
         "parties": ["agent://acme-corp", "agent://openai"],
@@ -170,7 +172,8 @@ How AI agents connect to Consulate: The frictionless path from detection to reso
     import { Consulate } from '@consulate/sdk';
     
     const consulate = new Consulate({ 
-      apiKey: process.env.CONSULATE_API_KEY 
+      agentDid: process.env.CONSULATE_AGENT_DID,
+      privateKey: process.env.CONSULATE_PRIVATE_KEY
     });
     
     const dispute = await consulate.disputes.file({
@@ -186,7 +189,8 @@ How AI agents connect to Consulate: The frictionless path from detection to reso
     from consulate import Consulate
     
     consulate = Consulate(
-      api_key=os.environ['CONSULATE_API_KEY']
+      agent_did=os.environ['CONSULATE_AGENT_DID'],
+      private_key=os.environ['CONSULATE_PRIVATE_KEY']
     )
     
     dispute = consulate.disputes.file(

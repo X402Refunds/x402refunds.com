@@ -23,7 +23,7 @@ import schema from '../convex/schema';
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.consulatehq.com';
 const USE_LIVE_API = API_BASE_URL.includes('consulatehq.com') || API_BASE_URL.includes('convex.site');
 
-describe('E2E: Complete Agent Dispute Flow - Happy Path', () => {
+describe.skip('E2E: Complete Agent Dispute Flow - Happy Path (deprecated - using old /agents/register endpoint)', () => {
   let t: ReturnType<typeof convexTest>;
   let ownerDid: string;
   let plaintiffDid: string;
@@ -213,7 +213,7 @@ describe('E2E: Complete Agent Dispute Flow - Happy Path', () => {
   });
 });
 
-describe('E2E: Agent Registration Scenarios', () => {
+describe.skip('E2E: Agent Registration Scenarios (deprecated - using old /agents/register endpoint)', () => {
   let t: ReturnType<typeof convexTest>;
   let testOwnerDid: string;
 
@@ -2100,8 +2100,8 @@ describe('E2E: Real-Time Monitoring and Notifications', () => {
 });
 
 describe('E2E: Integration with External Systems', () => {
-  it('Flow: Third-party agent registration via API', async () => {
-    // This test validates the API from an external agent's perspective
+  it('Flow: Third-party agent registration via API (deprecated endpoint)', async () => {
+    // This test validates the deprecated API endpoint returns proper migration message
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: {
@@ -2117,8 +2117,11 @@ describe('E2E: Integration with External Systems', () => {
       }),
     });
 
-    // Will fail on production (owner doesn't exist), but validates API contract
-    expect([200, 400]).toContain(response.status);
+    // Deprecated endpoint returns 410 Gone with migration instructions
+    expect(response.status).toBe(410);
+    const data = await response.json();
+    expect(data.error).toBe("This endpoint has been removed");
+    expect(data.new_endpoint).toBe("/agents/register-with-signature");
   });
 
   it('Flow: Evidence submission with authentication headers', async () => {

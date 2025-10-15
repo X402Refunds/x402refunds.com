@@ -7,27 +7,79 @@ export interface AuthContext {
   timestamp: number;
 }
 
-export interface BearerAuthResult {
-  valid: boolean;
-  agentDid?: string;
-  agentType?: string;
-  permissions: string[];
-}
-
+/**
+ * Verify Ed25519 signature
+ * 
+ * Expects:
+ * - message: UTF-8 string to verify
+ * - signature: Hex-encoded signature (128 chars = 64 bytes)
+ * - publicKey: Hex-encoded public key (64 chars = 32 bytes)
+ * 
+ * Returns true if signature is valid, false otherwise
+ */
 export async function verifySignature(
   message: string,
   signature: string,
   publicKey: string
 ): Promise<boolean> {
-  // For now, we'll implement basic signature verification
-  // In production, you'd use Web Crypto API or similar
   try {
-    // Simple validation - in real implementation use proper crypto
-    return signature.length > 0 && publicKey.length > 0;
+    // Validate input formats
+    if (!signature || !publicKey || !message) {
+      console.error("Missing required parameters for signature verification");
+      return false;
+    }
+    
+    // Ed25519 signatures are 64 bytes (128 hex chars)
+    if (signature.length !== 128) {
+      console.error(`Invalid signature length: ${signature.length}, expected 128`);
+      return false;
+    }
+    
+    // Ed25519 public keys are 32 bytes (64 hex chars)
+    if (publicKey.length !== 64) {
+      console.error(`Invalid public key length: ${publicKey.length}, expected 64`);
+      return false;
+    }
+    
+    // Convert hex strings to Uint8Arrays
+    const signatureBytes = hexToBytes(signature);
+    const publicKeyBytes = hexToBytes(publicKey);
+    const messageBytes = new TextEncoder().encode(message);
+    
+    // Use Web Crypto API for Ed25519 verification
+    // Note: Convex runtime supports crypto.subtle
+    const cryptoKey = await crypto.subtle.importKey(
+      "raw",
+      publicKeyBytes as BufferSource,
+      {
+        name: "Ed25519",
+        namedCurve: "Ed25519"
+      } as any, // Ed25519 params aren't fully typed in all environments
+      false,
+      ["verify"]
+    );
+    
+    const isValid = await crypto.subtle.verify(
+      "Ed25519" as any,
+      cryptoKey,
+      signatureBytes as BufferSource,
+      messageBytes as BufferSource
+    );
+    
+    return isValid;
   } catch (error) {
     console.error("Signature verification failed:", error);
     return false;
   }
+}
+
+// Helper: Convert hex string to Uint8Array
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  return bytes;
 }
 
 export function extractAuthFromHeaders(headers: Headers): AuthContext | null {
@@ -55,6 +107,12 @@ export function createAuthMessage(
   return `${method}:${path}:${body}:${timestamp}`;
 }
 
+/**
+ * Validate signature-based authentication
+ * 
+ * Verifies that the agent's signature matches their registered public key
+ * Uses Ed25519 cryptographic signatures for non-repudiation
+ */
 export async function validateAuth(
   ctx: any,
   authContext: AuthContext,
@@ -65,152 +123,46 @@ export async function validateAuth(
   // Check timestamp (within 5 minutes)
   const now = Date.now();
   if (Math.abs(now - authContext.timestamp) > 5 * 60 * 1000) {
+    console.error("Timestamp outside valid window (5 minutes)");
     return false;
   }
 
-  // Get agent's public key
+  // Get agent by DID
   const agent = await ctx.db
     .query("agents")
     .withIndex("by_did", (q: any) => q.eq("did", authContext.agentDid))
     .first();
 
   if (!agent) {
+    console.error(`Agent not found: ${authContext.agentDid}`);
     return false;
   }
 
-  // Get owner's public keys
-  const owner = await ctx.db
-    .query("owners")
-    .withIndex("by_did", (q: any) => q.eq("did", agent.ownerDid))
-    .first();
-
-  if (!owner || owner.pubkeys.length === 0) {
+  // Check if agent has public key registered
+  if (!agent.publicKey) {
+    console.error(`Agent ${authContext.agentDid} has no public key registered`);
     return false;
   }
 
-  // Create message to verify
+  // Verify agent is active
+  if (agent.status !== "active") {
+    console.error(`Agent ${authContext.agentDid} is not active (status: ${agent.status})`);
+    return false;
+  }
+
+  // Create message to verify (standard format for all requests)
   const message = createAuthMessage(method, path, body, authContext.timestamp);
 
-  // Try each public key
-  for (const pubkey of owner.pubkeys) {
-    if (await verifySignature(message, authContext.signature, pubkey)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// Generate API key for agents
-export function generateApiKey(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'ak_live_';
-  for (let i = 0; i < 32; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
-// Extract Bearer token from Authorization header
-export function extractBearerToken(headers: Headers): string | null {
-  const auth = headers.get("authorization");
-  if (auth?.startsWith("Bearer ")) {
-    return auth.slice(7);
-  }
-  return null;
-}
-
-// Validate Bearer token authentication
-export async function validateBearerAuth(
-  ctx: any,
-  token: string
-): Promise<BearerAuthResult> {
-  try {
-    // Look up API key in database
-    const apiKey = await ctx.db
-      .query("apiKeys")
-      .withIndex("by_token", (q: any) => q.eq("token", token))
-      .first();
-    
-    if (!apiKey || !apiKey.active) {
-      return { valid: false, permissions: [] };
-    }
-    
-    // Check expiration
-    if (apiKey.expiresAt && apiKey.expiresAt < Date.now()) {
-      return { valid: false, permissions: [] };
-    }
-    
-    // Get agent info
-    const agent = await ctx.db.get(apiKey.agentId);
-    if (!agent || agent.status !== "active") {
-      return { valid: false, permissions: [] };
-    }
-    
-    // Return permissions based on agent type
-    const permissions = getPermissionsForAgentType(agent.agentType);
-    
-    return {
-      valid: true,
-      agentDid: agent.did,
-      agentType: agent.agentType,
-      permissions
-    };
-  } catch (error) {
-    console.error("Bearer auth validation error:", error);
-    return { valid: false, permissions: [] };
-  }
-}
-
-// Get permissions based on agent type
-function getPermissionsForAgentType(agentType: string): string[] {
-  const permissions = {
-    session: ["evidence", "disputes", "cases"],
-    ephemeral: ["evidence", "disputes", "cases", "voting"],
-    physical: ["evidence", "disputes", "cases", "voting", "location"],
-    verified: ["evidence", "disputes", "cases", "voting", "proposals"],
-    premium: ["evidence", "disputes", "cases", "voting", "proposals", "emergency"]
-  };
+  // Verify signature against agent's public key
+  const isValid = await verifySignature(message, authContext.signature, agent.publicKey);
   
-  return permissions[agentType as keyof typeof permissions] || ["evidence"];
-}
-
-// Unified auth validation - supports both Bearer tokens and Ed25519
-export async function validateUnifiedAuth(
-  ctx: any,
-  request: Request,
-  method: string,
-  path: string,
-  body: string
-): Promise<{ valid: boolean; agentDid?: string; agentType?: string; permissions: string[] }> {
-  // Try Bearer token first
-  const bearerToken = extractBearerToken(request.headers);
-  if (bearerToken) {
-    return await validateBearerAuth(ctx, bearerToken);
+  if (!isValid) {
+    console.error(`Signature verification failed for agent: ${authContext.agentDid}`);
   }
   
-  // Fall back to Ed25519 signature
-  const authContext = extractAuthFromHeaders(request.headers);
-  if (authContext) {
-    const isValid = await validateAuth(ctx, authContext, method, path, body);
-    if (isValid) {
-      // Get agent info for Ed25519 auth
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_did", (q: any) => q.eq("did", authContext.agentDid))
-        .first();
-      
-      return {
-        valid: true,
-        agentDid: authContext.agentDid,
-        agentType: agent?.agentType || "verified",
-        permissions: getPermissionsForAgentType(agent?.agentType || "verified")
-      };
-    }
-  }
-  
-  return { valid: false, permissions: [] };
+  return isValid;
 }
+
 
 // Create a new owner in the system
 export const createOwner = mutation({

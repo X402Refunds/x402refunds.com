@@ -105,7 +105,7 @@ export function CreateAgentDialog({
           <DialogHeader>
             <DialogTitle>Create New Agent</DialogTitle>
             <DialogDescription>
-              Deploy a new AI agent to your organization
+              Deploy a new AI agent to your organization. Agents use Ed25519 signatures for authentication (no API keys needed).
             </DialogDescription>
           </DialogHeader>
           
@@ -181,6 +181,17 @@ export function CreateAgentDialog({
               />
               <p className="text-xs text-slate-600">
                 Configuration version identifier
+              </p>
+            </div>
+            
+            <div className="grid gap-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-xs font-semibold text-blue-900">
+                🔐 Signature-Based Authentication
+              </p>
+              <p className="text-xs text-blue-800">
+                After creating your agent, you can enable autonomous operation by calling the{" "}
+                <code className="bg-blue-100 px-1 py-0.5 rounded">addAgentPublicKey</code> mutation with your Ed25519 public key.
+                No API keys needed!
               </p>
             </div>
           </div>

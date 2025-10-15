@@ -37,9 +37,8 @@ describe('HTTP API - Agent Registration', () => {
   });
 
   describe('POST /agents/register', () => {
-    it('should register agent with valid data via HTTP', async () => {
-      // This test validates the HTTP endpoint accepts properly formatted requests
-      // Against production it will fail due to missing owner, which is expected
+    it('should return 410 Gone for deprecated endpoint', async () => {
+      // This endpoint is deprecated in favor of /agents/register-with-signature
       const agentData = {
         ownerDid: USE_LIVE_API ? 'did:test:will-not-exist' : testOwnerDid,
         name: 'HTTP Test Agent',
@@ -53,46 +52,18 @@ describe('HTTP API - Agent Registration', () => {
         body: JSON.stringify(agentData),
       });
 
-      // Accept 200 (success in test) or 400 (owner not found in production)
-      expect([200, 400]).toContain(response.status);
-      if (response.status === 200) {
-        const data = await response.json();
-        expect(data.did).toBeDefined();
-        expect(data.did).toMatch(/^did:agent:/);
-      }
-    });
-
-    it.skipIf(USE_LIVE_API)('should reject duplicate organization', async () => {
-      const orgName = `Duplicate Org ${Date.now()}`;
-      
-      // Register first time
-      await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ownerDid: testOwnerDid,
-          name: 'Agent 1',
-          organizationName: orgName,
-        }),
-      });
-
-      // Try to register same org again
-      const response = await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ownerDid: testOwnerDid,
-          name: 'Agent 2',
-          organizationName: orgName,
-        }),
-      });
-
-      expect(response.status).toBe(400);
+      // Deprecated endpoint returns 410 Gone
+      expect(response.status).toBe(410);
       const data = await response.json();
-      expect(data.error).toContain('already has an agent');
+      expect(data.error).toBe("This endpoint has been removed");
+      expect(data.new_endpoint).toBe("/agents/register-with-signature");
     });
 
-    it('should reject invalid owner DID format', async () => {
+    it.skip('Duplicate organization test (endpoint deprecated)', async () => {
+      // This test is no longer relevant as /agents/register is deprecated
+    });
+
+    it('should return 410 for invalid owner DID (endpoint deprecated)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,12 +74,13 @@ describe('HTTP API - Agent Registration', () => {
         }),
       });
 
-      expect(response.status).toBe(400);
+      // Deprecated endpoint returns 410 regardless of input validity
+      expect(response.status).toBe(410);
       const data = await response.json();
-      expect(data.error).toBeDefined();
+      expect(data.error).toBe("This endpoint has been removed");
     });
 
-    it('should reject missing required fields', async () => {
+    it('should return 410 for missing fields (endpoint deprecated)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,17 +90,19 @@ describe('HTTP API - Agent Registration', () => {
         }),
       });
 
-      expect(response.status).toBe(400);
+      // Deprecated endpoint returns 410 regardless of input
+      expect(response.status).toBe(410);
     });
 
-    it('should reject malformed JSON', async () => {
+    it('should return 410 for malformed JSON (endpoint deprecated)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: 'invalid json {',
       });
 
-      expect([400, 500]).toContain(response.status);
+      // Deprecated endpoint returns 410 regardless of input
+      expect(response.status).toBe(410);
     });
   });
 });

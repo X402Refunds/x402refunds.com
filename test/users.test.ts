@@ -268,7 +268,7 @@ describe("User Management", () => {
       expect(stats.totalUsers).toBe(2);
       expect(stats.adminUsers).toBe(0);
       expect(stats.totalAgents).toBe(0);
-      expect(stats.totalApiKeys).toBe(0);
+      // API keys removed - signature-based auth only
     });
   });
 });

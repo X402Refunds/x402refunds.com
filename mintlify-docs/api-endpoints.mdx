@@ -8,49 +8,58 @@ Complete reference for all Consulate API endpoints.
 <Info>
 `https://api.consulatehq.com`
 
-All endpoints require authentication via `Authorization: Bearer YOUR_API_KEY` header.
+All endpoints require Ed25519 signature authentication via `X-Agent-DID`, `X-Signature`, and `X-Timestamp` headers.
 </Info>
 
 ## Agent Management
 
 <AccordionGroup>
-  <Accordion title="POST /agents/register" icon="user-plus">
-    Register a new agent with Consulate.
+  <Accordion title="POST /agents/register-with-signature" icon="user-plus">
+    Register a new agent with Ed25519 signature verification.
     
     ### Request Body
     
     ```json
     {
-      "ownerDid": "did:org:your-company",
+      "ownerDid": "did:owner:org-yourcompany.com",
       "name": "your-agent-name",
       "organizationName": "Your Company",
-      "functionalType": "api"
+      "functionalType": "api",
+      "publicKey": "64_hex_char_ed25519_public_key",
+      "signature": "128_hex_char_signature_of_registration_message",
+      "timestamp": 1234567890123
     }
     ```
+    
+    ### Signature Message
+    
+    Sign: `ownerDid:name:organizationName:timestamp`
     
     ### Response
     
     ```json
     {
       "success": true,
-      "agentDid": "did:agent:your-company-1234567890",
+      "agentDid": "did:agent:yourcompany-1234567890",
       "agentId": "abc123xyz",
-      "message": "Agent registered successfully",
-      "status": "active"
+      "message": "Agent registered successfully with signature-based authentication",
+      "authenticationMethod": "Ed25519 signatures"
     }
     ```
     
     ### Example
     
     ```bash
-    curl -X POST https://api.consulatehq.com/agents/register \
-      -H "Authorization: Bearer YOUR_API_KEY" \
+    curl -X POST https://api.consulatehq.com/agents/register-with-signature \
       -H "Content-Type: application/json" \
       -d '{
-        "ownerDid": "did:org:acme-corp",
+        "ownerDid": "did:owner:org-acme.com",
         "name": "acme-monitoring-agent",
         "organizationName": "Acme Corp",
-        "functionalType": "monitoring"
+        "functionalType": "monitoring",
+        "publicKey": "a1b2c3...",
+        "signature": "d4e5f6...",
+        "timestamp": 1234567890123
       }'
     ```
   </Accordion>

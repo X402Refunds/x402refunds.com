@@ -53,14 +53,27 @@ export const syncUser = mutation({
       
       if (!org) {
         console.info(`Creating new organization for domain: ${domain}`);
+        const now = Date.now();
         const orgId = await ctx.db.insert("organizations", {
           name: domain, // Default to domain name, can be updated later
           domain: domain,
-          createdAt: Date.now(),
+          verified: true, // Auto-verified via Clerk OAuth (Google/Microsoft)
+          verifiedAt: now,
+          createdAt: now,
         });
         org = await ctx.db.get(orgId);
+        console.info(`Organization auto-verified via OAuth: ${domain}`);
       } else {
         console.info(`Found existing organization: ${org._id}`);
+        // If org exists but not verified, verify it now (OAuth user proves ownership)
+        if (!org.verified || org.verified === undefined) {
+          await ctx.db.patch(org._id, {
+            verified: true,
+            verifiedAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+          console.info(`Existing organization now verified via OAuth: ${domain}`);
+        }
       }
       
       // Create user
@@ -184,19 +197,11 @@ export const getOrganizationStats = query({
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .collect();
     
-    // Count API keys in organization
-    const apiKeys = await ctx.db
-      .query("apiKeys")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .filter((q) => q.eq(q.field("active"), true))
-      .collect();
-    
     return {
       totalUsers: users.length,
       adminUsers: users.filter(u => u.role === "admin").length,
       totalAgents: agents.length,
       activeAgents: agents.filter(a => a.status === "active").length,
-      totalApiKeys: apiKeys.length,
     };
   },
 });

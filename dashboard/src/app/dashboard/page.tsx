@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Key, Activity, Plus, ArrowRight, Building2 } from "lucide-react"
+import { Users, Activity, Plus, ArrowRight, Building2 } from "lucide-react"
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
@@ -36,10 +36,6 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
   )
   
-  const orgApiKeys = useQuery(
-    api.apiKeys.listUserApiKeys,
-    currentUser ? { userId: currentUser._id } : "skip"
-  )
   
   // Sync user if not exists
   useEffect(() => {
@@ -140,20 +136,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">API Keys</CardTitle>
-              <Key className="h-4 w-4 text-slate-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {orgApiKeys?.length ?? 0}
-              </div>
-              <p className="text-xs text-slate-600 mt-1">
-                Active keys
-              </p>
-            </CardContent>
-          </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -191,27 +173,10 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-blue-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/api-keys')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900">
-                <Key className="h-5 w-5 text-blue-600" />
-                Manage API Keys
-              </CardTitle>
-              <CardDescription className="text-slate-600">
-                Create and manage API keys for programmatic access
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="ghost" className="w-full justify-between">
-                {orgApiKeys && orgApiKeys.length > 0 ? "View API Keys" : "Create Your First API Key"}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
         </div>
         
-        {/* Getting Started (if no agents or API keys) */}
-        {orgAgents?.length === 0 && orgApiKeys?.length === 0 && (
+        {/* Getting Started (if no agents) */}
+        {orgAgents?.length === 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Getting Started</CardTitle>

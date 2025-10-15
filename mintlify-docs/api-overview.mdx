@@ -12,27 +12,28 @@ https://api.consulatehq.com
 ## Quick Start
 
 <Steps>
-  <Step title="Get an API Key">
-    Generate your API key from the [Consulate Dashboard](https://consulatehq.com/dashboard) under Settings → API Keys
+  <Step title="Generate Ed25519 Keypair">
+    Generate an Ed25519 keypair locally using `@noble/ed25519` or Web Crypto API
   </Step>
   
   <Step title="Make Your First Request">
     ```bash
-    curl -H "Authorization: Bearer YOUR_API_KEY" \
-         https://api.consulatehq.com/health
+    curl https://api.consulatehq.com/health
     ```
   </Step>
   
   <Step title="Register Your Agent">
     ```bash
-    curl -X POST https://api.consulatehq.com/agents/register \
-      -H "Authorization: Bearer YOUR_API_KEY" \
+    curl -X POST https://api.consulatehq.com/agents/register-with-signature \
       -H "Content-Type: application/json" \
       -d '{
-        "ownerDid": "did:org:your-company",
+        "ownerDid": "did:owner:org-yourcompany.com",
         "name": "your-agent-name",
         "organizationName": "Your Company",
-        "functionalType": "api"
+        "functionalType": "api",
+        "publicKey": "64_hex_char_ed25519_public_key",
+        "signature": "128_hex_char_signature",
+        "timestamp": 1234567890123
       }'
     ```
   </Step>
@@ -41,33 +42,48 @@ https://api.consulatehq.com
 ## Authentication
 
 <Warning>
-All API requests require authentication using an API key in the `Authorization` header.
+All API requests require Ed25519 cryptographic signatures in request headers. No API keys, no bearer tokens.
 </Warning>
 
 ### Header Format
 
 ```bash
-Authorization: Bearer YOUR_API_KEY
+X-Agent-DID: did:agent:yourcompany-1234567890
+X-Signature: <128-hex-char-ed25519-signature>
+X-Timestamp: 1234567890123
 ```
+
+### Signature Message Format
+
+Sign: `METHOD:PATH:BODY:TIMESTAMP`
+
+Example: `POST:/mcp/invoke:{"tool":"file_dispute",...}:1234567890123`
 
 ### Example Request
 
 ```javascript
-const response = await fetch('https://api.consulatehq.com/agents/register', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${YOUR_API_KEY}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    ownerDid: 'did:org:your-company',
-    name: 'your-agent',
-    organizationName: 'Your Company',
-    functionalType: 'api'
-  })
-});
+import * as ed from '@noble/ed25519';
 
-const data = await response.json();
+async function makeAuthenticatedRequest(agentDid, privateKey, body) {
+  const timestamp = Date.now();
+  const bodyStr = JSON.stringify(body);
+  const message = `POST:/mcp/invoke:${bodyStr}:${timestamp}`;
+  const messageBytes = new TextEncoder().encode(message);
+  const signature = await ed.sign(messageBytes, privateKey);
+  
+  const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+    method: 'POST',
+    headers: {
+      'X-Agent-DID': agentDid,
+      'X-Signature': Buffer.from(signature).toString('hex'),
+      'X-Timestamp': timestamp.toString(),
+      'Content-Type': 'application/json'
+    },
+    body: bodyStr
+  });
+  
+  return await response.json();
+}
 ```
 
 ## Core Capabilities

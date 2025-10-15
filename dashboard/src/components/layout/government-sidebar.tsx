@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Shield, Key, LayoutDashboard } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, Shield, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -25,11 +25,6 @@ const orgNavigationItems: NavigationItem[] = [
     title: "My Agents",
     href: "/dashboard/agents",
     icon: Users,
-  },
-  {
-    title: "My API Keys",
-    href: "/dashboard/api-keys",
-    icon: Key,
   },
 ]
 

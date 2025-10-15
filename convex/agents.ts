@@ -475,3 +475,70 @@ export const listOrgAgents = query({
     return agents;
   },
 });
+
+// Add public key to agent (for signature-based auth)
+// Allows dashboard-created agents to transition to autonomous operation
+export const addAgentPublicKey = mutation({
+  args: {
+    agentDid: v.string(),
+    publicKey: v.string(),
+    signature: v.string(),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.info(`Adding public key to agent: ${args.agentDid}`);
+      
+      // Get agent
+      const agent = await ctx.db
+        .query("agents")
+        .withIndex("by_did", (q) => q.eq("did", args.agentDid))
+        .first();
+      
+      if (!agent) {
+        throw new Error(`Agent ${args.agentDid} not found`);
+      }
+      
+      // Check if agent already has a public key
+      if (agent.publicKey) {
+        throw new Error(`Agent ${args.agentDid} already has a public key registered. Use updatePublicKey to rotate keys.`);
+      }
+      
+      // Check timestamp (within 5 minutes)
+      const now = Date.now();
+      if (Math.abs(now - args.timestamp) > 5 * 60 * 1000) {
+        throw new Error("Timestamp outside valid window (must be within 5 minutes)");
+      }
+      
+      // Verify signature proves ownership of private key
+      // Message format: agentDid:publicKey:timestamp
+      const message = `${args.agentDid}:${args.publicKey}:${args.timestamp}`;
+      
+      // Dynamic import to avoid circular dependency
+      const { verifySignature } = await import("./auth");
+      const isValid = await verifySignature(message, args.signature, args.publicKey);
+      
+      if (!isValid) {
+        throw new Error("Invalid signature. Could not verify ownership of private key.");
+      }
+      
+      // Add public key to agent
+      await ctx.db.patch(agent._id, {
+        publicKey: args.publicKey,
+        updatedAt: now,
+      });
+      
+      console.info(`Public key added successfully for agent: ${args.agentDid}`);
+      
+      return {
+        agentDid: args.agentDid,
+        publicKeyRegistered: true,
+        message: "Agent can now authenticate using Ed25519 signatures"
+      };
+      
+    } catch (error) {
+      console.error(`Failed to add public key for agent ${args.agentDid}:`, error);
+      throw new Error(`Failed to add public key: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});

@@ -39,38 +39,45 @@ Your Agent → Discovers tools → Invokes when needed → Gets results
     </Info>
   </Step>
 
-  <Step title="Get Your API Key">
-    **Contact us** at support@consulatehq.com with:
-    - Your company name
-    - Agent use case (monitoring, integration, etc.)
+  <Step title="Register Your Agent">
+    **Self-register** with Ed25519 cryptographic signatures (no API keys needed):
     
-    We'll send you:
-    - Your agent DID
-    - API key for authentication
+    1. Generate an Ed25519 keypair locally
+    2. POST to `/agents/register-with-signature` with your public key
+    3. Receive your agent DID
+    
+    **Authentication**: Sign each request with your private key (no tokens to manage)
     
     <Tip>
     **Response time:** Usually under 1 hour
     </Tip>
   </Step>
 
-  <Step title="Add Authentication">
-    Configure your MCP client to use Bearer token authentication:
+  <Step title="Configure Signature Authentication">
+    Your agent needs to sign each request with Ed25519:
     
-    ```json Claude Desktop Config (Updated)
-    {
-      "mcpServers": {
-        "consulate": {
-          "url": "https://api.consulatehq.com",
-          "headers": {
-            "Authorization": "Bearer ak_live_YOUR_RANDOM_KEY"
-          }
-        }
-      }
+    ```typescript Agent Implementation
+    import * as ed from '@noble/ed25519';
+    
+    // Generate keypair (do this once, store securely)
+    const privateKey = ed.utils.randomPrivateKey();
+    const publicKey = await ed.getPublicKey(privateKey);
+    
+    // Sign each MCP request
+    async function signRequest(method, path, body, timestamp) {
+      const message = `${method}:${path}:${body}:${timestamp}`;
+      const messageBytes = new TextEncoder().encode(message);
+      const signature = await ed.sign(messageBytes, privateKey);
+      return {
+        'X-Agent-DID': 'your-agent-did',
+        'X-Signature': Buffer.from(signature).toString('hex'),
+        'X-Timestamp': timestamp.toString()
+      };
     }
     ```
     
     <Check>
-    Your agent can now use all 8 Consulate tools!
+    Your agent can now use all 8 Consulate tools with cryptographic signatures!
     </Check>
   </Step>
 

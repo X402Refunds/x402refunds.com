@@ -27,7 +27,9 @@ description: "Add dispute resolution to your platform in 2 minutes"
       return await fetch('https://api.consulatehq.com/mcp/invoke', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${YOUR_PARTNER_API_KEY}`,
+          'X-Agent-DID': PARTNER_AGENT_DID,
+        'X-Signature': signatureHex,
+        'X-Timestamp': timestamp.toString(),
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -113,7 +115,9 @@ export const mcpInvoke = async (ctx, request) => {
     const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${PARTNER_API_KEY}`,
+        'X-Agent-DID': PARTNER_AGENT_DID,
+        'X-Signature': signatureHex,
+        'X-Timestamp': timestamp.toString(),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -188,7 +192,9 @@ curl -X POST https://api.consulatehq.com/mcp/invoke \
 
 # 3. Test with partner key (should succeed)
 curl -X POST https://api.consulatehq.com/mcp/invoke \
-  -H "Authorization: Bearer YOUR_PARTNER_KEY" \
+  -H "X-Agent-DID: did:agent:partner-123" \
+  -H "X-Signature: <signature>" \
+  -H "X-Timestamp: 1234567890123" \
   -H "Content-Type: application/json" \
   -d '{"tool":"lookup_agent","parameters":{"query":"OpenAI"}}'
 # Expected: 200 with results

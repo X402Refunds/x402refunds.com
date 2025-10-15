@@ -605,24 +605,26 @@ describe('Consulate HTTP API - Real-Time Monitoring', () => {
 });
 
 describe('Consulate HTTP API - Error Handling', () => {
-  it('should handle malformed JSON gracefully', async () => {
+  it('should return 410 for deprecated endpoint (malformed JSON)', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{'
     });
 
-    expect([400, 500]).toContain(response.status);
+    // Deprecated endpoint returns 410 regardless of input
+    expect(response.status).toBe(410);
   });
 
-  it('should validate required fields in requests', async () => {
+  it('should return 410 for deprecated endpoint (missing required fields)', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Incomplete Agent' })
     });
 
-    expect(response.status).toBe(400);
+    // Deprecated endpoint returns 410 regardless of input
+    expect(response.status).toBe(410);
   });
 });
 
