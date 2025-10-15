@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Id } from "@convex/_generated/dataModel"
 import { Loader2 } from "lucide-react"
 
@@ -19,33 +18,6 @@ interface CreateAgentDialogProps {
   onAgentCreated: () => void
 }
 
-const FUNCTIONAL_TYPES = [
-  { value: "general", label: "General Purpose" },
-  { value: "voice", label: "Voice/Audio" },
-  { value: "chat", label: "Chat/Messaging" },
-  { value: "social", label: "Social Media" },
-  { value: "translation", label: "Translation" },
-  { value: "coding", label: "Coding/Development" },
-  { value: "devops", label: "DevOps" },
-  { value: "security", label: "Security" },
-  { value: "data", label: "Data Processing" },
-  { value: "api", label: "API Integration" },
-  { value: "writing", label: "Writing/Content" },
-  { value: "design", label: "Design" },
-  { value: "video", label: "Video" },
-  { value: "music", label: "Music/Audio" },
-  { value: "research", label: "Research" },
-  { value: "financial", label: "Financial" },
-  { value: "sales", label: "Sales" },
-  { value: "marketing", label: "Marketing" },
-  { value: "legal", label: "Legal" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "education", label: "Education" },
-  { value: "scientific", label: "Scientific" },
-  { value: "workflow", label: "Workflow Automation" },
-  { value: "scheduler", label: "Scheduling" },
-] as const
-
 export function CreateAgentDialog({
   open,
   onOpenChange,
@@ -55,7 +27,6 @@ export function CreateAgentDialog({
 }: CreateAgentDialogProps) {
   const [name, setName] = useState("")
   const [orgName, setOrgName] = useState(organizationName)
-  const [functionalType, setFunctionalType] = useState<string>("general")
   const [buildHash, setBuildHash] = useState("")
   const [configHash, setConfigHash] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -79,7 +50,7 @@ export function CreateAgentDialog({
         userId,
         name: finalAgentName,
         organizationName: orgName.trim(),
-        functionalType: functionalType as "voice" | "chat" | "social" | "translation" | "presentation" | "coding" | "devops" | "security" | "data" | "api" | "writing" | "design" | "video" | "music" | "gaming" | "research" | "financial" | "sales" | "marketing" | "legal" | "healthcare" | "education" | "scientific" | "manufacturing" | "transportation" | "scheduler" | "workflow" | "procurement" | "project" | "general",
+        functionalType: "general", // Default to general for now
         buildHash: buildHash.trim() || undefined,
         configHash: configHash.trim() || undefined,
       })
@@ -87,7 +58,6 @@ export function CreateAgentDialog({
       // Reset form
       setName("")
       setOrgName(organizationName)
-      setFunctionalType("general")
       setBuildHash("")
       setConfigHash("")
       
@@ -141,25 +111,6 @@ export function CreateAgentDialog({
               />
               <p className="text-xs text-slate-600">
                 Organization identifier for the agent
-              </p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="functionalType">Functional Type</Label>
-              <Select value={functionalType} onValueChange={setFunctionalType}>
-                <SelectTrigger id="functionalType" className="w-full bg-white dark:bg-slate-800">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100]" position="popper" sideOffset={4}>
-                  {FUNCTIONAL_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-600">
-                Primary function of this agent
               </p>
             </div>
             
