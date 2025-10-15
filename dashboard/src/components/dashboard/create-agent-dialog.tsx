@@ -25,7 +25,6 @@ export function CreateAgentDialog({
   organizationName,
   onAgentCreated,
 }: CreateAgentDialogProps) {
-  const [name, setName] = useState("")
   const [orgName, setOrgName] = useState(organizationName)
   const [buildHash, setBuildHash] = useState("")
   const [configHash, setConfigHash] = useState("")
@@ -48,8 +47,8 @@ export function CreateAgentDialog({
     try {
       setIsSubmitting(true)
       
-      // Auto-generate agent name if not provided
-      const finalAgentName = name.trim() || `${orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-agent-${Date.now()}`;
+      // Auto-generate agent name based on organization
+      const finalAgentName = `${orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-agent-${Date.now()}`;
       
       const result = await createOrgAgent({
         userId,
@@ -90,7 +89,6 @@ export function CreateAgentDialog({
   
   const handleClose = () => {
     // Reset all state
-    setName("")
     setOrgName(organizationName)
     setBuildHash("")
     setConfigHash("")
@@ -123,21 +121,6 @@ export function CreateAgentDialog({
             </DialogHeader>
             
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">
-                  Agent Name <span className="text-slate-500 text-xs font-normal">(optional)</span>
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="Leave empty to auto-generate"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <p className="text-xs text-slate-600">
-                  {name.trim() ? `Will create: ${name}` : `Auto-generates as: ${orgName ? orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'org'}-agent-{timestamp}`}
-                </p>
-              </div>
-              
               <div className="grid gap-2">
                 <Label htmlFor="orgName">
                   Organization Name <span className="text-red-500">*</span>
