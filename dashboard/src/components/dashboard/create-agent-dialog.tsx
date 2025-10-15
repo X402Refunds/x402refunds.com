@@ -150,7 +150,7 @@ export function CreateAgentDialog({
                 <SelectTrigger id="functionalType" className="w-full bg-white dark:bg-slate-800">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100]" position="popper" sideOffset={4}>
                   {FUNCTIONAL_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
