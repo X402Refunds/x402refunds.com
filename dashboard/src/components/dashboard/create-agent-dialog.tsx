@@ -65,16 +65,19 @@ export function CreateAgentDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!name.trim() || !orgName.trim()) {
+    if (!orgName.trim()) {
       return
     }
     
     try {
       setIsSubmitting(true)
       
+      // Auto-generate agent name if not provided
+      const finalAgentName = name.trim() || `${orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-agent-${Date.now()}`;
+      
       await createOrgAgent({
         userId,
-        name: name.trim(),
+        name: finalAgentName,
         organizationName: orgName.trim(),
         functionalType: functionalType as "voice" | "chat" | "social" | "translation" | "presentation" | "coding" | "devops" | "security" | "data" | "api" | "writing" | "design" | "video" | "music" | "gaming" | "research" | "financial" | "sales" | "marketing" | "legal" | "healthcare" | "education" | "scientific" | "manufacturing" | "transportation" | "scheduler" | "workflow" | "procurement" | "project" | "general",
         buildHash: buildHash.trim() || undefined,
@@ -112,15 +115,17 @@ export function CreateAgentDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">
-                Agent Name <span className="text-red-500">*</span>
+                Agent Name <span className="text-slate-500 text-xs font-normal">(optional)</span>
               </Label>
               <Input
                 id="name"
-                placeholder="My AI Assistant"
+                placeholder="Leave empty to auto-generate"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
               />
+              <p className="text-xs text-slate-600">
+                {name.trim() ? `Will create: ${name}` : `Auto-generates as: ${orgName ? orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'org'}-agent-{timestamp}`}
+              </p>
             </div>
             
             <div className="grid gap-2">
@@ -142,7 +147,7 @@ export function CreateAgentDialog({
             <div className="grid gap-2">
               <Label htmlFor="functionalType">Functional Type</Label>
               <Select value={functionalType} onValueChange={setFunctionalType}>
-                <SelectTrigger id="functionalType">
+                <SelectTrigger id="functionalType" className="w-full bg-white dark:bg-slate-800">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,7 +186,7 @@ export function CreateAgentDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || !name.trim() || !orgName.trim()}
+              disabled={isSubmitting || !orgName.trim()}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
