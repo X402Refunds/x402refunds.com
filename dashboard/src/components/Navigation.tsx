@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, Gavel } from "lucide-react"
+import { Shield, Gavel, User } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
+import { Button } from "@/components/ui/button"
 
 interface NavigationProps {
   currentPage?: 'home' | 'pricing' | 'about'
@@ -10,6 +12,7 @@ interface NavigationProps {
 export function Navigation({ currentPage }: NavigationProps) {
   const [featuresOpen, setFeaturesOpen] = useState(false)
   const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null)
+  const { isSignedIn } = useUser()
 
   const handleMouseEnter = () => {
     if (closeTimeout) {
@@ -159,6 +162,18 @@ export function Navigation({ currentPage }: NavigationProps) {
                 Agentic Dispute Protocol
               </button>
             </div>
+          </div>
+          
+          {/* Right Section: Sign In Button */}
+          <div className="flex items-center">
+            <Button
+              onClick={() => window.location.href = isSignedIn ? '/dashboard' : '/sign-in'}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              size="sm"
+            >
+              <User className="h-4 w-4 mr-2" />
+              {isSignedIn ? 'Dashboard' : 'Sign In'}
+            </Button>
           </div>
         </div>
       </div>
