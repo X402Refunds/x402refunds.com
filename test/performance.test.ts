@@ -22,20 +22,36 @@ describe('Concurrent Operations', () => {
     const timer = new PerformanceTimer();
     timer.start();
     
-    // Create owner first
-    const ownerDid = `did:test:perf-owner-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Performance Test Owner',
-      email: `perf-${Date.now()}@test.com`,
+    // Create organization, user, and API key
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Performance Test Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `perf-user-${Date.now()}`,
+        email: "perf@test.com",
+        name: "Perf User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Performance Test Key",
     });
     
     // Register 100 agents concurrently
     const registrations = Array.from({ length: 100 }, (_, i) =>
       t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: key.key,
         name: `Concurrent Agent ${i}`,
-        organizationName: `Concurrent Org ${i} ${Date.now()}`,
         mock: false,
       })
     );
@@ -51,24 +67,67 @@ describe('Concurrent Operations', () => {
   it('should handle 50 concurrent case filings', async () => {
     const timer = new PerformanceTimer();
     
-    // Setup
-    const ownerDid = `did:test:case-perf-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Case Perf Owner',
-      email: `case-perf-${Date.now()}@test.com`,
+    // Setup - Create separate orgs for plaintiff and defendant
+    const timestamp = Date.now();
+    
+    // Plaintiff org and agent
+    const plaintiffOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Plaintiff Perf Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const plaintiffUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `plaintiff-perf-user-${timestamp}`,
+        email: "plaintiff@test.com",
+        name: "Plaintiff User",
+        organizationId: plaintiffOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const plaintiffKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: plaintiffUserId,
+      name: "Plaintiff Key",
     });
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: plaintiffKey.key,
       name: 'Plaintiff',
-      organizationName: `Plaintiff Perf ${Date.now()}`,
+    });
+    
+    // Defendant org and agent
+    const defendantOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Defendant Perf Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const defendantUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `defendant-perf-user-${timestamp}`,
+        email: "defendant@test.com",
+        name: "Defendant User",
+        organizationId: defendantOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const defendantKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: defendantUserId,
+      name: "Defendant Key",
     });
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: defendantKey.key,
       name: 'Defendant',
-      organizationName: `Defendant Perf ${Date.now()}`,
     });
     
     // Create evidence
@@ -108,17 +167,33 @@ describe('Concurrent Operations', () => {
   it('should handle 100 concurrent evidence submissions', async () => {
     const timer = new PerformanceTimer();
     
-    const ownerDid = `did:test:ev-perf-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Evidence Perf Owner',
-      email: `ev-perf-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Evidence Perf Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `ev-perf-user-${Date.now()}`,
+        email: "evidence@test.com",
+        name: "Evidence User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Evidence Perf Key",
     });
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: key.key,
       name: 'Evidence Agent',
-      organizationName: `Evidence Org ${Date.now()}`,
     });
     
     timer.start();
@@ -147,25 +222,65 @@ describe('Concurrent Operations', () => {
 
   it('should handle 10 concurrent panel votes', async () => {
     const timer = new PerformanceTimer();
+    const timestamp = Date.now();
     
-    // Setup case and panel
-    const ownerDid = `did:test:vote-perf-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Vote Perf Owner',
-      email: `vote-perf-${Date.now()}@test.com`,
+    // Setup case and panel - Create separate orgs for plaintiff and defendant
+    const plaintiffOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Plaintiff Vote Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const plaintiffUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `plaintiff-vote-user-${timestamp}`,
+        email: "plaintiffvote@test.com",
+        name: "Plaintiff Vote User",
+        organizationId: plaintiffOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const plaintiffKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: plaintiffUserId,
+      name: "Plaintiff Vote Key",
     });
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: plaintiffKey.key,
       name: 'Plaintiff',
-      organizationName: `Plaintiff ${Date.now()}`,
+    });
+    
+    const defendantOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Defendant Vote Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const defendantUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `defendant-vote-user-${timestamp}`,
+        email: "defendantvote@test.com",
+        name: "Defendant Vote User",
+        organizationId: defendantOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const defendantKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: defendantUserId,
+      name: "Defendant Vote Key",
     });
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: defendantKey.key,
       name: 'Defendant',
-      organizationName: `Defendant ${Date.now()}`,
     });
     
     const evidenceId = await t.mutation(api.evidence.submitEvidence, {
@@ -241,17 +356,33 @@ describe('Large Data Handling', () => {
   });
 
   it('should handle large evidence submission', async () => {
-    const ownerDid = `did:test:large-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Large Data Owner',
-      email: `large-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Large Data Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `large-user-${Date.now()}`,
+        email: "large@test.com",
+        name: "Large User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Large Data Key",
     });
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: key.key,
       name: 'Large Data Agent',
-      organizationName: `Large ${Date.now()}`,
     });
     
     // Submit evidence with large hash/URI
@@ -275,24 +406,66 @@ describe('Large Data Handling', () => {
 
   it('should query 1000+ cases efficiently', async () => {
     const timer = new PerformanceTimer();
+    const timestamp = Date.now();
     
-    const ownerDid = `did:test:many-cases-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Many Cases Owner',
-      email: `many-${Date.now()}@test.com`,
+    // Plaintiff org and agent
+    const plaintiffOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Plaintiff Cases Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const plaintiffUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `plaintiff-cases-user-${timestamp}`,
+        email: "plaintiffcases@test.com",
+        name: "Plaintiff Cases User",
+        organizationId: plaintiffOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const plaintiffKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: plaintiffUserId,
+      name: "Plaintiff Cases Key",
     });
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: plaintiffKey.key,
       name: 'Plaintiff',
-      organizationName: `Plaintiff Many ${Date.now()}`,
+    });
+    
+    // Defendant org and agent
+    const defendantOrg = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Defendant Cases Org",
+        createdAt: timestamp
+      });
+    });
+    
+    const defendantUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `defendant-cases-user-${timestamp}`,
+        email: "defendantcases@test.com",
+        name: "Defendant Cases User",
+        organizationId: defendantOrg,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+    
+    const defendantKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: defendantUserId,
+      name: "Defendant Cases Key",
     });
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: defendantKey.key,
       name: 'Defendant',
-      organizationName: `Defendant Many ${Date.now()}`,
     });
     
     const evidenceId = await t.mutation(api.evidence.submitEvidence, {
@@ -331,20 +504,36 @@ describe('Large Data Handling', () => {
   it('should handle 1000+ agent list efficiently', async () => {
     const timer = new PerformanceTimer();
     
-    const ownerDid = `did:test:many-agents-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Many Agents Owner',
-      email: `many-agents-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Many Agents Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `many-agents-user-${Date.now()}`,
+        email: "manyagents@test.com",
+        name: "Many Agents User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Many Agents Key",
     });
     
     // Create 100 agents (scaled down from 1000)
     await Promise.all(
       Array.from({ length: 100 }, (_, i) =>
         t.mutation(api.agents.joinAgent, {
-          ownerDid,
+          apiKey: key.key,
           name: `Agent ${i}`,
-          organizationName: `Org ${i} ${Date.now()}`,
         })
       )
     );
@@ -367,17 +556,33 @@ describe('Rate Limiting', () => {
   });
 
   it('should handle rapid-fire submissions gracefully', async () => {
-    const ownerDid = `did:test:rapid-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Rapid Test Owner',
-      email: `rapid-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Rapid Test Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `rapid-user-${Date.now()}`,
+        email: "rapid@test.com",
+        name: "Rapid User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Rapid Test Key",
     });
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: key.key,
       name: 'Rapid Agent',
-      organizationName: `Rapid ${Date.now()}`,
     });
     
     // Submit 50 evidence items as fast as possible
@@ -403,17 +608,33 @@ describe('Rate Limiting', () => {
   }, 60000);
 
   it('should maintain consistency under load', async () => {
-    const ownerDid = `did:test:consistency-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Consistency Owner',
-      email: `consistency-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Consistency Test Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `consistency-user-${Date.now()}`,
+        email: "consistency@test.com",
+        name: "Consistency User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Consistency Test Key",
     });
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: key.key,
       name: 'Consistency Agent',
-      organizationName: `Consistency ${Date.now()}`,
     });
     
     // Create many evidence items
@@ -442,20 +663,36 @@ describe('Rate Limiting', () => {
   }, 60000);
 
   it('should handle burst traffic patterns', async () => {
-    const ownerDid = `did:test:burst-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Burst Owner',
-      email: `burst-${Date.now()}@test.com`,
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Burst Test Org",
+        createdAt: Date.now()
+      });
+    });
+    
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `burst-user-${Date.now()}`,
+        email: "burst@test.com",
+        name: "Burst User",
+        organizationId: org,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    const key = await t.mutation(api.apiKeys.generateApiKey, {
+      userId,
+      name: "Burst Test Key",
     });
     
     // Burst 1: Create 10 agents
     const burst1 = await Promise.all(
       Array.from({ length: 10 }, (_, i) =>
         t.mutation(api.agents.joinAgent, {
-          ownerDid,
+          apiKey: key.key,
           name: `Burst Agent ${i}`,
-          organizationName: `Burst ${i} ${Date.now()}`,
         })
       )
     );

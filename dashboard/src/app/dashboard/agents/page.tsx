@@ -45,11 +45,6 @@ export default function AgentsPage() {
     }
   }, [user, isLoaded, currentUser, syncUser])
   
-  const handleAgentCreated = () => {
-    // Query will automatically refresh
-    setShowCreateDialog(false)
-  }
-  
   if (!isLoaded || !user) {
     return (
       <DashboardLayout>
@@ -160,15 +155,10 @@ export default function AgentsPage() {
       </div>
       
       {/* Create Agent Dialog */}
-      {currentUser && organization && (
-        <CreateAgentDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          userId={currentUser._id}
-          organizationName={organization.name}
-          onAgentCreated={handleAgentCreated}
-        />
-      )}
+      <CreateAgentDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </DashboardLayout>
   )
 }

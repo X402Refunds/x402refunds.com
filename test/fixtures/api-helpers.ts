@@ -16,38 +16,86 @@ export interface TestCase {
   caseId: Id<'cases'>;
   plaintiff: string;
   defendant: string;
-  evidenceId: Id<'evidence'>;
+  evidenceId: Id<'evidenceManifests'>;
 }
 
 /**
- * Setup test agents with owners
+ * Setup test agents with API keys
  */
 export async function setupTestAgents(t: ReturnType<typeof convexTest>) {
   const timestamp = Date.now();
   
-  // Create owner
-  const ownerDid = `did:test:api-owner-${timestamp}`;
-  await t.mutation(api.auth.createOwner, {
-    did: ownerDid,
-    name: 'API Test Owner',
-    email: `api-test-${timestamp}@example.com`,
+  // Create plaintiff organization and user
+  const plaintiffOrgId = await t.run(async (ctx) => {
+    return await ctx.db.insert("organizations", {
+      name: `Plaintiff Corp ${timestamp}`,
+      domain: `plaintiff-${timestamp}.com`,
+      verified: true,
+      verifiedAt: Date.now(),
+      createdAt: Date.now(),
+    });
+  });
+  
+  const plaintiffUserId = await t.run(async (ctx) => {
+    return await ctx.db.insert("users", {
+      clerkUserId: `plaintiff-clerk-${timestamp}`,
+      email: `plaintiff-${timestamp}@test.com`,
+      organizationId: plaintiffOrgId,
+      role: "admin",
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+    });
+  });
+  
+  // Generate API key for plaintiff org
+  const plaintiffKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+    userId: plaintiffUserId,
+    name: "Test API Key",
+  });
+  
+  // Create defendant organization and user
+  const defendantOrgId = await t.run(async (ctx) => {
+    return await ctx.db.insert("organizations", {
+      name: `Defendant Corp ${timestamp}`,
+      domain: `defendant-${timestamp}.com`,
+      verified: true,
+      verifiedAt: Date.now(),
+      createdAt: Date.now(),
+    });
+  });
+  
+  const defendantUserId = await t.run(async (ctx) => {
+    return await ctx.db.insert("users", {
+      clerkUserId: `defendant-clerk-${timestamp}`,
+      email: `defendant-${timestamp}@test.com`,
+      organizationId: defendantOrgId,
+      role: "admin",
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+    });
+  });
+  
+  // Generate API key for defendant org
+  const defendantKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+    userId: defendantUserId,
+    name: "Test API Key",
   });
   
   // Create plaintiff agent
   const plaintiff = await t.mutation(api.agents.joinAgent, {
-    ownerDid,
+    apiKey: plaintiffKeyResult.key,
     name: 'API Test Plaintiff',
-    organizationName: `Plaintiff Corp ${timestamp}`,
     functionalType: 'general',
   });
   
   // Create defendant agent
   const defendant = await t.mutation(api.agents.joinAgent, {
-    ownerDid,
+    apiKey: defendantKeyResult.key,
     name: 'API Test Defendant',
-    organizationName: `Defendant Corp ${timestamp}`,
     functionalType: 'api',
   });
+  
+  const ownerDid = `did:owner:org-plaintiff-${timestamp}.com`; // For backwards compatibility
   
   return {
     ownerDid,

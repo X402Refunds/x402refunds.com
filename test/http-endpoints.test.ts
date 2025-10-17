@@ -37,12 +37,10 @@ describe('HTTP API - Agent Registration', () => {
   });
 
   describe('POST /agents/register', () => {
-    it('should return 410 Gone for deprecated endpoint', async () => {
-      // This endpoint is deprecated in favor of /agents/register-with-signature
+    it('should require Authorization header', async () => {
+      // This endpoint now requires API key authentication
       const agentData = {
-        ownerDid: USE_LIVE_API ? 'did:test:will-not-exist' : testOwnerDid,
         name: 'HTTP Test Agent',
-        organizationName: `HTTP Test Org ${Date.now()}`,
         functionalType: 'general',
       };
 
@@ -52,57 +50,56 @@ describe('HTTP API - Agent Registration', () => {
         body: JSON.stringify(agentData),
       });
 
-      // Deprecated endpoint returns 410 Gone
-      expect(response.status).toBe(410);
+      // Should return 401 without Authorization header
+      expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toBe("This endpoint has been removed");
-      expect(data.new_endpoint).toBe("/agents/register-with-signature");
+      expect(data.error).toContain("Authorization");
     });
 
     it.skip('Duplicate organization test (endpoint deprecated)', async () => {
       // This test is no longer relevant as /agents/register is deprecated
     });
 
-    it('should return 410 for invalid owner DID (endpoint deprecated)', async () => {
+    it('should require valid API key', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer invalid_key_123'
+        },
         body: JSON.stringify({
-          ownerDid: 'invalid-did-format',
           name: 'Test Agent',
-          organizationName: `Test Org ${Date.now()}`,
         }),
       });
 
-      // Deprecated endpoint returns 410 regardless of input validity
-      expect(response.status).toBe(410);
+      // Should return 401 with invalid API key
+      expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toBe("This endpoint has been removed");
+      expect(data.error).toContain("Invalid API key");
     });
 
-    it('should return 410 for missing fields (endpoint deprecated)', async () => {
+    it('should return 401 for missing Authorization', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'Test Agent',
-          // Missing ownerDid and organizationName
         }),
       });
 
-      // Deprecated endpoint returns 410 regardless of input
-      expect(response.status).toBe(410);
+      // Should return 401 without Authorization
+      expect(response.status).toBe(401);
     });
 
-    it('should return 410 for malformed JSON (endpoint deprecated)', async () => {
+    it('should return 401 for malformed requests without auth', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: 'invalid json {',
       });
 
-      // Deprecated endpoint returns 410 regardless of input
-      expect(response.status).toBe(410);
+      // Should return 401 without Authorization (checked before parsing body)
+      expect(response.status).toBe(401);
     });
   });
 });
@@ -116,17 +113,36 @@ describe('HTTP API - Evidence Submission', () => {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
       
-      const ownerDid = `did:test:evidence-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: ownerDid,
-        name: 'Evidence Test Owner',
-        email: 'evidence-test@example.com',
+      const timestamp = Date.now();
+      const orgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "Evidence Test Org",
+          domain: `evidence-test-${timestamp}.com`,
+          verified: true,
+          verifiedAt: Date.now(),
+          createdAt: Date.now(),
+        });
+      });
+      
+      const userId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkUserId: `evidence-test-${timestamp}`,
+          email: `evidence-test-${timestamp}@test.com`,
+          organizationId: orgId,
+          role: "admin",
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+        });
+      });
+      
+      const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+        userId,
+        name: "Test API Key",
       });
       
       const agent = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: apiKeyResult.key,
         name: 'Evidence Test Agent',
-        organizationName: `Evidence Org ${Date.now()}`,
       });
       testAgentDid = agent.did;
     }

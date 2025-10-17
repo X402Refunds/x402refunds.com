@@ -2100,8 +2100,8 @@ describe('E2E: Real-Time Monitoring and Notifications', () => {
 });
 
 describe('E2E: Integration with External Systems', () => {
-  it('Flow: Third-party agent registration via API (deprecated endpoint)', async () => {
-    // This test validates the deprecated API endpoint returns proper migration message
+  it('Flow: Third-party agent registration via API requires auth', async () => {
+    // This test validates that the API endpoint now requires API key authentication
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: {
@@ -2110,18 +2110,15 @@ describe('E2E: Integration with External Systems', () => {
         'X-Agent-DID': 'did:agent:external-test',
       },
       body: JSON.stringify({
-        ownerDid: 'did:test:external-owner',
         name: 'External AI Agent',
-        organizationName: 'External Corp',
         functionalType: 'general',
       }),
     });
 
-    // Deprecated endpoint returns 410 Gone with migration instructions
-    expect(response.status).toBe(410);
+    // Should return 401 without Authorization header
+    expect(response.status).toBe(401);
     const data = await response.json();
-    expect(data.error).toBe("This endpoint has been removed");
-    expect(data.new_endpoint).toBe("/agents/register-with-signature");
+    expect(data.error).toContain("Authorization");
   });
 
   it('Flow: Evidence submission with authentication headers', async () => {

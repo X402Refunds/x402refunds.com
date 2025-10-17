@@ -133,137 +133,80 @@ http.route({
 
 // === END MCP ENDPOINTS ===
 
-// Agent registration with signature (PREFERRED)
-// Agents self-register with their public key for signature-based auth
+// Agent registration with API key authentication (Stripe-style)
 http.route({
-  path: "/agents/register-with-signature",
+  path: "/agents/register",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const { ownerDid, name, organizationName, functionalType, publicKey, signature, timestamp } = body;
-    
     try {
-      // Validate required fields
-      if (!ownerDid || !name || !organizationName || !publicKey || !signature || !timestamp) {
+      // Extract API key from Authorization header
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader) {
         return new Response(JSON.stringify({ 
-          error: "Missing required fields",
-          required: ["ownerDid", "name", "organizationName", "publicKey", "signature", "timestamp"],
-          received: Object.keys(body)
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      // Check timestamp (within 5 minutes)
-      const now = Date.now();
-      if (Math.abs(now - timestamp) > 5 * 60 * 1000) {
-        return new Response(JSON.stringify({ 
-          error: "Timestamp outside valid window (must be within 5 minutes)",
-          yourTimestamp: timestamp,
-          serverTime: now
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      // Verify signature proves ownership of private key
-      // Message format: ownerDid:name:organizationName:timestamp
-      const message = `${ownerDid}:${name}:${organizationName}:${timestamp}`;
-      
-      // Import verifySignature from auth module
-      const { verifySignature } = await import("./auth");
-      const isValidSignature = await verifySignature(message, signature, publicKey);
-      
-      if (!isValidSignature) {
-        return new Response(JSON.stringify({ 
-          error: "Invalid signature. Could not verify ownership of private key.",
-          expectedMessage: message,
-          hint: "Sign the message 'ownerDid:name:organizationName:timestamp' with your Ed25519 private key"
+          error: "Missing Authorization header",
+          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
         }), {
           status: 401,
           headers: corsHeaders,
         });
       }
+
+      const apiKey = authHeader.replace("Bearer ", "").trim();
+      if (!apiKey || !apiKey.startsWith("csk_")) {
+        return new Response(JSON.stringify({ 
+          error: "Invalid API key format",
+          hint: "API key should start with 'csk_live_' or 'csk_test_'"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      // Parse request body
+      const body = await request.json();
+      const { name, functionalType, buildHash, configHash, mock } = body;
       
-      // Check that owner's organization exists and is verified
-      const ownerSlug = ownerDid.replace("did:owner:org-", "");
-      const org = await ctx.runQuery(api.users.getOrganization, {
-        organizationId: ownerSlug as any // This will need adjustment - we need to look up by domain
-      });
-      
-      // For now, we'll be permissive and allow registration
-      // In production, we'd verify the org exists and is verified
-      
-      // Register agent (this generates a registrationToken)
+      if (!name) {
+        return new Response(JSON.stringify({ 
+          error: "Missing required field: name",
+          required: ["name"],
+          optional: ["functionalType", "buildHash", "configHash", "mock"]
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Register agent using API key
       const result = await ctx.runMutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey,
         name,
-        organizationName,
         functionalType: functionalType || "general",
-        mock: false
-      });
-      
-      // Immediately add public key using the registration token
-      // This makes the registration atomic and marks token as used
-      await ctx.runMutation(api.agents.addAgentPublicKey, {
-        agentDid: result.did,
-        publicKey,
-        signature,
-        timestamp,
-        registrationToken: result.registrationToken
+        buildHash,
+        configHash,
+        mock: mock || false
       });
       
       return new Response(JSON.stringify({
         success: true,
         agentId: result.agentId,
         agentDid: result.did,
-        publicKeyRegistered: true,
-        message: "Agent registered successfully with signature-based authentication",
-        authenticationMethod: "Ed25519 signatures",
-        nextSteps: [
-          "Use your agent DID in X-Agent-DID header",
-          "Sign each request with your private key",
-          "Include signature in X-Signature header",
-          "Include timestamp in X-Timestamp header"
-        ]
+        organizationName: result.organizationName,
+        message: result.message
       }), {
         headers: corsHeaders,
       });
       
     } catch (error: any) {
+      console.error("Agent registration failed:", error);
       return new Response(JSON.stringify({ 
         error: error.message,
-        hint: "Ensure you're signing the correct message format and using a valid Ed25519 keypair"
+        hint: "Ensure your API key is valid and active"
       }), {
-        status: 400,
+        status: error.message.includes("Invalid API key") ? 401 : 400,
         headers: corsHeaders,
       });
     }
-  })
-});
-
-// Legacy registration endpoint redirects to signature-based registration
-http.route({
-  path: "/agents/register",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    return new Response(JSON.stringify({
-      error: "This endpoint has been removed",
-      migration: "Use signature-based authentication instead",
-      new_endpoint: "/agents/register-with-signature",
-      documentation: "https://docs.consulatehq.com/agent-integration-guide",
-      benefits: [
-        "No API keys to manage",
-        "Cryptographic proof for legal disputes",
-        "Self-registration with Ed25519 keypairs",
-        "No expiration or rotation needed"
-      ]
-    }), {
-      status: 410, // Gone
-      headers: { "Content-Type": "application/json" },
-    });
   })
 });
 

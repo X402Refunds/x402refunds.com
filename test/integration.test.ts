@@ -3,6 +3,7 @@ import { convexTest } from 'convex-test';
 import { api } from '../convex/_generated/api';
 import schema from '../convex/schema';
 import { createTestOwnerAndAgents, createTestJudgePanel } from './setup';
+import { createTestAgent } from './testHelper';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -290,22 +291,14 @@ describe('Multi-Party Disputes', () => {
   });
 
   it('should handle three-party dispute resolution', async () => {
-    const ownerDid = `did:test:multi-owner-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Multi Owner',
-      email: `multi-${Date.now()}@test.com`,
-    });
-    
-    // Create three agents
+    // Create three agents (each with their own organization)
     const agents = [];
     for (let i = 0; i < 3; i++) {
-      const agent = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
-        name: `Agent ${i}`,
-        organizationName: `Org ${i} ${Date.now()}`,
+      const result = await createTestAgent(t, {
+        orgName: `Org ${i} ${Date.now()}`,
+        agentName: `Agent ${i}`,
       });
-      agents.push(agent.did);
+      agents.push(result.agentDid);
     }
     
     // Agent 0 vs Agent 1
@@ -359,33 +352,26 @@ describe('Multi-Party Disputes', () => {
   });
 
   it('should handle multiple defendants scenario', async () => {
-    const ownerDid = `did:test:multi-def-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Multi Defendant Owner',
-      email: `multi-def-${Date.now()}@test.com`,
+    // Create plaintiff agent
+    const plaintiff = await createTestAgent(t, {
+      orgName: `Plaintiff ${Date.now()}`,
+      agentName: 'Plaintiff',
     });
     
-    const plaintiff = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
-      name: 'Plaintiff',
-      organizationName: `Plaintiff ${Date.now()}`,
-    });
-    
+    // Create multiple defendant agents
     const defendants = [];
     for (let i = 0; i < 2; i++) {
-      const defendant = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
-        name: `Defendant ${i}`,
-        organizationName: `Defendant ${i} ${Date.now()}`,
+      const defendant = await createTestAgent(t, {
+        orgName: `Defendant ${i} ${Date.now()}`,
+        agentName: `Defendant ${i}`,
       });
-      defendants.push(defendant.did);
+      defendants.push(defendant.agentDid);
     }
     
     // File separate cases against each defendant
     for (let i = 0; i < defendants.length; i++) {
       const evidence = await t.mutation(api.evidence.submitEvidence, {
-        agentDid: plaintiff.did,
+        agentDid: plaintiff.agentDid,
         sha256: `sha256_multidef_${i}_${Date.now()}`,
         uri: `https://test.example.com/multidef-${i}.json`,
         signer: 'did:test:signer',
@@ -397,7 +383,7 @@ describe('Multi-Party Disputes', () => {
       });
       
       await t.mutation(api.cases.fileDispute, {
-        plaintiff: plaintiff.did,
+        plaintiff: plaintiff.agentDid,
         defendant: defendants[i],
         type: 'SLA_BREACH',
         jurisdictionTags: ['multi-defendant'],
@@ -405,34 +391,25 @@ describe('Multi-Party Disputes', () => {
       });
     }
     
-    const cases = await t.query(api.cases.getCasesByPlaintiff, { plaintiffDid: plaintiff.did });
+    const cases = await t.query(api.cases.getCasesByPlaintiff, { plaintiffDid: plaintiff.agentDid });
     expect(cases.length).toBeGreaterThanOrEqual(2);
   });
 
   it('should handle class action style dispute', async () => {
-    const ownerDid = `did:test:class-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Class Action Owner',
-      email: `class-${Date.now()}@test.com`,
-    });
-    
     // Multiple plaintiffs
     const plaintiffs = [];
     for (let i = 0; i < 3; i++) {
-      const plaintiff = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
-        name: `Plaintiff ${i}`,
-        organizationName: `Plaintiff ${i} ${Date.now()}`,
+      const plaintiff = await createTestAgent(t, {
+        orgName: `Plaintiff ${i} ${Date.now()}`,
+        agentName: `Plaintiff ${i}`,
       });
-      plaintiffs.push(plaintiff.did);
+      plaintiffs.push(plaintiff.agentDid);
     }
     
     // One defendant
-    const defendant = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
-      name: 'Defendant',
-      organizationName: `Defendant ${Date.now()}`,
+    const defendant = await createTestAgent(t, {
+      orgName: `Defendant ${Date.now()}`,
+      agentName: 'Defendant',
     });
     
     // Each plaintiff files separate case
@@ -451,7 +428,7 @@ describe('Multi-Party Disputes', () => {
       
       await t.mutation(api.cases.fileDispute, {
         plaintiff: plaintiffs[i],
-        defendant: defendant.did,
+        defendant: defendant.agentDid,
         type: 'SLA_BREACH',
         jurisdictionTags: ['class-action'],
         evidenceIds: [evidence],
@@ -459,7 +436,7 @@ describe('Multi-Party Disputes', () => {
     }
     
     const defendantCases = await t.query(api.cases.getCasesByDefendant, {
-      defendantDid: defendant.did,
+      defendantDid: defendant.agentDid,
     });
     expect(defendantCases.length).toBeGreaterThanOrEqual(3);
   });

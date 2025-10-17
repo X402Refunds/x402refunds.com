@@ -62,13 +62,35 @@ describe('Consulate HTTP API - Agent Management', () => {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
       
-      // Create test owner for agent registration
-      testOwnerDid = `did:test:api-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: testOwnerDid,
-        name: 'API Test Owner',
-        email: 'api-test@example.com',
+      // Create test org and API key for agent registration
+      const timestamp = Date.now();
+      const orgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "API Test Org",
+          domain: `api-test-${timestamp}.com`,
+          verified: true,
+          verifiedAt: Date.now(),
+          createdAt: Date.now(),
+        });
       });
+      
+      const userId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkUserId: `api-test-${timestamp}`,
+          email: `api-test-${timestamp}@test.com`,
+          organizationId: orgId,
+          role: "admin",
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+        });
+      });
+      
+      const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+        userId,
+        name: "Test API Key",
+      });
+      
+      testOwnerDid = apiKeyResult.key; // Store API key in testOwnerDid variable for simplicity
     }
   });
 
@@ -254,9 +276,8 @@ describe('Consulate HTTP API - Agent Management', () => {
       // Create agent first
       if (!USE_LIVE_API) {
         const agent = await t.mutation(api.agents.joinAgent, {
-          ownerDid: testOwnerDid,
+          apiKey: testOwnerDid, // testOwnerDid now stores the API key
           name: 'Rep Test Agent',
-          organizationName: `Rep Test ${Date.now()}`,
         });
 
         const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
@@ -268,9 +289,8 @@ describe('Consulate HTTP API - Agent Management', () => {
       // Agent with no dispute history should return default reputation
       if (!USE_LIVE_API) {
         const agent = await t.mutation(api.agents.joinAgent, {
-          ownerDid: testOwnerDid,
+          apiKey: testOwnerDid, // testOwnerDid now stores the API key
           name: 'No Cases Agent',
-          organizationName: `No Cases ${Date.now()}`,
         });
 
         const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
@@ -605,26 +625,26 @@ describe('Consulate HTTP API - Real-Time Monitoring', () => {
 });
 
 describe('Consulate HTTP API - Error Handling', () => {
-  it('should return 410 for deprecated endpoint (malformed JSON)', async () => {
+  it('should return 401 for endpoint without auth (malformed JSON)', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{'
     });
 
-    // Deprecated endpoint returns 410 regardless of input
-    expect(response.status).toBe(410);
+    // Should return 401 without Authorization header (checked before parsing body)
+    expect(response.status).toBe(401);
   });
 
-  it('should return 410 for deprecated endpoint (missing required fields)', async () => {
+  it('should return 401 for endpoint without auth (missing required fields)', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Incomplete Agent' })
     });
 
-    // Deprecated endpoint returns 410 regardless of input
-    expect(response.status).toBe(410);
+    // Should return 401 without Authorization header
+    expect(response.status).toBe(401);
   });
 });
 

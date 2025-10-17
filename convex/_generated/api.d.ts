@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as agents from "../agents.js";
+import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as cases from "../cases.js";
 import type * as courtEngine from "../courtEngine.js";
@@ -39,6 +40,7 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   agents: typeof agents;
+  apiKeys: typeof apiKeys;
   auth: typeof auth;
   cases: typeof cases;
   courtEngine: typeof courtEngine;

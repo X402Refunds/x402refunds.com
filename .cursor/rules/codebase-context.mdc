@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-15T15:35:14.512Z
+**Auto-generated on**: 2025-10-17T21:50:44.512Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -74,8 +74,9 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (16 files)
-- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation, createOrgAgent, listOrgAgents, addAgentPublicKey
+### Convex Files (17 files)
+- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation, listOrgAgents
+- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -143,10 +144,11 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (17 test files)
+### Test Suites (18 test files)
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
+- test/apiKeys.test.ts
 - test/cases.test.ts
 - test/court-engine.test.ts
 - test/e2e-flow.test.ts
@@ -203,19 +205,19 @@ Common HTTP routes exposed:
 
 
 
-### Internal Documentation (40 files)
+### Internal Documentation (41 files)
 - internal/README.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
 - internal/design/sovereign-civic-design-system.md
+- internal/operations/api-key-migration-complete.md
 - internal/operations/current-deployment-status.md
 - internal/operations/dashboard-system-summary.md
 - internal/operations/dashboard-testing-results.md
 - internal/operations/deployment-guide.md
 - internal/operations/fast-metrics-caching.md
-- internal/operations/locus-integration-pitch.md
 
-... and 30 more in internal/
+... and 31 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -257,13 +259,13 @@ Common HTTP routes exposed:
 - 38 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 16 TypeScript files with serverless functions
+- 17 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 17 test files using Vitest
+- 18 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -296,5 +298,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/15/2025, 8:35:14 AM
-Files scanned: 262
+Generated: 10/17/2025, 2:50:44 PM
+Files scanned: 270

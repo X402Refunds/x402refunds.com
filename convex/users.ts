@@ -1,6 +1,12 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Helper to generate API key string
+function createApiKeyString(prefix: "csk_live_" | "csk_test_"): string {
+  const random = crypto.randomUUID().replace(/-/g, '');
+  return `${prefix}${random}`;
+}
+
 /**
  * User Management for Dashboard Users
  * 
@@ -63,6 +69,31 @@ export const syncUser = mutation({
         });
         org = await ctx.db.get(orgId);
         console.info(`Organization auto-verified via OAuth: ${domain}`);
+        
+        // Auto-generate first API key for new organization (must happen before user creation)
+        const apiKey = createApiKeyString("csk_live_");
+        const tempUserId = await ctx.db.insert("users", {
+          clerkUserId: args.clerkUserId,
+          email: args.email,
+          name: args.name,
+          organizationId: org?._id,
+          role: "member",
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+        });
+        
+        await ctx.db.insert("apiKeys", {
+          key: apiKey,
+          organizationId: orgId,
+          name: "Default API Key",
+          createdBy: tempUserId,
+          status: "active",
+          createdAt: now,
+        });
+        console.info(`Auto-generated default API key for org: ${orgId}`);
+        
+        // Return early since we already created the user
+        return tempUserId;
       } else {
         console.info(`Found existing organization: ${org._id}`);
         // If org exists but not verified, verify it now (OAuth user proves ownership)

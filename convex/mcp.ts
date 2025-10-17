@@ -112,21 +112,17 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_register_agent",
-    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance.",
+    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance. Requires your Consulate API key.",
     input_schema: {
       type: "object",
       properties: {
-        ownerDid: {
+        apiKey: {
           type: "string",
-          description: "DID of the organization or entity that owns this agent"
+          description: "Your Consulate API key (get from Settings → API Keys in dashboard)"
         },
         name: {
           type: "string",
           description: "Name of the agent (e.g., 'acme-monitoring-agent', 'openai-api-consumer')"
-        },
-        organizationName: {
-          type: "string",
-          description: "Name of the organization deploying this agent"
         },
         functionalType: {
           type: "string",
@@ -134,7 +130,7 @@ export const MCP_TOOLS = [
           description: "What type of agent this is"
         }
       },
-      required: ["ownerDid", "name", "organizationName", "functionalType"]
+      required: ["apiKey", "name", "functionalType"]
     }
   },
   {
@@ -409,9 +405,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
       case "consulate_register_agent":
         result = await ctx.runMutation(api.agents.joinAgent, {
-          ownerDid: parameters.ownerDid,
+          apiKey: parameters.apiKey,
           name: parameters.name,
-          organizationName: parameters.organizationName,
           functionalType: parameters.functionalType,
           mock: false
         });

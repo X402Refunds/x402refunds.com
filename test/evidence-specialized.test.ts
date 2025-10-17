@@ -321,17 +321,36 @@ describe('Healthcare Evidence Advanced Filtering', () => {
     t = convexTest(schema, modules);
     
     // Create a healthcare-specific agent
-    const ownerDid = `did:test:healthcare-owner-${Date.now()}`;
-    await t.mutation(api.auth.createOwner, {
-      did: ownerDid,
-      name: 'Healthcare Test Owner',
-      email: 'healthcare-test@example.com',
+    const timestamp = Date.now();
+    const orgId = await t.run(async (ctx: any) => {
+      return await ctx.db.insert("organizations", {
+        name: `Healthcare Org ${timestamp}`,
+        domain: `healthcare-${timestamp}.com`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const userId = await t.run(async (ctx: any) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `clerk_healthcare_${timestamp}`,
+        email: 'healthcare-test@example.com',
+        name: 'Healthcare Test Owner',
+        organizationId: orgId,
+        role: "admin",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const apiKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: userId,
+      name: "Healthcare Test API Key",
     });
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      ownerDid,
+      apiKey: apiKey.key,
       name: 'Healthcare Test Agent',
-      organizationName: `Healthcare Org ${Date.now()}`,
       functionalType: 'healthcare',
     });
     agentDid = agent.did;

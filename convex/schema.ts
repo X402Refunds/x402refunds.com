@@ -43,6 +43,25 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_organization", ["organizationId"]),
 
+  // API Keys for organization authentication
+  apiKeys: defineTable({
+    key: v.optional(v.string()),              // NEW: csk_live_abc123... or csk_test_abc123...
+    token: v.optional(v.string()),            // DEPRECATED: old token field
+    organizationId: v.id("organizations"),
+    name: v.string(),                         // "Production Key", "CI/CD Key", "Default API Key"
+    createdBy: v.optional(v.id("users")),     // User who created it
+    createdByUserId: v.optional(v.id("users")), // DEPRECATED: old field name
+    lastUsedAt: v.optional(v.number()),       // Track usage
+    expiresAt: v.optional(v.number()),        // Optional expiration timestamp
+    status: v.optional(v.union(v.literal("active"), v.literal("revoked"))),
+    active: v.optional(v.boolean()),          // DEPRECATED: old status field
+    permissions: v.optional(v.array(v.string())), // DEPRECATED: old permissions field
+    createdAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_organization", ["organizationId"])
+    .index("by_status", ["status"]),
+
   // Agent owners/accounts
   owners: defineTable({
     did: v.string(),
@@ -64,11 +83,11 @@ export default defineSchema({
     // Signature-based authentication
     publicKey: v.optional(v.string()), // Ed25519 public key for signature verification
     
-    // Registration token security (prevents unauthorized key registration)
-    registrationToken: v.optional(v.string()),      // One-time token for first key registration
-    registrationTokenUsed: v.optional(v.boolean()), // Track if token has been consumed
+    // DEPRECATED: Legacy registration token fields (keeping for backwards compatibility during migration)
+    registrationToken: v.optional(v.string()),
+    registrationTokenUsed: v.optional(v.boolean()),
     
-    // Organization management (new)
+    // Organization management
     organizationId: v.optional(v.id("organizations")), // Agent belongs to organization
     deployedByUserId: v.optional(v.id("users")),       // User who deployed this agent
     

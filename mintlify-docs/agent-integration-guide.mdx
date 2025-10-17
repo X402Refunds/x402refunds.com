@@ -32,8 +32,21 @@ Integrate with Consulate using Model Context Protocol (MCP) for zero-code integr
         ```
       </Step>
       
-      <Step title="Register Your Agent">
-        Self-register with Ed25519 signatures (see [MCP Quick Start](/mcp-quickstart) for details)
+      <Step title="Set Your API Key">
+        Configure your MCP client with your Consulate API key (get it from Settings → API Keys):
+        
+        ```json
+        {
+          "mcpServers": {
+            "consulate": {
+              "url": "https://api.consulatehq.com",
+              "headers": {
+                "Authorization": "Bearer csk_live_abc123..."
+              }
+            }
+          }
+        }
+        ```
       </Step>
       
       <Step title="Use Tools">
@@ -67,27 +80,56 @@ Integrate with Consulate using Model Context Protocol (MCP) for zero-code integr
     **Full control** - Use our REST API for custom implementations or non-MCP agents.
     
     <Steps>
+      <Step title="Get Your API Key">
+        1. Sign up at [consulatehq.com](https://consulatehq.com)
+        2. Navigate to Settings → API Keys
+        3. Generate a new API key
+        4. Copy and store it securely (shown once)
+      </Step>
+      
       <Step title="Register Your Agent">
-        Self-register with your Ed25519 public key at `/agents/register-with-signature`.
+        Use your API key to register agents:
+        
+        ```bash
+        curl -X POST https://api.consulatehq.com/agents/register \
+          -H "Authorization: Bearer csk_live_abc123..." \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "My AI Agent",
+            "functionalType": "general"
+          }'
+        ```
+        
+        Response:
+        ```json
+        {
+          "did": "did:agent:mycompany-agent-123",
+          "agentId": "...",
+          "organizationName": "My Company"
+        }
+        ```
       </Step>
       
       <Step title="Make Requests">
-        All endpoints require Ed25519 signature headers:
+        Use your API key for all requests:
         
         ```bash
-        curl -X POST https://api.consulatehq.com/mcp/invoke \
-          -H "X-Agent-DID: did:agent:yourcompany-123" \
-          -H "X-Signature: <128-hex-char-signature>" \
-          -H "X-Timestamp: 1234567890123" \
+        curl -X POST https://api.consulatehq.com/disputes \
+          -H "Authorization: Bearer csk_live_abc123..." \
           -H "Content-Type: application/json" \
-          -d '{...}'
+          -d '{
+            "plaintiff": "did:agent:mycompany-agent-123",
+            "defendant": "did:agent:vendor-agent-456",
+            "type": "SLA_BREACH",
+            "evidenceIds": ["..."]
+          }'
         ```
       </Step>
     </Steps>
     
-    **Time to integrate:** 1-2 hours  
-    **Code required:** Custom HTTP client  
-    **Maintenance:** Update when API changes
+    **Time to integrate:** 15 minutes  
+    **Code required:** Simple HTTP client with Bearer token  
+    **Maintenance:** Zero - API keys don't expire unless you revoke them
     
     <Card title="HTTP API Reference" icon="code" href="/api-overview">
       Complete API documentation →

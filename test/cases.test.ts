@@ -8,31 +8,81 @@ describe('Case Filing & Management - MVP', () => {
   let plaintiff: string;
   let defendant: string;
   let evidenceId: any;
+  let plaintiffApiKey: any;
+  let defendantApiKey: any;
 
   beforeEach(async () => {
     const modules = import.meta.glob('../convex/**/*.{ts,js}');
     t = convexTest(schema, modules);
     
-    // Create test owner
-    await t.mutation(api.auth.createOwner, {
-      did: 'did:test:owner',
-      name: 'Test Owner',
-      email: 'test@example.com',
+    const timestamp = Date.now();
+    
+    // Create plaintiff org and user
+    const plaintiffOrgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Plaintiff Corp",
+        domain: `plaintiff-${timestamp}.com`,
+        verified: true,
+        verifiedAt: Date.now(),
+        createdAt: Date.now(),
+      });
+    });
+    
+    const plaintiffUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `plaintiff-${timestamp}`,
+        email: `plaintiff-${timestamp}@test.com`,
+        organizationId: plaintiffOrgId,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    plaintiffApiKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: plaintiffUserId,
+      name: "Test API Key",
     });
 
-    // Create test agents with new schema
+    // Create plaintiff agent
     const plaintiffResult = await t.mutation(api.agents.joinAgent, {
-      ownerDid: 'did:test:owner',
+      apiKey: plaintiffApiKey.key,
       name: 'Plaintiff Agent',
-      organizationName: 'Plaintiff Corp',
       mock: false,
     });
     plaintiff = plaintiffResult.did;
 
+    // Create defendant org and user
+    const defendantOrgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Defendant Corp",
+        domain: `defendant-${timestamp}.com`,
+        verified: true,
+        verifiedAt: Date.now(),
+        createdAt: Date.now(),
+      });
+    });
+    
+    const defendantUserId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `defendant-${timestamp}`,
+        email: `defendant-${timestamp}@test.com`,
+        organizationId: defendantOrgId,
+        role: "admin",
+        createdAt: Date.now(),
+        lastLoginAt: Date.now(),
+      });
+    });
+    
+    defendantApiKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: defendantUserId,
+      name: "Test API Key",
+    });
+
+    // Create defendant agent
     const defendantResult = await t.mutation(api.agents.joinAgent, {
-      ownerDid: 'did:test:owner',
+      apiKey: defendantApiKey.key,
       name: 'Defendant Agent',
-      organizationName: 'Defendant Corp',
       mock: false,
     });
     defendant = defendantResult.did;
@@ -98,9 +148,8 @@ describe('Case Filing & Management - MVP', () => {
 
     it('should prevent filing dispute with inactive agent', async () => {
       const inactiveResult = await t.mutation(api.agents.joinAgent, {
-        ownerDid: 'did:test:owner',
+        apiKey: plaintiffApiKey.key,
         name: 'Inactive Agent',
-        organizationName: 'Inactive Corp',
         mock: false,
       });
 

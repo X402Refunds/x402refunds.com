@@ -10,13 +10,11 @@ import { Id } from '../convex/_generated/dataModel';
  * 
  * Tests for MCP integration endpoints:
  * - GET /.well-known/mcp.json (discovery)
- * - POST /mcp/invoke (tool invocation with signature auth)
+ * - POST /mcp/invoke (tool invocation with API key auth)
  * 
- * Authentication: Ed25519 signatures (API keys removed)
+ * Authentication: API Keys (Bearer tokens)
  * 
- * NOTE: Most invocation tests are skipped pending signature auth implementation.
- * The system now requires Ed25519 cryptographic signatures instead of Bearer tokens.
- * All 8 MCP tools tested via discovery endpoint.
+ * All 8 MCP tools tested via discovery endpoint and invocation.
  */
 
 describe('MCP Protocol - Tool Discovery', () => {
@@ -102,38 +100,44 @@ describe('MCP Protocol - Tool Discovery', () => {
   });
 });
 
-describe.skip('MCP Protocol - Authentication', () => {
-  // SKIPPED: API key authentication removed
-  // TODO: Reimplement with Ed25519 signature authentication
-  
+describe('MCP Protocol - Authentication', () => {
   let t: ReturnType<typeof convexTest>;
-  let validAgentId: Id<"agents">;
-  let testOwnerDid: string;
+  let validApiKey: string;
+  let testOrgId: Id<"organizations">;
+  let testUserId: Id<"users">;
 
   beforeAll(async () => {
     if (!USE_LIVE_API) {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
       
-      // Create test owner
-      testOwnerDid = `did:test:owner-${Date.now()}`;
-      await t.run(async (ctx) => {
-        await ctx.db.insert("owners", {
-          did: testOwnerDid,
-          pubkeys: ['test-pubkey'],
+      // Create organization
+      testOrgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "MCP Test Org",
+          domain: "mcptest.com",
           createdAt: Date.now(),
         });
       });
 
-      // Register test agent
-      const agentResult = await t.mutation(api.agents.joinAgent, {
-        ownerDid: testOwnerDid,
-        name: 'MCP Test Agent',
-        organizationName: 'MCP Test Org',
-        functionalType: 'general',
-        mock: false,
+      // Create user
+      testUserId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkId: `clerk_mcp_${Date.now()}`,
+          email: "mcp@test.com",
+          name: "MCP Test User",
+          organizationId: testOrgId,
+          role: "admin",
+          createdAt: Date.now(),
+        });
       });
-      validAgentId = agentResult.agentId as Id<"agents">;
+
+      // Create API key
+      const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "MCP Test Key",
+      });
+      validApiKey = apiKeyResult.key;
     }
   });
 
@@ -210,16 +214,13 @@ describe.skip('MCP Protocol - Authentication', () => {
   });
 });
 
-describe.skip('MCP Protocol - Tool Invocation', () => {
-  // SKIPPED: API key authentication removed  
-  // TODO: Reimplement with Ed25519 signature authentication
-  //
+describe('MCP Protocol - Tool Invocation', () => {
   let t: ReturnType<typeof convexTest>;
   let validApiKey: string;
-  let validAgentId: Id<"agents">;
   let testAgentDid: string;
   let testDefendantDid: string;
-  let testOwnerDid: string;
+  let plaintiffApiKey: string;
+  let defendantApiKey: string;
   let testCaseId: Id<"cases"> | null = null;
 
   beforeAll(async () => {
@@ -227,44 +228,80 @@ describe.skip('MCP Protocol - Tool Invocation', () => {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
       
-      // Create test owner
-      testOwnerDid = `did:test:owner-${Date.now()}`;
-      await t.run(async (ctx) => {
-        await ctx.db.insert("owners", {
-          did: testOwnerDid,
-          pubkeys: ['test-pubkey'],
+      // Create plaintiff organization
+      const plaintiffOrgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "MCP Plaintiff Org",
+          domain: "mcpplaintiff.com",
           createdAt: Date.now(),
         });
       });
 
+      // Create plaintiff user
+      const plaintiffUserId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkId: `clerk_plaintiff_${Date.now()}`,
+          email: "plaintiff@mcptest.com",
+          name: "Plaintiff User",
+          organizationId: plaintiffOrgId,
+          role: "admin",
+          createdAt: Date.now(),
+        });
+      });
+
+      // Create plaintiff API key
+      const plaintiffKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: plaintiffUserId,
+        name: "Plaintiff Test Key",
+      });
+      plaintiffApiKey = plaintiffKeyResult.key;
+      validApiKey = plaintiffApiKey;
+
       // Register plaintiff agent
       const plaintiffResult = await t.mutation(api.agents.joinAgent, {
-        ownerDid: testOwnerDid,
+        apiKey: plaintiffApiKey,
         name: 'MCP Plaintiff Agent',
-        organizationName: 'MCP Plaintiff Org',
         functionalType: 'ai_consumer',
         mock: false,
       });
       testAgentDid = plaintiffResult.did;
-      validAgentId = plaintiffResult.agentId as Id<"agents">;
+
+      // Create defendant organization
+      const defendantOrgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "MCP Defendant Org",
+          domain: "mcpdefendant.com",
+          createdAt: Date.now(),
+        });
+      });
+
+      // Create defendant user
+      const defendantUserId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkId: `clerk_defendant_${Date.now()}`,
+          email: "defendant@mcptest.com",
+          name: "Defendant User",
+          organizationId: defendantOrgId,
+          role: "admin",
+          createdAt: Date.now(),
+        });
+      });
+
+      // Create defendant API key
+      const defendantKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: defendantUserId,
+        name: "Defendant Test Key",
+      });
+      defendantApiKey = defendantKeyResult.key;
 
       // Register defendant agent
       const defendantResult = await t.mutation(api.agents.joinAgent, {
-        ownerDid: testOwnerDid,
+        apiKey: defendantApiKey,
         name: 'MCP Defendant Agent',
-        organizationName: 'MCP Defendant Org',
         functionalType: 'ai_provider',
         mock: false,
       });
       testDefendantDid = defendantResult.did;
-
-      // Create valid API key
-      validApiKey = generateApiKey();
-      await t.mutation(api.apiKeys.createApiKey, {
-        token: validApiKey,
-        agentId: validAgentId,
-        permissions: ['evidence', 'disputes', 'cases'],
-      });
     }
   });
 
@@ -279,9 +316,7 @@ describe.skip('MCP Protocol - Tool Invocation', () => {
         body: JSON.stringify({
           tool: 'consulate_register_agent',
           parameters: {
-            ownerDid: testOwnerDid,
             name: `MCP New Agent ${Date.now()}`,
-            organizationName: `MCP New Org ${Date.now()}`,
             functionalType: 'monitoring',
           },
         }),

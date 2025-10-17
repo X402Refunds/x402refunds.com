@@ -68,32 +68,80 @@ export const createTestCase = (plaintiff: string, defendant: string) => ({
 // Enhanced test helpers for comprehensive testing
 
 export async function createTestOwnerAndAgents(t: any, suffix = Date.now()) {
-  const ownerDid = `did:test:owner-${suffix}`;
-  
-  // Create owner
-  await t.mutation(api.auth.createOwner, {
-    did: ownerDid,
-    name: `Test Owner ${suffix}`,
-    email: `test-${suffix}@example.com`,
+  // Create plaintiff org, user, and API key
+  const plaintiffOrgId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("organizations", {
+      name: `Plaintiff Corp ${suffix}`,
+      domain: `plaintiff-${suffix}.com`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
-  
+
+  const plaintiffUserId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("users", {
+      clerkUserId: `clerk_plaintiff_${suffix}`,
+      email: `plaintiff-${suffix}@example.com`,
+      name: `Plaintiff User ${suffix}`,
+      organizationId: plaintiffOrgId,
+      role: "admin",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  const plaintiffApiKey = await t.mutation(api.apiKeys.generateApiKey, {
+    userId: plaintiffUserId,
+    name: "Test API Key Plaintiff",
+  });
+
   // Create plaintiff agent
   const plaintiff = await t.mutation(api.agents.joinAgent, {
-    ownerDid,
+    apiKey: plaintiffApiKey.key,
     name: `Plaintiff Agent ${suffix}`,
-    organizationName: `Plaintiff Corp ${suffix}`,
     mock: false,
   });
-  
+
+  // Create defendant org, user, and API key
+  const defendantOrgId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("organizations", {
+      name: `Defendant Corp ${suffix}`,
+      domain: `defendant-${suffix}.com`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  const defendantUserId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("users", {
+      clerkUserId: `clerk_defendant_${suffix}`,
+      email: `defendant-${suffix}@example.com`,
+      name: `Defendant User ${suffix}`,
+      organizationId: defendantOrgId,
+      role: "admin",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  const defendantApiKey = await t.mutation(api.apiKeys.generateApiKey, {
+    userId: defendantUserId,
+    name: "Test API Key Defendant",
+  });
+
   // Create defendant agent
   const defendant = await t.mutation(api.agents.joinAgent, {
-    ownerDid,
+    apiKey: defendantApiKey.key,
     name: `Defendant Agent ${suffix}`,
-    organizationName: `Defendant Corp ${suffix}`,
     mock: false,
   });
-  
-  return { ownerDid, plaintiff: plaintiff.did, defendant: defendant.did };
+
+  return {
+    plaintiff: plaintiff.did,
+    defendant: defendant.did,
+    plaintiffApiKey: plaintiffApiKey.key,
+    defendantApiKey: defendantApiKey.key,
+  };
 }
 
 export async function createTestCaseWithEvidence(
