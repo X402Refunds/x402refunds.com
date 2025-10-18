@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-18T09:05:05.001Z
+**Auto-generated on**: 2025-10-18T09:18:58.673Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -144,7 +144,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (18 test files)
+### Test Suites (20 test files)
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
@@ -157,7 +157,9 @@ Common HTTP routes exposed:
 - test/http-endpoints.test.ts
 - test/integration.test.ts
 - test/judges.test.ts
+- test/llm-engine.test.ts
 - test/mcp-endpoints.test.ts
+- test/mcp-integration.test.ts
 - test/performance.test.ts
 - test/sla-endpoints.test.ts
 - test/system-endpoints.test.ts
@@ -265,7 +267,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 18 test files using Vitest
+- 20 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -298,5 +300,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/18/2025, 2:05:05 AM
-Files scanned: 273
+Generated: 10/18/2025, 2:18:58 AM
+Files scanned: 275
