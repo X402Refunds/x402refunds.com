@@ -240,7 +240,7 @@ export default function APIKeysPage() {
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Last Used</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right min-w-[120px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -323,10 +323,11 @@ export default function APIKeysPage() {
                         <TableCell className="text-sm text-slate-600">
                           {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right min-w-[120px]">
                           <div className="flex justify-end gap-2">
                             {key.status !== "revoked" ? (
                               <Button
+                                type="button"
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleRevokeKey(key._id, key.name)}
