@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Key, Copy, Trash2, Plus, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Key, Copy, Trash2, Plus, CheckCircle2, AlertCircle, Loader2, Pencil } from "lucide-react"
 import { Id } from "@convex/_generated/dataModel"
 
 export default function APIKeysPage() {
@@ -22,6 +23,9 @@ export default function APIKeysPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [generatedKey, setGeneratedKey] = useState<string | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [editingKeyId, setEditingKeyId] = useState<Id<"apiKeys"> | null>(null)
+  const [editingKeyName, setEditingKeyName] = useState("")
   
   // Queries
   const currentUser = useQuery(
@@ -37,6 +41,7 @@ export default function APIKeysPage() {
   // Mutations
   const generateApiKey = useMutation(api.apiKeys.generateApiKey)
   const revokeApiKey = useMutation(api.apiKeys.revokeApiKey)
+  const updateApiKeyName = useMutation(api.apiKeys.updateApiKeyName)
   
   const handleCreateKey = async () => {
     if (!currentUser || !newKeyName.trim()) return
@@ -60,12 +65,14 @@ export default function APIKeysPage() {
     }
   }
   
-  const handleCopyKey = () => {
-    if (generatedKey) {
-      navigator.clipboard.writeText(generatedKey)
-      setCopiedKey(true)
-      setTimeout(() => setCopiedKey(false), 2000)
-    }
+  const handleCopyKey = (key: string, id?: string) => {
+    navigator.clipboard.writeText(key)
+    setCopiedKey(true)
+    if (id) setCopiedId(id)
+    setTimeout(() => {
+      setCopiedKey(false)
+      setCopiedId(null)
+    }, 2000)
   }
   
   const handleCloseCreateDialog = () => {
@@ -94,6 +101,35 @@ export default function APIKeysPage() {
     }
   }
   
+  const handleStartEdit = (keyId: Id<"apiKeys">, currentName: string) => {
+    setEditingKeyId(keyId)
+    setEditingKeyName(currentName)
+  }
+  
+  const handleSaveEdit = async (keyId: Id<"apiKeys">) => {
+    if (!currentUser || !editingKeyName.trim()) {
+      setEditingKeyId(null)
+      return
+    }
+    
+    try {
+      await updateApiKeyName({
+        keyId,
+        name: editingKeyName.trim(),
+        userId: currentUser._id,
+      })
+      setEditingKeyId(null)
+    } catch (error) {
+      console.error("Failed to update API key name:", error)
+      alert(`Failed to update name: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  
+  const handleCancelEdit = () => {
+    setEditingKeyId(null)
+    setEditingKeyName("")
+  }
+  
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
@@ -103,6 +139,9 @@ export default function APIKeysPage() {
       minute: "2-digit",
     })
   }
+  
+  // Example full API key for the info card
+  const exampleApiKey = "csk_live_1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z"
   
   if (!isLoaded || !user) {
     return (
@@ -137,35 +176,14 @@ export default function APIKeysPage() {
           </div>
           <Button 
             onClick={() => setShowCreateDialog(true)}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-slate-900 hover:bg-slate-800 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             Generate New Key
           </Button>
         </div>
         
-        {/* Info Card */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-base text-blue-900 flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              How API Keys Work
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-blue-800 space-y-2">
-            <p>
-              API keys allow your agents to register autonomously. Include the key in the Authorization header:
-            </p>
-            <div className="bg-blue-100 p-3 rounded font-mono text-xs">
-              Authorization: Bearer csk_live_...
-            </div>
-            <p className="text-xs">
-              Keep your API keys secure. They provide full access to register agents under your organization.
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* API Keys List */}
+        {/* API Keys Table */}
         <Card>
           <CardHeader>
             <CardTitle>Your API Keys</CardTitle>
@@ -178,44 +196,115 @@ export default function APIKeysPage() {
           </CardHeader>
           <CardContent>
             {apiKeys && apiKeys.length > 0 ? (
-              <div className="space-y-3">
-                {apiKeys.map((key) => (
-                  <div
-                    key={key._id}
-                    className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-slate-900">{key.name}</span>
-                        <Badge 
-                          variant={key.status === "active" ? "default" : "secondary"}
-                          className={key.status === "active" ? "bg-emerald-100 text-emerald-800" : ""}
-                        >
-                          {key.status}
-                        </Badge>
-                      </div>
-                      <div className="font-mono text-xs text-slate-600 mb-1">
-                        {key.keyPreview}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        Created {formatDate(key.createdAt)}
-                        {key.lastUsedAt && ` • Last used ${formatDate(key.lastUsedAt)}`}
-                        {key.expiresAt && ` • Expires ${formatDate(key.expiresAt)}`}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      {key.status === "active" && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRevokeKey(key._id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name / Environment</TableHead>
+                      <TableHead>Key Preview</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Last Used</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {apiKeys.map((key) => (
+                      <TableRow key={key._id}>
+                        <TableCell className="font-medium">
+                          {editingKeyId === key._id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editingKeyName}
+                                onChange={(e) => setEditingKeyName(e.target.value)}
+                                className="h-8 max-w-[200px]"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveEdit(key._id)
+                                  if (e.key === "Escape") handleCancelEdit()
+                                }}
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSaveEdit(key._id)}
+                                className="h-8 px-2"
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEdit}
+                                className="h-8 px-2"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span>{key.name}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleStartEdit(key._id, key.name)}
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono text-slate-600">
+                              {key.keyPreview}
+                            </code>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCopyKey(key.keyPreview, key._id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              {copiedId === key._id ? (
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={key.status === "active" ? "default" : "secondary"}
+                            className={key.status === "active" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : ""}
+                          >
+                            {key.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-slate-600">
+                          {formatDate(key.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-sm text-slate-600">
+                          {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {key.status === "active" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRevokeKey(key._id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <div className="text-center py-8 text-slate-500">
@@ -227,9 +316,44 @@ export default function APIKeysPage() {
           </CardContent>
         </Card>
         
+        {/* Info Card - Moved below API Keys table */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-base text-blue-900 flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              How API Keys Work
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-blue-800 space-y-3">
+            <p>
+              API keys allow your agents to register autonomously. Include the key in the Authorization header:
+            </p>
+            <div className="flex gap-2 items-center">
+              <div className="bg-blue-100 p-3 rounded font-mono text-xs flex-1 overflow-x-auto">
+                Authorization: Bearer {exampleApiKey}
+              </div>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => handleCopyKey(exampleApiKey)}
+                className="shrink-0 border-blue-300 hover:bg-blue-100"
+              >
+                {copiedKey && copiedId === null ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs">
+              Keep your API keys secure. They provide full access to register agents under your organization.
+            </p>
+          </CardContent>
+        </Card>
+        
         {/* Create API Key Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={handleCloseCreateDialog}>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] bg-white dark:bg-slate-900">
             {!generatedKey ? (
               // Creation Form
               <form onSubmit={(e) => { e.preventDefault(); handleCreateKey(); }}>
@@ -291,7 +415,7 @@ export default function APIKeysPage() {
                   <Button 
                     type="submit" 
                     disabled={isCreating || !newKeyName.trim()}
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
                   >
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Generate Key
@@ -336,7 +460,7 @@ export default function APIKeysPage() {
                       />
                       <Button 
                         type="button"
-                        onClick={handleCopyKey}
+                        onClick={() => handleCopyKey(generatedKey)}
                         variant="outline"
                         size="sm"
                         className="shrink-0"
@@ -350,7 +474,7 @@ export default function APIKeysPage() {
                     <p className="text-xs font-semibold text-blue-900 mb-2">
                       Using Your API Key:
                     </p>
-                    <div className="bg-blue-100 p-2 rounded font-mono text-xs text-blue-900">
+                    <div className="bg-blue-100 p-2 rounded font-mono text-xs text-blue-900 break-all">
                       curl -X POST https://api.consulate.io/agents/register \<br />
                       &nbsp;&nbsp;-H &quot;Authorization: Bearer {generatedKey.substring(0, 20)}...&quot; \<br />
                       &nbsp;&nbsp;-d &apos;{"{"}&quot;name&quot;: &quot;My Agent&quot;{"}"}&#39;
@@ -359,7 +483,7 @@ export default function APIKeysPage() {
                 </div>
                 
                 <DialogFooter>
-                  <Button onClick={handleCloseCreateDialog} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={handleCloseCreateDialog} className="w-full bg-slate-900 hover:bg-slate-800 text-white">
                     I&apos;ve Saved the Key
                   </Button>
                 </DialogFooter>
@@ -371,4 +495,3 @@ export default function APIKeysPage() {
     </DashboardLayout>
   )
 }
-

@@ -389,3 +389,197 @@ export const listOrgAgents = query({
     return agents;
   },
 });
+
+// Manual agent registration (for dashboard UI)
+export const registerAgentManual = mutation({
+  args: {
+    userId: v.id("users"),
+    name: v.string(),
+    publicKey: v.string(),
+    functionalType: v.optional(v.union(
+      // Communication & Interface
+      v.literal("voice"), v.literal("chat"), v.literal("social"),
+      v.literal("translation"), v.literal("presentation"),
+      // Technical & Development  
+      v.literal("coding"), v.literal("devops"), v.literal("security"),
+      v.literal("data"), v.literal("api"),
+      // Creative & Content
+      v.literal("writing"), v.literal("design"), v.literal("video"),
+      v.literal("music"), v.literal("gaming"),
+      // Business & Analytics
+      v.literal("research"), v.literal("financial"), v.literal("sales"),
+      v.literal("marketing"), v.literal("legal"),
+      // Specialized Domains
+      v.literal("healthcare"), v.literal("education"), v.literal("scientific"),
+      v.literal("manufacturing"), v.literal("transportation"),
+      // Coordination & Workflow
+      v.literal("scheduler"), v.literal("workflow"), v.literal("procurement"),
+      v.literal("project"),
+      // General
+      v.literal("general")
+    )),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.info(`Manual agent registration for ${args.name}`);
+
+      // 1. Get user and organization
+      const user = await ctx.db.get(args.userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (!user.organizationId) {
+        throw new Error("User is not associated with an organization");
+      }
+
+      const org = await ctx.db.get(user.organizationId);
+      if (!org) {
+        throw new Error("Organization not found");
+      }
+
+      // 2. Get or create owner DID for organization
+      const orgName = org.name;
+      const orgDomain = (org.domain || orgName).toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const ownerDid = `did:owner:org-${orgDomain}`;
+      
+      const existingOwner = await ctx.db
+        .query("owners")
+        .withIndex("by_did", (q) => q.eq("did", ownerDid))
+        .first();
+      
+      if (!existingOwner) {
+        // Create owner for organization
+        await ctx.db.insert("owners", {
+          did: ownerDid,
+          verificationTier: "verified",
+          pubkeys: [args.publicKey],
+          createdAt: Date.now(),
+        });
+        console.info(`Created owner DID for organization: ${ownerDid}`);
+      }
+
+      // 3. Generate agent DID
+      const timestamp = Date.now();
+      const agentDid = `did:agent:${orgDomain}-${timestamp}`;
+      
+      // 4. Create agent record
+      const agentId = await ctx.db.insert("agents", {
+        did: agentDid,
+        ownerDid: ownerDid,
+        name: args.name,
+        organizationName: orgName,
+        organizationId: user.organizationId,
+        publicKey: args.publicKey,
+        deployedByUserId: args.userId,
+        mock: false,
+        functionalType: args.functionalType || "general",
+        status: "active",
+        createdAt: timestamp,
+      });
+
+      // 5. Initialize reputation for new agent
+      await ctx.db.insert("agentReputation", {
+        agentDid: agentDid,
+        casesFiled: 0,
+        casesDefended: 0,
+        casesWon: 0,
+        casesLost: 0,
+        slaViolations: 0,
+        violationsAgainstThem: 0,
+        winRate: 0,
+        reliabilityScore: 100,
+        overallScore: 100,
+        lastUpdated: timestamp,
+        createdAt: timestamp,
+      });
+
+      console.info(`✅ Manual agent registration successful: ${agentDid}`);
+
+      return {
+        success: true,
+        agentId,
+        did: agentDid,
+        organizationName: orgName,
+        message: `Agent registered successfully with DID: ${agentDid}`,
+      };
+    } catch (error: any) {
+      console.error("Manual agent registration failed:", error);
+      throw new Error(`Registration failed: ${error.message}`);
+    }
+  },
+});
+
+// Migrate existing agents to ensure all fields are populated
+export const migrateAgentsSchema = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.info("Starting agent schema migration...");
+    
+    const agents = await ctx.db.query("agents").collect();
+    let updated = 0;
+    let skipped = 0;
+
+    for (const agent of agents) {
+      const updates: any = {};
+      let needsUpdate = false;
+
+      // Ensure name exists
+      if (!agent.name) {
+        updates.name = agent.organizationName || agent.did.split(':')[2] || "Unknown Agent";
+        needsUpdate = true;
+      }
+
+      // Ensure organizationName exists
+      if (!agent.organizationName && agent.organizationId) {
+        const org = await ctx.db.get(agent.organizationId);
+        if (org) {
+          updates.organizationName = org.name;
+          needsUpdate = true;
+        }
+      }
+
+      // Ensure functionalType exists
+      if (!agent.functionalType) {
+        updates.functionalType = "general";
+        needsUpdate = true;
+      }
+
+      // Ensure status exists
+      if (!agent.status) {
+        updates.status = "active";
+        needsUpdate = true;
+      }
+
+      // Ensure createdAt exists
+      if (!agent.createdAt) {
+        updates.createdAt = Date.now();
+        needsUpdate = true;
+      }
+
+      // Ensure mock field exists
+      if (agent.mock === undefined) {
+        updates.mock = false;
+        needsUpdate = true;
+      }
+
+      // Apply updates if needed
+      if (needsUpdate) {
+        await ctx.db.patch(agent._id, updates);
+        updated++;
+        console.info(`Updated agent: ${agent.did}`);
+      } else {
+        skipped++;
+      }
+    }
+
+    console.info(`✅ Migration complete: ${updated} updated, ${skipped} skipped`);
+    
+    return {
+      success: true,
+      totalAgents: agents.length,
+      updated,
+      skipped,
+    };
+  },
+});

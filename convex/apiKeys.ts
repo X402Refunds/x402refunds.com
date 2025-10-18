@@ -209,3 +209,36 @@ export const updateApiKeyUsage = mutation({
   },
 });
 
+// Update API key name/environment label
+export const updateApiKeyName = mutation({
+  args: {
+    keyId: v.id("apiKeys"),
+    name: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Get user to verify organization
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get API key and verify it belongs to user's organization
+    const apiKey = await ctx.db.get(args.keyId);
+    if (!apiKey) {
+      throw new Error("API key not found");
+    }
+
+    if (apiKey.organizationId !== user.organizationId) {
+      throw new Error("Unauthorized: API key belongs to different organization");
+    }
+
+    // Update the name
+    await ctx.db.patch(args.keyId, {
+      name: args.name.trim(),
+    });
+
+    return { success: true };
+  },
+});
+

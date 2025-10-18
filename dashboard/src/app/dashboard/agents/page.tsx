@@ -70,7 +70,7 @@ export default function AgentsPage() {
           <Button
             onClick={() => setShowCreateDialog(true)}
             disabled={!currentUser || !organization}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-slate-900 hover:bg-slate-800 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Agent
@@ -116,7 +116,7 @@ export default function AgentsPage() {
                 <p className="text-slate-600 mb-4">No agents yet</p>
                 <Button
                   onClick={() => setShowCreateDialog(true)}
-                  variant="outline"
+                  className="bg-slate-900 hover:bg-slate-800 text-white"
                   disabled={!currentUser || !organization}
                 >
                   <Plus className="h-4 w-4 mr-2" />

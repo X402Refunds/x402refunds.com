@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-17T21:50:44.512Z
+**Auto-generated on**: 2025-10-18T02:03:10.767Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,8 +75,8 @@ consulate/
 ## ⚡ Backend API (Convex Functions)
 
 ### Convex Files (17 files)
-- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation, listOrgAgents
-- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage
+- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
+- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -112,7 +112,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (38 components)
+### React Components (39 components)
 - Footer
 - Navigation
 - StructuredData
@@ -134,7 +134,7 @@ Common HTTP routes exposed:
 - breadcrumb
 - button
 
-... and 18 more
+... and 19 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -256,7 +256,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 38 components organized by feature
+- 39 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 17 TypeScript files with serverless functions
@@ -298,5 +298,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/17/2025, 2:50:44 PM
-Files scanned: 270
+Generated: 10/17/2025, 7:03:10 PM
+Files scanned: 272
