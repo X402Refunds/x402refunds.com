@@ -291,30 +291,13 @@ export default function APIKeysPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1">
-                              <code className="text-xs font-mono text-slate-600">
-                                {key.keyPreview}
-                              </code>
-                              <p className="text-xs text-slate-500 mt-0.5">
-                                Full key only shown at creation
-                              </p>
-                            </div>
-                            {key.keyPreview !== 'N/A' && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleCopyKey(key.keyPreview, key._id)}
-                                className="h-6 w-6 p-0"
-                                title="Copy preview (full key only shown at creation)"
-                              >
-                                {copiedId === key._id ? (
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            )}
+                          <div>
+                            <code className="text-xs font-mono text-slate-600">
+                              {key.keyPreview}
+                            </code>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              Full key only shown at creation
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -342,7 +325,7 @@ export default function APIKeysPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            {key.status === "active" ? (
+                            {key.status !== "revoked" ? (
                               <Button
                                 variant="destructive"
                                 size="sm"
