@@ -327,5 +327,373 @@ describe('API Keys Management', () => {
       expect(activeKeys[0]._id).toEqual(key1.keyId);
     });
   });
+
+  describe('API Key Revocation (SOC2/PCI Compliance)', () => {
+    it('should revoke active key successfully', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      const revocation = await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      expect(revocation.success).toBe(true);
+      expect(revocation.revokedAt).toBeDefined();
+
+      // Verify key status updated
+      const keys = await t.query(api.apiKeys.listApiKeys, {
+        organizationId: testOrgId,
+      });
+
+      const revokedKey = keys.find(k => k._id === result.keyId);
+      expect(revokedKey?.status).toBe("revoked");
+    });
+
+    it('should set revokedAt timestamp and revokedBy user', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Check database directly for audit fields
+      const key = await t.run(async (ctx) => {
+        return await ctx.db.get(result.keyId);
+      });
+
+      expect(key?.revokedAt).toBeDefined();
+      expect(key?.revokedBy).toEqual(testUserId);
+    });
+
+    it('should create audit event for revocation', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Check events table for audit trail
+      const events = await t.run(async (ctx) => {
+        return await ctx.db.query("events").collect();
+      });
+
+      const revocationEvent = events.find(e => e.type === "API_KEY_REVOKED");
+      expect(revocationEvent).toBeDefined();
+      expect(revocationEvent?.payload).toMatchObject({
+        keyId: result.keyId,
+        keyName: "Test Key",
+      });
+    });
+
+    it('should fail to revoke already revoked key', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      // First revocation succeeds
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Second revocation should fail
+      await expect(
+        t.mutation(api.apiKeys.revokeApiKey, {
+          keyId: result.keyId,
+          userId: testUserId,
+        })
+      ).rejects.toThrow("already revoked");
+    });
+
+    it('should fail for unauthorized user (different org)', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      // Create user from different org
+      const otherOrgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "Other Org",
+          domain: "other.com",
+          verified: true,
+          verifiedAt: Date.now(),
+          createdAt: Date.now(),
+        });
+      });
+
+      const otherUserId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkUserId: "other-user-123",
+          email: "other@test.com",
+          name: "Other User",
+          organizationId: otherOrgId,
+          role: "admin",
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+        });
+      });
+
+      // Should fail - different org
+      await expect(
+        t.mutation(api.apiKeys.revokeApiKey, {
+          keyId: result.keyId,
+          userId: otherUserId,
+        })
+      ).rejects.toThrow("Unauthorized");
+    });
+  });
+
+  describe('API Key Deletion (Admin-only, 90-day cooling period)', () => {
+    it('should delete key after 90-day cooling period', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      // Revoke key
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Manually set revokedAt to 91 days ago
+      await t.run(async (ctx) => {
+        await ctx.db.patch(result.keyId, {
+          revokedAt: Date.now() - (91 * 24 * 60 * 60 * 1000),
+        });
+      });
+
+      // Delete should succeed
+      const deletion = await t.mutation(api.apiKeys.deleteApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      expect(deletion.success).toBe(true);
+
+      // Verify key is deleted
+      const key = await t.run(async (ctx) => {
+        return await ctx.db.get(result.keyId);
+      });
+
+      expect(key).toBeNull();
+    });
+
+    it('should fail if not admin', async () => {
+      // Create non-admin user
+      const nonAdminUserId = await t.run(async (ctx) => {
+        return await ctx.db.insert("users", {
+          clerkUserId: "non-admin-user",
+          email: "nonadmin@test.com",
+          name: "Non Admin",
+          organizationId: testOrgId,
+          role: "member",
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+        });
+      });
+
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Set revoked 91 days ago
+      await t.run(async (ctx) => {
+        await ctx.db.patch(result.keyId, {
+          revokedAt: Date.now() - (91 * 24 * 60 * 60 * 1000),
+        });
+      });
+
+      // Should fail - not admin
+      await expect(
+        t.mutation(api.apiKeys.deleteApiKey, {
+          keyId: result.keyId,
+          userId: nonAdminUserId,
+        })
+      ).rejects.toThrow("Admin access required");
+    });
+
+    it('should fail if key not revoked first', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      // Try to delete without revoking first
+      await expect(
+        t.mutation(api.apiKeys.deleteApiKey, {
+          keyId: result.keyId,
+          userId: testUserId,
+        })
+      ).rejects.toThrow("must be revoked before permanent deletion");
+    });
+
+    it('should fail if cooling period not elapsed', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Try to delete immediately (cooling period not elapsed)
+      await expect(
+        t.mutation(api.apiKeys.deleteApiKey, {
+          keyId: result.keyId,
+          userId: testUserId,
+        })
+      ).rejects.toThrow("90 days before permanent deletion");
+    });
+
+    it('should create deletion audit event', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Set revoked 91 days ago
+      await t.run(async (ctx) => {
+        await ctx.db.patch(result.keyId, {
+          revokedAt: Date.now() - (91 * 24 * 60 * 60 * 1000),
+        });
+      });
+
+      await t.mutation(api.apiKeys.deleteApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Check for deletion event
+      const events = await t.run(async (ctx) => {
+        return await ctx.db.query("events").collect();
+      });
+
+      const deletionEvent = events.find(e => e.type === "API_KEY_DELETED_PERMANENT");
+      expect(deletionEvent).toBeDefined();
+      expect(deletionEvent?.payload).toMatchObject({
+        keyId: result.keyId,
+        keyName: "Test Key",
+      });
+    });
+  });
+
+  describe('API Key Audit Trail', () => {
+    it('should return all events for specific key', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      const auditLog = await t.query(api.apiKeys.getApiKeyAuditLog, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      expect(auditLog.length).toBeGreaterThan(0);
+      const types = auditLog.map(e => e.type);
+      expect(types).toContain("API_KEY_REVOKED");
+    });
+
+    it('should be ordered by timestamp descending', async () => {
+      const result = await t.mutation(api.apiKeys.generateApiKey, {
+        userId: testUserId,
+        name: "Test Key",
+      });
+
+      await t.mutation(api.apiKeys.revokeApiKey, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      const auditLog = await t.query(api.apiKeys.getApiKeyAuditLog, {
+        keyId: result.keyId,
+        userId: testUserId,
+      });
+
+      // Verify descending order (newest first)
+      for (let i = 1; i < auditLog.length; i++) {
+        expect(auditLog[i - 1].timestamp).toBeGreaterThanOrEqual(auditLog[i].timestamp);
+      }
+    });
+  });
+
+  describe('Backwards Compatibility', () => {
+    it('should handle keys with old token field', async () => {
+      // Create key with old token field directly
+      const oldKeyId = await t.run(async (ctx) => {
+        return await ctx.db.insert("apiKeys", {
+          token: "old_token_abc123",
+          organizationId: testOrgId,
+          name: "Old Key",
+          createdBy: testUserId,
+          status: "active",
+          createdAt: Date.now(),
+        } as any);
+      });
+
+      const keys = await t.query(api.apiKeys.listApiKeys, {
+        organizationId: testOrgId,
+      });
+
+      const oldKey = keys.find(k => k._id === oldKeyId);
+      expect(oldKey).toBeDefined();
+      expect(oldKey?.keyPreview).toBeDefined();
+      expect(oldKey?.keyPreview).not.toBe('N/A');
+    });
+
+    it('should handle keys without revokedAt/revokedBy', async () => {
+      // Create revoked key without audit fields
+      const legacyKeyId = await t.run(async (ctx) => {
+        return await ctx.db.insert("apiKeys", {
+          key: "csk_live_legacy123456789012345678901234",
+          organizationId: testOrgId,
+          name: "Legacy Revoked Key",
+          createdBy: testUserId,
+          status: "revoked",
+          createdAt: Date.now(),
+        } as any);
+      });
+
+      const keys = await t.query(api.apiKeys.listApiKeys, {
+        organizationId: testOrgId,
+      });
+
+      const legacyKey = keys.find(k => k._id === legacyKeyId);
+      expect(legacyKey).toBeDefined();
+      expect(legacyKey?.status).toBe("revoked");
+    });
+  });
 });
 
