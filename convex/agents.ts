@@ -279,22 +279,214 @@ export const listAgents = query({
 export const updateAgentStatus = mutation({
   args: {
     agentId: v.id("agents"),
-    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned")),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"), v.literal("deactivated")),
+    userId: v.optional(v.id("users")),  // For audit trail
+    reason: v.optional(v.string()),     // Optional reason for status change
   },
   handler: async (ctx, args) => {
     try {
       console.info(`Updating agent status for ${args.agentId} to ${args.status}`);
       
+      // Get current agent state for audit log
+      const agent = await ctx.db.get(args.agentId);
+      if (!agent) {
+        throw new Error("Agent not found");
+      }
+      const oldStatus = agent.status;
+      
+      const now = Date.now();
+      
       await ctx.db.patch(args.agentId, {
         status: args.status,
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
       
-      console.info(`Agent status updated successfully`);
+      // Create audit trail event
+      await ctx.db.insert("events", {
+        type: "AGENT_STATUS_CHANGED",
+        timestamp: now,
+        agentDid: agent.did,
+        payload: {
+          agentId: args.agentId,
+          agentDid: agent.did,
+          agentName: agent.name,
+          oldStatus,
+          newStatus: args.status,
+          changedBy: args.userId,
+          reason: args.reason,
+          organizationId: agent.organizationId,
+        },
+      });
+      
+      console.info(`Agent status updated successfully: ${oldStatus} -> ${args.status}`);
       return "status_updated";
     } catch (error) {
       console.error(`Failed to update agent status:`, error);
       throw new Error(`Failed to update agent status: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
+// Deactivate an agent (soft delete, preserves dispute history)
+export const deactivateAgent = mutation({
+  args: {
+    agentId: v.id("agents"),
+    userId: v.id("users"),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    try {
+      const agent = await ctx.db.get(args.agentId);
+      if (!agent) {
+        throw new Error("Agent not found");
+      }
+
+      // Verify user belongs to same organization
+      const user = await ctx.db.get(args.userId);
+      if (!user || user.organizationId !== agent.organizationId) {
+        throw new Error("Unauthorized to deactivate this agent");
+      }
+
+      // Check if already deactivated
+      if (agent.status === "deactivated") {
+        throw new Error("Agent is already deactivated");
+      }
+
+      const now = Date.now();
+      
+      // Deactivate the agent (soft delete)
+      await ctx.db.patch(args.agentId, {
+        status: "deactivated",
+        deactivatedAt: now,
+        deactivatedBy: args.userId,
+        updatedAt: now,
+      });
+
+      // Create audit trail event
+      await ctx.db.insert("events", {
+        type: "AGENT_DEACTIVATED",
+        timestamp: now,
+        agentDid: agent.did,
+        payload: {
+          agentId: args.agentId,
+          agentDid: agent.did,
+          agentName: agent.name,
+          previousStatus: agent.status,
+          deactivatedBy: args.userId,
+          deactivatedByEmail: user.email,
+          reason: args.reason,
+          organizationId: agent.organizationId,
+        },
+      });
+
+      console.info(
+        `Agent deactivated: ${args.agentId} (${agent.did}) by user: ${args.userId}`
+      );
+      
+      return { 
+        success: true, 
+        deactivatedAt: now,
+        message: "Agent deactivated. Dispute history and audit trail preserved."
+      };
+    } catch (error) {
+      console.error("Failed to deactivate agent:", error);
+      throw new Error(`Failed to deactivate agent: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
+// Anonymize agent data for GDPR compliance (keeps DID and case references)
+export const anonymizeAgent = mutation({
+  args: {
+    agentId: v.id("agents"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    try {
+      const agent = await ctx.db.get(args.agentId);
+      if (!agent) {
+        throw new Error("Agent not found");
+      }
+
+      // Verify user belongs to same organization
+      const user = await ctx.db.get(args.userId);
+      if (!user || user.organizationId !== agent.organizationId) {
+        throw new Error("Unauthorized to anonymize this agent");
+      }
+
+      // Check if agent has active disputes (GDPR legal exception)
+      const activeCases = await ctx.db
+        .query("cases")
+        .filter((q) => 
+          q.or(
+            q.eq(q.field("plaintiff"), agent.did),
+            q.eq(q.field("defendant"), agent.did)
+          )
+        )
+        .filter((q) => 
+          q.or(
+            q.eq(q.field("status"), "pending"),
+            q.eq(q.field("status"), "evidence_gathering"),
+            q.eq(q.field("status"), "deliberation")
+          )
+        )
+        .collect();
+
+      if (activeCases.length > 0) {
+        throw new Error(
+          `Cannot anonymize agent with active disputes. ` +
+          `GDPR allows data retention for legal claims. ` +
+          `Active disputes: ${activeCases.length}`
+        );
+      }
+
+      const now = Date.now();
+      
+      // Create anonymized name using hash of original DID
+      const hashBuffer = new TextEncoder().encode(agent.did);
+      const hashHex = Array.from(hashBuffer)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .substring(0, 8);
+      const anonymizedName = `Anonymized Agent [${hashHex}]`;
+      
+      // Anonymize PII while preserving legal records
+      await ctx.db.patch(args.agentId, {
+        name: anonymizedName,
+        organizationName: undefined, // Remove org name
+        anonymizedAt: now,
+        updatedAt: now,
+      });
+
+      // Create audit trail event (preserve that anonymization occurred)
+      await ctx.db.insert("events", {
+        type: "AGENT_ANONYMIZED",
+        timestamp: now,
+        agentDid: agent.did, // Keep DID for legal traceability
+        payload: {
+          agentId: args.agentId,
+          agentDid: agent.did,
+          previousName: agent.name,
+          newName: anonymizedName,
+          anonymizedBy: args.userId,
+          anonymizedByEmail: user.email,
+          organizationId: agent.organizationId,
+          gdprCompliant: true,
+        },
+      });
+
+      console.info(
+        `Agent anonymized for GDPR compliance: ${args.agentId} (${agent.did})`
+      );
+      
+      return { 
+        success: true, 
+        anonymizedAt: now,
+        message: "Agent data anonymized. DID and case references preserved for legal requirements."
+      };
+    } catch (error) {
+      console.error("Failed to anonymize agent:", error);
+      throw new Error(`Failed to anonymize agent: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 });

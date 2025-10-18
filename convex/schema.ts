@@ -120,7 +120,10 @@ export default defineSchema({
       v.literal("general")
     )),
     
-    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned")),
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"), v.literal("deactivated")),
+    deactivatedAt: v.optional(v.number()),       // When agent was deactivated (soft delete)
+    deactivatedBy: v.optional(v.id("users")),    // User who deactivated the agent
+    anonymizedAt: v.optional(v.number()),        // When agent data was anonymized (GDPR compliance)
     
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),

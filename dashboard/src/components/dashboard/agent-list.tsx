@@ -16,10 +16,13 @@ interface Agent {
   name?: string
   organizationName?: string
   functionalType?: string
-  status: "active" | "suspended" | "banned"
+  status: "active" | "suspended" | "banned" | "deactivated"
   createdAt: number
   buildHash?: string
   configHash?: string
+  deactivatedAt?: number
+  deactivatedBy?: Id<"users">
+  anonymizedAt?: number
 }
 
 interface AgentListProps {
@@ -30,6 +33,7 @@ const STATUS_COLORS = {
   active: "bg-emerald-100 text-emerald-800 border-emerald-200",
   suspended: "bg-amber-100 text-amber-800 border-amber-200",
   banned: "bg-red-100 text-red-800 border-red-200",
+  deactivated: "bg-slate-100 text-slate-800 border-slate-200",
 }
 
 const FUNCTIONAL_TYPE_LABELS: Record<string, string> = {
