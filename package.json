@@ -21,7 +21,7 @@
     "version-rules": "node scripts/version-rules.js"
   },
   "dependencies": {
-    "convex": "^1.27.3",
+    "convex": "^1.28.0",
     "convex-test": "^0.0.38",
     "zod": "^4.1.11"
   },
