@@ -112,14 +112,10 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_register_agent",
-    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance. Requires your Consulate API key.",
+    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance. API key must be passed in Authorization header.",
     input_schema: {
       type: "object",
       properties: {
-        apiKey: {
-          type: "string",
-          description: "Your Consulate API key (get from Settings → API Keys in dashboard)"
-        },
         name: {
           type: "string",
           description: "Name of the agent (e.g., 'acme-monitoring-agent', 'openai-api-consumer')"
@@ -130,7 +126,7 @@ export const MCP_TOOLS = [
           description: "What type of agent this is"
         }
       },
-      required: ["apiKey", "name", "functionalType"]
+      required: ["name", "functionalType"]
     }
   },
   {
@@ -295,48 +291,79 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
     
-    // Signature-based authentication (ONLY method)
-    const { extractAuthFromHeaders, validateAuth } = await import("./auth");
-    const signatureAuth = extractAuthFromHeaders(request.headers);
+    // Check for Bearer token (API key) in Authorization header
+    const authHeader = request.headers.get("Authorization");
+    let authenticatedOrg = null;
     
-    if (!signatureAuth) {
-      return new Response(JSON.stringify({
-        error: "Authentication required",
-        method: "Ed25519 signature",
-        required_headers: {
-          "X-Agent-DID": "Your agent's DID (e.g., did:agent:acme-prod-1729012345)",
-          "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
-          "X-Timestamp": "Current timestamp in milliseconds"
-        },
-        message_format: "Sign: METHOD:PATH:BODY:TIMESTAMP",
-        registration: "POST /agents/register-with-signature to register your agent"
-      }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" }
-      });
+    if (authHeader?.startsWith("Bearer ")) {
+      // API Key authentication
+      const apiKey = authHeader.substring(7);
+      
+      // Validate API key using helper function
+      try {
+        const { validateApiKey } = await import("./apiKeys");
+        await validateApiKey(ctx, apiKey);
+        
+        // Update last used timestamp
+        await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
+      } catch (error: any) {
+        return new Response(JSON.stringify({
+          error: "Invalid or expired API key",
+          hint: "Get your API key from Settings → API Keys in the dashboard",
+          details: error.message
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    } else {
+      // Signature-based authentication (legacy)
+      const { extractAuthFromHeaders, validateAuth } = await import("./auth");
+      const signatureAuth = extractAuthFromHeaders(request.headers);
+      
+      if (!signatureAuth) {
+        return new Response(JSON.stringify({
+          error: "Authentication required",
+          methods: [
+            {
+              type: "Bearer token (recommended)",
+              header: "Authorization: Bearer csk_live_...",
+              how: "Get API key from Settings → API Keys in dashboard"
+            },
+            {
+              type: "Ed25519 signature (advanced)",
+              headers: {
+                "X-Agent-DID": "Your agent's DID",
+                "X-Signature": "Hex-encoded Ed25519 signature",
+                "X-Timestamp": "Current timestamp"
+              }
+            }
+          ]
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      
+      // Validate signature
+      const isValid = await validateAuth(
+        ctx,
+        signatureAuth,
+        "POST",
+        "/mcp/invoke",
+        bodyStr
+      );
+      
+      if (!isValid) {
+        return new Response(JSON.stringify({
+          error: "Invalid signature",
+          hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
     }
-    
-    // Validate signature
-    const isValid = await validateAuth(
-      ctx,
-      signatureAuth,
-      "POST",
-      "/mcp/invoke",
-      bodyStr
-    );
-    
-    if (!isValid) {
-      return new Response(JSON.stringify({
-        error: "Invalid signature",
-        hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP",
-        agentDid: signatureAuth.agentDid
-      }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-    
-    const agentDid = signatureAuth.agentDid;
     
     // Route to appropriate handler based on tool name
     let result;
@@ -404,8 +431,22 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         
       case "consulate_register_agent":
+        // Get the API key from the Authorization header
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+          return new Response(JSON.stringify({
+            error: "API key required",
+            hint: "Pass your API key in the Authorization header: 'Bearer csk_live_...'"
+          }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        const apiKey = authHeader.substring(7);
+        
         result = await ctx.runMutation(api.agents.joinAgent, {
-          apiKey: parameters.apiKey,
+          apiKey: apiKey,
           name: parameters.name,
           functionalType: parameters.functionalType,
           mock: false
