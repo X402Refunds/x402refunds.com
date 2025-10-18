@@ -113,16 +113,24 @@ export const listApiKeys = query({
       .collect();
 
     // Return keys without the actual key value (security)
-    return keys.map(k => ({
-      _id: k._id,
-      name: k.name,
-      keyPreview: k.key ? `${k.key.substring(0, 12)}...${k.key.substring(k.key.length - 4)}` : 'N/A',
-      status: k.status || 'active',
-      lastUsedAt: k.lastUsedAt,
-      expiresAt: k.expiresAt,
-      createdAt: k.createdAt,
-      createdBy: k.createdBy || k.createdByUserId,
-    }));
+    return keys.map(k => {
+      // Handle backwards compatibility with old 'token' field
+      const keyValue = k.key || (k as any).token;
+      const keyPreview = keyValue 
+        ? `${keyValue.substring(0, 12)}...${keyValue.substring(keyValue.length - 4)}` 
+        : 'N/A';
+      
+      return {
+        _id: k._id,
+        name: k.name,
+        keyPreview,
+        status: k.status || 'active',
+        lastUsedAt: k.lastUsedAt,
+        expiresAt: k.expiresAt,
+        createdAt: k.createdAt,
+        createdBy: k.createdBy || k.createdByUserId,
+      };
+    });
   },
 });
 
