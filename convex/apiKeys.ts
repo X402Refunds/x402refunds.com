@@ -134,7 +134,7 @@ export const listApiKeys = query({
   },
 });
 
-// Revoke an API key
+// Revoke an API key (SOC2/PCI compliant soft delete with audit trail)
 export const revokeApiKey = mutation({
   args: {
     keyId: v.id("apiKeys"),
@@ -148,19 +148,47 @@ export const revokeApiKey = mutation({
         throw new Error("API key not found");
       }
 
+      // Check if already revoked
+      if (apiKey.status === "revoked") {
+        throw new Error("API key is already revoked");
+      }
+
       // Verify user belongs to same organization
       const user = await ctx.db.get(args.userId);
       if (!user || user.organizationId !== apiKey.organizationId) {
         throw new Error("Unauthorized to revoke this API key");
       }
 
-      // Revoke the key
+      const now = Date.now();
+      
+      // Revoke the key with audit metadata
       await ctx.db.patch(args.keyId, {
         status: "revoked",
+        revokedAt: now,
+        revokedBy: args.userId,
       });
 
-      console.info(`Revoked API key: ${args.keyId}`);
-      return { success: true };
+      // Create audit trail event for SOC2/PCI compliance
+      const keyValue = apiKey.key || (apiKey as any).token;
+      const keyPreview = keyValue 
+        ? `${keyValue.substring(0, 12)}...${keyValue.substring(keyValue.length - 4)}` 
+        : 'N/A';
+
+      await ctx.db.insert("events", {
+        type: "API_KEY_REVOKED",
+        timestamp: now,
+        payload: {
+          keyId: args.keyId,
+          keyName: apiKey.name,
+          keyPreview,
+          organizationId: apiKey.organizationId,
+          revokedBy: args.userId,
+          revokedByEmail: user.email,
+        },
+      });
+
+      console.info(`Revoked API key: ${args.keyId} by user: ${args.userId}`);
+      return { success: true, revokedAt: now };
     } catch (error) {
       console.error("Failed to revoke API key:", error);
       throw new Error(`Failed to revoke API key: ${error instanceof Error ? error.message : String(error)}`);
@@ -247,6 +275,140 @@ export const updateApiKeyName = mutation({
     });
 
     return { success: true };
+  },
+});
+
+// Delete an API key permanently (admin-only, requires 90-day cooling period)
+// This is for compliance cleanup after retention requirements are met
+export const deleteApiKey = mutation({
+  args: {
+    keyId: v.id("apiKeys"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get user and verify admin role
+      const user = await ctx.db.get(args.userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      
+      if (user.role !== "admin") {
+        throw new Error("Admin access required for permanent deletion");
+      }
+
+      // Get the API key
+      const apiKey = await ctx.db.get(args.keyId);
+      if (!apiKey) {
+        throw new Error("API key not found");
+      }
+
+      // Verify user belongs to same organization
+      if (user.organizationId !== apiKey.organizationId) {
+        throw new Error("Unauthorized: API key belongs to different organization");
+      }
+
+      // Require key to be revoked first (must go through revocation process)
+      if (apiKey.status !== "revoked") {
+        throw new Error("Key must be revoked before permanent deletion. Please revoke the key first.");
+      }
+
+      // Enforce 90-day cooling period (compliance requirement)
+      const revokedAt = apiKey.revokedAt || 0;
+      const daysSinceRevocation = (Date.now() - revokedAt) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceRevocation < 90) {
+        const daysRemaining = Math.ceil(90 - daysSinceRevocation);
+        throw new Error(
+          `Key must be revoked for 90 days before permanent deletion. ` +
+          `Days remaining: ${daysRemaining}. ` +
+          `This cooling period is required for SOC2/PCI compliance audit trails.`
+        );
+      }
+
+      const now = Date.now();
+      
+      // Log deletion event BEFORE deleting (for audit trail preservation)
+      const keyValue = apiKey.key || (apiKey as any).token;
+      const keyPreview = keyValue 
+        ? `${keyValue.substring(0, 12)}...${keyValue.substring(keyValue.length - 4)}` 
+        : 'N/A';
+
+      await ctx.db.insert("events", {
+        type: "API_KEY_DELETED_PERMANENT",
+        timestamp: now,
+        payload: {
+          keyId: args.keyId,
+          keyName: apiKey.name,
+          keyPreview,
+          organizationId: apiKey.organizationId,
+          revokedAt: apiKey.revokedAt,
+          revokedBy: apiKey.revokedBy,
+          deletedBy: args.userId,
+          deletedByEmail: user.email,
+          daysSinceRevocation: Math.floor(daysSinceRevocation),
+        },
+      });
+
+      // Permanent deletion
+      await ctx.db.delete(args.keyId);
+
+      console.warn(
+        `PERMANENT deletion of API key: ${args.keyId} by admin: ${args.userId} ` +
+        `(revoked ${Math.floor(daysSinceRevocation)} days ago)`
+      );
+      
+      return { 
+        success: true, 
+        deletedAt: now,
+        message: "API key permanently deleted. Audit trail preserved in events log."
+      };
+    } catch (error) {
+      console.error("Failed to delete API key:", error);
+      throw new Error(`Failed to delete API key: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
+// Get audit log for a specific API key (for compliance review)
+export const getApiKeyAuditLog = query({
+  args: {
+    keyId: v.id("apiKeys"),
+    userId: v.id("users"), // For authorization
+  },
+  handler: async (ctx, args) => {
+    // Verify user access
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const apiKey = await ctx.db.get(args.keyId);
+    if (!apiKey) {
+      throw new Error("API key not found");
+    }
+
+    // Verify same organization
+    if (user.organizationId !== apiKey.organizationId) {
+      throw new Error("Unauthorized to view this API key's audit log");
+    }
+
+    // Get all events related to this key
+    const allEvents = await ctx.db.query("events").collect();
+    const keyEvents = allEvents.filter(event => {
+      const payload = event.payload as any;
+      return payload?.keyId === args.keyId;
+    });
+
+    // Sort by timestamp descending (newest first)
+    keyEvents.sort((a, b) => b.timestamp - a.timestamp);
+
+    return keyEvents.map(event => ({
+      _id: event._id,
+      type: event.type,
+      timestamp: event.timestamp,
+      payload: event.payload,
+    }));
   },
 });
 

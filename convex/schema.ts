@@ -54,6 +54,8 @@ export default defineSchema({
     lastUsedAt: v.optional(v.number()),       // Track usage
     expiresAt: v.optional(v.number()),        // Optional expiration timestamp
     status: v.optional(v.union(v.literal("active"), v.literal("revoked"))),
+    revokedAt: v.optional(v.number()),        // When key was revoked (SOC2/PCI compliance audit trail)
+    revokedBy: v.optional(v.id("users")),     // User who revoked the key (SOC2/PCI compliance audit trail)
     active: v.optional(v.boolean()),          // DEPRECATED: old status field
     permissions: v.optional(v.array(v.string())), // DEPRECATED: old permissions field
     createdAt: v.number(),

@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Key, Copy, Trash2, Plus, CheckCircle2, AlertCircle, Loader2, Pencil } from "lucide-react"
+import { Key, Copy, Ban, Plus, CheckCircle2, AlertCircle, Loader2, Pencil } from "lucide-react"
 import { Id } from "@convex/_generated/dataModel"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function APIKeysPage() {
   const { user, isLoaded } = useUser()
@@ -26,6 +27,7 @@ export default function APIKeysPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [editingKeyId, setEditingKeyId] = useState<Id<"apiKeys"> | null>(null)
   const [editingKeyName, setEditingKeyName] = useState("")
+  const [showRevokedKeys, setShowRevokedKeys] = useState(false)
   
   // Queries
   const currentUser = useQuery(
@@ -33,9 +35,14 @@ export default function APIKeysPage() {
     user ? { clerkUserId: user.id } : "skip"
   )
   
-  const apiKeys = useQuery(
+  const allApiKeys = useQuery(
     api.apiKeys.listApiKeys,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
+  )
+  
+  // Filter API keys based on revoked status
+  const apiKeys = allApiKeys?.filter(key => 
+    showRevokedKeys ? true : key.status !== "revoked"
   )
   
   // Mutations
@@ -83,18 +90,26 @@ export default function APIKeysPage() {
     setCopiedKey(false)
   }
   
-  const handleRevokeKey = async (keyId: Id<"apiKeys">) => {
+  const handleRevokeKey = async (keyId: Id<"apiKeys">, keyName: string) => {
     if (!currentUser) return
     
-    if (!confirm("Are you sure you want to revoke this API key? This action cannot be undone.")) {
-      return
-    }
+    const confirmed = confirm(
+      `Revoke API key "${keyName}"?\n\n` +
+      `This will immediately stop all authentication with this key.\n` +
+      `The key cannot be reactivated, but audit trails will be preserved for compliance.\n\n` +
+      `This action cannot be undone.`
+    )
+    
+    if (!confirmed) return
     
     try {
       await revokeApiKey({
         keyId,
         userId: currentUser._id,
       })
+      
+      // Show success message
+      alert(`API key "${keyName}" has been revoked successfully.`)
     } catch (error) {
       console.error("Failed to revoke API key:", error)
       alert(`Failed to revoke API key: ${error instanceof Error ? error.message : String(error)}`)
@@ -186,13 +201,33 @@ export default function APIKeysPage() {
         {/* API Keys Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Your API Keys</CardTitle>
-            <CardDescription>
-              {apiKeys?.length === 0 
-                ? "No API keys yet. Generate one to get started." 
-                : `${apiKeys?.length} API key${apiKeys?.length === 1 ? '' : 's'} total`
-              }
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Your API Keys</CardTitle>
+                <CardDescription>
+                  {apiKeys?.length === 0 
+                    ? "No API keys yet. Generate one to get started." 
+                    : `${apiKeys?.length} API key${apiKeys?.length === 1 ? '' : 's'} shown` +
+                      (allApiKeys ? ` (${allApiKeys.filter(k => k.status === "active").length} active, ${allApiKeys.filter(k => k.status === "revoked").length} revoked)` : '')
+                  }
+                </CardDescription>
+              </div>
+              {allApiKeys && allApiKeys.some(k => k.status === "revoked") && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="show-revoked" 
+                    checked={showRevokedKeys}
+                    onCheckedChange={(checked) => setShowRevokedKeys(checked === true)}
+                  />
+                  <label
+                    htmlFor="show-revoked"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Show revoked keys
+                  </label>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {apiKeys && apiKeys.length > 0 ? (
@@ -283,12 +318,21 @@ export default function APIKeysPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={key.status === "active" ? "default" : "secondary"}
-                            className={key.status === "active" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : ""}
-                          >
-                            {key.status}
-                          </Badge>
+                          {key.status === "revoked" ? (
+                            <Badge 
+                              variant="secondary"
+                              className="bg-red-100 text-red-800 border-red-200"
+                            >
+                              REVOKED
+                            </Badge>
+                          ) : (
+                            <Badge 
+                              variant="default"
+                              className="bg-emerald-100 text-emerald-800 border-emerald-200"
+                            >
+                              ACTIVE
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-slate-600">
                           {formatDate(key.createdAt)}
@@ -298,14 +342,20 @@ export default function APIKeysPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            {key.status === "active" && (
+                            {key.status === "active" ? (
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => handleRevokeKey(key._id)}
+                                onClick={() => handleRevokeKey(key._id, key.name)}
+                                title="Revoke this key (stops authentication, preserves audit trail)"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Ban className="h-4 w-4 mr-1" />
+                                Revoke
                               </Button>
+                            ) : (
+                              <span className="text-xs text-slate-500">
+                                Audit trail preserved
+                              </span>
                             )}
                           </div>
                         </TableCell>

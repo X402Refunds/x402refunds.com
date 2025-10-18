@@ -177,3 +177,42 @@ export const getEventTimeline = query({
     return Array.from(buckets.values());
   }
 });
+
+// Get API key specific events (for audit trail)
+export const getApiKeyEvents = query({
+  args: {
+    keyId: v.string(), // Can be either Id<"apiKeys"> or string representation
+    eventTypes: v.optional(v.array(v.string())), // Filter by event types
+  },
+  handler: async (ctx, args) => {
+    const allEvents = await ctx.db
+      .query("events")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .collect();
+
+    // Filter events related to this API key
+    const filteredEvents = allEvents.filter(event => {
+      const payload = event.payload as any;
+      const matchesKey = payload?.keyId === args.keyId;
+      
+      if (!matchesKey) return false;
+      
+      // If event types filter provided, check it
+      if (args.eventTypes && args.eventTypes.length > 0) {
+        return args.eventTypes.includes(event.type);
+      }
+      
+      return true;
+    });
+
+    return filteredEvents.map(event => ({
+      _id: event._id,
+      type: event.type,
+      timestamp: event.timestamp,
+      payload: event.payload,
+      agentDid: event.agentDid,
+      caseId: event.caseId,
+    }));
+  },
+});
