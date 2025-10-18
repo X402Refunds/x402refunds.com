@@ -256,23 +256,12 @@ export default function APIKeysPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <code className="text-xs font-mono text-slate-600">
-                              {key.keyPreview}
-                            </code>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleCopyKey(key.keyPreview, key._id)}
-                              className="h-6 w-6 p-0"
-                            >
-                              {copiedId === key._id ? (
-                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </div>
+                          <code className="text-xs font-mono text-slate-600">
+                            {key.keyPreview}
+                          </code>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Full key only shown at creation
+                          </p>
                         </TableCell>
                         <TableCell>
                           <Badge 

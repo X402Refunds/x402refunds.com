@@ -70,8 +70,7 @@ export const syncUser = mutation({
         org = await ctx.db.get(orgId);
         console.info(`Organization auto-verified via OAuth: ${domain}`);
         
-        // Auto-generate first API key for new organization (must happen before user creation)
-        const apiKey = createApiKeyString("csk_live_");
+        // Auto-generate default API keys for new organization (must happen before user creation)
         const tempUserId = await ctx.db.insert("users", {
           clerkUserId: args.clerkUserId,
           email: args.email,
@@ -82,15 +81,28 @@ export const syncUser = mutation({
           lastLoginAt: Date.now(),
         });
         
+        // Create Production API key
+        const productionKey = createApiKeyString("csk_live_");
         await ctx.db.insert("apiKeys", {
-          key: apiKey,
+          key: productionKey,
           organizationId: orgId,
-          name: "Default API Key",
+          name: "Production",
           createdBy: tempUserId,
           status: "active",
           createdAt: now,
         });
-        console.info(`Auto-generated default API key for org: ${orgId}`);
+        
+        // Create Development API key
+        const developmentKey = createApiKeyString("csk_live_");
+        await ctx.db.insert("apiKeys", {
+          key: developmentKey,
+          organizationId: orgId,
+          name: "Development",
+          createdBy: tempUserId,
+          status: "active",
+          createdAt: now,
+        });
+        console.info(`Auto-generated Production and Development API keys for org: ${orgId}`);
         
         // Return early since we already created the user
         return tempUserId;
@@ -249,6 +261,14 @@ export const getOrganizationOwnerDid = query({
     // Generate standard owner DID for org
     const domain = org.domain || org.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
     return `did:owner:org-${domain}`;
+  },
+});
+
+// Get all organizations (for migration scripts)
+export const getOrganizations = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("organizations").collect();
   },
 });
 

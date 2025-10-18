@@ -99,6 +99,9 @@ export default defineSchema({
       // Technical & Development  
       v.literal("coding"), v.literal("devops"), v.literal("security"), v.literal("data"), v.literal("api"),
       
+      // Financial & Transaction
+      v.literal("transaction"),
+      
       // Creative & Content
       v.literal("writing"), v.literal("design"), v.literal("video"), v.literal("music"), v.literal("gaming"),
       

@@ -407,7 +407,7 @@ export const registerAgentManual = mutation({
       v.literal("writing"), v.literal("design"), v.literal("video"),
       v.literal("music"), v.literal("gaming"),
       // Business & Analytics
-      v.literal("research"), v.literal("financial"), v.literal("sales"),
+      v.literal("research"), v.literal("financial"), v.literal("transaction"), v.literal("sales"),
       v.literal("marketing"), v.literal("legal"),
       // Specialized Domains
       v.literal("healthcare"), v.literal("education"), v.literal("scientific"),

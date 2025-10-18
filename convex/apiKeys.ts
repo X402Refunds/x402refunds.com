@@ -242,3 +242,71 @@ export const updateApiKeyName = mutation({
   },
 });
 
+// Ensure default API keys exist for an organization (Production and Development)
+// Used for migration and ensuring existing orgs have the default keys
+export const ensureDefaultApiKeys = mutation({
+  args: { 
+    organizationId: v.id("organizations"),
+    createdByUserId: v.optional(v.id("users")), // Optional: first user of org
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Check if org exists
+      const org = await ctx.db.get(args.organizationId);
+      if (!org) {
+        throw new Error("Organization not found");
+      }
+
+      // Get existing keys for this organization
+      const existingKeys = await ctx.db
+        .query("apiKeys")
+        .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+        .collect();
+      
+      const now = Date.now();
+      const keysCreated: string[] = [];
+
+      // Create Production key if doesn't exist
+      if (!existingKeys.some(k => k.name === "Production")) {
+        const productionKey = createApiKeyString("csk_live_");
+        await ctx.db.insert("apiKeys", {
+          key: productionKey,
+          organizationId: args.organizationId,
+          name: "Production",
+          createdBy: args.createdByUserId,
+          status: "active",
+          createdAt: now,
+        });
+        keysCreated.push("Production");
+      }
+      
+      // Create Development key if doesn't exist
+      if (!existingKeys.some(k => k.name === "Development")) {
+        const developmentKey = createApiKeyString("csk_live_");
+        await ctx.db.insert("apiKeys", {
+          key: developmentKey,
+          organizationId: args.organizationId,
+          name: "Development",
+          createdBy: args.createdByUserId,
+          status: "active",
+          createdAt: now,
+        });
+        keysCreated.push("Development");
+      }
+
+      console.info(`Ensured default API keys for org ${args.organizationId}. Created: ${keysCreated.join(", ") || "none (already exist)"}`);
+      
+      return { 
+        success: true,
+        keysCreated,
+        message: keysCreated.length > 0 
+          ? `Created ${keysCreated.join(" and ")} API key(s)` 
+          : "All default keys already exist"
+      };
+    } catch (error) {
+      console.error("Failed to ensure default API keys:", error);
+      throw new Error(`Failed to ensure default API keys: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
