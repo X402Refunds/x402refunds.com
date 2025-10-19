@@ -94,7 +94,7 @@ http.route({
       timestamp: Date.now(),
       service: "consulate-ai" 
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   })
 });
@@ -109,7 +109,7 @@ http.route({
       build: "clean",
       timestamp: Date.now()
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   })
 });
@@ -226,14 +226,14 @@ http.route({
       });
       
       return new Response(JSON.stringify(agents), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })
@@ -256,19 +256,19 @@ http.route({
           error: "Reputation not found" 
         }), {
           status: 404,
-          headers: { "Content-Type": "application/json" },
+          headers: corsHeaders,
         });
       }
       
       return new Response(JSON.stringify(reputation), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })
@@ -290,14 +290,14 @@ http.route({
       });
       
       return new Response(JSON.stringify(agents), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })
@@ -316,14 +316,14 @@ http.route({
       });
       
       return new Response(JSON.stringify(result), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })
@@ -342,14 +342,14 @@ http.route({
       });
       
       return new Response(JSON.stringify(result), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })
@@ -365,7 +365,7 @@ http.route({
     if (!caseId) {
       return new Response(JSON.stringify({ error: "Case ID is required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
     
@@ -375,14 +375,14 @@ http.route({
       });
       
       return new Response(JSON.stringify(caseData), {
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
         error: error.message 
       }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders,
       });
     }
   })

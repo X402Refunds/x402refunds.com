@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +29,8 @@ export default function APIKeysPage() {
   const [editingKeyId, setEditingKeyId] = useState<Id<"apiKeys"> | null>(null)
   const [editingKeyName, setEditingKeyName] = useState("")
   const [showRevokedKeys, setShowRevokedKeys] = useState(false)
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false)
+  const [keyToRevoke, setKeyToRevoke] = useState<{ id: Id<"apiKeys">; name: string } | null>(null)
   
   // Queries
   const currentUser = useQuery(
@@ -90,26 +93,22 @@ export default function APIKeysPage() {
     setCopiedKey(false)
   }
   
-  const handleRevokeKey = async (keyId: Id<"apiKeys">, keyName: string) => {
-    if (!currentUser) return
-    
-    const confirmed = confirm(
-      `Revoke API key "${keyName}"?\n\n` +
-      `This will immediately stop all authentication with this key.\n` +
-      `The key cannot be reactivated, but audit trails will be preserved for compliance.\n\n` +
-      `This action cannot be undone.`
-    )
-    
-    if (!confirmed) return
+  const handleRevokeClick = (keyId: Id<"apiKeys">, keyName: string) => {
+    setKeyToRevoke({ id: keyId, name: keyName })
+    setRevokeDialogOpen(true)
+  }
+
+  const handleRevokeConfirm = async () => {
+    if (!currentUser || !keyToRevoke) return
     
     try {
       await revokeApiKey({
-        keyId,
+        keyId: keyToRevoke.id,
         userId: currentUser._id,
       })
       
-      // Show success message
-      alert(`API key "${keyName}" has been revoked successfully.`)
+      setRevokeDialogOpen(false)
+      setKeyToRevoke(null)
     } catch (error) {
       console.error("Failed to revoke API key:", error)
       alert(`Failed to revoke API key: ${error instanceof Error ? error.message : String(error)}`)
@@ -330,7 +329,7 @@ export default function APIKeysPage() {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleRevokeKey(key._id, key.name)}
+                                onClick={() => handleRevokeClick(key._id, key.name)}
                                 title="Revoke this key (stops authentication, preserves audit trail)"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                               >
@@ -534,6 +533,35 @@ export default function APIKeysPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Revoke Confirmation Modal */}
+        <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
+          <AlertDialogContent className="bg-white dark:bg-slate-900">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>
+                  You&apos;re about to revoke <span className="font-semibold text-slate-900 dark:text-slate-100">&quot;{keyToRevoke?.name}&quot;</span>
+                </p>
+                <p>
+                  This will immediately stop all authentication with this key. The key cannot be reactivated, but audit trails will be preserved for compliance.
+                </p>
+                <p className="font-semibold text-red-600">
+                  This action cannot be undone.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleRevokeConfirm}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Revoke Key
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   )

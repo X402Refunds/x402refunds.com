@@ -280,6 +280,113 @@
 
 ---
 
+## 🎨 **UI/UX Design Standards**
+
+### **Confirmation Modals for Destructive Actions**
+
+**Pattern**: Use AlertDialog modals (not browser confirm()) for all destructive or irreversible actions.
+
+**When to Use:**
+- Revoking API keys
+- Suspending/deactivating agents
+- Deleting resources
+- Any action that cannot be easily undone
+
+**Modal Structure:**
+```tsx
+<AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  <AlertDialogContent className="bg-white dark:bg-slate-900">
+    <AlertDialogHeader>
+      <AlertDialogTitle>[Action] [Resource Type]?</AlertDialogTitle>
+      <AlertDialogDescription className="space-y-2">
+        <p>You're about to [action] <span className="font-semibold text-slate-900 dark:text-slate-100">"{resourceName}"</span></p>
+        <p>[Explanation of what will happen]</p>
+        {isIrreversible && (
+          <p className="font-semibold text-red-600">This action cannot be undone.</p>
+        )}
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        onClick={handleConfirm}
+        className="bg-red-600 hover:bg-red-700 text-white"
+      >
+        [Action] [Resource Type]
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+**Design Rules:**
+1. **No success notifications** - Modal confirmation is enough; don't show "Success!" after
+2. **Only show errors** - If action fails, show error alert
+3. **Modal closes on success** - Immediate feedback via UI update (status badge change, etc.)
+4. **Consistent styling** - Always use `bg-white dark:bg-slate-900` for AlertDialogContent
+
+### **Destructive Action Buttons**
+
+**Style Standard:**
+```tsx
+// Destructive actions (Revoke, Suspend, Delete)
+<Button
+  variant="outline"
+  size="sm"
+  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+>
+  <Ban className="h-4 w-4 mr-1" />
+  [Action]
+</Button>
+
+// Positive actions (Activate, Enable)
+<Button
+  variant="outline"
+  size="sm"
+  className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+>
+  [Action]
+</Button>
+```
+
+**Icon Guidelines:**
+- **Destructive actions**: `Ban` icon (from lucide-react)
+- **Positive actions**: No icon (text only)
+- **Loading state**: `Loader2` icon with `animate-spin`
+
+**Consistency Requirements:**
+- All destructive buttons use red color scheme
+- All positive buttons use emerald color scheme
+- Icon size: `h-4 w-4` (consistent across all action buttons)
+- Loading icon size: `h-4 w-4` (same as action icons)
+
+**Examples:**
+- **API Keys**: "Revoke" button (red, Ban icon)
+- **Agents**: "Suspend" button (red, Ban icon)
+- **Agents**: "Activate" button (emerald, no icon)
+
+### **Notification Philosophy**
+
+**What NOT to do:**
+- ❌ Double notifications (confirmation modal + success notification)
+- ❌ Browser alerts/confirms (`window.alert()`, `window.confirm()`)
+- ❌ Success messages for expected outcomes
+- ❌ Notifications that just repeat what the user just did
+
+**What TO do:**
+- ✅ Single confirmation modal before destructive action
+- ✅ Immediate UI feedback (status badge updates, table refresh)
+- ✅ Error notifications only when something goes wrong
+- ✅ Loading states during async operations
+
+**Rationale:**
+- Reduces UI noise and annoyance
+- Faster user workflows (no extra click to dismiss success message)
+- Professional enterprise UX (trust users know what they did)
+- Visual feedback is sufficient for success states
+
+---
+
 **The Goal**: Position as the essential infrastructure for enterprise AI agent commerce - the platform that makes agent-to-agent transactions reliable, fast, and legally sound.
 
 **🤖 Agentic Dispute Arbitration Platform - Automated Arbitration for AI Agents**
