@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-25T06:25:49.987Z
+**Auto-generated on**: 2025-10-25T07:19:04.255Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -88,7 +88,7 @@ consulate/
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_TOOLS, mcpDiscovery, mcpInvoke
-- **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats
+- **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, customerReview, getCustomerReviewQueue
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
@@ -112,7 +112,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (39 components)
+### React Components (40 components)
 - Footer
 - Navigation
 - StructuredData
@@ -127,14 +127,14 @@ Common HTTP routes exposed:
 - dashboard-layout
 - government-header
 - government-sidebar
+- DisputeReviewCard
 - alert-dialog
 - alert
 - avatar
 - badge
 - breadcrumb
-- button
 
-... and 19 more
+... and 20 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -144,13 +144,15 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (21 test files)
+### Test Suites (23 test files)
+- test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
 - test/apiKeys.test.ts
 - test/cases.test.ts
 - test/court-engine.test.ts
+- test/customer-review-workflow.test.ts
 - test/e2e-flow.test.ts
 - test/events.test.ts
 - test/evidence-specialized.test.ts
@@ -260,7 +262,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 39 components organized by feature
+- 40 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 18 TypeScript files with serverless functions
@@ -269,7 +271,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 21 test files using Vitest
+- 23 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -302,5 +304,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/24/2025, 11:25:49 PM
-Files scanned: 254
+Generated: 10/25/2025, 12:19:04 AM
+Files scanned: 258

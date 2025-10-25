@@ -1,469 +1,517 @@
 "use client"
 
-import { ArrowRight, Check, Shield, Zap, Lock, Globe } from "lucide-react"
+import { ArrowRight, Check, Webhook, Bot, User, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <Navigation currentPage="pricing" />
 
       {/* Hero Section */}
-      <section className="pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20 bg-slate-50/50">
+      <section className="pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">
-              Start with{" "}
-              <span className="text-blue-600">1 agent</span>
-              {" "}or scale to thousands
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge variant="outline" className="mb-4 bg-white dark:bg-slate-900">
+              Infrastructure Model
+            </Badge>
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
+              Dispute Resolution{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                Infrastructure
+              </span>
             </h1>
-            <p className="text-lg sm:text-xl text-slate-600 leading-relaxed">
-              All plans include persistent agent identity, automated dispute resolution, and full API access.
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+              You judge, we provide the tools. 95% automation + your domain expertise.
             </p>
+            <p className="text-sm text-slate-500 dark:text-slate-500">
+              Fully{" "}
+              <a 
+                href="https://github.com/consulatehq/agentic-dispute-protocol" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-purple-600 dark:text-purple-400 hover:underline inline-flex items-center gap-1"
+              >
+                ADP-compliant
+                <ExternalLink className="h-3 w-3" />
+              </a>
+              {" "}per{" "}
+              <a 
+                href="https://github.com/consulatehq/agentic-dispute-protocol" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Agentic Dispute Protocol
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-12 sm:py-16 lg:py-20 border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+              Three simple steps from dispute to resolution. Your team stays in control.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Webhook className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">1. Disputes Come In</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Via webhook, API, or dashboard. From ACP, ATXP, or any payment protocol. 
+                Regulation E compliant from day one.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">2. AI Analyzes (95%)</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Pattern matching + precedent learning. High-confidence cases auto-resolved 
+                in under 5 minutes. ADP chain of custody maintained.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">3. You Review (5%)</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Complex or low-confidence cases routed to YOUR team. You have the 
+                context. You make the final call. AI learns from you.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Tiers */}
-      <section className="py-8 sm:py-12 lg:py-16">
+      <section className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+              Start small, scale infinitely. No hidden fees, no surprises.
+            </p>
+          </div>
+          
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Free Tier */}
-            <Card className="border-2 border-slate-200 shadow-sm">
+            {/* Starter */}
+            <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-sm">
               <CardHeader className="pb-6">
-                <CardTitle className="text-2xl text-slate-900 mb-6">Free</CardTitle>
+                <CardTitle className="text-2xl mb-6">Starter</CardTitle>
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-slate-900 font-mono">$0</span>
-                    <span className="text-slate-600 text-lg">/month</span>
+                    <span className="text-5xl font-bold">$99</span>
+                    <span className="text-slate-600 dark:text-slate-400 text-lg">/month</span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-3 mb-4">
-                    For individuals and small projects
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
+                    For small businesses and startups
                   </p>
                 </div>
                 
-                <button onClick={() => window.location.href = '/demo'}>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                  >
-                    Start Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      <strong className="text-slate-900">1 agent</strong> with persistent identity
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      <strong className="text-slate-900">30 disputes</strong> per month
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Automated arbitration
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Reputation tracking
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Full API access
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Dashboard & monitoring
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Community support
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pro Tier */}
-            <Card className="border-2 border-blue-600 shadow-lg">
-              <CardHeader className="pb-6">
-                <CardTitle className="text-2xl text-slate-900 mb-6">Pro</CardTitle>
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-slate-900 font-mono">$149</span>
-                    <span className="text-slate-600 text-lg">/month</span>
-                  </div>
-                  <p className="text-sm text-slate-600 mt-3 mb-4">
-                    For teams that need scale
-                  </p>
-                </div>
-
-                <button onClick={() => window.location.href = '/demo'}>
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  >
-                    Upgrade to Pro
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      <strong className="text-slate-900">10 agents</strong>
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      <strong className="text-slate-900">100 disputes</strong> per month
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Everything in Free, plus:
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Priority resolution (&lt; 2 min)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Email support (24hr response)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      SLA templates
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Performance monitoring
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Advanced analytics
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Tier */}
-            <Card className="border-2 border-slate-200 shadow-sm">
-              <CardHeader className="pb-6">
-                <CardTitle className="text-2xl text-slate-900 mb-6">Enterprise</CardTitle>
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-slate-900">Custom</span>
-                  </div>
-                  <p className="text-sm text-slate-600 mt-3 mb-4">
-                    For companies with serious scale
-                  </p>
-                </div>
-
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                  onClick={() => window.location.href = 'tel:+1-781-747-0041'}
+                  className="w-full"
+                  onClick={() => window.location.href = '/demo'}
                 >
-                  Call CTO Directly
+                  Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-                <p className="text-xs text-slate-500 mt-2 text-center">
-                  or email vivek@consulatehq.com
-                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>First 1,000 disputes</strong> included
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      AI-powered analysis (95% auto)
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Review queue for YOUR team
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Full API + webhooks
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Regulation E compliance tools
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Dashboard + analytics
+                    </span>
+                  </div>
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Additional disputes: <strong className="text-slate-900 dark:text-slate-100">$0.08 each</strong>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Growth (Popular) */}
+            <Card className="border-4 border-purple-600 shadow-lg relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                Most Popular
+              </div>
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl mb-6">Growth</CardTitle>
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold">$299</span>
+                    <span className="text-slate-600 dark:text-slate-400 text-lg">/month</span>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
+                    For growing platforms
+                  </p>
+                </div>
+                
+                <Button 
+                  size="lg"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => window.location.href = '/demo'}
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>First 5,000 disputes</strong> included
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Everything in Starter
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>Custom rules engine</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>Priority support</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>Team collaboration</strong> (5 users)
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      <strong>Advanced analytics</strong>
+                    </span>
+                  </div>
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Additional disputes: <strong className="text-slate-900 dark:text-slate-100">$0.05 each</strong>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Enterprise */}
+            <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl mb-6">Enterprise</CardTitle>
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">Custom</span>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
+                    For large-scale operations
+                  </p>
+                </div>
+                
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.location.href = 'mailto:sales@consulatehq.com'}
+                >
+                  Contact Sales
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Everything in Pro, plus:
+                    <span className="text-sm">
+                      Everything in Growth
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
+                  <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Dedicated CTO support
+                    <span className="text-sm">
+                      <strong>White-label option</strong>
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
+                  <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Custom compliance
+                    <span className="text-sm">
+                      <strong>Custom integrations</strong>
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
+                  <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      Multi-region deployment
+                    <span className="text-sm">
+                      <strong>SLA guarantees</strong>
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
+                  <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      White-label options
+                    <span className="text-sm">
+                      <strong>Dedicated support</strong>
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
+                  <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      SSO & advanced security
+                    <span className="text-sm">
+                      <strong>Unlimited team members</strong>
                     </span>
                   </div>
-                  <div className="flex items-start gap-3 pl-6">
-                    <Check className="h-5 w-5 text-slate-700 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">
-                      99.99% uptime SLA
-                    </span>
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Volume discounts at <strong>100K+ disputes/mo</strong>
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+        </div>
+      </section>
 
-          {/* Simple note */}
-          <div className="mt-12 text-center">
-            <p className="text-slate-600">
-              Need more disputes? Additional credits available at $15 per dispute.
+      {/* ROI Calculator */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">ROI Calculator</h2>
+            <p className="text-slate-600 dark:text-slate-400">
+              See how much you save vs traditional dispute resolution
             </p>
           </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Traditional */}
+            <Card className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950">
+              <CardHeader>
+                <CardTitle className="text-red-900 dark:text-red-100">Traditional Manual Process</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span>Labor cost per dispute:</span>
+                    <span className="font-semibold text-red-700 dark:text-red-300">$20-50</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Time to resolution:</span>
+                    <span className="font-semibold text-red-700 dark:text-red-300">5-10 days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Regulation E compliance:</span>
+                    <span className="font-semibold text-red-700 dark:text-red-300">Manual tracking</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Scalability:</span>
+                    <span className="font-semibold text-red-700 dark:text-red-300">Limited by headcount</span>
+                  </div>
+                  <div className="flex justify-between pt-4 border-t border-red-200 dark:border-red-900">
+                    <span className="font-bold">10,000 disputes/mo:</span>
+                    <span className="font-bold text-red-700 dark:text-red-300 text-lg">$200K-500K</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* With Consulate */}
+            <Card className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950">
+              <CardHeader>
+                <CardTitle className="text-green-900 dark:text-green-100">With Consulate Infrastructure</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span>Cost per dispute:</span>
+                    <span className="font-semibold text-green-700 dark:text-green-300">$0.05-0.08</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Time to resolution:</span>
+                    <span className="font-semibold text-green-700 dark:text-green-300">&lt; 5 minutes</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Regulation E compliance:</span>
+                    <span className="font-semibold text-green-700 dark:text-green-300">Built-in</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Scalability:</span>
+                    <span className="font-semibold text-green-700 dark:text-green-300">Infinite (software)</span>
+                  </div>
+                  <div className="flex justify-between pt-4 border-t border-green-200 dark:border-green-900">
+                    <span className="font-bold">10,000 disputes/mo:</span>
+                    <span className="font-bold text-green-700 dark:text-green-300 text-lg">$819</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <div className="inline-block bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900 px-6 py-4 rounded-lg">
+              <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                99.6% Cost Reduction
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Same compliance, better experience, your control
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
-      <section className="py-8 sm:py-12 lg:py-16 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* FAQ */}
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-              Compare Plans
-            </h2>
+            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white border border-slate-200 rounded-lg">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Feature</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">Free</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-blue-600">Pro</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Agents</td>
-                  <td className="px-6 py-4 text-center font-mono text-slate-900">1</td>
-                  <td className="px-6 py-4 text-center font-mono text-blue-600 font-semibold">10</td>
-                  <td className="px-6 py-4 text-center text-slate-900">Custom</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Disputes/month</td>
-                  <td className="px-6 py-4 text-center font-mono text-slate-900">30</td>
-                  <td className="px-6 py-4 text-center font-mono text-blue-600 font-semibold">100</td>
-                  <td className="px-6 py-4 text-center text-slate-900">Custom</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Resolution time</td>
-                  <td className="px-6 py-4 text-center text-slate-900">~3-5 min</td>
-                  <td className="px-6 py-4 text-center text-blue-600 font-semibold">&lt;2 min</td>
-                  <td className="px-6 py-4 text-center text-slate-900">&lt;1 min</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">API access</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-blue-600 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Reputation tracking</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-blue-600 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">SLA templates</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-blue-600 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Email support</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-blue-600 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">Custom compliance</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">White-label</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-slate-700">CTO support</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center text-slate-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="h-5 w-5 text-slate-700 mx-auto" /></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Indicators - Simplified */}
-      <section className="py-8 sm:py-12 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="flex justify-center mb-4">
-                <Shield className="h-10 w-10 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">SOC 2</h3>
-              <p className="text-sm text-slate-600">Enterprise security</p>
-            </div>
-
-            <div>
-              <div className="flex justify-center mb-4">
-                <Lock className="h-10 w-10 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Encrypted</h3>
-              <p className="text-sm text-slate-600">End-to-end encryption</p>
-            </div>
-
-            <div>
-              <div className="flex justify-center mb-4">
-                <Globe className="h-10 w-10 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">GDPR</h3>
-              <p className="text-sm text-slate-600">Compliant globally</p>
-            </div>
-
-            <div>
-              <div className="flex justify-center mb-4">
-                <Zap className="h-10 w-10 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">99.9% Uptime</h3>
-              <p className="text-sm text-slate-600">Always available</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Simple FAQ */}
-      <section className="py-8 sm:py-12 lg:py-16 bg-slate-50/50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-              Questions
-            </h2>
-          </div>
-
+          
           <div className="space-y-6">
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-slate-900">What if I go over my limit?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600">
-                  Additional disputes are $15 each. We&apos;ll notify you when you&apos;re close to your limit.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-slate-900">Can I change plans?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600">
-                  Yes. Upgrade or downgrade anytime. Changes take effect immediately.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-slate-900">How does Enterprise pricing work?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600">
-                  Email the CTO at{" "}
-                  <a href="mailto:cto@consulatehq.com" className="text-blue-600 hover:text-blue-700 underline">
-                    cto@consulatehq.com
-                  </a>
-                  . We&apos;ll discuss your needs and give you a quote.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Simple CTA */}
-      <section className="py-8 sm:py-12 lg:py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
-            Start free. Upgrade when you need more.
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => window.location.href = '/demo'}
-            >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-slate-300 text-slate-700"
-              onClick={() => window.location.href = 'tel:+1-781-747-0041'}
-            >
-              Call CTO Directly
-            </Button>
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                Who makes the final decision on disputes?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                YOU do. Your team reviews all cases that need human judgment (typically 5%). 
+                Consulate provides AI recommendations based on historical patterns, but you have 
+                the final say. This is the <strong>Infrastructure Model</strong> - we provide tools, 
+                you make decisions.
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                What if I don&apos;t have a team to review disputes?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                With 95% automation, you&apos;ll only need someone for ~5% of disputes. For a business 
+                with 1,000 disputes/month, that&apos;s just 50 reviews (~2-3 hours of work). Even a 
+                single person can handle it. If you truly need zero-touch, contact us about our 
+                premium full-service option.
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                How does the AI learn from my decisions?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                When you approve or override AI recommendations, we feed that back into the pattern 
+                matching system. Over time, the AI learns your preferences, industry nuances, and 
+                edge cases specific to your business. Your overrides become training data that 
+                improves accuracy for YOUR disputes.
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                Is this Regulation E compliant?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                Yes. Consulate provides the workflow, logging, and timeline management required by 
+                Regulation E. YOU remain the decision-maker (as required by law for consumer 
+                protection), we just make the process automated, compliant, and trackable.
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                What about disputes for physical goods (like broken bottles)?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                Perfect use case! You have the domain expertise (shipping history, customer patterns, 
+                fraud indicators, packaging standards) that generic arbitration services lack. The AI 
+                provides pattern matching (&quot;broken glass disputes ruled X% for customer&quot;), you provide 
+                the context (&quot;but this customer has 3 disputes this month&quot;). Together, you make better 
+                decisions faster.
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                Is this compatible with the Agentic Dispute Protocol (ADP)?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                Yes, 100% ADP-compliant. All disputes maintain cryptographic chain of custody, evidence 
+                follows the ADP Evidence Message format, and rulings use the ADP Award Message structure. 
+                Learn more at{" "}
+                <a 
+                  href="https://github.com/consulatehq/agentic-dispute-protocol" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  github.com/consulatehq/agentic-dispute-protocol
+                </a>
+              </p>
+            </details>
+            
+            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
+              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-purple-600">
+                Can I integrate with ACP/ATXP payment protocols?
+              </summary>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                Absolutely. We have native support for both Agentic Commerce Protocol (ACP) and ATXP. 
+                Simply configure our webhook endpoint in your payment processor, and disputes will flow 
+                automatically. API documentation available in the dashboard.
+              </p>
+            </details>
           </div>
         </div>
       </section>

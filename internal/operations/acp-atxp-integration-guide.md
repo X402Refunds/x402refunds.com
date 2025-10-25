@@ -1,13 +1,34 @@
 # ACP/ATXP Payment Dispute Integration Guide
 
 **Last Updated**: October 25, 2025
-**Status**: Implementation Complete, Ready for Integration Testing
+**Status**: Infrastructure Model Implementation Complete
+**Model**: Infrastructure-as-a-Service (Customers Review, Consulate Provides Tools)
+
+---
+
+## 🚨 CRITICAL UPDATE: Infrastructure Model
+
+**Consulate now operates as INFRASTRUCTURE, not full-service arbitration.**
+
+**What This Means:**
+- ✅ **Your team makes all final decisions** on disputes
+- ✅ **Consulate provides 95% AI automation** + review queue
+- ✅ **You stay in control** - your domain expertise, your rules
+- ✅ **Zero judge costs for you** - no Consulate judges involved
+- ✅ **Better margins** - pure software, 75%+ gross margin
+- ✅ **Full ADP compliance** - per https://github.com/consulatehq/agentic-dispute-protocol
+
+**Updated Pricing:**
+- Platform: $99/mo (1K disputes included)
+- Usage: $0.05-0.08 per dispute
+- Your team reviews ~5% of disputes
+- 95% handled automatically by AI
 
 ---
 
 ## 🎯 Executive Summary
 
-Consulate now provides **Regulation E-compliant dispute resolution** for **micro-transactions (under $1)** in agentic commerce protocols (ACP/ATXP). 
+Consulate provides **Regulation E-compliant dispute resolution INFRASTRUCTURE** for **micro-transactions (under $1)** in agentic commerce protocols (ACP/ATXP). 
 
 **The Problem You're Solving:**
 - Every crypto payment provider needs dispute mechanisms (Regulation E requirement)
@@ -30,14 +51,20 @@ Consulate now provides **Regulation E-compliant dispute resolution** for **micro
 ### Answer to Your Questions:
 
 **Q: Do disputes come to my infrastructure or do I run an agent on their infra?**
-**A: Disputes come to YOUR infrastructure** (Option 1 - Hosted Model)
+**A: Disputes come to YOUR infrastructure** (Hosted Model)
 
-**Why:**
-1. ✅ **Faster to market** - They integrate via webhook, you control everything
-2. ✅ **Better for learning** - All disputes flow through your system, richer training data
-3. ✅ **Easier compliance** - Your audit trail, your infrastructure, your rules
-4. ✅ **Monetization** - SaaS model, charge per dispute or subscription
-5. ✅ **Multi-protocol** - Same infrastructure serves ACP, ATXP, and future protocols
+**Q: Who judges the disputes?**
+**A: THEIR team judges** (Infrastructure Model)
+
+**This is the key innovation:** You provide automation tools, they make final decisions.
+
+**Why Infrastructure Model Wins:**
+1. ✅ **Their domain expertise** - They know if a "broken glass bottle" is fraud
+2. ✅ **Zero judge costs** - They use their own team (you don't pay judges)
+3. ✅ **Faster GTM** - No judge recruitment needed
+4. ✅ **Better margins** - 75%+ gross margin (pure software)
+5. ✅ **Bigger market** - Everyone needs tools, few want full outsourcing
+6. ✅ **Multi-protocol** - Same infrastructure serves ACP, ATXP, and future protocols
 
 **Their Integration (ACP/ATXP Side):**
 ```javascript

@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2, Scale, Clock } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2, Scale, Clock, AlertCircle, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default function DashboardPage() {
@@ -42,6 +42,14 @@ export default function DashboardPage() {
     api.cases.getOrganizationCases,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
   )
+  
+  // Infrastructure Model: Get payment disputes needing review
+  const reviewQueue = useQuery(
+    api.paymentDisputes.getCustomerReviewQueue,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
+  )
+  
+  const customerReview = useMutation(api.paymentDisputes.customerReview)
   
   // Helper to format case status
   const getStatusColor = (status: string) => {
@@ -206,6 +214,88 @@ export default function DashboardPage() {
             )}
           </Card>
         </div>
+        
+        {/* Payment Dispute Review Queue - Infrastructure Model */}
+        {reviewQueue && reviewQueue.length > 0 && (
+          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-yellow-900 dark:text-yellow-100">
+                    <AlertCircle className="h-5 w-5" />
+                    Payment Dispute Review Queue
+                  </CardTitle>
+                  <CardDescription className="text-yellow-700 dark:text-yellow-300">
+                    {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''} need{reviewQueue.length === 1 ? 's' : ''} your review (AI confidence &lt; 95%)
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => router.push('/dashboard/review-queue')}
+                  className="bg-white dark:bg-slate-900"
+                >
+                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {reviewQueue.slice(0, 3).map((dispute) => (
+                  <div key={dispute._id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold text-sm">
+                          ${dispute.amount.toFixed(2)} {dispute.currency}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {dispute.disputeReason?.replace(/_/g, ' ')}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        AI: {((dispute.aiRulingConfidence || 0) * 100).toFixed(0)}%
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
+                      🤖 Recommends: <strong>{dispute.aiRecommendation || "UPHELD"}</strong>
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
+                        onClick={async () => {
+                          if (!currentUser) return
+                          await customerReview({
+                            paymentDisputeId: dispute._id,
+                            reviewerUserId: currentUser._id,
+                            decision: "APPROVE_AI",
+                            finalVerdict: dispute.aiRecommendation || "UPHELD",
+                          })
+                        }}
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs h-8"
+                        onClick={() => router.push('/dashboard/review-queue')}
+                      >
+                        Review
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {reviewQueue.length > 3 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
+                    + {reviewQueue.length - 3} more dispute{reviewQueue.length - 3 !== 1 ? 's' : ''} need review
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Live Case Activity */}
         <Card className="border-slate-200">

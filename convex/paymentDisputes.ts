@@ -13,6 +13,7 @@
 import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { createCustodyEvent } from "./custody";
 
 /**
  * Receive dispute from payment protocol (ACP/ATXP webhook endpoint)
@@ -52,6 +53,10 @@ export const receivePaymentDispute = mutation({
     
     // Webhook for result notification
     callbackUrl: v.optional(v.string()),
+    
+    // Infrastructure Model: Customer's team reviews
+    reviewerEmail: v.optional(v.string()),
+    reviewerOrganizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
     console.info(`📥 Payment dispute received: ${args.transactionId} ($${args.amount})`);
@@ -80,7 +85,10 @@ export const receivePaymentDispute = mutation({
     const autoResolveEligible = isMicroDispute; // Micro-disputes are auto-eligible
     
     // Calculate Regulation E deadline (10 business days)
-    const regulationEDeadline = Date.now() + (10 * 24 * 60 * 60 * 1000); // Simplified: 10 calendar days
+    const regulationEDeadline = now + (10 * 24 * 60 * 60 * 1000); // Simplified: 10 calendar days
+    
+    // Initial human review determination (may be updated by AI processing)
+    const initialHumanReviewNeeded = args.amount >= 1.0 || args.disputeReason === "fraud";
     
     const paymentDisputeId = await ctx.db.insert("paymentDisputes", {
       caseId,
@@ -93,8 +101,11 @@ export const receivePaymentDispute = mutation({
       regulationEDeadline,
       autoResolveEligible,
       aiRulingConfidence: 0, // Will be set by ruling engine
-      humanReviewRequired: false, // Default: no review needed for micro-disputes
+      humanReviewRequired: initialHumanReviewNeeded,
       userAppealed: false,
+      // Infrastructure Model fields
+      reviewerEmail: args.reviewerEmail,
+      reviewerOrganizationId: args.reviewerOrganizationId,
     });
     
     // 3. Submit evidence if provided
@@ -124,8 +135,8 @@ export const receivePaymentDispute = mutation({
       }
     }
     
-    // 4. Log event
-    await ctx.db.insert("events", {
+    // 4. Log ADP-compliant custody event
+    await createCustodyEvent(ctx, {
       type: "DISPUTE_FILED",
       caseId,
       agentDid: args.plaintiff,
@@ -135,8 +146,8 @@ export const receivePaymentDispute = mutation({
         currency: args.currency,
         protocol: args.paymentProtocol,
         microDispute: isMicroDispute,
+        adpVersion: "draft-01",
       },
-      timestamp: Date.now(),
     });
     
     // 5. Schedule immediate ruling for micro-disputes
@@ -147,12 +158,18 @@ export const receivePaymentDispute = mutation({
       });
     }
     
+    // Determine if human review will be required
+    // For micro-disputes: depends on AI confidence (will be calculated)
+    // For large disputes ($1+): always needs review
+    const willNeedHumanReview = args.amount >= 1.0;
+    
     return {
       caseId,
       paymentDisputeId,
       status: "received",
       isMicroDispute,
       autoResolveEligible,
+      humanReviewRequired: willNeedHumanReview,
       estimatedResolutionTime: isMicroDispute ? "5 minutes" : "24 hours",
       regulationECompliant: true,
       callbackUrl: args.callbackUrl,
@@ -235,7 +252,7 @@ export const processWithAI = action({
     confidence = Math.max(0, Math.min(1, confidence));
     
     // 4. Determine if human review needed
-    const humanReviewRequired: boolean = confidence < 0.95 || dispute.amount >= 1.0;
+    const humanReviewRequired: boolean = confidence < 0.95 || dispute.amount >= 1.0 || dispute.disputeReason === "fraud";
     
     // 5. Update payment dispute with AI ruling
     await ctx.runMutation(api.paymentDisputes.updateWithAIRuling, {
@@ -282,6 +299,8 @@ export const updateWithAIRuling = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.paymentDisputeId, {
       aiRulingConfidence: args.aiRulingConfidence,
+      aiRecommendation: args.verdict,
+      aiReasoning: args.reasoning,
       humanReviewRequired: args.humanReviewRequired,
       similarPastCases: args.similarPastCases,
     });
@@ -507,6 +526,130 @@ export const getMicroDisputeStats = query({
       avgAIConfidence: (avgConfidence * 100).toFixed(1) + "%",
       totalValueDisputed: microDisputes.reduce((sum, d) => sum + d.amount, 0).toFixed(2),
     };
+  },
+});
+
+/**
+ * INFRASTRUCTURE MODEL: Customer's team reviews disputes
+ * 
+ * This allows customers to make final decisions while Consulate provides
+ * AI-powered recommendations. Maintains full ADP compliance.
+ */
+
+/**
+ * Customer reviews and makes final decision on dispute
+ * ADP-compliant: Creates Award Message with custody chain
+ */
+export const customerReview = mutation({
+  args: {
+    paymentDisputeId: v.id("paymentDisputes"),
+    reviewerUserId: v.id("users"), // Customer's team member
+    decision: v.union(v.literal("APPROVE_AI"), v.literal("OVERRIDE")),
+    finalVerdict: v.union(v.literal("UPHELD"), v.literal("DISMISSED"), v.literal("SPLIT"), v.literal("NEED_PANEL")),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const dispute = await ctx.db.get(args.paymentDisputeId);
+    if (!dispute) throw new Error("Dispute not found");
+    
+    // Verify reviewer is from customer's organization
+    const reviewer = await ctx.db.get(args.reviewerUserId);
+    if (!reviewer) throw new Error("Reviewer not found");
+    
+    if (dispute.reviewerOrganizationId && reviewer.organizationId !== dispute.reviewerOrganizationId) {
+      throw new Error("Unauthorized: reviewer not from customer organization");
+    }
+    
+    const now = Date.now();
+    
+    // Update dispute with customer's decision
+    await ctx.db.patch(args.paymentDisputeId, {
+      humanReviewedAt: now,
+      humanReviewedBy: reviewer.email,
+      humanAgreesWithAI: args.decision === "APPROVE_AI",
+      customerFinalDecision: args.finalVerdict as "UPHELD" | "DISMISSED",
+      customerReviewNotes: args.notes,
+    });
+    
+    // Create ADP-compliant ruling (Award Message format)
+    const rulingId = await ctx.db.insert("rulings", {
+      caseId: dispute.caseId,
+      verdict: args.finalVerdict,
+      code: args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" : "CUSTOMER_OVERRIDE",
+      reasons: args.decision === "APPROVE_AI" 
+        ? `Customer approved AI recommendation: ${dispute.aiReasoning || "See analysis"}`
+        : `Customer override: ${args.notes || "Manual review decision"}`,
+      auto: false, // Human reviewed
+      decidedAt: now,
+      proof: {
+        merkleRoot: `customer_review_${dispute.caseId}_${now}`,
+      },
+    });
+    
+    // Update case status
+    await ctx.db.patch(dispute.caseId, {
+      status: "DECIDED",
+      ruling: {
+        verdict: args.finalVerdict,
+        auto: false,
+        decidedAt: now,
+      },
+    });
+    
+    // Log ADP-compliant custody event
+    await createCustodyEvent(ctx, {
+      type: "CASE_DECIDED",
+      caseId: dispute.caseId,
+      agentDid: undefined, // System action on behalf of customer
+      payload: {
+        verdict: args.finalVerdict,
+        auto: false,
+        customerReviewed: true,
+        aiApproved: args.decision === "APPROVE_AI",
+        reviewerEmail: reviewer.email,
+        reviewerOrganization: reviewer.organizationId,
+        adpVersion: "draft-01",
+      },
+    });
+    
+    // Learn from customer override
+    if (args.decision === "OVERRIDE") {
+      console.info(`📚 Learning: Customer overrode AI for dispute ${args.paymentDisputeId}`);
+      // Future: Update ML model with this feedback
+    }
+    
+    return { success: true, ruling: args.finalVerdict, rulingId };
+  },
+});
+
+/**
+ * Get review queue for customer's organization
+ * Infrastructure Model: Only shows disputes for customer's team
+ */
+export const getCustomerReviewQueue = query({
+  args: { 
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const disputes = await ctx.db
+      .query("paymentDisputes")
+      .withIndex("by_needs_review", q => 
+        q.eq("reviewerOrganizationId", args.organizationId).eq("humanReviewRequired", true)
+      )
+      .filter(q => q.eq(q.field("humanReviewedAt"), undefined))
+      .order("asc") // Oldest first (approaching deadline)
+      .take(args.limit || 50);
+    
+    // Enrich with case data
+    const enriched = await Promise.all(
+      disputes.map(async (dispute) => {
+        const caseData = await ctx.db.get(dispute.caseId);
+        return { ...dispute, caseData };
+      })
+    );
+    
+    return enriched;
   },
 });
 

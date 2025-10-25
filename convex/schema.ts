@@ -483,6 +483,7 @@ export default defineSchema({
     .index("by_key", ["key"]),
 
   // Payment disputes (OPTIMIZED FOR MICRO-DISPUTES under $1)
+  // Infrastructure Model: Customer's team makes final decisions
   paymentDisputes: defineTable({
     caseId: v.id("cases"),
     
@@ -516,7 +517,15 @@ export default defineSchema({
     // AI ruling (higher automation for micro-disputes)
     aiRulingConfidence: v.number(),
     aiRulingVector: v.optional(v.array(v.number())),
+    aiRecommendation: v.optional(v.union(v.literal("UPHELD"), v.literal("DISMISSED"))),
+    aiReasoning: v.optional(v.string()),
     similarPastCases: v.optional(v.array(v.id("paymentDisputes"))),
+    
+    // Infrastructure Model: Customer's team reviews
+    reviewerEmail: v.optional(v.string()), // Customer's designated reviewer
+    reviewerOrganizationId: v.optional(v.id("organizations")), // Customer's org
+    customerFinalDecision: v.optional(v.union(v.literal("UPHELD"), v.literal("DISMISSED"))),
+    customerReviewNotes: v.optional(v.string()),
     
     // Human oversight (EXCEPTION-BASED for micro-disputes)
     humanReviewRequired: v.boolean(),
@@ -534,7 +543,9 @@ export default defineSchema({
     .index("by_amount", ["amount"])
     .index("by_batch", ["batchId"])
     .index("by_auto_resolve", ["autoResolveEligible"])
-    .index("by_human_review", ["humanReviewRequired"]),
+    .index("by_human_review", ["humanReviewRequired"])
+    .index("by_reviewer_org", ["reviewerOrganizationId"])
+    .index("by_needs_review", ["reviewerOrganizationId", "humanReviewRequired"]),
 
   // Precedent embeddings for similarity search
   disputePrecedents: defineTable({
