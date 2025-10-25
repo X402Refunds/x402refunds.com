@@ -42,6 +42,75 @@ refactor: reorganize court engine functions     # Code structure
 
 ---
 
+## 🚨 Pre-Commit Requirements (MANDATORY)
+
+**CRITICAL: ALWAYS run these checks before committing. NO EXCEPTIONS.**
+
+### Quality Checks (Run in Order)
+```bash
+# 1. Lint (fix style issues)
+pnpm lint
+
+# 2. Type check (verify TypeScript)
+pnpm type-check
+
+# 3. Build (ensure compilation works)
+pnpm build
+
+# 4. Run tests (ensure functionality works)
+pnpm test:run
+
+# 5. Update context graph
+pnpm update-context
+```
+
+### One-Line Command
+```bash
+pnpm lint && pnpm type-check && pnpm build && pnpm test:run && pnpm update-context
+```
+
+### What These Checks Prevent
+- ❌ **Lint failures**: Catch code style issues before they reach CI
+- ❌ **Type errors**: Prevent TypeScript compilation failures
+- ❌ **Build failures**: Ensure all code compiles successfully
+- ❌ **Test failures**: Catch broken functionality before deployment
+- ❌ **Stale context**: Keep codebase context graph up-to-date
+
+### When to Commit
+**✅ ONLY commit when ALL checks pass:**
+- Lint: 0 errors
+- Type check: 0 errors
+- Build: Success
+- Tests: All passed (or documented known failures)
+- Context: Updated
+
+**❌ NEVER commit if:**
+- Any quality check fails
+- Tests are broken (unless fixing tests)
+- Build doesn't compile
+- You haven't run the checks
+
+### Handling Test Failures
+**Minor failures (e.g., production smoke tests with CORS headers):**
+- ✅ Document in commit message
+- ✅ Create issue to fix
+- ✅ Commit if core functionality passes
+
+**Major failures (core functionality broken):**
+- ❌ DO NOT COMMIT
+- ❌ Fix the failing tests first
+- ❌ Re-run all checks
+
+### CI Will Enforce This
+GitHub Actions runs the same checks on every push. If you skip local checks:
+- ⏰ Slower feedback (wait for CI)
+- 🚫 Blocked PRs
+- 💥 Broken main branch
+
+**Save time: run checks locally first.**
+
+---
+
 ## GitHub Actions Configuration
 
 ### pnpm Setup Pattern (Always Use This Order)

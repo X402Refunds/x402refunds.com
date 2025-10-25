@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-18T09:53:16.341Z
+**Auto-generated on**: 2025-10-25T06:25:49.987Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -49,7 +49,6 @@ consulate/
 ## 🎨 Common Assets
 
 ### Favicons (dashboard/public/)
-- coverage/favicon.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/favicon-192.png
 - dashboard/public/favicon-512.png
@@ -61,7 +60,6 @@ consulate/
 - public/consulate-workspace-logo.png
 
 ### Other Images
-- coverage/sort-arrow-sprite.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/file.svg
 - dashboard/public/globe.svg
@@ -71,10 +69,11 @@ consulate/
 - dashboard/public/window.svg
 - mintlify-docs/public/consulate-icon-simple.png
 - mintlify-docs/public/consulate-icon-simple.svg
+- public/consulate-icon-simple.png
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (17 files)
+### Convex Files (18 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
 - **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
@@ -89,6 +88,7 @@ consulate/
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
@@ -144,7 +144,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (20 test files)
+### Test Suites (21 test files)
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
@@ -161,6 +161,7 @@ Common HTTP routes exposed:
 - test/mcp-endpoints.test.ts
 - test/mcp-integration.test.ts
 - test/performance.test.ts
+- test/production-smoke.test.ts
 - test/sla-endpoints.test.ts
 - test/system-endpoints.test.ts
 - test/users.test.ts
@@ -180,6 +181,7 @@ Common HTTP routes exposed:
 - `pnpm test:run` - vitest
 - `pnpm test:api` - vitest
 - `pnpm test:unit` - vitest
+- `pnpm test:smoke` - bash
 - `pnpm postinstall` - node
 - `pnpm update-context` - node
 - `pnpm hash-rules` - node
@@ -207,19 +209,19 @@ Common HTTP routes exposed:
 
 
 
-### Internal Documentation (41 files)
+### Internal Documentation (43 files)
 - internal/README.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
 - internal/design/sovereign-civic-design-system.md
+- internal/operations/acp-atxp-integration-guide.md
 - internal/operations/api-key-migration-complete.md
 - internal/operations/current-deployment-status.md
 - internal/operations/dashboard-system-summary.md
 - internal/operations/dashboard-testing-results.md
 - internal/operations/deployment-guide.md
-- internal/operations/fast-metrics-caching.md
 
-... and 31 more in internal/
+... and 33 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -261,13 +263,13 @@ Common HTTP routes exposed:
 - 39 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 17 TypeScript files with serverless functions
+- 18 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 20 test files using Vitest
+- 21 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -300,5 +302,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/18/2025, 2:53:16 AM
-Files scanned: 275
+Generated: 10/24/2025, 11:25:49 PM
+Files scanned: 254

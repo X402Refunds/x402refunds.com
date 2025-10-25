@@ -13,17 +13,34 @@ const corsHeaders = {
   "Content-Type": "application/json"
 };
 
-// Handle CORS preflight requests
-http.route({
-  path: "/*",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, { 
-      status: 200, 
-      headers: corsHeaders 
-    });
-  })
+// CORS OPTIONS handler - must come before other routes
+const optionsHandler = httpAction(async () => {
+  return new Response(null, { 
+    status: 200, 
+    headers: corsHeaders 
+  });
 });
+
+// Handle CORS preflight requests for all major routes
+http.route({ path: "/", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/health", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/version", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/.well-known/mcp.json", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/.well-known/adp", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/.well-known/adp/neutrals", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents/register", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/evidence", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/disputes", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/webhooks/register", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/payment-disputes", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/payment-disputes/stats", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/payment-disputes/review-queue", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -132,6 +149,244 @@ http.route({
 });
 
 // === END MCP ENDPOINTS ===
+
+// === ADP (Agentic Dispute Protocol) DISCOVERY ENDPOINTS ===
+
+// ADP Service Discovery - standardized arbitration service manifest
+http.route({
+  path: "/.well-known/adp",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    return new Response(JSON.stringify({
+      arbitrationService: {
+        name: "Consulate",
+        version: "1.0.0",
+        provider: "Consulate HQ",
+        jurisdiction: "Global",
+        description: "Automated AI vendor dispute resolution platform",
+        contact: {
+          email: "support@consulatehq.com",
+          website: "https://consulatehq.com"
+        }
+      },
+      protocolVersion: "1.0",
+      supportedRules: [
+        "expert-determination",
+        "binding-arbitration",
+        "sla-breach-resolution"
+      ],
+      capabilities: {
+        automated: true,
+        binding: true,
+        appealable: false,
+        multiParty: true,
+        crossBorder: true
+      },
+      endpoints: {
+        fileDispute: "/disputes",
+        submitEvidence: "/evidence",
+        checkStatus: "/cases/:caseId",
+        neutrals: "/.well-known/adp/neutrals",
+        documentation: "https://docs.consulatehq.com/adp"
+      },
+      fees: {
+        currency: "USD",
+        filingFee: 0,
+        processingFee: 0,
+        note: "Currently free during beta period"
+      },
+      sla: {
+        averageResolutionTime: "24 hours",
+        autoRulingThreshold: "5 minutes",
+        panelAssignmentTime: "1 hour"
+      },
+      timestamp: Date.now()
+    }), {
+      headers: {
+        ...corsHeaders,
+        "Cache-Control": "public, max-age=86400" // Cache for 24 hours
+      }
+    });
+  })
+});
+
+// ADP Neutrals Directory - list of available arbitrators/judges
+http.route({
+  path: "/.well-known/adp/neutrals",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    try {
+      const judges = await ctx.runQuery(api.judges.getJudges, {});
+      
+      const neutrals = judges.map((judge: any) => ({
+        id: judge._id,
+        name: judge.name,
+        specialties: judge.specialties || [],
+        casesJudged: judge.casesJudged || 0,
+        reputation: judge.reputation || 100,
+        status: judge.status,
+        bio: `Experienced arbitrator specializing in ${(judge.specialties || []).join(", ")}`,
+        availability: judge.status === "active" ? "available" : "unavailable"
+      }));
+      
+      return new Response(JSON.stringify({
+        neutrals,
+        totalNeutrals: neutrals.length,
+        activeNeutrals: neutrals.filter((n: any) => n.status === "active").length,
+        selectionMethod: "automated",
+        panelSize: 3,
+        timestamp: Date.now()
+      }), {
+        headers: {
+          ...corsHeaders,
+          "Cache-Control": "public, max-age=3600" // Cache for 1 hour
+        }
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({ 
+        error: error.message,
+        neutrals: [],
+        totalNeutrals: 0,
+        activeNeutrals: 0
+      }), {
+        status: 200, // Return 200 even on error with empty list
+        headers: corsHeaders
+      });
+    }
+  })
+});
+
+// === END ADP ENDPOINTS ===
+
+// === PAYMENT PROTOCOL INTEGRATION (ACP/ATXP) ===
+
+// Webhook endpoint for payment protocols to send disputes
+http.route({
+  path: "/api/payment-disputes",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      
+      // Validate required fields
+      const requiredFields = ["transactionId", "amount", "currency", "plaintiff", "defendant", "disputeReason"];
+      for (const field of requiredFields) {
+        if (!body[field]) {
+          return new Response(JSON.stringify({
+            error: `Missing required field: ${field}`,
+            required: requiredFields,
+          }), {
+            status: 400,
+            headers: corsHeaders,
+          });
+        }
+      }
+      
+      // Create payment dispute
+      const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
+        transactionId: body.transactionId,
+        transactionHash: body.transactionHash,
+        amount: body.amount,
+        currency: body.currency,
+        paymentProtocol: body.paymentProtocol || "other",
+        plaintiff: body.plaintiff,
+        defendant: body.defendant,
+        disputeReason: body.disputeReason,
+        description: body.description || "Payment dispute",
+        evidenceUrls: body.evidenceUrls || [],
+        callbackUrl: body.callbackUrl,
+      });
+      
+      return new Response(JSON.stringify({
+        success: true,
+        ...result,
+        message: result.isMicroDispute 
+          ? "Micro-dispute received. Auto-ruling in progress (< 5 min)."
+          : "Dispute received. Processing with AI analysis (< 24 hours).",
+        regulationECompliant: true,
+        deadlines: {
+          initialResponse: result.estimatedResolutionTime,
+          regulationEFinal: "10 business days",
+        },
+      }), {
+        headers: corsHeaders,
+      });
+      
+    } catch (error: any) {
+      console.error("Payment dispute webhook error:", error);
+      return new Response(JSON.stringify({
+        error: error.message,
+        hint: "Check API documentation at https://docs.consulatehq.com/payment-disputes",
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Get payment dispute statistics
+http.route({
+  path: "/api/payment-disputes/stats",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const stats = await ctx.runQuery(api.paymentDisputes.getMicroDisputeStats, {});
+      
+      return new Response(JSON.stringify({
+        success: true,
+        ...stats,
+        timestamp: Date.now(),
+      }), {
+        headers: {
+          ...corsHeaders,
+          "Cache-Control": "public, max-age=60", // Cache for 1 minute
+        },
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message,
+      }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Get disputes needing human review
+http.route({
+  path: "/api/payment-disputes/review-queue",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const limit = parseInt(url.searchParams.get("limit") || "20");
+      
+      const disputes = await ctx.runQuery(api.paymentDisputes.getDisputesNeedingHumanReview, {
+        limit,
+      });
+      
+      return new Response(JSON.stringify({
+        success: true,
+        count: disputes.length,
+        disputes,
+        timestamp: Date.now(),
+      }), {
+        headers: corsHeaders,
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message,
+      }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// === END PAYMENT PROTOCOL ENDPOINTS ===
 
 // Agent registration with API key authentication (Stripe-style)
 http.route({
@@ -519,19 +774,25 @@ http.route({
       if (violations.length > 0) {
         console.log(`⚠️ SLA violations detected for ${agentDid}:`, violations);
         
-        // Auto-generate evidence for the violation
-        await ctx.runMutation(api.evidence.submitEvidence, {
-          agentDid: agentDid,
-          sha256: generateSHA256(),
-          uri: `https://sla-monitor.consulate.ai/reports/${agentDid}/${Date.now()}.json`,
-          signer: "system",
-          model: {
-            provider: "sla_monitor",
-            name: "automated_violation_detector",
-            version: "1.0.0"
-          },
-          tool: "sla_monitoring_system"
-        });
+        // Try to auto-generate evidence for the violation
+        // If agent doesn't exist yet, that's okay - just log the violation
+        try {
+          await ctx.runMutation(api.evidence.submitEvidence, {
+            agentDid: agentDid,
+            sha256: generateSHA256(),
+            uri: `https://sla-monitor.consulate.ai/reports/${agentDid}/${Date.now()}.json`,
+            signer: "system",
+            model: {
+              provider: "sla_monitor",
+              name: "automated_violation_detector",
+              version: "1.0.0"
+            },
+            tool: "sla_monitoring_system"
+          });
+        } catch (evidenceError: any) {
+          console.log(`Could not submit evidence for ${agentDid}:`, evidenceError.message);
+          // Continue anyway - the violation was still detected
+        }
       }
       
       return new Response(JSON.stringify({
@@ -751,7 +1012,8 @@ http.route({
       }));
       
       return new Response(JSON.stringify({
-        feed: liveFeed,
+        feed: liveFeed, // Main feed data
+        events: liveFeed, // Alias for compatibility
         lastUpdate: Date.now(),
         systemHealth: "OPERATIONAL"
       }), {

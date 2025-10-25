@@ -22,6 +22,7 @@ import type * as http from "../http.js";
 import type * as judges from "../judges.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
+import type * as paymentDisputes from "../paymentDisputes.js";
 import type * as types from "../types.js";
 import type * as users from "../users.js";
 
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   judges: typeof judges;
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;
+  paymentDisputes: typeof paymentDisputes;
   types: typeof types;
   users: typeof users;
 }>;

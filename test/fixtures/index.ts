@@ -36,6 +36,37 @@ export const createTestCase = (plaintiff: string, defendant: string, evidenceIds
   claimedDamages: 10000,
 });
 
+// MICRO-DISPUTE fixtures (under $1)
+export const createMicroDispute = (plaintiff: string, defendant: string, suffix = Date.now()) => {
+  const microAmounts = [0.02, 0.05, 0.10, 0.15, 0.25, 0.35, 0.50, 0.75, 0.95]; // Typical API call costs
+  const disputeReasons = [
+    'api_timeout',
+    'rate_limit_breach',
+    'service_not_rendered',
+    'quality_issue',
+    'amount_incorrect',
+  ] as const;
+  
+  return {
+    transactionId: `txn_${suffix}_${Math.random().toString(36).substring(7)}`,
+    transactionHash: `0x${Math.random().toString(36).substring(2, 15)}`,
+    amount: microAmounts[Math.floor(Math.random() * microAmounts.length)],
+    currency: 'USD',
+    paymentProtocol: Math.random() > 0.5 ? 'ACP' : 'ATXP',
+    plaintiff,
+    defendant,
+    disputeReason: disputeReasons[Math.floor(Math.random() * disputeReasons.length)],
+    description: 'Micro-transaction dispute for agentic commerce',
+    evidenceUrls: [`https://logs.example.com/${suffix}.json`],
+  };
+};
+
+export const createBatchMicroDisputes = (plaintiff: string, defendant: string, count: number) => {
+  return Array.from({ length: count }, (_, i) => 
+    createMicroDispute(plaintiff, defendant, Date.now() + i)
+  );
+};
+
 export const createTestJudge = (suffix = Date.now()) => ({
   name: `Test Judge ${suffix}`,
   type: 'HUMAN' as const,
@@ -47,6 +78,7 @@ export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 
 export const API_BASE_URL = process.env.API_BASE_URL || 'https://api.consulatehq.com';
 export const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || 'https://consulatehq.com';
-// USE_LIVE_API is true when testing against production (default), false when explicitly targeting test env
-export const USE_LIVE_API = !process.env.API_BASE_URL || API_BASE_URL.includes('consulatehq.com') || API_BASE_URL.includes('convex.site');
+// USE_LIVE_API is true ONLY when testing against actual production (consulatehq.com)
+// All other environments (dev, preview, youthful-orca) should run full test suite
+export const USE_LIVE_API = !process.env.API_BASE_URL || API_BASE_URL.includes('consulatehq.com');
 

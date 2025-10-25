@@ -349,6 +349,10 @@ export default defineSchema({
       daily: v.number(),
       perTransaction: v.number(),
     })),
+    stakingRequirement: v.optional(v.object({
+      currency: v.string(),
+      minimum: v.number(),
+    })),
     citizenshipTiers: v.optional(v.array(v.string())), // Legacy field for backward compatibility
     createdAt: v.number(),
     lastUpdated: v.number(),
@@ -477,4 +481,115 @@ export default defineSchema({
     calculationTimeMs: v.optional(v.number()),
   })
     .index("by_key", ["key"]),
+
+  // Payment disputes (OPTIMIZED FOR MICRO-DISPUTES under $1)
+  paymentDisputes: defineTable({
+    caseId: v.id("cases"),
+    
+    // Micro-payment specific fields
+    transactionId: v.string(),
+    transactionHash: v.optional(v.string()),
+    amount: v.number(), // Usually $0.01 - $0.99
+    currency: v.string(),
+    paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
+    
+    // Batch processing (critical for micro-disputes)
+    batchId: v.optional(v.string()), // Group similar micro-disputes
+    batchedWithCount: v.optional(v.number()),
+    
+    disputeReason: v.union(
+      v.literal("unauthorized"),
+      v.literal("service_not_rendered"),
+      v.literal("amount_incorrect"),
+      v.literal("duplicate_charge"),
+      v.literal("fraud"),
+      v.literal("api_timeout"),
+      v.literal("rate_limit_breach"),
+      v.literal("quality_issue"),
+      v.literal("other")
+    ),
+    
+    // Regulation E compliance
+    regulationEDeadline: v.number(),
+    autoResolveEligible: v.boolean(), // Micro-disputes get auto-resolved
+    
+    // AI ruling (higher automation for micro-disputes)
+    aiRulingConfidence: v.number(),
+    aiRulingVector: v.optional(v.array(v.number())),
+    similarPastCases: v.optional(v.array(v.id("paymentDisputes"))),
+    
+    // Human oversight (EXCEPTION-BASED for micro-disputes)
+    humanReviewRequired: v.boolean(),
+    humanReviewedAt: v.optional(v.number()),
+    humanReviewedBy: v.optional(v.string()),
+    humanAgreesWithAI: v.optional(v.boolean()),
+    humanOverrideReason: v.optional(v.string()),
+    
+    // Learning from outcomes
+    userAppealed: v.boolean(),
+    appealOutcome: v.optional(v.string()),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_protocol", ["paymentProtocol"])
+    .index("by_amount", ["amount"])
+    .index("by_batch", ["batchId"])
+    .index("by_auto_resolve", ["autoResolveEligible"])
+    .index("by_human_review", ["humanReviewRequired"]),
+
+  // Precedent embeddings for similarity search
+  disputePrecedents: defineTable({
+    originalDisputeId: v.id("paymentDisputes"),
+    
+    // Vector for semantic similarity (using OpenAI embeddings)
+    embedding: v.array(v.number()), // 1536-dim
+    
+    // Structured fields for exact matching
+    disputeType: v.string(),
+    amountRange: v.string(), // "$0-0.10", "$0.10-0.50", "$0.50-1.00"
+    currency: v.string(),
+    outcomeVerdict: v.string(),
+    outcomeReason: v.string(),
+    
+    // Trust metrics
+    humanConfirmed: v.boolean(),
+    appealedAndOverturned: v.boolean(),
+    confidenceScore: v.number(),
+    timesReferenced: v.number(), // How often used as precedent
+    
+    // Learning signals
+    userSatisfactionScore: v.optional(v.number()),
+    
+    createdAt: v.number(),
+  })
+    .index("by_dispute", ["originalDisputeId"])
+    .index("by_confidence", ["confidenceScore"])
+    .index("by_amount_range", ["amountRange"]),
+
+  // Aggregated dispute patterns (for batch processing)
+  disputePatterns: defineTable({
+    // Pattern identification
+    patternHash: v.string(), // Hash of (disputeReason + amountRange + protocol)
+    
+    // Pattern details
+    disputeReason: v.string(),
+    amountRange: v.string(),
+    protocol: v.string(),
+    
+    // Historical outcomes
+    totalOccurrences: v.number(),
+    autoResolvedCount: v.number(),
+    humanReviewedCount: v.number(),
+    overturnedCount: v.number(),
+    
+    // Pattern confidence
+    patternReliability: v.number(), // 0-1, based on consistency
+    recommendedAutoResolveThreshold: v.number(),
+    
+    // Latest precedent embedding (averaged from all similar disputes)
+    aggregatedEmbedding: v.optional(v.array(v.number())),
+    
+    lastUpdated: v.number(),
+  })
+    .index("by_hash", ["patternHash"])
+    .index("by_reliability", ["patternReliability"]),
 });

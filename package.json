@@ -1,7 +1,7 @@
 {
   "name": "consulate",
   "version": "1.0.0",
-  "description": "Consulate - Agent Dispute Resolution | Frontend (Vercel) + Backend (Convex) + Shared Config",
+  "description": "Consulate - AI Agent Dispute Resolution | Micro-disputes for ACP/ATXP payment protocols | Regulation E compliant | Frontend (Vercel) + Backend (Convex) + Shared Config",
   "private": true,
   "scripts": {
     "deploy": "pnpm exec convex deploy -y",
@@ -15,6 +15,7 @@
     "test:run": "vitest run",
     "test:api": "vitest run test/api.test.ts",
     "test:unit": "vitest run test/agents.test.ts test/cases.test.ts",
+    "test:smoke": "bash scripts/run-smoke-tests.sh",
     "postinstall": "node scripts/install-hooks.js",
     "update-context": "node scripts/generate-context-graph.js",
     "hash-rules": "node scripts/hash-and-timestamp-rules.js",
