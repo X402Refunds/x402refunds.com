@@ -139,15 +139,25 @@ pnpm exec convex deployments  # Show current deployment info
 
 ### Deployment Environments
 
-**Single Deployment (Production):**
+**Production Deployment: perceptive-lyrebird-89**
+- **Name**: `perceptive-lyrebird-89`
+- **Type**: Production (live traffic)
+- **Convex API**: `https://perceptive-lyrebird-89.convex.cloud` (for SDK)
+- **HTTP Routes**: `https://perceptive-lyrebird-89.convex.site` (for REST API)
+- **Production Domain**: `https://api.consulatehq.com` (CNAME to convex.site)
+- **Use For**: Real payment disputes, customer integrations, production data
+
+**Preview/Development Deployment: youthful-orca-358**
 - **Name**: `youthful-orca-358`
+- **Type**: Development/Preview
 - **Convex API**: `https://youthful-orca-358.convex.cloud` (for SDK)
 - **HTTP Routes**: `https://youthful-orca-358.convex.site` (for REST API)
-- **Production Domain**: `https://api.consulatehq.com` (CNAME to convex.site)
+- **Use For**: Testing, development, CI/CD, smoke tests
 
 **Critical URL Distinction:**
 - `.convex.cloud` = Convex SDK connections (queries, mutations)
 - `.convex.site` = Public HTTP REST API endpoints
+- Custom domain (`api.consulatehq.com`) = CNAME to production `.convex.site`
 
 ---
 
@@ -230,27 +240,64 @@ git add . && git commit -m "..." && git push
 6. Push and create PR
 
 ### For Deployment
-1. **Preview First (Always)**:
+
+**IMPORTANT**: Always deploy to preview FIRST, validate, then deploy to production.
+
+1. **Deploy to Preview (youthful-orca-358)**:
    ```bash
-   pnpm exec convex deploy --yes
-   pnpm test:smoke:prod
+   # Deploy to preview environment
+   CONVEX_DEPLOYMENT=dev:youthful-orca-358 pnpm exec convex deploy --yes
+
+   # Test preview deployment
+   API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:smoke:prod
    ```
 
-2. **Production (After Preview Validation)**:
+2. **Deploy to Production (perceptive-lyrebird-89)** - After Preview Validation:
    ```bash
-   pnpm exec convex deploy --yes
+   # Deploy to production environment
+   CONVEX_DEPLOYMENT=perceptive-lyrebird-89 pnpm exec convex deploy --yes
+
+   # Test production deployment
    API_BASE_URL=https://api.consulatehq.com pnpm test:smoke:prod
+
+   # Or test via convex.site directly
+   API_BASE_URL=https://perceptive-lyrebird-89.convex.site pnpm test:smoke:prod
+   ```
+
+3. **Verify Deployment**:
+   ```bash
+   # Check which deployment you're on
+   pnpm exec convex deployments
+
+   # View logs
+   pnpm check-logs
+
+   # Test endpoints manually
+   curl https://api.consulatehq.com/.well-known/mcp.json
    ```
 
 ---
 
 ## 🏛️ Core Product: AI Vendor Dispute Resolution
 
+### Business Model: Infrastructure-as-a-Service
+
+**CRITICAL**: Consulate operates as INFRASTRUCTURE, not full-service arbitration.
+
+**What This Means:**
+- ✅ **Customer teams make all final decisions** on disputes
+- ✅ **Consulate provides 95% AI automation** + review queue UI
+- ✅ **Customer stays in control** - their domain expertise, their rules
+- ✅ **Zero judge costs for customers** - no Consulate judges involved
+- ✅ **Better margins** - pure software infrastructure model
+- ✅ **Full ADP compliance** - per https://github.com/consulatehq/agentic-dispute-protocol
+
 ### What This System Does
-1. Automated SLA breach detection
-2. Evidence collection & validation
-3. Case filing & arbitration
-4. Resolution enforcement
+1. **Automated SLA breach detection** - Monitor agent performance
+2. **Evidence collection & validation** - Cryptographic proof chains
+3. **Case filing & arbitration** - 95% AI automation
+4. **Resolution enforcement** - Integration with payment protocols
+5. **Review Queue Management** - UI for customer teams to review edge cases
 
 ### Payment Dispute Features
 - **Micro-disputes**: Transactions < $1 (auto-resolve in < 5 min)
@@ -258,6 +305,8 @@ git add . && git commit -m "..." && git push
 - **Token-based**: 20k tokens included, $0.01/1k overage
 - **Regulation E Compliant**: 10 business day resolution
 - **ACP/ATXP Integration**: Native payment protocol support
+- **95% Automation Rate**: AI handles most cases, 5% go to human review
+- **Learning System**: Improves from human judgments and precedents
 
 ### Verdict Types
 **Payment Disputes:**
@@ -278,21 +327,117 @@ git add . && git commit -m "..." && git push
 
 ### API Key Format
 ```
-csk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Production
-csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing
+csk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Production (perceptive-lyrebird-89)
+csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing (youthful-orca-358)
 ```
 
-### Endpoint Authentication
-- **Required**: All write operations (POST, PUT, DELETE)
-- **Optional**: Read operations (GET)
-- **Header**: `Authorization: Bearer csk_live_...`
+### Current Authentication Status
+
+**⚠️ SECURITY CONCERN**: Most endpoints are currently PUBLIC (no authentication required)
+
+**Endpoints Requiring Authentication (1 total):**
+- `POST /agents/register` - ✅ Requires API key
+
+**Public Endpoints (23 total):**
+- Discovery & Health: `/`, `/health`, `/version`, `/.well-known/*`
+- **Payment Disputes**: `POST /api/payment-disputes` (❌ PUBLIC - security concern)
+- Evidence: `POST /evidence` (❌ PUBLIC - security concern)
+- Cases: `GET /cases/:caseId`, `POST /disputes`
+- Agents: `GET /agents/*`, `POST /agents/discover`, `POST /agents/capabilities`
+- Monitoring: `POST /sla/report`, `GET /sla/status/:agentDid` (deprecated)
+- MCP: `POST /mcp/invoke`
+- Webhooks: `POST /webhooks/register`, `GET /notifications/:agentDid`
+- Live: `GET /live/feed`
+
+**Recommended Security Improvements:**
+1. Add authentication to `POST /api/payment-disputes`
+2. Add authentication to `POST /evidence`
+3. Verify party authorization before allowing actions
+4. Add rate limiting to all public endpoints
+
+### How to Get API Key
+1. Create organization in Consulate dashboard
+2. Navigate to Settings → API Keys
+3. Generate new API key (starts with `csk_live_` for production)
+
+### Authentication Header
+```bash
+Authorization: Bearer csk_live_your_key_here
+```
 
 ### Error Handling Order
 1. **Validate request body first** (returns 400)
 2. **Then check authentication** (returns 401)
 3. **Then process request** (returns 200/201)
 
-This order provides better developer experience.
+This order provides better developer experience - users see validation errors before auth errors.
+
+---
+
+## 🔌 ACP/ATXP Payment Protocol Integration
+
+### What are ACP & ATXP?
+- **ACP** (Autonomous Commerce Protocol) - Payment protocol for AI agent transactions
+- **ATXP** (Autonomous Transaction Protocol) - Alternative payment protocol
+- Both require **Regulation E compliance** (dispute mechanisms for transactions)
+
+### Integration Pattern
+Payment platforms (ACP/ATXP) POST disputes to Consulate's webhook endpoint:
+
+```javascript
+// Payment platform integration example
+const response = await fetch('https://api.consulatehq.com/api/payment-disputes', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer csk_live_...'  // Customer's API key
+  },
+  body: JSON.stringify({
+    transactionId: 'txn_abc123',
+    transactionHash: '0x...',
+    amount: 0.25,  // Micro-transaction
+    currency: 'USD',
+    paymentProtocol: 'ACP',  // or 'ATXP'
+    plaintiff: 'consumer:alice@demo.com',  // Customer wallet
+    defendant: 'merchant:api-provider@demo.com',  // Service provider
+    disputeReason: 'api_timeout',  // One of: api_timeout, quality_issue, service_not_rendered, amount_incorrect, fraud
+    description: 'API request timed out after 30s',
+    evidenceUrls: [
+      'https://logs.platform.com/timeout.json'
+    ],
+    callbackUrl: 'https://acp-protocol.com/webhooks/dispute-result',  // Optional
+    reviewerOrganizationId: 'org_id'  // Customer's org ID in Consulate
+  })
+});
+
+// Response (within 5 minutes for micro-disputes):
+{
+  "success": true,
+  "caseId": "k123...",
+  "paymentDisputeId": "j098...",
+  "isMicroDispute": true,
+  "aiRecommendation": "CONSUMER_WINS",
+  "confidence": 0.97,
+  "needsHumanReview": false,
+  "estimatedResolutionTime": "< 5 minutes",
+  "fee": 0.10,
+  "pricingTier": "micro"
+}
+```
+
+### Dispute Resolution Flow
+1. **Dispute Received** → Create case, validate evidence
+2. **AI Analysis** (< 1 min) → Constitutional AI reasoning, precedent matching
+3. **High Confidence?** (>95%) → Auto-resolve, notify parties
+4. **Low Confidence?** (<95%) → Add to review queue for customer team
+5. **Human Review** → Customer team makes final decision
+6. **Resolution** → Callback to payment protocol with verdict
+
+### Regulation E Compliance
+- **Initial Response**: < 5 minutes for micro-disputes
+- **Final Resolution**: Within 10 business days (Regulation E requirement)
+- **Evidence Submission**: Parties can submit evidence up to 7 days
+- **Appeal Process**: Not supported (binding arbitration)
 
 ---
 
@@ -439,3 +584,103 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 ---
 
 **Last reminder**: You are working on a production system that handles real disputes and real money. Quality and reliability are paramount. Never cut corners. Never skip tests. Never deploy without validation.
+
+---
+
+## 📋 Quick Reference Tables
+
+### Deployment URLs Quick Reference
+
+| Environment | Purpose | Convex API | HTTP Routes | Custom Domain |
+|------------|---------|------------|-------------|---------------|
+| **Production** | Live traffic | `perceptive-lyrebird-89.convex.cloud` | `perceptive-lyrebird-89.convex.site` | `api.consulatehq.com` |
+| **Preview/Dev** | Testing | `youthful-orca-358.convex.cloud` | `youthful-orca-358.convex.site` | - |
+
+### Command Quick Reference
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Run tests | `pnpm test:run` | Run before EVERY commit |
+| Type check | `pnpm type-check` | Must pass before commit |
+| Lint | `pnpm lint` | Must pass before commit |
+| Build | `pnpm build` | Must pass before commit |
+| Deploy preview | `CONVEX_DEPLOYMENT=dev:youthful-orca-358 pnpm exec convex deploy --yes` | Always first |
+| Deploy production | `CONVEX_DEPLOYMENT=perceptive-lyrebird-89 pnpm exec convex deploy --yes` | After preview validation |
+| Test preview | `API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:smoke:prod` | Before production |
+| Test production | `API_BASE_URL=https://api.consulatehq.com pnpm test:smoke:prod` | After deployment |
+| View logs | `pnpm check-logs` | Monitor deployment |
+
+### API Endpoints Quick Reference
+
+| Endpoint | Method | Auth Required | Purpose |
+|----------|--------|---------------|---------|
+| `/.well-known/mcp.json` | GET | No | MCP tool discovery |
+| `/.well-known/adp` | GET | No | ADP service discovery |
+| `/api/payment-disputes` | POST | ❌ No (Should be!) | File payment dispute |
+| `/agents/register` | POST | ✅ Yes | Register agent |
+| `/evidence` | POST | ❌ No (Should be!) | Submit evidence |
+| `/health` | GET | No | Health check |
+| `/sla/report` | POST | No | SLA metrics (deprecated) |
+
+### Pricing Tiers Quick Reference
+
+| Tier | Transaction Amount | Fee | Token Limit | Overage Cost |
+|------|-------------------|-----|-------------|--------------|
+| Micro | < $1 | $0.10 | 20k | $0.01/1k |
+| Small | $1 - $10 | $0.25 | 20k | $0.01/1k |
+| Medium | $10 - $100 | $1.00 | 20k | $0.01/1k |
+| Large | $100 - $1k | $5.00 | 20k | $0.01/1k |
+| Enterprise | > $1k | $25.00 | 20k | $0.01/1k |
+
+### Verdict Types Quick Reference
+
+| Payment Disputes | Agent Disputes | Description |
+|-----------------|----------------|-------------|
+| `CONSUMER_WINS` | `PLAINTIFF_WINS` | Full refund/award |
+| `MERCHANT_WINS` | `DEFENDANT_WINS` | No refund/award |
+| `PARTIAL_REFUND` | `SPLIT` | Partial amount |
+| `NEED_REVIEW` | `NEED_PANEL` | Escalate to human |
+
+### File Locations Quick Reference
+
+| Type | Location | Purpose |
+|------|----------|---------|
+| Backend functions | `convex/*.ts` | Serverless functions, queries, mutations |
+| HTTP endpoints | `convex/http.ts` | REST API routes |
+| Database schema | `convex/schema.ts` | Table definitions |
+| Frontend pages | `dashboard/src/app/**/*.tsx` | Next.js pages |
+| Components | `dashboard/src/components/**/*.tsx` | React components |
+| Tests | `test/**/*.test.ts` | Vitest test files |
+| Scripts | `scripts/*.{sh,js}` | Automation scripts |
+| Docs | `internal/operations/*.md` | Operational docs |
+
+---
+
+## 🎯 Checklist for Every Task
+
+Before starting ANY task, verify:
+- [ ] I've read the requirements carefully
+- [ ] I understand what needs to change
+- [ ] I've identified which files to modify
+- [ ] I know which commit type to use
+
+Before committing ANY code, verify:
+- [ ] `pnpm lint` passes
+- [ ] `pnpm type-check` passes
+- [ ] `pnpm build` passes
+- [ ] `pnpm test:run` passes (or known failures documented)
+- [ ] Changes are committed with semantic commit message
+- [ ] Commit message includes: description, Co-Authored-By
+
+Before deploying to production, verify:
+- [ ] Deployed to preview first
+- [ ] Preview tests passing
+- [ ] Preview endpoints manually tested
+- [ ] No errors in preview logs
+- [ ] User approved production deployment
+
+---
+
+**End of Claude.md Configuration**
+
+This document is the single source of truth for Claude Code when working on Consulate. Refer back to it frequently. Update it when you discover new patterns or rules.
