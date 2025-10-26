@@ -100,13 +100,159 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Pricing Tiers */}
+      {/* Payment Dispute Pricing */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 bg-white dark:bg-slate-900">
+              Pay Per Dispute
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Payment Dispute Pricing</h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+              Tiered pricing based on transaction amount. No monthly fees, only pay when you use it.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            {/* Micro Tier */}
+            <Card className="border-2 border-green-200 dark:border-green-800 shadow-sm bg-white dark:bg-slate-900">
+              <CardHeader className="pb-3">
+                <Badge className="mb-2 bg-green-100 text-green-700 border-green-300 w-fit">Micro</Badge>
+                <CardTitle className="text-2xl mb-1">$0.10</CardTitle>
+                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Transactions &lt; $1</p>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>20k tokens included</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>$0.01 per 1k tokens over</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Small Tier */}
+            <Card className="border-2 border-blue-200 dark:border-blue-800 shadow-sm bg-white dark:bg-slate-900">
+              <CardHeader className="pb-3">
+                <Badge className="mb-2 bg-blue-100 text-blue-700 border-blue-300 w-fit">Small</Badge>
+                <CardTitle className="text-2xl mb-1">$0.25</CardTitle>
+                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">$1 - $10</p>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <span>20k tokens included</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <span>$0.01 per 1k tokens over</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Medium Tier */}
+            <Card className="border-2 border-yellow-200 dark:border-yellow-800 shadow-sm bg-white dark:bg-slate-900">
+              <CardHeader className="pb-3">
+                <Badge className="mb-2 bg-yellow-100 text-yellow-700 border-yellow-300 w-fit">Medium</Badge>
+                <CardTitle className="text-2xl mb-1">$1.00</CardTitle>
+                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">$10 - $100</p>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <span>20k tokens included</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <span>$0.01 per 1k tokens over</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Large Tier */}
+            <Card className="border-2 border-orange-200 dark:border-orange-800 shadow-sm bg-white dark:bg-slate-900">
+              <CardHeader className="pb-3">
+                <Badge className="mb-2 bg-orange-100 text-orange-700 border-orange-300 w-fit">Large</Badge>
+                <CardTitle className="text-2xl mb-1">$5.00</CardTitle>
+                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">$100 - $1,000</p>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <span>20k tokens included</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <span>$0.01 per 1k tokens over</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Tier */}
+            <Card className="border-2 border-purple-200 dark:border-purple-800 shadow-sm bg-white dark:bg-slate-900">
+              <CardHeader className="pb-3">
+                <Badge className="mb-2 bg-purple-100 text-purple-700 border-purple-300 w-fit">Enterprise</Badge>
+                <CardTitle className="text-2xl mb-1">$25.00</CardTitle>
+                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">&gt; $1,000</p>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <span>20k tokens included</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs">
+                      <Check className="h-3 w-3 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <span>$0.01 per 1k tokens over</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Example: A $0.05 transaction dispute costs <strong>$0.10</strong> (micro tier). A $500 transaction costs <strong>$5.00</strong> (large tier).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Pricing Tiers */}
       <section className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <Badge variant="outline" className="mb-4">
+              Platform Plans
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Agent Dispute Resolution Plans</h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Start small, scale infinitely. No hidden fees, no surprises.
+              For larger agent-to-agent disputes. Choose the plan that fits your volume.
             </p>
           </div>
           

@@ -21,7 +21,13 @@ export default function DisputeDetailPage() {
   const caseDetails = useQuery(api.cases.getCaseById, { caseId });
   const caseEvidence = useQuery(api.evidence.getEvidenceByCaseId, { caseId });
   const caseEvents = useQuery(api.events.getEventsByCase, { caseId });
-  
+
+  // Fetch payment dispute data if this is a payment dispute case
+  const paymentDispute = useQuery(
+    api.paymentDisputes.getPaymentDisputeByCaseId,
+    caseDetails ? { caseId } : "skip"
+  );
+
   // Only fetch panel if we have a panel ID (pass skip if no panel)
   const panelDetails = useQuery(
     api.judges.getPanel,
@@ -217,9 +223,14 @@ export default function DisputeDetailPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
+                  {paymentDispute ? "Transaction Amount" : caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
                 </p>
-                {caseDetails.claimedDamages ? (
+                {paymentDispute ? (
+                  <>
+                    <p className="text-lg font-semibold">${paymentDispute.amount.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{paymentDispute.currency} payment dispute</p>
+                  </>
+                ) : caseDetails.claimedDamages ? (
                   <>
                     <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
@@ -232,16 +243,42 @@ export default function DisputeDetailPage() {
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Filing Fee</p>
-                <p className="text-lg font-semibold">$150</p>
-                <p className="text-xs text-muted-foreground">Standard filing fee</p>
+                <p className="text-sm font-medium text-muted-foreground">Dispute Determination Fee</p>
+                {paymentDispute?.disputeFee ? (
+                  <>
+                    <p className="text-lg font-semibold">${paymentDispute.disputeFee.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{paymentDispute.pricingTier} tier</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold">$150</p>
+                    <p className="text-xs text-muted-foreground">Standard agent dispute fee</p>
+                  </>
+                )}
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Potential Penalty</p>
-                <p className="text-lg font-semibold">
-                  ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
+                <p className="text-sm font-medium text-muted-foreground">
+                  {paymentDispute ? "AI Processing Tokens" : "Potential Penalty"}
                 </p>
-                <p className="text-xs text-muted-foreground">If found in violation</p>
+                {paymentDispute ? (
+                  <>
+                    <p className="text-lg font-semibold">
+                      {paymentDispute.tokensUsed?.total?.toLocaleString() || "N/A"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {paymentDispute.disputeFeeBreakdown?.tokenOverageFee && paymentDispute.disputeFeeBreakdown.tokenOverageFee > 0
+                        ? `$${paymentDispute.disputeFeeBreakdown.tokenOverageFee.toFixed(2)} overage fee`
+                        : "Within 20k included limit"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold">
+                      ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">If found in violation</p>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>

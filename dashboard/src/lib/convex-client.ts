@@ -14,6 +14,14 @@ export type DisputeEvent = {
   timestamp: number;
   agentDid?: string;
   caseId?: string;
+  caseData?: Record<string, unknown> | null; // Enriched case data for DISPUTE_FILED events
+  paymentDispute?: {
+    amount: number;
+    currency: string;
+    pricingTier?: string;
+    disputeFee?: number;
+    isMicroDispute: boolean;
+  };
 };
 
 export type AgentReputation = {

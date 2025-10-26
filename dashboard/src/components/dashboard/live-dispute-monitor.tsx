@@ -68,7 +68,17 @@ export default function LiveDisputeMonitor() {
       case "AGENT_REGISTERED":
         return `${formatAgentName(event.payload?.did as string)} joined the platform`;
       case "DISPUTE_FILED":
-        const parties = (event.payload?.parties as string[])?.map((p: string) => formatAgentName(p)).join(" vs ");
+        // Try to get parties from enriched caseData first, then fall back to payload
+        let parties: string | undefined;
+        if (event.caseData?.parties) {
+          parties = (event.caseData.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ");
+        } else if (event.caseData?.plaintiff && event.caseData?.defendant) {
+          parties = `${formatAgentName(event.caseData.plaintiff as string)} vs ${formatAgentName(event.caseData.defendant as string)}`;
+        } else if (event.payload?.parties) {
+          parties = (event.payload.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ");
+        } else {
+          parties = "Unknown parties";
+        }
         // Highlight LLM-generated disputes by checking jurisdiction tags
         const jurisdictionTags = event.payload?.jurisdictionTags as string[] || [];
         const isLLMGenerated = jurisdictionTags.includes("LLM_GENERATED");
@@ -136,6 +146,31 @@ export default function LiveDisputeMonitor() {
                         })}
                       </span>
                       {event.type === "DISPUTE_FILED" && (() => {
+                        // Show payment dispute info (amount + tier) if available
+                        if (event.paymentDispute) {
+                          const tierColors: Record<string, string> = {
+                            micro: "text-green-700 border-green-300 bg-green-50",
+                            small: "text-blue-700 border-blue-300 bg-blue-50",
+                            medium: "text-yellow-700 border-yellow-300 bg-yellow-50",
+                            large: "text-orange-700 border-orange-300 bg-orange-50",
+                            enterprise: "text-purple-700 border-purple-300 bg-purple-50"
+                          };
+                          const tierColor = tierColors[event.paymentDispute.pricingTier || "micro"] || "text-slate-600 border-slate-300 bg-slate-50";
+                          return (
+                            <>
+                              <Badge variant="outline" className={`text-[11px] px-2 py-0.5 font-normal ${tierColor}`}>
+                                ${event.paymentDispute.amount.toFixed(2)} • {event.paymentDispute.pricingTier || "micro"} tier
+                              </Badge>
+                              {event.paymentDispute.disputeFee && (
+                                <span className="text-[11px] text-slate-500">
+                                  (${event.paymentDispute.disputeFee.toFixed(2)} fee)
+                                </span>
+                              )}
+                            </>
+                          );
+                        }
+
+                        // Show agent dispute type if available
                         const disputeType = event.payload?.type;
                         if (typeof disputeType === "string") {
                           return (

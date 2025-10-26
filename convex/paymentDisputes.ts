@@ -494,6 +494,19 @@ export const getPaymentDispute = query({
 });
 
 /**
+ * Get payment dispute by case ID
+ */
+export const getPaymentDisputeByCaseId = query({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("paymentDisputes")
+      .withIndex("by_case", q => q.eq("caseId", args.caseId))
+      .first();
+  },
+});
+
+/**
  * Queue for human review (exception cases)
  */
 export const getDisputesNeedingHumanReview = query({

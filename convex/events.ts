@@ -9,25 +9,61 @@ export const getRecentEvents = query({
     type: v.optional(v.string())
   },
   handler: async (ctx, args) => {
+    let events;
     if (args.afterTimestamp) {
       let query = ctx.db.query("events")
         .withIndex("by_timestamp", (q) => q.gt("timestamp", args.afterTimestamp!));
-      
+
       if (args.type) {
         query = query.filter((q) => q.eq(q.field("type"), args.type));
       }
-      
-      return await query.order("desc").take(args.limit ?? 50);
+
+      events = await query.order("desc").take(args.limit ?? 50);
     } else {
       let query = ctx.db.query("events")
         .withIndex("by_timestamp");
-      
+
       if (args.type) {
         query = query.filter((q) => q.eq(q.field("type"), args.type));
       }
-      
-      return await query.order("desc").take(args.limit ?? 50);
+
+      events = await query.order("desc").take(args.limit ?? 50);
     }
+
+    // Enrich events with case data for DISPUTE_FILED events
+    return await Promise.all(
+      events.map(async (event) => {
+        if (event.type === "DISPUTE_FILED" && event.caseId) {
+          const caseData = await ctx.db.get(event.caseId);
+
+          // Also fetch payment dispute data if this is a payment dispute
+          let paymentDisputeData = undefined;
+          if (event.caseId) {
+            const paymentDispute = await ctx.db
+              .query("paymentDisputes")
+              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
+              .first();
+
+            if (paymentDispute) {
+              paymentDisputeData = {
+                amount: paymentDispute.amount,
+                currency: paymentDispute.currency,
+                pricingTier: paymentDispute.pricingTier,
+                disputeFee: paymentDispute.disputeFee,
+                isMicroDispute: paymentDispute.amount < 1,
+              };
+            }
+          }
+
+          return {
+            ...event,
+            caseData,
+            paymentDispute: paymentDisputeData
+          };
+        }
+        return event;
+      })
+    );
   }
 });
 
