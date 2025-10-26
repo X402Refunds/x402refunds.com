@@ -395,93 +395,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ROI Calculator */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white dark:bg-slate-950">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">ROI Calculator</h2>
-            <p className="text-slate-600 dark:text-slate-400">
-              See how much you save vs traditional dispute resolution
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Traditional */}
-            <Card className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950">
-              <CardHeader>
-                <CardTitle className="text-red-900 dark:text-red-100">Traditional Manual Process</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span>Labor cost per dispute:</span>
-                    <span className="font-semibold text-red-700 dark:text-red-300">$20-50</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Time to resolution:</span>
-                    <span className="font-semibold text-red-700 dark:text-red-300">5-10 days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Regulation E compliance:</span>
-                    <span className="font-semibold text-red-700 dark:text-red-300">Manual tracking</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Scalability:</span>
-                    <span className="font-semibold text-red-700 dark:text-red-300">Limited by headcount</span>
-                  </div>
-                  <div className="flex justify-between pt-4 border-t border-red-200 dark:border-red-900">
-                    <span className="font-bold">10,000 disputes/mo:</span>
-                    <span className="font-bold text-red-700 dark:text-red-300 text-lg">$200K-500K</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* With Consulate */}
-            <Card className="border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950">
-              <CardHeader>
-                <CardTitle className="text-emerald-900 dark:text-emerald-100">With Consulate Infrastructure</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span>Cost per dispute:</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-300">$0.10-25.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Time to resolution:</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-300">&lt; 10 minutes</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Regulation E compliance:</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-300">Built-in</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Scalability:</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-300">Infinite (software)</span>
-                  </div>
-                  <div className="flex justify-between pt-4 border-t border-emerald-200 dark:border-emerald-900">
-                    <span className="font-bold">10,000 disputes/mo:</span>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-300 text-lg">$1,249</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-8 text-center">
-            <div className="inline-block bg-gradient-to-r from-slate-100 to-blue-100 dark:from-slate-800 dark:to-blue-900 px-6 py-4 rounded-lg">
-              <p className="text-3xl font-bold text-blue-600">
-                99.5% Cost Reduction
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Same compliance, better experience, your control
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* How It Works */}
       <section className="py-12 sm:py-16 lg:py-20 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -525,6 +438,176 @@ export default function PricingPage() {
                 context. You make the final call. AI learns from you.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ROI Comparison Table */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+              Consulate Beats Traditional Approaches
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400">
+              See how our infrastructure compares to legacy dispute resolution
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 dark:border-slate-800">
+                  <th className="text-left py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
+                  <th className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="text-slate-900 dark:text-slate-100 font-bold">Consulate</div>
+                  </th>
+                  <th className="py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Traditional Manual</th>
+                  <th className="py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Third-Party Arbitration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Cost per dispute */}
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Cost per dispute</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Average handling cost</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600 mr-2" />
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">$0.10-$25</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">$20-$50</span>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">$50-$200</span>
+                  </td>
+                </tr>
+
+                {/* Resolution time */}
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Resolution time</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Time to final decision</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600 mr-2" />
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">&lt; 10 minutes</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">5-10 days</span>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">14-30 days</span>
+                  </td>
+                </tr>
+
+                {/* Your team stays in control */}
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Your team makes decisions</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Final authority on edge cases</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-5 w-5 text-slate-400" />
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
+                  </td>
+                </tr>
+
+                {/* Regulation E compliance */}
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Regulation E compliance</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Consumer protection built-in</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600 mr-2" />
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">Automated</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">Manual tracking</span>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">Varies</span>
+                  </td>
+                </tr>
+
+                {/* Scalability */}
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Scalability</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Handle volume spikes</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600 mr-2" />
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">Infinite</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">Limited by headcount</span>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <span className="text-slate-600 dark:text-slate-400">Limited by panel</span>
+                  </td>
+                </tr>
+
+                {/* AI learning */}
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">AI learns from your decisions</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Continuous improvement</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center">
+                      <Check className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
+                  </td>
+                </tr>
+
+                {/* Total cost comparison */}
+                <tr className="bg-slate-100 dark:bg-slate-800">
+                  <td className="py-4 px-4">
+                    <div className="font-bold text-slate-900 dark:text-slate-100">10,000 disputes/month</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Total monthly cost</div>
+                  </td>
+                  <td className="py-4 px-4 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">$1,249</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">99.5% cost reduction</div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">$200K-$500K</div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">$500K-$2M</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
