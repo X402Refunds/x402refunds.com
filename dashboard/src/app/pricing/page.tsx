@@ -442,168 +442,146 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ROI Comparison Table */}
+      {/* ROI Calculator */}
       <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-              Consulate Beats Traditional Approaches
+              ROI Calculator
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
-              See how our infrastructure compares to legacy dispute resolution
+              See how much you save vs traditional dispute resolution
             </p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse bg-white dark:bg-slate-950 shadow-lg rounded-lg overflow-hidden">
               <thead>
                 <tr className="border-b-2 border-slate-200 dark:border-slate-800">
-                  <th className="text-left py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
-                  <th className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
-                    <div className="text-slate-900 dark:text-slate-100 font-bold">Consulate</div>
+                  <th className="text-left py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
+                  <th className="py-6 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
+                    <div className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-wide">
+                      CONSULATE
+                    </div>
                   </th>
-                  <th className="py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Traditional Manual</th>
-                  <th className="py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">Third-Party Arbitration</th>
+                  <th className="py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Traditional Arbitration</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Cost per dispute */}
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <td className="py-4 px-4">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Cost per dispute</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Average handling cost</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600 mr-2" />
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">$0.10-$25</span>
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">$0.10-$25</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">$20-$50</span>
-                  </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-5 px-6 text-center">
                     <span className="text-slate-600 dark:text-slate-400">$50-$200</span>
                   </td>
                 </tr>
 
                 {/* Resolution time */}
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
-                  <td className="py-4 px-4">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Resolution time</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Time to final decision</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600 mr-2" />
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">&lt; 10 minutes</span>
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">&lt; 10 minutes</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">5-10 days</span>
-                  </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-5 px-6 text-center">
                     <span className="text-slate-600 dark:text-slate-400">14-30 days</span>
                   </td>
                 </tr>
 
                 {/* Your team stays in control */}
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <td className="py-4 px-4">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Your team makes decisions</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Final authority on edge cases</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600" />
+                      <Check className="h-7 w-7 text-blue-600" />
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex items-center justify-center">
-                      <Check className="h-5 w-5 text-slate-400" />
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
+                  <td className="py-5 px-6 text-center">
+                    <div className="flex items-center justify-center text-slate-400 text-2xl">×</div>
                   </td>
                 </tr>
 
                 {/* Regulation E compliance */}
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
-                  <td className="py-4 px-4">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Regulation E compliance</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Consumer protection built-in</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600 mr-2" />
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Automated</span>
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Automated</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">Manual tracking</span>
-                  </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-5 px-6 text-center">
                     <span className="text-slate-600 dark:text-slate-400">Varies</span>
                   </td>
                 </tr>
 
                 {/* Scalability */}
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <td className="py-4 px-4">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Scalability</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Handle volume spikes</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600 mr-2" />
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Infinite</span>
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Infinite</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">Limited by headcount</span>
-                  </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-5 px-6 text-center">
                     <span className="text-slate-600 dark:text-slate-400">Limited by panel</span>
                   </td>
                 </tr>
 
                 {/* AI learning */}
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
-                  <td className="py-4 px-4">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                  <td className="py-5 px-6">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">AI learns from your decisions</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Continuous improvement</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-6 w-6 text-blue-600" />
+                      <Check className="h-7 w-7 text-blue-600" />
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex items-center justify-center text-slate-400 text-xl">×</div>
+                  <td className="py-5 px-6 text-center">
+                    <div className="flex items-center justify-center text-slate-400 text-2xl">×</div>
                   </td>
                 </tr>
 
                 {/* Total cost comparison */}
-                <tr className="bg-slate-100 dark:bg-slate-800">
-                  <td className="py-4 px-4">
+                <tr className="bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-700">
+                  <td className="py-6 px-6">
                     <div className="font-bold text-slate-900 dark:text-slate-100">10,000 disputes/month</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Total monthly cost</div>
                   </td>
-                  <td className="py-4 px-4 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600">
+                  <td className="py-6 px-8 bg-blue-100 dark:bg-blue-900 border-l-4 border-r-4 border-blue-600">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">$1,249</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">99.5% cost reduction</div>
+                      <div className="text-3xl font-black text-blue-600">$1,249</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-semibold">99.5% cost reduction</div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">$200K-$500K</div>
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">$500K-$2M</div>
+                  <td className="py-6 px-6 text-center">
+                    <div className="text-xl font-bold text-slate-900 dark:text-slate-100">$500K-$2M</div>
                   </td>
                 </tr>
               </tbody>
