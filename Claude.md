@@ -193,6 +193,83 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
+## 🎨 Design System Reference
+
+**CRITICAL**: All dashboard and UI elements MUST follow the Sovereign Civic Design System.
+
+### Design System Location
+- **File**: `/Users/vkotecha/Desktop/consulate/internal/design/sovereign-civic-design-system.md`
+- **Version**: 1.0.0
+- **Last Updated**: October 2025
+
+### Core Design Rules (NEVER VIOLATE)
+
+1. **Color Palette**:
+   - Primary text: `slate-900` (institutional authority)
+   - Interactive elements: `blue-600` (sovereign action)
+   - Success: `emerald-600`
+   - Warning: `amber-600`
+   - Critical: `red-600`
+   - Info: `blue-50` backgrounds with `blue-700` text
+   - **❌ NEVER use purple, pink, violet, or playful gradients** (not in design system)
+
+2. **Typography**:
+   - Font: `Inter` (sans-serif), `JetBrains Mono` (monospace for data/IDs)
+   - Hierarchy:
+     - H1: `text-4xl lg:text-7xl`
+     - H2: `text-3xl`
+     - H3: `text-2xl`
+     - H4: `text-xl`
+     - Body: `text-base`
+     - Small: `text-sm`
+     - Metadata: `text-xs`
+   - Weights:
+     - `font-bold` (headers, authority)
+     - `font-semibold` (emphasis, section headers)
+     - `font-normal` (body text)
+
+3. **Component Styling**:
+   - Cards: `border-2 border-slate-200 hover:border-blue-300 bg-white shadow-sm`
+   - Badges (Info): `bg-blue-50 text-blue-700 border-blue-200`
+   - Badges (Success): `bg-emerald-50 text-emerald-700 border-emerald-200`
+   - Badges (Warning): `bg-amber-50 text-amber-700 border-amber-200`
+   - Buttons (Primary): `bg-slate-900 text-white hover:bg-slate-800`
+   - Buttons (Secondary): `bg-blue-600 text-white hover:bg-blue-700`
+   - Buttons (Outline): `border-2 border-slate-300 text-slate-700 hover:bg-slate-50`
+
+4. **Spacing (8-point grid)**:
+   - Section padding: `py-12 sm:py-16 lg:py-20`
+   - Card padding: `p-6`
+   - Element gaps: `gap-4`, `gap-6`, `gap-8`
+   - Margins: `mb-4`, `mb-6`, `mb-8`, `mb-12`
+
+5. **Branding**:
+   - Landing page: "Consulate" (no subtitle)
+   - Dashboard: "Consulate" + "Governance OS" subtitle
+   - Logo: Shield icon + `bg-blue-600`
+   - Jurisdiction badge: "U.S. Federal Jurisdiction" (`bg-blue-50 text-blue-700 border-blue-200`)
+
+### When Creating UI Elements
+- ✅ Read design system doc BEFORE starting
+- ✅ Use provided component patterns from design system
+- ✅ Follow 8-point spacing grid
+- ✅ Ensure WCAG AAA contrast ratios (slate-900 on white = 17.5:1)
+- ✅ Test mobile responsiveness (mobile-first approach)
+- ✅ Use semantic colors appropriately (emerald=success, amber=warning, red=critical, blue=info)
+- ❌ Don't create custom colors outside defined palette
+- ❌ Don't use purple/pink/violet (not in design system)
+- ❌ Don't use playful gradients (except subtle hero: `from-slate-50 to-blue-50`)
+- ❌ Don't violate z-index hierarchy (see design system doc)
+
+### Reference Examples
+See design system doc for complete component library:
+- Button variants (design-system.md:317-337)
+- Badge patterns (design-system.md:344-364)
+- Card layouts (design-system.md:371-404)
+- Typography scale (design-system.md:229-267)
+
+---
+
 ## 🧪 Testing Strategy
 
 ### Before Committing (MANDATORY)
