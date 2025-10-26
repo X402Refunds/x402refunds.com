@@ -15,9 +15,9 @@ import { CollapsibleStats } from "./collapsible-stats";
 export default function LiveDisputeMonitor() {
   const router = useRouter();
   
-  // REAL-TIME DATA FROM CONVEX
-  const recentEvents = useQuery(api.events.getRecentEvents, { 
-    limit: 20 
+  // REAL-TIME DATA FROM CONVEX - Only dispute activity (excludes admin/audit events)
+  const recentEvents = useQuery(api.events.getDisputeActivityEvents, {
+    limit: 20
   });
   const activeCases = useQuery(api.cases.getCasesByStatus, { 
     status: "FILED",

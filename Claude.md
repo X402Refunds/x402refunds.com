@@ -668,7 +668,7 @@ Before committing ANY code, verify:
 - [ ] `pnpm lint` passes
 - [ ] `pnpm type-check` passes
 - [ ] `pnpm build` passes
-- [ ] `pnpm test:run` passes (or known failures documented)
+- [ ] `pnpm test:run` passes, even if the failing tests are unrelated to your changes.
 - [ ] Changes are committed with semantic commit message
 - [ ] Commit message includes: description, Co-Authored-By
 

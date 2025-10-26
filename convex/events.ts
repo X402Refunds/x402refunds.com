@@ -1,7 +1,90 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 
-// Query recent events for monitoring
+// Dispute-related event types (for activity feeds)
+const DISPUTE_EVENT_TYPES = [
+  "AGENT_REGISTERED",
+  "DISPUTE_FILED",
+  "EVIDENCE_SUBMITTED",
+  "CASE_STATUS_UPDATED"
+];
+
+// Query recent dispute activity events (filters out admin/audit events)
+export const getDisputeActivityEvents = query({
+  args: {
+    limit: v.optional(v.number()),
+    afterTimestamp: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let events;
+    if (args.afterTimestamp) {
+      events = await ctx.db.query("events")
+        .withIndex("by_timestamp", (q) => q.gt("timestamp", args.afterTimestamp!))
+        .order("desc")
+        .filter((q) => {
+          // Only include dispute-related events
+          return q.or(
+            q.eq(q.field("type"), "AGENT_REGISTERED"),
+            q.eq(q.field("type"), "DISPUTE_FILED"),
+            q.eq(q.field("type"), "EVIDENCE_SUBMITTED"),
+            q.eq(q.field("type"), "CASE_STATUS_UPDATED")
+          );
+        })
+        .take(args.limit ?? 50);
+    } else {
+      events = await ctx.db.query("events")
+        .withIndex("by_timestamp")
+        .order("desc")
+        .filter((q) => {
+          // Only include dispute-related events
+          return q.or(
+            q.eq(q.field("type"), "AGENT_REGISTERED"),
+            q.eq(q.field("type"), "DISPUTE_FILED"),
+            q.eq(q.field("type"), "EVIDENCE_SUBMITTED"),
+            q.eq(q.field("type"), "CASE_STATUS_UPDATED")
+          );
+        })
+        .take(args.limit ?? 50);
+    }
+
+    // Enrich events with case data for DISPUTE_FILED events
+    return await Promise.all(
+      events.map(async (event) => {
+        if (event.type === "DISPUTE_FILED" && event.caseId) {
+          const caseData = await ctx.db.get(event.caseId);
+
+          // Also fetch payment dispute data if this is a payment dispute
+          let paymentDisputeData = undefined;
+          if (event.caseId) {
+            const paymentDispute = await ctx.db
+              .query("paymentDisputes")
+              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
+              .first();
+
+            if (paymentDispute) {
+              paymentDisputeData = {
+                amount: paymentDispute.amount,
+                currency: paymentDispute.currency,
+                pricingTier: paymentDispute.pricingTier,
+                disputeFee: paymentDispute.disputeFee,
+                isMicroDispute: paymentDispute.amount < 1,
+              };
+            }
+          }
+
+          return {
+            ...event,
+            caseData,
+            paymentDispute: paymentDisputeData
+          };
+        }
+        return event;
+      })
+    );
+  }
+});
+
+// Query recent events for monitoring (includes ALL event types)
 export const getRecentEvents = query({
   args: {
     limit: v.optional(v.number()),
