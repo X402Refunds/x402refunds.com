@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ExternalLink, CheckCircle, XCircle } from "lucide-react"
 
+type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW";
+
 interface Dispute {
   _id: string
   amount: number
   currency: string
   transactionId: string
   disputeReason: string
-  aiRecommendation?: string
+  aiRecommendation?: PaymentVerdict
   aiRulingConfidence?: number
   aiReasoning?: string
   similarPastCases?: string[]
@@ -21,6 +23,8 @@ interface Dispute {
     description?: string
     evidenceIds?: string[]
   }
+  disputeFee?: number
+  pricingTier?: string
 }
 
 interface DisputeReviewCardProps {
@@ -31,7 +35,7 @@ interface DisputeReviewCardProps {
 
 export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeReviewCardProps) {
   const [showOverride, setShowOverride] = useState(false)
-  const [selectedVerdict, setSelectedVerdict] = useState<"UPHELD" | "DISMISSED">("UPHELD")
+  const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
   
@@ -41,10 +45,20 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
     ).join(' ')
   }
   
+  const getVerdictDisplay = (verdict?: PaymentVerdict) => {
+    switch (verdict) {
+      case "CONSUMER_WINS": return "Consumer Wins (Refund)"
+      case "MERCHANT_WINS": return "Merchant Wins (No Refund)"
+      case "PARTIAL_REFUND": return "Partial Refund"
+      case "NEED_REVIEW": return "Needs Review"
+      default: return "Unknown"
+    }
+  }
+
   const handleApprove = async () => {
     setSubmitting(true)
     try {
-      await onApprove(dispute.aiRecommendation || "UPHELD")
+      await onApprove(dispute.aiRecommendation || "CONSUMER_WINS")
     } finally {
       setSubmitting(false)
     }
@@ -90,7 +104,7 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">🤖</span>
             <h4 className="font-semibold text-purple-900 dark:text-purple-100">
-              AI Recommendation: {dispute.aiRecommendation || "UPHELD"}
+              AI Recommendation: {getVerdictDisplay(dispute.aiRecommendation)}
             </h4>
           </div>
           <div className="flex items-center gap-2 mb-2">
@@ -103,7 +117,12 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+          {dispute.disputeFee && (
+            <div className="text-xs text-purple-700 dark:text-purple-300 mt-2">
+              Resolution Fee: ${dispute.disputeFee.toFixed(2)} ({dispute.pricingTier} tier)
+            </div>
+          )}
+          <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
             {dispute.aiReasoning || "AI analysis pending..."}
           </p>
         </div>
@@ -170,28 +189,50 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
             <h4 className="text-sm font-semibold">Override AI Recommendation:</h4>
             
             {/* Verdict Selection */}
-            <div className="flex gap-3">
-              <label className="flex-1 cursor-pointer">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="cursor-pointer">
                 <input
                   type="radio"
                   name="verdict"
-                  value="UPHELD"
-                  checked={selectedVerdict === "UPHELD"}
-                  onChange={() => setSelectedVerdict("UPHELD")}
+                  value="CONSUMER_WINS"
+                  checked={selectedVerdict === "CONSUMER_WINS"}
+                  onChange={() => setSelectedVerdict("CONSUMER_WINS")}
                   className="mr-2"
                 />
-                <span className="text-sm">UPHOLD (Customer wins)</span>
+                <span className="text-sm">Consumer Wins (Refund)</span>
               </label>
-              <label className="flex-1 cursor-pointer">
+              <label className="cursor-pointer">
                 <input
                   type="radio"
                   name="verdict"
-                  value="DISMISSED"
-                  checked={selectedVerdict === "DISMISSED"}
-                  onChange={() => setSelectedVerdict("DISMISSED")}
+                  value="MERCHANT_WINS"
+                  checked={selectedVerdict === "MERCHANT_WINS"}
+                  onChange={() => setSelectedVerdict("MERCHANT_WINS")}
                   className="mr-2"
                 />
-                <span className="text-sm">DISMISS (Merchant wins)</span>
+                <span className="text-sm">Merchant Wins (No Refund)</span>
+              </label>
+              <label className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="verdict"
+                  value="PARTIAL_REFUND"
+                  checked={selectedVerdict === "PARTIAL_REFUND"}
+                  onChange={() => setSelectedVerdict("PARTIAL_REFUND")}
+                  className="mr-2"
+                />
+                <span className="text-sm">Partial Refund</span>
+              </label>
+              <label className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="verdict"
+                  value="NEED_REVIEW"
+                  checked={selectedVerdict === "NEED_REVIEW"}
+                  onChange={() => setSelectedVerdict("NEED_REVIEW")}
+                  className="mr-2"
+                />
+                <span className="text-sm">Escalate to Panel</span>
               </label>
             </div>
             

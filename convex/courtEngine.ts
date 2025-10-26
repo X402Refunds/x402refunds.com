@@ -11,7 +11,8 @@ interface CaseData {
 }
 
 interface RuleResult {
-  verdict: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL";
+  verdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL";
+  verdictLegacy: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL";
   confidence: number;
   code: string;
   reasons: string;
@@ -32,37 +33,42 @@ async function processCase(ctx: any, args: {
     const { caseData, evidenceManifests } = args;
     
     // Simple rule-based logic
-    let verdict: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL" = "NEED_PANEL";
+    let verdictLegacy: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL" = "NEED_PANEL";
+    let verdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" = "NEED_PANEL";
     let confidence = 0.5;
     let code = "CASE_REVIEW_REQUIRED";
     let reasons = "Case requires human review for proper adjudication.";
     let auto = false;
-    
+
     // Basic automated rules
     if (evidenceManifests.length === 0) {
-      verdict = "DISMISSED";
+      verdictLegacy = "DISMISSED";
+      verdict = "DEFENDANT_WINS";
       confidence = 0.9;
       code = "INSUFFICIENT_EVIDENCE";
       reasons = "Case dismissed due to lack of evidence.";
       auto = true;
     } else if (evidenceManifests.length >= 3) {
-      // If substantial evidence, auto-resolve with UPHELD verdict
-      verdict = "UPHELD";
+      // If substantial evidence, auto-resolve with plaintiff wins verdict
+      verdictLegacy = "UPHELD";
+      verdict = "PLAINTIFF_WINS";
       confidence = 0.8;
       code = "SLA_VIOLATION_CONFIRMED";
       reasons = "Substantial evidence confirms SLA violation. Provider found liable.";
       auto = true;
     } else {
-      // 1-2 pieces of evidence, likely UPHELD
-      verdict = "UPHELD";
+      // 1-2 pieces of evidence, likely PLAINTIFF_WINS
+      verdictLegacy = "UPHELD";
+      verdict = "PLAINTIFF_WINS";
       confidence = 0.7;
       code = "EVIDENCE_SUPPORTS_CLAIM";
       reasons = "Evidence supports claim of service level violation.";
       auto = true;
     }
-    
+
     return {
       verdict,
+      verdictLegacy,
       confidence,
       code,
       reasons,
@@ -120,6 +126,7 @@ export const runCourtWorkflow = mutation({
     const ruling = await ctx.db.insert("rulings", {
       caseId: args.caseId,
       verdict: result.verdict,
+      verdictLegacy: result.verdictLegacy,
       code: result.code,
       reasons: result.reasons,
       auto: result.auto,
@@ -134,7 +141,7 @@ export const runCourtWorkflow = mutation({
     await ctx.db.patch(args.caseId, {
       status: newStatus,
       ruling: {
-        verdict: result.verdict,
+        verdict: result.verdictLegacy,
         auto: result.auto,
         decidedAt: Date.now()
       }

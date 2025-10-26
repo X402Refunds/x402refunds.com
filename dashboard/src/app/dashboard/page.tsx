@@ -257,7 +257,7 @@ export default function DashboardPage() {
                       </Badge>
                     </div>
                     <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
-                      🤖 Recommends: <strong>{dispute.aiRecommendation || "UPHELD"}</strong>
+                      🤖 Recommends: <strong>{dispute.aiRecommendation || "CONSUMER_WINS"}</strong>
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                             paymentDisputeId: dispute._id,
                             reviewerUserId: currentUser._id,
                             decision: "APPROVE_AI",
-                            finalVerdict: dispute.aiRecommendation || "UPHELD",
+                            finalVerdict: dispute.aiRecommendation || "CONSUMER_WINS",
                           })
                         }}
                       >

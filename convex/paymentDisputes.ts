@@ -14,6 +14,16 @@ import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
+import {
+  calculateDisputeFee,
+  estimateDisputeTokens,
+  validateEvidenceSize,
+} from "./disputePricing";
+import {
+  type PaymentVerdict,
+  migrateLegacyPaymentVerdict,
+  toLegacyVerdict,
+} from "./verdictHelpers";
 
 /**
  * Receive dispute from payment protocol (ACP/ATXP webhook endpoint)
@@ -29,11 +39,11 @@ export const receivePaymentDispute = mutation({
     amount: v.number(),
     currency: v.string(),
     paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
-    
+
     // Parties
     plaintiff: v.string(), // Agent DID or wallet address
     defendant: v.string(),
-    
+
     // Dispute details
     disputeReason: v.union(
       v.literal("unauthorized"),
@@ -47,21 +57,32 @@ export const receivePaymentDispute = mutation({
       v.literal("other")
     ),
     description: v.string(),
-    
+
     // Evidence URLs (API logs, transaction records, etc.)
     evidenceUrls: v.optional(v.array(v.string())),
-    
+
     // Webhook for result notification
     callbackUrl: v.optional(v.string()),
-    
+
     // Infrastructure Model: Customer's team reviews
     reviewerEmail: v.optional(v.string()),
     reviewerOrganizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
     console.info(`📥 Payment dispute received: ${args.transactionId} ($${args.amount})`);
-    
-    // 1. Create standard case
+
+    // 1. Validate evidence size and estimate tokens
+    const evidenceTexts: string[] = []; // In production: fetch from URLs
+    const validation = validateEvidenceSize(args.description, evidenceTexts);
+
+    if (!validation.valid) {
+      throw new Error(validation.message);
+    }
+
+    // 2. Calculate pricing
+    const feeBreakdown = calculateDisputeFee(args.amount, validation.estimatedTokens);
+
+    // 3. Create standard case
     const now = Date.now();
     const caseId = await ctx.db.insert("cases", {
       plaintiff: args.plaintiff,
@@ -79,17 +100,17 @@ export const receivePaymentDispute = mutation({
         panelDue: now + (7 * 24 * 60 * 60 * 1000), // 7 days
       },
     });
-    
-    // 2. Create payment-specific record
+
+    // 4. Create payment-specific record
     const isMicroDispute = args.amount < 1.0;
     const autoResolveEligible = isMicroDispute; // Micro-disputes are auto-eligible
-    
+
     // Calculate Regulation E deadline (10 business days)
     const regulationEDeadline = now + (10 * 24 * 60 * 60 * 1000); // Simplified: 10 calendar days
-    
+
     // Initial human review determination (may be updated by AI processing)
     const initialHumanReviewNeeded = args.amount >= 1.0 || args.disputeReason === "fraud";
-    
+
     const paymentDisputeId = await ctx.db.insert("paymentDisputes", {
       caseId,
       transactionId: args.transactionId,
@@ -106,6 +127,19 @@ export const receivePaymentDispute = mutation({
       // Infrastructure Model fields
       reviewerEmail: args.reviewerEmail,
       reviewerOrganizationId: args.reviewerOrganizationId,
+      // NEW: Pricing fields
+      disputeFee: feeBreakdown.totalFee,
+      disputeFeeBreakdown: {
+        baseFee: feeBreakdown.baseFee,
+        tokenOverageFee: feeBreakdown.tokenOverageFee,
+        totalFee: feeBreakdown.totalFee,
+      },
+      pricingTier: feeBreakdown.tier,
+      tokensUsed: {
+        evidenceInput: validation.estimatedTokens,
+        aiAnalysis: 0, // Will be updated by AI processing
+        total: validation.estimatedTokens,
+      },
     });
     
     // 3. Submit evidence if provided
@@ -173,6 +207,10 @@ export const receivePaymentDispute = mutation({
       estimatedResolutionTime: isMicroDispute ? "5 minutes" : "24 hours",
       regulationECompliant: true,
       callbackUrl: args.callbackUrl,
+      // NEW: Fee information
+      fee: feeBreakdown.totalFee,
+      feeBreakdown,
+      tier: feeBreakdown.tier,
     };
   },
 });
@@ -188,11 +226,13 @@ export const processWithAI = action({
     paymentDisputeId: v.id("paymentDisputes"),
   },
   handler: async (ctx, args): Promise<{
-    verdict: string;
+    verdict: PaymentVerdict;
+    verdictLegacy: string;
     confidence: number;
     reasoning: string;
     humanReviewRequired: boolean;
     similarDisputesFound: number;
+    tokensUsed: number;
   }> => {
     const dispute = await ctx.runQuery(api.paymentDisputes.getPaymentDispute, {
       paymentDisputeId: args.paymentDisputeId,
@@ -215,41 +255,44 @@ export const processWithAI = action({
     
     // 2. Calculate confidence based on precedent consistency
     let confidence: number = 0.5; // Base confidence
-    let verdict: "UPHELD" | "DISMISSED" = "UPHELD"; // Default: favor consumer (Regulation E)
+    let verdict: PaymentVerdict = "CONSUMER_WINS"; // Default: favor consumer (Regulation E)
     let reasoning: string = "";
-    
+
     if (similarDisputes.length > 0) {
       // Calculate confidence from precedent agreement
-      const upheldCount = similarDisputes.filter((d: any) => 
-        d.caseData?.ruling?.verdict === "UPHELD"
+      const consumerWinsCount = similarDisputes.filter((d: any) =>
+        d.aiRecommendation === "CONSUMER_WINS" || d.caseData?.ruling?.verdict === "UPHELD"
       ).length;
-      const consistency = upheldCount / similarDisputes.length;
-      
+      const consistency = consumerWinsCount / similarDisputes.length;
+
       confidence = 0.7 + (consistency * 0.3); // 70-100% confidence
-      verdict = consistency > 0.5 ? "UPHELD" : "DISMISSED";
-      
+      verdict = consistency > 0.5 ? "CONSUMER_WINS" : "MERCHANT_WINS";
+
       reasoning = `Based on ${similarDisputes.length} similar past disputes, ` +
-        `${(consistency * 100).toFixed(0)}% were ruled ${verdict}. `;
+        `${(consistency * 100).toFixed(0)}% ruled in favor of consumer. `;
     }
-    
+
     // 3. Adjust confidence based on dispute characteristics
     if (dispute.amount < 0.10) {
       confidence += 0.1; // Very micro disputes: higher automation confidence
     }
-    
+
     if (dispute.disputeReason === "api_timeout" || dispute.disputeReason === "service_not_rendered") {
       confidence += 0.05; // Clear-cut technical failures
-      verdict = "UPHELD";
+      verdict = "CONSUMER_WINS";
       reasoning += "Technical failure confirmed. ";
     }
-    
+
     if (dispute.disputeReason === "fraud") {
       confidence -= 0.2; // Fraud requires human review
       reasoning += "Fraud allegations require enhanced review. ";
     }
-    
+
     // Clamp confidence to [0, 1]
     confidence = Math.max(0, Math.min(1, confidence));
+
+    // Estimate AI tokens used (simplified for now)
+    const tokensUsed = estimateDisputeTokens(reasoning, []);
     
     // 4. Determine if human review needed
     const humanReviewRequired: boolean = confidence < 0.95 || dispute.amount >= 1.0 || dispute.disputeReason === "fraud";
@@ -262,8 +305,9 @@ export const processWithAI = action({
       reasoning,
       humanReviewRequired,
       similarPastCases: similarDisputes.map((d: any) => d._id),
+      tokensUsed,
     });
-    
+
     // 6. If high confidence + micro-dispute, auto-resolve
     if (!humanReviewRequired && dispute.amount < 1.0) {
       await ctx.runMutation(api.paymentDisputes.autoResolve, {
@@ -273,13 +317,15 @@ export const processWithAI = action({
         confidence,
       });
     }
-    
+
     return {
       verdict,
+      verdictLegacy: toLegacyVerdict(verdict),
       confidence,
       reasoning,
       humanReviewRequired,
       similarDisputesFound: similarDisputes.length,
+      tokensUsed,
     };
   },
 });
@@ -291,20 +337,38 @@ export const updateWithAIRuling = mutation({
   args: {
     paymentDisputeId: v.id("paymentDisputes"),
     aiRulingConfidence: v.number(),
-    verdict: v.union(v.literal("UPHELD"), v.literal("DISMISSED")),
+    verdict: v.union(
+      v.literal("CONSUMER_WINS"),
+      v.literal("MERCHANT_WINS"),
+      v.literal("PARTIAL_REFUND"),
+      v.literal("NEED_REVIEW")
+    ),
     reasoning: v.string(),
     humanReviewRequired: v.boolean(),
     similarPastCases: v.array(v.id("paymentDisputes")),
+    tokensUsed: v.number(),
   },
   handler: async (ctx, args) => {
+    const dispute = await ctx.db.get(args.paymentDisputeId);
+    if (!dispute) throw new Error("Dispute not found");
+
+    // Update token usage
+    const updatedTokens = {
+      evidenceInput: dispute.tokensUsed?.evidenceInput || 0,
+      aiAnalysis: args.tokensUsed,
+      total: (dispute.tokensUsed?.evidenceInput || 0) + args.tokensUsed,
+    };
+
     await ctx.db.patch(args.paymentDisputeId, {
       aiRulingConfidence: args.aiRulingConfidence,
       aiRecommendation: args.verdict,
+      aiRecommendationLegacy: toLegacyVerdict(args.verdict),
       aiReasoning: args.reasoning,
       humanReviewRequired: args.humanReviewRequired,
       similarPastCases: args.similarPastCases,
+      tokensUsed: updatedTokens,
     });
-    
+
     console.info(
       `AI ruling: ${args.verdict} (confidence: ${(args.aiRulingConfidence * 100).toFixed(1)}%), ` +
       `human review: ${args.humanReviewRequired ? "YES" : "NO"}`
@@ -318,20 +382,32 @@ export const updateWithAIRuling = mutation({
 export const autoResolve = mutation({
   args: {
     paymentDisputeId: v.id("paymentDisputes"),
-    verdict: v.union(v.literal("UPHELD"), v.literal("DISMISSED"), v.literal("SPLIT"), v.literal("NEED_PANEL")),
+    verdict: v.union(
+      v.literal("CONSUMER_WINS"),
+      v.literal("MERCHANT_WINS"),
+      v.literal("PARTIAL_REFUND"),
+      v.literal("NEED_REVIEW")
+    ),
     reasoning: v.string(),
     confidence: v.number(),
   },
   handler: async (ctx, args) => {
     const dispute = await ctx.db.get(args.paymentDisputeId);
     if (!dispute) throw new Error("Dispute not found");
-    
+
     const now = Date.now();
-    
+
+    // Convert to agent verdict for rulings table
+    const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
+      args.verdict === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
+      args.verdict === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
+      args.verdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
+
     // 1. Create ruling
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
-      verdict: args.verdict,
+      verdict: agentVerdict,
+      verdictLegacy: toLegacyVerdict(args.verdict),
       code: "AUTO_RESOLVED_MICRO_DISPUTE",
       reasons: args.reasoning + ` (Auto-resolved with ${(args.confidence * 100).toFixed(1)}% confidence)`,
       auto: true,
@@ -340,23 +416,24 @@ export const autoResolve = mutation({
         merkleRoot: `auto_${dispute.caseId}_${now}`,
       },
     });
-    
+
     // 2. Update case status
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: args.verdict,
+        verdict: toLegacyVerdict(args.verdict),
         auto: true,
         decidedAt: now,
       },
     });
-    
+
     // 3. Log event
     await ctx.db.insert("events", {
       type: "CASE_DECIDED",
       caseId: dispute.caseId,
       payload: {
         verdict: args.verdict,
+        verdictLegacy: toLegacyVerdict(args.verdict),
         auto: true,
         confidence: args.confidence,
         microDispute: true,
@@ -364,9 +441,9 @@ export const autoResolve = mutation({
       },
       timestamp: now,
     });
-    
+
     console.info(`✅ Auto-resolved micro-dispute ${args.paymentDisputeId}: ${args.verdict}`);
-    
+
     return rulingId;
   },
 });
@@ -455,15 +532,26 @@ export const humanReview = mutation({
     paymentDisputeId: v.id("paymentDisputes"),
     userId: v.string(), // User performing review
     agreeWithAI: v.boolean(),
-    finalVerdict: v.union(v.literal("UPHELD"), v.literal("DISMISSED"), v.literal("SPLIT"), v.literal("NEED_PANEL")),
+    finalVerdict: v.union(
+      v.literal("CONSUMER_WINS"),
+      v.literal("MERCHANT_WINS"),
+      v.literal("PARTIAL_REFUND"),
+      v.literal("NEED_REVIEW")
+    ),
     overrideReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const dispute = await ctx.db.get(args.paymentDisputeId);
     if (!dispute) throw new Error("Dispute not found");
-    
+
     const now = Date.now();
-    
+
+    // Convert to agent verdict for rulings table
+    const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
+      args.finalVerdict === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
+      args.finalVerdict === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
+      args.finalVerdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
+
     // Update dispute with human review
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
@@ -471,11 +559,12 @@ export const humanReview = mutation({
       humanAgreesWithAI: args.agreeWithAI,
       humanOverrideReason: args.overrideReason,
     });
-    
+
     // Create or update ruling
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
-      verdict: args.finalVerdict,
+      verdict: agentVerdict,
+      verdictLegacy: toLegacyVerdict(args.finalVerdict),
       code: args.agreeWithAI ? "AI_CONFIRMED_BY_HUMAN" : "HUMAN_OVERRIDE",
       reasons: args.overrideReason || "Human review confirms AI ruling",
       auto: false, // Human involved
@@ -484,23 +573,23 @@ export const humanReview = mutation({
         merkleRoot: `human_${dispute.caseId}_${now}`,
       },
     });
-    
+
     // Update case
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: args.finalVerdict,
+        verdict: toLegacyVerdict(args.finalVerdict),
         auto: false,
         decidedAt: now,
       },
     });
-    
+
     // If human disagreed with AI, create learning record
     if (!args.agreeWithAI) {
       console.info(`📚 Learning: Human overrode AI ruling for dispute ${args.paymentDisputeId}`);
       // In production: Update embeddings, retrain model
     }
-    
+
     return rulingId;
   },
 });
@@ -545,38 +634,51 @@ export const customerReview = mutation({
     paymentDisputeId: v.id("paymentDisputes"),
     reviewerUserId: v.id("users"), // Customer's team member
     decision: v.union(v.literal("APPROVE_AI"), v.literal("OVERRIDE")),
-    finalVerdict: v.union(v.literal("UPHELD"), v.literal("DISMISSED"), v.literal("SPLIT"), v.literal("NEED_PANEL")),
+    finalVerdict: v.union(
+      v.literal("CONSUMER_WINS"),
+      v.literal("MERCHANT_WINS"),
+      v.literal("PARTIAL_REFUND"),
+      v.literal("NEED_REVIEW")
+    ),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const dispute = await ctx.db.get(args.paymentDisputeId);
     if (!dispute) throw new Error("Dispute not found");
-    
+
     // Verify reviewer is from customer's organization
     const reviewer = await ctx.db.get(args.reviewerUserId);
     if (!reviewer) throw new Error("Reviewer not found");
-    
+
     if (dispute.reviewerOrganizationId && reviewer.organizationId !== dispute.reviewerOrganizationId) {
       throw new Error("Unauthorized: reviewer not from customer organization");
     }
-    
+
     const now = Date.now();
-    
+
+    // Convert to agent verdict for rulings table
+    const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
+      args.finalVerdict === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
+      args.finalVerdict === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
+      args.finalVerdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
+
     // Update dispute with customer's decision
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
       humanReviewedBy: reviewer.email,
       humanAgreesWithAI: args.decision === "APPROVE_AI",
-      customerFinalDecision: args.finalVerdict as "UPHELD" | "DISMISSED",
+      customerFinalDecision: args.finalVerdict,
+      customerFinalDecisionLegacy: toLegacyVerdict(args.finalVerdict),
       customerReviewNotes: args.notes,
     });
-    
+
     // Create ADP-compliant ruling (Award Message format)
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
-      verdict: args.finalVerdict,
+      verdict: agentVerdict,
+      verdictLegacy: toLegacyVerdict(args.finalVerdict),
       code: args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" : "CUSTOMER_OVERRIDE",
-      reasons: args.decision === "APPROVE_AI" 
+      reasons: args.decision === "APPROVE_AI"
         ? `Customer approved AI recommendation: ${dispute.aiReasoning || "See analysis"}`
         : `Customer override: ${args.notes || "Manual review decision"}`,
       auto: false, // Human reviewed
@@ -585,17 +687,17 @@ export const customerReview = mutation({
         merkleRoot: `customer_review_${dispute.caseId}_${now}`,
       },
     });
-    
+
     // Update case status
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: args.finalVerdict,
+        verdict: toLegacyVerdict(args.finalVerdict),
         auto: false,
         decidedAt: now,
       },
     });
-    
+
     // Log ADP-compliant custody event
     await createCustodyEvent(ctx, {
       type: "CASE_DECIDED",
@@ -603,6 +705,7 @@ export const customerReview = mutation({
       agentDid: undefined, // System action on behalf of customer
       payload: {
         verdict: args.finalVerdict,
+        verdictLegacy: toLegacyVerdict(args.finalVerdict),
         auto: false,
         customerReviewed: true,
         aiApproved: args.decision === "APPROVE_AI",
@@ -611,13 +714,13 @@ export const customerReview = mutation({
         adpVersion: "draft-01",
       },
     });
-    
+
     // Learn from customer override
     if (args.decision === "OVERRIDE") {
       console.info(`📚 Learning: Customer overrode AI for dispute ${args.paymentDisputeId}`);
       // Future: Update ML model with this feedback
     }
-    
+
     return { success: true, ruling: args.finalVerdict, rulingId };
   },
 });

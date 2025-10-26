@@ -111,24 +111,24 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       paymentDisputeId: result.paymentDisputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
-      finalVerdict: "UPHELD",
+      finalVerdict: "CONSUMER_WINS",
     });
-    
+
     expect(review.success).toBe(true);
-    expect(review.ruling).toBe("UPHELD");
-    
+    expect(review.ruling).toBe("CONSUMER_WINS");
+
     // Verify dispute is marked as reviewed
     const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
       paymentDisputeId: result.paymentDisputeId,
     });
-    
+
     expect(dispute.humanReviewedAt).toBeDefined();
     expect(dispute.humanAgreesWithAI).toBe(true);
-    expect(dispute.customerFinalDecision).toBe("UPHELD");
+    expect(dispute.customerFinalDecision).toBe("CONSUMER_WINS");
   });
 
   it("should allow customer to override AI recommendation", async () => {
-    // Create dispute where AI will recommend UPHELD
+    // Create dispute where AI will recommend CONSUMER_WINS
     const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_override_test",
       amount: 5.00,
@@ -137,33 +137,33 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
       disputeReason: "service_not_rendered",
-      description: "Test dispute - AI will recommend UPHELD",
+      description: "Test dispute - AI will recommend CONSUMER_WINS",
       reviewerOrganizationId: testOrgId,
     });
-    
+
     // Wait for AI processing
     await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Customer overrides to DISMISSED (has context AI doesn't)
+
+    // Customer overrides to MERCHANT_WINS (has context AI doesn't)
     const review = await t.mutation(api.paymentDisputes.customerReview, {
       paymentDisputeId: result.paymentDisputeId,
       reviewerUserId: testUserId,
       decision: "OVERRIDE",
-      finalVerdict: "DISMISSED",
+      finalVerdict: "MERCHANT_WINS",
       notes: "Customer has history of fraud (3 disputes this month). Evidence shows service was actually rendered. Photo metadata shows wrong date.",
     });
-    
+
     expect(review.success).toBe(true);
-    expect(review.ruling).toBe("DISMISSED");
-    
+    expect(review.ruling).toBe("MERCHANT_WINS");
+
     // Verify override was recorded
     const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
       paymentDisputeId: result.paymentDisputeId,
     });
-    
+
     expect(dispute.humanAgreesWithAI).toBe(false);
     expect(dispute.customerReviewNotes).toContain("fraud");
-    expect(dispute.customerFinalDecision).toBe("DISMISSED");
+    expect(dispute.customerFinalDecision).toBe("MERCHANT_WINS");
   });
 
   it("should prevent unauthorized users from reviewing other organization's disputes", async () => {
@@ -207,7 +207,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         paymentDisputeId: result.paymentDisputeId,
         reviewerUserId: unauthorizedUserId,
         decision: "APPROVE_AI",
-        finalVerdict: "UPHELD",
+        finalVerdict: "CONSUMER_WINS",
       })
     ).rejects.toThrow(/Unauthorized/);
   });
@@ -267,7 +267,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       paymentDisputeId: result.paymentDisputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
-      finalVerdict: "UPHELD",
+      finalVerdict: "CONSUMER_WINS",
     });
     
     // Verify custody chain
@@ -309,7 +309,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       paymentDisputeId: result.paymentDisputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
-      finalVerdict: "UPHELD",
+      finalVerdict: "CONSUMER_WINS",
     });
     
     // Get the ruling
@@ -320,7 +320,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     // Verify ADP Award Message format
     expect(ruling).toBeDefined();
     expect(ruling.caseId).toBeDefined();
-    expect(ruling.verdict).toBe("UPHELD");
+    expect(ruling.verdict).toBe("PLAINTIFF_WINS"); // Agent dispute verdict
     expect(ruling.code).toBeDefined();
     expect(ruling.reasons).toBeDefined();
     expect(ruling.auto).toBe(false); // Human reviewed

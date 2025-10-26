@@ -578,13 +578,20 @@ export const processPendingCases = internalMutation({
             code = "EVIDENCE_SUPPORTS_CLAIM";
             reasons = "Evidence supports claim of service level violation.";
           }
-          
+
           const decidedAt = Date.now();
-          
+
+          // Convert legacy verdict to agent verdict
+          const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
+            verdict === "UPHELD" ? "PLAINTIFF_WINS" :
+            verdict === "DISMISSED" ? "DEFENDANT_WINS" :
+            verdict === "SPLIT" ? "SPLIT" : "NEED_PANEL";
+
           // Create ruling
           await ctx.db.insert("rulings", {
             caseId: caseData._id,
-            verdict,
+            verdict: agentVerdict,
+            verdictLegacy: verdict,
             code,
             reasons,
             auto,

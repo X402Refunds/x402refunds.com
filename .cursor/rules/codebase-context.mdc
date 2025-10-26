@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-25T07:19:04.255Z
+**Auto-generated on**: 2025-10-26T09:01:55.052Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -73,15 +73,16 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (18 files)
+### Convex Files (20 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
-- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys
+- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generateLLMDispute, createLLMDispute, generateFallbackDispute, systemHealthMonitor, processPendingCases, updateSystemStatsCache, triggerDisputeGeneration
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
+- **disputePricing.ts** - calculateDisputeFee, estimateTokens, estimateDisputeTokens, validateEvidenceSize, getPricingTierDescription, getFeexplanation
 - **events.ts** - getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getApiKeyEvents
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
@@ -92,6 +93,7 @@ consulate/
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
+- **verdictHelpers.ts** - migrateLegacyPaymentVerdict, migrateLegacyAgentVerdict, getOutcomeForParty, getVerdictMessage, getVerdictBadge, getRegulationEStatus, toLegacyVerdict
 
 ### Key Backend Functions
 - **agents.ts** - Agent registration & management (joinAgent, listAgents, etc.)
@@ -144,35 +146,38 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (23 test files)
+### Test Suites (25 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
 - test/apiKeys.test.ts
 - test/cases.test.ts
-- test/court-engine.test.ts
 - test/customer-review-workflow.test.ts
 - test/e2e-flow.test.ts
 - test/events.test.ts
 - test/evidence-specialized.test.ts
 - test/http-endpoints.test.ts
 - test/integration.test.ts
-- test/judges.test.ts
+- test/legacy/court-engine.test.ts
+- test/legacy/judges.test.ts
 - test/llm-engine.test.ts
 - test/mcp-endpoints.test.ts
 - test/mcp-integration.test.ts
 - test/performance.test.ts
 - test/production-smoke.test.ts
-- test/sla-endpoints.test.ts
 - test/system-endpoints.test.ts
+- test/unit/batch-processing.test.ts
+- test/unit/regulation-e-compliance.test.ts
+- test/unit/vector-similarity.test.ts
+- test/unit/webhooks.test.ts
 - test/users.test.ts
-- test/webhooks-endpoints.test.ts
 
 ## 📦 Package Scripts
 
 ### Root Package Commands
 - `pnpm deploy` - pnpm
+- `pnpm deploy:dev` - pnpm
 - `pnpm check-logs` - pnpm
 - `pnpm build` - pnpm
 - `pnpm lint` - pnpm
@@ -183,7 +188,8 @@ Common HTTP routes exposed:
 - `pnpm test:run` - vitest
 - `pnpm test:api` - vitest
 - `pnpm test:unit` - vitest
-- `pnpm test:smoke` - bash
+- `pnpm test:smoke` - API_BASE_URL=https://youthful-orca-358.convex.site
+- `pnpm test:smoke:prod` - API_BASE_URL=https://api.consulatehq.com
 - `pnpm postinstall` - node
 - `pnpm update-context` - node
 - `pnpm hash-rules` - node
@@ -211,19 +217,19 @@ Common HTTP routes exposed:
 
 
 
-### Internal Documentation (43 files)
+### Internal Documentation (40 files)
 - internal/README.md
+- internal/analysis/AI-RULING-TERMINOLOGY-ANALYSIS.md
+- internal/analysis/DISPUTE-PRICING-MODEL.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
 - internal/design/sovereign-civic-design-system.md
-- internal/operations/acp-atxp-integration-guide.md
-- internal/operations/api-key-migration-complete.md
-- internal/operations/current-deployment-status.md
-- internal/operations/dashboard-system-summary.md
-- internal/operations/dashboard-testing-results.md
-- internal/operations/deployment-guide.md
+- internal/operations/API_AUTHENTICATION_AUDIT.md
+- internal/operations/DEPLOYMENT_URLS.md
+- internal/operations/IMPLEMENTATION_COMPLETE.md
+- internal/operations/VERDICT-PRICING-MIGRATION-COMPLETE.md
 
-... and 33 more in internal/
+... and 30 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -265,13 +271,13 @@ Common HTTP routes exposed:
 - 40 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 18 TypeScript files with serverless functions
+- 20 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 23 test files using Vitest
+- 25 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -304,5 +310,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/25/2025, 12:19:04 AM
-Files scanned: 258
+Generated: 10/26/2025, 2:01:55 AM
+Files scanned: 263

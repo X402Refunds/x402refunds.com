@@ -34,7 +34,7 @@ export default function ReviewQueuePage() {
         paymentDisputeId,
         reviewerUserId: currentUser._id,
         decision: "APPROVE_AI",
-        finalVerdict: verdict as "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL",
+        finalVerdict: verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
       })
     } catch (error) {
       console.error("Failed to approve:", error)
@@ -50,7 +50,7 @@ export default function ReviewQueuePage() {
         paymentDisputeId,
         reviewerUserId: currentUser._id,
         decision: "OVERRIDE",
-        finalVerdict: verdict as "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL",
+        finalVerdict: verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
         notes,
       })
     } catch (error) {

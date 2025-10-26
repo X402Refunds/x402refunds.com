@@ -235,12 +235,23 @@ export default defineSchema({
   // Case rulings (ADP Award Message)
   rulings: defineTable({
     caseId: v.id("cases"),
-    verdict: v.union(
+
+    // NEW: Clear verdict terminology (for agent disputes)
+    verdict: v.optional(v.union(
+      v.literal("PLAINTIFF_WINS"),     // Claimant's dispute is valid
+      v.literal("DEFENDANT_WINS"),     // Respondent successfully defended
+      v.literal("SPLIT"),              // Partial liability
+      v.literal("NEED_PANEL")          // Escalate to panel
+    )),
+
+    // DEPRECATED: Legacy verdicts (kept for migration)
+    verdictLegacy: v.optional(v.union(
       v.literal("UPHELD"),
       v.literal("DISMISSED"),
       v.literal("SPLIT"),
       v.literal("NEED_PANEL")
-    ),
+    )),
+
     code: v.string(),
     reasons: v.string(),
     auto: v.boolean(),
@@ -252,7 +263,8 @@ export default defineSchema({
   })
     .index("by_case", ["caseId"])
     .index("by_decided_at", ["decidedAt"])
-    .index("by_verdict", ["verdict"]),
+    .index("by_verdict", ["verdict"])
+    .index("by_verdict_legacy", ["verdictLegacy"]),
 
   // Agent reputation tracking
   agentReputation: defineTable({
@@ -483,7 +495,11 @@ export default defineSchema({
     .index("by_key", ["key"]),
 
   // Payment disputes (OPTIMIZED FOR MICRO-DISPUTES under $1)
-  // Infrastructure Model: Customer's team makes final decisions
+  // PLANNED FEATURE: Infrastructure Model where customer's team makes final decisions
+  // NOTE: This is a planned feature for AI-powered dispute auto-resolution with human oversight.
+  //       The system will auto-decide on micro-disputes and send to humans for approval,
+  //       learning via RL from approved/rejected decisions and using vector similarity for precedence.
+  //       Convex supports vector search - see: https://docs.convex.dev/vector-search
   paymentDisputes: defineTable({
     caseId: v.id("cases"),
     
@@ -517,14 +533,66 @@ export default defineSchema({
     // AI ruling (higher automation for micro-disputes)
     aiRulingConfidence: v.number(),
     aiRulingVector: v.optional(v.array(v.number())),
-    aiRecommendation: v.optional(v.union(v.literal("UPHELD"), v.literal("DISMISSED"))),
+
+    // NEW: Clear verdict terminology (replaces UPHELD/DISMISSED)
+    aiRecommendation: v.optional(v.union(
+      v.literal("CONSUMER_WINS"),      // Consumer gets refund
+      v.literal("MERCHANT_WINS"),      // Merchant keeps money
+      v.literal("PARTIAL_REFUND"),     // Split the difference
+      v.literal("NEED_REVIEW")         // Escalate to human
+    )),
+
+    // DEPRECATED: Legacy verdicts (kept for migration)
+    aiRecommendationLegacy: v.optional(v.union(
+      v.literal("UPHELD"),
+      v.literal("DISMISSED"),
+      v.literal("SPLIT"),
+      v.literal("NEED_PANEL")
+    )),
+
     aiReasoning: v.optional(v.string()),
     similarPastCases: v.optional(v.array(v.id("paymentDisputes"))),
-    
+
+    // Pricing & token tracking
+    disputeFee: v.optional(v.number()),              // Total fee charged
+    disputeFeeBreakdown: v.optional(v.object({
+      baseFee: v.number(),                            // Tier-based fee
+      tokenOverageFee: v.number(),                    // Extra for >20k tokens
+      totalFee: v.number(),                           // Sum
+    })),
+    tokensUsed: v.optional(v.object({
+      evidenceInput: v.number(),                      // Tokens in evidence
+      aiAnalysis: v.number(),                         // Tokens AI used
+      total: v.number(),                              // Sum
+    })),
+    pricingTier: v.optional(v.union(
+      v.literal("micro"),          // < $1: $0.10
+      v.literal("small"),          // $1-10: $0.25
+      v.literal("medium"),         // $10-100: $1.00
+      v.literal("large"),          // $100-1k: $5.00
+      v.literal("enterprise")      // > $1k: $25.00
+    )),
+
     // Infrastructure Model: Customer's team reviews
     reviewerEmail: v.optional(v.string()), // Customer's designated reviewer
     reviewerOrganizationId: v.optional(v.id("organizations")), // Customer's org
-    customerFinalDecision: v.optional(v.union(v.literal("UPHELD"), v.literal("DISMISSED"))),
+
+    // NEW: Clear customer decision
+    customerFinalDecision: v.optional(v.union(
+      v.literal("CONSUMER_WINS"),
+      v.literal("MERCHANT_WINS"),
+      v.literal("PARTIAL_REFUND"),
+      v.literal("NEED_REVIEW")
+    )),
+
+    // DEPRECATED: Legacy customer decision
+    customerFinalDecisionLegacy: v.optional(v.union(
+      v.literal("UPHELD"),
+      v.literal("DISMISSED"),
+      v.literal("SPLIT"),
+      v.literal("NEED_PANEL")
+    )),
+
     customerReviewNotes: v.optional(v.string()),
     
     // Human oversight (EXCEPTION-BASED for micro-disputes)
