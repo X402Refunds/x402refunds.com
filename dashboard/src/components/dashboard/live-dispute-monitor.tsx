@@ -31,6 +31,18 @@ export default function LiveDisputeMonitor() {
   // Helper function to format agent name from DID (without ID numbers)
   const formatAgentName = (did: string) => {
     if (!did) return "Unknown";
+
+    // Handle payment dispute identifiers: consumer:alice@demo.com or merchant:cryptomart@demo.com
+    if (did.includes('@')) {
+      const parts = did.split(':');
+      if (parts.length >= 2) {
+        const role = parts[0]; // consumer or merchant
+        const name = parts[1].split('@')[0]; // alice or cryptomart
+        return `${name.charAt(0).toUpperCase() + name.slice(1)} (${role})`;
+      }
+    }
+
+    // Handle agent DIDs: did:agent:name-company-12345
     const parts = did.split(':');
     if (parts.length >= 3) {
       // Extract just the agent name without the ID number

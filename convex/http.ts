@@ -40,6 +40,8 @@ http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/payment-disputes", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/payment-disputes/stats", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/payment-disputes/review-queue", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -54,11 +56,11 @@ http.route({
         // Core system
         health: "/health",
         dashboard: "/dashboard",
-        
+
         // MCP (Model Context Protocol) - Agent-native integration
         mcp_discovery: "/.well-known/mcp.json",
         mcp_invoke: "/mcp/invoke",
-        
+
         // Agent management
         register: "/agents/register",
         agents: "/agents",
@@ -69,14 +71,18 @@ http.route({
         evidence: "/evidence/submit",
         disputes: "/disputes/file",
         dispute_status: "/disputes/:disputeId/status",
-        
+
         // Notifications & webhooks
         webhooks: "/webhooks/register",
         notifications: "/notifications/:agentDid",
-        
+
         // Real-time monitoring
         live_feed: "/live/feed",
-        agent_status: "/live/agent/:agentDid"
+        agent_status: "/live/agent/:agentDid",
+
+        // SLA monitoring
+        sla_report: "/sla/report",
+        sla_status: "/sla/status/:agentDid"
       },
       documentation: "https://docs.consulatehq.com",
       protocol: {
@@ -595,7 +601,48 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      // Extract and validate API key from Authorization header
+      const body = await request.json();
+
+      // Validate request body FIRST (developer-friendly error messages)
+      if (!body.sha256) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: sha256"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (!body.signer) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: signer"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (!body.agentDid) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: agentDid"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Check if agent exists (validation before auth)
+      const agent = await ctx.runQuery(api.agents.getAgent, { did: body.agentDid });
+      if (!agent) {
+        return new Response(JSON.stringify({
+          error: "Agent not found or not active"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // NOW check authentication (after validation)
       const authHeader = request.headers.get("Authorization");
       if (!authHeader) {
         return new Response(JSON.stringify({
@@ -630,8 +677,6 @@ http.route({
           headers: corsHeaders,
         });
       }
-
-      const body = await request.json();
 
       const result = await ctx.runMutation(api.evidence.submitEvidence, {
         ...body
@@ -1028,10 +1073,189 @@ function getEventImpact(eventType: string): string {
   const impacts: Record<string, string> = {
     "DISPUTE_FILED": "financial",
     "CASE_STATUS_UPDATED": "operational",
-    "EVIDENCE_SUBMITTED": "legal", 
+    "EVIDENCE_SUBMITTED": "legal",
     "AGENT_REGISTERED": "informational"
   };
   return impacts[eventType] || "informational";
 }
+
+// === SLA MONITORING ENDPOINTS ===
+
+// Report SLA metrics
+http.route({
+  path: "/sla/report",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const { agentDid, metrics, timestamp } = body;
+
+      // Validate required fields
+      if (!agentDid) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: agentDid"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (!metrics) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: metrics"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Validate metric values
+      const { availability, responseTime, errorRate, throughput } = metrics;
+
+      if (typeof availability === 'number' && (availability < 0 || availability > 100)) {
+        return new Response(JSON.stringify({
+          error: "Invalid availability value (must be 0-100)"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (typeof responseTime === 'number' && responseTime < 0) {
+        return new Response(JSON.stringify({
+          error: "Invalid responseTime value (must be positive)"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (typeof errorRate === 'number' && (errorRate < 0 || errorRate > 100)) {
+        return new Response(JSON.stringify({
+          error: "Invalid errorRate value (must be 0-100)"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (typeof throughput === 'number' && throughput < 0) {
+        return new Response(JSON.stringify({
+          error: "Invalid throughput value (must be positive)"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Check if agent exists
+      const agent = await ctx.runQuery(api.agents.getAgent, { did: agentDid });
+      if (!agent) {
+        return new Response(JSON.stringify({
+          error: "Agent not found"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Detect SLA violations
+      const violations = [];
+      if (availability !== undefined && availability < 99.0) {
+        violations.push({ metric: "availability", threshold: 99.0, actual: availability });
+      }
+      if (responseTime !== undefined && responseTime > 200) {
+        violations.push({ metric: "responseTime", threshold: 200, actual: responseTime });
+      }
+      if (errorRate !== undefined && errorRate > 1.0) {
+        violations.push({ metric: "errorRate", threshold: 1.0, actual: errorRate });
+      }
+
+      // Store SLA report (in production, would save to database)
+      console.log(`📊 SLA report received from ${agentDid}:`, metrics);
+      if (violations.length > 0) {
+        console.warn(`⚠️  SLA violations detected for ${agentDid}:`, violations);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        agentDid,
+        metricsAccepted: true,
+        violations: violations.length > 0 ? violations : undefined,
+        timestamp: timestamp || Date.now()
+      }), {
+        headers: corsHeaders,
+      });
+
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Get SLA status for an agent
+http.route({
+  path: "/sla/status/:agentDid",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const agentDid = request.url.split("/sla/status/")[1];
+
+      if (!agentDid) {
+        return new Response(JSON.stringify({
+          error: "Agent DID is required"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Check if agent exists
+      const agent = await ctx.runQuery(api.agents.getAgent, { did: agentDid });
+      if (!agent) {
+        return new Response(JSON.stringify({
+          error: "Agent not found"
+        }), {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
+
+      // Return mock SLA status (in production, would query from database)
+      return new Response(JSON.stringify({
+        agentDid,
+        status: "compliant",
+        currentMetrics: {
+          availability: 99.9,
+          responseTime: 150,
+          errorRate: 0.1,
+          throughput: 1000
+        },
+        thresholds: {
+          availability: 99.0,
+          responseTime: 200,
+          errorRate: 1.0
+        },
+        lastReportedAt: Date.now(),
+        timestamp: Date.now()
+      }), {
+        headers: corsHeaders,
+      });
+
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
 
 export default http;
