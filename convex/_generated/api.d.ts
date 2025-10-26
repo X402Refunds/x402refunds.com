@@ -16,6 +16,7 @@ import type * as courtEngine from "../courtEngine.js";
 import type * as crons from "../crons.js";
 import type * as custody from "../custody.js";
 import type * as disputeEngine from "../disputeEngine.js";
+import type * as disputePricing from "../disputePricing.js";
 import type * as events from "../events.js";
 import type * as evidence from "../evidence.js";
 import type * as http from "../http.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   custody: typeof custody;
   disputeEngine: typeof disputeEngine;
+  disputePricing: typeof disputePricing;
   events: typeof events;
   evidence: typeof evidence;
   http: typeof http;
