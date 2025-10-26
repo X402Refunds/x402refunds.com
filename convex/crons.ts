@@ -591,7 +591,6 @@ export const processPendingCases = internalMutation({
           await ctx.db.insert("rulings", {
             caseId: caseData._id,
             verdict: agentVerdict,
-            verdictLegacy: verdict,
             code,
             reasons,
             auto,

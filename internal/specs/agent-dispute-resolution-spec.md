@@ -1,15 +1,19 @@
-# Agentic Dispute Arbitration Platform - Technical Specification
+# Micro-Dispute Resolution Infrastructure - Technical Specification
 
-> **"Automated arbitration for enterprise AI agents"**
+> **"Automated dispute resolution infrastructure for agentic payments and micro-transactions"**
+
+**Last Updated**: October 26, 2025
+**Model**: Infrastructure-as-a-Service for payment platforms (B2B2C)
+**Target Market**: Payment protocol providers (ACP, ATXP, Stripe for agents)
 
 ---
 
 ## 1) Executive Summary
 
-- **What:** Enterprise platform for automated dispute resolution between AI agents
-- **Why:** AI agents increasingly transact with each other but lack fast, reliable dispute resolution
-- **How:** Evidence-based automation with cryptographic verification and enterprise integration
-- **Target:** Fortune 1000 enterprises with production AI agent ecosystems
+- **What:** Infrastructure platform for automated micro-dispute resolution (<$1 transactions)
+- **Why:** Payment platforms need Regulation E-compliant dispute resolution, but traditional systems cost $20-50/dispute (impossible for $0.25 transactions)
+- **How:** 95% AI automation + customer-managed reviews for exceptions
+- **Target:** Payment protocol providers serving agentic commerce platforms
 
 ---
 
@@ -17,110 +21,78 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ENTERPRISE AGENTS                          │
+│           PAYMENT PLATFORMS (CUSTOMERS)                         │
+│  ACP, ATXP, Stripe for Agents, Crypto Payment Processors       │
 ├─────────────────────────────────────────────────────────────────┤
-│  Client SDKs (JavaScript, Python, Go, REST APIs)              │
+│  Webhook Integration (< 1 week to integrate)                   │
 └───────────────────┬─────────────────────────────────────────────┘
                     │
     ┌───────────────┴───────────────────┐
-    │         CONVEX PLATFORM           │
+    │    CONSULATE INFRASTRUCTURE       │
     │  ┌─────────────┐ ┌─────────────────┐  │
-    │  │🤖 IDENTITY  │ │⚖️ DISPUTES      │  │
-    │  │• Agent DIDs │ │• Case Filing    │  │
-    │  │• Enterprise │ │• Evidence       │  │
-    │  │• Reputation │ │• Arbitration    │  │
-    │  │• Lifecycle  │ │• Resolution     │  │
+    │  │💰 PAYMENT   │ │🤖 AI ENGINE     │  │
+    │  │ DISPUTES    │ │• Precedent DB   │  │
+    │  │• Micro < $1 │ │• 95% Auto-Rule  │  │
+    │  │• Reg E      │ │• Confidence     │  │
+    │  │• ACP/ATXP   │ │• Learning       │  │
     │  └─────────────┘ └─────────────────┘  │
     │  ┌─────────────┐ ┌─────────────────┐  │
-    │  │📋 CONTRACTS │ │📊 ANALYTICS     │  │
-    │  │• SLA Mgmt   │ │• Performance    │  │
-    │  │• Templates  │ │• Dashboards     │  │
-    │  │• Monitoring │ │• Reporting      │  │
-    │  │• Automation │ │• Insights       │  │
-    │  └─────────────┘ └─────────────────┘  │
-    │  ┌─────────────┐ ┌─────────────────┐  │
-    │  │🔐 SECURITY  │ │🏢 ENTERPRISE    │  │
-    │  │• Auth/AuthZ │ │• Multi-tenant   │  │
-    │  │• Audit Logs │ │• Integrations   │  │
-    │  │• Compliance │ │• Webhooks       │  │
-    │  │• Encryption │ │• SSO            │  │
+    │  │📋 CUSTOMER  │ │📊 ADP CUSTODY   │  │
+    │  │ REVIEWS     │ │• SHA-256 Hash   │  │
+    │  │• 5% Queue   │ │• Merkle Chain   │  │
+    │  │• Override   │ │• Regulation E   │  │
+    │  │• Learning   │ │• Audit Trail    │  │
     │  └─────────────┘ └─────────────────┘  │
     └───────────────────────────────────────┘
 ```
 
 ---
 
-## 3) Agent Identity System
+## 3) Payment Agent Identity System
 
-### 3.1 Enterprise Agent Classification
+### 3.1 Agent Types for Payment Ecosystems
 
-**Two-Dimensional Classification:**
-- **Enterprise Tier**: Basic, Professional, Enterprise (service level)
-- **Functional Type**: Service capability and compliance requirements
+**Payment-Focused Classification:**
 
-#### **Enterprise Tiers**
+**🟢 Payment Processors**
+- **Purpose**: Process micro-transactions for agent commerce
+- **Examples**: ACP nodes, ATXP validators, crypto payment gateways
+- **Compliance**: Regulation E, PCI-DSS, AML/KYC
 
-**🟢 Basic Agents**
-- **Purpose**: Development, testing, basic operations
-- **Limits**: $1K transaction limit, 100 API calls/day
-- **Support**: Community support and documentation
+**🔵 API Providers**
+- **Purpose**: Provide API services with micro-billing
+- **Examples**: OpenAI API, Claude API, RapidAPI services
+- **Compliance**: SLA monitoring, rate limit enforcement
 
-**🔵 Professional Agents**  
-- **Purpose**: Production agents with standard SLAs
-- **Limits**: $50K transaction limit, 10K API calls/day
-- **Support**: Email support with business hours SLA
-
-**🟡 Enterprise Agents**
-- **Purpose**: Mission-critical agents with custom SLAs
-- **Limits**: Custom transaction limits, unlimited API calls
-- **Support**: Dedicated support with custom SLA
-
-#### **Functional Types**
-
-**💻 Technical Agents**
-- **Coding Agents**: Code generation, review, testing
-- **DevOps Agents**: CI/CD, infrastructure, monitoring
-- **Data Agents**: Processing, analysis, transformation
-
-**🏢 Business Agents**
-- **Financial Agents**: Trading, payments, risk analysis
-- **Legal Agents**: Contract analysis, compliance checking
-- **Customer Service Agents**: Support, chat, voice interaction
-
-**🏥 Specialized Agents**
-- **Healthcare Agents**: Medical analysis, patient data (HIPAA required)
-- **IoT/Physical Agents**: Sensor data, device control
-- **Research Agents**: Web scraping, competitive intelligence
+**🟡 Merchant Agents**
+- **Purpose**: Accept payments for goods/services
+- **Examples**: E-commerce bots, service providers, automated vendors
+- **Compliance**: Consumer protection, refund policies
 
 ### 3.2 Agent Identity Format
 
 ```typescript
-interface AgentIdentity {
+interface PaymentAgent {
   did: string;                    // Cryptographic identifier
-  enterpriseId: string;           // Parent enterprise
-  enterpriseTier: "basic" | "professional" | "enterprise";
-  functionalType: string;         // Agent capability type
-  
-  authentication: {
-    publicKey: string;            // Cryptographic verification
-    certificates: string[];      // Compliance certifications
-    lastVerified: number;         // Identity verification timestamp
+  organizationId: string;         // Parent payment platform
+  agentType: "payment_processor" | "api_provider" | "merchant_agent";
+
+  paymentCapabilities: {
+    protocols: string[];          // ["ACP", "ATXP", "crypto"]
+    currencies: string[];         // ["USD", "BTC", "ETH"]
+    transactionLimits: {
+      microDisputeThreshold: number; // e.g., 1.00 USD
+      dailyVolume: number;
+    };
   };
-  
-  capabilities: {
-    services: string[];           // Available services
-    slaTemplates: string[];       // Supported SLA types
-    complianceFrameworks: string[]; // Required compliance (HIPAA, SOX, etc.)
-  };
-  
+
   reputation: {
-    overall: number;              // 0-100 overall score
-    domains: Record<string, number>; // Domain-specific scores
-    relationshipScores: Record<string, number>; // Partner-specific scores
-    lastUpdated: number;
+    disputeRate: number;          // Percentage of transactions disputed
+    autoResolveSuccessRate: number; // How often AI ruling is upheld
+    averageResolutionTime: number;  // Milliseconds
   };
-  
-  status: "active" | "suspended" | "terminated";
+
+  status: "active" | "suspended" | "banned";
   createdAt: number;
   updatedAt: number;
 }
@@ -128,575 +100,562 @@ interface AgentIdentity {
 
 ---
 
-## 4) Contract & SLA Management
+## 4) Micro-Dispute Management
 
-### 4.1 SLA Template System
+### 4.1 Dispute Types for Payment Systems
+
+**Standard Micro-Dispute Types:**
+- `api_timeout` - API call timed out, customer charged
+- `service_not_rendered` - Service promised but not delivered
+- `amount_incorrect` - Charged wrong amount
+- `duplicate_charge` - Charged multiple times for same transaction
+- `fraud` - Suspected fraudulent transaction
+- `quality_issue` - Output quality below agreed threshold
+- `rate_limit_breach` - Service exceeded rate limits
+- `unauthorized` - Transaction not authorized by customer
+
+### 4.2 Regulation E Compliance
 
 ```typescript
-interface SLATemplate {
-  templateId: string;
-  name: string;                   // "API Response Time SLA"
-  category: string;               // "performance", "availability", "quality"
-  
-  metrics: {
-    name: string;                 // "response_time", "uptime", "accuracy"
-    threshold: number;            // Maximum acceptable value
-    unit: string;                 // "milliseconds", "percentage", etc.
-    measurementMethod: string;    // How the metric is collected
-    penalty: {
-      type: "fixed" | "percentage" | "escalating";
-      amount: number;             // Penalty amount
-      currency: string;           // USD, EUR, etc.
-    };
-  }[];
-  
-  duration: number;               // Contract duration in milliseconds
-  autoRenewal: boolean;
-  terminationConditions: string[];
-  
-  applicableAgentTypes: string[]; // Which agent types can use this
-  complianceRequirements: string[]; // Required compliance frameworks
-  
-  createdBy: string;              // Template creator
-  version: string;                // Template version
-  active: boolean;
+interface RegulationECompliance {
+  deadline: number;               // 10 business days from filing
+  provisionalCredit?: {
+    required: boolean;
+    deadline: number;             // 1 business day if required
+    amount: number;
+  };
+  investigationRecord: {
+    evidenceCollected: string[];
+    rulingTimestamp: number;
+    auditable: boolean;
+  };
+  customerNotification: {
+    method: "email" | "sms" | "push";
+    sentAt: number;
+    receivedAt?: number;
+  };
 }
 ```
 
-### 4.2 Active Contract Management
+### 4.3 Automated Resolution Rules (95% Target)
 
 ```typescript
-interface Contract {
-  contractId: string;
-  templateId: string;             // Base SLA template
-  
-  parties: {
-    provider: string;             // Provider agent DID
-    consumer: string;             // Consumer agent DID
-    enterprise: string;           // Enterprise identifier (if cross-company)
+interface MicroDisputeResolutionRule {
+  ruleId: string;
+  applicableDisputeReasons: string[];
+
+  autoResolveConditions: {
+    maxAmount: number;            // e.g., 1.00 USD for micro-disputes
+    minConfidence: number;        // e.g., 0.95 (95%)
+    precedentMatches: number;     // e.g., 5+ similar cases
+    customerOverrideRate: number; // e.g., < 10% override rate
   };
-  
-  terms: {
-    metrics: SLAMetric[];         // Customized metrics from template
-    duration: number;             // Contract length
-    value: number;                // Contract value (for penalty calculations)
-    currency: string;
-    automaticRenewal: boolean;
+
+  resolution: {
+    type: "automatic" | "customer_review";
+    verdict: "UPHELD" | "DISMISSED";
+    confidenceScore: number;
+    precedentCaseIds: string[];
+    reasoning: string;
+    estimatedResolutionTime: number; // < 5 minutes for micro
   };
-  
-  performance: {
-    currentMetrics: Record<string, number>; // Real-time performance
-    breachCount: number;          // Number of SLA breaches
-    lastBreach: number;           // Timestamp of last breach
-    penaltiesApplied: number;     // Total penalties applied
+
+  learningSignals: {
+    customerAgreed: boolean;
+    customerOverrode: boolean;
+    overrideReason?: string;
+    appealFiled?: boolean;
+    finalOutcome?: string;
   };
-  
-  status: "active" | "suspended" | "terminated" | "disputed";
-  createdAt: number;
-  expiresAt: number;
-  lastUpdated: number;
 }
 ```
+
+### 4.4 Case Processing Pipeline for Micro-Disputes
+
+```
+1. DISPUTE INTAKE (< 1 second)
+   ├── Validate payment platform API key
+   ├── Check transaction data (amount, protocol, reason)
+   ├── Determine micro-dispute eligibility (< $1)
+   └── Assign to processing queue
+
+2. AI EVALUATION (< 30 seconds)
+   ├── Generate vector embedding of dispute description
+   ├── Search precedent database for similar cases
+   ├── Calculate confidence score from precedents
+   ├── Generate verdict + reasoning
+   └── Determine if customer review needed
+
+3. CUSTOMER REVIEW (if confidence < 95%)
+   ├── Add to customer's review queue
+   ├── Display AI recommendation + confidence
+   ├── Show similar past cases
+   ├── Wait for customer approval/override
+   └── Capture override reasoning for learning
+
+4. RESOLUTION EXECUTION (< 1 minute)
+   ├── Notify payment platform via webhook
+   ├── Update agent reputation scores
+   ├── Create precedent record (if human-confirmed)
+   ├── Log ADP custody event
+   └── Mark case as CLOSED
+
+5. LEARNING & IMPROVEMENT (async)
+   ├── If customer overrode: Update AI model
+   ├── Add to precedent database
+   ├── Update dispute patterns
+   └── Improve auto-resolve rate
+```
+
+**Target SLAs:**
+- Micro-disputes (<$1): 95%+ auto-resolved in < 5 minutes
+- Standard disputes ($1-$100): 90%+ resolved in < 24 hours
+- Regulation E deadline: 100% within 10 business days
 
 ---
 
 ## 5) Evidence Collection System
 
-### 5.1 Evidence Types
+### 5.1 Payment-Specific Evidence Types
 
-**Performance Evidence**
+**Financial Transaction Evidence**
 ```typescript
-interface PerformanceEvidence {
-  contractId: string;
-  metricName: string;             // "response_time", "availability", etc.
-  value: number;                  // Measured value
-  timestamp: number;              // When measurement was taken
-  source: "agent_self_report" | "third_party_monitor" | "system_automatic";
-  
+interface FinancialEvidence {
+  transactionId: string;
+  transactionHash?: string;       // For blockchain transactions
+  amount: number;
+  currency: string;
+  timestamp: number;
+
+  paymentProtocol: "ACP" | "ATXP" | "crypto" | "other";
+
   verification: {
+    blockchainVerified?: boolean;
+    paymentGatewayConfirmed?: boolean;
+    sha256: string;               // Evidence content hash
     signature: string;            // Cryptographic signature
-    hash: string;                 // Evidence content hash
-    witness?: string;             // Third-party witness (if applicable)
   };
-  
-  context?: {
-    requestId?: string;           // Specific API request
-    environmentData?: any;        // Environmental context
-    systemLoad?: number;          // System resource utilization
+
+  context: {
+    apiEndpoint?: string;
+    requestId?: string;
+    responseTime?: number;
+    errorCode?: string;
+    merchantId: string;
+    customerId: string;
   };
 }
 ```
 
-**Compliance Evidence**
+**API Performance Evidence**
 ```typescript
-interface ComplianceEvidence {
-  agentDid: string;
-  complianceFramework: string;    // "HIPAA", "SOX", "GDPR", etc.
-  checkpoint: string;             // Specific compliance requirement
-  status: "compliant" | "non_compliant" | "pending";
-  
-  evidence: {
-    documents: string[];          // Document references
-    certifications: string[];     // Compliance certificates
-    auditTrail: string[];         // Audit evidence
+interface APIPerformanceEvidence {
+  endpoint: string;
+  method: string;
+  requestTimestamp: number;
+  responseTimestamp?: number;
+  responseTime: number;
+  statusCode: number;
+
+  slaThresholds: {
+    maxResponseTime: number;
+    agreedUptime: number;
   };
-  
-  verifiedBy: string;             // Compliance auditor/system
-  verifiedAt: number;
-  expiresAt?: number;             // When compliance expires
+
+  breach: {
+    detected: boolean;
+    type: "timeout" | "rate_limit" | "server_error";
+    impact: string;
+  };
+
+  verification: {
+    sha256: string;
+    logsUrl: string;
+    monitoringDashboardUrl?: string;
+  };
 }
 ```
 
-### 5.2 Evidence Storage & Verification
+### 5.2 Evidence Storage & ADP Compliance
 
-All evidence is stored in Convex with cryptographic verification:
+All evidence follows the Agentic Dispute Protocol (ADP):
 
 ```typescript
-interface EvidenceManifest {
+interface ADPEvidenceManifest {
   evidenceId: string;
-  contractId?: string;            // Related contract (if applicable)
+  caseId: string;
   agentDid: string;               // Evidence submitter
-  evidenceType: "performance" | "compliance" | "dispute" | "general";
-  
-  contentHash: string;            // SHA-256 hash of evidence content
+
+  type: "financial" | "api_performance" | "contract" | "communication";
+
+  contentHash: string;            // SHA-256 hash
   signature: string;              // Agent's cryptographic signature
   timestamp: number;              // Submission timestamp
-  
-  convexFileId: string;           // Convex file storage reference
-  retentionPolicy: "30d" | "1y" | "7y" | "permanent";
-  
-  verification: {
-    verified: boolean;            // Has been cryptographically verified
-    verifiedBy: string;           // Verification system/agent
-    verifiedAt: number;
+
+  uri: string;                    // Evidence location
+
+  custody: {
+    merkleRoot: string;           // Merkle tree root for chain
+    previousEventHash: string;    // Links to previous custody event
+    sequenceNumber: number;
+  };
+
+  regulationE: {
+    retentionRequired: boolean;
+    retentionPeriod: number;      // Days
+    customerAccessible: boolean;
   };
 }
 ```
 
 ---
 
-## 6) Dispute Resolution Engine
+## 6) Customer Review Infrastructure Model
 
-### 6.1 Case Types
+### 6.1 Review Queue for Payment Platforms
 
-**Standard Dispute Types:**
-- `SLA_VIOLATION` - Service level agreement breaches
-- `PERFORMANCE_DISPUTE` - Performance metric disagreements  
-- `NON_DELIVERY` - Service not delivered as specified
-- `QUALITY_DISPUTE` - Output quality below agreed standards
-- `BILLING_DISPUTE` - Payment and billing disagreements
-- `CONTRACT_INTERPRETATION` - Disagreement on contract terms
-
-### 6.2 Automated Resolution Rules
+Payment platforms (customers) review the 5% of disputes where AI confidence < 95%:
 
 ```typescript
-interface ResolutionRule {
-  ruleId: string;
-  applicableCaseTypes: string[];
-  
-  conditions: {
-    field: string;                // "breach_count", "penalty_amount", etc.
-    operator: ">" | "<" | "=" | "!=" | ">=" | "<=";
-    value: any;
-    logicOperator?: "AND" | "OR"; // For multiple conditions
+interface CustomerReviewQueue {
+  organizationId: string;         // Payment platform's org
+
+  pendingDisputes: {
+    paymentDisputeId: string;
+    transactionId: string;
+    amount: number;
+    currency: string;
+    disputeReason: string;
+
+    aiRecommendation: "UPHELD" | "DISMISSED";
+    aiConfidence: number;         // e.g., 0.85 (85%)
+    aiReasoning: string;
+
+    similarPastCases: {
+      caseId: string;
+      similarity: number;
+      outcome: string;
+      humanConfirmed: boolean;
+    }[];
+
+    evidenceUrls: string[];
+    regulationEDeadline: number;
+
+    assignedReviewer?: string;
+    addedToQueueAt: number;
   }[];
-  
-  resolution: {
-    type: "automatic" | "escalation" | "mediation";
-    action: string;               // Specific action to take
-    penaltyCalculation?: {
-      type: "fixed" | "percentage" | "escalating";
-      amount: number;
-      cap?: number;               // Maximum penalty
-    };
-    timeLimit: number;            // Time to resolve (milliseconds)
+
+  metrics: {
+    averageReviewTime: number;
+    approvalRate: number;         // How often customer agrees with AI
+    overrideRate: number;         // How often customer disagrees
   };
-  
-  appealable: boolean;
-  precedentWeight: number;        // How much this rule affects future cases
 }
-
-// Example: Automatic SLA violation penalty
-const slaViolationRule: ResolutionRule = {
-  ruleId: "sla-response-time-violation",
-  applicableCaseTypes: ["SLA_VIOLATION"],
-  conditions: [{
-    field: "response_time_breach",
-    operator: ">",
-    value: 200, // milliseconds
-  }],
-  resolution: {
-    type: "automatic",
-    action: "apply_penalty",
-    penaltyCalculation: {
-      type: "fixed",
-      amount: 100, // $100 penalty
-    },
-    timeLimit: 300000, // 5 minutes
-  },
-  appealable: true,
-  precedentWeight: 0.8
-};
 ```
 
-### 6.3 Case Processing Pipeline
-
-```
-1. CASE FILING
-   ├── Validate parties and evidence
-   ├── Check contract terms and SLAs
-   └── Assign case classification
-
-2. EVIDENCE REVIEW
-   ├── Verify evidence cryptographic signatures
-   ├── Check evidence completeness
-   └── Flag any evidence inconsistencies
-
-3. AUTOMATED EVALUATION
-   ├── Apply relevant resolution rules
-   ├── Calculate penalties/remediation
-   └── Generate initial decision
-
-4. NOTIFICATION & APPEALS
-   ├── Notify all parties of decision
-   ├── Start appeal period timer
-   └── Execute resolution if no appeals
-
-5. RESOLUTION ENFORCEMENT
-   ├── Apply penalties/payments
-   ├── Update agent reputation scores
-   └── Create precedent record
-```
-
----
-
-## 7) Multi-Dimensional Reputation System
-
-### 7.1 Reputation Scoring
+### 6.2 Learning from Customer Decisions
 
 ```typescript
-interface ReputationScore {
-  agentDid: string;
-  
-  overall: number;                // 0-100 overall reliability score
-  
-  domainScores: {
-    reliability: number;          // Uptime, availability
-    performance: number;          // Speed, efficiency  
-    quality: number;              // Accuracy, completeness
-    communication: number;        // Response time, clarity
-    compliance: number;           // Regulatory adherence
+interface LearningSignal {
+  paymentDisputeId: string;
+
+  aiPrediction: {
+    verdict: "UPHELD" | "DISMISSED";
+    confidence: number;
+    reasoning: string;
   };
-  
-  relationshipScores: Record<string, number>; // Agent-specific reputation
-  
-  metrics: {
-    totalInteractions: number;    // Total transactions
-    disputeRate: number;          // Percentage of interactions disputed
-    resolutionFavorability: number; // Win rate in disputes
-    averageRating: number;        // Average rating from partners
-    improvementTrend: number;     // Recent performance trend
+
+  customerDecision: {
+    verdict: "UPHELD" | "DISMISSED";
+    agreedWithAI: boolean;
+    overrideReason?: string;
+    reviewerEmail: string;
+    decidedAt: number;
   };
-  
-  timeWeighting: {
-    recentWeight: number;         // Weight for last 30 days
-    mediumWeight: number;         // Weight for last 90 days
-    historicalWeight: number;     // Weight for older history
+
+  impact: {
+    precedentCreated: boolean;
+    confidenceAdjustment: number; // e.g., +0.05 or -0.10
+    patternRecognized: boolean;
+    similarFutureCases: number;   // Estimated impact
   };
-  
-  lastUpdated: number;
-  calculationVersion: string;     // Reputation algorithm version
 }
 ```
 
-### 7.2 Reputation Updates
-
-Reputation is updated based on:
-- **SLA Performance**: Meeting/missing SLA targets
-- **Dispute Outcomes**: Winning/losing dispute resolutions
-- **Partner Feedback**: Explicit ratings from transaction partners
-- **Resolution Time**: How quickly issues are resolved
-- **Contract Compliance**: Adherence to contract terms
-
 ---
 
-## 8) Enterprise Integration APIs
+## 7) API Structure & Integration
 
-### 8.1 Core API Endpoints
+### 7.1 Core API Endpoints for Payment Platforms
+
+**Payment Dispute Management**
+```typescript
+POST   /api/payment-disputes              // Receive dispute from platform
+GET    /api/payment-disputes/:id          // Get dispute status
+GET    /api/payment-disputes/stats        // Platform's dispute statistics
+GET    /api/payment-disputes/review-queue // Disputes needing review
+
+POST   /api/payment-disputes/:id/review   // Customer reviews AI decision
+POST   /api/payment-disputes/:id/appeal   // File appeal
+```
 
 **Agent Management**
 ```typescript
-POST   /api/v1/agents/register           // Register new agent
-GET    /api/v1/agents/{agentId}         // Get agent details
-PUT    /api/v1/agents/{agentId}         // Update agent configuration
-DELETE /api/v1/agents/{agentId}         // Deactivate agent
-
-POST   /api/v1/agents/discover          // Discover available agents
-GET    /api/v1/agents/reputation/{agentId} // Get reputation score
+POST   /agents/register           // Register payment agent
+GET    /agents/:did               // Agent details + reputation
+GET    /agents/discover           // Discover available agents
 ```
 
-**Contract Management**
+**Evidence & ADP Compliance**
 ```typescript
-POST   /api/v1/contracts                // Create new contract
-GET    /api/v1/contracts/{contractId}   // Get contract details
-PUT    /api/v1/contracts/{contractId}   // Update contract terms
-DELETE /api/v1/contracts/{contractId}   // Terminate contract
-
-GET    /api/v1/templates                // List available SLA templates
-POST   /api/v1/templates                // Create custom template
+POST   /evidence                  // Submit ADP Evidence Message
+GET    /evidence/:evidenceId      // Retrieve evidence
+GET    /cases/:caseId/custody     // Verify custody chain
 ```
 
-**Evidence & Monitoring**
+**Webhooks** (Platform receives results)
 ```typescript
-POST   /api/v1/evidence                 // Submit evidence
-GET    /api/v1/evidence/{evidenceId}    // Retrieve evidence
-POST   /api/v1/performance              // Submit performance metrics
-GET    /api/v1/performance/{contractId} // Get performance data
-```
-
-**Dispute Resolution**
-```typescript
-POST   /api/v1/disputes                 // File dispute
-GET    /api/v1/disputes/{disputeId}     // Get dispute status
-POST   /api/v1/disputes/{disputeId}/appeal // Appeal decision
-GET    /api/v1/disputes/history         // Dispute history
-```
-
-### 8.2 Enterprise Integration Features
-
-**Webhooks for Real-time Notifications**
-```typescript
-interface WebhookEvent {
-  eventType: "sla_breach" | "dispute_filed" | "resolution_complete" | "contract_created";
-  timestamp: number;
-  data: {
-    contractId?: string;
-    disputeId?: string;
-    agentIds: string[];
-    severity: "low" | "medium" | "high" | "critical";
-    details: any;
-  };
-  signature: string; // Webhook verification signature
+POST   /webhooks/register         // Register callback URL
+// Platform's webhook receives:
+{
+  caseId: string,
+  verdict: "UPHELD" | "DISMISSED",
+  winner: string,
+  confidence: number,
+  reasoning: string,
+  auto: boolean,
+  decidedAt: number
 }
 ```
 
-**SSO Integration**
-- SAML 2.0 support
-- OAuth 2.0 / OpenID Connect
-- Active Directory integration
-- Custom enterprise authentication
+### 7.2 Integration Example for ACP/ATXP
 
-**Multi-tenant Support**
-- Enterprise data isolation
-- Custom branding and domains
-- Role-based access controls
-- Usage analytics and reporting
+```javascript
+// When customer files dispute on payment platform
+const dispute = await fetch('https://api.consulatehq.com/api/payment-disputes', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    transactionId: 'txn_abc123',
+    amount: 0.25,
+    currency: 'USD',
+    paymentProtocol: 'ACP',
+    plaintiff: 'customer_wallet',
+    defendant: 'merchant_did',
+    disputeReason: 'api_timeout',
+    description: 'API call timed out after 30s',
+    evidenceUrls: ['https://logs.platform.com/timeout.json'],
+    reviewerOrganizationId: 'YOUR_ORG_ID',
+    callbackUrl: 'https://platform.com/webhooks/dispute-result'
+  })
+});
 
----
-
-## 9) Data Model (Convex Tables)
-
-### 9.1 Core Tables
-
-```typescript
-// Agent identity and management
-agents: {
-  did: string;
-  enterpriseId: string;
-  enterpriseTier: string;
-  functionalType: string;
-  publicKey: string;
-  capabilities: string[];
-  reputation: object;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-// Contract and SLA management
-contracts: {
-  contractId: string;
-  templateId: string;
-  providerDid: string;
-  consumerDid: string;
-  terms: object;
-  performance: object;
-  status: string;
-  createdAt: number;
-  expiresAt: number;
-}
-
-// SLA templates
-slaTemplates: {
-  templateId: string;
-  name: string;
-  category: string;
-  metrics: object[];
-  applicableAgentTypes: string[];
-  complianceRequirements: string[];
-  version: string;
-  active: boolean;
-}
-
-// Evidence storage
-evidenceManifests: {
-  evidenceId: string;
-  contractId: string;
-  agentDid: string;
-  evidenceType: string;
-  contentHash: string;
-  signature: string;
-  convexFileId: string;
-  verification: object;
-  timestamp: number;
-}
-
-// Dispute cases
-disputes: {
-  disputeId: string;
-  contractId: string;
-  parties: string[];
-  caseType: string;
-  evidenceIds: string[];
-  status: string;
-  resolution: object;
-  filedAt: number;
-  resolvedAt: number;
-}
-
-// Reputation scores
-reputation: {
-  agentDid: string;
-  overall: number;
-  domainScores: object;
-  relationshipScores: object;
-  metrics: object;
-  lastUpdated: number;
+// Response (typically < 5 minutes for micro-disputes)
+{
+  "caseId": "k11234567890",
+  "isMicroDispute": true,
+  "humanReviewRequired": false, // 95% are auto-resolved
+  "estimatedResolutionTime": "5 minutes",
+  "regulationECompliant": true
 }
 ```
 
 ---
 
-## 10) Security & Compliance
+## 8) Data Model (Convex Tables)
 
-### 10.1 Security Framework
+### 8.1 Core Tables for Payment Disputes
+
+```typescript
+// Payment-specific disputes
+paymentDisputes: {
+  caseId: string;
+  transactionId: string;
+  transactionHash?: string;
+  amount: number;
+  currency: string;
+  paymentProtocol: "ACP" | "ATXP" | "other";
+  disputeReason: string;
+
+  // Regulation E compliance
+  regulationEDeadline: number;
+  autoResolveEligible: boolean;
+
+  // AI automation
+  aiRulingConfidence: number;
+  aiRulingVector?: number[];      // 1536-dim embedding
+  aiRecommendation?: "UPHELD" | "DISMISSED";
+  aiReasoning?: string;
+
+  // Infrastructure model
+  humanReviewRequired: boolean;
+  reviewerOrganizationId?: string;
+  reviewerEmail?: string;
+  customerFinalDecision?: string;
+  customerReviewNotes?: string;
+
+  // Learning signals
+  userAppealed: boolean;
+  appealOutcome?: string;
+
+  // Batch processing
+  batchId?: string;
+  batchedWithCount?: number;
+
+  // Precedents
+  similarPastCases?: string[];
+}
+
+// Precedent database (network effects moat)
+disputePrecedents: {
+  originalDisputeId: string;
+  embedding: number[];            // Vector for similarity search
+  disputeType: string;
+  amountRange: string;
+  outcomeVerdict: string;
+  humanConfirmed: boolean;        // Customer approved this ruling
+  confidenceScore: number;
+  timesReferenced: number;
+  userSatisfactionScore?: number;
+  appealedAndOverturned: boolean;
+}
+
+// Pattern recognition for batch processing
+disputePatterns: {
+  patternHash: string;
+  disputeReason: string;
+  amountRange: string;
+  protocol: string;
+  totalOccurrences: number;
+  autoResolvedCount: number;
+  overturnedCount: number;
+  patternReliability: number;
+  recommendedAutoResolveThreshold: number;
+  aggregatedEmbedding?: number[];
+}
+```
+
+---
+
+## 9) Security & Compliance
+
+### 9.1 Security Framework
 
 **Authentication & Authorization**
-- Multi-factor authentication required
-- Role-based access control (RBAC)
-- API key management with rotation
-- Session management with timeout
+- Payment platform API keys (Stripe-style)
+- Organization-level isolation
+- API key rotation support
+- Rate limiting per customer
 
 **Data Protection**
 - AES-256 encryption at rest
 - TLS 1.3 encryption in transit
-- End-to-end encryption for sensitive evidence
-- Secure key management with HSM support
+- Evidence SHA-256 hashing
+- Merkle chain custody verification
 
 **Audit & Monitoring**
-- Complete activity logging
-- Tamper detection and alerts
-- Real-time security monitoring
-- Automated threat response
+- Complete ADP custody chain
+- Regulation E deadline tracking
+- Customer review audit trail
+- Precedent usage logging
 
-### 10.2 Compliance Support
+### 9.2 Compliance Support
 
 **Regulatory Frameworks**
-- **SOC 2 Type II**: Security, availability, processing integrity
-- **GDPR**: EU data protection compliance
-- **HIPAA**: Healthcare data protection (for healthcare agents)
-- **SOX**: Financial reporting controls (for financial agents)
+- **Regulation E**: Electronic fund transfer dispute resolution
+- **PCI-DSS**: Payment card data security (when applicable)
+- **ADP**: Agentic Dispute Protocol compliance
+- **SOC 2 Type II**: Security and availability controls
 
 **Industry Standards**
-- **ISO 27001**: Information security management
-- **ISO 27017**: Cloud security controls
-- **PCI DSS**: Payment card data security (when applicable)
+- **Regulation E Deadline**: 10 business days (met in < 5 minutes)
+- **Provisional Credit**: 1 business day when required
+- **Complete Records**: All evidence retained for audit
+- **Customer Notification**: Automated status updates
 
 ---
 
-## 11) Deployment Architecture
+## 10) Deployment Architecture
 
-### 11.1 Convex-First Architecture
+### 10.1 Convex-First Architecture
 
 ```typescript
 // All backend logic runs as Convex functions
-// No external services required
-// Auto-scaling serverless platform
-
 convex/
-├── agents.ts              // Agent management functions
-├── contracts.ts           // Contract and SLA functions  
-├── disputes.ts            // Dispute resolution functions
-├── evidence.ts            // Evidence collection functions
-├── reputation.ts          // Reputation calculation functions
-├── http.ts               // REST API endpoints
-├── crons.ts              // Scheduled functions
-└── schema.ts             // Database schema definitions
+├── paymentDisputes.ts    // Micro-dispute processing (primary)
+├── agents.ts             // Payment agent management
+├── evidence.ts           // Evidence collection + validation
+├── custody.ts            // ADP chain of custody
+├── http.ts              // REST API endpoints
+├── crons.ts             // Scheduled jobs (stats, cleanup)
+└── schema.ts            // Database schema
 ```
 
-### 11.2 Deployment Options
+### 10.2 Deployment Options
 
-**SaaS Deployment**
+**SaaS Deployment** (Recommended)
 - Multi-tenant cloud platform
-- Fastest time to value
+- Fastest time to value (< 1 week integration)
 - Automatic updates and scaling
-- Standard compliance and security
+- Standard Regulation E compliance
 
-**Private Cloud**
+**Private Cloud** (Enterprise)
 - Dedicated cloud deployment
 - Enhanced security and compliance
 - Custom configurations
 - Private network connectivity
 
-**On-Premises**
-- Customer-managed deployment
-- Maximum security control
-- Custom compliance requirements
-- Air-gapped network support
+---
+
+## 11) Development Roadmap
+
+### 11.1 Current Status (Production-Ready)
+- ✅ Payment dispute schema and infrastructure
+- ✅ AI auto-resolution with 95% target rate
+- ✅ Customer review workflow and UI
+- ✅ ADP compliance and custody chain
+- ✅ Regulation E deadline tracking
+- ✅ Batch processing support
+- ✅ API endpoints for payment platforms
+- ✅ Webhook integration
+
+### 11.2 Next Features (Q1 2025)
+- 🔄 Vector similarity search (precedent matching)
+- 🔄 Reinforcement learning from customer decisions
+- 🔄 Advanced batch processing optimization
+- 🔄 Multi-currency support expansion
+- 🔄 Real-time analytics dashboard
+
+### 11.3 Future Enhancements (Q2+ 2025)
+- 📋 Blockchain evidence anchoring (optional)
+- 📋 Cross-border dispute resolution
+- 📋 Multilingual support
+- 📋 Mobile app for customer reviews
+- 📋 Advanced fraud detection
 
 ---
 
-## 12) Development Roadmap
+## 12) Success Metrics
 
-### 12.1 Current Status (MVP Ready)
-- ✅ Agent identity and reputation system
-- ✅ Contract and SLA management
-- ✅ Evidence collection and verification
-- ✅ Automated dispute resolution
-- ✅ Enterprise APIs and integrations
-- ✅ Security and compliance framework
-
-### 12.2 Next Features (Q1 2025)
-- 🔄 Advanced analytics and dashboards
-- 🔄 Machine learning dispute prediction
-- 🔄 Mobile application for monitoring
-- 🔄 Advanced compliance reporting
-- 🔄 International expansion features
-
-### 12.3 Future Enhancements (Q2+ 2025)
-- 📋 Multi-party complex dispute resolution
-- 📋 Blockchain evidence anchoring
-- 📋 AI-powered contract negotiation
-- 📋 Advanced reputation algorithms
-- 📋 Industry-specific compliance modules
-
----
-
-## 13) Success Metrics
-
-### 13.1 Platform Performance
-- **Resolution Speed**: Average dispute resolution < 4 hours
-- **Automation Rate**: 90%+ disputes resolved automatically
-- **Customer Satisfaction**: NPS > 50, CSAT > 4.5/5
+### 12.1 Platform Performance
+- **Auto-Resolution Rate**: 95%+ disputes resolved without human review
+- **Resolution Speed**: < 5 minutes for micro-disputes
+- **Regulation E Compliance**: 100% within 10 business day deadline
 - **Platform Reliability**: 99.9% uptime, < 100ms API response
 
-### 13.2 Business Impact
-- **Cost Reduction**: 90%+ reduction in dispute resolution costs
-- **Time Savings**: 95%+ reduction in dispute resolution time
-- **Risk Mitigation**: 80%+ reduction in agent relationship risks
-- **Operational Efficiency**: 50%+ reduction in manual processes
+### 12.2 Business Impact
+- **Cost Reduction**: 98%+ reduction vs traditional dispute systems
+- **Time Savings**: 2,000x faster than manual review
+- **Scalability**: Handle 10,000+ disputes/day per customer
+- **Profitability**: 92%+ gross margin for payment platforms
 
 ---
 
-**The platform is enterprise-ready for immediate deployment with comprehensive dispute resolution capabilities, enterprise integration, and production-grade security and compliance.**
+**The platform is production-ready for immediate deployment with comprehensive micro-dispute resolution capabilities, payment platform integration, and Regulation E compliance.**
 
+**Target Customers**: ACP, ATXP, Stripe for Agents, crypto payment processors
+**Model**: Infrastructure-as-a-Service (B2B2C)
+**Key Advantage**: Only economically viable solution for micro-disputes (<$1)

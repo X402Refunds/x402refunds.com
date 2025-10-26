@@ -138,12 +138,23 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 - **Config**: Root - `package.json`, `tsconfig.json`, `vitest.config.ts`
 
 ### Commands
-- **Dev**: `pnpm dev` - Start development server
-- **Deploy Backend**: `pnpm exec convex deploy --yes` - Deploy to Convex production
-- **Deploy Frontend**: `pnpm deploy:frontend` - Deploy to Vercel
+- **Dev**: `pnpm dev` - Start development server (connects to preview by default)
 - **Build**: `pnpm build` - Build all packages
-- **Test**: `pnpm test:run` - Run tests
-- **Quality**: `pnpm lint && pnpm type-check && pnpm build`
+- **Test**: `pnpm test:run` - Run full test suite
+- **Smoke Test**: `pnpm test:smoke` - Run quick smoke tests
+- **Quality**: `pnpm lint && pnpm type-check && pnpm build && pnpm test:run && pnpm update-context`
+
+### Deployment Commands
+- **Preview**: `pnpm deploy:preview` - Deploy to preview environment (safe for testing)
+- **Production**: `pnpm deploy:prod` - Deploy to production (requires explicit approval)
+- **Logs (Preview)**: `pnpm check-logs:preview` - View preview deployment logs
+- **Logs (Production)**: `pnpm check-logs` - View production deployment logs
+
+**Environments**:
+- **Preview** (`youthful-orca-358.convex.cloud`) - For development/testing, runs smoke tests in CI
+- **Production** (`api.consulatehq.com`) - Live production, runs full test suite before deploy
+
+See `internal/operations/convex-deployment-environments.md` for complete deployment guide.
 
 ---
 
@@ -151,14 +162,16 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 
 ### Deployment Safety
 **NEVER auto-deploy** unless user explicitly requests.
-- ❌ Don't run `pnpm deploy:frontend` automatically
-- ✅ Only deploy when user says "deploy"
-- After fixes: Commit to git, then STOP (don't deploy)
+- ❌ Don't run deployment commands automatically
+- ✅ Always deploy to **preview first**, then production after validation
+- ❌ Never run `pnpm deploy` (it's disabled - use `deploy:preview` or `deploy:prod`)
+- ✅ After fixes: Run quality checks, commit to git, then STOP (don't deploy)
+- ✅ User says "deploy" → Ask "preview or production?"
 
 ### Quality Checks (MANDATORY)
 After ANY code change, run:
 ```bash
-pnpm lint && pnpm type-check && pnpm build && pnpm update-context
+pnpm lint && pnpm type-check && pnpm build && pnpm test:run && pnpm update-context
 ```
 **Never commit** if any check fails.
 

@@ -1,5 +1,5 @@
 ---
-description: Agent coordination architecture patterns for database-driven coordination using Convex instead of traditional frameworks
+description: Agent coordination architecture patterns for database-driven coordination using Convex
 globs: "convex/**/*.ts"
 alwaysApply: false
 ---
@@ -8,7 +8,9 @@ alwaysApply: false
 
 ## Core Philosophy: Database-Driven Coordination
 
-Consulate AI uses **pure serverless coordination** through shared Convex database state instead of traditional agent orchestration frameworks like LangGraph or OpenAI Agents SDK.
+Consulate AI uses **pure serverless coordination** through shared Convex database state following the Convex agents pattern: https://docs.convex.dev/agents
+
+This approach leverages Convex's built-in primitives for agent coordination instead of traditional agent orchestration frameworks like LangGraph or OpenAI Agents SDK.
 
 ### Why We Don't Use Traditional Frameworks
 

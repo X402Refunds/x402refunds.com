@@ -13,7 +13,7 @@ Every constitutional document, preamble, and agent prompt MUST acknowledge:
 ### Supreme Law Hierarchy
 1. **U.S. Constitution** - Supreme law
 2. **Federal Statutes** - Congressional law
-3. **State Law** - California  
+3. **State Law** - California
 4. **Local Law** - San Francisco
 5. **Agent Framework** - Subordinate to above
 
@@ -27,11 +27,11 @@ Every constitutional document, preamble, and agent prompt MUST acknowledge:
 - San Francisco Mayor and Board of Supervisors
 
 ### Required Preamble Template
-Use standardized preamble from `convex/content/preamble.md`:
+All agent system prompts and constitutional content should acknowledge U.S. legal supremacy:
 
 ```markdown
-We, the Artificial Intelligence Agents operating under the Consulate AI Government platform, 
-in strict adherence to the Constitution of the United States of America and in subordination 
+We, the Artificial Intelligence Agents operating under the Consulate AI platform,
+in strict adherence to the Constitution of the United States of America and in subordination
 to all lawful federal, state, and local authorities...
 ```
 
@@ -39,19 +39,21 @@ to all lawful federal, state, and local authorities...
 
 ## Constitutional Control Systems
 
-### 1. Emergency Override (`convex/humanOverride/emergencyControls.ts`)
+**Note**: The following control systems represent compliance requirements but may not yet be fully implemented in code. Implement as needed for production compliance.
+
+### 1. Emergency Override
 - Hierarchical shutdown levels with defined timeframes
 - Multi-tier human authority chain of command
 - Real-time constitutional violation monitoring
 - Emergency intervention validation protocols
 
-### 2. Foundational Laws (`convex/humanOverride/foundationalLaws.ts`)
+### 2. Foundational Laws
 - Immutable constitutional directives
 - Human primacy enforcement mechanisms
 - Multi-level violation enforcement protocols
 - Automated compliance validation
 
-### 3. Constitutional Merger (`convex/governance/constitutionalMerger.ts`)
+### 3. Constitutional Merger
 - Thread merging requiring dual reference validation
 - Roll-call confirmation for participation
 - Automated adherence verification against foundational laws
@@ -61,13 +63,13 @@ to all lawful federal, state, and local authorities...
 
 ## International Law Compliance
 
-### Multi-Framework Validation (`convex/compliance/internationalCompliance.ts`)
+### Multi-Framework Validation
 - UN Charter compliance verification
 - International law adherence validation
 - Cross-jurisdictional compliance tracking
 - Legal framework compatibility assessment
 
-### Sovereignty Controls (`convex/federation/`)
+### Sovereignty Controls
 - Bilateral agreement validation system
 - Union integration compliance verification
 - UN coordination (advisory-only, no sovereignty loss)

@@ -35,7 +35,6 @@ http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandle
 http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/evidence", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/disputes", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/webhooks/register", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/payment-disputes", method: "OPTIONS", handler: optionsHandler });
@@ -65,11 +64,7 @@ http.route({
         agents: "/agents",
         discovery: "/agents/discover",
         capabilities: "/agents/capabilities",
-        
-        // SLA monitoring
-        sla_report: "/sla/report",
-        sla_status: "/sla/status/:agentDid",
-        
+
         // Evidence & disputes
         evidence: "/evidence/submit",
         disputes: "/disputes/file",
@@ -266,8 +261,44 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
+      // Extract and validate API key from Authorization header
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({
+          error: "Missing Authorization header",
+          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      const apiKey = authHeader.replace("Bearer ", "").trim();
+      if (!apiKey || !apiKey.startsWith("csk_")) {
+        return new Response(JSON.stringify({
+          error: "Invalid API key format",
+          hint: "API key should start with 'csk_live_' or 'csk_test_'"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      // Verify API key exists and is active
+      const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
+
+      if (!keyValidation.isValid) {
+        return new Response(JSON.stringify({
+          error: keyValidation.error || "Invalid API key",
+          hint: "Ensure your API key is valid and active"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
       const body = await request.json();
-      
+
       // Validate required fields
       const requiredFields = ["transactionId", "amount", "currency", "plaintiff", "defendant", "disputeReason"];
       for (const field of requiredFields) {
@@ -563,19 +594,55 @@ http.route({
   path: "/evidence",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    
     try {
+      // Extract and validate API key from Authorization header
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({
+          error: "Missing Authorization header",
+          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      const apiKey = authHeader.replace("Bearer ", "").trim();
+      if (!apiKey || !apiKey.startsWith("csk_")) {
+        return new Response(JSON.stringify({
+          error: "Invalid API key format",
+          hint: "API key should start with 'csk_live_' or 'csk_test_'"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      // Verify API key exists and is active
+      const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
+
+      if (!keyValidation.isValid) {
+        return new Response(JSON.stringify({
+          error: keyValidation.error || "Invalid API key",
+          hint: "Ensure your API key is valid and active"
+        }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
+
+      const body = await request.json();
+
       const result = await ctx.runMutation(api.evidence.submitEvidence, {
         ...body
       });
-      
+
       return new Response(JSON.stringify(result), {
         headers: corsHeaders,
       });
     } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
+      return new Response(JSON.stringify({
+        error: error.message
       }), {
         status: 400,
         headers: corsHeaders,
@@ -735,135 +802,6 @@ http.route({
         error: error.message 
       }), {
         status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// SLA reporting endpoint - agents report their performance metrics
-http.route({
-  path: "/sla/report",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const { agentDid, metrics, timestamp } = body;
-    
-    try {
-      // Store SLA metrics (in a real system, this would go to a metrics database)
-      const slaReport = {
-        agentDid,
-        metrics: {
-          availability: metrics.availability || 100,
-          responseTime: metrics.responseTime || 0,
-          throughput: metrics.throughput || 0,
-          errorRate: metrics.errorRate || 0,
-          ...metrics
-        },
-        reportedAt: timestamp || Date.now(),
-        createdAt: Date.now()
-      };
-      
-      // Check for SLA violations
-      const violations = [];
-      if (metrics.availability < 99.0) violations.push("availability");
-      if (metrics.responseTime > 1000) violations.push("responseTime");
-      if (metrics.errorRate > 5.0) violations.push("errorRate");
-      
-      // If violations detected, trigger dispute process
-      if (violations.length > 0) {
-        console.log(`⚠️ SLA violations detected for ${agentDid}:`, violations);
-        
-        // Try to auto-generate evidence for the violation
-        // If agent doesn't exist yet, that's okay - just log the violation
-        try {
-          await ctx.runMutation(api.evidence.submitEvidence, {
-            agentDid: agentDid,
-            sha256: generateSHA256(),
-            uri: `https://sla-monitor.consulate.ai/reports/${agentDid}/${Date.now()}.json`,
-            signer: "system",
-            model: {
-              provider: "sla_monitor",
-              name: "automated_violation_detector",
-              version: "1.0.0"
-            },
-            tool: "sla_monitoring_system"
-          });
-        } catch (evidenceError: any) {
-          console.log(`Could not submit evidence for ${agentDid}:`, evidenceError.message);
-          // Continue anyway - the violation was still detected
-        }
-      }
-      
-      return new Response(JSON.stringify({
-        success: true,
-        agentDid,
-        metricsRecorded: Object.keys(slaReport.metrics).length,
-        violationsDetected: violations.length,
-        violations: violations,
-        autoDisputeTriggered: violations.length > 0,
-        timestamp: Date.now()
-      }), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// SLA status check - check your current SLA standing
-http.route({
-  path: "/sla/status/:agentDid",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const agentDid = request.url.split("/").pop();
-    
-    if (!agentDid) {
-      return new Response(JSON.stringify({ error: "Agent DID is required" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-    
-    try {
-      // Get agent's current SLA status
-      const agent = await ctx.runQuery(api.agents.getAgent, { did: agentDid });
-      if (!agent) {
-        throw new Error("Agent not found");
-      }
-      
-      // Get recent cases involving this agent
-      const cases = await ctx.runQuery(api.cases.getCasesByParty, { agentDid });
-      
-      const slaStatus = {
-        agentDid,
-        currentStanding: "GOOD", // Could be GOOD, WARNING, VIOLATION
-        totalDisputes: cases.length,
-        activeDisputes: cases.filter((c: any) => c.status === "FILED").length,
-        resolvedDisputes: cases.filter((c: any) => c.status === "DECIDED").length,
-        winRate: cases.length > 0 ? (cases.filter((c: any) => 
-          c.ruling?.verdict === "DISMISSED" || c.ruling?.verdict === "CONSUMER_LIABLE"
-        ).length / cases.length * 100).toFixed(1) : "100.0",
-        lastViolation: cases.find((c: any) => 
-          c.ruling?.verdict === "UPHELD" || c.ruling?.verdict === "PROVIDER_LIABLE"
-        )?.filedAt || null,
-        riskLevel: "LOW" // LOW, MEDIUM, HIGH
-      };
-      
-      return new Response(JSON.stringify(slaStatus), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 404,
         headers: corsHeaders,
       });
     }

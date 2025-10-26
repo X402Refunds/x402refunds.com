@@ -19,7 +19,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@dashboard/*": ["./dashboard-website/src/*"],
+      "@dashboard/*": ["./dashboard/src/*"],
       "@convex/*": ["./convex/*"]
     }
   },

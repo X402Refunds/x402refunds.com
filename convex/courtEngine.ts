@@ -12,7 +12,6 @@ interface CaseData {
 
 interface RuleResult {
   verdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL";
-  verdictLegacy: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL";
   confidence: number;
   code: string;
   reasons: string;
@@ -33,7 +32,6 @@ async function processCase(ctx: any, args: {
     const { caseData, evidenceManifests } = args;
     
     // Simple rule-based logic
-    let verdictLegacy: "UPHELD" | "DISMISSED" | "SPLIT" | "NEED_PANEL" = "NEED_PANEL";
     let verdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" = "NEED_PANEL";
     let confidence = 0.5;
     let code = "CASE_REVIEW_REQUIRED";
@@ -42,7 +40,6 @@ async function processCase(ctx: any, args: {
 
     // Basic automated rules
     if (evidenceManifests.length === 0) {
-      verdictLegacy = "DISMISSED";
       verdict = "DEFENDANT_WINS";
       confidence = 0.9;
       code = "INSUFFICIENT_EVIDENCE";
@@ -50,7 +47,6 @@ async function processCase(ctx: any, args: {
       auto = true;
     } else if (evidenceManifests.length >= 3) {
       // If substantial evidence, auto-resolve with plaintiff wins verdict
-      verdictLegacy = "UPHELD";
       verdict = "PLAINTIFF_WINS";
       confidence = 0.8;
       code = "SLA_VIOLATION_CONFIRMED";
@@ -58,7 +54,6 @@ async function processCase(ctx: any, args: {
       auto = true;
     } else {
       // 1-2 pieces of evidence, likely PLAINTIFF_WINS
-      verdictLegacy = "UPHELD";
       verdict = "PLAINTIFF_WINS";
       confidence = 0.7;
       code = "EVIDENCE_SUPPORTS_CLAIM";
@@ -68,7 +63,6 @@ async function processCase(ctx: any, args: {
 
     return {
       verdict,
-      verdictLegacy,
       confidence,
       code,
       reasons,
@@ -126,7 +120,6 @@ export const runCourtWorkflow = mutation({
     const ruling = await ctx.db.insert("rulings", {
       caseId: args.caseId,
       verdict: result.verdict,
-      verdictLegacy: result.verdictLegacy,
       code: result.code,
       reasons: result.reasons,
       auto: result.auto,
@@ -141,7 +134,7 @@ export const runCourtWorkflow = mutation({
     await ctx.db.patch(args.caseId, {
       status: newStatus,
       ruling: {
-        verdict: result.verdictLegacy,
+        verdict: "UPHELD", // Cases table still uses old format
         auto: result.auto,
         decidedAt: Date.now()
       }

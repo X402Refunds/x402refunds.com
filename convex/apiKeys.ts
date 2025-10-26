@@ -466,16 +466,35 @@ export const ensureDefaultApiKeys = mutation({
 
       console.info(`Ensured default API keys for org ${args.organizationId}. Created: ${keysCreated.join(", ") || "none (already exist)"}`);
       
-      return { 
+      return {
         success: true,
         keysCreated,
-        message: keysCreated.length > 0 
-          ? `Created ${keysCreated.join(" and ")} API key(s)` 
+        message: keysCreated.length > 0
+          ? `Created ${keysCreated.join(" and ")} API key(s)`
           : "All default keys already exist"
       };
     } catch (error) {
       console.error("Failed to ensure default API keys:", error);
       throw new Error(`Failed to ensure default API keys: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+});
+
+// Validate API key (public query for HTTP endpoints)
+export const checkApiKey = query({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    try {
+      const apiKeyRecord = await validateApiKey(ctx, args.key);
+      return {
+        isValid: true,
+        organizationId: apiKeyRecord.organizationId,
+      };
+    } catch (error: any) {
+      return {
+        isValid: false,
+        error: error.message,
+      };
     }
   },
 });

@@ -18,12 +18,8 @@ import {
   calculateDisputeFee,
   estimateDisputeTokens,
   validateEvidenceSize,
-} from "./disputePricing";
-import {
   type PaymentVerdict,
-  migrateLegacyPaymentVerdict,
-  toLegacyVerdict,
-} from "./verdictHelpers";
+} from "./disputePricing";
 
 /**
  * Receive dispute from payment protocol (ACP/ATXP webhook endpoint)
@@ -227,7 +223,6 @@ export const processWithAI = action({
   },
   handler: async (ctx, args): Promise<{
     verdict: PaymentVerdict;
-    verdictLegacy: string;
     confidence: number;
     reasoning: string;
     humanReviewRequired: boolean;
@@ -320,7 +315,6 @@ export const processWithAI = action({
 
     return {
       verdict,
-      verdictLegacy: toLegacyVerdict(verdict),
       confidence,
       reasoning,
       humanReviewRequired,
@@ -362,7 +356,6 @@ export const updateWithAIRuling = mutation({
     await ctx.db.patch(args.paymentDisputeId, {
       aiRulingConfidence: args.aiRulingConfidence,
       aiRecommendation: args.verdict,
-      aiRecommendationLegacy: toLegacyVerdict(args.verdict),
       aiReasoning: args.reasoning,
       humanReviewRequired: args.humanReviewRequired,
       similarPastCases: args.similarPastCases,
@@ -407,7 +400,6 @@ export const autoResolve = mutation({
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
       verdict: agentVerdict,
-      verdictLegacy: toLegacyVerdict(args.verdict),
       code: "AUTO_RESOLVED_MICRO_DISPUTE",
       reasons: args.reasoning + ` (Auto-resolved with ${(args.confidence * 100).toFixed(1)}% confidence)`,
       auto: true,
@@ -421,7 +413,7 @@ export const autoResolve = mutation({
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: toLegacyVerdict(args.verdict),
+        verdict: "UPHELD", // Cases table still uses legacy format
         auto: true,
         decidedAt: now,
       },
@@ -433,7 +425,6 @@ export const autoResolve = mutation({
       caseId: dispute.caseId,
       payload: {
         verdict: args.verdict,
-        verdictLegacy: toLegacyVerdict(args.verdict),
         auto: true,
         confidence: args.confidence,
         microDispute: true,
@@ -564,7 +555,6 @@ export const humanReview = mutation({
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
       verdict: agentVerdict,
-      verdictLegacy: toLegacyVerdict(args.finalVerdict),
       code: args.agreeWithAI ? "AI_CONFIRMED_BY_HUMAN" : "HUMAN_OVERRIDE",
       reasons: args.overrideReason || "Human review confirms AI ruling",
       auto: false, // Human involved
@@ -578,7 +568,7 @@ export const humanReview = mutation({
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: toLegacyVerdict(args.finalVerdict),
+        verdict: "UPHELD", // Cases table still uses legacy format
         auto: false,
         decidedAt: now,
       },
@@ -668,7 +658,6 @@ export const customerReview = mutation({
       humanReviewedBy: reviewer.email,
       humanAgreesWithAI: args.decision === "APPROVE_AI",
       customerFinalDecision: args.finalVerdict,
-      customerFinalDecisionLegacy: toLegacyVerdict(args.finalVerdict),
       customerReviewNotes: args.notes,
     });
 
@@ -676,7 +665,6 @@ export const customerReview = mutation({
     const rulingId = await ctx.db.insert("rulings", {
       caseId: dispute.caseId,
       verdict: agentVerdict,
-      verdictLegacy: toLegacyVerdict(args.finalVerdict),
       code: args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" : "CUSTOMER_OVERRIDE",
       reasons: args.decision === "APPROVE_AI"
         ? `Customer approved AI recommendation: ${dispute.aiReasoning || "See analysis"}`
@@ -692,7 +680,7 @@ export const customerReview = mutation({
     await ctx.db.patch(dispute.caseId, {
       status: "DECIDED",
       ruling: {
-        verdict: toLegacyVerdict(args.finalVerdict),
+        verdict: "UPHELD", // Cases table still uses legacy format
         auto: false,
         decidedAt: now,
       },
@@ -705,7 +693,6 @@ export const customerReview = mutation({
       agentDid: undefined, // System action on behalf of customer
       payload: {
         verdict: args.finalVerdict,
-        verdictLegacy: toLegacyVerdict(args.finalVerdict),
         auto: false,
         customerReviewed: true,
         aiApproved: args.decision === "APPROVE_AI",

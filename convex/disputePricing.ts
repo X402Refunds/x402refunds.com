@@ -13,6 +13,8 @@
 
 export type PricingTier = "micro" | "small" | "medium" | "large" | "enterprise";
 
+export type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW";
+
 export interface DisputeFeeBreakdown {
   tier: PricingTier;
   baseFee: number;
