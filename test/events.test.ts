@@ -92,9 +92,55 @@ describe('Event Queries', () => {
     const events = await t.query(api.events.getEventsByCase, {
       caseId,
     });
-    
+
     expect(Array.isArray(events)).toBe(true);
     expect(events.length).toBeGreaterThan(0);
+  });
+
+  it('should get dispute activity events (filters out admin events)', async () => {
+    // This query filters events to only show dispute-related activity
+    const events = await t.query(api.events.getDisputeActivityEvents, {
+      limit: 10,
+    });
+
+    expect(Array.isArray(events)).toBe(true);
+    // All returned events should be dispute-related types
+    events.forEach((event: any) => {
+      expect(['AGENT_REGISTERED', 'DISPUTE_FILED', 'EVIDENCE_SUBMITTED', 'CASE_STATUS_UPDATED'])
+        .toContain(event.type);
+    });
+  });
+
+  it('should enrich dispute activity events with case data', async () => {
+    const events = await t.query(api.events.getDisputeActivityEvents, {
+      limit: 50,
+    });
+
+    expect(Array.isArray(events)).toBe(true);
+
+    // Check if any DISPUTE_FILED events are enriched with case data
+    const disputeFiledEvents = events.filter((e: any) => e.type === 'DISPUTE_FILED');
+    if (disputeFiledEvents.length > 0) {
+      // At least one should have case data attached
+      const hasEnrichedEvent = disputeFiledEvents.some((e: any) => e.caseData !== undefined);
+      expect(hasEnrichedEvent).toBe(true);
+    }
+  });
+
+  it('should support afterTimestamp filtering for dispute activity', async () => {
+    const now = Date.now();
+    const oneHourAgo = now - (60 * 60 * 1000);
+
+    const events = await t.query(api.events.getDisputeActivityEvents, {
+      afterTimestamp: oneHourAgo,
+      limit: 20,
+    });
+
+    expect(Array.isArray(events)).toBe(true);
+    // All events should be after the specified timestamp
+    events.forEach((event: any) => {
+      expect(event.timestamp).toBeGreaterThan(oneHourAgo);
+    });
   });
 
   it('should get event timeline', async () => {
@@ -102,7 +148,7 @@ describe('Event Queries', () => {
       hoursBack: 24,
       bucketMinutes: 60,
     });
-    
+
     expect(Array.isArray(timeline)).toBe(true);
   });
 });
