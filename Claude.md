@@ -134,10 +134,12 @@ pnpm deploy                # Deploy to Convex (production)
 pnpm deploy:dev            # One-time dev build
 pnpm exec convex dev       # Watch mode with hot reload
 
-# Testing
-pnpm test:run              # Full test suite
-pnpm test:smoke            # Quick smoke tests
-pnpm test:smoke:prod       # Test against production API
+# Testing (uses .env.test.* files for environment config)
+pnpm test:run              # Full test suite (~400 tests) - uses default (PREVIEW)
+pnpm test:preview          # Full test suite - PREVIEW (.env.test.preview)
+pnpm test:production       # Smoke tests only - PRODUCTION (.env.test.production)
+pnpm test:smoke            # Alias for test:preview
+pnpm test:smoke:prod       # Alias for test:production
 
 # Monitoring
 pnpm check-logs            # View Convex deployment logs
@@ -165,6 +167,26 @@ pnpm exec convex deployments  # Show current deployment info
 - `.convex.cloud` = Convex SDK connections (queries, mutations)
 - `.convex.site` = Public HTTP REST API endpoints
 - Custom domain (`api.consulatehq.com`) = CNAME to production `.convex.site`
+
+### Test Environment Configuration (Industry Standard)
+
+**Environment Files:**
+- `.env.test.preview` - Preview/dev environment configuration
+- `.env.test.production` - Production environment configuration
+- Both files are committed to git (no secrets, just URLs)
+
+**How it works:**
+- Test scripts (`scripts/test-preview.sh`, `scripts/test-production.sh`) load environment files automatically
+- No hardcoded URLs in scripts (industry standard pattern)
+- Environment-specific configuration in dedicated files
+- Easy to add new environments (staging, local, etc.)
+
+**Why this approach:**
+- ✅ No hardcoded URLs (maintainable)
+- ✅ Clear separation of environments
+- ✅ Easy to understand which environment you're testing
+- ✅ Follows industry standard `.env.{environment}` pattern
+- ✅ No deployment-specific names in scripts (avoid "youthful-orca" confusion)
 
 ---
 
@@ -279,17 +301,67 @@ See design system doc for complete component library:
 
 ## 🧪 Testing Strategy
 
-### Before Committing (MANDATORY)
+### Test Environment Configuration
+
+**CRITICAL**: Tests now default to PREVIEW environment for safety.
+
+**Default Behavior (No Environment Variables):**
+- `pnpm test:run` → Tests against **PREVIEW** (youthful-orca-358)
+- `pnpm test:smoke` → Tests against **PREVIEW** (youthful-orca-358)
+- Safe for tests that modify data (write operations)
+
+**Production Testing (Explicit):**
+- `pnpm test:smoke:prod` → Tests against **PRODUCTION** (api.consulatehq.com)
+- **READ-ONLY tests only!** (health, version, discovery endpoints)
+- Uses dedicated script: `scripts/run-smoke-tests-prod.sh`
+
+**Custom Testing:**
 ```bash
-# 1. Quality checks (ALWAYS)
+# Test against specific environment
+API_BASE_URL=https://custom-url.convex.site pnpm test:run
+
+# Test against production (use with caution!)
+API_BASE_URL=https://api.consulatehq.com pnpm test:run
+```
+
+### Test Type Categories
+
+**Unit Tests (10 files)** - In-memory Convex testing
+- Run against: ANY environment (no HTTP calls, uses `convex-test`)
+- Examples: `agents.test.ts`, `cases.test.ts`, `evidence-specialized.test.ts`
+- Can run in parallel, isolated, no external dependencies
+
+**Integration Tests (5 files)** - Multi-component workflows
+- Run against: PREVIEW (youthful-orca-358) - safe for data modification
+- Examples: `integration.test.ts`, `llm-engine.test.ts`, `performance.test.ts`
+- Test complex workflows, may create test data
+
+**E2E Tests (5 files)** - HTTP API testing
+- Run against: PREVIEW (default) or PRODUCTION (explicit)
+- Examples: `api.test.ts`, `e2e-flow.test.ts`, `http-endpoints.test.ts`
+- Full HTTP request/response cycle, writes data
+
+**Smoke Tests (1 file)** - Critical path validation
+- Run against: PREVIEW or PRODUCTION
+- File: `production-smoke.test.ts` (13 tests)
+- READ-ONLY: Health, version, MCP discovery, ADP discovery
+
+### Before Committing (MANDATORY)
+
+```bash
+# 1. Quality checks (ALWAYS run on PREVIEW by default)
 pnpm lint && pnpm type-check && pnpm build && pnpm test:run
 
-# 2. Backend changes (if applicable)
-pnpm exec convex deploy --yes
-pnpm test:run
+# 2. Backend changes - deploy to PREVIEW first
+pnpm deploy:dev
+pnpm test:smoke
 
-# 3. Only then commit
+# 3. If preview tests pass, then commit
 git add . && git commit -m "..." && git push
+
+# 4. Deploy to production only after preview validation
+pnpm deploy
+pnpm test:smoke:prod
 ```
 
 ### Test Coverage Required
@@ -297,11 +369,31 @@ git add . && git commit -m "..." && git push
 - ✅ Validation logic
 - ✅ Error handling
 - ✅ Integration between components
+- ✅ HTTP endpoint error cases (4xx, 5xx)
 
 ### Expected Test Results
-- **Full test suite**: 371+ tests passing, 42 failing (non-critical), 14 skipped
-- **Production smoke tests**: 13/13 passing
-- Some notification/webhook tests may fail (known issues, non-critical)
+- **Full test suite**: ~400+ tests total
+- **Preview smoke tests**: 13/13 passing
+- **Production smoke tests**: 13/13 passing (READ-ONLY)
+- Some tests may be skipped when `USE_LIVE_API=true` (production mode)
+
+### When to Use Preview vs Production
+
+**Use PREVIEW (youthful-orca-358) for:**
+- ✅ Development and testing
+- ✅ Tests that CREATE data (agents, disputes, evidence)
+- ✅ Tests that MODIFY data (updates, deletions)
+- ✅ Load testing, performance testing
+- ✅ Experimental features
+- ✅ CI/CD pipelines
+- ✅ Before every commit
+
+**Use PRODUCTION (api.consulatehq.com) for:**
+- ✅ Final validation after deployment
+- ✅ Read-only smoke tests (health, version, discovery)
+- ✅ Verifying production configuration
+- ❌ NEVER for tests that modify data
+- ❌ NEVER for automated CI/CD (use preview instead)
 
 ---
 
