@@ -39,7 +39,8 @@ http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsHandler });
 // New unified dispute endpoints
-http.route({ path: "/api/disputes/:disputeType", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/disputes/payment", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/disputes/agent", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 
@@ -302,13 +303,14 @@ async function validateApiKeyFromRequest(ctx: any, request: Request): Promise<{
   };
 }
 
-// Unified dispute ingestion endpoint - handles all dispute types
+// === UNIFIED DISPUTE INGESTION ENDPOINTS ===
+
+// Payment disputes endpoint
 http.route({
-  path: "/api/disputes/:disputeType",
+  path: "/api/disputes/payment",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      // 1. Validate API key and get organization
       const validation = await validateApiKeyFromRequest(ctx, request);
       if (!validation.isValid) {
         return new Response(JSON.stringify({
@@ -320,47 +322,33 @@ http.route({
         });
       }
 
-      // 2. Extract dispute type from URL
-      const url = new URL(request.url);
-      const pathParts = url.pathname.split('/');
-      const disputeType = pathParts[pathParts.length - 1];
-
-      // 3. Route to appropriate handler
-      switch (disputeType) {
-        case "payment":
-          return await handlePaymentDispute(ctx, request, validation.organizationId!);
-
-        case "agent":
-          return await handleAgentDispute(ctx, request, validation.organizationId!);
-
-        // Future dispute types
-        case "contract":
-        case "ip":
-        case "employment":
-          return new Response(JSON.stringify({
-            error: `Dispute type '${disputeType}' is not yet implemented`,
-            hint: "Currently supported: 'payment', 'agent'",
-            comingSoon: ["contract", "ip", "employment"]
-          }), {
-            status: 501, // Not Implemented
-            headers: corsHeaders,
-          });
-
-        default:
-          return new Response(JSON.stringify({
-            error: `Unknown dispute type: ${disputeType}`,
-            supportedTypes: ["payment", "agent"],
-            comingSoon: ["contract", "ip", "employment"]
-          }), {
-            status: 400,
-            headers: corsHeaders,
-          });
-      }
+      return await handlePaymentDispute(ctx, request, validation.organizationId!);
     } catch (error: any) {
-      console.error("Dispute ingestion error:", error);
+      console.error("Payment dispute error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.consulatehq.com/disputes"
+        hint: "Check API documentation at https://docs.consulatehq.com/disputes/payment"
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Agent disputes endpoint (no auth required for backward compatibility)
+http.route({
+  path: "/api/disputes/agent",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Note: No authentication required for agent disputes (matches old /disputes behavior)
+      return await handleAgentDispute(ctx, request, undefined);
+    } catch (error: any) {
+      console.error("Agent dispute error:", error);
+      return new Response(JSON.stringify({
+        error: error.message,
+        hint: "Check API documentation at https://docs.consulatehq.com/disputes/agent"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -420,7 +408,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
 }
 
 // Handler: Agent disputes (general SLA/contract violations)
-async function handleAgentDispute(ctx: any, request: Request, organizationId: any) {
+async function handleAgentDispute(ctx: any, request: Request, organizationId: any | undefined) {
   const body = await request.json();
 
   // Validate required fields for agent disputes

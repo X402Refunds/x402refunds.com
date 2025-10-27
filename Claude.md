@@ -327,26 +327,33 @@ git add . && git commit -m "..." && git push
 
 **IMPORTANT**: Always deploy to preview FIRST, validate, then deploy to production.
 
-1. **Deploy to Preview (youthful-orca-358)**:
+1. **Deploy to Preview/Dev (youthful-orca-358)** - ALWAYS DEPLOY HERE FIRST:
    ```bash
-   # Deploy to preview environment
-   CONVEX_DEPLOYMENT=dev:youthful-orca-358 pnpm exec convex deploy --yes
+   # Deploy to preview/dev environment (uses CONVEX_DEPLOYMENT from .env.local)
+   pnpm exec convex dev --once --yes
+   # OR use the npm script:
+   pnpm deploy:dev
 
    # Test preview deployment
+   pnpm test:smoke
+   # OR explicitly:
    API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:smoke:prod
    ```
 
-2. **Deploy to Production (perceptive-lyrebird-89)** - After Preview Validation:
+2. **Deploy to Production (perceptive-lyrebird-89)** - ONLY AFTER preview validation:
    ```bash
-   # Deploy to production environment
-   CONVEX_DEPLOYMENT=perceptive-lyrebird-89 pnpm exec convex deploy --yes
+   # Deploy to production environment (default for convex deploy)
+   pnpm exec convex deploy --yes
+   # OR use the npm script:
+   pnpm deploy
 
    # Test production deployment
+   pnpm test:smoke:prod
+   # OR explicitly:
    API_BASE_URL=https://api.consulatehq.com pnpm test:smoke:prod
-
-   # Or test via convex.site directly
-   API_BASE_URL=https://perceptive-lyrebird-89.convex.site pnpm test:smoke:prod
    ```
+
+   **CRITICAL**: `convex dev` deploys to dev/preview, `convex deploy` deploys to production!
 
 3. **Verify Deployment**:
    ```bash
@@ -688,10 +695,10 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 | Type check | `pnpm type-check` | Must pass before commit |
 | Lint | `pnpm lint` | Must pass before commit |
 | Build | `pnpm build` | Must pass before commit |
-| Deploy preview | `CONVEX_DEPLOYMENT=dev:youthful-orca-358 pnpm exec convex deploy --yes` | Always first |
-| Deploy production | `CONVEX_DEPLOYMENT=perceptive-lyrebird-89 pnpm exec convex deploy --yes` | After preview validation |
-| Test preview | `API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:smoke:prod` | Before production |
-| Test production | `API_BASE_URL=https://api.consulatehq.com pnpm test:smoke:prod` | After deployment |
+| **Deploy preview** | `pnpm deploy:dev` or `pnpm exec convex dev --once --yes` | **ALWAYS FIRST** |
+| **Deploy production** | `pnpm deploy` or `pnpm exec convex deploy --yes` | **ONLY after preview** |
+| Test preview | `pnpm test:smoke` | Before production |
+| Test production | `pnpm test:smoke:prod` | After deployment |
 | View logs | `pnpm check-logs` | Monitor deployment |
 
 ### API Endpoints Quick Reference
