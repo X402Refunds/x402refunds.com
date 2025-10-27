@@ -10,7 +10,8 @@ import { API_BASE_URL, USE_LIVE_API } from './fixtures';
  * Tests for the 5 critical endpoints that were missing HTTP-level testing:
  * - POST /agents/register
  * - POST /evidence
- * - POST /disputes
+ * - POST /api/disputes/agent (formerly /disputes)
+ * - POST /api/disputes/payment
  * - GET /cases/:caseId
  * - POST /agents/capabilities
  * 
@@ -311,7 +312,7 @@ describe('HTTP API - Dispute Filing', () => {
     }
   });
 
-  describe('POST /disputes', () => {
+  describe('POST /api/disputes/agent', () => {
     it.skipIf(USE_LIVE_API)('should file dispute with valid data', async () => {
       const disputeData = {
         plaintiff,
@@ -322,7 +323,7 @@ describe('HTTP API - Dispute Filing', () => {
         description: 'Test dispute',
       };
 
-      const response = await fetch(`${API_BASE_URL}/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(disputeData),
@@ -332,7 +333,7 @@ describe('HTTP API - Dispute Filing', () => {
     });
 
     it('should reject dispute without evidence', async () => {
-      const response = await fetch(`${API_BASE_URL}/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -349,7 +350,7 @@ describe('HTTP API - Dispute Filing', () => {
     });
 
     it.skipIf(USE_LIVE_API)('should reject dispute with same plaintiff and defendant', async () => {
-      const response = await fetch(`${API_BASE_URL}/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

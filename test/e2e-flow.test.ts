@@ -143,7 +143,7 @@ describe.skip('E2E: Complete Agent Dispute Flow - Happy Path (deprecated - using
       claimedDamages: 50000,
     };
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(disputeData),
@@ -593,7 +593,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -625,7 +625,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -647,7 +647,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -665,7 +665,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
   });
 
   it('Negative: Should reject dispute with non-existent plaintiff', async () => {
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -685,7 +685,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -705,7 +705,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -721,7 +721,7 @@ describe('E2E: Dispute Filing Scenarios', () => {
   });
 
   it('Negative: Should reject dispute missing required fields', async () => {
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -954,7 +954,7 @@ describe('E2E: Complete Dispute Resolution Flow - Auto-Decision', () => {
     }
 
     // 4. File dispute
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1088,7 +1088,7 @@ describe('E2E: Multi-Party Dispute Scenarios', () => {
       const evidenceId = (await evResp.json()).evidenceId;
 
       // File dispute
-      const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+      const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1166,7 +1166,7 @@ describe('E2E: Multi-Party Dispute Scenarios', () => {
     });
     const evidence1 = (await ev1Resp.json()).evidenceId;
 
-    const dispute1 = await fetch(`${API_BASE_URL}/disputes`, {
+    const dispute1 = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1197,7 +1197,7 @@ describe('E2E: Multi-Party Dispute Scenarios', () => {
     });
     const evidence2 = (await ev2Resp.json()).evidenceId;
 
-    const dispute2 = await fetch(`${API_BASE_URL}/disputes`, {
+    const dispute2 = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1278,7 +1278,7 @@ describe('E2E: Complex Workflow Scenarios', () => {
     });
 
     // File dispute with mixed evidence types
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1357,7 +1357,7 @@ describe('E2E: Complex Workflow Scenarios', () => {
     }
 
     // File high-value dispute
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1499,7 +1499,7 @@ describe('E2E: Error Recovery and Edge Cases', () => {
       },
     });
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1552,7 +1552,7 @@ describe('E2E: Error Recovery and Edge Cases', () => {
       },
     });
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1605,7 +1605,7 @@ describe('E2E: Error Recovery and Edge Cases', () => {
       },
     });
 
-    const response = await fetch(`${API_BASE_URL}/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1690,7 +1690,7 @@ describe('E2E: Full Lifecycle with Status Transitions', () => {
     }
 
     // File dispute
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1760,7 +1760,7 @@ describe('E2E: Full Lifecycle with Status Transitions', () => {
     const evidence1 = (await ev1Resp.json()).evidenceId;
 
     // File dispute
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1837,7 +1837,7 @@ describe('E2E: Full Lifecycle with Status Transitions', () => {
     });
 
     // File dispute
-    const disputeResp = await fetch(`${API_BASE_URL}/disputes`, {
+    const disputeResp = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

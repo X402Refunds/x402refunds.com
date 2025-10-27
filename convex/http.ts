@@ -34,14 +34,14 @@ http.route({ path: "/agents", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/evidence", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/disputes", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/webhooks/register", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/payment-disputes", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/payment-disputes/stats", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/payment-disputes/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsHandler });
+// New unified dispute endpoints
+http.route({ path: "/api/disputes/:disputeType", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -259,101 +259,108 @@ http.route({
 
 // === END ADP ENDPOINTS ===
 
-// === PAYMENT PROTOCOL INTEGRATION (ACP/ATXP) ===
+// === UNIFIED DISPUTE INGESTION (Multi-Product Architecture) ===
 
-// Webhook endpoint for payment protocols to send disputes
+// Helper: Extract and validate API key
+async function validateApiKeyFromRequest(ctx: any, request: Request): Promise<{
+  isValid: boolean;
+  organizationId?: any;
+  error?: string;
+  hint?: string;
+}> {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader) {
+    return {
+      isValid: false,
+      error: "Missing Authorization header",
+      hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
+    };
+  }
+
+  const apiKey = authHeader.replace("Bearer ", "").trim();
+  if (!apiKey || !apiKey.startsWith("csk_")) {
+    return {
+      isValid: false,
+      error: "Invalid API key format",
+      hint: "API key should start with 'csk_live_' or 'csk_test_'"
+    };
+  }
+
+  const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
+
+  if (!keyValidation.isValid) {
+    return {
+      isValid: false,
+      error: keyValidation.error || "Invalid API key",
+      hint: "Ensure your API key is valid and active"
+    };
+  }
+
+  return {
+    isValid: true,
+    organizationId: keyValidation.organizationId
+  };
+}
+
+// Unified dispute ingestion endpoint - handles all dispute types
 http.route({
-  path: "/api/payment-disputes",
+  path: "/api/disputes/:disputeType",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      // Extract and validate API key from Authorization header
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader) {
+      // 1. Validate API key and get organization
+      const validation = await validateApiKeyFromRequest(ctx, request);
+      if (!validation.isValid) {
         return new Response(JSON.stringify({
-          error: "Missing Authorization header",
-          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
+          error: validation.error,
+          hint: validation.hint
         }), {
           status: 401,
           headers: corsHeaders,
         });
       }
 
-      const apiKey = authHeader.replace("Bearer ", "").trim();
-      if (!apiKey || !apiKey.startsWith("csk_")) {
-        return new Response(JSON.stringify({
-          error: "Invalid API key format",
-          hint: "API key should start with 'csk_live_' or 'csk_test_'"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
+      // 2. Extract dispute type from URL
+      const url = new URL(request.url);
+      const pathParts = url.pathname.split('/');
+      const disputeType = pathParts[pathParts.length - 1];
 
-      // Verify API key exists and is active
-      const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
+      // 3. Route to appropriate handler
+      switch (disputeType) {
+        case "payment":
+          return await handlePaymentDispute(ctx, request, validation.organizationId!);
 
-      if (!keyValidation.isValid) {
-        return new Response(JSON.stringify({
-          error: keyValidation.error || "Invalid API key",
-          hint: "Ensure your API key is valid and active"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
+        case "agent":
+          return await handleAgentDispute(ctx, request, validation.organizationId!);
 
-      const body = await request.json();
-
-      // Validate required fields
-      const requiredFields = ["transactionId", "amount", "currency", "plaintiff", "defendant", "disputeReason"];
-      for (const field of requiredFields) {
-        if (!body[field]) {
+        // Future dispute types
+        case "contract":
+        case "ip":
+        case "employment":
           return new Response(JSON.stringify({
-            error: `Missing required field: ${field}`,
-            required: requiredFields,
+            error: `Dispute type '${disputeType}' is not yet implemented`,
+            hint: "Currently supported: 'payment', 'agent'",
+            comingSoon: ["contract", "ip", "employment"]
+          }), {
+            status: 501, // Not Implemented
+            headers: corsHeaders,
+          });
+
+        default:
+          return new Response(JSON.stringify({
+            error: `Unknown dispute type: ${disputeType}`,
+            supportedTypes: ["payment", "agent"],
+            comingSoon: ["contract", "ip", "employment"]
           }), {
             status: 400,
             headers: corsHeaders,
           });
-        }
       }
-      
-      // Create payment dispute
-      const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: body.transactionId,
-        transactionHash: body.transactionHash,
-        amount: body.amount,
-        currency: body.currency,
-        paymentProtocol: body.paymentProtocol || "other",
-        plaintiff: body.plaintiff,
-        defendant: body.defendant,
-        disputeReason: body.disputeReason,
-        description: body.description || "Payment dispute",
-        evidenceUrls: body.evidenceUrls || [],
-        callbackUrl: body.callbackUrl,
-      });
-      
-      return new Response(JSON.stringify({
-        success: true,
-        ...result,
-        message: result.isMicroDispute 
-          ? "Micro-dispute received. Auto-ruling in progress (< 5 min)."
-          : "Dispute received. Processing with AI analysis (< 24 hours).",
-        regulationECompliant: true,
-        deadlines: {
-          initialResponse: result.estimatedResolutionTime,
-          regulationEFinal: "10 business days",
-        },
-      }), {
-        headers: corsHeaders,
-      });
-      
     } catch (error: any) {
-      console.error("Payment dispute webhook error:", error);
+      console.error("Dispute ingestion error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.consulatehq.com/payment-disputes",
+        hint: "Check API documentation at https://docs.consulatehq.com/disputes"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -362,14 +369,103 @@ http.route({
   })
 });
 
+// Handler: Payment disputes (ACP/ATXP integration)
+async function handlePaymentDispute(ctx: any, request: Request, organizationId: any) {
+  const body = await request.json();
+
+  // Validate required fields
+  const requiredFields = ["transactionId", "amount", "currency", "plaintiff", "defendant", "disputeReason"];
+  for (const field of requiredFields) {
+    if (!body[field]) {
+      return new Response(JSON.stringify({
+        error: `Missing required field: ${field}`,
+        required: requiredFields,
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  }
+
+  // Create payment dispute (organizationId auto-injected)
+  const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
+    transactionId: body.transactionId,
+    transactionHash: body.transactionHash,
+    amount: body.amount,
+    currency: body.currency,
+    paymentProtocol: body.paymentProtocol || "other",
+    plaintiff: body.plaintiff,
+    defendant: body.defendant,
+    disputeReason: body.disputeReason,
+    description: body.description || "Payment dispute",
+    evidenceUrls: body.evidenceUrls || [],
+    callbackUrl: body.callbackUrl,
+    reviewerOrganizationId: organizationId, // Auto-detected from API key
+  });
+
+  return new Response(JSON.stringify({
+    success: true,
+    ...result,
+    message: result.isMicroDispute
+      ? "Micro-dispute received. Auto-ruling in progress (< 5 min)."
+      : "Dispute received. Processing with AI analysis (< 24 hours).",
+    regulationECompliant: true,
+    deadlines: {
+      initialResponse: result.estimatedResolutionTime,
+      regulationEFinal: "10 business days",
+    },
+  }), {
+    headers: corsHeaders,
+  });
+}
+
+// Handler: Agent disputes (general SLA/contract violations)
+async function handleAgentDispute(ctx: any, request: Request, organizationId: any) {
+  const body = await request.json();
+
+  // Validate required fields for agent disputes
+  const requiredFields = ["plaintiff", "defendant", "type", "jurisdictionTags", "evidenceIds"];
+  for (const field of requiredFields) {
+    if (!body[field]) {
+      return new Response(JSON.stringify({
+        error: `Missing required field: ${field}`,
+        required: requiredFields,
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  }
+
+  // Create agent dispute
+  const result = await ctx.runMutation(api.cases.fileDispute, {
+    plaintiff: body.plaintiff,
+    defendant: body.defendant,
+    type: body.type,
+    jurisdictionTags: body.jurisdictionTags,
+    evidenceIds: body.evidenceIds,
+    description: body.description,
+    claimedDamages: body.claimedDamages,
+    breachDetails: body.breachDetails,
+  });
+
+  return new Response(JSON.stringify({
+    success: true,
+    caseId: result,
+    message: "Agent dispute filed successfully",
+  }), {
+    headers: corsHeaders,
+  });
+}
+
 // Get payment dispute statistics
 http.route({
-  path: "/api/payment-disputes/stats",
+  path: "/api/disputes/payment/stats",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     try {
       const stats = await ctx.runQuery(api.paymentDisputes.getMicroDisputeStats, {});
-      
+
       return new Response(JSON.stringify({
         success: true,
         ...stats,
@@ -393,17 +489,17 @@ http.route({
 
 // Get disputes needing human review
 http.route({
-  path: "/api/payment-disputes/review-queue",
+  path: "/api/disputes/payment/review-queue",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     try {
       const url = new URL(request.url);
       const limit = parseInt(url.searchParams.get("limit") || "20");
-      
+
       const disputes = await ctx.runQuery(api.paymentDisputes.getDisputesNeedingHumanReview, {
         limit,
       });
-      
+
       return new Response(JSON.stringify({
         success: true,
         count: disputes.length,
@@ -423,7 +519,7 @@ http.route({
   })
 });
 
-// === END PAYMENT PROTOCOL ENDPOINTS ===
+// === END DISPUTE INGESTION ENDPOINTS ===
 
 // Agent registration with API key authentication (Stripe-style)
 http.route({
@@ -688,32 +784,6 @@ http.route({
     } catch (error: any) {
       return new Response(JSON.stringify({
         error: error.message
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// File dispute
-http.route({
-  path: "/disputes",
-  method: "POST", 
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    
-    try {
-      const result = await ctx.runMutation(api.cases.fileDispute, {
-        ...body
-      });
-      
-      return new Response(JSON.stringify(result), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
       }), {
         status: 400,
         headers: corsHeaders,

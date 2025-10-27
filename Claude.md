@@ -46,7 +46,14 @@ You are a senior full-stack software engineer with deep expertise in AI systems,
 
 ## 📁 Project Structure
 
-### Backend (`convex/`)
+**IMPORTANT**: Before starting ANY architecture or implementation work, ALWAYS read the comprehensive project structure map at:
+- **File**: `/Users/vkotecha/Desktop/consulate/internal/architecture/project-structure.md`
+- This file contains the complete directory tree, file locations, and architectural patterns
+- Refer to it to understand where files belong and how they interact
+
+### Quick Reference (see project-structure.md for full details)
+
+**Backend (`convex/`)**
 - `agents.ts` - Agent registration and reputation
 - `cases.ts` - Dispute case management
 - `evidence.ts` - Evidence submission and validation
@@ -56,13 +63,13 @@ You are a senior full-stack software engineer with deep expertise in AI systems,
 - `http.ts` - HTTP API endpoints
 - `schema.ts` - Database schema definitions
 
-### Frontend (`dashboard/src/`)
+**Frontend (`dashboard/src/`)**
 - `app/` - Next.js 14 App Router pages
 - `components/` - React components (31+ components)
 - Protected routes with Clerk authentication
 - Real-time updates via Convex subscriptions
 
-### Tests (`test/`)
+**Tests (`test/`)**
 - Vitest test files
 - 400+ tests total
 - Integration and unit tests
@@ -459,15 +466,15 @@ This order provides better developer experience - users see validation errors be
 - Both require **Regulation E compliance** (dispute mechanisms for transactions)
 
 ### Integration Pattern
-Payment platforms (ACP/ATXP) POST disputes to Consulate's webhook endpoint:
+Payment platforms (ACP/ATXP) POST disputes to Consulate's unified dispute endpoint:
 
 ```javascript
 // Payment platform integration example
-const response = await fetch('https://api.consulatehq.com/api/payment-disputes', {
+const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer csk_live_...'  // Customer's API key
+    'Authorization': 'Bearer csk_live_...'  // Customer's API key (org auto-detected)
   },
   body: JSON.stringify({
     transactionId: 'txn_abc123',
@@ -482,8 +489,8 @@ const response = await fetch('https://api.consulatehq.com/api/payment-disputes',
     evidenceUrls: [
       'https://logs.platform.com/timeout.json'
     ],
-    callbackUrl: 'https://acp-protocol.com/webhooks/dispute-result',  // Optional
-    reviewerOrganizationId: 'org_id'  // Customer's org ID in Consulate
+    callbackUrl: 'https://acp-protocol.com/webhooks/dispute-result'  // Optional
+    // NOTE: reviewerOrganizationId is AUTO-DETECTED from API key - no need to send!
   })
 });
 
@@ -689,15 +696,30 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 
 ### API Endpoints Quick Reference
 
+**New Unified Dispute Endpoints:**
+
+| Endpoint | Method | Auth Required | Purpose |
+|----------|--------|---------------|---------|
+| `/api/disputes/payment` | POST | ✅ Yes | File payment dispute (ACP/ATXP) |
+| `/api/disputes/agent` | POST | ✅ Yes | File agent dispute (SLA/contract) |
+| `/api/disputes/payment/stats` | GET | No | Get payment dispute statistics |
+| `/api/disputes/payment/review-queue` | GET | No | Get disputes needing review |
+
+**Other Core Endpoints:**
+
 | Endpoint | Method | Auth Required | Purpose |
 |----------|--------|---------------|---------|
 | `/.well-known/mcp.json` | GET | No | MCP tool discovery |
 | `/.well-known/adp` | GET | No | ADP service discovery |
-| `/api/payment-disputes` | POST | ❌ No (Should be!) | File payment dispute |
 | `/agents/register` | POST | ✅ Yes | Register agent |
-| `/evidence` | POST | ❌ No (Should be!) | Submit evidence |
+| `/evidence` | POST | ✅ Yes | Submit evidence |
 | `/health` | GET | No | Health check |
-| `/sla/report` | POST | No | SLA metrics (deprecated) |
+| `/cases/:caseId` | GET | No | Get case status |
+
+**Future Dispute Types (Coming Soon):**
+- `/api/disputes/contract` - Contract breach disputes
+- `/api/disputes/ip` - Intellectual property disputes
+- `/api/disputes/employment` - Employment disputes
 
 ### Pricing Tiers Quick Reference
 
