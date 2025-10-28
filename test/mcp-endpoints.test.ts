@@ -158,6 +158,36 @@ describe('MCP Protocol - Authentication', () => {
       const data = await response.json();
       expect(data.error).toContain('Invalid or expired API key');
     });
+
+    it.skipIf(!process.env.TEST_API_KEY)('should accept valid API key and execute tool', async () => {
+      // This test requires TEST_API_KEY environment variable to be set
+      // This ensures validateApiKey works correctly in httpAction context
+      const testApiKey = process.env.TEST_API_KEY!;
+
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${testApiKey}`,
+        },
+        body: JSON.stringify({
+          tool: 'consulate_lookup_agent',
+          parameters: { query: 'test' },
+        }),
+      });
+
+      // Should NOT return 401 - auth should pass
+      expect(response.status).not.toBe(401);
+
+      // Should return 200 with tool response (even if no results found)
+      const data = await response.json();
+      expect(data).toBeDefined();
+
+      // If it's a "not found" response, that's still success (auth worked)
+      if (response.status === 200 && data.success === false) {
+        expect(data.error).toContain('No agents found');
+      }
+    });
   });
 });
 
