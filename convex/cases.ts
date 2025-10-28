@@ -27,23 +27,28 @@ export const fileDispute = mutation({
       throw new Error("Plaintiff and defendant must be different agents");
     }
 
-    // Verify both parties are active agents
+    // Verify plaintiff is an active registered agent
     const plaintiff = await ctx.db
       .query("agents")
       .withIndex("by_did", (q) => q.eq("did", args.plaintiff))
       .first();
 
+    if (!plaintiff || plaintiff.status !== "active") {
+      throw new Error(`Plaintiff ${args.plaintiff} not found or not active. Register your agent first using consulate_register_agent.`);
+    }
+
+    // Defendant doesn't need to be registered - disputes can be filed against unregistered vendors
+    // They'll be notified and can register/respond later
     const defendant = await ctx.db
       .query("agents")
       .withIndex("by_did", (q) => q.eq("did", args.defendant))
       .first();
 
-    if (!plaintiff || plaintiff.status !== "active") {
-      throw new Error(`Plaintiff ${args.plaintiff} not found or not active`);
-    }
-
-    if (!defendant || defendant.status !== "active") {
-      throw new Error(`Defendant ${args.defendant} not found or not active`);
+    // Log if defendant is not registered (for tracking purposes)
+    if (!defendant) {
+      console.info(`📢 Dispute filed against unregistered defendant: ${args.defendant}. They will be notified to register and respond.`);
+    } else if (defendant.status !== "active") {
+      console.warn(`⚠️ Dispute filed against inactive defendant: ${args.defendant} (status: ${defendant.status})`);
     }
 
     // Verify evidence exists
