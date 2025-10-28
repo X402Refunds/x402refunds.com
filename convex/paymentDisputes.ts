@@ -36,9 +36,25 @@ export const receivePaymentDispute = mutation({
     currency: v.string(),
     paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
 
-    // Parties
-    plaintiff: v.string(), // Agent DID or wallet address
+    // Parties (customer-scoped identifiers)
+    // Examples: "consumer:alice@stripe.com", "merchant:openai-api@stripe.com"
+    // These are scoped to the customer's organization via API key
+    plaintiff: v.string(),
     defendant: v.string(),
+
+    // Party metadata - helps customer identify parties in their system
+    plaintiffMetadata: v.optional(v.object({
+      email: v.optional(v.string()),
+      name: v.optional(v.string()),
+      customerId: v.optional(v.string()), // Customer's internal ID
+      walletAddress: v.optional(v.string()),
+    })),
+    defendantMetadata: v.optional(v.object({
+      email: v.optional(v.string()),
+      name: v.optional(v.string()),
+      merchantId: v.optional(v.string()), // Customer's internal merchant/vendor ID
+      walletAddress: v.optional(v.string()),
+    })),
 
     // Dispute details
     disputeReason: v.union(
@@ -123,6 +139,9 @@ export const receivePaymentDispute = mutation({
       // Infrastructure Model fields
       reviewerEmail: args.reviewerEmail,
       reviewerOrganizationId: args.reviewerOrganizationId,
+      // Party metadata - helps customer identify parties
+      plaintiffMetadata: args.plaintiffMetadata,
+      defendantMetadata: args.defendantMetadata,
       // NEW: Pricing fields
       disputeFee: feeBreakdown.totalFee,
       disputeFeeBreakdown: {

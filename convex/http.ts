@@ -539,6 +539,9 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     evidenceUrls: body.evidenceUrls || [],
     callbackUrl: body.callbackUrl,
     reviewerOrganizationId: organizationId, // Auto-detected from API key
+    // Party metadata - helps customer identify parties in their system
+    plaintiffMetadata: body.plaintiffMetadata,
+    defendantMetadata: body.defendantMetadata,
   });
 
   return new Response(JSON.stringify({

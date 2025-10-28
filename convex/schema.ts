@@ -493,13 +493,27 @@ export default defineSchema({
   //       Convex supports vector search - see: https://docs.convex.dev/vector-search
   paymentDisputes: defineTable({
     caseId: v.id("cases"),
-    
+
     // Micro-payment specific fields
     transactionId: v.string(),
     transactionHash: v.optional(v.string()),
     amount: v.number(), // Usually $0.01 - $0.99
     currency: v.string(),
     paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
+
+    // Party metadata - helps customer identify their users/merchants
+    plaintiffMetadata: v.optional(v.object({
+      email: v.optional(v.string()),
+      name: v.optional(v.string()),
+      customerId: v.optional(v.string()), // Customer's internal ID
+      walletAddress: v.optional(v.string()),
+    })),
+    defendantMetadata: v.optional(v.object({
+      email: v.optional(v.string()),
+      name: v.optional(v.string()),
+      merchantId: v.optional(v.string()), // Customer's internal merchant/vendor ID
+      walletAddress: v.optional(v.string()),
+    })),
     
     // Batch processing (critical for micro-disputes)
     batchId: v.optional(v.string()), // Group similar micro-disputes
