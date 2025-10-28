@@ -123,7 +123,7 @@ describe('MCP Protocol - Authentication', () => {
       // Create user
       testUserId = await t.run(async (ctx) => {
         return await ctx.db.insert("users", {
-          clerkId: `clerk_mcp_${Date.now()}`,
+          clerkUserId: `clerk_mcp_${Date.now()}`,
           email: "mcp@test.com",
           name: "MCP Test User",
           organizationId: testOrgId,
@@ -240,7 +240,7 @@ describe('MCP Protocol - Tool Invocation', () => {
       // Create plaintiff user
       const plaintiffUserId = await t.run(async (ctx) => {
         return await ctx.db.insert("users", {
-          clerkId: `clerk_plaintiff_${Date.now()}`,
+          clerkUserId: `clerk_plaintiff_${Date.now()}`,
           email: "plaintiff@mcptest.com",
           name: "Plaintiff User",
           organizationId: plaintiffOrgId,

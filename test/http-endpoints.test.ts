@@ -6,7 +6,7 @@ import { API_BASE_URL, USE_LIVE_API } from './fixtures';
 
 /**
  * HTTP Endpoint Tests - Missing Core Endpoints
- * 
+ *
  * Tests for the 5 critical endpoints that were missing HTTP-level testing:
  * - POST /agents/register
  * - POST /evidence
@@ -14,10 +14,39 @@ import { API_BASE_URL, USE_LIVE_API } from './fixtures';
  * - POST /api/disputes/payment
  * - GET /cases/:caseId
  * - POST /agents/capabilities
- * 
+ *
  * Note: These tests create data via HTTP endpoints, so they work best against
  * a test environment. When running against production, some tests are skipped.
  */
+
+// Helper to create org + user + API key for agent registration
+async function setupTestOrgAndApiKey(t: any, suffix: string) {
+  const orgId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("organizations", {
+      name: `Test Org ${suffix}`,
+      domain: `test-${suffix}.com`,
+      createdAt: Date.now(),
+    });
+  });
+
+  const userId = await t.run(async (ctx: any) => {
+    return await ctx.db.insert("users", {
+      clerkUserId: `clerk_${suffix}_${Date.now()}`,
+      email: `test-${suffix}@example.com`,
+      name: `Test User ${suffix}`,
+      organizationId: orgId,
+      role: "admin" as const,
+      createdAt: Date.now(),
+    });
+  });
+
+  const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+    userId,
+    name: `Test Key ${suffix}`,
+  });
+
+  return { orgId, userId, apiKey: apiKeyResult.key };
+}
 
 describe('HTTP API - Agent Registration', () => {
   let t: ReturnType<typeof convexTest>;
@@ -276,28 +305,22 @@ describe('HTTP API - Dispute Filing', () => {
     if (!USE_LIVE_API) {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
-      
-      const ownerDid = `did:test:dispute-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: ownerDid,
-        name: 'Dispute Test Owner',
-        email: 'dispute-test@example.com',
-      });
-      
+
+      const { apiKey: plaintiffKey } = await setupTestOrgAndApiKey(t, 'plaintiff');
+      const { apiKey: defendantKey } = await setupTestOrgAndApiKey(t, 'defendant');
+
       const p = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: plaintiffKey,
         name: 'Plaintiff',
-        organizationName: `Plaintiff Corp ${Date.now()}`,
       });
       plaintiff = p.did;
-      
+
       const d = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: defendantKey,
         name: 'Defendant',
-        organizationName: `Defendant Corp ${Date.now()}`,
       });
       defendant = d.did;
-      
+
       evidenceId = await t.mutation(api.evidence.submitEvidence, {
         agentDid: plaintiff,
         sha256: `sha256_${Date.now()}`,
@@ -368,12 +391,13 @@ describe('HTTP API - Dispute Filing', () => {
     });
 
     it.skipIf(USE_LIVE_API)('should reject dispute with inactive agent', async () => {
+      const { apiKey } = await setupTestOrgAndApiKey(t, `inactive-${Date.now()}`);
+
       const inactiveAgent = await t.mutation(api.agents.joinAgent, {
-        ownerDid: `did:test:owner-${Date.now()}`,
+        apiKey,
         name: 'Inactive',
-        organizationName: `Inactive ${Date.now()}`,
       });
-      
+
       const agent = await t.query(api.agents.getAgent, { did: inactiveAgent.did });
       await t.mutation(api.agents.updateAgentStatus, {
         agentId: agent!._id,
@@ -437,26 +461,20 @@ describe('HTTP API - Case Status', () => {
     if (!USE_LIVE_API) {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
-      
-      const ownerDid = `did:test:case-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: ownerDid,
-        name: 'Case Test Owner',
-        email: 'case-test@example.com',
-      });
-      
+
+      const { apiKey: plaintiffKey } = await setupTestOrgAndApiKey(t, 'case-plaintiff');
+      const { apiKey: defendantKey } = await setupTestOrgAndApiKey(t, 'case-defendant');
+
       const p = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: plaintiffKey,
         name: 'Plaintiff',
-        organizationName: `Plaintiff ${Date.now()}`,
       });
-      
+
       const d = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey: defendantKey,
         name: 'Defendant',
-        organizationName: `Defendant ${Date.now()}`,
       });
-      
+
       const evidenceId = await t.mutation(api.evidence.submitEvidence, {
         agentDid: p.did,
         sha256: `sha256_${Date.now()}`,
@@ -535,18 +553,12 @@ describe('HTTP API - Agent Capabilities', () => {
     if (!USE_LIVE_API) {
       const modules = import.meta.glob('../convex/**/*.{ts,js}');
       t = convexTest(schema, modules);
-      
-      const ownerDid = `did:test:cap-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: ownerDid,
-        name: 'Capabilities Test Owner',
-        email: 'cap-test@example.com',
-      });
-      
+
+      const { apiKey } = await setupTestOrgAndApiKey(t, 'capabilities');
+
       const agent = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
+        apiKey,
         name: 'Capabilities Test Agent',
-        organizationName: `Cap Org ${Date.now()}`,
       });
       testAgentDid = agent.did;
     }

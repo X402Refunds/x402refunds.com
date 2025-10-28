@@ -204,7 +204,9 @@ http.route({
         crossBorder: true
       },
       endpoints: {
+        disputes: "/disputes",
         fileDispute: "/disputes",
+        evidence: "/evidence",
         submitEvidence: "/evidence",
         checkStatus: "/cases/:caseId",
         custody: "/api/custody/:caseId",
