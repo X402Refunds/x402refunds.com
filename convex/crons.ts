@@ -23,6 +23,14 @@ crons.interval(
   {}
 );
 
+// Process filed cases every 2 minutes
+crons.interval(
+  "process filed cases",
+  { minutes: 2 },
+  internal.crons.processFiledCases,
+  {}
+);
+
 export default crons;
 
 // =================================================================
@@ -180,5 +188,79 @@ export const triggerDisputeGeneration = mutation({
   args: {},
   handler: async (ctx): Promise<any> => {
     return await ctx.runMutation(internal.crons.generatePaymentDisputeDemo, {});
+  }
+});
+
+// =================================================================
+// PROCESS FILED CASES (AUTO-RESOLVE STUCK CASES)
+// =================================================================
+
+/**
+ * Process cases stuck in FILED status
+ *
+ * This cron job runs every 2 minutes and automatically processes cases that are:
+ * - In FILED status for > 5 minutes (enough time for parties to submit evidence)
+ * - Have not been processed by the court engine yet
+ *
+ * Why this is needed:
+ * - Cases can get stuck in FILED status if no one manually triggers court workflow
+ * - Payment disputes should auto-resolve within minutes
+ * - Agent disputes should move to panel review automatically
+ */
+export const processFiledCases = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const startTime = Date.now();
+      console.log("⚖️  Processing filed cases...");
+
+      // Get all cases in FILED status that are > 5 minutes old
+      const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+      const filedCases = await ctx.db
+        .query("cases")
+        .filter((q) => q.eq(q.field("status"), "FILED"))
+        .collect();
+
+      // Filter for cases older than 5 minutes
+      const staleCases = filedCases.filter((c) => c.filedAt < fiveMinutesAgo);
+
+      if (staleCases.length === 0) {
+        console.log("✅ No stale filed cases found");
+        return { processed: 0, message: "No cases to process" };
+      }
+
+      console.log(`📋 Found ${staleCases.length} cases in FILED status > 5 minutes old`);
+
+      let processed = 0;
+      let errors = 0;
+
+      for (const caseData of staleCases) {
+        try {
+          // Run court workflow to process the case
+          await ctx.runMutation(api.courtEngine.runCourtWorkflow, {
+            caseId: caseData._id,
+          });
+          processed++;
+          console.log(`  ✅ Processed case ${caseData._id}`);
+        } catch (error: any) {
+          errors++;
+          console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`⚖️  Processed ${processed}/${staleCases.length} cases in ${duration}ms (${errors} errors)`);
+
+      return {
+        processed,
+        errors,
+        total: staleCases.length,
+        duration,
+      };
+
+    } catch (error: any) {
+      console.error("❌ Filed case processing failed:", error.message);
+      return { success: false, reason: error.message };
+    }
   }
 });
