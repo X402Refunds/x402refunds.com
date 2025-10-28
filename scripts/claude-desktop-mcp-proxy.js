@@ -160,6 +160,16 @@ async function invokeTool(toolName, parameters) {
 
     if (!response.ok) {
       log(`❌ Tool invocation failed (${response.status}):`, result);
+      // Handle new error format: { success: false, error: { code, message, hint } }
+      if (result.error && typeof result.error === 'object') {
+        return {
+          error: result.error.message || result.error,
+          hint: result.error.hint,
+          details: result.error.details,
+          status: response.status
+        };
+      }
+      // Handle old format
       return {
         error: result.error || 'Tool invocation failed',
         hint: result.hint,
