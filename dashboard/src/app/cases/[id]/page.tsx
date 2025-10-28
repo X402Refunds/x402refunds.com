@@ -1,0 +1,302 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useQuery } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
+import { Clock, FileText, Scale, DollarSign, Calendar, Shield } from "lucide-react";
+
+export default function PublicCaseTrackingPage() {
+  const params = useParams();
+  const caseId = params.id as Id<"cases">;
+
+  // Fetch case details (public endpoint - no auth required)
+  const caseDetails = useQuery(api.cases.getCaseById, { caseId });
+  const caseEvidence = useQuery(api.evidence.getEvidenceByCaseId, { caseId });
+
+  // Fetch payment dispute data if this is a payment dispute case
+  const paymentDispute = useQuery(
+    api.paymentDisputes.getPaymentDisputeByCaseId,
+    caseDetails ? { caseId } : "skip"
+  );
+
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  // Helper function to get status description
+  const getStatusDescription = (status: string) => {
+    const descriptions: Record<string, string> = {
+      "FILED": "Your dispute has been filed and is under review",
+      "AUTORULED": "Your dispute has been automatically resolved",
+      "PANELED": "Your dispute is being reviewed by our panel",
+      "DECIDED": "A final decision has been reached",
+      "CLOSED": "This case is now closed"
+    };
+    return descriptions[status] || "Processing your dispute";
+  };
+
+  if (!caseDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+        <div className="container max-w-4xl mx-auto py-12 px-4">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-slate-900">Consulate</h1>
+            </div>
+            <p className="text-sm text-slate-600">Case Tracking</p>
+          </div>
+
+          <Card>
+            <CardContent className="py-8">
+              <p className="text-center text-muted-foreground">Loading case details...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const statusColors: Record<string, string> = {
+    "FILED": "bg-blue-50 text-blue-700 border-blue-200",
+    "DECIDED": "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "DISMISSED": "bg-slate-50 text-slate-700 border-slate-200",
+    "APPEALED": "bg-blue-50 text-blue-700 border-blue-200",
+    "AUTORULED": "bg-purple-50 text-purple-700 border-purple-200",
+    "PANELED": "bg-amber-50 text-amber-700 border-amber-200",
+    "CLOSED": "bg-slate-50 text-slate-700 border-slate-200"
+  };
+  const statusColor = statusColors[caseDetails.status] || "bg-slate-50 text-slate-700 border-slate-200";
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+      <div className="container max-w-4xl mx-auto py-12 px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Shield className="h-8 w-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-slate-900">Consulate</h1>
+          </div>
+          <p className="text-sm text-slate-600">Dispute Resolution Case Tracking</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Status Overview */}
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl">Case Status</CardTitle>
+                  <CardDescription className="mt-2">
+                    {getStatusDescription(caseDetails.status)}
+                  </CardDescription>
+                </div>
+                <Badge className={`${statusColor} border-2 px-4 py-2 text-base font-semibold`}>
+                  {caseDetails.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">Case ID</p>
+                  <p className="text-sm font-mono bg-slate-50 px-3 py-2 rounded border">{caseId}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">Filed On</p>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-400" />
+                    <p className="text-sm">{formatTimestamp(caseDetails.filedAt)}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Financial Information */}
+          {(paymentDispute || caseDetails.claimedDamages) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-600">
+                      {paymentDispute ? "Disputed Amount" : "Claim Amount"}
+                    </p>
+                    {paymentDispute ? (
+                      <>
+                        <p className="text-2xl font-bold text-slate-900 mt-1">
+                          ${paymentDispute.amount.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-slate-500">{paymentDispute.currency}</p>
+                      </>
+                    ) : (
+                      <p className="text-2xl font-bold text-slate-900 mt-1">
+                        ${caseDetails.claimedDamages?.toLocaleString() || "N/A"}
+                      </p>
+                    )}
+                  </div>
+                  {paymentDispute && paymentDispute.disputeFee && (
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600">Resolution Fee</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">
+                        ${paymentDispute.disputeFee.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-slate-500 capitalize">{paymentDispute.pricingTier} tier</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Resolution Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                    <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Dispute Filed</p>
+                    <p className="text-sm text-slate-600">{formatTimestamp(caseDetails.filedAt)}</p>
+                  </div>
+                </div>
+
+                {["PANELED", "DECIDED", "CLOSED"].includes(caseDetails.status) && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Under Review</p>
+                        <p className="text-sm text-slate-600">Case assigned to resolution panel</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {["DECIDED", "CLOSED"].includes(caseDetails.status) && caseDetails.ruling && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Decision Reached</p>
+                        <p className="text-sm text-slate-600">
+                          {typeof caseDetails.ruling === 'object' && 'decidedAt' in caseDetails.ruling
+                            ? formatTimestamp((caseDetails.ruling as { decidedAt: number }).decidedAt)
+                            : "Recently"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!["DECIDED", "CLOSED"].includes(caseDetails.status) && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                        <div className="h-3 w-3 rounded-full bg-slate-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-500">Final Decision</p>
+                        <p className="text-sm text-slate-400">Pending review completion</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ruling (if available) */}
+          {caseDetails.ruling && (
+            <Card className="border-2 border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Scale className="h-5 w-5 text-blue-700" />
+                  Final Decision
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">Verdict</p>
+                  <p className="text-xl font-bold text-slate-900">
+                    {typeof caseDetails.ruling === 'object' && 'verdict' in caseDetails.ruling
+                      ? (caseDetails.ruling as { verdict: string }).verdict
+                      : 'Decision Rendered'}
+                  </p>
+                </div>
+                {typeof caseDetails.ruling === 'object' && 'reasoning' in caseDetails.ruling && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-600 mb-1">Explanation</p>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      {(caseDetails.ruling as { reasoning: string }).reasoning}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Evidence Count */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Evidence Submitted
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-slate-900">
+                {caseEvidence?.length || 0}
+              </p>
+              <p className="text-sm text-slate-600 mt-1">
+                {caseEvidence?.length === 1 ? "item" : "items"} submitted for review
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Footer */}
+          <Card className="bg-slate-50 border-slate-200">
+            <CardContent className="py-6">
+              <div className="text-center space-y-2">
+                <p className="text-sm font-semibold text-slate-900">Need assistance?</p>
+                <p className="text-xs text-slate-600">
+                  Contact your payment provider for questions about this dispute.
+                </p>
+                <p className="text-xs text-slate-500 mt-4">
+                  Case disputes are resolved in accordance with applicable regulations.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

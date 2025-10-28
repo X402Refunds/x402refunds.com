@@ -447,7 +447,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           caseId: result,
           evidenceCount: evidenceIds.length,
           message: `Dispute filed successfully${evidenceIds.length > 0 ? ` with ${evidenceIds.length} evidence item(s)` : ''}. Case ID: ${result}`,
-          trackingUrl: `https://consulatehq.com/demo/dispute/${result}`,
+          trackingUrl: `https://consulatehq.com/cases/${result}`,
           estimatedResolution: "72 hours",
           nextSteps: [
             evidenceIds.length > 0
