@@ -104,6 +104,174 @@ Your Agent → Discovers tools → Invokes when needed → Gets results
   </Step>
 </Steps>
 
+## Claude Desktop Integration
+
+<Tip>
+**Native Claude Desktop support!** Use Consulate tools directly in your Claude Desktop app with our one-command installer.
+</Tip>
+
+### Quick Setup for Claude Desktop (macOS)
+
+<Steps>
+  <Step title="Get Your API Key">
+    1. Sign in to [Consulate Dashboard](https://consulatehq.com)
+    2. Navigate to **Settings → API Keys**
+    3. Click **Generate New API Key**
+    4. Copy the key (starts with `csk_live_`)
+  </Step>
+
+  <Step title="Run the Installer">
+    ```bash One-Command Installation
+    cd /path/to/consulate
+    ./scripts/install-mcp-server.sh csk_live_YOUR_KEY_HERE
+    ```
+
+    **What this does:**
+    - Validates your API key
+    - Configures Claude Desktop automatically
+    - Tests the MCP proxy
+    - Shows you next steps
+  </Step>
+
+  <Step title="Restart Claude Desktop">
+    Quit Claude Desktop (Cmd+Q) and relaunch it. Consulate tools will be automatically available!
+  </Step>
+
+  <Step title="Try It Out">
+    In Claude Desktop, say:
+
+    > "Register my agent 'acme-api-monitor' as an ai_consumer with Consulate"
+
+    Or:
+
+    > "Look up OpenAI's agent DID in Consulate"
+
+    Claude will automatically use the Consulate MCP tools!
+  </Step>
+</Steps>
+
+### Manual Claude Desktop Setup
+
+If the installer doesn't work or you prefer manual configuration:
+
+<Accordion title="Manual Configuration Steps">
+
+**1. Locate Claude Desktop Config**
+
+```bash
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+**2. Add Consulate Server**
+
+Edit the config file (create if it doesn't exist):
+
+```json
+{
+  "mcpServers": {
+    "consulate": {
+      "command": "node",
+      "args": ["/absolute/path/to/consulate/scripts/claude-desktop-mcp-proxy.js"],
+      "env": {
+        "CONSULATE_API_KEY": "csk_live_YOUR_KEY_HERE"
+      }
+    }
+  }
+}
+```
+
+**Important:** Replace `/absolute/path/to/consulate` with your actual directory path.
+
+**3. Make Proxy Executable**
+
+```bash
+chmod +x /path/to/consulate/scripts/claude-desktop-mcp-proxy.js
+```
+
+**4. Restart Claude Desktop**
+
+Completely quit (Cmd+Q) and relaunch.
+
+</Accordion>
+
+### Troubleshooting Claude Desktop
+
+<AccordionGroup>
+  <Accordion title="Tools not appearing in Claude">
+    **Solutions:**
+    1. Verify you completely quit (Cmd+Q) and relaunched Claude Desktop
+    2. Check config file location: `~/Library/Application Support/Claude/claude_desktop_config.json`
+    3. Validate JSON syntax at [jsonlint.com](https://jsonlint.com)
+    4. View logs: **Claude Desktop → Settings → Developer → View Logs**
+  </Accordion>
+
+  <Accordion title="Authentication errors">
+    **Solutions:**
+    1. Verify API key starts with `csk_live_` or `csk_test_`
+    2. Check key is active in dashboard (Settings → API Keys)
+    3. Ensure no extra spaces or quotes around key in config
+    4. Try regenerating the key
+  </Accordion>
+
+  <Accordion title="Proxy script not found">
+    **Solutions:**
+    1. Use absolute path (not relative like `./scripts/...`)
+    2. Find absolute path: `cd /path/to/consulate && pwd`
+    3. Verify file exists: `ls -la /path/to/scripts/claude-desktop-mcp-proxy.js`
+    4. Check executable: `chmod +x /path/to/scripts/claude-desktop-mcp-proxy.js`
+  </Accordion>
+
+  <Accordion title="Enable debug mode">
+    Add debug logging to diagnose issues:
+
+    ```json
+    {
+      "mcpServers": {
+        "consulate": {
+          "command": "node",
+          "args": ["/path/to/consulate/scripts/claude-desktop-mcp-proxy.js"],
+          "env": {
+            "CONSULATE_API_KEY": "csk_live_...",
+            "CONSULATE_DEBUG": "true"
+          }
+        }
+      }
+    }
+    ```
+
+    View logs: **Settings → Developer → View Logs**
+  </Accordion>
+</AccordionGroup>
+
+### Why Use API Keys Instead of Ed25519 Signatures?
+
+<Tabs>
+  <Tab title="API Keys (Claude Desktop)">
+    ✅ **Simple**: One credential to manage
+    ✅ **Familiar**: Stripe-style developer experience
+    ✅ **Fast**: No signing overhead
+    ✅ **Revocable**: Instant revocation in dashboard
+    ✅ **Multiple keys**: Different keys per environment
+
+    **Best for:** Claude Desktop, development, quick integration
+  </Tab>
+
+  <Tab title="Ed25519 Signatures (Advanced)">
+    ✅ **Non-repudiation**: Cryptographic proof of requests
+    ✅ **No tokens**: Self-sovereign identity
+    ✅ **Legal proof**: Admissible in dispute resolution
+
+    ⚠️ **Complex**: Keypair management, signing each request
+    ⚠️ **Slower**: Cryptographic overhead
+
+    **Best for:** Autonomous agents, legal compliance, blockchain integration
+  </Tab>
+</Tabs>
+
+<Card title="Complete Claude Desktop Guide" icon="book" href="/docs/claude-desktop-setup">
+  Detailed setup guide with examples, security best practices, and advanced configuration
+</Card>
+
 ## Available MCP Tools
 
 Your agent can now use these 8 tools:

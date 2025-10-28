@@ -17,6 +17,20 @@ import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
 
 /**
+ * MCP Error Codes
+ * Standardized error codes for MCP clients
+ */
+export const MCP_ERROR_CODES = {
+  AUTH_FAILED: "MCP_AUTH_FAILED",
+  AUTH_REQUIRED: "MCP_AUTH_REQUIRED",
+  TOOL_NOT_FOUND: "MCP_TOOL_NOT_FOUND",
+  INVALID_PARAMETERS: "MCP_INVALID_PARAMETERS",
+  INTERNAL_ERROR: "MCP_INTERNAL_ERROR",
+  NOT_FOUND: "MCP_NOT_FOUND",
+  FORBIDDEN: "MCP_FORBIDDEN",
+} as const;
+
+/**
  * MCP Tool Definitions
  * These are discoverable by any MCP-compatible agent
  */
@@ -238,28 +252,31 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     },
     tools: MCP_TOOLS,
     authentication: {
-      type: "signature",
-      algorithm: "Ed25519",
-      description: "Cryptographic signature-based authentication for non-repudiation and legal proof",
+      type: "bearer",
+      scheme: "Bearer",
+      description: "Bearer token authentication using Consulate API keys",
       required_headers: {
-        "X-Agent-DID": "Your agent's DID (e.g., did:agent:acme-prod-1729012345)",
-        "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
-        "X-Timestamp": "Current timestamp in milliseconds"
+        "Authorization": "Bearer csk_live_... or Bearer csk_test_..."
       },
-      message_format: "METHOD:PATH:BODY:TIMESTAMP",
-      registration: {
-        endpoint: "https://consulatehq.com/agents/register-with-signature",
-        method: "POST",
-        description: "Self-register with your Ed25519 public key. No API keys, no tokens, just cryptographic signatures.",
-        example: {
-          ownerDid: "did:owner:org-yourcompany.com",
-          name: "your-agent-name",
-          organizationName: "Your Company",
-          functionalType: "api",
-          publicKey: "64-char hex-encoded Ed25519 public key",
-          signature: "128-char hex signature of 'ownerDid:name:organizationName:timestamp'",
-          timestamp: Date.now()
-        }
+      how_to_get_key: {
+        dashboard: "https://consulatehq.com/settings/api-keys",
+        steps: [
+          "1. Sign in to Consulate dashboard",
+          "2. Navigate to Settings → API Keys",
+          "3. Click 'Generate New API Key'",
+          "4. Copy the key (starts with csk_live_ for production)"
+        ]
+      },
+      alternative_auth: {
+        type: "signature",
+        algorithm: "Ed25519",
+        description: "Advanced: Cryptographic signature-based authentication for non-repudiation",
+        required_headers: {
+          "X-Agent-DID": "Your agent's DID",
+          "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
+          "X-Timestamp": "Current timestamp in milliseconds"
+        },
+        message_format: "METHOD:PATH:BODY:TIMESTAMP"
       }
     },
     documentation: "https://docs.consulatehq.com/mcp-quickstart",
@@ -307,9 +324,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
       } catch (error: any) {
         return new Response(JSON.stringify({
-          error: "Invalid or expired API key",
-          hint: "Get your API key from Settings → API Keys in the dashboard",
-          details: error.message
+          success: false,
+          error: {
+            code: MCP_ERROR_CODES.AUTH_FAILED,
+            message: "Invalid or expired API key",
+            hint: "Get your API key from Settings → API Keys in the dashboard",
+            details: error.message
+          }
         }), {
           status: 401,
           headers: { "Content-Type": "application/json" }
@@ -322,22 +343,27 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
       
       if (!signatureAuth) {
         return new Response(JSON.stringify({
-          error: "Authentication required",
-          methods: [
-            {
-              type: "Bearer token (recommended)",
-              header: "Authorization: Bearer csk_live_...",
-              how: "Get API key from Settings → API Keys in dashboard"
-            },
-            {
-              type: "Ed25519 signature (advanced)",
-              headers: {
-                "X-Agent-DID": "Your agent's DID",
-                "X-Signature": "Hex-encoded Ed25519 signature",
-                "X-Timestamp": "Current timestamp"
+          success: false,
+          error: {
+            code: MCP_ERROR_CODES.AUTH_REQUIRED,
+            message: "Authentication required",
+            hint: "Provide either Bearer token or Ed25519 signature",
+            methods: [
+              {
+                type: "Bearer token (recommended)",
+                header: "Authorization: Bearer csk_live_...",
+                how: "Get API key from Settings → API Keys in dashboard"
+              },
+              {
+                type: "Ed25519 signature (advanced)",
+                headers: {
+                  "X-Agent-DID": "Your agent's DID",
+                  "X-Signature": "Hex-encoded Ed25519 signature",
+                  "X-Timestamp": "Current timestamp"
+                }
               }
-            }
-          ]
+            ]
+          }
         }), {
           status: 401,
           headers: { "Content-Type": "application/json" }
@@ -355,8 +381,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
       
       if (!isValid) {
         return new Response(JSON.stringify({
-          error: "Invalid signature",
-          hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
+          success: false,
+          error: {
+            code: MCP_ERROR_CODES.AUTH_FAILED,
+            message: "Invalid signature",
+            hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
+          }
         }), {
           status: 401,
           headers: { "Content-Type": "application/json" }
@@ -431,21 +461,25 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
       case "consulate_register_agent":
         // Get the API key from the Authorization header
-        const authHeader = request.headers.get("Authorization");
-        if (!authHeader?.startsWith("Bearer ")) {
+        const authHeaderRegister = request.headers.get("Authorization");
+        if (!authHeaderRegister?.startsWith("Bearer ")) {
           return new Response(JSON.stringify({
-            error: "API key required",
-            hint: "Pass your API key in the Authorization header: 'Bearer csk_live_...'"
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.AUTH_REQUIRED,
+              message: "API key required",
+              hint: "Pass your API key in the Authorization header: 'Bearer csk_live_...'"
+            }
           }), {
             status: 401,
             headers: { "Content-Type": "application/json" }
           });
         }
         
-        const apiKey = authHeader.substring(7);
+        const apiKeyRegister = authHeaderRegister.substring(7);
         
         result = await ctx.runMutation(api.agents.joinAgent, {
-          apiKey: apiKey,
+          apiKey: apiKeyRegister,
           name: parameters.name,
           functionalType: parameters.functionalType,
           mock: false
@@ -492,7 +526,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         if (!agent) {
           return new Response(JSON.stringify({
-            error: "Agent not found"
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.NOT_FOUND,
+              message: "Agent not found",
+              hint: "Check that the agent DID is correct or register the agent first"
+            }
           }), {
             status: 404,
             headers: { "Content-Type": "application/json" }
@@ -690,8 +729,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
       default:
         return new Response(JSON.stringify({
-          error: `Unknown tool: ${tool}`,
-          availableTools: MCP_TOOLS.map(t => t.name)
+          success: false,
+          error: {
+            code: MCP_ERROR_CODES.TOOL_NOT_FOUND,
+            message: `Unknown tool: ${tool}`,
+            hint: "Check the tool name spelling or list available tools",
+            availableTools: MCP_TOOLS.map(t => t.name)
+          }
         }), {
           status: 400,
           headers: { "Content-Type": "application/json" }
@@ -700,8 +744,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     
   } catch (error: any) {
     return new Response(JSON.stringify({
-      error: error.message,
-      details: "MCP tool invocation failed"
+      success: false,
+      error: {
+        code: MCP_ERROR_CODES.INTERNAL_ERROR,
+        message: error.message,
+        hint: "An unexpected error occurred during tool invocation",
+        details: "MCP tool invocation failed"
+      }
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" }

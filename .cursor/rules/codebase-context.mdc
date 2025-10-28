@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-28T01:44:40.813Z
+**Auto-generated on**: 2025-10-28T06:32:44.351Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ### Convex Files (19 files)
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
-- **apiKeys.ts** - generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
+- **apiKeys.ts** - validateApiKeyQuery, generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
 - **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -88,7 +88,7 @@ consulate/
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
-- **mcp.ts** - MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, customerReview, getCustomerReviewQueue
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
@@ -182,7 +182,7 @@ Common HTTP routes exposed:
 - `pnpm type-check:convex` - tsc
 - `pnpm dev` - pnpm
 - `pnpm test` - vitest
-- `pnpm test:run` - vitest
+- `pnpm test:run` - bash
 - `pnpm test:api` - vitest
 - `pnpm test:unit` - vitest
 - `pnpm test:preview` - bash
@@ -212,8 +212,8 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Public Documentation (0 files)
-
+### Public Documentation (1 files)
+- docs/claude-desktop-setup.md
 
 
 ### Internal Documentation (27 files)
@@ -309,5 +309,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/27/2025, 6:44:40 PM
-Files scanned: 246
+Generated: 10/27/2025, 11:32:44 PM
+Files scanned: 249

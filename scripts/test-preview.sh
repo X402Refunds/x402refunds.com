@@ -26,7 +26,7 @@ echo ""
 
 # Run all tests (no tests will be skipped because USE_LIVE_API will be false)
 echo "Running complete test suite..."
-pnpm test:run
+pnpm exec vitest run
 
 echo ""
 echo "✅ Preview tests complete!"

@@ -90,11 +90,11 @@ describe('MCP Protocol - Tool Discovery', () => {
     it('should specify authentication requirements', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
-      
+
       expect(manifest.authentication).toBeDefined();
-      expect(manifest.authentication.type).toBe('signature');
-      expect(manifest.authentication.algorithm).toBe('Ed25519');
-      expect(manifest.authentication.description).toContain('Cryptographic signature');
+      expect(manifest.authentication.type).toBe('bearer');
+      expect(manifest.authentication.scheme).toBe('Bearer');
+      expect(manifest.authentication.description).toContain('Bearer token');
     });
 
     it('should include CORS headers', async () => {
@@ -120,7 +120,10 @@ describe('MCP Protocol - Authentication', () => {
 
       expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toContain('Authentication required');
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
+      expect(data.error.code).toBe('MCP_AUTH_REQUIRED');
+      expect(data.error.message).toContain('Authentication required');
     });
 
     it.skipIf(USE_LIVE_API)('should reject invalid Bearer token format', async () => {
@@ -138,7 +141,10 @@ describe('MCP Protocol - Authentication', () => {
 
       expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toContain('Authentication required');
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
+      expect(data.error.code).toBe('MCP_AUTH_REQUIRED');
+      expect(data.error.message).toContain('Authentication required');
     });
 
     it.skipIf(USE_LIVE_API)('should reject invalid API key', async () => {
@@ -156,7 +162,10 @@ describe('MCP Protocol - Authentication', () => {
 
       expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toContain('Invalid or expired API key');
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
+      expect(data.error.code).toBe('MCP_AUTH_FAILED');
+      expect(data.error.message).toContain('Invalid or expired API key');
     });
 
     it.skipIf(!process.env.TEST_API_KEY)('should accept valid API key and execute tool', async () => {
