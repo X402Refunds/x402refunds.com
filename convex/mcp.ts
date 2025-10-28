@@ -299,11 +299,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
       // API Key authentication
       const apiKey = authHeader.substring(7);
       
-      // Validate API key using helper function
+      // Validate API key using query
       try {
-        const { validateApiKey } = await import("./apiKeys");
-        await validateApiKey(ctx, apiKey);
-        
+        await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
+
         // Update last used timestamp
         await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
       } catch (error: any) {

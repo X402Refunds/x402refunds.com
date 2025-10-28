@@ -21,7 +21,7 @@ export async function validateApiKey(ctx: any, key: string) {
     .query("apiKeys")
     .withIndex("by_key", (q: any) => q.eq("key", key))
     .first();
-  
+
   if (!apiKey) {
     // Try old token field for backwards compatibility
     const allKeys = await ctx.db.query("apiKeys").collect();
@@ -44,6 +44,16 @@ export async function validateApiKey(ctx: any, key: string) {
 
   return apiKey;
 }
+
+// Query version of validateApiKey for use in httpActions
+export const validateApiKeyQuery = query({
+  args: {
+    key: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await validateApiKey(ctx, args.key);
+  },
+});
 
 // Generate a new API key for user's organization
 export const generateApiKey = mutation({
