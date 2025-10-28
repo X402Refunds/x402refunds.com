@@ -28,7 +28,7 @@ import http from 'http';
 
 // Configuration
 const API_KEY = process.env.CONSULATE_API_KEY;
-const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://api.consulatehq.com';
+const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://youthful-orca-358.convex.site';
 const DEBUG = process.env.CONSULATE_DEBUG === 'true';
 
 // Logging helper (writes to stderr to not interfere with stdio protocol)
@@ -252,7 +252,12 @@ async function handleMCPMessage(message) {
       // Invoke the requested tool
       const { name, arguments: args } = request.params;
 
-      const result = await invokeTool(name, args);
+      // Claude Desktop prefixes tool names with server name (e.g., "consulate:consulate_file_dispute")
+      // Strip the prefix if present
+      const toolName = name.includes(':') ? name.split(':')[1] : name;
+      log(`Tool name after prefix stripping: ${toolName}`);
+
+      const result = await invokeTool(toolName, args);
 
       // Check if invocation failed
       if (result.error) {
