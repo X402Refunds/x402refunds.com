@@ -486,7 +486,15 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               : "Submit additional evidence using consulate_submit_evidence tool",
             "Monitor case status with consulate_check_case_status",
             "Receive notification when panel issues ruling"
-          ]
+          ],
+          _links: {
+            self: `https://consulatehq.com/cases/${result}`,
+            evidence: `https://api.consulatehq.com/cases/${result}/evidence`,
+            timeline: `https://consulatehq.com/cases/${result}#timeline`,
+            api: `https://api.consulatehq.com/cases/${result}`,
+            submitEvidence: `https://api.consulatehq.com/evidence`,
+            checkStatus: `https://api.consulatehq.com/cases/${result}`
+          }
         }), {
           headers: { "Content-Type": "application/json" }
         });
