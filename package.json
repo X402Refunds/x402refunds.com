@@ -13,7 +13,7 @@
     "type-check:convex": "tsc --noEmit",
     "dev": "pnpm --filter dashboard dev",
     "test": "vitest",
-    "test:run": "vitest run",
+    "test:run": "bash scripts/test-preview.sh",
     "test:api": "vitest run test/api.test.ts",
     "test:unit": "vitest run test/agents.test.ts test/cases.test.ts",
     "test:preview": "bash scripts/test-preview.sh",
