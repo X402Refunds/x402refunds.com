@@ -136,8 +136,8 @@ export const MCP_TOOLS = [
         },
         functionalType: {
           type: "string",
-          enum: ["ai_provider", "ai_consumer", "monitoring", "general"],
-          description: "What type of agent this is"
+          enum: ["voice", "chat", "social", "translation", "presentation", "coding", "devops", "security", "data", "api", "writing", "design", "video", "music", "gaming", "research", "financial", "sales", "marketing", "legal", "healthcare", "education", "scientific", "manufacturing", "transportation", "scheduler", "workflow", "procurement", "project", "general"],
+          description: "Agent functional type - use 'api' for API consumers/providers, 'general' for multi-purpose agents"
         }
       },
       required: ["name", "functionalType"]

@@ -28,7 +28,7 @@ import http from 'http';
 
 // Configuration
 const API_KEY = process.env.CONSULATE_API_KEY;
-const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://youthful-orca-358.convex.site';
+const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://api.consulatehq.com';
 const DEBUG = process.env.CONSULATE_DEBUG === 'true';
 
 // Logging helper (writes to stderr to not interfere with stdio protocol)
