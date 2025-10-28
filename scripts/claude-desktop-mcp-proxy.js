@@ -198,6 +198,16 @@ async function handleMCPMessage(message) {
     const request = JSON.parse(message);
     log('📨 Received MCP request:', request);
 
+    // Check if this is a notification (no id field)
+    // Notifications MUST NOT receive responses per JSON-RPC 2.0 spec
+    const isNotification = !request.hasOwnProperty('id') && typeof request.id === 'undefined';
+
+    if (isNotification) {
+      log('📢 Received notification (no response will be sent)');
+      // Process notification but don't send response
+      return null;
+    }
+
     // Handle different MCP request types
     if (request.method === 'initialize') {
       // Fetch real discovery manifest from Consulate
@@ -287,9 +297,20 @@ async function handleMCPMessage(message) {
 
   } catch (error) {
     log('❌ Error handling MCP message:', error.message);
+
+    // Try to extract id from the message if possible
+    let requestId = null;
+    try {
+      const partialRequest = JSON.parse(message);
+      requestId = partialRequest.id;
+    } catch {
+      // Cannot determine id, use null per JSON-RPC 2.0 spec
+      requestId = null;
+    }
+
     return {
       jsonrpc: '2.0',
-      id: null,
+      id: requestId,
       error: {
         code: -32700,
         message: 'Parse error',
@@ -321,10 +342,13 @@ async function main() {
     for (const line of lines) {
       if (line.trim()) {
         const response = await handleMCPMessage(line);
-        const responseStr = JSON.stringify(response);
 
-        log('📤 Sending MCP response:', response);
-        process.stdout.write(responseStr + '\n');
+        // Only send response if not null (null = notification, no response needed)
+        if (response !== null) {
+          const responseStr = JSON.stringify(response);
+          log('📤 Sending MCP response:', response);
+          process.stdout.write(responseStr + '\n');
+        }
       }
     }
   });
