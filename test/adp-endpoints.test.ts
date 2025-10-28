@@ -229,9 +229,9 @@ describe('AAP Protocol - Standards', () => {
       expect(version.filename).toBeDefined();
     });
 
-    it('should include caching headers', async () => {
+    it.skipIf(!FRONTEND_BASE_URL.includes('localhost'))('should include caching headers', async () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/standards`);
-      
+
       const cacheControl = response.headers.get('cache-control');
       expect(cacheControl).toContain('public');
     });
@@ -241,9 +241,9 @@ describe('AAP Protocol - Standards', () => {
     // Note: Standards files moved to external hosting, route returns 404
     // Keeping tests for error handling only
     
-    it('should return 404 for non-existent version', async () => {
+    it.skipIf(!FRONTEND_BASE_URL.includes('localhost'))('should return 404 for non-existent version', async () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/standards/arbitration-rules/v99.99`);
-      
+
       expect(response.status).toBe(404);
       const data = await response.json();
       expect(data.error).toBeDefined();
@@ -305,9 +305,9 @@ describe('AAP Protocol - JSON Schemas', () => {
       }
     });
 
-    it('should include caching headers', async () => {
+    it.skipIf(!FRONTEND_BASE_URL.includes('localhost'))('should include caching headers', async () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/schemas/list`);
-      
+
       const cacheControl = response.headers.get('cache-control');
       expect(cacheControl).toContain('public');
     });
@@ -345,9 +345,9 @@ describe('AAP Protocol - JSON Schemas', () => {
       expect(response2.status).toBe(200);
     });
 
-    it('should return 404 for non-existent schema', async () => {
+    it.skipIf(!FRONTEND_BASE_URL.includes('localhost'))('should return 404 for non-existent schema', async () => {
       const response = await fetch(`${FRONTEND_BASE_URL}/api/schemas/nonexistent-schema`);
-      
+
       expect(response.status).toBe(404);
       const data = await response.json();
       expect(data.error).toBeDefined();

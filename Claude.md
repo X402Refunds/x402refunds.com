@@ -94,9 +94,13 @@ You are a senior full-stack software engineer with deep expertise in AI systems,
 ```bash
 # MANDATORY before every commit
 pnpm lint && pnpm type-check && pnpm build && pnpm test:run
+
+# MANDATORY before every push
+pnpm update-context
 ```
 
 **Never commit** if any check fails. Period.
+**Never push** without running `pnpm update-context` first. Period.
 
 ### 3. Documentation Discipline
 **NEVER create `.md` files** unless explicitly requested.
@@ -106,12 +110,29 @@ pnpm lint && pnpm type-check && pnpm build && pnpm test:run
 - No "helpful" documentation
 - User must explicitly ask for documentation
 
-### 4. Context Trust
-The codebase context is accurate. Don't waste time "understanding the project structure" - you already know it.
+### 4. Project Structure Awareness
+**ALWAYS read the project structure at the start of EVERY task** to ensure fresh, accurate context.
 
-- ❌ Don't say "let me understand your project structure"
-- ✅ Use what you know immediately
-- Only read files for implementation details, not structure
+- ✅ Read `internal/architecture/project-structure.md` at the start of every task (see Rule #5 below)
+- ✅ Use this fresh context to inform your implementation decisions
+- ✅ Read additional files for implementation details as needed
+- ❌ Don't waste time saying "let me understand your project structure" - just read the file silently
+- ❌ Don't rely solely on cached knowledge - the structure evolves constantly
+
+### 5. Always Refresh Project Structure (MANDATORY)
+**ALWAYS read the project structure at the start of EVERY task** - No exceptions.
+
+- ✅ **MUST READ** `/Users/vkotecha/Desktop/consulate/internal/architecture/project-structure.md` at the start of every task
+- ✅ This ensures you have the latest file locations, directory structure, and architectural patterns
+- ✅ Do this BEFORE planning or implementing any changes
+- ❌ Never rely solely on cached knowledge - the structure may have changed
+- ❌ Never skip this step, even for "simple" tasks
+
+**Why this matters:**
+- Project structure evolves as features are added
+- New directories, files, and patterns emerge
+- Fresh context prevents working with outdated assumptions
+- Ensures correct file placement and architectural alignment
 
 ---
 
@@ -356,10 +377,13 @@ pnpm lint && pnpm type-check && pnpm build && pnpm test:run
 pnpm deploy:dev
 pnpm test:smoke
 
-# 3. If preview tests pass, then commit
+# 3. Update codebase context (MANDATORY before push)
+pnpm update-context
+
+# 4. If preview tests pass and context updated, then commit and push
 git add . && git commit -m "..." && git push
 
-# 4. Deploy to production only after preview validation
+# 5. Deploy to production only after preview validation
 pnpm deploy
 pnpm test:smoke:prod
 ```
@@ -403,17 +427,19 @@ pnpm test:smoke:prod
 1. Create feature branch
 2. Make changes locally
 3. Run quality checks: `pnpm lint && pnpm type-check && pnpm build && pnpm test:run`
-4. Commit with semantic commit message
-5. Push to GitHub
-6. Create PR
+4. Update context: `pnpm update-context` (MANDATORY before push)
+5. Commit with semantic commit message
+6. Push to GitHub
+7. Create PR
 
 ### For Bug Fixes
 1. Reproduce the bug with a test
 2. Fix the bug
 3. Ensure test passes
 4. Run full quality checks
-5. Commit with `fix:` prefix
-6. Push and create PR
+5. Update context: `pnpm update-context` (MANDATORY before push)
+6. Commit with `fix:` prefix
+7. Push and create PR
 
 ### For Deployment
 
@@ -867,6 +893,7 @@ Before committing ANY code, verify:
 - [ ] `pnpm type-check` passes
 - [ ] `pnpm build` passes
 - [ ] `pnpm test:run` passes, even if the failing tests are unrelated to your changes.
+- [ ] `pnpm update-context` has been run (MANDATORY before push)
 - [ ] Changes are committed with semantic commit message
 - [ ] Commit message includes: description, Co-Authored-By
 
