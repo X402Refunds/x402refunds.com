@@ -23,9 +23,56 @@ import {
 
 /**
  * Receive dispute from payment protocol (ACP/ATXP webhook endpoint)
- * 
- * Called by: ACP/ATXP infrastructure when dispute is filed
- * Returns: Initial ruling + human review requirement flag
+ *
+ * THREE-PARTY INFRASTRUCTURE MODEL:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * 1. **Payment Provider (YOU - e.g., Stripe, ACP platform)**
+ *    - The actual Consulate customer who integrates our API
+ *    - Files disputes on behalf of YOUR end-users (consumers)
+ *    - Makes final decisions via your review queue dashboard
+ *    - Pays Consulate fees
+ *    - YOUR API key auto-detects your organizationId
+ *
+ * 2. **Consumer (Your Customer - e.g., Alice)**
+ *    - The PLAINTIFF who disputes a charge
+ *    - YOUR end-user who made a payment and now disputes it
+ *    - Example: "consumer:alice@stripe.com" (YOUR customer)
+ *    - Identified via plaintiffMetadata.customerId in YOUR system
+ *
+ * 3. **Merchant (Service Provider - e.g., OpenAI)**
+ *    - The DEFENDANT who charged the consumer
+ *    - The vendor/service provider who received payment
+ *    - Example: "merchant:openai-api@stripe.com" (service provider in YOUR platform)
+ *    - Identified via defendantMetadata.merchantId in YOUR system
+ *
+ * REAL-WORLD EXAMPLE:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Scenario: Alice paid $50 to OpenAI via Stripe for API credits
+ *
+ * 1. Alice (consumer) disputes the charge in Stripe dashboard: "Service not rendered"
+ * 2. Stripe (YOU) receives dispute from Alice
+ * 3. Stripe calls Consulate API:
+ *    - plaintiff: "consumer:alice@stripe.com" (Alice - YOUR customer)
+ *    - defendant: "merchant:openai-acct@stripe.com" (OpenAI - merchant in YOUR system)
+ *    - plaintiffMetadata.customerId: "cus_stripe_abc123" (Alice's ID in YOUR DB)
+ *    - defendantMetadata.merchantId: "acct_stripe_xyz789" (OpenAI's merchant ID in YOUR DB)
+ *    - reviewerOrganizationId: Auto-detected from YOUR API key → Stripe's org
+ * 4. Consulate AI analyzes: 95% confidence → "CONSUMER_WINS"
+ * 5. Stripe's review queue shows: "Alice vs OpenAI - AI recommends refund"
+ * 6. Stripe team (YOU) reviews and makes final decision
+ * 7. Stripe executes decision: Refund Alice, notify OpenAI
+ *
+ * WHO IS WHO:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * ✅ YOU = Payment Provider (Stripe) - Consulate customer, makes final decisions
+ * ✅ YOUR CUSTOMER = Consumer (Alice) - Plaintiff disputing charge
+ * ✅ SERVICE PROVIDER = Merchant (OpenAI) - Defendant who charged consumer
+ *
+ * Called by: ACP/ATXP infrastructure when dispute is filed by YOUR customer
+ * Returns: Initial AI ruling + human review requirement flag for YOUR team
  */
 export const receivePaymentDispute = mutation({
   args: {
@@ -37,22 +84,23 @@ export const receivePaymentDispute = mutation({
     paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
 
     // Parties (customer-scoped identifiers)
+    // plaintiff = YOUR CUSTOMER (Alice) who is disputing the charge
+    // defendant = The merchant/vendor (OpenAI) who charged YOUR customer
     // Examples: "consumer:alice@stripe.com", "merchant:openai-api@stripe.com"
-    // These are scoped to the customer's organization via API key
     plaintiff: v.string(),
     defendant: v.string(),
 
-    // Party metadata - helps customer identify parties in their system
+    // Party metadata - helps YOU identify parties in YOUR system
     plaintiffMetadata: v.optional(v.object({
-      email: v.optional(v.string()),
-      name: v.optional(v.string()),
-      customerId: v.optional(v.string()), // Customer's internal ID
+      email: v.optional(v.string()),          // YOUR customer's email (Alice)
+      name: v.optional(v.string()),           // YOUR customer's name (Alice Smith)
+      customerId: v.optional(v.string()),     // Alice's ID in YOUR database
       walletAddress: v.optional(v.string()),
     })),
     defendantMetadata: v.optional(v.object({
-      email: v.optional(v.string()),
-      name: v.optional(v.string()),
-      merchantId: v.optional(v.string()), // Customer's internal merchant/vendor ID
+      email: v.optional(v.string()),          // Merchant's contact email
+      name: v.optional(v.string()),           // Merchant's business name
+      merchantId: v.optional(v.string()),     // Merchant's ID in YOUR platform
       walletAddress: v.optional(v.string()),
     })),
 

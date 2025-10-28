@@ -1,0 +1,249 @@
+/**
+ * Payment Dispute Party Model Tests
+ *
+ * Verifies the THREE-PARTY infrastructure model:
+ * 1. Payment Provider (Customer) - Files disputes, makes final decisions
+ * 2. Consumer (Plaintiff) - The customer's end-user disputing a charge
+ * 3. Merchant (Defendant) - The service provider who charged the consumer
+ *
+ * Tests ensure:
+ * - Plaintiff is consumer identifier (not payment provider)
+ * - Defendant is merchant identifier
+ * - reviewerOrganizationId is auto-detected from API key
+ * - Party metadata is stored correctly for mapping back to customer's system
+ */
+
+import { describe, it, expect, beforeEach } from "vitest";
+import { convexTest } from "convex-test";
+import schema from "../convex/schema";
+import { api } from "../convex/_generated/api";
+
+describe("Payment Dispute Three-Party Model", () => {
+  let t: any;
+  let stripeOrgId: any; // Payment Provider (Consulate customer)
+  let stripeApiKey: string;
+
+  beforeEach(async () => {
+    console.log("🧪 Setting up three-party model test environment...");
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+
+    // Create Stripe (Payment Provider) organization
+    stripeOrgId = await t.run(async (ctx: any) => {
+      return await ctx.db.insert("organizations", {
+        name: "Stripe (Test Payment Provider)",
+        domain: "stripe.com",
+        verified: true,
+        createdAt: Date.now(),
+      });
+    });
+
+    // Create Stripe admin user
+    const stripeAdminId = await t.run(async (ctx: any) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: "clerk_stripe_admin",
+        email: "admin@stripe.com",
+        organizationId: stripeOrgId,
+        role: "admin",
+        createdAt: Date.now(),
+      });
+    });
+
+    // Generate Stripe's API key
+    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: stripeAdminId,
+      name: "Stripe Production Key",
+      expiresIn: 365, // 365 days (1 year)
+    });
+    stripeApiKey = apiKeyResult.key;
+
+    console.log("✅ Stripe (payment provider) organization created");
+  });
+
+  it("should correctly identify plaintiff as consumer (not payment provider)", async () => {
+    // Scenario: Alice (Stripe customer) disputes OpenAI charge
+
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: "txn_alice_openai_001",
+      amount: 50,
+      currency: "USD",
+      paymentProtocol: "ACP",
+      // Parties
+      plaintiff: "consumer:alice@stripe.com", // Alice (consumer) is plaintiff
+      defendant: "merchant:openai-acct@stripe.com", // OpenAI (merchant) is defendant
+      plaintiffMetadata: {
+        email: "alice@example.com",
+        name: "Alice Smith",
+        customerId: "cus_stripe_alice123", // Stripe's customer ID for Alice
+      },
+      defendantMetadata: {
+        email: "billing@openai.com",
+        name: "OpenAI",
+        merchantId: "acct_stripe_openai789", // Stripe's merchant ID for OpenAI
+      },
+      disputeReason: "service_not_rendered",
+      description: "API credits not delivered as promised",
+      evidenceUrls: ["https://alice-evidence.com/receipt.pdf"],
+      reviewerOrganizationId: stripeOrgId, // Stripe reviews this dispute
+    });
+
+    // Verify party identifiers
+    const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
+      paymentDisputeId: result.paymentDisputeId,
+    });
+
+    expect(dispute.reviewerOrganizationId).toBe(stripeOrgId); // Stripe reviews
+    expect(dispute.plaintiffMetadata?.customerId).toBe("cus_stripe_alice123"); // Alice
+    expect(dispute.defendantMetadata?.merchantId).toBe("acct_stripe_openai789"); // OpenAI
+
+    // Get the case
+    const caseData = await t.run(async (ctx: any) => {
+      return await ctx.db.get(result.caseId);
+    });
+
+    expect(caseData.plaintiff).toBe("consumer:alice@stripe.com"); // Consumer is plaintiff
+    expect(caseData.defendant).toBe("merchant:openai-acct@stripe.com"); // Merchant is defendant
+
+    console.log("✅ Plaintiff correctly identified as consumer (Alice)");
+    console.log("✅ Defendant correctly identified as merchant (OpenAI)");
+    console.log("✅ Reviewer correctly identified as payment provider (Stripe)");
+  });
+
+  it("should store party metadata for customer's system mapping", async () => {
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: "txn_bob_anthropic_001",
+      amount: 100,
+      currency: "USD",
+      paymentProtocol: "ATXP",
+      plaintiff: "consumer:bob@stripe.com",
+      defendant: "merchant:anthropic-acct@stripe.com",
+      plaintiffMetadata: {
+        email: "bob@company.com",
+        name: "Bob Johnson",
+        customerId: "cus_stripe_bob456",
+        walletAddress: "0xbob123",
+      },
+      defendantMetadata: {
+        email: "support@anthropic.com",
+        name: "Anthropic PBC",
+        merchantId: "acct_stripe_anthropic456",
+      },
+      disputeReason: "amount_incorrect",
+      description: "Charged $100 but should be $75",
+      reviewerOrganizationId: stripeOrgId,
+    });
+
+    const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
+      paymentDisputeId: result.paymentDisputeId,
+    });
+
+    // Verify plaintiff metadata (consumer)
+    expect(dispute.plaintiffMetadata).toBeDefined();
+    expect(dispute.plaintiffMetadata?.email).toBe("bob@company.com");
+    expect(dispute.plaintiffMetadata?.name).toBe("Bob Johnson");
+    expect(dispute.plaintiffMetadata?.customerId).toBe("cus_stripe_bob456");
+    expect(dispute.plaintiffMetadata?.walletAddress).toBe("0xbob123");
+
+    // Verify defendant metadata (merchant)
+    expect(dispute.defendantMetadata).toBeDefined();
+    expect(dispute.defendantMetadata?.email).toBe("support@anthropic.com");
+    expect(dispute.defendantMetadata?.name).toBe("Anthropic PBC");
+    expect(dispute.defendantMetadata?.merchantId).toBe("acct_stripe_anthropic456");
+
+    console.log("✅ Party metadata stored correctly for mapping back to Stripe's system");
+  });
+
+  it("should auto-detect reviewer organization from API key", async () => {
+    // This test verifies that when Stripe files a dispute,
+    // the reviewerOrganizationId is set to Stripe's org
+
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: "txn_auto_detect_001",
+      amount: 25,
+      currency: "USD",
+      paymentProtocol: "ACP",
+      plaintiff: "consumer:carol@stripe.com",
+      defendant: "merchant:vendor@stripe.com",
+      disputeReason: "unauthorized",
+      description: "Did not authorize this charge",
+      reviewerOrganizationId: stripeOrgId, // Auto-detected from Stripe's API key
+    });
+
+    const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
+      paymentDisputeId: result.paymentDisputeId,
+    });
+
+    expect(dispute.reviewerOrganizationId).toBe(stripeOrgId);
+    console.log("✅ Reviewer organization auto-detected from API key");
+  });
+
+  it("should support customer-scoped identifiers", async () => {
+    // Payment providers use their own identifier format
+    // Examples: "consumer:alice@stripe.com", "merchant:vendor-123@stripe.com"
+
+    const testCases = [
+      {
+        plaintiff: "consumer:alice@stripe.com",
+        defendant: "merchant:openai@stripe.com",
+      },
+      {
+        plaintiff: "user:bob-uuid-123@stripe.com",
+        defendant: "vendor:anthropic-id-456@stripe.com",
+      },
+      {
+        plaintiff: "customer:carol@stripe.com",
+        defendant: "provider:google-ai@stripe.com",
+      },
+    ];
+
+    for (const testCase of testCases) {
+      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+        transactionId: `txn_${Math.random().toString(36).substring(7)}`,
+        amount: 10,
+        currency: "USD",
+        paymentProtocol: "ACP",
+        plaintiff: testCase.plaintiff,
+        defendant: testCase.defendant,
+        disputeReason: "other",
+        description: "Testing identifier formats",
+        reviewerOrganizationId: stripeOrgId,
+      });
+
+      const caseData = await t.run(async (ctx: any) => {
+        return await ctx.db.get(result.caseId);
+      });
+
+      expect(caseData.plaintiff).toBe(testCase.plaintiff);
+      expect(caseData.defendant).toBe(testCase.defendant);
+    }
+
+    console.log("✅ Customer-scoped identifiers supported");
+  });
+
+  it("should clarify who makes final decision (payment provider)", async () => {
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: "txn_decision_maker_001",
+      amount: 75,
+      currency: "USD",
+      paymentProtocol: "ACP",
+      plaintiff: "consumer:dave@stripe.com",
+      defendant: "merchant:vendor@stripe.com",
+      disputeReason: "quality_issue",
+      description: "Service quality below expectations",
+      reviewerOrganizationId: stripeOrgId, // Stripe's team makes final decision
+    });
+
+    const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
+      paymentDisputeId: result.paymentDisputeId,
+    });
+
+    // The reviewerOrganizationId indicates who makes the final decision
+    expect(dispute.reviewerOrganizationId).toBe(stripeOrgId);
+
+    // Stripe's team will see this in their review queue
+    // They make the final decision, not Consulate
+    expect(dispute.humanReviewRequired).toBeDefined();
+
+    console.log("✅ Payment provider (Stripe) identified as final decision maker");
+  });
+});

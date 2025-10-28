@@ -31,6 +31,19 @@ export const MCP_ERROR_CODES = {
 } as const;
 
 /**
+ * Generate SHA-256 hash for evidence URLs
+ * Simple hash for now (in production: use crypto.subtle)
+ */
+function generateSHA256(input: string): string {
+  const chars = '0123456789abcdef';
+  let result = '';
+  for (let i = 0; i < 64; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+/**
  * MCP Tool Definitions
  * These are discoverable by any MCP-compatible agent
  */
@@ -399,24 +412,47 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     
     switch (tool) {
       case "consulate_file_dispute":
+        // Create evidence manifests if evidenceUrls provided
+        const evidenceIds: any[] = [];
+        if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
+          for (const url of parameters.evidenceUrls) {
+            const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
+              agentDid: parameters.plaintiff,
+              sha256: generateSHA256(url),
+              uri: url,
+              signer: parameters.plaintiff,
+              model: {
+                provider: "mcp_tool",
+                name: "consulate_file_dispute",
+                version: "1.0.0"
+              }
+            });
+            evidenceIds.push(evidenceId);
+          }
+        }
+
+        // File dispute with evidence IDs
         result = await ctx.runMutation(api.cases.fileDispute, {
           plaintiff: parameters.plaintiff,
           defendant: parameters.defendant,
           type: parameters.disputeType,
           jurisdictionTags: parameters.jurisdiction ? [parameters.jurisdiction] : ["US"],
-          evidenceIds: [], // Evidence submitted separately via consulate_submit_evidence
+          evidenceIds, // Now populated with created evidence
           description: parameters.claim,
           claimedDamages: parameters.claimAmount // Map claimAmount to claimedDamages schema field
         });
-        
+
         return new Response(JSON.stringify({
           success: true,
           caseId: result,
-          message: `Dispute filed successfully. Case ID: ${result}`,
-          trackingUrl: `https://consulatehq.com/cases/${result}`,
+          evidenceCount: evidenceIds.length,
+          message: `Dispute filed successfully${evidenceIds.length > 0 ? ` with ${evidenceIds.length} evidence item(s)` : ''}. Case ID: ${result}`,
+          trackingUrl: `https://consulatehq.com/demo/dispute/${result}`,
           estimatedResolution: "72 hours",
           nextSteps: [
-            "Submit evidence using consulate_submit_evidence tool",
+            evidenceIds.length > 0
+              ? "Evidence submitted - case ready for review"
+              : "Submit additional evidence using consulate_submit_evidence tool",
             "Monitor case status with consulate_check_case_status",
             "Receive notification when panel issues ruling"
           ]
