@@ -442,13 +442,44 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           claimedDamages: parameters.claimAmount // Map claimAmount to claimedDamages schema field
         });
 
+        // Calculate dynamic resolution time based on claim amount and dispute type
+        const claimAmount = parameters.claimAmount || 0;
+        let estimatedResolution: string;
+        let resolutionDetails: string;
+
+        if (claimAmount < 100) {
+          // Small claims: Fast track
+          estimatedResolution = "24-48 hours";
+          resolutionDetails = "Small claim - fast track resolution";
+        } else if (claimAmount < 10000) {
+          // Standard claims
+          estimatedResolution = "3-5 business days";
+          resolutionDetails = "Standard claim - expert panel review";
+        } else if (claimAmount < 100000) {
+          // Large claims
+          estimatedResolution = "5-10 business days";
+          resolutionDetails = "Large claim - comprehensive review with legal analysis";
+        } else {
+          // Enterprise claims
+          estimatedResolution = "10-15 business days";
+          resolutionDetails = "Enterprise claim - full discovery and expert determination";
+        }
+
+        // Fraud/Data Breach disputes get priority
+        if (parameters.disputeType === "FRAUD" || parameters.disputeType === "DATA_BREACH") {
+          estimatedResolution = "24-48 hours";
+          resolutionDetails = "Priority dispute - immediate review for security concerns";
+        }
+
         return new Response(JSON.stringify({
           success: true,
           caseId: result,
           evidenceCount: evidenceIds.length,
           message: `Dispute filed successfully${evidenceIds.length > 0 ? ` with ${evidenceIds.length} evidence item(s)` : ''}. Case ID: ${result}`,
           trackingUrl: `https://consulatehq.com/cases/${result}`,
-          estimatedResolution: "72 hours",
+          claimAmount: parameters.claimAmount,
+          estimatedResolution,
+          resolutionDetails,
           nextSteps: [
             evidenceIds.length > 0
               ? "Evidence submitted - case ready for review"
