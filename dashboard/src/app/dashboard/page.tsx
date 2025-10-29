@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Activity, ArrowRight, Building2, AlertCircle, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Id } from "@convex/_generated/dataModel"
+
+type Event = {
+  _id: Id<"events">;
+  type: string;
+  payload: Record<string, unknown>;
+  timestamp: number;
+  agentDid?: string;
+  caseId?: Id<"cases">;
+}
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
@@ -44,8 +54,55 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
   )
 
+  // Get organization-specific events for activity feed
+  const recentEvents = useQuery(
+    api.events.getOrganizationEvents,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 10 } : "skip"
+  )
+
   const customerReview = useMutation(api.paymentDisputes.customerReview)
-  
+
+  // Helper functions for activity feed
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case "case_filed":
+      case "DISPUTE_FILED":
+        return "📋"
+      case "case_resolved":
+        return "✅"
+      case "evidence_submitted":
+      case "EVIDENCE_SUBMITTED":
+        return "📎"
+      case "agent_registered":
+      case "AGENT_REGISTERED":
+        return "🤖"
+      default:
+        return "📌"
+    }
+  }
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "case_filed":
+      case "DISPUTE_FILED":
+        return "bg-blue-50 text-blue-700 border-blue-200"
+      case "case_resolved":
+        return "bg-green-50 text-green-700 border-green-200"
+      case "evidence_submitted":
+      case "EVIDENCE_SUBMITTED":
+        return "bg-amber-50 text-amber-700 border-amber-200"
+      case "agent_registered":
+      case "AGENT_REGISTERED":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200"
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200"
+    }
+  }
+
+  const getEventBadge = (eventType: string) => {
+    return eventType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+  }
+
   // Sync user if not exists
   useEffect(() => {
     if (user && isLoaded && !currentUser) {
@@ -284,19 +341,56 @@ export default function DashboardPage() {
               Watch your organization&apos;s disputes and agent activity in real-time
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 mb-2">Live activity feed</p>
-              <p className="text-xs text-slate-400 mb-4">Real-time updates will appear here</p>
-              <Button
-                variant="outline"
-                onClick={() => router.push('/dashboard/activity')}
-              >
-                View Full Activity Feed
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+          <CardContent className="space-y-3">
+            {!recentEvents || recentEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 mb-2">No recent activity</p>
+                <p className="text-xs text-slate-400">Activity will appear here when your agents file or receive disputes</p>
+              </div>
+            ) : (
+              <>
+                {recentEvents.slice(0, 10).map((event: Event) => (
+                  <div
+                    key={event._id}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
+                    onClick={() => event.caseId && router.push(`/dashboard/activity`)}
+                  >
+                    <div className="text-2xl flex-shrink-0">{getEventIcon(event.type)}</div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" className={`${getEventColor(event.type)} text-xs font-medium`}>
+                          {getEventBadge(event.type)}
+                        </Badge>
+                        <span className="text-xs text-slate-500">
+                          {new Date(event.timestamp).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </span>
+                      </div>
+                      {event.payload && (
+                        <p className="text-sm text-slate-700 line-clamp-2">
+                          {typeof event.payload === 'object' ? JSON.stringify(event.payload).substring(0, 100) : event.payload}...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => router.push('/dashboard/activity')}
+                  >
+                    View All Activity
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
