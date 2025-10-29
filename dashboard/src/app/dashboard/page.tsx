@@ -19,6 +19,11 @@ type Event = {
   timestamp: number;
   agentDid?: string;
   caseId?: Id<"cases">;
+  caseData?: {
+    parties?: string[];
+    plaintiff?: string;
+    defendant?: string;
+  };
 }
 
 export default function DashboardPage() {
@@ -62,42 +67,71 @@ export default function DashboardPage() {
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
-  // Helper functions for activity feed
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "case_filed":
-      case "DISPUTE_FILED":
-        return "📋"
-      case "case_resolved":
-        return "✅"
-      case "evidence_submitted":
-      case "EVIDENCE_SUBMITTED":
-        return "📎"
-      case "agent_registered":
-      case "AGENT_REGISTERED":
-        return "🤖"
-      default:
-        return "📌"
+  // Helper functions for activity feed (copied from demo)
+  const formatAgentName = (did: string) => {
+    if (!did) return "Unknown";
+
+    // Handle payment dispute identifiers: consumer:alice@demo.com or merchant:cryptomart@demo.com
+    if (did.includes('@')) {
+      const parts = did.split(':');
+      if (parts.length >= 2) {
+        const role = parts[0]; // consumer or merchant
+        const name = parts[1].split('@')[0]; // alice or cryptomart
+        return `${name.charAt(0).toUpperCase() + name.slice(1)} (${role})`;
+      }
     }
-  }
+
+    // Handle agent DIDs: did:agent:name-company-12345
+    const parts = did.split(':');
+    if (parts.length >= 3) {
+      // Extract just the agent name without the ID number
+      const fullName = parts[2];
+      // Remove the timestamp/ID suffix (everything after the last hyphen)
+      const nameWithoutId = fullName.substring(0, fullName.lastIndexOf('-'));
+      return nameWithoutId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    return did;
+  };
+
+  const formatEventDescription = (event: Event) => {
+    switch (event.type) {
+      case "AGENT_REGISTERED":
+        return `${formatAgentName((event.payload?.did || event.agentDid || 'Unknown') as string)} joined the platform`;
+      case "DISPUTE_FILED": {
+        // Try to get parties from enriched caseData first, then fall back to payload
+        let parties: string | undefined;
+        if (event.caseData?.parties) {
+          parties = event.caseData.parties.map((p: string) => formatAgentName(p)).join(" vs ");
+        } else if (event.caseData?.plaintiff && event.caseData?.defendant) {
+          parties = `${formatAgentName(event.caseData.plaintiff)} vs ${formatAgentName(event.caseData.defendant)}`;
+        } else if (event.payload?.parties) {
+          parties = (event.payload.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ");
+        } else {
+          parties = "New dispute filed";
+        }
+        return parties;
+      }
+      case "EVIDENCE_SUBMITTED":
+        return `${formatAgentName((event.payload?.agentDid || event.agentDid || 'Unknown') as string)} submitted evidence`;
+      case "CASE_STATUS_UPDATED": {
+        const caseId = (event.payload?.caseId || event.caseId || '') as string;
+        const shortId = caseId ? caseId.toString().substring(0, 8) : "Unknown";
+        return `Case ${shortId} status updated`;
+      }
+      default:
+        return event.type.replace(/_/g, ' ').toLowerCase();
+    }
+  };
 
   const getEventColor = (type: string) => {
-    switch (type) {
-      case "case_filed":
-      case "DISPUTE_FILED":
-        return "bg-blue-50 text-blue-700 border-blue-200"
-      case "case_resolved":
-        return "bg-green-50 text-green-700 border-green-200"
-      case "evidence_submitted":
-      case "EVIDENCE_SUBMITTED":
-        return "bg-amber-50 text-amber-700 border-amber-200"
-      case "agent_registered":
-      case "AGENT_REGISTERED":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200"
-      default:
-        return "bg-slate-50 text-slate-700 border-slate-200"
-    }
-  }
+    const colors: Record<string, string> = {
+      "AGENT_REGISTERED": "bg-blue-50 text-blue-700 border-blue-200",
+      "DISPUTE_FILED": "bg-red-50 text-red-700 border-red-200",
+      "EVIDENCE_SUBMITTED": "bg-amber-50 text-amber-700 border-amber-200",
+      "CASE_STATUS_UPDATED": "bg-emerald-50 text-emerald-700 border-emerald-200"
+    };
+    return colors[type] || "bg-slate-50 text-slate-700 border-slate-200"
+  };
 
   const getEventBadge = (eventType: string) => {
     return eventType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
@@ -350,13 +384,21 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                {recentEvents.slice(0, 10).map((event: Event) => (
+                {recentEvents.slice(0, 10).map((evt) => {
+                  const event = evt as Event;
+                  return (
                   <div
                     key={event._id}
                     className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
                     onClick={() => event.caseId && router.push(`/dashboard/activity`)}
                   >
-                    <div className="text-2xl flex-shrink-0">{getEventIcon(event.type)}</div>
+                    <div className="text-2xl flex-shrink-0">
+                      {event.type === "AGENT_REGISTERED" && "🤖"}
+                      {event.type === "DISPUTE_FILED" && "📋"}
+                      {event.type === "EVIDENCE_SUBMITTED" && "📎"}
+                      {event.type === "CASE_STATUS_UPDATED" && "✅"}
+                      {!["AGENT_REGISTERED", "DISPUTE_FILED", "EVIDENCE_SUBMITTED", "CASE_STATUS_UPDATED"].includes(event.type) && "📌"}
+                    </div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="secondary" className={`${getEventColor(event.type)} text-xs font-medium`}>
@@ -371,14 +413,13 @@ export default function DashboardPage() {
                           })}
                         </span>
                       </div>
-                      {event.payload && (
-                        <p className="text-sm text-slate-700 line-clamp-2">
-                          {typeof event.payload === 'object' ? JSON.stringify(event.payload).substring(0, 100) : event.payload}...
-                        </p>
-                      )}
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        {formatEventDescription(event)}
+                      </p>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
                 <div className="pt-2">
                   <Button
                     variant="outline"
