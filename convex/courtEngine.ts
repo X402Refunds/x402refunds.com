@@ -109,9 +109,9 @@ export const runCourtWorkflow = mutation({
     const result = await processCase(ctx, {
       caseData: {
         id: args.caseId,
-        parties: caseData.parties,
+        parties: caseData.parties || [caseData.plaintiff, caseData.defendant],
         type: caseData.type,
-        jurisdictionTags: caseData.jurisdictionTags
+        jurisdictionTags: caseData.jurisdictionTags || []
       },
       evidenceManifests: evidence
     });

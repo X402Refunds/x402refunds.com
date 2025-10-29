@@ -62,21 +62,24 @@ export const fileDispute = mutation({
     const now = Date.now();
     const panelDue = now + 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    const caseData = {
+    const caseData: any = {
       plaintiff: args.plaintiff,
       defendant: args.defendant,
       parties: [args.plaintiff, args.defendant], // For backward compatibility
       status: "FILED" as const,
       type: args.type,
       filedAt: now,
+      description: args.description || `Dispute filed: ${args.type}`,
+      amount: args.claimedDamages,
+      claimedDamages: args.claimedDamages, // Keep for backward compat
       jurisdictionTags: args.jurisdictionTags,
       evidenceIds: args.evidenceIds,
       deadlines: {
         panelDue,
+        finalDecisionDue: panelDue,
       },
-      description: args.description,
-      claimedDamages: args.claimedDamages,
       breachDetails: args.breachDetails,
+      humanReviewRequired: false, // Default to no review
     };
 
     const caseId = await ctx.db.insert("cases", caseData);
@@ -168,9 +171,13 @@ export const getCasesByStatus = query({
 export const getCasesByParty = query({
   args: { agentDid: v.string() },
   handler: async (ctx, args) => {
-    // Since parties is an array, we need to filter manually
+    // Check both parties array (legacy) and plaintiff/defendant fields (new)
     const allCases = await ctx.db.query("cases").collect();
-    return allCases.filter(case_ => case_.parties.includes(args.agentDid));
+    return allCases.filter(case_ =>
+      case_.parties?.includes(args.agentDid) ||
+      case_.plaintiff === args.agentDid ||
+      case_.defendant === args.agentDid
+    );
   },
 });
 

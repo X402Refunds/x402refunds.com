@@ -62,10 +62,10 @@ export default function DisputeDetailPage() {
   };
 
   // Helper function to get next steps
-  const getNextSteps = (status: string, deadlines: { panelDue?: number; appealDue?: number }) => {
+  const getNextSteps = (status: string, deadlines?: { analysisDue?: number; reviewDue?: number; finalDecisionDue?: number; panelDue?: number; appealDue?: number }) => {
     switch (status) {
       case "FILED":
-        return `Panel review due: ${formatTimestamp(deadlines?.panelDue || 0)}`;
+        return `Panel review due: ${formatTimestamp(deadlines?.panelDue || deadlines?.finalDecisionDue || 0)}`;
       case "PANELED":
         return "Awaiting panel decision";
       case "DECIDED":
@@ -78,15 +78,15 @@ export default function DisputeDetailPage() {
   };
 
   // Helper function to get dispute description
-  const getDisputeDescription = (caseDetails: { description?: string; parties: string[]; type: string; breachDetails?: { duration?: string; impactLevel?: string; affectedUsers?: number; slaRequirement?: string; actualPerformance?: string; rootCause?: string } }) => {
+  const getDisputeDescription = (caseDetails: { description?: string; parties?: string[]; plaintiff?: string; defendant?: string; type: string; breachDetails?: { duration?: string; impactLevel?: string; affectedUsers?: number; slaRequirement?: string; actualPerformance?: string; rootCause?: string } }) => {
     // Read directly from case data (no more digging through events!)
     if (caseDetails.description) {
       return caseDetails.description;
     }
-    
+
     // Fallback for cases without description - create detailed narrative
     const disputeType = caseDetails.type;
-    
+
     // Extract company names from DIDs for better readability
     const getCompanyName = (did: string) => {
       const parts = did.split(':');
@@ -96,9 +96,10 @@ export default function DisputeDetailPage() {
       }
       return "Unknown";
     };
-    
-    const provider = getCompanyName(caseDetails.parties[0]);
-    const consumer = getCompanyName(caseDetails.parties[1]);
+
+    const parties = caseDetails.parties || [caseDetails.plaintiff || '', caseDetails.defendant || ''];
+    const provider = getCompanyName(parties[0]);
+    const consumer = getCompanyName(parties[1]);
     
     switch (disputeType) {
       case "API_DOWNTIME":
@@ -183,7 +184,7 @@ export default function DisputeDetailPage() {
                 <div className="flex items-center gap-2 mt-1">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm">
-                    {caseDetails.parties.map(formatAgentName).join(" vs ")}
+                    {caseDetails.parties?.map(formatAgentName).join(" vs ") || `${formatAgentName(caseDetails.plaintiff)} vs ${formatAgentName(caseDetails.defendant)}`}
                   </p>
                 </div>
               </div>
@@ -371,13 +372,13 @@ export default function DisputeDetailPage() {
               </Badge>
             </div>
             
-            {caseDetails.deadlines && (
+            {caseDetails.deadlines && (caseDetails.deadlines.panelDue || caseDetails.deadlines.finalDecisionDue) && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Panel Review Due</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{formatTimestamp(caseDetails.deadlines.panelDue)}</p>
+                    <p className="text-sm">{formatTimestamp(caseDetails.deadlines.panelDue || caseDetails.deadlines.finalDecisionDue || 0)}</p>
                   </div>
                 </div>
                 {caseDetails.deadlines.appealDue && (
@@ -621,7 +622,7 @@ export default function DisputeDetailPage() {
                 <p className="text-sm font-medium mb-2">Case Information</p>
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>Case ID: <span className="font-mono">{caseId}</span></p>
-                  <p>Jurisdiction: {caseDetails.jurisdictionTags.join(", ")}</p>
+                  <p>Jurisdiction: {caseDetails.jurisdictionTags?.join(", ") || "Not specified"}</p>
                   <p>Priority: Standard</p>
                 </div>
               </div>

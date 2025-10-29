@@ -118,7 +118,7 @@ export default function CasesPage() {
                     <div className="space-y-1 flex-1">
                       <div className="font-medium">{case_.description || "Untitled Case"}</div>
                       <div className="text-sm text-muted-foreground">
-                        Filed: {new Date(case_.filedAt).toLocaleString()} • Parties: {case_.parties.join(" vs ")}
+                        Filed: {new Date(case_.filedAt).toLocaleString()} • Parties: {case_.parties?.join(" vs ") || `${case_.plaintiff} vs ${case_.defendant}`}
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
