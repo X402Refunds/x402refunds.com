@@ -138,7 +138,7 @@ export const listApiKeys = query({
         lastUsedAt: k.lastUsedAt,
         expiresAt: k.expiresAt,
         createdAt: k.createdAt,
-        createdBy: k.createdBy || k.createdByUserId,
+        createdBy: k.createdBy,
       };
     });
   },
@@ -216,7 +216,7 @@ export const getApiKeyInfo = query({
     }
 
     // Get creator info
-    const creatorId = apiKey.createdBy || apiKey.createdByUserId;
+    const creatorId = apiKey.createdBy;
     const creator = creatorId ? await ctx.db.get(creatorId) : null;
     
     return {
@@ -425,9 +425,9 @@ export const getApiKeyAuditLog = query({
 // Ensure default API keys exist for an organization (Production and Development)
 // Used for migration and ensuring existing orgs have the default keys
 export const ensureDefaultApiKeys = mutation({
-  args: { 
+  args: {
     organizationId: v.id("organizations"),
-    createdByUserId: v.optional(v.id("users")), // Optional: first user of org
+    createdBy: v.optional(v.id("users")), // Optional: first user of org
   },
   handler: async (ctx, args) => {
     try {
@@ -442,7 +442,7 @@ export const ensureDefaultApiKeys = mutation({
         .query("apiKeys")
         .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
         .collect();
-      
+
       const now = Date.now();
       const keysCreated: string[] = [];
 
@@ -453,13 +453,13 @@ export const ensureDefaultApiKeys = mutation({
           key: productionKey,
           organizationId: args.organizationId,
           name: "Production",
-          createdBy: args.createdByUserId,
+          createdBy: args.createdBy,
           status: "active",
           createdAt: now,
         });
         keysCreated.push("Production");
       }
-      
+
       // Create Development key if doesn't exist
       if (!existingKeys.some(k => k.name === "Development")) {
         const developmentKey = createApiKeyString("csk_live_");
@@ -467,7 +467,7 @@ export const ensureDefaultApiKeys = mutation({
           key: developmentKey,
           organizationId: args.organizationId,
           name: "Development",
-          createdBy: args.createdByUserId,
+          createdBy: args.createdBy,
           status: "active",
           createdAt: now,
         });

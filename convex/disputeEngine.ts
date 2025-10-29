@@ -248,31 +248,13 @@ function generateBreachData(vendor: any, scenario: any) {
   }
 }
 
-// Initialize system owners (run once)
+// DEPRECATED: Initialize system owners (run once)
+// Owners table removed - ownerDid is now stored directly in agents table
 export const initializeOwners = mutation({
   args: {},
   handler: async (ctx) => {
-    console.log("🔧 Backend: Creating enterprise owners...");
-    
-    const ownerDids = Array.from(new Set([...AI_VENDORS, ...AI_CONSUMERS].map(a => a.ownerDid)));
-    
-    for (const ownerDid of Array.from(ownerDids)) {
-      try {
-        await ctx.db.insert("owners", {
-          did: ownerDid,
-          verificationTier: "premium",
-          pubkeys: [],
-          createdAt: Date.now(),
-        });
-        console.log(`✅ Created owner: ${ownerDid.split(':')[2]}`);
-      } catch (error: any) {
-        if (!error.message.includes("already exists")) {
-          console.log(`⚠️ Owner error: ${error.message}`);
-        }
-      }
-    }
-    
-    return { success: true };
+    console.warn("DEPRECATED: initializeOwners called. Owners table no longer exists. OwnerDid is stored directly in agents table.");
+    return { success: true, message: "DEPRECATED: Owners table removed" };
   }
 });
 

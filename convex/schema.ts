@@ -50,17 +50,13 @@ export default defineSchema({
 
   // API Keys
   apiKeys: defineTable({
-    key: v.optional(v.string()),
-    token: v.optional(v.string()), // DEPRECATED
+    key: v.string(),  // csk_live_xxx or csk_test_xxx
     organizationId: v.id("organizations"),
     name: v.string(),
     createdBy: v.optional(v.id("users")),
-    createdByUserId: v.optional(v.id("users")), // DEPRECATED: old field name
     lastUsedAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
-    status: v.optional(v.union(v.literal("active"), v.literal("revoked"))),
-    active: v.optional(v.boolean()), // DEPRECATED: old status field
-    permissions: v.optional(v.array(v.string())), // DEPRECATED: old permissions field
+    status: v.union(v.literal("active"), v.literal("revoked")),
     revokedAt: v.optional(v.number()),
     revokedBy: v.optional(v.id("users")),
     createdAt: v.number(),
@@ -69,13 +65,6 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_status", ["status"]),
 
-  // Agent owners (DEPRECATED - will be removed, kept for backward compat)
-  owners: defineTable({
-    did: v.string(),
-    verificationTier: v.union(v.literal("basic"), v.literal("verified"), v.literal("premium")),
-    pubkeys: v.array(v.string()),
-    createdAt: v.number(),
-  }).index("by_did", ["did"]),
 
   // Registered AI agents
   agents: defineTable({
@@ -116,88 +105,79 @@ export default defineSchema({
   // ========================================
   // CASES TABLE - SINGLE SOURCE OF TRUTH
   // ========================================
-  // Consolidated: Payment disputes + Agent disputes + All dispute types
+  // Supports TWO dispute types:
+  // 1. PAYMENT - Payment/transaction disputes (ACP/ATXP/Stripe integration)
+  // 2. GENERAL - Everything else (contracts, SLAs, service quality, API downtime, etc.)
+  //              Can be agentic OR traditional - we're Zendesk for all disputes, not just payments
   cases: defineTable({
-    // Universal fields (all dispute types)
-    plaintiff: v.string(),
-    defendant: v.string(),
-    parties: v.optional(v.array(v.string())), // DEPRECATED: legacy field
+    // Universal fields
+    plaintiff: v.string(),  // Who filed the dispute (consumer, agent DID, user email, company)
+    defendant: v.string(),  // Who is being disputed (merchant, agent DID, company name, service provider)
 
     status: v.union(
-      v.literal("FILED"),
-      v.literal("ANALYZED"),  // AI completed analysis
-      v.literal("IN_REVIEW"), // Human reviewing
-      v.literal("DECIDED"),
-      v.literal("CLOSED"),
-      // DEPRECATED status values (for backward compatibility)
-      v.literal("AUTORULED"),  // Old name for ANALYZED
-      v.literal("PANELED")     // Old status when assigned to panel
+      v.literal("FILED"),      // Just filed, awaiting AI analysis
+      v.literal("ANALYZED"),   // AI completed analysis
+      v.literal("IN_REVIEW"),  // Human reviewing (for low confidence or escalated cases)
+      v.literal("DECIDED"),    // Final decision made
+      v.literal("CLOSED")      // Case closed
     ),
 
-    // Dispute type determines which optional fields are populated
-    // Allow any string for backward compatibility with old data
-    type: v.string(),
+    // TWO MAIN TYPES: "PAYMENT" or "GENERAL"
+    type: v.union(
+      v.literal("PAYMENT"),   // Agentic payment disputes (ACP/ATXP merchants)
+      v.literal("GENERAL")    // Traditional disputes (like Zendesk)
+    ),
 
     filedAt: v.number(),
     description: v.string(),
-    amount: v.optional(v.number()), // Transaction amount OR claimed damages (optional for backward compat)
+    amount: v.optional(v.number()), // Transaction amount OR claimed damages
     currency: v.optional(v.string()),
 
-    // Legacy fields for backward compatibility
-    claimedDamages: v.optional(v.number()), // DEPRECATED: use amount instead
-    breachDetails: v.optional(v.object({
-      duration: v.optional(v.string()),
-      impactLevel: v.optional(v.string()),
-      affectedUsers: v.optional(v.number()),
-      slaRequirement: v.optional(v.string()),
-      actualPerformance: v.optional(v.string()),
-      rootCause: v.optional(v.string()),
-    })),
-    panelId: v.optional(v.id("panels")), // DEPRECATED
+    // GENERAL dispute fields (for non-payment disputes)
+    // Use for: contracts, SLAs, service quality, API downtime, delivery, support, etc.
+    // Works for both agentic AND traditional disputes
+    category: v.optional(v.string()), // "contract_breach", "sla_violation", "service_quality", "api_downtime", "delivery", "support", etc.
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))),
+    tags: v.optional(v.array(v.string())), // Custom tags for categorization
+    attachments: v.optional(v.array(v.object({
+      url: v.string(),
+      filename: v.string(),
+      contentType: v.optional(v.string()),
+      size: v.optional(v.number()),
+    }))),
 
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
 
     // Deadlines
-    deadlines: v.optional(v.object({
-      analysisDue: v.optional(v.number()),
-      reviewDue: v.optional(v.number()),
-      finalDecisionDue: v.optional(v.number()), // Made optional for backward compat
-      panelDue: v.optional(v.number()), // DEPRECATED: old field name
-      appealDue: v.optional(v.number()), // DEPRECATED
-    })),
+    analysisDue: v.optional(v.number()),    // When AI should complete analysis
+    reviewDue: v.optional(v.number()),      // When human review should be done
+    finalDecisionDue: v.number(),           // Final deadline (e.g., Regulation E: 10 business days)
 
-    // AI Analysis (universal for all dispute types)
+    // AI Analysis
     aiRecommendation: v.optional(v.object({
-      verdict: v.string(), // CONSUMER_WINS, MERCHANT_WINS, PLAINTIFF_WINS, etc.
-      confidence: v.number(),
+      verdict: v.string(),      // CONSUMER_WINS, MERCHANT_WINS, PLAINTIFF_WINS, DEFENDANT_WINS
+      confidence: v.number(),   // 0-1
       reasoning: v.string(),
       analyzedAt: v.number(),
       similarCases: v.array(v.id("cases")),
       tokensUsed: v.optional(v.number()),
     })),
 
-    // Human Review (infrastructure model - customer team makes final decision)
-    reviewerOrganizationId: v.optional(v.id("organizations")),
-    reviewerEmail: v.optional(v.string()),
-    humanReviewRequired: v.optional(v.boolean()), // Made optional for backward compat (defaults to false)
+    // Human Review (Infrastructure Model - customer team makes final decision)
+    reviewerOrganizationId: v.optional(v.id("organizations")),  // Which org reviews this
+    humanReviewRequired: v.boolean(),        // Does this need human review?
     humanReviewedAt: v.optional(v.number()),
-    humanReviewedBy: v.optional(v.string()),
+    humanReviewedBy: v.optional(v.string()), // Email/name of reviewer
     humanAgreesWithAI: v.optional(v.boolean()),
     humanOverrideReason: v.optional(v.string()),
 
     // Final Decision
     finalVerdict: v.optional(v.string()),
     decidedAt: v.optional(v.number()),
-    ruling: v.optional(v.object({
-      verdict: v.string(),
-      winner: v.optional(v.string()), // Agent DID of winner
-      auto: v.boolean(),
-      decidedAt: v.number(),
-    })),
 
     // ========================================
-    // PAYMENT-SPECIFIC FIELDS (type=PAYMENT_DISPUTE)
+    // PAYMENT-SPECIFIC FIELDS (type=PAYMENT only)
     // ========================================
     paymentDetails: v.optional(v.object({
       transactionId: v.string(),
@@ -214,7 +194,7 @@ export default defineSchema({
         v.literal("quality_issue"),
         v.literal("other")
       ),
-      regulationEDeadline: v.number(),
+      regulationEDeadline: v.number(),      // Regulation E compliance (10 business days)
       pricingTier: v.union(
         v.literal("micro"),      // < $1: $0.10
         v.literal("small"),      // $1-10: $0.25
@@ -223,44 +203,22 @@ export default defineSchema({
         v.literal("enterprise")  // > $1k: $25.00
       ),
       disputeFee: v.number(),
-      disputeFeeBreakdown: v.optional(v.object({
-        baseFee: v.number(),
-        tokenOverageFee: v.number(),
-        totalFee: v.number(),
-      })),
-      // Party metadata for customer identification
+      // Party metadata (for customer to identify users in their system)
       plaintiffMetadata: v.optional(v.object({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
-        customerId: v.optional(v.string()),
-        walletAddress: v.optional(v.string()),
+        customerId: v.optional(v.string()),  // Customer's internal user ID
       })),
       defendantMetadata: v.optional(v.object({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
-        merchantId: v.optional(v.string()),
-        walletAddress: v.optional(v.string()),
+        merchantId: v.optional(v.string()),  // Customer's internal merchant ID
       })),
     })),
 
-    // ========================================
-    // SLA-SPECIFIC FIELDS (type=SLA_BREACH)
-    // ========================================
-    slaDetails: v.optional(v.object({
-      duration: v.optional(v.string()),
-      impactLevel: v.optional(v.string()),
-      affectedUsers: v.optional(v.number()),
-      slaRequirement: v.optional(v.string()),
-      actualPerformance: v.optional(v.string()),
-      rootCause: v.optional(v.string()),
-    })),
-
-    // Jurisdiction tags (for ADP compliance)
-    jurisdictionTags: v.optional(v.array(v.string())),
-
     // Metadata
-    mock: v.optional(v.boolean()), // Demo/test data flag
-    createdAt: v.optional(v.number()), // Some old records may not have this
+    mock: v.optional(v.boolean()),
+    createdAt: v.number(),
   })
     .index("by_status", ["status"])
     .index("by_type", ["type"])
@@ -269,7 +227,8 @@ export default defineSchema({
     .index("by_defendant", ["defendant"])
     .index("by_reviewer_org", ["reviewerOrganizationId"])
     .index("by_needs_review", ["reviewerOrganizationId", "humanReviewRequired"])
-    .index("by_status_and_type", ["status", "type"]),
+    .index("by_status_and_type", ["status", "type"])
+    .index("by_category", ["category"]),  // For GENERAL disputes
 
   // Evidence manifests (ADP-compliant)
   evidenceManifests: defineTable({
@@ -337,141 +296,7 @@ export default defineSchema({
     .index("by_case_sequence", ["caseId", "sequenceNumber"]),
 
   // ========================================
-  // DEPRECATED TABLES - Kept for backward compatibility
-  // ========================================
-
-  // Judges (DEPRECATED - 95% AI automation, no human judges used)
-  judges: defineTable({
-    did: v.string(),
-    name: v.string(),
-    specialties: v.array(v.string()),
-    reputation: v.number(),
-    casesJudged: v.number(),
-    status: v.union(v.literal("active"), v.literal("inactive")),
-    createdAt: v.number(),
-  })
-    .index("by_did", ["did"])
-    .index("by_status", ["status"]),
-
-  // Judge panels (DEPRECATED - not used in infrastructure model)
-  panels: defineTable({
-    judgeIds: v.array(v.string()),
-    assignedAt: v.number(),
-    dueAt: v.number(),
-    votes: v.optional(v.array(v.object({
-      judgeId: v.string(),
-      code: v.string(),
-      reasons: v.string(),
-    }))),
-  })
-    .index("by_assigned_at", ["assignedAt"])
-    .index("by_due_at", ["dueAt"]),
-
-  // Functional evidence (DEPRECATED - over-engineered, not used)
-  functionalEvidence: defineTable({
-    evidenceId: v.id("evidenceManifests"),
-    agentDid: v.string(),
-    functionalType: v.string(),
-    physicalContext: v.optional(v.any()),
-    voiceContext: v.optional(v.any()),
-    codingContext: v.optional(v.any()),
-    financialContext: v.optional(v.any()),
-    healthcareContext: v.optional(v.any()),
-    generalContext: v.optional(v.any()),
-    createdAt: v.number(),
-  })
-    .index("by_evidence", ["evidenceId"])
-    .index("by_agent", ["agentDid"])
-    .index("by_functional_type", ["functionalType"]),
-
-  // Payment disputes (DEPRECATED - being migrated to cases table)
-  // TODO: Remove this table after migration is complete
-  paymentDisputes: defineTable({
-    caseId: v.id("cases"),
-    transactionId: v.string(),
-    transactionHash: v.optional(v.string()),
-    amount: v.number(),
-    currency: v.string(),
-    paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
-    plaintiffMetadata: v.optional(v.object({
-      email: v.optional(v.string()),
-      name: v.optional(v.string()),
-      customerId: v.optional(v.string()),
-      walletAddress: v.optional(v.string()),
-    })),
-    defendantMetadata: v.optional(v.object({
-      email: v.optional(v.string()),
-      name: v.optional(v.string()),
-      merchantId: v.optional(v.string()),
-      walletAddress: v.optional(v.string()),
-    })),
-    disputeReason: v.union(
-      v.literal("unauthorized"),
-      v.literal("service_not_rendered"),
-      v.literal("amount_incorrect"),
-      v.literal("duplicate_charge"),
-      v.literal("fraud"),
-      v.literal("api_timeout"),
-      v.literal("rate_limit_breach"),
-      v.literal("quality_issue"),
-      v.literal("other")
-    ),
-    regulationEDeadline: v.number(),
-    autoResolveEligible: v.boolean(),
-    aiRulingConfidence: v.number(),
-    aiRecommendation: v.optional(v.union(
-      v.literal("CONSUMER_WINS"),
-      v.literal("MERCHANT_WINS"),
-      v.literal("PARTIAL_REFUND"),
-      v.literal("NEED_REVIEW")
-    )),
-    aiReasoning: v.optional(v.string()),
-    similarPastCases: v.optional(v.array(v.id("paymentDisputes"))),
-    disputeFee: v.optional(v.number()),
-    disputeFeeBreakdown: v.optional(v.object({
-      baseFee: v.number(),
-      tokenOverageFee: v.number(),
-      totalFee: v.number(),
-    })),
-    tokensUsed: v.optional(v.object({
-      evidenceInput: v.number(),
-      aiAnalysis: v.number(),
-      total: v.number(),
-    })),
-    pricingTier: v.optional(v.union(
-      v.literal("micro"),
-      v.literal("small"),
-      v.literal("medium"),
-      v.literal("large"),
-      v.literal("enterprise")
-    )),
-    reviewerOrganizationId: v.optional(v.id("organizations")),
-    reviewerEmail: v.optional(v.string()),
-    customerFinalDecision: v.optional(v.union(
-      v.literal("CONSUMER_WINS"),
-      v.literal("MERCHANT_WINS"),
-      v.literal("PARTIAL_REFUND"),
-      v.literal("NEED_REVIEW")
-    )),
-    customerReviewNotes: v.optional(v.string()),
-    humanReviewRequired: v.boolean(),
-    humanReviewedAt: v.optional(v.number()),
-    humanReviewedBy: v.optional(v.string()),
-    humanAgreesWithAI: v.optional(v.boolean()),
-    humanOverrideReason: v.optional(v.string()),
-    userAppealed: v.boolean(),
-    appealOutcome: v.optional(v.string()),
-  })
-    .index("by_case", ["caseId"])
-    .index("by_protocol", ["paymentProtocol"])
-    .index("by_amount", ["amount"])
-    .index("by_auto_resolve", ["autoResolveEligible"])
-    .index("by_human_review", ["humanReviewRequired"])
-    .index("by_reviewer_org", ["reviewerOrganizationId"])
-    .index("by_needs_review", ["reviewerOrganizationId", "humanReviewRequired"]),
-
-  // ========================================
-  // SUPPORTING TABLES (5) - Analytics & Learning
+  // SUPPORTING TABLES - Analytics & Learning
   // ========================================
 
   // Agent reputation
@@ -526,43 +351,22 @@ export default defineSchema({
   })
     .index("by_key", ["key"]),
 
-  // Feedback signals for ML/RL
+  // Feedback signals for ML/RL (learning from human decisions)
   feedbackSignals: defineTable({
     caseId: v.id("cases"),
-    paymentDisputeId: v.optional(v.id("paymentDisputes")), // For payment disputes
     aiVerdict: v.string(),
     aiConfidence: v.number(),
     aiReasoning: v.string(),
     humanVerdict: v.string(),
     agreedWithAI: v.boolean(),
     overrideReason: v.optional(v.string()),
-    disputeType: v.string(),
-    amountRange: v.string(),
+    disputeType: v.string(),  // "PAYMENT" or "GENERAL"
+    amountRange: v.optional(v.string()),  // For payment disputes
+    category: v.optional(v.string()),     // For general disputes
     reviewTimeMs: v.number(),
     createdAt: v.number(),
   })
     .index("by_case", ["caseId"])
-    .index("by_payment_dispute", ["paymentDisputeId"])
     .index("by_agreement", ["agreedWithAI"])
     .index("by_type", ["disputeType"]),
-
-  // Dispute precedents (DEPRECATED - vector search, not actively used)
-  disputePrecedents: defineTable({
-    originalDisputeId: v.id("paymentDisputes"),
-    embedding: v.array(v.number()),
-    disputeType: v.string(),
-    amountRange: v.string(),
-    currency: v.string(),
-    outcomeVerdict: v.string(),
-    outcomeReason: v.string(),
-    humanConfirmed: v.boolean(),
-    appealedAndOverturned: v.boolean(),
-    confidenceScore: v.number(),
-    timesReferenced: v.number(),
-    userSatisfactionScore: v.optional(v.number()),
-    createdAt: v.number(),
-  })
-    .index("by_dispute", ["originalDisputeId"])
-    .index("by_confidence", ["confidenceScore"])
-    .index("by_amount_range", ["amountRange"]),
 });

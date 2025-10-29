@@ -211,21 +211,16 @@ export const submitEvidence = mutation({
       // Insert evidence manifest
       const evidenceId = await ctx.db.insert("evidenceManifests", manifest);
 
-      // Create functional evidence context if provided
-      if (args.functionalContext) {
-        await ctx.db.insert("functionalEvidence", {
-          evidenceId,
-          agentDid: args.agentDid,
-          functionalType: agent.functionalType || "general",
-          physicalContext: args.functionalContext.physicalContext,
-          voiceContext: args.functionalContext.voiceContext,
-          codingContext: args.functionalContext.codingContext,
-          financialContext: args.functionalContext.financialContext,
-          healthcareContext: args.functionalContext.healthcareContext,
-          generalContext: args.functionalContext.generalContext,
-          createdAt: now,
-        });
-      }
+      // DEPRECATED: Functional evidence table removed during schema consolidation
+      // if (args.functionalContext) {
+      //   await ctx.db.insert("functionalEvidence", {
+      //     evidenceId,
+      //     agentDid: args.agentDid,
+      //     functionalType: agent.functionalType || "general",
+      //     ...args.functionalContext,
+      //     createdAt: now,
+      //   });
+      // }
 
       // Apply functional type-specific validation
       await validateFunctionalEvidence(ctx, agent.functionalType || "general", args.functionalContext);
@@ -283,23 +278,19 @@ export const getEvidenceByCaseId = query({
       .collect();
     
     // Get functional evidence for each manifest
+    // DEPRECATED: Functional evidence table removed, return manifests directly
     const evidenceWithContext = await Promise.all(
       evidenceManifests.map(async (manifest) => {
-        const functionalEvidence = await ctx.db
-          .query("functionalEvidence")
-          .withIndex("by_evidence", (q) => q.eq("evidenceId", manifest._id))
-          .first();
-        
         return {
           ...manifest,
           submittedBy: manifest.agentDid,
           submittedAt: manifest.ts,
-          type: functionalEvidence?.functionalType || "general",
-          data: functionalEvidence,
+          type: "general", // Default type since functionalEvidence table removed
+          data: null, // No functional evidence data available
         };
       })
     );
-    
+
     return evidenceWithContext;
   },
 });
@@ -325,48 +316,28 @@ export const getRecentEvidence = query({
   },
 });
 
-// Enhanced evidence queries for functional types
+// DEPRECATED: Functional evidence table removed during schema consolidation
 export const getFunctionalEvidence = query({
   args: { evidenceId: v.id("evidenceManifests") },
   handler: async (ctx, args) => {
     const baseEvidence = await ctx.db.get(args.evidenceId);
-    
-    const functionalEvidence = await ctx.db
-      .query("functionalEvidence")
-      .withIndex("by_evidence", (q) => q.eq("evidenceId", args.evidenceId))
-      .first();
-    
     return {
       ...baseEvidence,
-      functionalContext: functionalEvidence,
+      functionalContext: null, // Functional evidence table removed
     };
   },
 });
 
+// DEPRECATED: Functional evidence table removed during schema consolidation
 export const getEvidenceByFunctionalType = query({
-  args: { 
+  args: {
     functionalType: v.string(),
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const functionalEvidence = await ctx.db
-      .query("functionalEvidence")
-      .withIndex("by_functional_type", (q) => q.eq("functionalType", args.functionalType))
-      .order("desc")
-      .take(args.limit ?? 50);
-    
-    // Fetch base evidence for each functional evidence
-    const evidenceWithContext = await Promise.all(
-      functionalEvidence.map(async (funcEvidence) => {
-        const baseEvidence = await ctx.db.get(funcEvidence.evidenceId);
-        return {
-          ...baseEvidence,
-          functionalContext: funcEvidence,
-        };
-      })
-    );
-    
-    return evidenceWithContext;
+    // Functional evidence table removed - return empty array
+    console.warn("DEPRECATED: getEvidenceByFunctionalType called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 

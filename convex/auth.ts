@@ -164,7 +164,8 @@ export async function validateAuth(
 }
 
 
-// Create a new owner in the system
+// DEPRECATED: Owners table removed - ownerDid is now stored directly in agents table
+// Keeping this as a stub for backward compatibility with old code references
 export const createOwner = mutation({
   args: {
     did: v.string(),
@@ -174,31 +175,7 @@ export const createOwner = mutation({
     pubkeys: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    try {
-      console.info(`Creating owner ${args.did}`);
-
-      // Check if owner already exists
-      const existingOwner = await ctx.db
-        .query("owners")
-        .withIndex("by_did", (q) => q.eq("did", args.did))
-        .first();
-
-      if (existingOwner) {
-        throw new Error(`Owner ${args.did} already exists`);
-      }
-
-      const ownerId = await ctx.db.insert("owners", {
-        did: args.did,
-        verificationTier: args.verificationTier || "basic",
-        pubkeys: args.pubkeys || [],
-        createdAt: Date.now(),
-      });
-
-      console.info(`Created owner ${args.did} with ID: ${ownerId}`);
-      return ownerId;
-    } catch (error) {
-      console.error(`Failed to create owner ${args.did}:`, error);
-      throw new Error(`Failed to create owner: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    console.warn(`DEPRECATED: createOwner called for ${args.did}. Owners table no longer exists. OwnerDid is stored directly in agents table.`);
+    throw new Error("DEPRECATED: Owners table removed. OwnerDid is now stored directly in agents table.");
   },
 });

@@ -60,26 +60,22 @@ export const fileDispute = mutation({
     }
 
     const now = Date.now();
-    const panelDue = now + 7 * 24 * 60 * 60 * 1000; // 7 days
+    const finalDecisionDue = now + 7 * 24 * 60 * 60 * 1000; // 7 days
 
     const caseData: any = {
       plaintiff: args.plaintiff,
       defendant: args.defendant,
-      parties: [args.plaintiff, args.defendant], // For backward compatibility
       status: "FILED" as const,
-      type: args.type,
+      type: "GENERAL", // Agent disputes are now type GENERAL (vs PAYMENT)
       filedAt: now,
       description: args.description || `Dispute filed: ${args.type}`,
       amount: args.claimedDamages,
-      claimedDamages: args.claimedDamages, // Keep for backward compat
-      jurisdictionTags: args.jurisdictionTags,
       evidenceIds: args.evidenceIds,
-      deadlines: {
-        panelDue,
-        finalDecisionDue: panelDue,
-      },
-      breachDetails: args.breachDetails,
+      finalDecisionDue,
       humanReviewRequired: false, // Default to no review
+      category: args.type, // Store original dispute type as category
+      tags: args.jurisdictionTags, // Jurisdiction tags become tags
+      createdAt: now,
     };
 
     const caseId = await ctx.db.insert("cases", caseData);
@@ -125,17 +121,10 @@ export const getCase = query({
       .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
       .first();
 
-    // Get panel if exists
-    let panel = null;
-    if (case_.panelId) {
-      panel = await ctx.db.get(case_.panelId);
-    }
-
     return {
       ...case_,
       evidence,
       ruling,
-      panel,
     };
   },
 });
@@ -149,11 +138,11 @@ export const getCaseById = query({
 });
 
 export const getCasesByStatus = query({
-  args: { 
+  args: {
     status: v.union(
       v.literal("FILED"),
-      v.literal("AUTORULED"),
-      v.literal("PANELED"),
+      v.literal("ANALYZED"),
+      v.literal("IN_REVIEW"),
       v.literal("DECIDED"),
       v.literal("CLOSED")
     ),
@@ -171,10 +160,9 @@ export const getCasesByStatus = query({
 export const getCasesByParty = query({
   args: { agentDid: v.string() },
   handler: async (ctx, args) => {
-    // Check both parties array (legacy) and plaintiff/defendant fields (new)
+    // Check plaintiff/defendant fields
     const allCases = await ctx.db.query("cases").collect();
     return allCases.filter(case_ =>
-      case_.parties?.includes(args.agentDid) ||
       case_.plaintiff === args.agentDid ||
       case_.defendant === args.agentDid
     );
@@ -269,12 +257,11 @@ export const updateCaseStatus = mutation({
     caseId: v.id("cases"),
     status: v.union(
       v.literal("FILED"),
-      v.literal("AUTORULED"),
-      v.literal("PANELED"),
+      v.literal("ANALYZED"),
+      v.literal("IN_REVIEW"),
       v.literal("DECIDED"),
       v.literal("CLOSED")
     ),
-    panelId: v.optional(v.id("panels")),
   },
   handler: async (ctx, args) => {
     const case_ = await ctx.db.get(args.caseId);
@@ -282,12 +269,7 @@ export const updateCaseStatus = mutation({
       throw new Error("Case not found");
     }
 
-    const updates: any = { status: args.status };
-    if (args.panelId) {
-      updates.panelId = args.panelId;
-    }
-
-    await ctx.db.patch(args.caseId, updates);
+    await ctx.db.patch(args.caseId, { status: args.status });
 
     // Log custody event
     await createCustodyEvent(ctx, {
@@ -297,7 +279,6 @@ export const updateCaseStatus = mutation({
       payload: {
         oldStatus: case_.status,
         newStatus: args.status,
-        panelId: args.panelId,
       },
     });
 
@@ -322,14 +303,16 @@ export const updateCaseRuling = mutation({
       throw new Error("Case not found");
     }
 
+    // Update case with final verdict
     await ctx.db.patch(args.caseId, {
-      ruling: args.ruling,
+      finalVerdict: args.ruling.verdict,
+      decidedAt: args.ruling.decidedAt,
+      status: "DECIDED",
     });
 
     // Update reputation for both parties if we have a winner
     if (args.ruling.winner && case_.plaintiff && case_.defendant) {
-      const isSLAViolation = case_.type.toLowerCase().includes("sla") || 
-                             case_.breachDetails !== undefined;
+      const isSLAViolation = case_.category?.toLowerCase().includes("sla") || false;
 
       // Update plaintiff reputation
       await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {

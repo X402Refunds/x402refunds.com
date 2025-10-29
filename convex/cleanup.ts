@@ -11,7 +11,7 @@ export const deleteNonPaymentDisputes = mutation({
     let deleted = 0;
 
     for (const caseDoc of cases) {
-      if (caseDoc.type !== "PAYMENT_DISPUTE") {
+      if (caseDoc.type !== "PAYMENT") {
         await ctx.db.delete(caseDoc._id);
         deleted++;
         console.log(`Deleted ${caseDoc.type} case: ${caseDoc._id}`);

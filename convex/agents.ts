@@ -46,27 +46,11 @@ export const joinAgent = mutation({
         throw new Error("Organization not found");
       }
 
-      // 2. Get or create owner DID for organization
+      // 2. Generate owner DID for organization (no separate owners table needed)
       // Type assertion: we know org is an organization document
       const orgName = (org as any).name as string;
       const orgDomain = ((org as any).domain as string | undefined || orgName).toLowerCase().replace(/[^a-z0-9]/g, '-');
       const ownerDid = `did:owner:org-${orgDomain}`;
-      
-      const existingOwner = await ctx.db
-        .query("owners")
-        .withIndex("by_did", (q) => q.eq("did", ownerDid))
-        .first();
-      
-      if (!existingOwner) {
-        // Create owner for organization
-        await ctx.db.insert("owners", {
-          did: ownerDid,
-          verificationTier: "verified", // Orgs are auto-verified via API key
-          pubkeys: [],
-          createdAt: Date.now(),
-        });
-        console.info(`Created owner DID for organization: ${ownerDid}`);
-      }
 
       // 3. Generate agent DID
       const timestamp = Date.now();
@@ -630,26 +614,10 @@ export const registerAgentManual = mutation({
         throw new Error("Organization not found");
       }
 
-      // 2. Get or create owner DID for organization
+      // 2. Generate owner DID for organization (no separate owners table needed)
       const orgName = org.name;
       const orgDomain = (org.domain || orgName).toLowerCase().replace(/[^a-z0-9]/g, '-');
       const ownerDid = `did:owner:org-${orgDomain}`;
-      
-      const existingOwner = await ctx.db
-        .query("owners")
-        .withIndex("by_did", (q) => q.eq("did", ownerDid))
-        .first();
-      
-      if (!existingOwner) {
-        // Create owner for organization
-        await ctx.db.insert("owners", {
-          did: ownerDid,
-          verificationTier: "verified",
-          pubkeys: [args.publicKey],
-          createdAt: Date.now(),
-        });
-        console.info(`Created owner DID for organization: ${ownerDid}`);
-      }
 
       // 3. Generate agent DID
       const timestamp = Date.now();

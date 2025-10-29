@@ -109,13 +109,13 @@ export const runCourtWorkflow = mutation({
     const result = await processCase(ctx, {
       caseData: {
         id: args.caseId,
-        parties: caseData.parties || [caseData.plaintiff, caseData.defendant],
+        parties: [caseData.plaintiff, caseData.defendant],
         type: caseData.type,
-        jurisdictionTags: caseData.jurisdictionTags || []
+        jurisdictionTags: caseData.tags || []
       },
       evidenceManifests: evidence
     });
-    
+
     // Create ruling
     const ruling = await ctx.db.insert("rulings", {
       caseId: args.caseId,
@@ -128,16 +128,13 @@ export const runCourtWorkflow = mutation({
         merkleRoot: "simple_hash_" + args.caseId,
       }
     });
-    
+
     // Update case status
-    const newStatus = result.verdict === "NEED_PANEL" ? "PANELED" : "DECIDED";
+    const newStatus = result.verdict === "NEED_PANEL" ? "IN_REVIEW" : "DECIDED";
     await ctx.db.patch(args.caseId, {
       status: newStatus,
-      ruling: {
-        verdict: "UPHELD", // Cases table still uses old format
-        auto: result.auto,
-        decidedAt: Date.now()
-      }
+      finalVerdict: result.verdict,
+      decidedAt: Date.now()
     });
     
     // Log the status update event for dashboard tracking

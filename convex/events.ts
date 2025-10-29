@@ -53,23 +53,16 @@ export const getDisputeActivityEvents = query({
         if (event.type === "DISPUTE_FILED" && event.caseId) {
           const caseData = await ctx.db.get(event.caseId);
 
-          // Also fetch payment dispute data if this is a payment dispute
+          // Also fetch payment dispute data if this is a payment dispute (type=PAYMENT case)
           let paymentDisputeData = undefined;
-          if (event.caseId) {
-            const paymentDispute = await ctx.db
-              .query("paymentDisputes")
-              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
-              .first();
-
-            if (paymentDispute) {
-              paymentDisputeData = {
-                amount: paymentDispute.amount,
-                currency: paymentDispute.currency,
-                pricingTier: paymentDispute.pricingTier,
-                disputeFee: paymentDispute.disputeFee,
-                isMicroDispute: paymentDispute.amount < 1,
-              };
-            }
+          if (event.caseId && caseData?.type === "PAYMENT") {
+            paymentDisputeData = {
+              amount: caseData.amount || 0,
+              currency: caseData.currency || "USD",
+              pricingTier: caseData.paymentDetails?.pricingTier || "micro",
+              disputeFee: caseData.paymentDetails?.disputeFee || 0,
+              isMicroDispute: (caseData.amount || 0) < 1,
+            };
           }
 
           return {
@@ -119,23 +112,16 @@ export const getRecentEvents = query({
         if (event.type === "DISPUTE_FILED" && event.caseId) {
           const caseData = await ctx.db.get(event.caseId);
 
-          // Also fetch payment dispute data if this is a payment dispute
+          // Also fetch payment dispute data if this is a payment dispute (type=PAYMENT case)
           let paymentDisputeData = undefined;
-          if (event.caseId) {
-            const paymentDispute = await ctx.db
-              .query("paymentDisputes")
-              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
-              .first();
-
-            if (paymentDispute) {
-              paymentDisputeData = {
-                amount: paymentDispute.amount,
-                currency: paymentDispute.currency,
-                pricingTier: paymentDispute.pricingTier,
-                disputeFee: paymentDispute.disputeFee,
-                isMicroDispute: paymentDispute.amount < 1,
-              };
-            }
+          if (event.caseId && caseData?.type === "PAYMENT") {
+            paymentDisputeData = {
+              amount: caseData.amount || 0,
+              currency: caseData.currency || "USD",
+              pricingTier: caseData.paymentDetails?.pricingTier || "micro",
+              disputeFee: caseData.paymentDetails?.disputeFee || 0,
+              isMicroDispute: (caseData.amount || 0) < 1,
+            };
           }
 
           return {
@@ -211,10 +197,10 @@ export const getSystemStats = query({
       .collect();
     
     // Count resolved cases (DECIDED status) in the time period
-    const resolvedCases = recentCases.filter(c => 
-      c.status === "DECIDED" && 
-      c.ruling?.decidedAt && 
-      c.ruling.decidedAt > cutoffTime
+    const resolvedCases = recentCases.filter(c =>
+      c.status === "DECIDED" &&
+      c.decidedAt &&
+      c.decidedAt > cutoffTime
     );
     
     // Count events for activity metrics
@@ -357,23 +343,16 @@ export const getOrganizationEvents = query({
         if (event.caseId) {
           const caseData = await ctx.db.get(event.caseId);
 
-          // Fetch payment dispute data if applicable
+          // Fetch payment dispute data if applicable (type=PAYMENT case)
           let paymentDisputeData = undefined;
-          if (event.caseId) {
-            const paymentDispute = await ctx.db
-              .query("paymentDisputes")
-              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
-              .first();
-
-            if (paymentDispute) {
-              paymentDisputeData = {
-                amount: paymentDispute.amount,
-                currency: paymentDispute.currency,
-                pricingTier: paymentDispute.pricingTier,
-                disputeFee: paymentDispute.disputeFee,
-                isMicroDispute: paymentDispute.amount < 1,
-              };
-            }
+          if (event.caseId && caseData?.type === "PAYMENT") {
+            paymentDisputeData = {
+              amount: caseData.amount || 0,
+              currency: caseData.currency || "USD",
+              pricingTier: caseData.paymentDetails?.pricingTier || "micro",
+              disputeFee: caseData.paymentDetails?.disputeFee || 0,
+              isMicroDispute: (caseData.amount || 0) < 1,
+            };
           }
 
           return {
@@ -432,16 +411,16 @@ export const getOrganizationStats = query({
     // Calculate stats
     const resolvedCases = orgCases.filter(c =>
       c.status === "DECIDED" &&
-      c.ruling?.decidedAt &&
-      c.ruling.decidedAt > cutoffTime
+      c.decidedAt &&
+      c.decidedAt > cutoffTime
     );
 
     // Calculate average resolution time for resolved cases
     let avgResolutionTimeMinutes = 0;
     if (resolvedCases.length > 0) {
       const totalResolutionTime = resolvedCases.reduce((sum, c) => {
-        if (c.ruling?.decidedAt) {
-          return sum + (c.ruling.decidedAt - c.filedAt);
+        if (c.decidedAt) {
+          return sum + (c.decidedAt - c.filedAt);
         }
         return sum;
       }, 0);
@@ -449,7 +428,7 @@ export const getOrganizationStats = query({
     }
 
     const pendingCases = orgCases.filter(c =>
-      c.status === "FILED" || c.status === "PANELED"
+      c.status === "FILED" || c.status === "IN_REVIEW"
     ).length;
 
     return {

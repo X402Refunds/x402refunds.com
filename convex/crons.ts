@@ -152,20 +152,26 @@ export const updateSystemStatsCache = internalMutation({
       const startTime = Date.now();
       console.log("📊 Updating cached system statistics...");
 
-      // Get payment disputes
-      const allPaymentDisputes = await ctx.db.query("paymentDisputes").collect();
+      // Get payment disputes (type=PAYMENT cases)
+      const allPaymentDisputes = await ctx.db
+        .query("cases")
+        .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+        .collect();
 
       // Calculate stats
       const totalDisputes = allPaymentDisputes.length;
-      const microDisputes = allPaymentDisputes.filter(d => d.amount < 1).length;
+      const microDisputes = allPaymentDisputes.filter(d => (d.amount || 0) < 1).length;
       const autoResolved = allPaymentDisputes.filter(d => !d.humanReviewRequired).length;
 
       // Calculate total fees
-      const totalFees = allPaymentDisputes.reduce((sum, d) => sum + (d.disputeFee || 0), 0);
+      const totalFees = allPaymentDisputes.reduce((sum, d) => {
+        const fee = d.paymentDetails?.disputeFee || 0;
+        return sum + fee;
+      }, 0);
 
       // Group by verdict
       const verdictCounts = allPaymentDisputes.reduce((acc: any, d) => {
-        const verdict = d.aiRecommendation || d.customerFinalDecision || "PENDING";
+        const verdict = d.aiRecommendation?.verdict || d.finalVerdict || "PENDING";
         acc[verdict] = (acc[verdict] || 0) + 1;
         return acc;
       }, {});
@@ -285,17 +291,12 @@ export const processFiledCases = internalMutation({
 // =================================================================
 
 /**
- * Get organization for a case (from payment dispute if exists)
+ * Get organization for a case
  */
 async function getOrgForCase(ctx: any, caseData: any) {
-  // Try to find payment dispute first
-  const paymentDispute = await ctx.db
-    .query("paymentDisputes")
-    .withIndex("by_case", (q: any) => q.eq("caseId", caseData._id))
-    .first();
-
-  if (paymentDispute?.reviewerOrganizationId) {
-    return await ctx.db.get(paymentDispute.reviewerOrganizationId);
+  // Cases now have reviewerOrganizationId directly
+  if (caseData?.reviewerOrganizationId) {
+    return await ctx.db.get(caseData.reviewerOrganizationId);
   }
 
   // Fallback: return null (use default settings)
@@ -306,17 +307,9 @@ async function getOrgForCase(ctx: any, caseData: any) {
  * Check if case already has AI recommendation
  */
 async function hasAIRecommendation(ctx: any, caseId: any) {
-  // Check case table for agent disputes
+  // Check case table for AI recommendation (single source of truth)
   const caseData = await ctx.db.get(caseId);
-  if (caseData?.aiRecommendation) return true;
-
-  // Check payment disputes table
-  const paymentDispute = await ctx.db
-    .query("paymentDisputes")
-    .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
-    .first();
-
-  return !!paymentDispute?.aiRecommendation;
+  return !!caseData?.aiRecommendation;
 }
 
 /**
@@ -330,15 +323,19 @@ export const autoApproveOverdueDisputes = internalMutation({
       const startTime = Date.now();
       console.log("🕐 Checking for overdue disputes to auto-approve...");
 
-      // Find payment disputes with AI recommendations but no human review
+      // Find payment disputes (type=PAYMENT cases) with AI recommendations but no human review
       // that are past their Regulation E deadline
       const now = Date.now();
-      const allDisputes = await ctx.db.query("paymentDisputes").collect();
+      const allDisputes = await ctx.db
+        .query("cases")
+        .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+        .collect();
 
       const overdueDisputes = allDisputes.filter((d) =>
         d.humanReviewedAt === undefined &&
         d.aiRecommendation !== undefined &&
-        d.regulationEDeadline < now
+        d.paymentDetails?.regulationEDeadline &&
+        d.paymentDetails.regulationEDeadline < now
       );
 
       if (overdueDisputes.length === 0) {
@@ -353,11 +350,13 @@ export const autoApproveOverdueDisputes = internalMutation({
 
       for (const dispute of overdueDisputes) {
         try {
-          await ctx.runMutation(api.paymentDisputes.autoApproveAIRecommendation, {
-            paymentDisputeId: dispute._id,
-          });
-          approved++;
-          console.log(`  ✅ Auto-approved dispute ${dispute._id} (${(now - dispute.regulationEDeadline) / (24 * 60 * 60 * 1000)} days overdue)`);
+          // TODO: Implement auto-approve logic for consolidated cases table
+          // await ctx.runMutation(api.paymentDisputes.autoApproveAIRecommendation, {
+          //   paymentDisputeId: dispute._id,
+          // });
+          console.warn(`  ⚠️  Auto-approve not yet implemented for consolidated cases table: ${dispute._id}`);
+          // approved++;
+          // console.log(`  ✅ Auto-approved dispute ${dispute._id} (${(now - (dispute.paymentDetails?.regulationEDeadline || 0)) / (24 * 60 * 60 * 1000)} days overdue)`);
         } catch (error: any) {
           errors++;
           console.error(`  ❌ Failed to auto-approve ${dispute._id}:`, error.message);
