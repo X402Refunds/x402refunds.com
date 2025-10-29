@@ -4,16 +4,16 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 // =================================================================
-// PAYMENT DISPUTE DEMO GENERATION
+// PAYMENT DISPUTE DEMO GENERATION (DISABLED)
 // =================================================================
 
-// Generate mock payment disputes every 20 minutes for demo
-crons.interval(
-  "payment dispute demo generation",
-  { minutes: 20 },
-  internal.crons.generatePaymentDisputeDemo,
-  {}
-);
+// DISABLED: Generate mock payment disputes every 20 minutes for demo
+// crons.interval(
+//   "payment dispute demo generation",
+//   { minutes: 20 },
+//   internal.crons.generatePaymentDisputeDemo,
+//   {}
+// );
 
 // Update cached system statistics every 10 minutes
 crons.interval(
