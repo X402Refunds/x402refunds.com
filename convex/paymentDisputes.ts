@@ -184,11 +184,7 @@ export const receivePaymentDispute = mutation({
         defendantMetadata: args.defendantMetadata,
         disputeFee: feeBreakdown.totalFee,
         pricingTier: feeBreakdown.tier,
-        tokensUsed: {
-          evidenceInput: validation.estimatedTokens,
-          aiAnalysis: 0, // Will be updated by AI processing
-          total: validation.estimatedTokens,
-        },
+        // TODO: Add tokensUsed to schema if needed for billing tracking
       },
     });
     
@@ -499,59 +495,51 @@ export const findSimilarDisputes = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Find disputes with same reason and similar amount range
+    // Find payment dispute cases with same reason and similar amount range
     const amountRange = getAmountRange(args.amount);
-    
+
     const similarDisputes = await ctx.db
-      .query("paymentDisputes")
-      .filter(q => 
+      .query("cases")
+      .filter(q =>
         q.and(
-          q.eq(q.field("disputeReason"), args.disputeReason),
+          q.eq(q.field("type"), "PAYMENT"),
           q.eq(q.field("currency"), args.currency)
         )
       )
       .take(args.limit || 10);
-    
-    // Filter by amount range manually
-    const filtered = similarDisputes.filter(d => 
-      getAmountRange(d.amount) === amountRange
+
+    // Filter by amount range and disputeReason
+    const filtered = similarDisputes.filter(d =>
+      getAmountRange(d.amount || 0) === amountRange &&
+      d.paymentDetails?.disputeReason === args.disputeReason
     );
-    
-    // Enrich with case data
-    const enriched = await Promise.all(
-      filtered.map(async (dispute) => {
-        const caseData = await ctx.db.get(dispute.caseId);
-        return { ...dispute, caseData };
-      })
-    );
-    
-    // Only return resolved cases (that have rulings)
-    return enriched.filter(d => 
-      d.caseData?.ruling?.verdict
+
+    // Only return resolved cases (that have final verdicts)
+    return filtered.filter(d =>
+      d.finalVerdict
     ).slice(0, args.limit || 5);
   },
 });
 
 /**
- * Get payment dispute with case details
+ * Get payment dispute (now returns case directly)
+ * DEPRECATED: Use cases.getCase instead
  */
 export const getPaymentDispute = query({
-  args: { paymentDisputeId: v.id("paymentDisputes") },
+  args: { paymentDisputeId: v.id("cases") }, // Changed to cases
   handler: async (ctx, args) => {
     return await ctx.db.get(args.paymentDisputeId);
   },
 });
 
 /**
- * Get payment dispute by case ID
+ * Get payment dispute by case ID (now returns case directly)
+ * DEPRECATED: Use cases.getCase instead
  */
 export const getPaymentDisputeByCaseId = query({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("paymentDisputes")
-      .withIndex("by_case", q => q.eq("caseId", args.caseId))
-      .first();
+    return await ctx.db.get(args.caseId);
   },
 });
 
@@ -564,19 +552,16 @@ export const getByCase = getPaymentDisputeByCaseId;
 export const getDisputesNeedingHumanReview = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    // Query cases table for payment disputes needing review
     const disputes = await ctx.db
-      .query("paymentDisputes")
-      .withIndex("by_human_review", q => q.eq("humanReviewRequired", true))
-      .filter(q => q.eq(q.field("humanReviewedAt"), undefined))
+      .query("cases")
+      .filter(q => q.and(
+        q.eq(q.field("type"), "PAYMENT"),
+        q.eq(q.field("humanReviewRequired"), true)
+      ))
       .take(args.limit || 20);
-    
-    // Enrich with case details
-    return await Promise.all(
-      disputes.map(async (dispute) => {
-        const caseData = await ctx.db.get(dispute.caseId);
-        return { ...dispute, caseData };
-      })
-    );
+
+    return disputes.filter(d => !d.humanReviewedAt);
   },
 });
 
@@ -585,7 +570,7 @@ export const getDisputesNeedingHumanReview = query({
  */
 export const humanReview = mutation({
   args: {
-    paymentDisputeId: v.id("paymentDisputes"),
+    paymentDisputeId: v.id("cases"), // Changed to cases
     userId: v.string(), // User performing review
     agreeWithAI: v.boolean(),
     finalVerdict: v.union(
@@ -608,34 +593,25 @@ export const humanReview = mutation({
       args.finalVerdict === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
       args.finalVerdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
 
-    // Update dispute with human review
+    // Update case with human review
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
       humanReviewedBy: args.userId,
-      humanAgreesWithAI: args.agreeWithAI,
-      humanOverrideReason: args.overrideReason,
+      status: "DECIDED",
+      finalVerdict: args.finalVerdict,
+      decidedAt: now,
     });
 
-    // Create or update ruling
+    // Create ruling
     const rulingId = await ctx.db.insert("rulings", {
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId,
       verdict: agentVerdict,
       code: args.agreeWithAI ? "AI_CONFIRMED_BY_HUMAN" : "HUMAN_OVERRIDE",
       reasons: args.overrideReason || "Human review confirms AI ruling",
       auto: false, // Human involved
       decidedAt: now,
       proof: {
-        merkleRoot: `human_${dispute.caseId}_${now}`,
-      },
-    });
-
-    // Update case
-    await ctx.db.patch(dispute.caseId, {
-      status: "DECIDED",
-      ruling: {
-        verdict: "UPHELD", // Cases table still uses legacy format
-        auto: false,
-        decidedAt: now,
+        merkleRoot: `human_${args.paymentDisputeId}_${now}`,
       },
     });
 
@@ -655,9 +631,12 @@ export const humanReview = mutation({
 export const getMicroDisputeStats = query({
   args: {},
   handler: async (ctx) => {
-    const allDisputes = await ctx.db.query("paymentDisputes").collect();
-    const microDisputes = allDisputes.filter(d => d.amount < 1.0);
-    
+    const allDisputes = await ctx.db
+      .query("cases")
+      .filter(q => q.eq(q.field("type"), "PAYMENT"))
+      .collect();
+    const microDisputes = allDisputes.filter(d => (d.amount || 0) < 1.0);
+
     const autoResolved = microDisputes.filter(d => !d.humanReviewRequired).length;
     const humanReviewed = microDisputes.filter(d => d.humanReviewRequired).length;
     const avgConfidence = microDisputes.reduce((sum, d) => sum + (d.aiRulingConfidence || 0), 0) / microDisputes.length;
