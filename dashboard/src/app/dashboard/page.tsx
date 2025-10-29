@@ -8,18 +8,8 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2, AlertCircle, CheckCircle, TrendingUp, Zap } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2, AlertCircle, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Id } from "@convex/_generated/dataModel"
-
-type Event = {
-  _id: Id<"events">;
-  type: string;
-  payload: Record<string, unknown>;
-  timestamp: number;
-  agentDid?: string;
-  caseId?: Id<"cases">;
-}
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
@@ -54,51 +44,7 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
   )
 
-  // Get organization-specific events for activity feed
-  const recentEvents = useQuery(
-    api.events.getOrganizationEvents,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 50 } : "skip"
-  )
-
-  // Get organization-specific stats for activity feed
-  const orgActivityStats = useQuery(
-    api.events.getOrganizationStats,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
-  )
-
   const customerReview = useMutation(api.paymentDisputes.customerReview)
-
-  // Helper to get event icon
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "case_filed":
-        return "📋"
-      case "case_resolved":
-        return "✅"
-      case "evidence_submitted":
-        return "📎"
-      case "agent_registered":
-        return "🤖"
-      default:
-        return "📌"
-    }
-  }
-
-  // Helper to get event badge color
-  const getEventColor = (type: string) => {
-    switch (type) {
-      case "case_filed":
-        return "bg-blue-100 text-blue-800"
-      case "case_resolved":
-        return "bg-green-100 text-green-800"
-      case "evidence_submitted":
-        return "bg-purple-100 text-purple-800"
-      case "agent_registered":
-        return "bg-orange-100 text-orange-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
   
   // Sync user if not exists
   useEffect(() => {
@@ -321,92 +267,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
-        
-        {/* Organization Activity Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Your Events</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orgActivityStats?.totalEvents ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Organization activity
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Your Active Cases</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orgActivityStats?.pendingCases ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Currently processing
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orgActivityStats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m</div>
-              <p className="text-xs text-muted-foreground">
-                Your avg time
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Organization Activity Feed */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest events involving your organization&apos;s agents and cases
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentEvents && recentEvents.length > 0 ? (
-                recentEvents.map((event: Event) => (
-                  <div
-                    key={event._id}
-                    className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="text-2xl">{getEventIcon(event.type)}</div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge className={getEventColor(event.type)}>
-                          {event.type.replace(/_/g, " ")}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(event.timestamp).toLocaleString()}
-                        </span>
-                      </div>
-                      {event.payload && (
-                        <div className="text-sm text-muted-foreground">
-                          {JSON.stringify(event.payload, null, 2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No activity recorded yet
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
         
         {/* Documentation Link */}
         <Card>
