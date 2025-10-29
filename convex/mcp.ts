@@ -50,42 +50,55 @@ function generateSHA256(input: string): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File a dispute using the Agentic Dispute Protocol (ADP) for SLA breaches, contract violations, or service quality issues between AI agents or AI vendors. Uses expert determination for technical disputes with liquidated damages.",
+    description: "File a PAYMENT DISPUTE for failed transactions, incorrect charges, or service-not-rendered issues. Regulation E compliant with 10 business day resolution. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00). AI provides recommendations, customer teams make final decisions.",
     input_schema: {
       type: "object",
       properties: {
+        transactionId: {
+          type: "string",
+          description: "Unique transaction ID from the payment system (e.g., 'txn_abc123')"
+        },
+        amount: {
+          type: "number",
+          description: "Transaction amount in USD (e.g., 0.50 for $0.50). This determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
+        },
+        currency: {
+          type: "string",
+          description: "Currency code (default: 'USD')"
+        },
+        paymentProtocol: {
+          type: "string",
+          enum: ["ACP", "ATXP", "STRIPE", "OTHER"],
+          description: "Payment protocol used (ACP=Autonomous Commerce Protocol, ATXP=Autonomous Transaction Protocol)"
+        },
         plaintiff: {
           type: "string",
-          description: "DID or identifier of the agent filing the dispute (the claimant)"
+          description: "Consumer identifier (e.g., 'consumer:alice@example.com' or email)"
         },
         defendant: {
-          type: "string", 
-          description: "DID or identifier of the agent being disputed against (the respondent)"
-        },
-        disputeType: {
           type: "string",
-          enum: ["SLA_BREACH", "CONTRACT_VIOLATION", "FRAUD", "DATA_BREACH", "SERVICE_QUALITY"],
-          description: "Type of dispute being filed"
+          description: "Merchant/service provider identifier (e.g., 'merchant:shop@example.com')"
         },
-        claim: {
+        disputeReason: {
           type: "string",
-          description: "Clear statement of what went wrong and what you're claiming (e.g., '45 minute API downtime exceeding 99.9% SLA guarantee')"
+          enum: ["api_timeout", "service_not_rendered", "quality_issue", "amount_incorrect", "fraud", "duplicate_charge"],
+          description: "Reason for the payment dispute"
         },
-        claimAmount: {
-          type: "number",
-          description: "Amount being claimed in USD (e.g., 5000 for $5,000)"
-        },
-        jurisdiction: {
+        description: {
           type: "string",
-          description: "Legal jurisdiction for the dispute (e.g., 'US-CA', 'US-NY', 'UK', 'EU')"
+          description: "Clear description of what went wrong (e.g., 'API timed out after 30s but charge went through')"
         },
         evidenceUrls: {
           type: "array",
           items: { type: "string" },
-          description: "URLs to evidence supporting your claim (API logs, SLA documents, contracts, monitoring data)"
+          description: "URLs to evidence: transaction logs, API responses, receipts, screenshots"
+        },
+        callbackUrl: {
+          type: "string",
+          description: "Optional webhook URL to receive dispute resolution result"
         }
       },
-      required: ["plaintiff", "defendant", "disputeType", "claim", "claimAmount"]
+      required: ["transactionId", "amount", "paymentProtocol", "plaintiff", "defendant", "disputeReason", "description"]
     }
   },
   {
@@ -256,11 +269,18 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "1.0.0",
     server: {
-      name: "Consulate Dispute Resolution Platform",
+      name: "Consulate Payment Dispute Resolution",
       version: "1.0.0",
-      description: "Agentic Dispute Protocol (ADP) implementation for automated dispute resolution between AI agents and vendors",
-      adp_version: "draft-01",
-      adp_repository: "https://github.com/consulatehq/agentic-dispute-protocol",
+      description: "Automated payment dispute resolution for failed transactions, incorrect charges, and service-not-rendered issues. Regulation E compliant. 5 pricing tiers: MICRO (<$1), SMALL ($1-$10), MEDIUM ($10-$100), LARGE ($100-$1k), ENTERPRISE (>$1k).",
+      dispute_types: "PAYMENT DISPUTES ONLY (not SLA/contract disputes)",
+      pricing: {
+        micro: { range: "<$1", fee: "$0.10" },
+        small: { range: "$1-$10", fee: "$0.25" },
+        medium: { range: "$10-$100", fee: "$1.00" },
+        large: { range: "$100-$1,000", fee: "$5.00" },
+        enterprise: { range: ">$1,000", fee: "$25.00" }
+      },
+      resolution_time: "10 business days (Regulation E)",
       url: "https://consulatehq.com"
     },
     tools: MCP_TOOLS,
