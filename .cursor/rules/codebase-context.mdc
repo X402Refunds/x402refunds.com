@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-29T20:57:58.792Z
+**Auto-generated on**: 2025-10-29T21:04:04.503Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -123,7 +123,7 @@ Common HTTP routes exposed:
 - collapsible-stats
 - create-agent-dialog
 - hero-stats
-- live-dispute-monitor
+- live-activity-feed
 - doc-layout
 - doc-sidebar
 - dashboard-layout
@@ -315,5 +315,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/29/2025, 1:57:58 PM
+Generated: 10/29/2025, 2:04:04 PM
 Files scanned: 257

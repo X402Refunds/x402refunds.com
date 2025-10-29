@@ -267,7 +267,39 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
-        
+
+        {/* Live Activity Feed */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-slate-900" />
+                <CardTitle className="text-slate-900">Live Activity Feed</CardTitle>
+              </div>
+              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+                🟢 Real-time Updates
+              </Badge>
+            </div>
+            <CardDescription className="text-slate-600">
+              Watch your organization&apos;s disputes and agent activity in real-time
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500 mb-2">Live activity feed</p>
+              <p className="text-xs text-slate-400 mb-4">Real-time updates will appear here</p>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/dashboard/activity')}
+              >
+                View Full Activity Feed
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Documentation Link */}
         <Card>
           <CardHeader>

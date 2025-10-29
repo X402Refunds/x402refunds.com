@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { HeroStats } from "./hero-stats";
 import { CollapsibleStats } from "./collapsible-stats";
 
-export default function LiveDisputeMonitor() {
+export default function LiveActivityFeed() {
   const router = useRouter();
   
   // REAL-TIME DATA FROM CONVEX - Only dispute activity (excludes admin/audit events)

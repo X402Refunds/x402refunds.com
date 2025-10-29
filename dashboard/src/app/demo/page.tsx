@@ -1,12 +1,12 @@
 "use client"
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import LiveDisputeMonitor from "@/components/dashboard/live-dispute-monitor"
+import LiveActivityFeed from "@/components/dashboard/live-activity-feed"
 
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <LiveDisputeMonitor />
+      <LiveActivityFeed />
     </DashboardLayout>
   )
 }
