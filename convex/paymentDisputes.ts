@@ -180,7 +180,6 @@ export const receivePaymentDispute = mutation({
         paymentProtocol: args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol,
         disputeReason: args.disputeReason,
         regulationEDeadline,
-        autoResolveEligible,
         plaintiffMetadata: args.plaintiffMetadata,
         defendantMetadata: args.defendantMetadata,
         disputeFee: feeBreakdown.totalFee,
