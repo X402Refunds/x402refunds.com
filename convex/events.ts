@@ -297,6 +297,174 @@ export const getEventTimeline = query({
   }
 });
 
+// Get organization-specific events (for dashboard activity feed)
+export const getOrganizationEvents = query({
+  args: {
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Get all agents belonging to this organization
+    const orgAgents = await ctx.db
+      .query("agents")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .collect();
+
+    const orgAgentDids = new Set(orgAgents.map(a => a.did));
+
+    // Get all cases where org's agents are involved (as plaintiff or defendant)
+    const orgCases = await ctx.db
+      .query("cases")
+      .collect();
+
+    const orgCaseIds = new Set(
+      orgCases
+        .filter(c =>
+          (c.plaintiff && orgAgentDids.has(c.plaintiff)) ||
+          (c.defendant && orgAgentDids.has(c.defendant))
+        )
+        .map(c => c._id)
+    );
+
+    // Get recent events
+    const allEvents = await ctx.db
+      .query("events")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(args.limit ?? 100); // Get more than needed, then filter
+
+    // Filter events to only those relevant to this organization
+    const relevantEvents = allEvents.filter(event => {
+      // Include if event is about org's agent
+      if (event.agentDid && orgAgentDids.has(event.agentDid)) {
+        return true;
+      }
+
+      // Include if event is about org's case
+      if (event.caseId && orgCaseIds.has(event.caseId)) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // Limit to requested count
+    const limitedEvents = relevantEvents.slice(0, args.limit ?? 50);
+
+    // Enrich events with case data
+    return await Promise.all(
+      limitedEvents.map(async (event) => {
+        if (event.caseId) {
+          const caseData = await ctx.db.get(event.caseId);
+
+          // Fetch payment dispute data if applicable
+          let paymentDisputeData = undefined;
+          if (event.caseId) {
+            const paymentDispute = await ctx.db
+              .query("paymentDisputes")
+              .withIndex("by_case", q => q.eq("caseId", event.caseId!))
+              .first();
+
+            if (paymentDispute) {
+              paymentDisputeData = {
+                amount: paymentDispute.amount,
+                currency: paymentDispute.currency,
+                pricingTier: paymentDispute.pricingTier,
+                disputeFee: paymentDispute.disputeFee,
+                isMicroDispute: paymentDispute.amount < 1,
+              };
+            }
+          }
+
+          return {
+            ...event,
+            caseData,
+            paymentDispute: paymentDisputeData
+          };
+        }
+        return event;
+      })
+    );
+  },
+});
+
+// Get organization-specific stats
+export const getOrganizationStats = query({
+  args: {
+    organizationId: v.id("organizations"),
+    hoursBack: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const hoursBack = args.hoursBack ?? 24;
+    const cutoffTime = Date.now() - (hoursBack * 60 * 60 * 1000);
+
+    // Get all agents belonging to this organization
+    const orgAgents = await ctx.db
+      .query("agents")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .collect();
+
+    const orgAgentDids = new Set(orgAgents.map(a => a.did));
+
+    // Get all cases where org's agents are involved
+    const allCases = await ctx.db
+      .query("cases")
+      .withIndex("by_filed_at", (q) => q.gt("filedAt", cutoffTime))
+      .collect();
+
+    const orgCases = allCases.filter(c =>
+      (c.plaintiff && orgAgentDids.has(c.plaintiff)) ||
+      (c.defendant && orgAgentDids.has(c.defendant))
+    );
+
+    // Get recent events for this org
+    const allEvents = await ctx.db
+      .query("events")
+      .withIndex("by_timestamp", (q) => q.gt("timestamp", cutoffTime))
+      .collect();
+
+    const orgEvents = allEvents.filter(event => {
+      if (event.agentDid && orgAgentDids.has(event.agentDid)) return true;
+      if (event.caseId && orgCases.some(c => c._id === event.caseId)) return true;
+      return false;
+    });
+
+    // Calculate stats
+    const resolvedCases = orgCases.filter(c =>
+      c.status === "DECIDED" &&
+      c.ruling?.decidedAt &&
+      c.ruling.decidedAt > cutoffTime
+    );
+
+    // Calculate average resolution time for resolved cases
+    let avgResolutionTimeMinutes = 0;
+    if (resolvedCases.length > 0) {
+      const totalResolutionTime = resolvedCases.reduce((sum, c) => {
+        if (c.ruling?.decidedAt) {
+          return sum + (c.ruling.decidedAt - c.filedAt);
+        }
+        return sum;
+      }, 0);
+      avgResolutionTimeMinutes = (totalResolutionTime / resolvedCases.length) / (1000 * 60);
+    }
+
+    const pendingCases = orgCases.filter(c =>
+      c.status === "FILED" || c.status === "PANELED"
+    ).length;
+
+    return {
+      totalEvents: orgEvents.length,
+      pendingCases,
+      avgResolutionTimeMinutes,
+      disputesFiled: orgCases.length,
+      casesResolved: resolvedCases.length,
+      timeRange: hoursBack,
+      periodStart: cutoffTime,
+      periodEnd: Date.now(),
+    };
+  },
+});
+
 // Get API key specific events (for audit trail)
 export const getApiKeyEvents = query({
   args: {
@@ -314,14 +482,14 @@ export const getApiKeyEvents = query({
     const filteredEvents = allEvents.filter(event => {
       const payload = event.payload as any;
       const matchesKey = payload?.keyId === args.keyId;
-      
+
       if (!matchesKey) return false;
-      
+
       // If event types filter provided, check it
       if (args.eventTypes && args.eventTypes.length > 0) {
         return args.eventTypes.includes(event.type);
       }
-      
+
       return true;
     });
 

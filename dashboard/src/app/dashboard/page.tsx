@@ -54,11 +54,17 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
   )
 
-  // Get recent system events for activity feed
-  const recentEvents = useQuery(api.events.getRecentEvents, { limit: 100 })
+  // Get organization-specific events for activity feed
+  const recentEvents = useQuery(
+    api.events.getOrganizationEvents,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 50 } : "skip"
+  )
 
-  // Get system stats for activity feed
-  const systemStats = useQuery(api.cases.getCachedSystemStats)
+  // Get organization-specific stats for activity feed
+  const orgActivityStats = useQuery(
+    api.events.getOrganizationStats,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
+  )
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
@@ -316,28 +322,28 @@ export default function DashboardPage() {
           </Card>
         )}
         
-        {/* System Activity Stats */}
+        {/* Organization Activity Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+              <CardTitle className="text-sm font-medium">Your Events</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{recentEvents?.length ?? 0}</div>
+              <div className="text-2xl font-bold">{orgActivityStats?.totalEvents ?? 0}</div>
               <p className="text-xs text-muted-foreground">
-                All system events
+                Organization activity
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+              <CardTitle className="text-sm font-medium">Your Active Cases</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats?.pendingCases ?? 0}</div>
+              <div className="text-2xl font-bold">{orgActivityStats?.pendingCases ?? 0}</div>
               <p className="text-xs text-muted-foreground">
                 Currently processing
               </p>
@@ -350,26 +356,26 @@ export default function DashboardPage() {
               <Zap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m</div>
+              <div className="text-2xl font-bold">{orgActivityStats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m</div>
               <p className="text-xs text-muted-foreground">
-                Lightning fast
+                Your avg time
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Live System Activity Feed */}
+        {/* Organization Activity Feed */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
-              Latest events from the dispute resolution system
+              Latest events involving your organization&apos;s agents and cases
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {recentEvents && recentEvents.length > 0 ? (
-                recentEvents.slice(0, 50).map((event: Event) => (
+                recentEvents.map((event: Event) => (
                   <div
                     key={event._id}
                     className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
