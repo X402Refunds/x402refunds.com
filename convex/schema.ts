@@ -24,6 +24,10 @@ export default defineSchema({
     verifiedAt: v.optional(v.number()),     // When organization was verified
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+
+    // AI dispute resolution settings
+    aiAnalysisDelayMinutes: v.optional(v.number()), // How long to wait before triggering AI analysis (default: 5 minutes)
+    autoApprovalDeadlineDays: v.optional(v.number()), // Auto-approve AI recommendations after N business days (default: 10, per Regulation E)
   })
     .index("by_clerk_org_id", ["clerkOrgId"])
     .index("by_domain", ["domain"]),
@@ -176,7 +180,16 @@ export default defineSchema({
       actualPerformance: v.optional(v.string()),
       rootCause: v.optional(v.string()),
     })),
-    
+
+    // AI recommendation (for agent disputes - payment disputes store in paymentDisputes table)
+    aiRecommendation: v.optional(v.object({
+      verdict: v.string(), // "PLAINTIFF_WINS", "DEFENDANT_WINS", "SPLIT", "NEED_PANEL"
+      confidence: v.number(), // 0-1
+      reasoning: v.string(),
+      analyzedAt: v.number(),
+      similarCases: v.array(v.id("cases")),
+    })),
+
     // Mock data flag for demo/test purposes
     mock: v.optional(v.boolean()), // true = demo data, false/undefined = real data
   })
@@ -655,9 +668,36 @@ export default defineSchema({
     
     // Latest precedent embedding (averaged from all similar disputes)
     aggregatedEmbedding: v.optional(v.array(v.number())),
-    
+
     lastUpdated: v.number(),
   })
     .index("by_hash", ["patternHash"])
     .index("by_reliability", ["patternReliability"]),
+
+  // Feedback signals for Reinforcement Learning
+  feedbackSignals: defineTable({
+    caseId: v.id("cases"),
+    paymentDisputeId: v.optional(v.id("paymentDisputes")),
+
+    // AI's prediction
+    aiVerdict: v.string(),
+    aiConfidence: v.number(),
+    aiReasoning: v.string(),
+
+    // Human's decision
+    humanVerdict: v.string(),
+    agreedWithAI: v.boolean(),
+    overrideReason: v.optional(v.string()),
+
+    // Context for learning
+    disputeType: v.string(),
+    amountRange: v.string(), // For payment disputes: "$0-0.10", "$0.10-0.50", etc.
+    reviewTimeMs: v.number(), // How long human took to review
+
+    createdAt: v.number(),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_payment_dispute", ["paymentDisputeId"])
+    .index("by_agreement", ["agreedWithAI"])
+    .index("by_type", ["disputeType"]),
 });

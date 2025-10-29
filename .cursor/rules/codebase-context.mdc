@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-28T09:02:26.488Z
+**Auto-generated on**: 2025-10-29T09:14:14.898Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -77,9 +77,9 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
 - **apiKeys.ts** - validateApiKeyQuery, generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats
+- **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
-- **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, processFiledCases
+- **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, processFiledCases, autoApproveOverdueDisputes
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **disputePricing.ts** - calculateDisputeFee, estimateTokens, estimateDisputeTokens, validateEvidenceSize, getPricingTierDescription, getFeexplanation
@@ -89,7 +89,7 @@ consulate/
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
-- **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, customerReview, getCustomerReviewQueue
+- **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
@@ -314,5 +314,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/28/2025, 2:02:26 AM
+Generated: 10/29/2025, 2:14:14 AM
 Files scanned: 255

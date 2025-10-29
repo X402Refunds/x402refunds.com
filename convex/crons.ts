@@ -31,6 +31,14 @@ crons.interval(
   {}
 );
 
+// Auto-approve overdue disputes (Regulation E compliance)
+crons.interval(
+  "auto approve overdue disputes",
+  { hours: 6 }, // Run 4x per day
+  internal.crons.autoApproveOverdueDisputes,
+  {}
+);
+
 export default crons;
 
 // =================================================================
@@ -212,36 +220,53 @@ export const processFiledCases = internalMutation({
   handler: async (ctx) => {
     try {
       const startTime = Date.now();
-      console.log("⚖️  Processing filed cases...");
+      console.log("⚖️  Processing filed cases with AI analysis...");
 
-      // Get all cases in FILED status that are > 5 minutes old
-      const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+      // Get all cases in FILED status
       const filedCases = await ctx.db
         .query("cases")
         .filter((q) => q.eq(q.field("status"), "FILED"))
         .collect();
 
-      // Filter for cases older than 5 minutes
-      const staleCases = filedCases.filter((c) => c.filedAt < fiveMinutesAgo);
-
-      if (staleCases.length === 0) {
-        console.log("✅ No stale filed cases found");
+      if (filedCases.length === 0) {
+        console.log("✅ No filed cases found");
         return { processed: 0, message: "No cases to process" };
       }
 
-      console.log(`📋 Found ${staleCases.length} cases in FILED status > 5 minutes old`);
+      console.log(`📋 Found ${filedCases.length} cases in FILED status`);
 
       let processed = 0;
       let errors = 0;
+      let skipped = 0;
 
-      for (const caseData of staleCases) {
+      for (const caseData of filedCases) {
         try {
-          // Run court workflow to process the case
-          await ctx.runMutation(api.courtEngine.runCourtWorkflow, {
-            caseId: caseData._id,
-          });
-          processed++;
-          console.log(`  ✅ Processed case ${caseData._id}`);
+          // Get organization settings for this case
+          const org = await getOrgForCase(ctx, caseData);
+          const delayMinutes = org?.aiAnalysisDelayMinutes || 5; // Default: 5 minutes
+          const delayMs = delayMinutes * 60 * 1000;
+          const threshold = Date.now() - delayMs;
+
+          // Only process if case is older than org's configured delay
+          if (caseData.filedAt < threshold) {
+            // Check if already analyzed
+            const alreadyAnalyzed = await hasAIRecommendation(ctx, caseData._id);
+
+            if (alreadyAnalyzed) {
+              skipped++;
+              console.log(`  ⏭️  Skipped case ${caseData._id} (already analyzed)`);
+              continue;
+            }
+
+            // Trigger AI analysis using processWithAI
+            await ctx.scheduler.runAfter(0, api.paymentDisputes.processWithAI, {
+              caseId: caseData._id,
+            });
+            processed++;
+            console.log(`  ✅ Triggered AI analysis for case ${caseData._id} (delay: ${delayMinutes}min)`);
+          } else {
+            skipped++;
+          }
         } catch (error: any) {
           errors++;
           console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);
@@ -249,17 +274,119 @@ export const processFiledCases = internalMutation({
       }
 
       const duration = Date.now() - startTime;
-      console.log(`⚖️  Processed ${processed}/${staleCases.length} cases in ${duration}ms (${errors} errors)`);
+      console.log(`⚖️  Processed ${processed}/${filedCases.length} cases in ${duration}ms (${errors} errors, ${skipped} skipped)`);
 
       return {
         processed,
         errors,
-        total: staleCases.length,
+        skipped,
+        total: filedCases.length,
         duration,
       };
 
     } catch (error: any) {
       console.error("❌ Filed case processing failed:", error.message);
+      return { success: false, reason: error.message };
+    }
+  }
+});
+
+// =================================================================
+// HELPER FUNCTIONS
+// =================================================================
+
+/**
+ * Get organization for a case (from payment dispute if exists)
+ */
+async function getOrgForCase(ctx: any, caseData: any) {
+  // Try to find payment dispute first
+  const paymentDispute = await ctx.db
+    .query("paymentDisputes")
+    .withIndex("by_case", (q: any) => q.eq("caseId", caseData._id))
+    .first();
+
+  if (paymentDispute?.reviewerOrganizationId) {
+    return await ctx.db.get(paymentDispute.reviewerOrganizationId);
+  }
+
+  // Fallback: return null (use default settings)
+  return null;
+}
+
+/**
+ * Check if case already has AI recommendation
+ */
+async function hasAIRecommendation(ctx: any, caseId: any) {
+  // Check case table for agent disputes
+  const caseData = await ctx.db.get(caseId);
+  if (caseData?.aiRecommendation) return true;
+
+  // Check payment disputes table
+  const paymentDispute = await ctx.db
+    .query("paymentDisputes")
+    .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+    .first();
+
+  return !!paymentDispute?.aiRecommendation;
+}
+
+/**
+ * Auto-approve disputes that exceed Regulation E deadline (10 business days)
+ * Runs every 6 hours to check for overdue disputes
+ */
+export const autoApproveOverdueDisputes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const startTime = Date.now();
+      console.log("🕐 Checking for overdue disputes to auto-approve...");
+
+      // Find payment disputes with AI recommendations but no human review
+      // that are past their Regulation E deadline
+      const now = Date.now();
+      const allDisputes = await ctx.db.query("paymentDisputes").collect();
+
+      const overdueDisputes = allDisputes.filter((d) =>
+        d.humanReviewedAt === undefined &&
+        d.aiRecommendation !== undefined &&
+        d.regulationEDeadline < now
+      );
+
+      if (overdueDisputes.length === 0) {
+        console.log("✅ No overdue disputes found");
+        return { approved: 0, message: "No overdue disputes" };
+      }
+
+      console.log(`📋 Found ${overdueDisputes.length} overdue disputes`);
+
+      let approved = 0;
+      let errors = 0;
+
+      for (const dispute of overdueDisputes) {
+        try {
+          await ctx.runMutation(api.paymentDisputes.autoApproveAIRecommendation, {
+            paymentDisputeId: dispute._id,
+          });
+          approved++;
+          console.log(`  ✅ Auto-approved dispute ${dispute._id} (${(now - dispute.regulationEDeadline) / (24 * 60 * 60 * 1000)} days overdue)`);
+        } catch (error: any) {
+          errors++;
+          console.error(`  ❌ Failed to auto-approve ${dispute._id}:`, error.message);
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`🕐 Auto-approved ${approved}/${overdueDisputes.length} overdue disputes in ${duration}ms (${errors} errors)`);
+
+      return {
+        approved,
+        errors,
+        total: overdueDisputes.length,
+        duration,
+      };
+
+    } catch (error: any) {
+      console.error("❌ Auto-approval cron failed:", error.message);
       return { success: false, reason: error.message };
     }
   }

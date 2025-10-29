@@ -391,3 +391,30 @@ export const getCachedSystemStats = query({
     };
   },
 });
+
+/**
+ * Store AI recommendation for agent disputes
+ * (Payment disputes store in paymentDisputes table)
+ */
+export const storeAIRecommendation = mutation({
+  args: {
+    caseId: v.id("cases"),
+    aiRecommendation: v.object({
+      verdict: v.string(),
+      confidence: v.number(),
+      reasoning: v.string(),
+      analyzedAt: v.number(),
+      similarCases: v.array(v.id("cases")),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.caseId, {
+      aiRecommendation: args.aiRecommendation,
+    });
+
+    console.info(
+      `AI recommendation stored for case ${args.caseId}: ${args.aiRecommendation.verdict} ` +
+      `(confidence: ${(args.aiRecommendation.confidence * 100).toFixed(1)}%)`
+    );
+  },
+});

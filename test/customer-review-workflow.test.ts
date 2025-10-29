@@ -212,15 +212,14 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     ).rejects.toThrow(/Unauthorized/);
   });
 
-  it("should demonstrate 95/5 automation split", async () => {
-    let autoResolved = 0;
+  it("should require human review for all disputes (Option 3)", async () => {
     let needsReview = 0;
-    
-    // Generate 100 micro-disputes
+
+    // Generate 100 disputes
     for (let i = 0; i < 100; i++) {
       const amount = Math.random() < 0.9 ? 0.50 : 5.00; // 90% micro, 10% large
       const reasons = ["api_timeout", "service_not_rendered", "quality_issue"] as const;
-      
+
       const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `txn_batch_${i}`,
         amount,
@@ -232,20 +231,16 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         description: "Batch test dispute",
         reviewerOrganizationId: testOrgId,
       });
-      
+
       if (result.humanReviewRequired) {
         needsReview++;
-      } else {
-        autoResolved++;
       }
     }
-    
-    // Should be approximately 95/5 split
-    const autoResolveRate = autoResolved / 100;
-    expect(autoResolveRate).toBeGreaterThan(0.85); // At least 85%
-    expect(autoResolveRate).toBeLessThan(1.0); // Some need review
-    
-    console.log(`✅ Automation rate: ${(autoResolveRate * 100).toFixed(1)}% (${autoResolved} auto / ${needsReview} review)`);
+
+    // ALL disputes should require human review (Option 3)
+    expect(needsReview).toBe(100); // 100% require review
+
+    console.log(`✅ All disputes require human review: ${needsReview}/100 (Option 3: customer team makes all final decisions)`);
   });
 
   it("should maintain ADP custody chain after customer review", async () => {
