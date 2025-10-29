@@ -23,10 +23,10 @@ crons.interval(
   {}
 );
 
-// Process filed cases every 2 minutes
+// Process filed cases every 10 minutes
 crons.interval(
   "process filed cases",
-  { minutes: 2 },
+  { minutes: 10 },
   internal.crons.processFiledCases,
   {}
 );
@@ -241,32 +241,21 @@ export const processFiledCases = internalMutation({
 
       for (const caseData of filedCases) {
         try {
-          // Get organization settings for this case
-          const org = await getOrgForCase(ctx, caseData);
-          const delayMinutes = org?.aiAnalysisDelayMinutes || 5; // Default: 5 minutes
-          const delayMs = delayMinutes * 60 * 1000;
-          const threshold = Date.now() - delayMs;
+          // Check if already analyzed
+          const alreadyAnalyzed = await hasAIRecommendation(ctx, caseData._id);
 
-          // Only process if case is older than org's configured delay
-          if (caseData.filedAt < threshold) {
-            // Check if already analyzed
-            const alreadyAnalyzed = await hasAIRecommendation(ctx, caseData._id);
-
-            if (alreadyAnalyzed) {
-              skipped++;
-              console.log(`  ⏭️  Skipped case ${caseData._id} (already analyzed)`);
-              continue;
-            }
-
-            // Trigger AI analysis using processWithAI
-            await ctx.scheduler.runAfter(0, api.paymentDisputes.processWithAI, {
-              caseId: caseData._id,
-            });
-            processed++;
-            console.log(`  ✅ Triggered AI analysis for case ${caseData._id} (delay: ${delayMinutes}min)`);
-          } else {
+          if (alreadyAnalyzed) {
             skipped++;
+            console.log(`  ⏭️  Skipped case ${caseData._id} (already analyzed)`);
+            continue;
           }
+
+          // Trigger AI analysis using processWithAI (no age check - process immediately)
+          await ctx.scheduler.runAfter(0, api.paymentDisputes.processWithAI, {
+            caseId: caseData._id,
+          });
+          processed++;
+          console.log(`  ✅ Triggered AI analysis for case ${caseData._id}`);
         } catch (error: any) {
           errors++;
           console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);
