@@ -51,10 +51,10 @@ export default function DashboardPage() {
   // Get payment dispute stats for automation metrics
   const paymentStats = useQuery(api.paymentDisputes.getMicroDisputeStats)
 
-  // Get organization-specific events for activity feed (dispute events only)
+  // Get organization-specific events for activity feed (fetch more to ensure enough dispute events after filtering)
   const recentEvents = useQuery(
     api.events.getOrganizationEvents,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 15 } : "skip"
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 50 } : "skip"
   )
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
@@ -331,7 +331,8 @@ export default function DashboardPage() {
                 {reviewQueue.slice(0, 5).map((dispute) => (
                   <div
                     key={dispute._id}
-                    className="p-4 bg-white rounded-lg border border-amber-200 hover:border-amber-300 transition-colors"
+                    className="p-4 bg-white rounded-lg border border-amber-200 hover:border-amber-300 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -356,7 +357,8 @@ export default function DashboardPage() {
                       <Button
                         size="sm"
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={async () => {
+                        onClick={async (e) => {
+                          e.stopPropagation() // Prevent card click
                           if (!currentUser) return
                           await customerReview({
                             paymentDisputeId: dispute._id,
@@ -373,9 +375,12 @@ export default function DashboardPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1"
-                        onClick={() => router.push('/dashboard/review-queue')}
+                        onClick={(e) => {
+                          e.stopPropagation() // Prevent card click
+                          router.push(`/dashboard/disputes/${dispute._id}`)
+                        }}
                       >
-                        Detailed Review
+                        Review Details
                       </Button>
                     </div>
                   </div>
@@ -415,11 +420,17 @@ export default function DashboardPage() {
               <>
                 {disputeEvents.slice(0, 8).map((evt) => {
                   const event = evt as Event
+                  // For dispute events, try to navigate to the specific dispute if we have paymentDisputeId
+                  const handleClick = () => {
+                    // For now, go to activity page - in future we can enhance this to go to specific dispute
+                    // if we add paymentDisputeId to event payload
+                    router.push(`/dashboard/activity`)
+                  }
                   return (
                     <div
                       key={event._id}
                       className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
-                      onClick={() => event.caseId && router.push(`/dashboard/activity`)}
+                      onClick={handleClick}
                     >
                       <div className="text-2xl flex-shrink-0">
                         {event.type === "DISPUTE_FILED" && "📋"}
