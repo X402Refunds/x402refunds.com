@@ -352,39 +352,13 @@ export const getPhysicalEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let evidence;
-    
-    if (args.agentDid) {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
-        .collect();
-    } else {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_functional_type", (q) => q.eq("functionalType", "physical"))
-        .collect();
-    }
-    
-    // Filter by location if specified
-    if (args.location) {
-      evidence = evidence.filter((e) => {
-        if (!e.physicalContext?.location) return false;
-        
-        const loc = e.physicalContext.location;
-        const distance = Math.sqrt(
-          Math.pow(loc.lat - args.location!.lat, 2) + 
-          Math.pow(loc.lng - args.location!.lng, 2)
-        ) * 111320; // Approximate meters per degree
-        
-        return distance <= args.location!.radius;
-      });
-    }
-    
-    return evidence.slice(0, args.limit ?? 20);
+    // DEPRECATED: Functional evidence table removed
+    console.warn("DEPRECATED: getPhysicalEvidence called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 
+// DEPRECATED: Functional evidence table removed during schema consolidation
 export const getVoiceEvidence = query({
   args: {
     agentDid: v.optional(v.string()),
@@ -393,36 +367,8 @@ export const getVoiceEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let evidence;
-    
-    if (args.agentDid) {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
-        .collect();
-    } else {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_functional_type", (q) => q.eq("functionalType", "voice"))
-        .collect();
-    }
-    
-    // Filter by language if specified
-    if (args.language) {
-      evidence = evidence.filter((e) => 
-        e.voiceContext?.languageDetected === args.language
-      );
-    }
-    
-    // Filter by privacy compliance if specified
-    if (args.privacyCompliant !== undefined) {
-      evidence = evidence.filter((e) => {
-        const hasCompliance = (e.voiceContext?.privacyCompliance?.length || 0) > 0;
-        return args.privacyCompliant ? hasCompliance : !hasCompliance;
-      });
-    }
-    
-    return evidence.slice(0, args.limit ?? 20);
+    console.warn("DEPRECATED: getVoiceEvidence called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 
@@ -434,41 +380,13 @@ export const getCodingEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let evidence;
-    
-    if (args.agentDid) {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
-        .collect();
-    } else {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_functional_type", (q) => q.eq("functionalType", "coding"))
-        .collect();
-    }
-    
-    // Filter by programming language if specified
-    if (args.language) {
-      evidence = evidence.filter((e) => 
-        e.codingContext?.languagesUsed?.includes(args.language!)
-      );
-    }
-    
-    // Filter by security compliance if specified
-    if (args.securityCompliant !== undefined) {
-      evidence = evidence.filter((e) => {
-        const scanResults = e.codingContext?.securityScanResults;
-        const isCompliant = scanResults !== false && 
-          (!scanResults || !scanResults.vulnerabilities || scanResults.vulnerabilities === 0);
-        return args.securityCompliant ? isCompliant : !isCompliant;
-      });
-    }
-    
-    return evidence.slice(0, args.limit ?? 20);
+    // DEPRECATED: Functional evidence table removed
+    console.warn("DEPRECATED: getCodingEvidence called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 
+// DEPRECATED: Functional evidence table removed during schema consolidation
 export const getFinancialEvidence = query({
   args: {
     agentDid: v.optional(v.string()),
@@ -477,39 +395,13 @@ export const getFinancialEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let evidence;
-    
-    if (args.agentDid) {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
-        .collect();
-    } else {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_functional_type", (q) => q.eq("functionalType", "financial"))
-        .collect();
-    }
-    
-    // Filter by minimum transaction count if specified
-    if (args.minTransactionCount !== undefined) {
-      evidence = evidence.filter((e) => 
-        (e.financialContext?.transactionIds?.length || 0) >= args.minTransactionCount!
-      );
-    }
-    
-    // Filter by compliance requirements if specified
-    if (args.complianceRequired !== undefined) {
-      evidence = evidence.filter((e) => {
-        const hasCompliance = (e.financialContext?.complianceChecks?.length || 0) > 0;
-        return args.complianceRequired ? hasCompliance : !hasCompliance;
-      });
-    }
-    
-    return evidence.slice(0, args.limit ?? 20);
+    // DEPRECATED: Functional evidence table removed
+    console.warn("DEPRECATED: getFinancialEvidence called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 
+// DEPRECATED: Functional evidence table removed during schema consolidation
 export const getHealthcareEvidence = query({
   args: {
     agentDid: v.optional(v.string()),
@@ -518,35 +410,9 @@ export const getHealthcareEvidence = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let evidence;
-    
-    if (args.agentDid) {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_agent", (q) => q.eq("agentDid", args.agentDid!))
-        .collect();
-    } else {
-      evidence = await ctx.db
-        .query("functionalEvidence")
-        .withIndex("by_functional_type", (q) => q.eq("functionalType", "healthcare"))
-        .collect();
-    }
-    
-    // Filter by HIPAA compliance if specified
-    if (args.hipaaCompliant !== undefined) {
-      evidence = evidence.filter((e) => 
-        e.healthcareContext?.hipaaCompliance === args.hipaaCompliant
-      );
-    }
-    
-    // Filter by oversight requirements if specified
-    if (args.requiresOversight !== undefined) {
-      evidence = evidence.filter((e) => 
-        e.healthcareContext?.humanOversightRequired === args.requiresOversight
-      );
-    }
-    
-    return evidence.slice(0, args.limit ?? 20);
+    // DEPRECATED: Functional evidence table removed
+    console.warn("DEPRECATED: getHealthcareEvidence called. Functional evidence table no longer exists.");
+    return [];
   },
 });
 
