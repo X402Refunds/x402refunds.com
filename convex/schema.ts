@@ -59,6 +59,8 @@ export default defineSchema({
     lastUsedAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
     status: v.optional(v.union(v.literal("active"), v.literal("revoked"))),
+    active: v.optional(v.boolean()), // DEPRECATED: old status field
+    permissions: v.optional(v.array(v.string())), // DEPRECATED: old permissions field
     revokedAt: v.optional(v.number()),
     revokedBy: v.optional(v.id("users")),
     createdAt: v.number(),
@@ -133,15 +135,8 @@ export default defineSchema({
     ),
 
     // Dispute type determines which optional fields are populated
-    type: v.union(
-      v.literal("PAYMENT_DISPUTE"),
-      v.literal("SLA_BREACH"),
-      v.literal("CONTRACT_DISPUTE"),
-      v.literal("CONTRACT_VIOLATION"), // Alias for CONTRACT_DISPUTE
-      v.literal("API_DOWNTIME"),
-      v.literal("APPEAL"), // Appeal of previous ruling
-      v.literal("OTHER")
-    ),
+    // Allow any string for backward compatibility with old data
+    type: v.string(),
 
     filedAt: v.number(),
     description: v.string(),
