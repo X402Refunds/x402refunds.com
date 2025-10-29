@@ -340,180 +340,144 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const body = await request.json();
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
-    
-    // Check for Bearer token (API key) in Authorization header
+
+    // Public tools (no auth required): file_dispute, check_case_status
+    const publicTools = ['consulate_file_dispute', 'consulate_check_case_status'];
+    const isPublicTool = publicTools.includes(tool);
+
+    // Check for Bearer token (API key) in Authorization header (skip for public tools)
     const authHeader = request.headers.get("Authorization");
     let authenticatedOrg = null;
-    
-    if (authHeader?.startsWith("Bearer ")) {
-      // API Key authentication
-      const apiKey = authHeader.substring(7);
-      
-      // Validate API key using query
-      try {
-        await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
 
-        // Update last used timestamp
-        await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
-      } catch (error: any) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: {
-            code: MCP_ERROR_CODES.AUTH_FAILED,
-            message: "Invalid or expired API key",
-            hint: "Get your API key from Settings → API Keys in the dashboard",
-            details: error.message
-          }
-        }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-    } else {
-      // Signature-based authentication (legacy)
-      const { extractAuthFromHeaders, validateAuth } = await import("./auth");
-      const signatureAuth = extractAuthFromHeaders(request.headers);
-      
-      if (!signatureAuth) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: {
-            code: MCP_ERROR_CODES.AUTH_REQUIRED,
-            message: "Authentication required",
-            hint: "Provide either Bearer token or Ed25519 signature",
-            methods: [
-              {
-                type: "Bearer token (recommended)",
-                header: "Authorization: Bearer csk_live_...",
-                how: "Get API key from Settings → API Keys in dashboard"
-              },
-              {
-                type: "Ed25519 signature (advanced)",
-                headers: {
-                  "X-Agent-DID": "Your agent's DID",
-                  "X-Signature": "Hex-encoded Ed25519 signature",
-                  "X-Timestamp": "Current timestamp"
+    if (!isPublicTool) {
+      // Authentication required for non-public tools
+      if (authHeader?.startsWith("Bearer ")) {
+        // API Key authentication
+        const apiKey = authHeader.substring(7);
+
+        // Validate API key using query
+        try {
+          await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
+
+          // Update last used timestamp
+          await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
+        } catch (error: any) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.AUTH_FAILED,
+              message: "Invalid or expired API key",
+              hint: "Get your API key from Settings → API Keys in the dashboard",
+              details: error.message
+            }
+          }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      } else {
+        // Signature-based authentication (legacy)
+        const { extractAuthFromHeaders, validateAuth } = await import("./auth");
+        const signatureAuth = extractAuthFromHeaders(request.headers);
+
+        if (!signatureAuth) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.AUTH_REQUIRED,
+              message: "Authentication required",
+              hint: "Provide either Bearer token or Ed25519 signature",
+              methods: [
+                {
+                  type: "Bearer token (recommended)",
+                  header: "Authorization: Bearer csk_live_...",
+                  how: "Get API key from Settings → API Keys in dashboard"
+                },
+                {
+                  type: "Ed25519 signature (advanced)",
+                  headers: {
+                    "X-Agent-DID": "Your agent's DID",
+                    "X-Signature": "Hex-encoded Ed25519 signature",
+                    "X-Timestamp": "Current timestamp"
+                  }
                 }
-              }
-            ]
-          }
-        }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-      
-      // Validate signature
-      const isValid = await validateAuth(
-        ctx,
-        signatureAuth,
-        "POST",
-        "/mcp/invoke",
-        bodyStr
-      );
-      
-      if (!isValid) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: {
-            code: MCP_ERROR_CODES.AUTH_FAILED,
-            message: "Invalid signature",
-            hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
-          }
-        }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
+              ]
+            }
+          }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // Validate signature
+        const isValid = await validateAuth(
+          ctx,
+          signatureAuth,
+          "POST",
+          "/mcp/invoke",
+          bodyStr
+        );
+
+        if (!isValid) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.AUTH_FAILED,
+              message: "Invalid signature",
+              hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
+            }
+          }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
       }
     }
-    
+
     // Route to appropriate handler based on tool name
     let result;
     
     switch (tool) {
       case "consulate_file_dispute":
-        // Create evidence manifests if evidenceUrls provided
-        const evidenceIds: any[] = [];
-        if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
-          for (const url of parameters.evidenceUrls) {
-            const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
-              agentDid: parameters.plaintiff,
-              sha256: generateSHA256(url),
-              uri: url,
-              signer: parameters.plaintiff,
-              model: {
-                provider: "mcp_tool",
-                name: "consulate_file_dispute",
-                version: "1.0.0"
-              }
-            });
-            evidenceIds.push(evidenceId);
-          }
-        }
-
-        // File dispute with evidence IDs
-        result = await ctx.runMutation(api.cases.fileDispute, {
+        // File PAYMENT DISPUTE using the unified payment dispute endpoint
+        result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
+          transactionId: parameters.transactionId,
+          amount: parameters.amount,
+          currency: parameters.currency || "USD",
+          paymentProtocol: parameters.paymentProtocol,
           plaintiff: parameters.plaintiff,
           defendant: parameters.defendant,
-          type: parameters.disputeType,
-          jurisdictionTags: parameters.jurisdiction ? [parameters.jurisdiction] : ["US"],
-          evidenceIds, // Now populated with created evidence
-          description: parameters.claim,
-          claimedDamages: parameters.claimAmount // Map claimAmount to claimedDamages schema field
+          disputeReason: parameters.disputeReason,
+          description: parameters.description,
+          evidenceUrls: parameters.evidenceUrls || [],
+          callbackUrl: parameters.callbackUrl,
         });
-
-        // Calculate dynamic resolution time based on claim amount and dispute type
-        const claimAmount = parameters.claimAmount || 0;
-        let estimatedResolution: string;
-        let resolutionDetails: string;
-
-        if (claimAmount < 100) {
-          // Small claims: Fast track
-          estimatedResolution = "24-48 hours";
-          resolutionDetails = "Small claim - fast track resolution";
-        } else if (claimAmount < 10000) {
-          // Standard claims
-          estimatedResolution = "3-5 business days";
-          resolutionDetails = "Standard claim - expert panel review";
-        } else if (claimAmount < 100000) {
-          // Large claims
-          estimatedResolution = "5-10 business days";
-          resolutionDetails = "Large claim - comprehensive review with legal analysis";
-        } else {
-          // Enterprise claims
-          estimatedResolution = "10-15 business days";
-          resolutionDetails = "Enterprise claim - full discovery and expert determination";
-        }
-
-        // Fraud/Data Breach disputes get priority
-        if (parameters.disputeType === "FRAUD" || parameters.disputeType === "DATA_BREACH") {
-          estimatedResolution = "24-48 hours";
-          resolutionDetails = "Priority dispute - immediate review for security concerns";
-        }
 
         return new Response(JSON.stringify({
           success: true,
-          caseId: result,
-          evidenceCount: evidenceIds.length,
-          message: `Dispute filed successfully${evidenceIds.length > 0 ? ` with ${evidenceIds.length} evidence item(s)` : ''}. Case ID: ${result}`,
-          trackingUrl: `https://consulatehq.com/cases/${result}`,
-          claimAmount: parameters.claimAmount,
-          estimatedResolution,
-          resolutionDetails,
+          caseId: result.caseId,
+          paymentDisputeId: result.paymentDisputeId,
+          status: result.status,
+          isMicroDispute: result.isMicroDispute,
+          pricingTier: result.pricingTier,
+          disputeFee: result.disputeFee,
+          humanReviewRequired: result.humanReviewRequired,
+          estimatedResolutionTime: result.estimatedResolutionTime,
+          message: `Payment dispute filed successfully. Case ID: ${result.caseId}`,
+          trackingUrl: `https://consulatehq.com/cases/${result.caseId}`,
           nextSteps: [
-            evidenceIds.length > 0
-              ? "Evidence submitted - case ready for review"
-              : "Submit additional evidence using consulate_submit_evidence tool",
-            "Monitor case status with consulate_check_case_status",
-            "Receive notification when panel issues ruling"
+            "Submit additional evidence using consulate_submit_evidence tool (optional)",
+            "AI will analyze the dispute and provide a recommendation",
+            "Customer review team will make the final decision",
+            "Resolution guaranteed within 10 business days (Regulation E)"
           ],
           _links: {
-            self: `https://consulatehq.com/cases/${result}`,
-            evidence: `https://api.consulatehq.com/cases/${result}/evidence`,
-            timeline: `https://consulatehq.com/cases/${result}#timeline`,
-            api: `https://api.consulatehq.com/cases/${result}`,
+            self: `https://consulatehq.com/cases/${result.caseId}`,
+            evidence: `https://api.consulatehq.com/cases/${result.caseId}/evidence`,
+            timeline: `https://consulatehq.com/cases/${result.caseId}#timeline`,
+            api: `https://api.consulatehq.com/cases/${result.caseId}`,
             submitEvidence: `https://api.consulatehq.com/evidence`,
-            checkStatus: `https://api.consulatehq.com/cases/${result}`
+            checkStatus: `https://api.consulatehq.com/cases/${result.caseId}`
           }
         }), {
           headers: { "Content-Type": "application/json" }

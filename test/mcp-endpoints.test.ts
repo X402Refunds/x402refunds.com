@@ -37,11 +37,14 @@ describe('MCP Protocol - Tool Discovery', () => {
     it('should include tool metadata', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
-      
+
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(manifest.server.name).toBe('Consulate Dispute Resolution Platform');
+      expect(manifest.server.name).toBe('Consulate Payment Dispute Resolution');
+      expect(manifest.server.dispute_types).toBe('PAYMENT DISPUTES ONLY (not SLA/contract disputes)');
+      expect(manifest.server.pricing).toBeDefined();
+      expect(manifest.server.pricing.micro.fee).toBe('$0.10');
     });
 
     it('should list all 8 MCP tools', async () => {
@@ -249,6 +252,43 @@ describe('MCP Protocol - Tool Invocation Error Handling', () => {
 
       // Should fail on authentication
       expect(response.status).toBe(401);
+    });
+
+    it('should successfully file a payment dispute via MCP (CRITICAL TEST)', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tool: 'consulate_file_dispute',
+          parameters: {
+            transactionId: `mcp_test_${Date.now()}`,
+            amount: 0.75,
+            currency: 'USD',
+            paymentProtocol: 'ACP',
+            plaintiff: 'consumer:mcp-test@example.com',
+            defendant: 'merchant:test-shop@example.com',
+            disputeReason: 'api_timeout',
+            description: 'MCP test: API timeout but charged',
+            evidenceUrls: ['https://example.com/log1.json'],
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const result = await response.json();
+      expect(result.success).toBe(true);
+      expect(result.caseId).toBeDefined();
+      expect(result.paymentDisputeId).toBeDefined();
+      expect(result.isMicroDispute).toBe(true); // $0.75 is micro (<$1)
+      expect(result.humanReviewRequired).toBe(true); // Option 3: all require review
+      expect(result.status).toBe('received');
+      expect(result.trackingUrl).toContain(result.caseId);
+      expect(result._links).toBeDefined();
+      expect(result._links.self).toContain(result.caseId);
+
+      console.log(`✅ MCP payment dispute filed: ${result.caseId}`);
     });
   });
 });

@@ -76,13 +76,13 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tool: 'consulate_check_case_status',
-          parameters: { caseId: 'test' }
+          tool: 'consulate_register_agent', // Non-public tool (requires auth)
+          parameters: { name: 'test', functionalType: 'api' }
         })
       });
-      
-      // Should fail auth but return proper error
-      expect([400, 401, 403]).toContain(response.status);
+
+      // Should fail auth and return 401
+      expect(response.status).toBe(401);
       
       // Verify CORS headers even on errors (may be null in production if behind CDN)
       const corsHeader = response.headers.get('access-control-allow-origin');
