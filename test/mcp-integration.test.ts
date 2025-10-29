@@ -41,10 +41,13 @@ describe('MCP - Tool Definitions', () => {
     
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain('dispute');
+    expect(tool?.description).toContain('PAYMENT DISPUTE');
     expect(tool?.input_schema.required).toContain('plaintiff');
     expect(tool?.input_schema.required).toContain('defendant');
-    expect(tool?.input_schema.required).toContain('disputeType');
+    expect(tool?.input_schema.required).toContain('transactionId');
+    expect(tool?.input_schema.required).toContain('amount');
+    expect(tool?.input_schema.required).toContain('paymentProtocol');
+    expect(tool?.input_schema.required).toContain('disputeReason');
   });
 
   it('should include consulate_submit_evidence tool', async () => {
@@ -112,19 +115,20 @@ describe('MCP - Tool Definitions', () => {
   });
 });
 
-describe('MCP - Dispute Type Enums', () => {
-  it('should define valid dispute types', async () => {
+describe('MCP - Payment Dispute Enums', () => {
+  it('should define valid payment dispute reasons', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
-    
+
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
-    const disputeTypeEnum = fileDisputeTool?.input_schema.properties.disputeType.enum;
-    
-    expect(disputeTypeEnum).toBeDefined();
-    expect(disputeTypeEnum).toContain('SLA_BREACH');
-    expect(disputeTypeEnum).toContain('CONTRACT_VIOLATION');
-    expect(disputeTypeEnum).toContain('FRAUD');
-    expect(disputeTypeEnum).toContain('DATA_BREACH');
-    expect(disputeTypeEnum).toContain('SERVICE_QUALITY');
+    const disputeReasonEnum = fileDisputeTool?.input_schema.properties.disputeReason.enum;
+
+    expect(disputeReasonEnum).toBeDefined();
+    expect(disputeReasonEnum).toContain('api_timeout');
+    expect(disputeReasonEnum).toContain('service_not_rendered');
+    expect(disputeReasonEnum).toContain('quality_issue');
+    expect(disputeReasonEnum).toContain('amount_incorrect');
+    expect(disputeReasonEnum).toContain('fraud');
+    expect(disputeReasonEnum).toContain('duplicate_charge');
   });
 
   it('should define valid evidence types', async () => {

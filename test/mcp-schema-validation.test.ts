@@ -47,31 +47,34 @@ describe("MCP Tool Schema Validation", () => {
   });
 
   describe("consulate_file_dispute", () => {
-    it("should have disputeType enum matching backend case types", () => {
+    it("should have disputeReason enum matching payment dispute types", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      const disputeTypeEnum = disputeTool?.input_schema.properties.disputeType.enum;
-      expect(disputeTypeEnum).toBeDefined();
+      const disputeReasonEnum = disputeTool?.input_schema.properties.disputeReason.enum;
+      expect(disputeReasonEnum).toBeDefined();
 
-      // Valid dispute types from backend
-      expect(disputeTypeEnum).toContain("SLA_BREACH");
-      expect(disputeTypeEnum).toContain("CONTRACT_VIOLATION");
-      expect(disputeTypeEnum).toContain("FRAUD");
-      expect(disputeTypeEnum).toContain("DATA_BREACH");
-      expect(disputeTypeEnum).toContain("SERVICE_QUALITY");
+      // Valid payment dispute reasons
+      expect(disputeReasonEnum).toContain("api_timeout");
+      expect(disputeReasonEnum).toContain("service_not_rendered");
+      expect(disputeReasonEnum).toContain("quality_issue");
+      expect(disputeReasonEnum).toContain("amount_incorrect");
+      expect(disputeReasonEnum).toContain("fraud");
+      expect(disputeReasonEnum).toContain("duplicate_charge");
     });
 
-    it("should have required fields matching backend mutation", () => {
+    it("should have required fields matching payment dispute mutation", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
       expect(required).toContain("plaintiff");
       expect(required).toContain("defendant");
-      expect(required).toContain("disputeType");
-      expect(required).toContain("claim");
-      expect(required).toContain("claimAmount");
+      expect(required).toContain("transactionId");
+      expect(required).toContain("amount");
+      expect(required).toContain("paymentProtocol");
+      expect(required).toContain("disputeReason");
+      expect(required).toContain("description");
     });
   });
 

@@ -116,8 +116,12 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'consulate_check_case_status',
-          parameters: { caseId: '123' },
+          tool: 'consulate_register_agent', // Non-public tool (requires auth)
+          parameters: {
+            name: 'Test Agent',
+            functionalType: 'api',
+            domain: 'test.com'
+          },
         }),
       });
 
@@ -137,8 +141,12 @@ describe('MCP Protocol - Authentication', () => {
           'Authorization': 'Basic invalid-format',
         },
         body: JSON.stringify({
-          tool: 'consulate_check_case_status',
-          parameters: { caseId: '123' },
+          tool: 'consulate_register_agent', // Non-public tool (requires auth)
+          parameters: {
+            name: 'Test Agent',
+            functionalType: 'api',
+            domain: 'test.com'
+          },
         }),
       });
 
@@ -158,8 +166,12 @@ describe('MCP Protocol - Authentication', () => {
           'Authorization': 'Bearer csk_test_invalid_fake_12345',
         },
         body: JSON.stringify({
-          tool: 'consulate_check_case_status',
-          parameters: { caseId: '123' },
+          tool: 'consulate_register_agent', // Non-public tool (requires auth)
+          parameters: {
+            name: 'Test Agent',
+            functionalType: 'api',
+            domain: 'test.com'
+          },
         }),
       });
 

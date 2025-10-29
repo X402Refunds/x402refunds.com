@@ -8,8 +8,18 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2, Scale, Clock, AlertCircle, CheckCircle } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2, Scale, AlertCircle, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Id } from "@convex/_generated/dataModel"
+
+type Event = {
+  _id: Id<"events">;
+  type: string;
+  payload: Record<string, unknown>;
+  timestamp: number;
+  agentDid?: string;
+  caseId?: Id<"cases">;
+}
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
@@ -37,42 +47,48 @@ export default function DashboardPage() {
     api.agents.listOrgAgents,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
   )
-  
-  const orgCases = useQuery(
-    api.cases.getOrganizationCases,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
-  )
-  
+
   // Infrastructure Model: Get payment disputes needing review
   const reviewQueue = useQuery(
     api.paymentDisputes.getCustomerReviewQueue,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
   )
+
+  // Get recent system events for activity feed
+  const recentEvents = useQuery(api.events.getRecentEvents, { limit: 100 })
   
   const customerReview = useMutation(api.paymentDisputes.customerReview)
-  
-  // Helper to format case status
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      FILED: "bg-blue-100 text-blue-800",
-      PANELED: "bg-yellow-100 text-yellow-800",
-      DECIDED: "bg-green-100 text-green-800",
-      CLOSED: "bg-slate-100 text-slate-800",
+
+  // Helper to get event icon
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case "case_filed":
+        return "📋"
+      case "case_resolved":
+        return "✅"
+      case "evidence_submitted":
+        return "📎"
+      case "agent_registered":
+        return "🤖"
+      default:
+        return "📌"
     }
-    return colors[status] || "bg-slate-100 text-slate-800"
   }
-  
-  // Helper to get relative time
-  const getRelativeTime = (timestamp: number) => {
-    const now = Date.now()
-    const diff = now - timestamp
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
+
+  // Helper to get event badge color
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "case_filed":
+        return "bg-blue-100 text-blue-800"
+      case "case_resolved":
+        return "bg-green-100 text-green-800"
+      case "evidence_submitted":
+        return "bg-purple-100 text-purple-800"
+      case "agent_registered":
+        return "bg-orange-100 text-orange-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
   
   // Sync user if not exists
@@ -297,61 +313,57 @@ export default function DashboardPage() {
           </Card>
         )}
         
-        {/* Live Case Activity */}
+        {/* Live System Activity */}
         <Card className="border-slate-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-slate-900">
                   <Scale className="h-5 w-5 text-slate-600" />
-                  Live Case Activity
+                  Recent Activity
                 </CardTitle>
                 <CardDescription className="text-slate-600">
-                  Recent cases involving your organization&apos;s agents
+                  Latest events from the dispute resolution system
                 </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => router.push('/demo/cases')}>
+              <Button variant="ghost" size="sm" onClick={() => router.push('/demo/activity')}>
                 View All <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {orgCases && orgCases.length > 0 ? (
-              <div className="space-y-3">
-                {orgCases.map((case_) => (
-                  <div 
-                    key={case_._id}
-                    className="flex items-start justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/demo/dispute/${case_._id}`)}
+            <div className="space-y-3">
+              {recentEvents && recentEvents.length > 0 ? (
+                recentEvents.slice(0, 10).map((event: Event) => (
+                  <div
+                    key={event._id}
+                    className="flex items-start gap-4 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className={getStatusColor(case_.status)}>
-                          {case_.status}
+                    <div className="text-2xl">{getEventIcon(event.type)}</div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge className={getEventColor(event.type)}>
+                          {event.type.replace(/_/g, " ")}
                         </Badge>
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {getRelativeTime(case_.filedAt)}
+                        <span className="text-sm text-slate-500">
+                          {new Date(event.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {case_.type}
-                      </p>
-                      <p className="text-xs text-slate-600 truncate">
-                        {case_.description || `${case_.plaintiff} vs ${case_.defendant}`}
-                      </p>
+                      {event.payload && (
+                        <div className="text-sm text-slate-600 font-mono text-xs max-h-20 overflow-y-auto">
+                          {JSON.stringify(event.payload, null, 2)}
+                        </div>
+                      )}
                     </div>
-                    <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-slate-500">
-                <Scale className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                <p className="text-sm">No case activity yet</p>
-                <p className="text-xs text-slate-400 mt-1">Cases will appear here when your agents file or receive disputes</p>
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <Scale className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                  <p className="text-sm">No activity recorded yet</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
         

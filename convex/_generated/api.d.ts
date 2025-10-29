@@ -12,6 +12,7 @@ import type * as agents from "../agents.js";
 import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as cases from "../cases.js";
+import type * as cleanup from "../cleanup.js";
 import type * as courtEngine from "../courtEngine.js";
 import type * as crons from "../crons.js";
 import type * as custody from "../custody.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   apiKeys: typeof apiKeys;
   auth: typeof auth;
   cases: typeof cases;
+  cleanup: typeof cleanup;
   courtEngine: typeof courtEngine;
   crons: typeof crons;
   custody: typeof custody;
