@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2, Scale, AlertCircle, CheckCircle } from "lucide-react"
+import { Users, Activity, ArrowRight, Building2, AlertCircle, CheckCircle, TrendingUp, Zap } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
 
@@ -56,7 +56,10 @@ export default function DashboardPage() {
 
   // Get recent system events for activity feed
   const recentEvents = useQuery(api.events.getRecentEvents, { limit: 100 })
-  
+
+  // Get system stats for activity feed
+  const systemStats = useQuery(api.cases.getCachedSystemStats)
+
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
   // Helper to get event icon
@@ -313,31 +316,63 @@ export default function DashboardPage() {
           </Card>
         )}
         
-        {/* Live System Activity */}
-        <Card className="border-slate-200">
+        {/* System Activity Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{recentEvents?.length ?? 0}</div>
+              <p className="text-xs text-muted-foreground">
+                All system events
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{systemStats?.pendingCases ?? 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently processing
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{systemStats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m</div>
+              <p className="text-xs text-muted-foreground">
+                Lightning fast
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Live System Activity Feed */}
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-slate-900">
-                  <Scale className="h-5 w-5 text-slate-600" />
-                  Recent Activity
-                </CardTitle>
-                <CardDescription className="text-slate-600">
-                  Latest events from the dispute resolution system
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => router.push('/demo/activity')}>
-                View All <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Latest events from the dispute resolution system
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {recentEvents && recentEvents.length > 0 ? (
-                recentEvents.slice(0, 10).map((event: Event) => (
+                recentEvents.slice(0, 50).map((event: Event) => (
                   <div
                     key={event._id}
-                    className="flex items-start gap-4 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
                   >
                     <div className="text-2xl">{getEventIcon(event.type)}</div>
                     <div className="flex-1 space-y-1">
@@ -345,12 +380,12 @@ export default function DashboardPage() {
                         <Badge className={getEventColor(event.type)}>
                           {event.type.replace(/_/g, " ")}
                         </Badge>
-                        <span className="text-sm text-slate-500">
+                        <span className="text-sm text-muted-foreground">
                           {new Date(event.timestamp).toLocaleString()}
                         </span>
                       </div>
                       {event.payload && (
-                        <div className="text-sm text-slate-600 font-mono text-xs max-h-20 overflow-y-auto">
+                        <div className="text-sm text-muted-foreground">
                           {JSON.stringify(event.payload, null, 2)}
                         </div>
                       )}
@@ -358,9 +393,8 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-slate-500">
-                  <Scale className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                  <p className="text-sm">No activity recorded yet</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  No activity recorded yet
                 </div>
               )}
             </div>
