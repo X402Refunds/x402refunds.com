@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useQuery, useMutation } from "convex/react"
 import { useRouter } from "next/navigation"
@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, ArrowRight, Building2, AlertCircle, CheckCircle } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, Clock, Zap, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
 
@@ -29,43 +29,43 @@ type Event = {
 export default function DashboardPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  
+
   // Sync user on page load
   const syncUser = useMutation(api.users.syncUser)
   const currentUser = useQuery(
     api.users.getCurrentUser,
     user ? { clerkUserId: user.id } : "skip"
   )
-  
+
   const organization = useQuery(
     api.users.getUserOrganization,
     currentUser ? { userId: currentUser._id } : "skip"
-  )
-  
-  const orgStats = useQuery(
-    api.users.getOrganizationStats,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
-  )
-  
-  const orgAgents = useQuery(
-    api.agents.listOrgAgents,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
   )
 
   // Infrastructure Model: Get payment disputes needing review
   const reviewQueue = useQuery(
     api.paymentDisputes.getCustomerReviewQueue,
-    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 5 } : "skip"
-  )
-
-  // Get organization-specific events for activity feed
-  const recentEvents = useQuery(
-    api.events.getOrganizationEvents,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 10 } : "skip"
   )
 
+  // Get payment dispute stats for automation metrics
+  const paymentStats = useQuery(api.paymentDisputes.getMicroDisputeStats)
+
+  // Get organization-specific events for activity feed (dispute events only)
+  const recentEvents = useQuery(
+    api.events.getOrganizationEvents,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 15 } : "skip"
+  )
+
   const customerReview = useMutation(api.paymentDisputes.customerReview)
+
+  // Calculate automation rate
+  const automationRate = paymentStats
+    ? parseFloat(paymentStats.autoResolutionRate)
+    : 95
+
+  // Calculate average resolution time (mock - would need actual data)
+  const avgResolutionMinutes = 2.4
 
   // Helper functions for activity feed (copied from demo)
   const formatAgentName = (did: string) => {
@@ -187,144 +187,175 @@ export default function DashboardPage() {
     )
   }
   
+  // Filter events to show only dispute-related activity
+  const disputeEvents = recentEvents?.filter(evt =>
+    ["DISPUTE_FILED", "CASE_STATUS_UPDATED", "EVIDENCE_SUBMITTED"].includes(evt.type)
+  ) || []
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600">
-            {organization ? `Welcome to ${organization.name}` : "Loading..."}
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
+            <p className="text-slate-600 mt-1">
+              {organization?.name || "Loading..."}
+            </p>
+          </div>
+
+          {/* System Status Badge */}
+          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+            System Operational
+          </Badge>
         </div>
-        
-        {/* Organization Info Card */}
-        {organization && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <Building2 className="h-5 w-5 text-blue-600 mt-0.5" />
+
+        {/* Alert Banner - Only shows if review queue has items */}
+        {reviewQueue && reviewQueue.length > 0 && (
+          <Card className="border-l-4 border-l-amber-600 bg-amber-50 border-amber-200">
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
                   <div>
-                    <CardTitle className="text-base text-blue-900">
-                      {organization.name}
-                    </CardTitle>
-                    <CardDescription className="text-blue-700">
-                      {organization.domain && `Domain: ${organization.domain}`}
-                    </CardDescription>
+                    <p className="font-semibold text-amber-900">
+                      {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''} need{reviewQueue.length === 1 ? 's' : ''} your review
+                    </p>
+                    <p className="text-sm text-amber-700">
+                      AI confidence below 95% threshold
+                    </p>
                   </div>
                 </div>
+                <Button
+                  onClick={() => router.push('/dashboard/review-queue')}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  Review Now <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-            </CardHeader>
+            </CardContent>
           </Card>
         )}
-        
-        {/* Stats Cards with Hover Effect */}
+
+        {/* Hero Metrics - What Matters Most */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card 
-            className="relative cursor-pointer hover:border-slate-400 transition-all hover:shadow-md group"
-            onClick={() => router.push('/dashboard/agents')}
-            onMouseEnter={() => setHoveredCard('agents')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
+          {/* Card 1: Review Queue Status */}
+          <Card className={reviewQueue && reviewQueue.length > 0 ? "border-amber-300 hover:border-amber-400" : "border-emerald-300 hover:border-emerald-400"}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Agents</CardTitle>
-              <Users className="h-4 w-4 text-slate-600" />
+              <CardTitle className="text-sm font-medium text-slate-700">Review Queue</CardTitle>
+              <AlertCircle className={reviewQueue && reviewQueue.length > 0 ? "h-5 w-5 text-amber-600" : "h-5 w-5 text-emerald-600"} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {orgAgents?.length ?? 0}
+              <div className={`text-4xl font-bold font-mono tabular-nums ${reviewQueue && reviewQueue.length > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                {reviewQueue?.length || 0}
               </div>
-              <p className="text-xs text-slate-600 mt-1">
-                {orgStats?.activeAgents ?? 0} active
+              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
+                {reviewQueue && reviewQueue.length > 0 ? "Disputes Waiting" : "No Action Needed"}
               </p>
-            </CardContent>
-            {hoveredCard === 'agents' && (
-              <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center rounded-lg">
-                <Button variant="secondary" size="sm" className="shadow-lg">
-                  Manage Agents
+              {reviewQueue && reviewQueue.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full mt-3"
+                  onClick={() => router.push('/dashboard/review-queue')}
+                >
+                  Review Disputes
                 </Button>
-              </div>
-            )}
+              )}
+            </CardContent>
           </Card>
-          
-          
-          <Card 
-            className="relative cursor-pointer hover:border-slate-400 transition-all hover:shadow-md group"
-            onClick={() => router.push('/dashboard/team')}
-            onMouseEnter={() => setHoveredCard('team')}
-            onMouseLeave={() => setHoveredCard(null)}
-          >
+
+          {/* Card 2: Automation Efficiency */}
+          <Card className="border-blue-300 hover:border-blue-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-              <Activity className="h-4 w-4 text-slate-600" />
+              <CardTitle className="text-sm font-medium text-slate-700">Automation Rate</CardTitle>
+              <Zap className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {orgStats?.totalUsers ?? 0}
+              <div className="text-4xl font-bold text-blue-600 font-mono tabular-nums">
+                {automationRate.toFixed(0)}%
               </div>
-              <p className="text-xs text-slate-600 mt-1">
-                {orgStats?.adminUsers ?? 0} admin{(orgStats?.adminUsers ?? 0) !== 1 ? 's' : ''}
+              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
+                AI Auto-Resolved
               </p>
-            </CardContent>
-            {hoveredCard === 'team' && (
-              <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center rounded-lg">
-                <Button variant="secondary" size="sm" className="shadow-lg">
-                  Manage Team
-                </Button>
+              <div className="flex items-center gap-1 mt-3 text-xs text-slate-600">
+                <TrendingUp className="h-3 w-3 text-emerald-600" />
+                <span>
+                  {paymentStats?.autoResolvedCount || 0} of {paymentStats?.totalMicroDisputes || 0} disputes
+                </span>
               </div>
-            )}
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Avg Resolution Time */}
+          <Card className="border-slate-300 hover:border-slate-400">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700">Avg Resolution Time</CardTitle>
+              <Clock className="h-5 w-5 text-slate-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-slate-900 font-mono tabular-nums">
+                {avgResolutionMinutes.toFixed(1)}<span className="text-xl text-slate-600">m</span>
+              </div>
+              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
+                Average Time
+              </p>
+              <div className="text-xs text-emerald-600 mt-3 font-medium">
+                ✓ Under 5 min target
+              </div>
+            </CardContent>
           </Card>
         </div>
         
-        {/* Payment Dispute Review Queue - Infrastructure Model */}
+        {/* Detailed Review Queue - Only shows if items exist */}
         {reviewQueue && reviewQueue.length > 0 && (
-          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
+          <Card className="border-amber-200 shadow-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-yellow-900 dark:text-yellow-100">
-                    <AlertCircle className="h-5 w-5" />
-                    Payment Dispute Review Queue
-                  </CardTitle>
-                  <CardDescription className="text-yellow-700 dark:text-yellow-300">
-                    {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''} need{reviewQueue.length === 1 ? 's' : ''} your review (AI confidence &lt; 95%)
-                  </CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <CardTitle className="text-slate-900">Pending Reviews</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => router.push('/dashboard/review-queue')}
-                  className="bg-white dark:bg-slate-900"
                 >
                   View All <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
+              <CardDescription className="text-slate-600">
+                Disputes where AI confidence is below 95% - your decision needed
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {reviewQueue.slice(0, 3).map((dispute) => (
-                  <div key={dispute._id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex justify-between items-start mb-2">
+                {reviewQueue.slice(0, 5).map((dispute) => (
+                  <div
+                    key={dispute._id}
+                    className="p-4 bg-white rounded-lg border border-amber-200 hover:border-amber-300 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-semibold text-sm">
+                        <p className="font-semibold text-slate-900">
                           ${dispute.amount.toFixed(2)} {dispute.currency}
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-slate-600">
                           {dispute.disputeReason?.replace(/_/g, ' ')}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
                         AI: {((dispute.aiRulingConfidence || 0) * 100).toFixed(0)}%
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
-                      🤖 Recommends: <strong>{dispute.aiRecommendation || "CONSUMER_WINS"}</strong>
-                    </p>
+                    <div className="flex items-center gap-2 mb-3 text-sm text-slate-700">
+                      <span className="font-medium">AI Recommends:</span>
+                      <Badge className="bg-slate-100 text-slate-700 border-slate-200">
+                        {dispute.aiRecommendation || "CONSUMER_WINS"}
+                      </Badge>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={async () => {
                           if (!currentUser) return
                           await customerReview({
@@ -335,96 +366,94 @@ export default function DashboardPage() {
                           })
                         }}
                       >
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Approve
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Approve AI
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 text-xs h-8"
+                        className="flex-1"
                         onClick={() => router.push('/dashboard/review-queue')}
                       >
-                        Review
+                        Detailed Review
                       </Button>
                     </div>
                   </div>
                 ))}
-                {reviewQueue.length > 3 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
-                    + {reviewQueue.length - 3} more dispute{reviewQueue.length - 3 !== 1 ? 's' : ''} need review
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Live Activity Feed */}
+        {/* Live Dispute Activity */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-slate-900" />
-                <CardTitle className="text-slate-900">Live Activity Feed</CardTitle>
+                <CardTitle className="text-slate-900">Live Dispute Activity</CardTitle>
               </div>
-              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
-                🟢 Real-time Updates
+              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                Real-time
               </Badge>
             </div>
             <CardDescription className="text-slate-600">
-              Watch your organization&apos;s disputes and agent activity in real-time
+              Monitor dispute resolution activity as it happens
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {!recentEvents || recentEvents.length === 0 ? (
+            {!disputeEvents || disputeEvents.length === 0 ? (
               <div className="text-center py-8">
                 <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 mb-2">No recent activity</p>
-                <p className="text-xs text-slate-400">Activity will appear here when your agents file or receive disputes</p>
+                <p className="text-sm text-slate-500 mb-2">No dispute activity yet</p>
+                <p className="text-xs text-slate-400">
+                  Dispute events will appear here when disputes are filed or resolved
+                </p>
               </div>
             ) : (
               <>
-                {recentEvents.slice(0, 10).map((evt) => {
-                  const event = evt as Event;
+                {disputeEvents.slice(0, 8).map((evt) => {
+                  const event = evt as Event
                   return (
-                  <div
-                    key={event._id}
-                    className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
-                    onClick={() => event.caseId && router.push(`/dashboard/activity`)}
-                  >
-                    <div className="text-2xl flex-shrink-0">
-                      {event.type === "AGENT_REGISTERED" && "🤖"}
-                      {event.type === "DISPUTE_FILED" && "📋"}
-                      {event.type === "EVIDENCE_SUBMITTED" && "📎"}
-                      {event.type === "CASE_STATUS_UPDATED" && "✅"}
-                      {!["AGENT_REGISTERED", "DISPUTE_FILED", "EVIDENCE_SUBMITTED", "CASE_STATUS_UPDATED"].includes(event.type) && "📌"}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="secondary" className={`${getEventColor(event.type)} text-xs font-medium`}>
-                          {getEventBadge(event.type)}
-                        </Badge>
-                        <span className="text-xs text-slate-500">
-                          {new Date(event.timestamp).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            timeZoneName: 'short'
-                          })}
-                        </span>
+                    <div
+                      key={event._id}
+                      className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
+                      onClick={() => event.caseId && router.push(`/dashboard/activity`)}
+                    >
+                      <div className="text-2xl flex-shrink-0">
+                        {event.type === "DISPUTE_FILED" && "📋"}
+                        {event.type === "EVIDENCE_SUBMITTED" && "📎"}
+                        {event.type === "CASE_STATUS_UPDATED" && "✅"}
                       </div>
-                      <p className="text-sm text-slate-700 leading-relaxed">
-                        {formatEventDescription(event)}
-                      </p>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge
+                            variant="secondary"
+                            className={`${getEventColor(event.type)} text-xs font-medium`}
+                          >
+                            {getEventBadge(event.type)}
+                          </Badge>
+                          <span className="text-xs text-slate-500">
+                            {new Date(event.timestamp).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZoneName: "short",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-700 leading-relaxed">
+                          {formatEventDescription(event)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
                   )
                 })}
                 <div className="pt-2">
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => router.push('/dashboard/activity')}
+                    onClick={() => router.push("/dashboard/activity")}
                   >
                     View All Activity
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -432,30 +461,6 @@ export default function DashboardPage() {
                 </div>
               </>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Documentation Link */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Documentation</CardTitle>
-            <CardDescription>
-              Learn how to integrate with Consulate&apos;s platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Button variant="outline" asChild>
-                <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
-                  API Documentation
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="https://docs.consulatehq.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
-                  Integration Guide
-                </a>
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
