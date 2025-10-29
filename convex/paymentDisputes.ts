@@ -142,26 +142,8 @@ export const receivePaymentDispute = mutation({
     // 2. Calculate pricing
     const feeBreakdown = calculateDisputeFee(args.amount, validation.estimatedTokens);
 
-    // 3. Create standard case
+    // 3. Create consolidated payment dispute case
     const now = Date.now();
-    const caseId = await ctx.db.insert("cases", {
-      plaintiff: args.plaintiff,
-      defendant: args.defendant,
-      parties: [args.plaintiff, args.defendant],
-      status: "FILED",
-      type: "PAYMENT_DISPUTE",
-      filedAt: now,
-      jurisdictionTags: ["REGULATION_E", "PAYMENT_PROTOCOL"],
-      evidenceIds: [], // Will be populated if evidence submitted
-      description: `${args.disputeReason}: ${args.description}`,
-      claimedDamages: args.amount,
-      mock: false, // Real dispute, not demo data
-      deadlines: {
-        panelDue: now + (7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-    });
-
-    // 4. Create payment-specific record
     const isMicroDispute = args.amount < 1.0;
     const autoResolveEligible = isMicroDispute; // Micro-disputes are auto-eligible
 
@@ -171,37 +153,43 @@ export const receivePaymentDispute = mutation({
     // Initial human review determination (may be updated by AI processing)
     const initialHumanReviewNeeded = args.amount >= 1.0 || args.disputeReason === "fraud";
 
-    const paymentDisputeId = await ctx.db.insert("paymentDisputes", {
-      caseId,
-      transactionId: args.transactionId,
-      transactionHash: args.transactionHash,
+    const caseId = await ctx.db.insert("cases", {
+      // Core case fields
+      plaintiff: args.plaintiff,
+      defendant: args.defendant,
+      status: "FILED",
+      type: "PAYMENT", // Changed from PAYMENT_DISPUTE
+      filedAt: now,
+      description: `${args.disputeReason}: ${args.description}`,
       amount: args.amount,
       currency: args.currency,
-      paymentProtocol: args.paymentProtocol,
-      disputeReason: args.disputeReason,
-      regulationEDeadline,
-      autoResolveEligible,
-      aiRulingConfidence: 0, // Will be set by ruling engine
+      evidenceIds: [], // Will be populated if evidence submitted
+      mock: false, // Real dispute, not demo data
       humanReviewRequired: initialHumanReviewNeeded,
-      userAppealed: false,
+      createdAt: now,
+      finalDecisionDue: regulationEDeadline,
+
       // Infrastructure Model fields
       reviewerEmail: args.reviewerEmail,
       reviewerOrganizationId: args.reviewerOrganizationId,
-      // Party metadata - helps customer identify parties
-      plaintiffMetadata: args.plaintiffMetadata,
-      defendantMetadata: args.defendantMetadata,
-      // NEW: Pricing fields
-      disputeFee: feeBreakdown.totalFee,
-      disputeFeeBreakdown: {
-        baseFee: feeBreakdown.baseFee,
-        tokenOverageFee: feeBreakdown.tokenOverageFee,
-        totalFee: feeBreakdown.totalFee,
-      },
-      pricingTier: feeBreakdown.tier,
-      tokensUsed: {
-        evidenceInput: validation.estimatedTokens,
-        aiAnalysis: 0, // Will be updated by AI processing
-        total: validation.estimatedTokens,
+
+      // Payment-specific data in paymentDetails
+      paymentDetails: {
+        transactionId: args.transactionId,
+        transactionHash: args.transactionHash,
+        paymentProtocol: args.paymentProtocol,
+        disputeReason: args.disputeReason,
+        regulationEDeadline,
+        autoResolveEligible,
+        plaintiffMetadata: args.plaintiffMetadata,
+        defendantMetadata: args.defendantMetadata,
+        disputeFee: feeBreakdown.totalFee,
+        pricingTier: feeBreakdown.tier,
+        tokensUsed: {
+          evidenceInput: validation.estimatedTokens,
+          aiAnalysis: 0, // Will be updated by AI processing
+          total: validation.estimatedTokens,
+        },
       },
     });
     
@@ -256,7 +244,7 @@ export const receivePaymentDispute = mutation({
     
     return {
       caseId,
-      paymentDisputeId,
+      paymentDisputeId: caseId, // Backward compatibility: return caseId as paymentDisputeId
       status: "received",
       isMicroDispute,
       autoResolveEligible,
@@ -296,28 +284,26 @@ export const processWithAI = action({
       throw new Error("Case not found");
     }
 
-    // Check if this is a payment dispute or agent dispute
-    const paymentDispute = await ctx.runQuery(api.paymentDisputes.getByCase, {
-      caseId: args.caseId,
-    });
+    // Check if this is a payment dispute or general dispute
+    const isPaymentDispute = caseData.type === "PAYMENT";
 
-    console.info(`🤖 Processing case ${args.caseId} with AI (${paymentDispute ? 'payment' : 'agent'} dispute)`);
+    console.info(`🤖 Processing case ${args.caseId} with AI (${isPaymentDispute ? 'payment' : 'general'} dispute)`);
 
     // Determine dispute type and extract relevant fields
     let disputeReason: string;
     let amount: number;
     let currency: string;
 
-    if (paymentDispute) {
-      // Payment dispute
-      disputeReason = paymentDispute.disputeReason;
-      amount = paymentDispute.amount;
-      currency = paymentDispute.currency;
+    if (isPaymentDispute) {
+      // Payment dispute - get from paymentDetails
+      disputeReason = caseData.paymentDetails?.disputeReason || "unknown";
+      amount = caseData.amount || 0;
+      currency = caseData.currency || "USD";
     } else {
-      // Agent dispute (SLA violation, contract breach, etc.)
-      disputeReason = caseData.type; // "API_DOWNTIME", "SLA_VIOLATION", etc.
-      amount = caseData.claimedDamages || 0;
-      currency = "USD";
+      // General dispute (SLA violation, contract breach, etc.)
+      disputeReason = caseData.category || caseData.type; // "API_DOWNTIME", "SLA_VIOLATION", etc.
+      amount = caseData.amount || 0;
+      currency = caseData.currency || "USD";
     }
 
     // 1. Find similar past disputes using pattern matching
@@ -373,31 +359,17 @@ export const processWithAI = action({
     // 4. ALL disputes now require human review (Option 3)
     const humanReviewRequired: boolean = true;
 
-    // 5. Store AI recommendation (don't finalize decision)
-    if (paymentDispute) {
-      // Payment dispute - update in paymentDisputes table
-      await ctx.runMutation(api.paymentDisputes.updateWithAIRuling, {
-        paymentDisputeId: paymentDispute._id,
-        aiRulingConfidence: confidence,
+    // 5. Store AI recommendation in cases table (single source of truth)
+    await ctx.runMutation(api.cases.storeAIRecommendation, {
+      caseId: args.caseId,
+      aiRecommendation: {
         verdict,
+        confidence,
         reasoning,
-        humanReviewRequired,
-        similarPastCases: similarDisputes.map((d: any) => d._id),
-        tokensUsed,
-      });
-    } else {
-      // Agent dispute - store in cases table
-      await ctx.runMutation(api.cases.storeAIRecommendation, {
-        caseId: args.caseId,
-        aiRecommendation: {
-          verdict,
-          confidence,
-          reasoning,
-          analyzedAt: Date.now(),
-          similarCases: similarDisputes.map((d: any) => d.caseData?._id).filter(Boolean),
-        },
-      });
-    }
+        analyzedAt: Date.now(),
+        similarCases: similarDisputes.map((d: any) => d._id).filter(Boolean),
+      },
+    });
 
     // 6. REMOVED: No auto-resolve - all cases go to review queue
 
@@ -413,11 +385,12 @@ export const processWithAI = action({
 });
 
 /**
- * Update dispute with AI ruling
+ * DEPRECATED: Update dispute with AI ruling
+ * Use cases.storeAIRecommendation instead
  */
 export const updateWithAIRuling = mutation({
   args: {
-    paymentDisputeId: v.id("paymentDisputes"),
+    paymentDisputeId: v.id("cases"), // Changed to cases
     aiRulingConfidence: v.number(),
     verdict: v.union(
       v.literal("CONSUMER_WINS"),
@@ -427,35 +400,26 @@ export const updateWithAIRuling = mutation({
     ),
     reasoning: v.string(),
     humanReviewRequired: v.boolean(),
-    similarPastCases: v.array(v.id("paymentDisputes")),
+    similarPastCases: v.array(v.id("cases")), // Changed to cases
     tokensUsed: v.number(),
   },
   handler: async (ctx, args) => {
-    const dispute = await ctx.db.get(args.paymentDisputeId);
-    if (!dispute) throw new Error("Dispute not found");
-
-    // Update token usage
-    const updatedTokens = {
-      evidenceInput: dispute.tokensUsed?.evidenceInput || 0,
-      aiAnalysis: args.tokensUsed,
-      total: (dispute.tokensUsed?.evidenceInput || 0) + args.tokensUsed,
-    };
-
-    await ctx.db.patch(args.paymentDisputeId, {
-      aiRulingConfidence: args.aiRulingConfidence,
-      aiRecommendation: args.verdict,
-      aiReasoning: args.reasoning,
+    console.warn("DEPRECATED: updateWithAIRuling called. Use cases.storeAIRecommendation instead.");
+    // Forward to new API
+    return await ctx.db.patch(args.paymentDisputeId, {
+      aiRecommendation: {
+        verdict: args.verdict,
+        confidence: args.aiRulingConfidence,
+        reasoning: args.reasoning,
+        analyzedAt: Date.now(),
+        similarCases: args.similarPastCases,
+      },
       humanReviewRequired: args.humanReviewRequired,
-      similarPastCases: args.similarPastCases,
-      tokensUsed: updatedTokens,
+      status: "ANALYZED",
     });
-
-    console.info(
-      `AI ruling: ${args.verdict} (confidence: ${(args.aiRulingConfidence * 100).toFixed(1)}%), ` +
-      `human review: ${args.humanReviewRequired ? "YES" : "NO"}`
-    );
   },
 });
+
 
 /**
  * Auto-resolve high-confidence micro-disputes

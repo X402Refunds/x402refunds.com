@@ -160,6 +160,8 @@ export interface PanelAssignment {
 }
 
 // Judge management functions
+// DEPRECATED: Judges table removed during schema consolidation
+// Human reviewers now handle edge cases directly via review queue
 export const registerJudge = mutation({
   args: {
     did: v.string(),
@@ -167,98 +169,24 @@ export const registerJudge = mutation({
     specialties: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    // Check if judge already exists
-    const existingJudge = await ctx.db
-      .query("judges")
-      .withIndex("by_did", (q: any) => q.eq("did", args.did))
-      .first();
-
-    if (existingJudge) {
-      throw new Error("Judge already registered");
-    }
-
-    const judgeData = {
-      did: args.did,
-      name: args.name,
-      specialties: args.specialties,
-      reputation: 100, // Starting reputation
-      casesJudged: 0,
-      status: "active" as const,
-      createdAt: Date.now(),
-    };
-
-    const judgeId = await ctx.db.insert("judges", judgeData);
-
-    await ctx.db.insert("events", {
-      type: "JUDGE_REGISTERED",
-      payload: { judgeId, did: args.did, name: args.name },
-      timestamp: Date.now(),
-      agentDid: args.did,
-    });
-
-    return judgeId;
+    console.warn("DEPRECATED: registerJudge called. Judges table removed. Human reviewers handle cases via review queue.");
+    throw new Error("DEPRECATED: Judge system removed. Use human review queue instead.");
   },
 });
 
-// Panel assignment for complex cases
+// DEPRECATED: Panels table removed during schema consolidation
 export const assignPanel = mutation({
   args: {
     caseId: v.id("cases"),
     panelSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const panelSize = args.panelSize || 3;
-
-    // Get available judges
-    const availableJudges = await ctx.db
-      .query("judges")
-      .withIndex("by_status", (q: any) => q.eq("status", "active"))
-      .collect();
-
-    if (availableJudges.length < panelSize) {
-      throw new Error(`Insufficient judges available: need ${panelSize}, have ${availableJudges.length}`);
-    }
-
-    // Simple random selection for now (TODO: improve with reputation/specialty matching)
-    const selectedJudges = availableJudges
-      .sort(() => Math.random() - 0.5)
-      .slice(0, panelSize);
-
-    const now = Date.now();
-    const dueAt = now + 7 * 24 * 60 * 60 * 1000; // 7 days
-
-    const panelData = {
-      judgeIds: selectedJudges.map(j => j.did),
-      assignedAt: now,
-      dueAt,
-    };
-
-    const panelId = await ctx.db.insert("panels", panelData);
-
-    // Update case with panel assignment
-    await ctx.db.patch(args.caseId, { 
-      panelId,
-      status: "PANELED" as const 
-    });
-
-    // Log assignment
-    await ctx.db.insert("events", {
-      type: "PANEL_ASSIGNED",
-      payload: {
-        caseId: args.caseId,
-        panelId,
-        judgeIds: selectedJudges.map(j => j.did),
-        dueAt,
-      },
-      timestamp: now,
-      caseId: args.caseId,
-    });
-
-    return panelId;
+    console.warn("DEPRECATED: assignPanel called. Panels table removed.");
+    throw new Error("DEPRECATED: Panel system removed. Use human review queue instead.");
   },
 });
 
-// Judge voting function  
+// DEPRECATED: Panels table removed during schema consolidation
 export const submitVote = mutation({
   args: {
     panelId: v.id("panels"),
@@ -268,75 +196,17 @@ export const submitVote = mutation({
     confidence: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Get panel
-    const panel = await ctx.db.get(args.panelId);
-    if (!panel) {
-      throw new Error("Panel not found");
-    }
-
-    // Check if judge is assigned to this panel
-    if (!panel.judgeIds.includes(args.judgeId)) {
-      throw new Error("Judge not assigned to this panel");
-    }
-
-    // Check if judge already voted
-    const existingVote = panel.votes?.find(v => v.judgeId === args.judgeId);
-    if (existingVote) {
-      throw new Error("Judge has already voted on this panel");
-    }
-
-    // Create vote
-    const vote = {
-      judgeId: args.judgeId,
-      code: args.code,
-      reasons: args.reasons,
-    };
-
-    // Update panel with vote
-    const updatedVotes = panel.votes ? [...panel.votes, vote] : [vote];
-    await ctx.db.patch(args.panelId, { votes: updatedVotes });
-
-    // Update judge stats
-    const judge = await ctx.db
-      .query("judges")
-      .withIndex("by_did", (q: any) => q.eq("did", args.judgeId))
-      .first();
-
-    if (judge) {
-      await ctx.db.patch(judge._id, {
-        casesJudged: judge.casesJudged + 1,
-      });
-    }
-
-    // Log vote
-    await ctx.db.insert("events", {
-      type: "JUDGE_VOTE_SUBMITTED",
-      payload: {
-        panelId: args.panelId,
-        judgeId: args.judgeId,
-        code: args.code,
-        confidence: args.confidence || 0.8,
-      },
-      timestamp: Date.now(),
-      agentDid: args.judgeId,
-    });
-
-    // Check if panel is complete (all judges voted)
-    if (updatedVotes.length === panel.judgeIds.length) {
-      // Panel finalization will be handled by a cron job or manual trigger
-      // TODO: Add cron job to check for complete panels and finalize them
-    }
-
-    return "vote_submitted";
+    console.warn("DEPRECATED: submitVote called. Panels table removed.");
+    throw new Error("DEPRECATED: Judge voting system removed.");
   },
 });
 
-// Simple judge analysis (no external LLM calls for now)
-// Get panel information
+// DEPRECATED: Panels table removed during schema consolidation
 export const getPanel = query({
   args: { panelId: v.id("panels") },
   handler: async (ctx, { panelId }) => {
-    return await ctx.db.get(panelId);
+    console.warn("DEPRECATED: getPanel called. Panels table removed.");
+    return null;
   },
 });
 
@@ -452,6 +322,7 @@ CONSTITUTIONAL COMPLIANCE: Due process requires proper subject matter expertise 
 }
 
 // AI-powered panel deliberation (for future LLM integration)
+// DEPRECATED: Judge deliberation system removed
 export const deliberateWithAI = action({
   args: {
     caseData: v.object({
@@ -465,120 +336,48 @@ export const deliberateWithAI = action({
     systemPrompt: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    // TODO: Integrate with OpenAI, Anthropic, or other LLM provider
-    // For now, use enhanced hardcoded analysis
-    
-    const systemPrompt = args.systemPrompt || JUDGE_SYSTEM_PROMPTS.GENERAL_JUDGE;
-    const analysis = await analyzeCase(args.caseData, args.evidenceManifests, args.judgeSpecialties);
-    
-    // Log deliberation for transparency (commented out until events mutations are implemented)
-    // TODO: Implement events.logEvent mutation
-    // await ctx.runMutation(api.events.logEvent, {
-    //   type: "JUDGE_DELIBERATION", 
-    //   payload: {
-    //     caseId: args.caseData.id,
-    //     judgePrompt: systemPrompt.substring(0, 500) + "...",
-    //     analysisResult: analysis,
-    //   },
-    //   timestamp: Date.now(),
-    //   caseId: args.caseData.id,
-    // });
-    
-    return analysis;
+    console.warn("DEPRECATED: deliberateWithAI called. Judge system removed.");
+    throw new Error("DEPRECATED: Judge deliberation system removed.");
   }
 });
 
-// Simple demo function to show judge functionality  
+// DEPRECATED: Judges table removed
 export const createDemoJudges = mutation({
   args: {},
   handler: async (ctx, args) => {
-    const judges = [
-      { did: "judge:alice", name: "Judge Alice", specialties: ["sla", "performance"] },
-      { did: "judge:bob", name: "Judge Bob", specialties: ["format", "compliance"] },
-      { did: "judge:charlie", name: "Judge Charlie", specialties: ["delivery", "general"] },
-    ];
-
-    const judgeIds = [];
-    for (const judge of judges) {
-      const judgeId = await ctx.db.insert("judges", {
-        ...judge,
-        reputation: 100,
-        casesJudged: 0,
-        status: "active" as const,
-        createdAt: Date.now(),
-      });
-      judgeIds.push(judgeId);
-    }
-
-    return { message: "Demo judges created", judgeIds };
+    console.warn("DEPRECATED: createDemoJudges called. Judges table removed.");
+    throw new Error("DEPRECATED: Judge system removed.");
   },
 });
 
-// Get panel status
+// DEPRECATED: Panels table removed
 export const getPanelStatus = query({
   args: { panelId: v.id("panels") },
   handler: async (ctx, args) => {
-    const panel = await ctx.db.get(args.panelId);
-    if (!panel) return null;
-
-    const isComplete = panel.votes && panel.votes.length === panel.judgeIds.length;
-    const voteCounts = panel.votes?.reduce((acc, vote) => {
-      acc[vote.code] = (acc[vote.code] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return {
-      ...panel,
-      isComplete: isComplete || false,
-      voteCounts,
-      remainingVotes: panel.judgeIds.length - (panel.votes?.length || 0),
-    };
+    console.warn("DEPRECATED: getPanelStatus called. Panels table removed.");
+    return null;
   },
 });
 
-// Get judges
+// DEPRECATED: Judges table removed
 export const getJudges = query({
   args: { status: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    if (args.status) {
-      return await ctx.db
-        .query("judges")
-        .withIndex("by_status", (q: any) => q.eq("status", args.status))
-        .collect();
-    } else {
-      return await ctx.db.query("judges").collect();
-    }
+    console.warn("DEPRECATED: getJudges called. Judges table removed.");
+    return [];
   },
 });
 
+// DEPRECATED: Judges table removed
 export const getJudgeStats = query({
   args: { judgeId: v.string() },
   handler: async (ctx, args) => {
-    const judge = await ctx.db
-      .query("judges")
-      .withIndex("by_did", (q: any) => q.eq("did", args.judgeId))
-      .first();
-
-    if (!judge) {
-      return null;
-    }
-
-    // Get recent votes
-    const recentVotes = await ctx.db
-      .query("events")
-      .withIndex("by_type", (q: any) => q.eq("type", "JUDGE_VOTE_SUBMITTED"))
-      .filter((q: any) => q.eq(q.field("payload.judgeId"), args.judgeId))
-      .order("desc")
-      .take(10);
-
-    return {
-      ...judge,
-      recentVotes: recentVotes.length,
-    };
+    console.warn("DEPRECATED: getJudgeStats called. Judges table removed.");
+    return null;
   },
 });
 
-// Create panel - needed by tests
+// DEPRECATED: Panels table removed
 export const createPanel = mutation({
   args: {
     caseId: v.id("cases"),
@@ -586,21 +385,7 @@ export const createPanel = mutation({
     panelSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    try {
-      console.info(`Creating panel for case ${args.caseId} with ${args.judgeIds.length} judges`);
-      
-      const panelId = await ctx.db.insert("panels", {
-        judgeIds: args.judgeIds,
-        assignedAt: Date.now(),
-        dueAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days from now
-        votes: [],
-      });
-      
-      console.info(`Panel created with ID: ${panelId}`);
-      return panelId;
-    } catch (error) {
-      console.error(`Failed to create panel:`, error);
-      throw new Error(`Failed to create panel: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    console.warn("DEPRECATED: createPanel called. Panels table removed.");
+    throw new Error("DEPRECATED: Panel system removed.");
   },
 });
