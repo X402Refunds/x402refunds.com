@@ -177,7 +177,7 @@ export const receivePaymentDispute = mutation({
       paymentDetails: {
         transactionId: args.transactionId,
         transactionHash: args.transactionHash,
-        paymentProtocol: args.paymentProtocol,
+        paymentProtocol: args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol,
         disputeReason: args.disputeReason,
         regulationEDeadline,
         autoResolveEligible,
@@ -331,11 +331,11 @@ export const processWithAI = action({
       verdict = consistency > 0.5 ? "CONSUMER_WINS" : "MERCHANT_WINS";
 
       reasoning = `Based on ${similarDisputes.length} similar past disputes, ` +
-        `${(consistency * 100).toFixed(0)}% ruled in favor of ${paymentDispute ? 'consumer' : 'plaintiff'}. `;
+        `${(consistency * 100).toFixed(0)}% ruled in favor of ${isPaymentDispute ? 'consumer' : 'plaintiff'}. `;
     }
 
     // 3. Adjust confidence based on dispute characteristics
-    if (paymentDispute && amount < 0.10) {
+    if (isPaymentDispute && amount < 0.10) {
       confidence += 0.1; // Very micro disputes: higher automation confidence
     }
 
@@ -424,9 +424,10 @@ export const updateWithAIRuling = mutation({
 /**
  * Auto-resolve high-confidence micro-disputes
  */
+// DEPRECATED: Use with cases table instead
 export const autoResolve = mutation({
   args: {
-    paymentDisputeId: v.id("paymentDisputes"),
+    paymentDisputeId: v.id("cases"), // Changed to cases
     verdict: v.union(
       v.literal("CONSUMER_WINS"),
       v.literal("MERCHANT_WINS"),
@@ -450,31 +451,28 @@ export const autoResolve = mutation({
 
     // 1. Create ruling
     const rulingId = await ctx.db.insert("rulings", {
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId,
       verdict: agentVerdict,
       code: "AUTO_RESOLVED_MICRO_DISPUTE",
       reasons: args.reasoning + ` (Auto-resolved with ${(args.confidence * 100).toFixed(1)}% confidence)`,
       auto: true,
       decidedAt: now,
       proof: {
-        merkleRoot: `auto_${dispute.caseId}_${now}`,
+        merkleRoot: `auto_${args.paymentDisputeId}_${now}`,
       },
     });
 
-    // 2. Update case status
-    await ctx.db.patch(dispute.caseId, {
+    // 2. Update case status (no more ruling field, use finalVerdict)
+    await ctx.db.patch(args.paymentDisputeId, {
       status: "DECIDED",
-      ruling: {
-        verdict: "UPHELD", // Cases table still uses legacy format
-        auto: true,
-        decidedAt: now,
-      },
+      finalVerdict: args.verdict,
+      decidedAt: now,
     });
 
     // 3. Log event
     await ctx.db.insert("events", {
       type: "CASE_DECIDED",
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId,
       payload: {
         verdict: args.verdict,
         auto: true,
