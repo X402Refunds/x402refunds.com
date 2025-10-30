@@ -24,9 +24,9 @@ Your agent will get two new tools:
   <Step title="Add MCP Proxy to Your Backend">
     Choose your language:
 
-<Tabs>
-  <Tab title="Node.js">
-    <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
+    <Tabs>
+      <Tab title="Node.js">
+        <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
       ```
       Create an MCP proxy server with two endpoints:
       
@@ -45,11 +45,11 @@ Your agent will get two new tools:
       
       Use Express.js with proper error handling.
       ```
-    </Accordion>
+        </Accordion>
 
-**Manual implementation:**
+        **Manual implementation:**
 
-```javascript
+        ```javascript
 const express = require('express');
 const app = express();
 
@@ -104,22 +104,22 @@ app.post('/mcp/invoke', async (req, res) => {
 app.listen(3000, () => {
   console.log('MCP proxy running on port 3000');
 });
-```
+        ```
 
-**Install:**
-```bash
+        **Install:**
+        ```bash
 npm install express node-fetch
-```
+        ```
 
-**Run:**
-```bash
+        **Run:**
+        ```bash
 export CONSULATE_API_KEY=csk_live_your_key_here
 node server.js
-```
-  </Tab>
+        ```
+      </Tab>
 
-  <Tab title="Python">
-    <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
+      <Tab title="Python">
+        <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
       ```
       Create an MCP proxy server using FastAPI with two endpoints:
       
@@ -138,11 +138,11 @@ node server.js
       
       Use FastAPI with proper async/await and error handling.
       ```
-    </Accordion>
+        </Accordion>
 
-**Manual implementation:**
+        **Manual implementation:**
 
-```python
+        ```python
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import httpx
@@ -202,36 +202,36 @@ async def invoke_tool(request: MCPInvoke):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=3000)
-```
+        ```
 
-**Install:**
-```bash
+        **Install:**
+        ```bash
 pip install fastapi uvicorn httpx
-```
+        ```
 
-**Run:**
-```bash
+        **Run:**
+        ```bash
 export CONSULATE_API_KEY=csk_live_your_key_here
 python server.py
-```
-  </Tab>
-</Tabs>
+        ```
+      </Tab>
+    </Tabs>
   </Step>
 
   <Step title="Configure Your Agent">
     Point your agent's MCP config to YOUR backend (not Consulate):
 
-```json
-{
-  "mcpServers": {
-    "my-company": {
-      "url": "http://localhost:3000"
+    ```json
+    {
+      "mcpServers": {
+        "my-company": {
+          "url": "http://localhost:3000"
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-Your agent will auto-discover `file_dispute` and `check_case_status` tools.
+    Your agent will auto-discover `file_dispute` and `check_case_status` tools.
   </Step>
 </Steps>
 
