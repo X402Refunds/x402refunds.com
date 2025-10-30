@@ -7,7 +7,7 @@
     "dark": "/consulate-icon-simple.svg",
     "href": "https://consulatehq.com"
   },
-  "favicon": "/public/consulate-icon-simple.png",
+  "favicon": "/consulate-icon-simple.png",
   "colors": {
     "primary": "#3B82F6",
     "light": "#F8FAFC",
@@ -29,32 +29,9 @@
   },
   "navigation": [
     {
-      "group": "Getting Started",
+      "group": "Documentation",
       "pages": [
-        "index",
-        "customer-integration",
-        "dispute-types"
-      ]
-    },
-    {
-      "group": "Integration Support",
-      "pages": [
-        "agent-discovery",
-        "agent-failure-modes"
-      ]
-    },
-    {
-      "group": "For Platforms",
-      "pages": [
-        "partner-integration"
-      ]
-    },
-    {
-      "group": "Standards & Rules",
-      "pages": [
-        "expert-determination-rules",
-        "code-of-ethics",
-        "evidence-format-spec"
+        "customer-integration"
       ]
     }
   ],
