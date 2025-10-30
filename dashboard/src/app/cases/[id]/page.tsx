@@ -120,7 +120,7 @@ export default function PublicCaseTrackingPage() {
           </Card>
 
           {/* Financial Information */}
-          {(paymentDispute || caseDetails.claimedDamages) && (
+          {(paymentDispute || caseDetails.amount) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -137,23 +137,23 @@ export default function PublicCaseTrackingPage() {
                     {paymentDispute ? (
                       <>
                         <p className="text-2xl font-bold text-slate-900 mt-1">
-                          ${paymentDispute.amount.toFixed(2)}
+                          ${paymentDispute.amount?.toFixed(2) || "0.00"}
                         </p>
-                        <p className="text-xs text-slate-500">{paymentDispute.currency}</p>
+                        <p className="text-xs text-slate-500">{paymentDispute.currency || "USD"}</p>
                       </>
                     ) : (
                       <p className="text-2xl font-bold text-slate-900 mt-1">
-                        ${caseDetails.claimedDamages?.toLocaleString() || "N/A"}
+                        ${caseDetails.amount?.toLocaleString() || "N/A"}
                       </p>
                     )}
                   </div>
-                  {paymentDispute && paymentDispute.disputeFee && (
+                  {paymentDispute && paymentDispute.paymentDetails?.disputeFee && (
                     <div>
                       <p className="text-sm font-semibold text-slate-600">Resolution Fee</p>
                       <p className="text-2xl font-bold text-slate-900 mt-1">
-                        ${paymentDispute.disputeFee.toFixed(2)}
+                        ${paymentDispute.paymentDetails.disputeFee.toFixed(2)}
                       </p>
-                      <p className="text-xs text-slate-500 capitalize">{paymentDispute.pricingTier} tier</p>
+                      <p className="text-xs text-slate-500 capitalize">{paymentDispute.paymentDetails.pricingTier} tier</p>
                     </div>
                   )}
                 </div>
@@ -196,7 +196,7 @@ export default function PublicCaseTrackingPage() {
                   </>
                 )}
 
-                {["DECIDED", "CLOSED"].includes(caseDetails.status) && caseDetails.ruling && (
+                {["DECIDED", "CLOSED"].includes(caseDetails.status) && caseDetails.decidedAt && (
                   <>
                     <Separator />
                     <div className="flex items-start gap-4">
@@ -206,9 +206,7 @@ export default function PublicCaseTrackingPage() {
                       <div>
                         <p className="font-semibold text-slate-900">Decision Reached</p>
                         <p className="text-sm text-slate-600">
-                          {typeof caseDetails.ruling === 'object' && 'decidedAt' in caseDetails.ruling
-                            ? formatTimestamp((caseDetails.ruling as { decidedAt: number }).decidedAt)
-                            : "Recently"}
+                          {caseDetails.decidedAt ? formatTimestamp(caseDetails.decidedAt) : "Recently"}
                         </p>
                       </div>
                     </div>
@@ -233,8 +231,8 @@ export default function PublicCaseTrackingPage() {
             </CardContent>
           </Card>
 
-          {/* Ruling (if available) */}
-          {caseDetails.ruling && (
+          {/* Final Decision (if available) */}
+          {caseDetails.finalVerdict && (
             <Card className="border-2 border-blue-200 bg-blue-50/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -246,16 +244,14 @@ export default function PublicCaseTrackingPage() {
                 <div>
                   <p className="text-sm font-semibold text-slate-600 mb-1">Verdict</p>
                   <p className="text-xl font-bold text-slate-900">
-                    {typeof caseDetails.ruling === 'object' && 'verdict' in caseDetails.ruling
-                      ? (caseDetails.ruling as { verdict: string }).verdict
-                      : 'Decision Rendered'}
+                    {caseDetails.finalVerdict}
                   </p>
                 </div>
-                {typeof caseDetails.ruling === 'object' && 'reasoning' in caseDetails.ruling && (
+                {(caseDetails.aiRecommendation?.reasoning || caseDetails.humanOverrideReason) && (
                   <div>
                     <p className="text-sm font-semibold text-slate-600 mb-1">Explanation</p>
                     <p className="text-sm text-slate-700 leading-relaxed">
-                      {(caseDetails.ruling as { reasoning: string }).reasoning}
+                      {caseDetails.humanOverrideReason || caseDetails.aiRecommendation?.reasoning || "Decision rendered"}
                     </p>
                   </div>
                 )}

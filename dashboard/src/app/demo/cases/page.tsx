@@ -12,7 +12,7 @@ export default function CasesPage() {
   const stats = useQuery(api.cases.getCachedSystemStats)
 
   const cases = recentCases ?? []
-  const pendingCases = cases.filter((c) => c.status === "FILED" || c.status === "PANELED").length
+  const pendingCases = cases.filter((c) => c.status === "FILED" || c.status === "IN_REVIEW").length
   const resolvedCases = cases.filter((c) => c.status === "DECIDED" || c.status === "CLOSED").length
   const totalCases = cases.length
 
@@ -118,13 +118,13 @@ export default function CasesPage() {
                     <div className="space-y-1 flex-1">
                       <div className="font-medium">{case_.description || "Untitled Case"}</div>
                       <div className="text-sm text-muted-foreground">
-                        Filed: {new Date(case_.filedAt).toLocaleString()} • Parties: {case_.parties?.join(" vs ") || `${case_.plaintiff} vs ${case_.defendant}`}
+                        Filed: {new Date(case_.filedAt).toLocaleString()} • Parties: {case_.plaintiff} vs {case_.defendant}
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      {case_.claimedDamages && (
+                      {case_.amount && (
                         <div className="text-sm font-medium">
-                          ${case_.claimedDamages.toLocaleString()}
+                          ${case_.amount.toLocaleString()}
                         </div>
                       )}
                       {getStatusBadge(case_.status)}

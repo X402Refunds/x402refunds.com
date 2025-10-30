@@ -26,7 +26,7 @@ export default function ReviewQueuePage() {
   
   const customerReview = useMutation(api.paymentDisputes.customerReview)
   
-  const handleApprove = async (paymentDisputeId: Id<"paymentDisputes">, verdict: string) => {
+  const handleApprove = async (paymentDisputeId: Id<"cases">, verdict: string) => {
     if (!currentUser) return
     
     try {
@@ -42,7 +42,7 @@ export default function ReviewQueuePage() {
     }
   }
   
-  const handleOverride = async (paymentDisputeId: Id<"paymentDisputes">, verdict: string, notes: string) => {
+  const handleOverride = async (paymentDisputeId: Id<"cases">, verdict: string, notes: string) => {
     if (!currentUser) return
     
     try {

@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { ArrowLeft, Gavel, Users, Clock, FileText, Scale, AlertTriangle, DollarSign, Calendar, MessageSquare, UserCheck } from "lucide-react";
+import { ArrowLeft, Gavel, Users, Clock, FileText, Scale, AlertTriangle, DollarSign, Calendar, MessageSquare } from "lucide-react";
 import { ChainVerificationBadge } from "@/components/chain-verification-badge";
 
 export default function DisputeDetailPage() {
@@ -28,11 +28,7 @@ export default function DisputeDetailPage() {
     caseDetails ? { caseId } : "skip"
   );
 
-  // Only fetch panel if we have a panel ID (pass skip if no panel)
-  const panelDetails = useQuery(
-    api.judges.getPanel,
-    caseDetails?.panelId ? { panelId: caseDetails.panelId } : "skip"
-  );
+  // Panel system deprecated - cases are now decided by AI + human review
 
   // Helper function to format agent name from DID
   const formatAgentName = (did: string) => {
@@ -184,7 +180,7 @@ export default function DisputeDetailPage() {
                 <div className="flex items-center gap-2 mt-1">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm">
-                    {caseDetails.parties?.map(formatAgentName).join(" vs ") || `${formatAgentName(caseDetails.plaintiff)} vs ${formatAgentName(caseDetails.defendant)}`}
+                    {formatAgentName(caseDetails.plaintiff)} vs {formatAgentName(caseDetails.defendant)}
                   </p>
                 </div>
               </div>
@@ -199,12 +195,12 @@ export default function DisputeDetailPage() {
                   <p className="text-sm">{formatTimestamp(caseDetails.filedAt)}</p>
                 </div>
               </div>
-              {caseDetails.ruling && typeof caseDetails.ruling === 'object' && 'decidedAt' in caseDetails.ruling && (
+              {caseDetails.decidedAt && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Decided At</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{formatTimestamp((caseDetails.ruling as { decidedAt: number }).decidedAt)}</p>
+                    <p className="text-sm">{formatTimestamp(caseDetails.decidedAt)}</p>
                   </div>
                 </div>
               )}
@@ -224,16 +220,16 @@ export default function DisputeDetailPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {paymentDispute ? "Transaction Amount" : caseDetails.claimedDamages ? "Claimed Damages" : "Estimated Damages"}
+                  {paymentDispute ? "Transaction Amount" : caseDetails.amount ? "Claimed Damages" : "Estimated Damages"}
                 </p>
                 {paymentDispute ? (
                   <>
-                    <p className="text-lg font-semibold">${paymentDispute.amount.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">{paymentDispute.currency} payment dispute</p>
+                    <p className="text-lg font-semibold">${paymentDispute.amount?.toFixed(2) || "0.00"}</p>
+                    <p className="text-xs text-muted-foreground">{paymentDispute.currency || "USD"} payment dispute</p>
                   </>
-                ) : caseDetails.claimedDamages ? (
+                ) : caseDetails.amount ? (
                   <>
-                    <p className="text-lg font-semibold">${caseDetails.claimedDamages.toLocaleString()}</p>
+                    <p className="text-lg font-semibold">${caseDetails.amount.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">Based on actual breach impact</p>
                   </>
                 ) : (
@@ -245,10 +241,10 @@ export default function DisputeDetailPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Dispute Determination Fee</p>
-                {paymentDispute?.disputeFee ? (
+                {paymentDispute?.paymentDetails?.disputeFee ? (
                   <>
-                    <p className="text-lg font-semibold">${paymentDispute.disputeFee.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{paymentDispute.pricingTier} tier</p>
+                    <p className="text-lg font-semibold">${paymentDispute.paymentDetails.disputeFee.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{paymentDispute.paymentDetails.pricingTier} tier</p>
                   </>
                 ) : (
                   <>
@@ -264,18 +260,16 @@ export default function DisputeDetailPage() {
                 {paymentDispute ? (
                   <>
                     <p className="text-lg font-semibold">
-                      {paymentDispute.tokensUsed?.total?.toLocaleString() || "N/A"}
+                      {paymentDispute.aiRecommendation?.tokensUsed?.toLocaleString() || "N/A"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {paymentDispute.disputeFeeBreakdown?.tokenOverageFee && paymentDispute.disputeFeeBreakdown.tokenOverageFee > 0
-                        ? `$${paymentDispute.disputeFeeBreakdown.tokenOverageFee.toFixed(2)} overage fee`
-                        : "Within 20k included limit"}
+                      Within 20k included limit
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-lg font-semibold">
-                      ${Math.round((caseDetails.claimedDamages || 5000) * 0.1).toLocaleString()}
+                      ${Math.round((caseDetails.amount || 5000) * 0.1).toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground">If found in violation</p>
                   </>
@@ -304,51 +298,8 @@ export default function DisputeDetailPage() {
                   {getDisputeDescription(caseDetails)}
                 </p>
               </div>
-              
-              {/* Show breach details directly from case data */}
-              {caseDetails.breachDetails && (
-                <div className="pt-3 border-t border-border/50">
-                  <p className="text-sm font-semibold mb-3 text-foreground">Technical Details</p>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {caseDetails.breachDetails.duration && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Breach Duration</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.duration}</p>
-                      </div>
-                    )}
-                    {caseDetails.breachDetails.impactLevel && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Impact Level</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.impactLevel}</p>
-                      </div>
-                    )}
-                    {caseDetails.breachDetails.affectedUsers && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Affected Users</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.affectedUsers.toLocaleString()}</p>
-                      </div>
-                    )}
-                    {caseDetails.breachDetails.slaRequirement && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">SLA Requirement</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.slaRequirement}</p>
-                      </div>
-                    )}
-                    {caseDetails.breachDetails.actualPerformance && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Actual Performance</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.actualPerformance}</p>
-                      </div>
-                    )}
-                    {caseDetails.breachDetails.rootCause && (
-                      <div className="md:col-span-2">
-                        <p className="text-xs font-medium text-muted-foreground">Root Cause</p>
-                        <p className="text-sm text-foreground">{caseDetails.breachDetails.rootCause}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+
+              {/* Technical details section removed - breachDetails field deprecated */}
             </div>
           </CardContent>
         </Card>
@@ -365,100 +316,56 @@ export default function DisputeDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Current Status</p>
-                <p className="text-sm text-muted-foreground">{getNextSteps(caseDetails.status, caseDetails.deadlines)}</p>
+                <p className="text-sm text-muted-foreground">{getNextSteps(caseDetails.status, {
+                  analysisDue: caseDetails.analysisDue,
+                  reviewDue: caseDetails.reviewDue,
+                  finalDecisionDue: caseDetails.finalDecisionDue
+                })}</p>
               </div>
               <Badge className={statusColors[caseDetails.status]}>
                 {caseDetails.status}
               </Badge>
             </div>
-            
-            {caseDetails.deadlines && (caseDetails.deadlines.panelDue || caseDetails.deadlines.finalDecisionDue) && (
+
+
+            {caseDetails.finalDecisionDue && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Panel Review Due</p>
+                  <p className="text-sm font-medium text-muted-foreground">Final Decision Due</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{formatTimestamp(caseDetails.deadlines.panelDue || caseDetails.deadlines.finalDecisionDue || 0)}</p>
+                    <p className="text-sm">{formatTimestamp(caseDetails.finalDecisionDue)}</p>
                   </div>
                 </div>
-                {caseDetails.deadlines.appealDue && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Appeal Deadline</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm">{formatTimestamp(caseDetails.deadlines.appealDue)}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Assigned Panel (if available) */}
-        {panelDetails && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
-                Assigned Panel
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium">Panel ID</p>
-                  <p className="text-sm text-muted-foreground font-mono">{panelDetails._id}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Judges</p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {panelDetails.judgeIds.map((judgeId: string, idx: number) => (
-                      <Badge key={idx} variant="outline">
-                        {judgeId.split(':').pop() || judgeId}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Panel system deprecated - removed */}
 
-        {/* Ruling (if available) */}
-        {caseDetails.ruling && (
+        {/* Final Decision (if available) */}
+        {caseDetails.finalVerdict && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Scale className="h-5 w-5" />
-                Ruling
+                Final Decision
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Verdict</p>
                 <p className="text-lg font-semibold mt-1">
-                  {typeof caseDetails.ruling === 'object' && 'verdict' in caseDetails.ruling 
-                    ? (caseDetails.ruling as { verdict: string }).verdict 
-                    : 'N/A'}
+                  {caseDetails.finalVerdict}
                 </p>
               </div>
-              {typeof caseDetails.ruling === 'object' && 'reasoning' in caseDetails.ruling && (
+              {(caseDetails.aiRecommendation?.reasoning || caseDetails.humanOverrideReason) && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Reasoning</p>
                   <p className="text-sm mt-1 whitespace-pre-wrap">
-                    {(caseDetails.ruling as { reasoning: string }).reasoning}
+                    {caseDetails.humanOverrideReason || caseDetails.aiRecommendation?.reasoning}
                   </p>
-                </div>
-              )}
-              {typeof caseDetails.ruling === 'object' && 'remedies' in caseDetails.ruling && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Remedies</p>
-                  <ul className="list-disc list-inside mt-1 space-y-1">
-                    {((caseDetails.ruling as { remedies: string[] }).remedies || []).map((remedy: string, idx: number) => (
-                      <li key={idx} className="text-sm">{remedy}</li>
-                    ))}
-                  </ul>
                 </div>
               )}
             </CardContent>
@@ -622,8 +529,8 @@ export default function DisputeDetailPage() {
                 <p className="text-sm font-medium mb-2">Case Information</p>
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>Case ID: <span className="font-mono">{caseId}</span></p>
-                  <p>Jurisdiction: {caseDetails.jurisdictionTags?.join(", ") || "Not specified"}</p>
-                  <p>Priority: Standard</p>
+                  <p>Category: {caseDetails.category || "Not specified"}</p>
+                  <p>Priority: {caseDetails.priority || "standard"}</p>
                 </div>
               </div>
             </div>

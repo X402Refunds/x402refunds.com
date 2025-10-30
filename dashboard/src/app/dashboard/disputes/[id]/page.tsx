@@ -31,17 +31,15 @@ export default function DisputeDetailPage() {
     user ? { clerkUserId: user.id } : "skip"
   )
 
-  // Get dispute details
+  // Get dispute details (payment disputes are now in cases table)
+  // The dispute IS the case, so we only need one query
   const dispute = useQuery(
     api.paymentDisputes.getPaymentDispute,
-    disputeId ? { paymentDisputeId: disputeId as Id<"paymentDisputes"> } : "skip"
+    disputeId ? { paymentDisputeId: disputeId as Id<"cases"> } : "skip"
   )
 
-  // Get case details if available
-  const caseDetails = useQuery(
-    api.cases.getCase,
-    dispute?.caseId ? { caseId: dispute.caseId } : "skip"
-  )
+  // caseDetails is just an alias for dispute (they're the same now)
+  const caseDetails = dispute
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
@@ -53,7 +51,7 @@ export default function DisputeDetailPage() {
         paymentDisputeId: dispute._id,
         reviewerUserId: currentUser._id,
         decision: "APPROVE_AI",
-        finalVerdict: dispute.aiRecommendation || "CONSUMER_WINS",
+        finalVerdict: (dispute.aiRecommendation?.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW") || "CONSUMER_WINS",
       })
       router.push("/dashboard/review-queue")
     } catch (error) {
@@ -124,7 +122,7 @@ export default function DisputeDetailPage() {
     )
   }
 
-  const isResolved = dispute.humanReviewedAt || dispute.customerFinalDecision
+  const isResolved = dispute.humanReviewedAt || dispute.finalVerdict
 
   return (
     <DashboardLayout>
@@ -141,7 +139,7 @@ export default function DisputeDetailPage() {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-slate-900">Dispute Details</h1>
-            <p className="text-slate-600 mt-1">Transaction: {dispute.transactionId}</p>
+            <p className="text-slate-600 mt-1">Transaction: {dispute.paymentDetails?.transactionId || dispute._id}</p>
           </div>
           {isResolved ? (
             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
@@ -166,30 +164,30 @@ export default function DisputeDetailPage() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Amount</p>
                 <p className="text-2xl font-bold text-slate-900">
-                  ${dispute.amount.toFixed(2)} {dispute.currency}
+                  ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-600">Transaction ID</p>
-                <p className="text-sm font-mono text-slate-900">{dispute.transactionId}</p>
+                <p className="text-sm font-mono text-slate-900">{dispute.paymentDetails?.transactionId || dispute._id}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-600">Dispute Reason</p>
-                <p className="text-sm text-slate-900">{formatReason(dispute.disputeReason || "")}</p>
+                <p className="text-sm text-slate-900">{formatReason(dispute.paymentDetails?.disputeReason || "")}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-600">Payment Protocol</p>
-                <p className="text-sm text-slate-900">{dispute.paymentProtocol || "N/A"}</p>
+                <p className="text-sm text-slate-900">{dispute.paymentDetails?.paymentProtocol || "N/A"}</p>
               </div>
-              {dispute.disputeFee && (
+              {dispute.paymentDetails?.disputeFee && (
                 <>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Resolution Fee</p>
-                    <p className="text-sm text-slate-900">${dispute.disputeFee.toFixed(2)}</p>
+                    <p className="text-sm text-slate-900">${dispute.paymentDetails.disputeFee.toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Pricing Tier</p>
-                    <Badge variant="secondary">{dispute.pricingTier}</Badge>
+                    <Badge variant="secondary">{dispute.paymentDetails.pricingTier}</Badge>
                   </div>
                 </>
               )}
@@ -206,7 +204,7 @@ export default function DisputeDetailPage() {
                 <div>
                   <CardTitle>AI Recommendation</CardTitle>
                   <CardDescription>
-                    Based on {dispute.similarPastCases?.length || 0} similar cases
+                    Based on {dispute.aiRecommendation?.similarCases?.length || 0} similar cases
                   </CardDescription>
                 </div>
               </div>
@@ -216,21 +214,21 @@ export default function DisputeDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-600">Verdict</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {getVerdictDisplay(dispute.aiRecommendation)}
+                    {getVerdictDisplay(dispute.aiRecommendation?.verdict as PaymentVerdict)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-slate-600">Confidence</p>
                   <p className="text-lg font-bold text-blue-600">
-                    {((dispute.aiRulingConfidence || 0) * 100).toFixed(1)}%
+                    {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(1)}%
                   </p>
                 </div>
               </div>
 
-              {dispute.aiReasoning && (
+              {dispute.aiRecommendation?.reasoning && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm font-medium text-blue-900 mb-2">AI Analysis</p>
-                  <p className="text-sm text-blue-800">{dispute.aiReasoning}</p>
+                  <p className="text-sm text-blue-800">{dispute.aiRecommendation.reasoning}</p>
                 </div>
               )}
             </CardContent>
@@ -248,7 +246,7 @@ export default function DisputeDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-600">Final Verdict</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {getVerdictDisplay(dispute.customerFinalDecision)}
+                    {getVerdictDisplay(dispute.finalVerdict as PaymentVerdict)}
                   </p>
                 </div>
                 <div>
@@ -271,10 +269,10 @@ export default function DisputeDetailPage() {
                 </div>
               </div>
 
-              {dispute.customerReviewNotes && (
+              {dispute.humanOverrideReason && (
                 <div className="pt-4 border-t">
                   <p className="text-sm font-medium text-slate-600 mb-2">Review Notes</p>
-                  <p className="text-sm text-slate-700">{dispute.customerReviewNotes}</p>
+                  <p className="text-sm text-slate-700">{dispute.humanOverrideReason}</p>
                 </div>
               )}
             </CardContent>
@@ -303,11 +301,11 @@ export default function DisputeDetailPage() {
                     {new Date(caseDetails._creationTime).toLocaleString()}
                   </p>
                 </div>
-                {dispute.regulationEDeadline && (
+                {dispute.paymentDetails?.regulationEDeadline && (
                   <div>
                     <p className="text-sm font-medium text-slate-600">Regulation E Deadline</p>
                     <p className="text-sm text-slate-900">
-                      {new Date(dispute.regulationEDeadline).toLocaleDateString()}
+                      {new Date(dispute.paymentDetails.regulationEDeadline).toLocaleDateString()}
                     </p>
                   </div>
                 )}

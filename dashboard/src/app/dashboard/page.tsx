@@ -337,20 +337,20 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="font-semibold text-slate-900">
-                          ${dispute.amount.toFixed(2)} {dispute.currency}
+                          ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
                         </p>
                         <p className="text-sm text-slate-600">
-                          {dispute.disputeReason?.replace(/_/g, ' ')}
+                          {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ')}
                         </p>
                       </div>
                       <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-                        AI: {((dispute.aiRulingConfidence || 0) * 100).toFixed(0)}%
+                        AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}%
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mb-3 text-sm text-slate-700">
                       <span className="font-medium">AI Recommends:</span>
                       <Badge className="bg-slate-100 text-slate-700 border-slate-200">
-                        {dispute.aiRecommendation || "CONSUMER_WINS"}
+                        {dispute.aiRecommendation?.verdict || "CONSUMER_WINS"}
                       </Badge>
                     </div>
                     <div className="flex gap-2">
@@ -364,7 +364,7 @@ export default function DashboardPage() {
                             paymentDisputeId: dispute._id,
                             reviewerUserId: currentUser._id,
                             decision: "APPROVE_AI",
-                            finalVerdict: dispute.aiRecommendation || "CONSUMER_WINS",
+                            finalVerdict: (dispute.aiRecommendation?.verdict || "CONSUMER_WINS") as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                           })
                         }}
                       >
@@ -420,11 +420,15 @@ export default function DashboardPage() {
               <>
                 {disputeEvents.slice(0, 8).map((evt) => {
                   const event = evt as Event
-                  // For dispute events, try to navigate to the specific dispute if we have paymentDisputeId
+                  // Navigate to the specific case/dispute details page
                   const handleClick = () => {
-                    // For now, go to activity page - in future we can enhance this to go to specific dispute
-                    // if we add paymentDisputeId to event payload
-                    router.push(`/dashboard/activity`)
+                    if (event.caseId) {
+                      // For payment disputes (stored in cases table), caseId IS the dispute ID
+                      router.push(`/dashboard/disputes/${event.caseId}`)
+                    } else {
+                      // Fallback to activity page if no caseId
+                      router.push(`/dashboard/activity`)
+                    }
                   }
                   return (
                     <div

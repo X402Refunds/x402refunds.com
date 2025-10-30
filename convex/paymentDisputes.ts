@@ -170,7 +170,6 @@ export const receivePaymentDispute = mutation({
       finalDecisionDue: regulationEDeadline,
 
       // Infrastructure Model fields
-      reviewerEmail: args.reviewerEmail,
       reviewerOrganizationId: args.reviewerOrganizationId,
 
       // Payment-specific data in paymentDetails
@@ -639,15 +638,15 @@ export const getMicroDisputeStats = query({
 
     const autoResolved = microDisputes.filter(d => !d.humanReviewRequired).length;
     const humanReviewed = microDisputes.filter(d => d.humanReviewRequired).length;
-    const avgConfidence = microDisputes.reduce((sum, d) => sum + (d.aiRulingConfidence || 0), 0) / microDisputes.length;
-    
+    const avgConfidence = microDisputes.reduce((sum, d) => sum + (d.aiRecommendation?.confidence || 0), 0) / (microDisputes.length || 1);
+
     return {
       totalMicroDisputes: microDisputes.length,
       autoResolvedCount: autoResolved,
       humanReviewedCount: humanReviewed,
-      autoResolutionRate: (autoResolved / microDisputes.length * 100).toFixed(1) + "%",
+      autoResolutionRate: (autoResolved / (microDisputes.length || 1) * 100).toFixed(1) + "%",
       avgAIConfidence: (avgConfidence * 100).toFixed(1) + "%",
-      totalValueDisputed: microDisputes.reduce((sum, d) => sum + d.amount, 0).toFixed(2),
+      totalValueDisputed: microDisputes.reduce((sum, d) => sum + (d.amount || 0), 0).toFixed(2),
     };
   },
 });
@@ -665,7 +664,7 @@ export const getMicroDisputeStats = query({
  */
 export const customerReview = mutation({
   args: {
-    paymentDisputeId: v.id("paymentDisputes"),
+    paymentDisputeId: v.id("cases"), // Changed: payment disputes are now in cases table
     reviewerUserId: v.id("users"), // Customer's team member
     decision: v.union(v.literal("APPROVE_AI"), v.literal("OVERRIDE")),
     finalVerdict: v.union(
@@ -701,39 +700,33 @@ export const customerReview = mutation({
       humanReviewedAt: now,
       humanReviewedBy: reviewer.email,
       humanAgreesWithAI: args.decision === "APPROVE_AI",
-      customerFinalDecision: args.finalVerdict,
-      customerReviewNotes: args.notes,
+      finalVerdict: args.finalVerdict, // Changed: use finalVerdict field from schema
+      humanOverrideReason: args.notes, // Changed: use humanOverrideReason field from schema
+      decidedAt: now,
+      status: "DECIDED",
     });
 
     // Create ADP-compliant ruling (Award Message format)
     const rulingId = await ctx.db.insert("rulings", {
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId (cases table)
       verdict: agentVerdict,
       code: args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" : "CUSTOMER_OVERRIDE",
       reasons: args.decision === "APPROVE_AI"
-        ? `Customer approved AI recommendation: ${dispute.aiReasoning || "See analysis"}`
+        ? `Customer approved AI recommendation: ${dispute.aiRecommendation?.reasoning || "See analysis"}`
         : `Customer override: ${args.notes || "Manual review decision"}`,
       auto: false, // Human reviewed
       decidedAt: now,
       proof: {
-        merkleRoot: `customer_review_${dispute.caseId}_${now}`,
+        merkleRoot: `customer_review_${args.paymentDisputeId}_${now}`,
       },
     });
 
-    // Update case status
-    await ctx.db.patch(dispute.caseId, {
-      status: "DECIDED",
-      ruling: {
-        verdict: "UPHELD", // Cases table still uses legacy format
-        auto: false,
-        decidedAt: now,
-      },
-    });
+    // Note: Case status already updated above in patch, no need to update again
 
     // Log ADP-compliant custody event
     await createCustodyEvent(ctx, {
       type: "CASE_DECIDED",
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId
       agentDid: undefined, // System action on behalf of customer
       payload: {
         verdict: args.finalVerdict,
@@ -748,37 +741,24 @@ export const customerReview = mutation({
 
     // Record feedback signal for RL (both approval and override)
     await ctx.db.insert("feedbackSignals", {
-      caseId: dispute.caseId,
-      paymentDisputeId: args.paymentDisputeId,
-      aiVerdict: dispute.aiRecommendation || "",
-      aiConfidence: dispute.aiRulingConfidence,
-      aiReasoning: dispute.aiReasoning || "",
+      caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId
+      aiVerdict: dispute.aiRecommendation?.verdict || "",
+      aiConfidence: dispute.aiRecommendation?.confidence || 0,
+      aiReasoning: dispute.aiRecommendation?.reasoning || "",
       humanVerdict: args.finalVerdict,
       agreedWithAI: args.decision === "APPROVE_AI",
       overrideReason: args.notes,
-      disputeType: dispute.disputeReason,
-      amountRange: getAmountRange(dispute.amount),
+      disputeType: dispute.paymentDetails?.disputeReason || "other",
+      amountRange: getAmountRange(dispute.amount || 0),
       reviewTimeMs: now - (dispute._creationTime || now),
       createdAt: now,
     });
 
-    // If human approved AI, create high-confidence precedent
-    if (args.decision === "APPROVE_AI" && dispute.aiRulingConfidence > 0.8) {
-      await ctx.db.insert("disputePrecedents", {
-        originalDisputeId: args.paymentDisputeId,
-        embedding: [], // Future: Generate OpenAI embedding
-        disputeType: dispute.disputeReason,
-        amountRange: getAmountRange(dispute.amount),
-        currency: dispute.currency,
-        outcomeVerdict: args.finalVerdict,
-        outcomeReason: dispute.aiReasoning || "",
-        humanConfirmed: true, // High trust - human approved
-        appealedAndOverturned: false,
-        confidenceScore: dispute.aiRulingConfidence,
-        timesReferenced: 0,
-        createdAt: now,
-      });
-      console.info(`📚 Created precedent from approved dispute ${args.paymentDisputeId} (confidence: ${(dispute.aiRulingConfidence * 100).toFixed(1)}%)`);
+    // If human approved AI, log for future precedent system
+    // TODO: Re-enable when disputePrecedents table is added to schema
+    const aiConfidence = dispute.aiRecommendation?.confidence || 0;
+    if (args.decision === "APPROVE_AI" && aiConfidence > 0.8) {
+      console.info(`📚 High-confidence approval: dispute ${args.paymentDisputeId} (confidence: ${(aiConfidence * 100).toFixed(1)}%)`);
     } else if (args.decision === "OVERRIDE") {
       console.info(`📚 Learning: Customer overrode AI for dispute ${args.paymentDisputeId} - Reason: ${args.notes || 'Not specified'}`);
     }
@@ -798,23 +778,16 @@ export const getCustomerReviewQueue = query({
   },
   handler: async (ctx, args) => {
     const disputes = await ctx.db
-      .query("paymentDisputes")
-      .withIndex("by_needs_review", q => 
+      .query("cases") // Changed: payment disputes are now in cases table
+      .withIndex("by_needs_review", q =>
         q.eq("reviewerOrganizationId", args.organizationId).eq("humanReviewRequired", true)
       )
       .filter(q => q.eq(q.field("humanReviewedAt"), undefined))
       .order("asc") // Oldest first (approaching deadline)
       .take(args.limit || 50);
-    
-    // Enrich with case data
-    const enriched = await Promise.all(
-      disputes.map(async (dispute) => {
-        const caseData = await ctx.db.get(dispute.caseId);
-        return { ...dispute, caseData };
-      })
-    );
-    
-    return enriched;
+
+    // Disputes ARE cases now, no need to enrich
+    return disputes;
   },
 });
 
@@ -824,7 +797,7 @@ export const getCustomerReviewQueue = query({
  */
 export const autoApproveAIRecommendation = mutation({
   args: {
-    paymentDisputeId: v.id("paymentDisputes"),
+    paymentDisputeId: v.id("cases"), // Changed: payment disputes are now in cases table
   },
   handler: async (ctx, args) => {
     const dispute = await ctx.db.get(args.paymentDisputeId);
@@ -841,50 +814,45 @@ export const autoApproveAIRecommendation = mutation({
     const now = Date.now();
 
     // Convert to agent verdict for rulings table
+    const aiVerdict = dispute.aiRecommendation.verdict;
     const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
-      dispute.aiRecommendation === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
-      dispute.aiRecommendation === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
-      dispute.aiRecommendation === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
+      aiVerdict === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
+      aiVerdict === "MERCHANT_WINS" ? "DEFENDANT_WINS" :
+      aiVerdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
 
     // Update dispute with auto-approval
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
       humanReviewedBy: "SYSTEM_AUTO_APPROVAL",
       humanAgreesWithAI: true,
-      customerFinalDecision: dispute.aiRecommendation,
-      customerReviewNotes: "Auto-approved after Regulation E deadline (10 business days)",
+      finalVerdict: aiVerdict, // Changed: use finalVerdict field from schema
+      humanOverrideReason: "Auto-approved after Regulation E deadline (10 business days)",
+      decidedAt: now,
+      status: "DECIDED",
     });
 
     // Create ADP-compliant ruling
     const rulingId = await ctx.db.insert("rulings", {
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId
       verdict: agentVerdict,
       code: "AUTO_APPROVED_REGULATION_E",
-      reasons: `AI recommendation auto-approved: ${dispute.aiReasoning || "See analysis"}. Auto-approved after 10 business day deadline per Regulation E.`,
+      reasons: `AI recommendation auto-approved: ${dispute.aiRecommendation.reasoning || "See analysis"}. Auto-approved after 10 business day deadline per Regulation E.`,
       auto: false, // Technically not auto - it went through AI + waiting period
       decidedAt: now,
       proof: {
-        merkleRoot: `auto_approve_${dispute.caseId}_${now}`,
+        merkleRoot: `auto_approve_${args.paymentDisputeId}_${now}`,
       },
     });
 
-    // Update case status
-    await ctx.db.patch(dispute.caseId, {
-      status: "DECIDED",
-      ruling: {
-        verdict: dispute.aiRecommendation, // Use actual verdict, not "UPHELD"
-        auto: false,
-        decidedAt: now,
-      },
-    });
+    // Note: Case status already updated above in patch, no need to update again
 
     // Log ADP-compliant custody event
     await createCustodyEvent(ctx, {
       type: "CASE_DECIDED",
-      caseId: dispute.caseId,
+      caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId
       agentDid: undefined,
       payload: {
-        verdict: dispute.aiRecommendation,
+        verdict: aiVerdict,
         auto: false,
         autoApproved: true,
         regulationECompliance: true,
