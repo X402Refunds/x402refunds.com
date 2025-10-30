@@ -26,28 +26,30 @@ Your agent will get two new tools:
 
     <Tabs>
       <Tab title="Node.js">
-        <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
-      ```
-      Create an MCP proxy server with two endpoints:
-      
-      1. GET /.well-known/mcp.json
-         - Fetch from https://api.consulatehq.com/.well-known/mcp.json
-         - Filter tools array to only: consulate_file_dispute, consulate_check_case_status
-         - Strip 'consulate_' prefix from tool names
-         - Return the modified schema
-      
-      2. POST /mcp/invoke
-         - Accept {tool, parameters} in request body
-         - Add 'consulate_' prefix to tool name
-         - Forward to https://api.consulatehq.com/mcp/invoke
-         - Add Authorization header: Bearer ${process.env.CONSULATE_API_KEY}
-         - Return response as JSON
-      
-      Use Express.js with proper error handling.
-      ```
-        </Accordion>
+        **📋 Copy-Paste This Prompt Into Cursor/Windsurf:**
 
-        **Manual implementation:**
+        ```
+        Modify my existing MCP server to add Consulate dispute tools:
+        
+        1. Add GET /.well-known/mcp.json endpoint:
+           - Fetch from https://api.consulatehq.com/.well-known/mcp.json
+           - Filter tools to: consulate_file_dispute, consulate_check_case_status
+           - Strip 'consulate_' prefix from tool names
+           - Merge with my existing tools
+           - Return the combined schema
+        
+        2. Add to POST /mcp/invoke handler:
+           - If tool name is 'file_dispute' or 'check_case_status':
+             - Add 'consulate_' prefix
+             - Forward to https://api.consulatehq.com/mcp/invoke
+             - Add Authorization: Bearer ${process.env.CONSULATE_API_KEY}
+             - Return the response
+           - Else: handle my existing tools normally
+        
+        Use Express.js with proper error handling.
+        ```
+
+        <Accordion title="Manual implementation (expand to see full code)">
 
         ```javascript
 const express = require('express');
@@ -115,32 +117,35 @@ npm install express node-fetch
         ```bash
 export CONSULATE_API_KEY=csk_live_your_key_here
 node server.js
-        ```
+          ```
+        </Accordion>
       </Tab>
 
       <Tab title="Python">
-        <Accordion title="📋 Copy-Paste Prompt for Cursor/Windsurf">
-      ```
-      Create an MCP proxy server using FastAPI with two endpoints:
-      
-      1. GET /.well-known/mcp.json
-         - Fetch from https://api.consulatehq.com/.well-known/mcp.json using httpx
-         - Filter tools array to only: consulate_file_dispute, consulate_check_case_status
-         - Strip 'consulate_' prefix from tool names
-         - Return the modified schema
-      
-      2. POST /mcp/invoke
-         - Accept {tool: str, parameters: dict} in request body
-         - Add 'consulate_' prefix to tool name
-         - Forward to https://api.consulatehq.com/mcp/invoke
-         - Add Authorization header: Bearer {CONSULATE_API_KEY from env}
-         - Return response as JSON
-      
-      Use FastAPI with proper async/await and error handling.
-      ```
-        </Accordion>
+        **📋 Copy-Paste This Prompt Into Cursor/Windsurf:**
 
-        **Manual implementation:**
+        ```
+        Modify my existing MCP server to add Consulate dispute tools:
+        
+        1. Add GET /.well-known/mcp.json endpoint:
+           - Fetch from https://api.consulatehq.com/.well-known/mcp.json using httpx
+           - Filter tools to: consulate_file_dispute, consulate_check_case_status
+           - Strip 'consulate_' prefix from tool names
+           - Merge with my existing tools
+           - Return the combined schema
+        
+        2. Add to POST /mcp/invoke handler:
+           - If tool name is 'file_dispute' or 'check_case_status':
+             - Add 'consulate_' prefix
+             - Forward to https://api.consulatehq.com/mcp/invoke
+             - Add Authorization: Bearer {CONSULATE_API_KEY from env}
+             - Return the response
+           - Else: handle my existing tools normally
+        
+        Use FastAPI with proper async/await and error handling.
+        ```
+
+        <Accordion title="Manual implementation (expand to see full code)">
 
         ```python
 from fastapi import FastAPI, HTTPException
@@ -213,7 +218,8 @@ pip install fastapi uvicorn httpx
         ```bash
 export CONSULATE_API_KEY=csk_live_your_key_here
 python server.py
-        ```
+          ```
+        </Accordion>
       </Tab>
     </Tabs>
   </Step>
