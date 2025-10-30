@@ -247,25 +247,25 @@ Your agent automatically discovers these tools with full schemas:
     - Enum values for `disputeReason`
     - Pricing tier information
 
-**Example agent usage:**
-```javascript
-// Agent calls this automatically when payment fails
-{
-  "transactionId": "txn_abc123",
-  "amount": 10.50,
-  "plaintiff": "customer@example.com",
-  "defendant": "merchant@example.com",
-  "disputeReason": "service_not_rendered",
-  "description": "Charged but API call failed"
-}
-```
+    **Example agent usage:**
+    ```javascript
+    // Agent calls this automatically when payment fails
+    {
+      "transactionId": "txn_abc123",
+      "amount": 10.50,
+      "plaintiff": "customer@example.com",
+      "defendant": "merchant@example.com",
+      "disputeReason": "service_not_rendered",
+      "description": "Charged but API call failed"
+    }
+    ```
 
-**Dispute reasons:**
-- `service_not_rendered` - Paid but didn't receive service
-- `api_timeout` - API timed out but charge went through
-- `amount_incorrect` - Wrong amount charged
-- `duplicate_charge` - Charged multiple times
-- `fraud` - Unauthorized transaction
+    **Dispute reasons:**
+    - `service_not_rendered` - Paid but didn't receive service
+    - `api_timeout` - API timed out but charge went through
+    - `amount_incorrect` - Wrong amount charged
+    - `duplicate_charge` - Charged multiple times
+    - `fraud` - Unauthorized transaction
   </Accordion>
 
   <Accordion title="check_case_status - Track dispute progress" icon="magnifying-glass">
@@ -273,18 +273,18 @@ Your agent automatically discovers these tools with full schemas:
     - Case ID parameter (required)
     - Response format with status, timeline, ruling
 
-**Example agent usage:**
-```javascript
-{
-  "caseId": "case_abc123"
-}
-```
+    **Example agent usage:**
+    ```javascript
+    {
+      "caseId": "case_abc123"
+    }
+    ```
 
-**Response includes:**
-- Current status (FILED, UNDER_REVIEW, DECIDED)
-- Estimated resolution time
-- Tracking URL
-- Ruling (when decided)
+    **Response includes:**
+    - Current status (FILED, UNDER_REVIEW, DECIDED)
+    - Estimated resolution time
+    - Tracking URL
+    - Ruling (when decided)
   </Accordion>
 </AccordionGroup>
 
