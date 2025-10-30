@@ -59,7 +59,7 @@ export default defineSchema({
     status: v.union(v.literal("active"), v.literal("revoked")),
     revokedAt: v.optional(v.number()),
     revokedBy: v.optional(v.id("users")),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
   })
     .index("by_key", ["key"])
     .index("by_organization", ["organizationId"])
@@ -125,7 +125,8 @@ export default defineSchema({
     // TWO MAIN TYPES: "PAYMENT" or "GENERAL"
     type: v.union(
       v.literal("PAYMENT"),   // Agentic payment disputes (ACP/ATXP merchants)
-      v.literal("GENERAL")    // Traditional disputes (like Zendesk)
+      v.literal("GENERAL"),   // Traditional disputes (like Zendesk)
+      v.literal("PAYMENT_DISPUTE")  // TEMP: For migration - old value
     ),
 
     filedAt: v.number(),
@@ -152,7 +153,7 @@ export default defineSchema({
     // Deadlines
     analysisDue: v.optional(v.number()),    // When AI should complete analysis
     reviewDue: v.optional(v.number()),      // When human review should be done
-    finalDecisionDue: v.number(),           // Final deadline (e.g., Regulation E: 10 business days)
+    finalDecisionDue: v.optional(v.number()), // TEMP: Optional to allow migration - Final deadline (e.g., Regulation E: 10 business days)
 
     // AI Analysis
     aiRecommendation: v.optional(v.object({
@@ -166,7 +167,7 @@ export default defineSchema({
 
     // Human Review (Infrastructure Model - customer team makes final decision)
     reviewerOrganizationId: v.optional(v.id("organizations")),  // Which org reviews this
-    humanReviewRequired: v.boolean(),        // Does this need human review?
+    humanReviewRequired: v.optional(v.boolean()),  // TEMP: Optional to allow migration - Does this need human review?
     humanReviewedAt: v.optional(v.number()),
     humanReviewedBy: v.optional(v.string()), // Email/name of reviewer
     humanAgreesWithAI: v.optional(v.boolean()),
@@ -218,7 +219,14 @@ export default defineSchema({
 
     // Metadata
     mock: v.optional(v.boolean()),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
+
+    // TEMP: Deprecated fields for migration
+    claimedDamages: v.optional(v.number()),
+    deadlines: v.optional(v.any()),
+    jurisdictionTags: v.optional(v.array(v.string())),
+    parties: v.optional(v.array(v.string())),
+    ruling: v.optional(v.any()),
   })
     .index("by_status", ["status"])
     .index("by_type", ["type"])
