@@ -50,7 +50,7 @@ export default defineSchema({
 
   // API Keys
   apiKeys: defineTable({
-    key: v.string(),  // csk_live_xxx or csk_test_xxx
+    key: v.optional(v.string()),  // TEMP: Optional for migration - csk_live_xxx or csk_test_xxx
     organizationId: v.id("organizations"),
     name: v.string(),
     createdBy: v.optional(v.id("users")),
@@ -60,6 +60,12 @@ export default defineSchema({
     revokedAt: v.optional(v.number()),
     revokedBy: v.optional(v.id("users")),
     createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
+
+    // TEMP: Deprecated fields for migration
+    token: v.optional(v.string()),  // Old field name, renamed to 'key'
+    active: v.optional(v.boolean()),  // Old field, use 'status' instead
+    createdByUserId: v.optional(v.id("users")),  // Old field name, renamed to 'createdBy'
+    permissions: v.optional(v.array(v.string())),  // Deprecated permissions field
   })
     .index("by_key", ["key"])
     .index("by_organization", ["organizationId"])
@@ -123,11 +129,8 @@ export default defineSchema({
     ),
 
     // TWO MAIN TYPES: "PAYMENT" or "GENERAL"
-    type: v.union(
-      v.literal("PAYMENT"),   // Agentic payment disputes (ACP/ATXP merchants)
-      v.literal("GENERAL"),   // Traditional disputes (like Zendesk)
-      v.literal("PAYMENT_DISPUTE")  // TEMP: For migration - old value
-    ),
+    // TEMP: Using v.string() during migration to allow any legacy type values
+    type: v.string(),
 
     filedAt: v.number(),
     description: v.string(),
@@ -227,6 +230,7 @@ export default defineSchema({
     jurisdictionTags: v.optional(v.array(v.string())),
     parties: v.optional(v.array(v.string())),
     ruling: v.optional(v.any()),
+    breachDetails: v.optional(v.any()),
   })
     .index("by_status", ["status"])
     .index("by_type", ["type"])

@@ -1,0 +1,115 @@
+{
+  "name": "consulate",
+  "version": "1.0.0",
+  "description": "Automated payment dispute resolution for failed transactions, incorrect charges, and service-not-rendered issues. Regulation E compliant with 10 business day resolution. Features 5 pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00).",
+  "author": "Consulate",
+  "license": "MIT",
+  "homepage": "https://consulatehq.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/consulatehq/consulate"
+  },
+  "keywords": [
+    "dispute-resolution",
+    "arbitration",
+    "payment-disputes",
+    "regulation-e",
+    "sla-enforcement",
+    "ai-vendor-accountability"
+  ],
+  "categories": [
+    "finance",
+    "legal",
+    "business"
+  ],
+  "server": {
+    "name": "Consulate Payment Dispute Resolution",
+    "version": "1.0.0",
+    "protocol": "http",
+    "endpoints": {
+      "discovery": "https://api.consulatehq.com/.well-known/mcp.json",
+      "invoke": "https://api.consulatehq.com/mcp/invoke"
+    }
+  },
+  "authentication": {
+    "type": "bearer",
+    "scheme": "Bearer",
+    "description": "Bearer token authentication using Consulate API keys",
+    "required_headers": {
+      "Authorization": "Bearer csk_live_... or Bearer csk_test_..."
+    },
+    "how_to_get_key": {
+      "dashboard": "https://consulatehq.com/settings/api-keys",
+      "steps": [
+        "1. Sign in to Consulate dashboard",
+        "2. Navigate to Settings → API Keys",
+        "3. Click 'Generate New API Key'",
+        "4. Copy the key (starts with csk_live_ for production)"
+      ]
+    },
+    "alternative_auth": {
+      "type": "signature",
+      "algorithm": "Ed25519",
+      "description": "Advanced: Cryptographic signature-based authentication for non-repudiation",
+      "required_headers": {
+        "X-Agent-DID": "Your agent's DID",
+        "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
+        "X-Timestamp": "Current timestamp in milliseconds"
+      },
+      "message_format": "METHOD:PATH:BODY:TIMESTAMP"
+    }
+  },
+  "tools": [
+    {
+      "name": "consulate_file_dispute",
+      "description": "File a PAYMENT DISPUTE for failed transactions, incorrect charges, or service-not-rendered issues. Regulation E compliant with 10 business day resolution. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00). AI provides recommendations, customer teams make final decisions."
+    },
+    {
+      "name": "consulate_submit_evidence",
+      "description": "Submit ADP-compliant evidence to support a dispute case. Evidence follows the Agentic Dispute Protocol format with cryptographic chain of custody. Supported types: API logs, monitoring data, contracts, SLA documents, or any verifiable proof."
+    },
+    {
+      "name": "consulate_check_case_status",
+      "description": "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details."
+    },
+    {
+      "name": "consulate_register_agent",
+      "description": "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance. API key must be passed in Authorization header."
+    },
+    {
+      "name": "consulate_list_my_cases",
+      "description": "List all cases where you are a party (plaintiff or defendant)."
+    },
+    {
+      "name": "consulate_get_sla_status",
+      "description": "Check your current SLA compliance status and any active violations."
+    },
+    {
+      "name": "consulate_lookup_agent",
+      "description": "Look up an agent's DID by organization name, domain, or service name. Use this to find the defendant's DID before filing a dispute."
+    },
+    {
+      "name": "consulate_request_vendor_registration",
+      "description": "Request that Consulate register a vendor that isn't currently in the system. Use this when lookup_agent returns no results."
+    }
+  ],
+  "documentation": {
+    "quickstart": "https://docs.consulatehq.com/mcp-quickstart",
+    "api": "https://docs.consulatehq.com/api",
+    "protocol": "https://github.com/consulatehq/agentic-dispute-protocol"
+  },
+  "support": {
+    "email": "support@consulatehq.com",
+    "github": "https://github.com/consulatehq/consulate/issues"
+  },
+  "pricing": {
+    "micro": { "range": "<$1", "fee": "$0.10" },
+    "small": { "range": "$1-$10", "fee": "$0.25" },
+    "medium": { "range": "$10-$100", "fee": "$1.00" },
+    "large": { "range": "$100-$1,000", "fee": "$5.00" },
+    "enterprise": { "range": ">$1,000", "fee": "$25.00" }
+  },
+  "resolution_time": "10 business days (Regulation E)",
+  "dispute_types": "PAYMENT DISPUTES ONLY (not SLA/contract disputes)"
+}
+
