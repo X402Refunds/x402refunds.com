@@ -102,6 +102,61 @@ export const MCP_TOOLS = [
     }
   },
   {
+    name: "consulate_file_general_dispute",
+    description: "File a GENERAL DISPUTE for service quality issues, SLA breaches, contract violations, API failures, data quality problems, or other non-payment disputes. For payment/transaction disputes, use consulate_file_dispute instead. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00).",
+    input_schema: {
+      type: "object",
+      properties: {
+        plaintiff: {
+          type: "string",
+          description: "Who's filing the dispute (agent DID, email, or company name)"
+        },
+        defendant: {
+          type: "string",
+          description: "Who's being disputed (service provider name, agent DID, or company)"
+        },
+        category: {
+          type: "string",
+          enum: ["contract_breach", "sla_violation", "service_quality", "api_downtime", "api_latency", "data_quality", "data_breach", "feature_availability", "delivery_issue", "support_issue", "billing_dispute", "unauthorized_access"],
+          description: "Type of dispute: contract_breach (contract terms violated), sla_violation (SLA not met), service_quality (poor service), api_downtime (API unavailable), api_latency (slow performance), data_quality (bad data), data_breach (security incident), feature_availability (features not working), delivery_issue (delivery problems), support_issue (poor support), billing_dispute (billing problems), unauthorized_access (security breach)"
+        },
+        description: {
+          type: "string",
+          description: "Clear description of what went wrong (e.g., 'API was down for 3 hours, violated 99.9% uptime SLA')"
+        },
+        amount: {
+          type: "number",
+          description: "Claimed damages in USD (e.g., 500.00 for $500). This determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
+        },
+        currency: {
+          type: "string",
+          description: "Currency code (default: 'USD')"
+        },
+        evidenceUrls: {
+          type: "array",
+          items: { type: "string" },
+          description: "URLs to evidence: contracts, SLA documents, monitoring logs, screenshots, communications"
+        },
+        breachDetails: {
+          type: "object",
+          properties: {
+            duration: { type: "string", description: "How long the issue lasted (e.g., '3 hours', '2 days')" },
+            slaRequirement: { type: "string", description: "What the SLA required (e.g., '99.9% uptime', '<200ms latency')" },
+            actualPerformance: { type: "string", description: "What actually happened (e.g., '97.2% uptime', '450ms average latency')" },
+            impactLevel: { type: "string", description: "Impact severity: low, medium, high, critical" },
+            affectedUsers: { type: "number", description: "Number of users affected" }
+          },
+          description: "Optional detailed breach information for SLA/contract disputes"
+        },
+        callbackUrl: {
+          type: "string",
+          description: "Optional webhook URL to receive dispute resolution result"
+        }
+      },
+      required: ["plaintiff", "defendant", "category", "description", "amount"]
+    }
+  },
+  {
     name: "consulate_submit_evidence",
     description: "Submit ADP-compliant evidence to support a dispute case. Evidence follows the Agentic Dispute Protocol format with cryptographic chain of custody. Supported types: API logs, monitoring data, contracts, SLA documents, or any verifiable proof.",
     input_schema: {
@@ -269,10 +324,10 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "1.0.0",
     server: {
-      name: "Consulate Payment Dispute Resolution",
+      name: "Consulate Dispute Resolution",
       version: "1.0.0",
-      description: "Automated payment dispute resolution for failed transactions, incorrect charges, and service-not-rendered issues. Regulation E compliant. 5 pricing tiers: MICRO (<$1), SMALL ($1-$10), MEDIUM ($10-$100), LARGE ($100-$1k), ENTERPRISE (>$1k).",
-      dispute_types: "PAYMENT DISPUTES ONLY (not SLA/contract disputes)",
+      description: "Automated dispute resolution for payments, service quality, contracts, SLAs, and more. Regulation E compliant. 5 pricing tiers: MICRO (<$1), SMALL ($1-$10), MEDIUM ($10-$100), LARGE ($100-$1k), ENTERPRISE (>$1k).",
+      dispute_types: "PAYMENT & GENERAL DISPUTES (payments, SLA violations, contracts, service quality, API issues)",
       pricing: {
         micro: { range: "<$1", fee: "$0.10" },
         small: { range: "$1-$10", fee: "$0.25" },
@@ -341,8 +396,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
 
-    // Public tools (no auth required): file_dispute, check_case_status
-    const publicTools = ['consulate_file_dispute', 'consulate_check_case_status'];
+    // Public tools (no auth required): file_dispute, file_general_dispute, check_case_status
+    const publicTools = ['consulate_file_dispute', 'consulate_file_general_dispute', 'consulate_check_case_status'];
     const isPublicTool = publicTools.includes(tool);
 
     // Check for Bearer token (API key) in Authorization header (skip for public tools)
@@ -478,6 +533,71 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             api: `https://api.consulatehq.com/cases/${result.caseId}`,
             submitEvidence: `https://api.consulatehq.com/evidence`,
             checkStatus: `https://api.consulatehq.com/cases/${result.caseId}`
+          }
+        }), {
+          headers: { "Content-Type": "application/json" }
+        });
+      
+      case "consulate_file_general_dispute":
+        // File GENERAL DISPUTE (non-payment: SLA, contract, service quality, etc.)
+        // First, submit evidence if provided
+        const evidenceIds = [];
+        if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
+          for (const url of parameters.evidenceUrls) {
+            const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
+              caseId: null as any, // Will be updated after case creation
+              agentDid: parameters.plaintiff,
+              sha256: generateSHA256(url), // Generate hash for URL
+              uri: url,
+              signer: parameters.plaintiff,
+              model: {
+                provider: "agent_submitted",
+                name: "evidence_upload",
+                version: "1.0.0"
+              },
+              tool: `general_dispute_${parameters.category}`,
+            });
+            evidenceIds.push(evidenceId);
+          }
+        }
+
+        // Create the general dispute case
+        const caseId = await ctx.runMutation(api.cases.fileDispute, {
+          plaintiff: parameters.plaintiff,
+          defendant: parameters.defendant,
+          type: parameters.category, // Category becomes the type (e.g., "api_downtime")
+          jurisdictionTags: ["general"],
+          evidenceIds: evidenceIds,
+          description: parameters.description,
+          claimedDamages: parameters.amount,
+          breachDetails: parameters.breachDetails,
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          caseId,
+          message: `General dispute filed successfully: ${parameters.category}`,
+          category: parameters.category,
+          pricingTier: parameters.amount < 1 ? "MICRO" :
+                       parameters.amount < 10 ? "SMALL" :
+                       parameters.amount < 100 ? "MEDIUM" :
+                       parameters.amount < 1000 ? "LARGE" : "ENTERPRISE",
+          estimatedFee: parameters.amount < 1 ? 0.10 :
+                        parameters.amount < 10 ? 0.25 :
+                        parameters.amount < 100 ? 1.00 :
+                        parameters.amount < 1000 ? 5.00 : 25.00,
+          trackingUrl: `https://consulatehq.com/cases/${caseId}`,
+          nextSteps: [
+            "Submit additional evidence using consulate_submit_evidence tool (optional)",
+            "Defendant will be notified and can respond",
+            "AI will analyze the dispute and provide a recommendation",
+            "Final resolution will be provided"
+          ],
+          _links: {
+            self: `https://consulatehq.com/cases/${caseId}`,
+            evidence: `https://api.consulatehq.com/cases/${caseId}/evidence`,
+            timeline: `https://consulatehq.com/cases/${caseId}#timeline`,
+            api: `https://api.consulatehq.com/cases/${caseId}`
           }
         }), {
           headers: { "Content-Type": "application/json" }

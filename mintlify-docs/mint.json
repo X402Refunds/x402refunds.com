@@ -32,36 +32,21 @@
       "group": "Getting Started",
       "pages": [
         "index",
+        "customer-integration",
         "dispute-types"
       ]
     },
     {
-      "group": "MCP Integration (Recommended)",
+      "group": "Integration Support",
       "pages": [
-        "mcp-quickstart",
-        "mcp-tools",
         "agent-discovery",
         "agent-failure-modes"
-      ]
-    },
-    {
-      "group": "HTTP API Reference",
-      "pages": [
-        "api-overview",
-        "api-endpoints"
       ]
     },
     {
       "group": "For Platforms",
       "pages": [
         "partner-integration"
-      ]
-    },
-    {
-      "group": "Advanced",
-      "pages": [
-        "agent-integration-guide",
-        "agent-integration-strategy"
       ]
     },
     {

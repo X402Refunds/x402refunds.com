@@ -2,16 +2,27 @@
 
 **Automated dispute resolution for agentic payments and micro-transactions**
 
-🌐 **Production**: [consulatehq.com](https://consulatehq.com)
-🔧 **API Base**: `https://api.consulatehq.com` (HTTP Routes/Actions)
-🗄️ **Convex API**: `https://youthful-orca-358.convex.cloud` (SDK Only)
-📄 **Protocol Spec**: [Agentic Dispute Protocol](https://github.com/consulatehq/agentic-dispute-protocol)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://modelcontextprotocol.io) [![Status](https://img.shields.io/badge/Status-Active-success)](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
+
+🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
+🔧 **API Base**: `https://api.consulatehq.com` (HTTP Routes/Actions)  
+🗄️ **Convex API**: `https://youthful-orca-358.convex.cloud` (SDK Only)  
+📄 **Protocol Spec**: [Agentic Dispute Protocol](https://github.com/consulatehq/agentic-dispute-protocol)  
+🤖 **MCP Server**: `com.consulatehq/consulate` - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
 
 ### 🔗 Key Endpoints
-- **MCP Discovery**: [`https://api.consulatehq.com/.well-known/mcp.json`](https://api.consulatehq.com/.well-known/mcp.json)
+- **MCP Discovery**: [`https://api.consulatehq.com/.well-known/mcp.json`](https://api.consulatehq.com/.well-known/mcp.json) - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
 - **ADP Discovery**: [`https://api.consulatehq.com/.well-known/adp`](https://api.consulatehq.com/.well-known/adp)
 - **Payment Disputes**: `https://api.consulatehq.com/api/payment-disputes`
 - **Agent Registration**: `https://api.consulatehq.com/api/agents/register`
+
+### 🤖 MCP Integration
+Consulate is available as an **MCP (Model Context Protocol) server** in the official directory. AI agents can discover and use Consulate's dispute resolution tools automatically with zero-code integration.
+
+- **Server Name**: `com.consulatehq/consulate`
+- **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
+- **Quick Start**: https://docs.consulatehq.com/mcp-quickstart
+- **8 Tools Available**: Agent registration, dispute filing, evidence submission, case tracking, and more
 
 ---
 

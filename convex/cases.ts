@@ -3,6 +3,24 @@ import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
 
+// General dispute category enum
+export const GENERAL_DISPUTE_CATEGORIES = [
+  "contract_breach",
+  "sla_violation", 
+  "service_quality",
+  "api_downtime",
+  "api_latency",
+  "data_quality",
+  "data_breach",
+  "feature_availability",
+  "delivery_issue",
+  "support_issue",
+  "billing_dispute",
+  "unauthorized_access"
+] as const;
+
+export type GeneralDisputeCategory = typeof GENERAL_DISPUTE_CATEGORIES[number];
+
 export const fileDispute = mutation({
   args: {
     plaintiff: v.string(),  // Agent DID filing the dispute
