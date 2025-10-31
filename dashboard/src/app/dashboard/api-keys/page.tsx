@@ -317,7 +317,7 @@ export default function APIKeysPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-slate-600">
-                          {formatDate(key.createdAt)}
+                          {key.createdAt ? formatDate(key.createdAt) : "Unknown"}
                         </TableCell>
                         <TableCell className="text-sm text-slate-600">
                           {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
