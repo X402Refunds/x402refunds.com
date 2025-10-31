@@ -25,7 +25,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-xl sm:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-              Don&apos;t build dispute resolution from scratch. Add one endpoint to your MCP server and instantly become compliant with{' '}
+              Add one endpoint to your MCP server and instantly become compliant with{' '}
               <a 
                 href="https://www.consumerfinance.gov/rules-policy/regulations/1005/" 
                 target="_blank" 
