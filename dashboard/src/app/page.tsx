@@ -32,7 +32,7 @@ export default function HomePage() {
               <Button 
                 size="lg" 
                 className="bg-slate-900 text-white hover:bg-slate-800 text-lg px-8 h-14 font-semibold"
-                onClick={() => window.open('/dashboard', '_self')}
+                onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
               >
                 Get Started Free
               </Button>
@@ -40,9 +40,7 @@ export default function HomePage() {
                 size="lg" 
                 variant="outline"
                 className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 text-lg px-8 h-14 font-semibold"
-                onClick={() => {
-                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
-                }}
+                onClick={() => window.location.href = 'https://docs.consulatehq.com'}
               >
                 View Documentation →
               </Button>
@@ -261,7 +259,7 @@ export default function HomePage() {
               <Button 
                 size="lg" 
                 className="bg-slate-900 text-white hover:bg-slate-800 text-base px-6"
-                onClick={() => window.open('/dashboard', '_self')}
+                onClick={() => window.location.href = 'https://docs.consulatehq.com'}
               >
                 View Documentation →
               </Button>
@@ -323,7 +321,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
             <Button 
               size="lg" 
               className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold"
-              onClick={() => window.open('/dashboard', '_self')}
+              onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
             >
               <Key className="mr-2 h-5 w-5" />
               Get Your API Key
@@ -332,7 +330,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               size="lg" 
               variant="outline"
               className="border-2 border-slate-600 text-white hover:bg-slate-800 text-lg px-8 h-14 font-semibold"
-              onClick={() => window.open('/dashboard', '_self')}
+              onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
               Read the Docs

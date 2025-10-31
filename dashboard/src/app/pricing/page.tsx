@@ -34,7 +34,7 @@ export default function PricingPage() {
                 <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Starter</CardTitle>
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">$249</span>
+                    <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">$0</span>
                     <span className="text-slate-600 dark:text-slate-400 text-lg">/month</span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
@@ -45,7 +45,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full bg-slate-900 text-white hover:bg-slate-800"
-                  onClick={() => window.location.href = '/demo'}
+                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -107,7 +107,7 @@ export default function PricingPage() {
                 <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Growth</CardTitle>
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">$999</span>
+                    <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">$249</span>
                     <span className="text-slate-600 dark:text-slate-400 text-lg">/month</span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
@@ -118,7 +118,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => window.location.href = '/demo'}
+                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -135,13 +135,13 @@ export default function PricingPage() {
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      <strong>Custom judge system prompts</strong>
+                      <strong>Custom terms and conditions knowledge base</strong>
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      <strong>Custom domain</strong> (disputes.yourbrand.com)
+                      <strong>Privacy policy judgments</strong>
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -576,8 +576,8 @@ export default function PricingPage() {
                   </td>
                   <td className="py-6 px-8 bg-blue-100 dark:bg-blue-900 border-l-4 border-r-4 border-blue-600">
                     <div className="text-center">
-                      <div className="text-3xl font-black text-blue-600">$1,249</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-semibold">99.5% cost reduction</div>
+                      <div className="text-3xl font-black text-blue-600">$249</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-semibold">99.9% cost reduction</div>
                     </div>
                   </td>
                   <td className="py-6 px-6 text-center">
@@ -615,7 +615,7 @@ export default function PricingPage() {
                 What&apos;s included in the platform fee?
               </summary>
               <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
-                The platform fee ($249 or $999/month) covers: API access, review queue dashboard, team collaboration,
+                The platform fee ($0 or $249/month) covers: API access, review queue dashboard, team collaboration,
                 precedent AI, webhooks, and support. Dispute resolution fees are separate - you pay per dispute based
                 on transaction value ($0.10 for micro, up to $25.00 for enterprise).
               </p>
@@ -649,8 +649,8 @@ export default function PricingPage() {
                 What&apos;s the difference between Starter and Growth?
               </summary>
               <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
-                Growth adds <strong>custom judge system prompts</strong> (define your own dispute resolution logic),
-                <strong>custom domain</strong> (disputes.yourbrand.com), advanced analytics, and more team members (15 vs 5).
+                Growth adds <strong>custom terms and conditions knowledge base</strong> (judges use your T&amp;C for decisions),
+                <strong>privacy policy judgments</strong> (privacy-focused dispute resolution), advanced analytics, and more team members (15 vs 5).
                 Both have the same per-dispute fees and resolution time.
               </p>
             </details>
