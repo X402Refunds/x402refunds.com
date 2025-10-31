@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-10-30T06:25:46.968Z
+**Auto-generated on**: 2025-10-31T00:10:58.632Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -77,7 +77,7 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
 - **apiKeys.ts** - validateApiKeyQuery, generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, processFiledCases, autoApproveOverdueDisputes
@@ -146,7 +146,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (29 test files)
+### Test Suites (30 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
@@ -161,6 +161,7 @@ Common HTTP routes exposed:
 - test/integration.test.ts
 - test/llm-engine.test.ts
 - test/mcp-case-url.test.ts
+- test/mcp-customer-proxy.test.ts
 - test/mcp-endpoints.test.ts
 - test/mcp-evidence-attachment.test.ts
 - test/mcp-integration.test.ts
@@ -219,8 +220,12 @@ Common HTTP routes exposed:
 
 ## 📚 Documentation Files
 
-### Public Documentation (1 files)
+### Public Documentation (5 files)
 - docs/claude-desktop-setup.md
+- docs/mcp-advertising-guide.md
+- docs/mcp-directory-publishing.md
+- docs/mcp-dns-setup.md
+- docs/mcp-publishing-guide.md
 
 
 ### Internal Documentation (27 files)
@@ -283,7 +288,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 29 test files using Vitest
+- 30 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -316,5 +321,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 10/29/2025, 11:25:46 PM
-Files scanned: 259
+Generated: 10/30/2025, 5:10:58 PM
+Files scanned: 255

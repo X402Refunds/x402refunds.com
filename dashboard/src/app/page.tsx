@@ -1,7 +1,7 @@
 "use client"
 
-import { ArrowRight, Code, Share, Sparkles, Plug, Webhook, ShieldCheck, DiagramProject, LineChart, Scale, Book, Terminal, Flask, XCircle, CheckCircle, Key, BookOpen } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Code, Share, Sparkles, Plug, Webhook, ShieldCheck, Network, LineChart, Scale, Book, Terminal, Beaker, XCircle, CheckCircle, Key, BookOpen } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/Navigation"
@@ -25,7 +25,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-xl sm:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-              Don't build dispute resolution from scratch. Add one endpoint to your MCP server and route all disputes to our AI-powered platform.
+              Don&apos;t build dispute resolution from scratch. Add one endpoint to your MCP server and route all disputes to our AI-powered platform.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -202,7 +202,7 @@ export default function HomePage() {
                 description: "ML models trained on millions of disputes catch fraudulent claims automatically."
               },
               {
-                icon: DiagramProject,
+                icon: Network,
                 title: "Custom Workflows",
                 description: "Define resolution rules specific to your use case. Escalate complex cases automatically."
               },
@@ -243,14 +243,14 @@ export default function HomePage() {
                 Beautiful APIs. Comprehensive docs.
               </h2>
               <p className="text-lg text-slate-600 mb-8">
-                We're developers building for developers. Our APIs are RESTful, well-documented, and designed to get you up and running in minutes.
+                We&apos;re developers building for developers. Our APIs are RESTful, well-documented, and designed to get you up and running in minutes.
               </p>
 
               <div className="space-y-4 mb-8">
                 {[
                   { icon: Book, title: "Complete Documentation", description: "Interactive API reference, guides, and examples" },
-                  { icon: Terminal, title: "SDKs for Every Language", description: "TypeScript, Python, Go, Rust - we've got you covered" },
-                  { icon: Flask, title: "Sandbox Environment", description: "Test your integration with fake disputes before going live" }
+                  { icon: Terminal, title: "SDKs for Every Language", description: "TypeScript, Python, Go, Rust - we&apos;ve got you covered" },
+                  { icon: Beaker, title: "Sandbox Environment", description: "Test your integration with fake disputes before going live" }
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -322,7 +322,7 @@ const dispute = await disputeflow.disputes.create({
             Ship disputes in 5 minutes
           </h2>
           <p className="text-xl text-slate-300 mb-8">
-            Join hundreds of MCP server builders who've added dispute resolution to their agents.
+            Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
