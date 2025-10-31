@@ -102,13 +102,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it Works */}
+      {/* Expose Consulate Tools */}
       <section id="how-it-works" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">How it works</h2>
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">Expose Consulate Tools</h2>
             <p className="text-xl text-slate-600">
-              Expose one endpoint. Route all disputes to us. Focus on building your agent.
+              Add our MCP tools to your server. Route disputes to us. Focus on building your agent.
             </p>
           </div>
 
@@ -120,15 +120,12 @@ export default function HomePage() {
                   <Code className="h-6 w-6 text-slate-700" />
                 </div>
                 <div className="text-3xl font-bold text-slate-900 mb-2">1</div>
-                <CardTitle className="text-2xl">Add the SDK</CardTitle>
+                <CardTitle className="text-2xl">Expose Consulate Tool</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-600 mb-4">
-                  Install our SDK and add a file_dispute tool to your MCP server. The tool wraps our dispute API.
+                <p className="text-slate-600">
+                  Add the consulate_file_dispute tool to your MCP server as a wrapper that forwards to our API. Your users get instant dispute resolution.
                 </p>
-                <div className="bg-slate-900 text-slate-100 p-3 rounded font-mono text-sm">
-                  npm install @disputeflow/sdk
-                </div>
               </CardContent>
             </Card>
 
@@ -139,15 +136,12 @@ export default function HomePage() {
                   <Share className="h-6 w-6 text-slate-700" />
                 </div>
                 <div className="text-3xl font-bold text-slate-900 mb-2">2</div>
-                <CardTitle className="text-2xl">Route Disputes</CardTitle>
+                <CardTitle className="text-2xl">Auto-Route Disputes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-600 mb-4">
-                  When users call file_dispute on your server, it automatically routes to our platform with full context.
+                <p className="text-slate-600">
+                  When users invoke the tool, disputes automatically route to Consulate with full transaction context. No additional integration needed.
                 </p>
-                <div className="bg-slate-900 text-slate-100 p-3 rounded font-mono text-sm">
-                  disputeflow.disputes.create()
-                </div>
               </CardContent>
             </Card>
 
@@ -162,7 +156,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 mb-4">
-                  Our AI agents analyze, detect fraud, communicate with parties, and resolve disputes in minutes.
+                  Our AI analyzes evidence, detects fraud, and provides recommendations. Your team reviews and makes final decisions in minutes.
                 </p>
                 <div className="text-center pt-2">
                   <div className="text-sm text-slate-600 font-medium">avg resolution:</div>
@@ -285,27 +279,27 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent className="bg-slate-900 text-slate-100 p-6 font-mono text-sm rounded-b-lg">
                   <pre className="overflow-x-auto">
-{`// Create a dispute
-const dispute = await disputeflow.disputes.create({
-  transaction_id: "txn_abc123",
+{`// File a dispute via MCP tool
+const result = await mcp.invoke("consulate_file_dispute", {
+  transactionId: "txn_abc123",
   amount: 29.99,
   currency: "USD",
-  reason: "product_not_received",
-  customer: {
-    id: "cus_xyz789",
-    email: "user@example.com"
-  },
-  metadata: {
-    order_id: "ord_456"
-  }
+  paymentProtocol: "STRIPE",
+  plaintiff: "consumer:alice@example.com",
+  defendant: "merchant:openai-api",
+  disputeReason: "service_not_rendered",
+  description: "API call failed but charge went through",
+  evidenceUrls: ["https://logs.example.com/txn_abc123"]
 });
 
 // Returns:
 {
-  id: "dsp_123",
+  success: true,
+  caseId: "k123abc",
   status: "analyzing",
-  estimated_resolution: "2024-01-15T10:30:00Z",
-  fraud_score: 0.12
+  estimatedResolutionTime: "< 5 minutes",
+  pricingTier: "MEDIUM",
+  disputeFee: 1.00
 }`}
                   </pre>
                 </CardContent>
