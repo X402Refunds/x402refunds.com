@@ -14,12 +14,12 @@ import schema from '../convex/schema';
  */
 
 describe('MCP - Tool Definitions', () => {
-  it('should export all 8 MCP tools', async () => {
+  it('should export all 9 MCP tools', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(8);
+    expect(MCP_TOOLS.length).toBe(9);
   });
 
   it('should have valid tool schemas', async () => {

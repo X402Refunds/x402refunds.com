@@ -168,6 +168,7 @@ export const receivePaymentDispute = mutation({
       humanReviewRequired: initialHumanReviewNeeded,
       createdAt: now,
       finalDecisionDue: regulationEDeadline,
+      regulationEDeadline, // Regulation E compliance deadline (top-level for easy access)
 
       // Infrastructure Model fields
       reviewerOrganizationId: args.reviewerOrganizationId,
@@ -178,7 +179,7 @@ export const receivePaymentDispute = mutation({
         transactionHash: args.transactionHash,
         paymentProtocol: args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol,
         disputeReason: args.disputeReason,
-        regulationEDeadline,
+        regulationEDeadline, // Also stored here for backward compatibility
         plaintiffMetadata: args.plaintiffMetadata,
         defendantMetadata: args.defendantMetadata,
         disputeFee: feeBreakdown.totalFee,
@@ -527,7 +528,15 @@ export const findSimilarDisputes = query({
 export const getPaymentDispute = query({
   args: { paymentDisputeId: v.id("cases") }, // Changed to cases
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.paymentDisputeId);
+    const caseData = await ctx.db.get(args.paymentDisputeId);
+    if (!caseData) return null;
+    
+    // Flatten paymentDetails metadata to top level for easier access
+    return {
+      ...caseData,
+      plaintiffMetadata: caseData.paymentDetails?.plaintiffMetadata,
+      defendantMetadata: caseData.paymentDetails?.defendantMetadata,
+    };
   },
 });
 

@@ -83,6 +83,7 @@ export const fileDispute = mutation({
     const caseData: any = {
       plaintiff: args.plaintiff,
       defendant: args.defendant,
+      parties: [args.plaintiff, args.defendant], // List of all parties involved
       status: "FILED" as const,
       type: "GENERAL", // Agent disputes are now type GENERAL (vs PAYMENT)
       filedAt: now,
@@ -93,6 +94,7 @@ export const fileDispute = mutation({
       humanReviewRequired: false, // Default to no review
       category: args.type, // Store original dispute type as category
       tags: args.jurisdictionTags, // Jurisdiction tags become tags
+      breachDetails: args.breachDetails, // Store SLA/breach details if provided
       createdAt: now,
     };
 
@@ -276,7 +278,9 @@ export const updateCaseStatus = mutation({
     status: v.union(
       v.literal("FILED"),
       v.literal("ANALYZED"),
+      v.literal("AUTORULED"),
       v.literal("IN_REVIEW"),
+      v.literal("PANELED"),
       v.literal("DECIDED"),
       v.literal("CLOSED")
     ),
@@ -326,6 +330,7 @@ export const updateCaseRuling = mutation({
       finalVerdict: args.ruling.verdict,
       decidedAt: args.ruling.decidedAt,
       status: "DECIDED",
+      ruling: args.ruling, // Store ruling data on the case object
     });
 
     // Update reputation for both parties if we have a winner

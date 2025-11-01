@@ -145,11 +145,12 @@ describe("MCP Tool Schema Validation", () => {
       }
     });
 
-    it("should list exactly 8 tools", () => {
-      expect(MCP_TOOLS.length).toBe(8);
+    it("should list exactly 9 tools", () => {
+      expect(MCP_TOOLS.length).toBe(9);
 
       const expectedTools = [
         "consulate_file_dispute",
+        "consulate_file_general_dispute",
         "consulate_submit_evidence",
         "consulate_check_case_status",
         "consulate_register_agent",

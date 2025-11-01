@@ -4,6 +4,12 @@ import { ArrowRight, Check, Webhook, Bot, User } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 
@@ -597,69 +603,69 @@ export default function PricingPage() {
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Frequently Asked Questions</h2>
           </div>
 
-          <div className="space-y-6">
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Who makes the final decision on disputes?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 YOU do. Your team reviews all cases that need human judgment (typically 5%).
                 Consulate provides AI recommendations based on historical patterns, but you have
                 the final say. This is the <strong>Infrastructure Model</strong> - we provide tools,
                 you make decisions.
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-2">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 What&apos;s included in the platform fee?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 The platform fee ($0 or $249/month) covers: API access, review queue dashboard, team collaboration,
                 precedent AI, webhooks, and support. Dispute resolution fees are separate - you pay per dispute based
                 on transaction value ($0.10 for micro, up to $25.00 for enterprise).
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-3">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 How does the AI learn from my decisions?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 When you approve or override AI recommendations, we feed that back into the pattern
                 matching system. Over time, the AI learns your preferences, industry nuances, and
                 edge cases specific to your business. Your overrides become training data that
                 improves accuracy for YOUR disputes.
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-4">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Is this Regulation E compliant?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Yes. Consulate provides the workflow, logging, and timeline management required by
                 Regulation E. YOU remain the decision-maker (as required by law for consumer
                 protection), we just make the process automated, compliant, and trackable.
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-5">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 What&apos;s the difference between Starter and Growth?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Growth adds <strong>custom terms and conditions knowledge base</strong> (judges use your T&amp;C for decisions),
                 <strong>privacy policy judgments</strong> (privacy-focused dispute resolution), advanced analytics, and more team members (15 vs 5).
                 Both have the same per-dispute fees and resolution time.
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-6">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Is this compatible with the Agentic Dispute Protocol (ADP)?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Yes, 100% ADP-compliant. All disputes maintain cryptographic chain of custody, evidence
                 follows the ADP Evidence Message format, and rulings use the ADP Award Message structure.
                 Learn more at{" "}
@@ -671,20 +677,20 @@ export default function PricingPage() {
                 >
                   github.com/consulatehq/agentic-dispute-protocol
                 </a>
-              </p>
-            </details>
+              </AccordionContent>
+            </AccordionItem>
 
-            <details className="border-b border-slate-200 dark:border-slate-800 pb-4">
-              <summary className="font-semibold cursor-pointer text-slate-900 dark:text-slate-100 hover:text-blue-600">
+            <AccordionItem value="item-7">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Can I integrate with ACP/ATXP payment protocols?
-              </summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">
+              </AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Absolutely. We have native support for both Agentic Commerce Protocol (ACP) and ATXP.
                 Simply configure our webhook endpoint in your payment processor, and disputes will flow
                 automatically. API documentation available in the dashboard.
-              </p>
-            </details>
-          </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
 

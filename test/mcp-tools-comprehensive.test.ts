@@ -27,8 +27,8 @@ import { API_BASE_URL } from './fixtures';
  * For PREVIEW (youthful-orca-358): Most tests will work except auth-required endpoints.
  */
 
-describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
-  const API_KEY = process.env.TEST_API_KEY || 'csk_live_4f1e395fddbe4447d0532ece6314b6b3';
+describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test Suite', () => {
+  const API_KEY = process.env.TEST_API_KEY || '';
   let testAgentDid: string;
   let testCaseId: string;
 

@@ -123,7 +123,9 @@ export default defineSchema({
     status: v.union(
       v.literal("FILED"),      // Just filed, awaiting AI analysis
       v.literal("ANALYZED"),   // AI completed analysis
+      v.literal("AUTORULED"),  // AI auto-ruled (high confidence, automated resolution)
       v.literal("IN_REVIEW"),  // Human reviewing (for low confidence or escalated cases)
+      v.literal("PANELED"),    // Assigned to judge panel for review
       v.literal("DECIDED"),    // Final decision made
       v.literal("CLOSED")      // Case closed
     ),
@@ -157,6 +159,7 @@ export default defineSchema({
     analysisDue: v.optional(v.number()),    // When AI should complete analysis
     reviewDue: v.optional(v.number()),      // When human review should be done
     finalDecisionDue: v.optional(v.number()), // TEMP: Optional to allow migration - Final deadline (e.g., Regulation E: 10 business days)
+    regulationEDeadline: v.optional(v.number()), // Regulation E compliance deadline for payment disputes (10 business days)
 
     // AI Analysis
     aiRecommendation: v.optional(v.object({
@@ -212,11 +215,13 @@ export default defineSchema({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
         customerId: v.optional(v.string()),  // Customer's internal user ID
+        walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
       })),
       defendantMetadata: v.optional(v.object({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
         merchantId: v.optional(v.string()),  // Customer's internal merchant ID
+        walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
       })),
     })),
 
