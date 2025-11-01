@@ -41,19 +41,20 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(manifest.server.name).toBe('Consulate Payment Dispute Resolution');
-      expect(manifest.server.dispute_types).toBe('PAYMENT DISPUTES ONLY (not SLA/contract disputes)');
+      expect(manifest.server.name).toBe('Consulate Dispute Resolution');
+      expect(manifest.server.dispute_types).toBe('PAYMENT & GENERAL DISPUTES (payments, SLA violations, contracts, service quality, API issues)');
       expect(manifest.server.pricing).toBeDefined();
       expect(manifest.server.pricing.micro.fee).toBe('$0.10');
     });
 
-    it('should list all 8 MCP tools', async () => {
+    it('should list all 9 MCP tools', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
       const toolNames = manifest.tools.map((t: any) => t.name);
       const expectedTools = [
         'consulate_file_dispute',
+        'consulate_file_general_dispute',
         'consulate_submit_evidence',
         'consulate_check_case_status',
         'consulate_register_agent',
@@ -63,7 +64,7 @@ describe('MCP Protocol - Tool Discovery', () => {
         'consulate_request_vendor_registration',
       ];
       
-      expect(manifest.tools.length).toBe(8);
+      expect(manifest.tools.length).toBe(9);
       for (const expectedTool of expectedTools) {
         expect(toolNames).toContain(expectedTool);
       }
