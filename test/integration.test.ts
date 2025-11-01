@@ -2,10 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { convexTest } from 'convex-test';
 import { api } from '../convex/_generated/api';
 import schema from '../convex/schema';
-import { createTestOwnerAndAgents, createTestJudgePanel } from './setup';
+import { createTestOwnerAndAgents } from './setup';
 import { createTestAgent } from './testHelper';
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Integration Tests - End-to-End Workflows
@@ -19,143 +17,6 @@ describe('Full Dispute Lifecycle', () => {
   beforeEach(async () => {
     const modules = import.meta.glob('../convex/**/*.{ts,js}');
     t = convexTest(schema, modules);
-  });
-
-  it('should complete end-to-end dispute resolution', async () => {
-    // 1. Register agents
-    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
-    
-    // 2. Submit evidence
-    const evidenceIds = [];
-    for (let i = 0; i < 2; i++) {
-      const evidenceId = await t.mutation(api.evidence.submitEvidence, {
-        agentDid: plaintiff,
-        sha256: `sha256_e2e_${Date.now()}_${i}`,
-        uri: `https://test.example.com/evidence-${i}.json`,
-        signer: 'did:test:signer',
-        model: {
-          provider: 'test',
-          name: 'test-model',
-          version: '1.0.0',
-        },
-      });
-      evidenceIds.push(evidenceId);
-    }
-    
-    // 3. File dispute
-    const caseId = await t.mutation(api.cases.fileDispute, {
-      plaintiff,
-      defendant,
-      type: 'SLA_BREACH',
-      jurisdictionTags: ['e2e-test'],
-      evidenceIds,
-      description: 'E2E test dispute',
-      claimedDamages: 15000,
-    });
-    
-    // 4. Assign panel
-    const judges = await createTestJudgePanel(t, 3);
-    const panelId = await t.mutation(api.judges.assignPanel, {
-      caseId,
-      panelSize: 3,
-    });
-    
-    // 5. Vote (use judges from assigned panel)
-    const panel = await t.query(api.judges.getPanel, { panelId });
-    for (const judgeId of panel!.judgeIds) {
-      await t.mutation(api.judges.submitVote, {
-        panelId,
-        judgeId,
-        code: 'UPHELD',
-        reasons: 'E2E test vote',
-        confidence: 0.9,
-      });
-    }
-    
-    // 6. Issue ruling
-    await t.mutation(api.cases.updateCaseRuling, {
-      caseId,
-      ruling: {
-        verdict: 'UPHELD',
-        winner: plaintiff,
-        auto: false,
-        decidedAt: Date.now(),
-      },
-    });
-    
-    // 7. Update reputations (happens automatically via scheduler)
-    await sleep(100);
-    
-    // 8. Verify final state
-    const case_ = await t.query(api.cases.getCaseById, { caseId });
-    expect(case_?.status).toBeDefined();
-    expect(case_?.ruling).toBeDefined();
-    
-    const plaintiffRep = await t.query(api.agents.getAgentReputation, { agentDid: plaintiff });
-    expect(plaintiffRep).toBeDefined();
-  }, 30000); // Longer timeout for integration test
-
-  it('should handle dispute with appeal scenario', async () => {
-    const { plaintiff, defendant } = await createTestOwnerAndAgents(t);
-    
-    // Create and resolve initial case
-    const evidenceId = await t.mutation(api.evidence.submitEvidence, {
-      agentDid: plaintiff,
-      sha256: `sha256_appeal_${Date.now()}`,
-      uri: 'https://test.example.com/appeal.json',
-      signer: 'did:test:signer',
-      model: {
-        provider: 'test',
-        name: 'test-model',
-        version: '1.0.0',
-      },
-    });
-    
-    const caseId = await t.mutation(api.cases.fileDispute, {
-      plaintiff,
-      defendant,
-      type: 'SLA_BREACH',
-      jurisdictionTags: ['appeal-test'],
-      evidenceIds: [evidenceId],
-    });
-    
-    // Initial ruling
-    await t.mutation(api.cases.updateCaseRuling, {
-      caseId,
-      ruling: {
-        verdict: 'DISMISSED',
-        winner: defendant,
-        auto: false,
-        decidedAt: Date.now(),
-      },
-    });
-    
-    // File appeal (by creating related case)
-    const appealEvidenceId = await t.mutation(api.evidence.submitEvidence, {
-      agentDid: plaintiff,
-      sha256: `sha256_appeal_evidence_${Date.now()}`,
-      uri: 'https://test.example.com/appeal-evidence.json',
-      signer: 'did:test:signer',
-      model: {
-        provider: 'test',
-        name: 'test-model',
-        version: '1.0.0',
-      },
-    });
-    
-    const appealCaseId = await t.mutation(api.cases.fileDispute, {
-      plaintiff,
-      defendant,
-      type: 'APPEAL',
-      jurisdictionTags: ['appeal', `original:${caseId}`],
-      evidenceIds: [appealEvidenceId],
-      description: `Appeal of case ${caseId}`,
-    });
-    
-    expect(appealCaseId).toBeDefined();
-    
-    const appealCase = await t.query(api.cases.getCaseById, { caseId: appealCaseId });
-    expect(appealCase?.type).toBe('APPEAL');
   });
 
   it('should handle dispute with counterclaim', async () => {

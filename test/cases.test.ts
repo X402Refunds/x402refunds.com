@@ -127,10 +127,11 @@ describe('Case Filing & Management - MVP', () => {
         plaintiff,
         defendant,
         parties: [plaintiff, defendant],
-        type: 'SLA_BREACH',
+        type: 'GENERAL', // Agent disputes are stored as GENERAL type
+        category: 'SLA_BREACH', // Original type is stored in category
         status: 'FILED',
         description: 'API latency exceeded SLA',
-        claimedDamages: 10000,
+        amount: 10000, // Changed from claimedDamages to amount
       });
     });
 

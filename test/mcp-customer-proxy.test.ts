@@ -21,7 +21,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(schema).toHaveProperty('protocol', 'mcp');
     expect(schema).toHaveProperty('tools');
     expect(Array.isArray(schema.tools)).toBe(true);
-  });
+  }, 30000); // 30 second timeout for network requests
 
   it('should include core tools in schema', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -31,7 +31,7 @@ describe('MCP Customer Proxy Pattern', () => {
     
     expect(toolNames).toContain('consulate_file_dispute');
     expect(toolNames).toContain('consulate_check_case_status');
-  });
+  }, 30000);
 
   it('should have complete schemas for core tools', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -58,7 +58,7 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify check_status schema
     expect(checkStatusTool).toBeDefined();
     expect(checkStatusTool.input_schema.required).toContain('caseId');
-  });
+  }, 30000);
 
   it('should support schema filtering and renaming (customer pattern)', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -87,7 +87,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(customerSchema.tools.length).toBe(2);
     const fileDispute = customerSchema.tools.find((t: any) => t.name === 'file_dispute');
     expect(fileDispute.input_schema.required).toContain('transactionId');
-  });
+  }, 30000);
 
   it('should preserve all schema properties when renaming', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -108,7 +108,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(renamedTool.input_schema.properties.transactionId).toBeDefined();
     expect(renamedTool.input_schema.properties.amount).toBeDefined();
     expect(renamedTool.input_schema.properties.disputeReason).toBeDefined();
-  });
+  }, 30000);
 
   it('should include pricing information in schema', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -121,7 +121,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(schema.server.pricing.medium).toBeDefined();
     expect(schema.server.pricing.large).toBeDefined();
     expect(schema.server.pricing.enterprise).toBeDefined();
-  });
+  }, 30000);
 
   it('should include authentication info for customers', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -130,7 +130,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(schema.authentication).toBeDefined();
     expect(schema.authentication.type).toBe('bearer');
     expect(schema.authentication.required_headers.Authorization).toContain('Bearer');
-  });
+  }, 30000);
 
   it('should document dispute reasons in file_dispute tool', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
@@ -145,7 +145,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(disputeReasonProperty.enum).toContain('amount_incorrect');
     expect(disputeReasonProperty.enum).toContain('duplicate_charge');
     expect(disputeReasonProperty.enum).toContain('fraud');
-  });
+  }, 30000);
 });
 
 describe('MCP Customer Proxy - Tool Invocation', () => {

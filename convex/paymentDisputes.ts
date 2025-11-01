@@ -795,8 +795,13 @@ export const getCustomerReviewQueue = query({
       .order("asc") // Oldest first (approaching deadline)
       .take(args.limit || 50);
 
-    // Disputes ARE cases now, no need to enrich
-    return disputes;
+    // Flatten paymentDetails for easier access
+    return disputes.map(d => ({
+      ...d,
+      transactionId: d.paymentDetails?.transactionId,
+      paymentProtocol: d.paymentDetails?.paymentProtocol,
+      disputeReason: d.paymentDetails?.disputeReason,
+    }));
   },
 });
 

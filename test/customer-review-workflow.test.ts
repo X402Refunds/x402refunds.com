@@ -124,7 +124,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
     expect(dispute.humanReviewedAt).toBeDefined();
     expect(dispute.humanAgreesWithAI).toBe(true);
-    expect(dispute.customerFinalDecision).toBe("CONSUMER_WINS");
+    expect(dispute.finalVerdict).toBe("CONSUMER_WINS");
   });
 
   it("should allow customer to override AI recommendation", async () => {
@@ -162,8 +162,8 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     });
 
     expect(dispute.humanAgreesWithAI).toBe(false);
-    expect(dispute.customerReviewNotes).toContain("fraud");
-    expect(dispute.customerFinalDecision).toBe("MERCHANT_WINS");
+    expect(dispute.humanOverrideReason).toContain("fraud");
+    expect(dispute.finalVerdict).toBe("MERCHANT_WINS");
   });
 
   it("should prevent unauthorized users from reviewing other organization's disputes", async () => {
@@ -271,7 +271,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     });
     
     const custodyVerification = await t.query(api.custody.verifyCustodyChain, {
-      caseId: dispute.caseId,
+      caseId: result.paymentDisputeId, // paymentDisputeId IS the caseId
     });
     
     expect(custodyVerification.totalEvents).toBeGreaterThan(0);
