@@ -14,17 +14,17 @@ export function Footer() {
           <div>
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/demo', '_self')} className="hover:text-white transition-colors">Demo</button></li>
-              <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-white transition-colors">API Status</button></li>
-              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-white transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('/demo', '_self')} className="hover:text-emerald-400 transition-colors">Demo</button></li>
+              <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-emerald-400 transition-colors">API Status</button></li>
+              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Company</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-white transition-colors">About</button></li>
-              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-white transition-colors">Pricing</button></li>
-              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-white transition-colors">Docs</button></li>
+              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-emerald-400 transition-colors">About</button></li>
+              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-emerald-400 transition-colors">Pricing</button></li>
+              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-emerald-400 transition-colors">Docs</button></li>
             </ul>
           </div>
         </div>
@@ -34,7 +34,7 @@ export function Footer() {
             <div className="text-xs sm:text-sm space-y-1">
               <p>101a Clay St PMB 201, San Francisco CA 94111</p>
               <p>
-                Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-white transition-colors">vivek@consulatehq.com</a>
+                Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-emerald-400 transition-colors">vivek@consulatehq.com</a>
               </p>
               <p>Founder: Vivek Kotecha</p>
             </div>

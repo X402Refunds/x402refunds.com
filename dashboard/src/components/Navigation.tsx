@@ -82,11 +82,11 @@ export function Navigation({ currentPage }: NavigationProps) {
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-identity')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                                  <Shield className="h-5 w-5 text-blue-600" />
+                                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                                  <Shield className="h-5 w-5 text-emerald-600" />
                                 </div>
                                 <div>
                                   <div className="font-semibold text-slate-900 mb-1">Persistent ID for Agents</div>
@@ -103,11 +103,11 @@ export function Navigation({ currentPage }: NavigationProps) {
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-dispute')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-purple-50 hover:border-purple-200 border border-transparent transition-all group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                                  <Gavel className="h-5 w-5 text-purple-600" />
+                                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                                  <Gavel className="h-5 w-5 text-emerald-600" />
                                 </div>
                                 <div>
                                   <div className="font-semibold text-slate-900 mb-1">Agent-to-Agent Dispute Resolution</div>

@@ -62,7 +62,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-emerald-500 to-green-600 text-black hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
                 onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
               >
                 Get Started Free
@@ -70,8 +70,8 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </Button>
               <Button 
                 size="lg" 
-                variant="outline"
-                className="border-2 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md hover:shadow-emerald-500/20 transition-all duration-200 backdrop-blur-sm"
+                variant="secondary"
+                className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
                 onClick={() => window.location.href = 'https://docs.consulatehq.com'}
               >
                 View Documentation →
@@ -169,7 +169,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
       <section id="how-it-works" data-animate className="py-24 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="bg-blue-100 text-blue-700 border-blue-200 mb-4">HOW IT WORKS</Badge>
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">HOW IT WORKS</Badge>
             <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
               Expose Consulate Tools
             </h2>
@@ -180,16 +180,16 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connection lines - desktop only */}
-            <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
+            <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-200 to-transparent" />
             
             {/* Step 1 */}
-            <Card className="border-2 border-slate-200 hover:border-blue-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
-              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
+              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 1
               </div>
               <CardHeader>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Code className="h-7 w-7 text-blue-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Code className="h-7 w-7 text-emerald-600" />
                 </div>
                 <CardTitle className="text-2xl text-slate-900">Expose Consulate Tool</CardTitle>
               </CardHeader>
@@ -201,13 +201,13 @@ const result = await mcp.invoke("consulate_file_dispute", {
             </Card>
 
             {/* Step 2 */}
-            <Card className="border-2 border-slate-200 hover:border-purple-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
-              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-purple-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
+              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 2
               </div>
               <CardHeader>
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Share className="h-7 w-7 text-purple-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Share className="h-7 w-7 text-emerald-600" />
                 </div>
                 <CardTitle className="text-2xl text-slate-900">Auto-Route Disputes</CardTitle>
               </CardHeader>
@@ -235,7 +235,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 </p>
                 <div className="text-center pt-4 border-t border-slate-200">
                   <div className="text-sm text-slate-500 font-medium uppercase tracking-wide">avg resolution</div>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mt-1">4.2 minutes</div>
+                  <div className="text-3xl font-bold text-emerald-600 mt-1">4.2 minutes</div>
                 </div>
               </CardContent>
             </Card>
@@ -244,11 +244,11 @@ const result = await mcp.invoke("consulate_file_dispute", {
       </section>
 
       {/* Built for MCP Server Builders */}
-      <section id="features" data-animate className="py-24 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
+      <section id="features" data-animate className="py-24 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 text-white relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
 
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -268,13 +268,13 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 icon: Plug,
                 title: "Simple Integration",
                 description: "One SDK, one API key. Add dispute resolution to your MCP server in under 5 minutes.",
-                color: "from-blue-500 to-cyan-500"
+                color: "from-emerald-500 to-green-500"
               },
               {
                 icon: Webhook,
                 title: "Webhooks & Events",
                 description: "Get real-time updates on dispute status. Stay in control with webhook notifications.",
-                color: "from-purple-500 to-pink-500"
+                color: "from-emerald-600 to-teal-500"
               },
               {
                 icon: ShieldCheck,
@@ -286,19 +286,19 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 icon: Network,
                 title: "Custom Workflows",
                 description: "Define resolution rules specific to your use case. Escalate complex cases automatically.",
-                color: "from-orange-500 to-red-500"
+                color: "from-emerald-400 to-green-600"
               },
               {
                 icon: LineChart,
                 title: "Real-time Dashboard",
                 description: "Monitor disputes, view analytics, and track resolution rates from your dashboard.",
-                color: "from-indigo-500 to-blue-500"
+                color: "from-teal-500 to-emerald-600"
               },
               {
                 icon: Scale,
                 title: "Compliance Ready",
                 description: "SOC 2, GDPR compliant. Built-in audit logs and reporting for regulations.",
-                color: "from-violet-500 to-purple-500"
+                color: "from-emerald-500 to-emerald-700"
               }
             ].map((feature, idx) => (
               <Card key={idx} className="bg-white/5 border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-2xl group">
@@ -322,7 +322,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <Badge className="bg-purple-100 text-purple-700 border-purple-200 mb-4">DEVELOPER FIRST</Badge>
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">DEVELOPER FIRST</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight">
                 Beautiful APIs. Comprehensive docs.
               </h2>
@@ -332,8 +332,8 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
               <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Book className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Book className="h-6 w-6 text-emerald-600" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Complete Documentation</h3>
@@ -342,8 +342,8 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 </div>
                 
                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Terminal className="h-6 w-6 text-purple-600" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Terminal className="h-6 w-6 text-emerald-600" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">SDKs for Every Language</h3>
@@ -374,7 +374,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
             </div>
 
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-2xl" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-2xl blur-2xl" />
               <Card className="border-2 border-slate-200 shadow-2xl relative overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-t-lg border-b-0 pb-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -428,10 +428,10 @@ const result = await mcp.invoke("consulate_file_dispute", {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 text-white relative overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-emerald-500 to-green-500 rounded-full blur-3xl animate-pulse" />
         </div>
 
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center relative z-10">
