@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Bell, Menu, X, ExternalLink } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 
@@ -45,7 +45,10 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3">
+    <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 relative">
+      {/* Subtle emerald accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+      
       <div className="flex items-center justify-between gap-3">
         {/* Mobile Menu Button - Integrated into header */}
         {onToggleSidebar && (
@@ -90,24 +93,6 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
 
         {/* Right Section: Status and User */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Agentic Dispute Protocol Link */}
-          <a 
-            href="https://github.com/consulatehq/agentic-dispute-protocol"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex"
-          >
-            <span>Agentic Dispute Protocol</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-
-          {/* Notifications - Hidden on smallest mobile */}
-          <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg hidden xs:block">
-            <Bell className="h-4 w-4" />
-            <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-xs text-white">3</span>
-            </div>
-          </button>
 
           {/* User Display Name - Hidden on mobile */}
           {user && (

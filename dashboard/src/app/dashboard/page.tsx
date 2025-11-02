@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowRight, AlertCircle, CheckCircle, Clock, Zap, DollarSign, FileText, Users, Key } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
 
@@ -83,21 +83,11 @@ export default function DashboardPage() {
 
   // Calculate financial impact
   const totalFees = allOrgCases?.reduce((sum, c) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
-  const automationRate = totalDisputes > 0 ? ((resolvedDisputes / totalDisputes) * 100) : 100
 
   // Calculate win rates (from resolved disputes)
   const resolvedCases = allOrgCases?.filter(c => c.finalVerdict) || []
   const consumerWins = resolvedCases.filter(c => c.finalVerdict === "CONSUMER_WINS").length
   const merchantWins = resolvedCases.filter(c => c.finalVerdict === "MERCHANT_WINS").length
-
-  // Calculate average resolution time
-  const avgResolutionMinutes = 2.4 // TODO: Calculate from actual data
-
-  // Regulation E compliance
-  const regulationECompliant = allOrgCases?.every(c => {
-    if (!c.regulationEDeadline || !c.decidedAt) return true
-    return c.decidedAt < c.regulationEDeadline
-  }) ?? true
 
   // Helper functions for activity feed
   const formatAgentName = (did: string) => {
@@ -294,131 +284,143 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Key Metrics Grid - 4 columns */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Disputes */}
-          <Card className="border-slate-300 hover:border-slate-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">Total Disputes</CardTitle>
-              <FileText className="h-5 w-5 text-slate-600" />
+        {/* Simplified 2-Card Layout - Focus on What Matters */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Card 1: Financial Overview - What's At Stake */}
+          <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-slate-900 text-xl">Financial Overview</CardTitle>
+                  <CardDescription className="text-slate-600">
+                    Money in disputes and resolved
+                  </CardDescription>
+                </div>
+                <DollarSign className="h-8 w-8 text-emerald-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-slate-900 font-mono tabular-nums">
-                {totalDisputes}
-              </div>
-              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                All Time
-              </p>
-              <div className="mt-3 text-xs text-slate-600 space-y-1">
-                <div className="flex justify-between">
-                  <span>Resolved:</span>
-                  <span className="font-semibold text-emerald-600">{resolvedDisputes}</span>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Active Disputes */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    In Disputes Now
+                  </p>
+                  <div className="text-3xl font-bold text-amber-600 font-mono">
+                    ${(reviewQueue?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {reviewQueueCount} dispute{reviewQueueCount !== 1 ? 's' : ''} awaiting review
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Need Review:</span>
-                  <span className="font-semibold text-emerald-600">{reviewQueueCount}</span>
+
+                {/* Resolved This Month */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Resolved (All Time)
+                  </p>
+                  <div className="text-3xl font-bold text-emerald-600 font-mono">
+                    ${totalFees.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {resolvedDisputes} dispute{resolvedDisputes !== 1 ? 's' : ''} decided
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Stats Bar */}
+              <div className="mt-6 pt-4 border-t border-slate-200 grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{totalDisputes}</p>
+                  <p className="text-xs text-slate-600">Total</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600">{consumerWins}</p>
+                  <p className="text-xs text-slate-600">Consumer</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-600">{merchantWins}</p>
+                  <p className="text-xs text-slate-600">Merchant</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Review Queue */}
-          <Card className={reviewQueue && reviewQueue.length > 0 ? "border-emerald-300 hover:border-emerald-400" : "border-slate-300 hover:border-slate-400"}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">Ready to Review</CardTitle>
-              <AlertCircle className={reviewQueue && reviewQueue.length > 0 ? "h-5 w-5 text-emerald-600" : "h-5 w-5 text-slate-600"} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-4xl font-bold font-mono tabular-nums ${reviewQueue && reviewQueue.length > 0 ? "text-emerald-600" : "text-slate-600"}`}>
-                {reviewQueue?.length || 0}
+          {/* Card 2: Quick Actions - What You Need to Do */}
+          <Card className="border-2 border-slate-200 hover:border-slate-300 shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-slate-900 text-xl">Quick Actions</CardTitle>
+                  <CardDescription className="text-slate-600">
+                    Common tasks and resources
+                  </CardDescription>
+                </div>
               </div>
-              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                {reviewQueue && reviewQueue.length > 0 ? "With AI Recommendations" : "No Disputes"}
-              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Review Queue CTA */}
               <Button
-                size="sm"
-                variant={reviewQueue && reviewQueue.length > 0 ? "default" : "outline"}
-                className={`w-full mt-3`}
+                size="lg"
+                className={`w-full justify-between ${reviewQueueCount > 0 ? '' : 'opacity-50'}`}
                 onClick={() => router.push('/dashboard/review-queue')}
               >
-                {reviewQueue && reviewQueue.length > 0 ? 'Review Now' : 'View History'}
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="font-semibold">Review Disputes</div>
+                    <div className="text-xs font-normal opacity-90">
+                      {reviewQueueCount > 0 ? `${reviewQueueCount} waiting with AI recommendations` : 'All caught up'}
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+
+              {/* API Keys */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-between"
+                onClick={() => router.push('/dashboard/api-keys')}
+              >
+                <div className="flex items-center gap-3">
+                  <Key className="h-5 w-5" />
+                  <span className="font-medium">Manage API Keys</span>
+                </div>
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+
+              {/* Team */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-between"
+                onClick={() => router.push('/dashboard/team')}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5" />
+                  <span className="font-medium">Team Settings</span>
+                </div>
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+
+              {/* Activity */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-between"
+                onClick={() => router.push('/dashboard/activity')}
+              >
+                <div className="flex items-center gap-3">
+                  <Activity className="h-5 w-5" />
+                  <span className="font-medium">View All Activity</span>
+                </div>
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </CardContent>
           </Card>
-
-          {/* Automation Rate */}
-          <Card className="border-emerald-300 hover:border-emerald-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">Automation Rate</CardTitle>
-              <Zap className="h-5 w-5 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-emerald-600 font-mono tabular-nums">
-                {automationRate.toFixed(0)}%
-              </div>
-              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                AI Auto-Resolved
-              </p>
-              <div className="mt-3 space-y-1 text-xs">
-                <div className="flex justify-between text-slate-600">
-                  <span>Consumer wins:</span>
-                  <span className="font-semibold">{consumerWins}</span>
-                </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Merchant wins:</span>
-                  <span className="font-semibold">{merchantWins}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Avg Resolution Time */}
-          <Card className="border-slate-300 hover:border-slate-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">Avg Resolution Time</CardTitle>
-              <Clock className="h-5 w-5 text-slate-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-slate-900 font-mono tabular-nums">
-                {avgResolutionMinutes.toFixed(1)}<span className="text-xl text-slate-600">m</span>
-              </div>
-              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                Average Time
-              </p>
-              <div className="mt-3 space-y-1 text-xs">
-                <div className="text-emerald-600 font-medium flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Under 5 min target
-                </div>
-                <div className="text-slate-600">
-                  Regulation E: {regulationECompliant ? '✓ 100% compliant' : '⚠ Review needed'}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
-
-        {/* Financial Impact Card */}
-        {totalFees > 0 && (
-          <Card className="border-emerald-300 hover:border-emerald-400">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
-                <CardTitle className="text-slate-900">Financial Impact</CardTitle>
-                <CardDescription>Dispute resolution costs saved via automation</CardDescription>
-              </div>
-              <DollarSign className="h-8 w-8 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold text-emerald-600">${totalFees.toFixed(2)}</span>
-                <span className="text-slate-600">total fees processed</span>
-              </div>
-              <div className="mt-3 text-sm text-slate-600">
-                Automated {resolvedDisputes} disputes • Avg ${(totalFees / (totalDisputes || 1)).toFixed(2)} per dispute
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Review Queue Section - ALWAYS VISIBLE */}
         <Card className="border-slate-200 shadow-sm">

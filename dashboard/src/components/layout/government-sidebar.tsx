@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Shield, LayoutDashboard, Key } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, Shield, LayoutDashboard, Key, AlertCircle } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -22,14 +22,24 @@ const orgNavigationItems: NavigationItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "Review Queue",
+    href: "/dashboard/review-queue",
+    icon: AlertCircle,
+  },
+  {
     title: "API Keys",
     href: "/dashboard/api-keys",
     icon: Key,
   },
   {
-    title: "My Agents",
-    href: "/dashboard/agents",
+    title: "Team",
+    href: "/dashboard/team",
     icon: Users,
+  },
+  {
+    title: "Activity",
+    href: "/dashboard/activity",
+    icon: Activity,
   },
 ]
 
@@ -98,13 +108,12 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
     <div className={cn("flex flex-col h-full bg-white border-r border-slate-200", className)}>
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="flex items-center space-x-2" onClick={onClick}>
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Shield className="text-white h-5 w-5" />
+        <Link href="/" className="flex items-center space-x-3 group" onClick={onClick}>
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+            <Shield className="text-white h-6 w-6" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-slate-900">Consulate</h2>
-            <p className="text-xs text-slate-600">Governance OS</p>
+            <h2 className="font-bold text-xl text-slate-900 group-hover:text-emerald-600 transition-colors">Consulate</h2>
           </div>
         </Link>
       </div>
@@ -120,17 +129,23 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
             <div className="space-y-1">
               {orgNavigationItems.map((item) => {
                 const Icon = item.icon
+                const isActive = pathname === item.href
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={onClick}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    )}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{item.title}</span>
                     {item.badge && (
-                      <span className="ml-auto px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                      <span className="ml-auto px-2 py-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
                         {item.badge}
                       </span>
                     )}
