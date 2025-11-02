@@ -419,3 +419,150 @@ describe('Event Timeline Bucketing', () => {
   });
 });
 
+describe('Organization Events - Infrastructure Model', () => {
+  let t: ReturnType<typeof convexTest>;
+
+  beforeEach(async () => {
+    const modules = import.meta.glob('../convex/**/*.{ts,js}');
+    t = convexTest(schema, modules);
+  });
+
+  it('should show payment disputes assigned to organization via reviewerOrganizationId', async () => {
+    // REGRESSION TEST: Ensure organization events include disputes where org is the reviewer
+    // Bug fixed: getOrganizationEvents was only showing disputes where org's agents were parties,
+    // but missed payment disputes filed via MCP where org is the reviewer (Infrastructure Model)
+
+    // Create test organization (payment platform that reviews disputes)
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Test Payment Platform",
+        domain: "testpayment.com",
+        verified: true,
+        createdAt: Date.now(),
+      });
+    });
+
+    // File a payment dispute with this org as reviewer (Infrastructure Model pattern)
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: "txn_org_events_test",
+      amount: 5.00,
+      currency: "USD",
+      paymentProtocol: "ACP",
+      plaintiff: "consumer:alice@example.com", // Not an agent in our system
+      defendant: "merchant:shop@example.com", // Not an agent in our system
+      disputeReason: "service_not_rendered",
+      description: "Test dispute for organization events",
+      reviewerOrganizationId: orgId, // THIS org reviews this dispute
+    });
+
+    // CRITICAL: Organization events should include this dispute
+    const orgEvents = await t.query(api.events.getOrganizationEvents, {
+      organizationId: orgId,
+      limit: 50,
+    });
+
+    // Verify the dispute event appears in org's feed
+    const disputeEvents = orgEvents.filter(e => 
+      e.type === "DISPUTE_FILED" && e.caseId === result.caseId
+    );
+
+    expect(disputeEvents.length).toBeGreaterThan(0);
+    expect(disputeEvents[0].caseId).toBe(result.caseId);
+    
+    console.log(`✅ Organization event feed correctly shows disputes where org is reviewer`);
+    console.log(`   Dispute: ${result.caseId}`);
+    console.log(`   Events found: ${disputeEvents.length}`);
+  });
+
+  it('should include both owned-agent disputes AND reviewer disputes in organization feed', async () => {
+    // Test that org sees BOTH types of disputes:
+    // 1. Disputes where their registered agents are involved
+    // 2. Payment disputes where they are the reviewer
+
+    const timestamp = Date.now();
+    
+    // Create organization
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Multi-Role Org",
+        domain: `multirole-${timestamp}.com`,
+        verified: true,
+        createdAt: timestamp,
+      });
+    });
+
+    const userId = await t.run(async (ctx) => {
+      return await ctx.db.insert("users", {
+        clerkUserId: `user-${timestamp}`,
+        email: `user-${timestamp}@test.com`,
+        organizationId: orgId,
+        role: "admin",
+        createdAt: timestamp,
+        lastLoginAt: timestamp,
+      });
+    });
+
+    const apiKey = await t.mutation(api.apiKeys.generateApiKey, {
+      userId: userId,
+      name: "Test Key",
+    });
+
+    // Type 1: Register an agent owned by this org
+    const agentResult = await t.mutation(api.agents.joinAgent, {
+      apiKey: apiKey.key,
+      name: "Org Test Agent",
+      mock: false,
+    });
+
+    // File agent dispute (agent-to-agent)
+    const evidenceId = await t.mutation(api.evidence.submitEvidence, {
+      agentDid: agentResult.did,
+      sha256: `sha256_${timestamp}`,
+      uri: 'https://test.example.com/evidence.json',
+      signer: 'did:test:signer',
+      model: {
+        provider: 'test',
+        name: 'test-model',
+        version: '1.0.0',
+      },
+    });
+
+    const agentDisputeId = await t.mutation(api.cases.fileDispute, {
+      plaintiff: agentResult.did,
+      defendant: `did:agent:other-${timestamp}`,
+      type: 'SLA_BREACH',
+      jurisdictionTags: ['test'],
+      evidenceIds: [evidenceId],
+    });
+
+    // Type 2: File payment dispute where org is reviewer
+    const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: `txn_multi_${timestamp}`,
+      amount: 10.00,
+      currency: "USD",
+      paymentProtocol: "ACP",
+      plaintiff: "consumer:bob@example.com",
+      defendant: "merchant:vendor@example.com",
+      disputeReason: "amount_incorrect",
+      description: "Payment dispute for multi-role test",
+      reviewerOrganizationId: orgId, // Org reviews this one
+    });
+
+    // Get organization events
+    const orgEvents = await t.query(api.events.getOrganizationEvents, {
+      organizationId: orgId,
+      limit: 100,
+    });
+
+    // Should include BOTH disputes
+    const agentDisputeEvents = orgEvents.filter(e => e.caseId === agentDisputeId);
+    const paymentDisputeEvents = orgEvents.filter(e => e.caseId === paymentDisputeResult.caseId);
+
+    expect(agentDisputeEvents.length).toBeGreaterThan(0);
+    expect(paymentDisputeEvents.length).toBeGreaterThan(0);
+
+    console.log(`✅ Organization sees both owned-agent disputes AND reviewer disputes`);
+    console.log(`   Agent dispute events: ${agentDisputeEvents.length}`);
+    console.log(`   Payment dispute events: ${paymentDisputeEvents.length}`);
+  });
+});

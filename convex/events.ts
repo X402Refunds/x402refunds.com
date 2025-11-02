@@ -299,6 +299,7 @@ export const getOrganizationEvents = query({
     const orgAgentDids = new Set(orgAgents.map(a => a.did));
 
     // Get all cases where org's agents are involved (as plaintiff or defendant)
+    // OR where the org is the reviewer (Infrastructure Model - payment disputes)
     const orgCases = await ctx.db
       .query("cases")
       .collect();
@@ -307,7 +308,8 @@ export const getOrganizationEvents = query({
       orgCases
         .filter(c =>
           (c.plaintiff && orgAgentDids.has(c.plaintiff)) ||
-          (c.defendant && orgAgentDids.has(c.defendant))
+          (c.defendant && orgAgentDids.has(c.defendant)) ||
+          (c.reviewerOrganizationId === args.organizationId) // Infrastructure Model: show disputes this org reviews
         )
         .map(c => c._id)
     );
