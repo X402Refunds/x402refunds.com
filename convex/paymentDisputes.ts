@@ -786,17 +786,43 @@ export const getCustomerReviewQueue = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const disputes = await ctx.db
-      .query("cases") // Changed: payment disputes are now in cases table
-      .withIndex("by_needs_review", q =>
-        q.eq("reviewerOrganizationId", args.organizationId).eq("humanReviewRequired", true)
+    // Get all payment disputes for this org (as reviewer)
+    const allOrgDisputes = await ctx.db
+      .query("cases")
+      .withIndex("by_reviewer_org", q =>
+        q.eq("reviewerOrganizationId", args.organizationId)
       )
-      .filter(q => q.eq(q.field("humanReviewedAt"), undefined))
-      .order("asc") // Oldest first (approaching deadline)
-      .take(args.limit || 50);
+      .filter(q => q.eq(q.field("type"), "PAYMENT"))
+      .collect();
+
+    // Filter to unreviewed disputes that need attention:
+    // 1. Explicitly marked as humanReviewRequired, OR
+    // 2. AI hasn't analyzed yet (aiRecommendation is null), OR
+    // 3. AI has low confidence (<95%)
+    const needsReview = allOrgDisputes.filter(d => {
+      // Already reviewed? Skip it
+      if (d.humanReviewedAt) return false;
+      
+      // Explicitly needs review? Include it
+      if (d.humanReviewRequired) return true;
+      
+      // No AI recommendation yet? Needs review
+      if (!d.aiRecommendation) return true;
+      
+      // Low AI confidence? Needs review
+      if (d.aiRecommendation.confidence < 0.95) return true;
+      
+      return false;
+    });
+
+    // Sort by oldest first (approaching Regulation E deadline)
+    const sorted = needsReview.sort((a, b) => a.filedAt - b.filedAt);
+    
+    // Limit results
+    const limited = sorted.slice(0, args.limit || 50);
 
     // Flatten paymentDetails for easier access
-    return disputes.map(d => ({
+    return limited.map(d => ({
       ...d,
       transactionId: d.paymentDetails?.transactionId,
       paymentProtocol: d.paymentDetails?.paymentProtocol,
