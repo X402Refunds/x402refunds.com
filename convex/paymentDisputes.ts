@@ -795,22 +795,21 @@ export const getCustomerReviewQueue = query({
       .filter(q => q.eq(q.field("type"), "PAYMENT"))
       .collect();
 
-    // Filter to unreviewed disputes that need attention:
-    // 1. Explicitly marked as humanReviewRequired, OR
-    // 2. AI hasn't analyzed yet (aiRecommendation is null), OR
-    // 3. AI has low confidence (<95%)
+    // Infrastructure Model: ALL disputes need human review
+    // User makes final decision on every dispute with AI recommendations
+    // Show disputes that have AI recommendations (regardless of confidence score)
     const needsReview = allOrgDisputes.filter(d => {
-      // Already reviewed? Skip it
+      // Already reviewed by human? Skip it
       if (d.humanReviewedAt) return false;
       
-      // Explicitly needs review? Include it
+      // Must be in FILED status (not yet decided)
+      if (d.status !== "FILED") return false;
+      
+      // Has AI recommendation? Show it for review (ALL disputes, regardless of confidence)
+      if (d.aiRecommendation) return true;
+      
+      // No AI recommendation yet? Still needs review (waiting for AI)
       if (d.humanReviewRequired) return true;
-      
-      // No AI recommendation yet? Needs review
-      if (!d.aiRecommendation) return true;
-      
-      // Low AI confidence? Needs review
-      if (d.aiRecommendation.confidence < 0.95) return true;
       
       return false;
     });

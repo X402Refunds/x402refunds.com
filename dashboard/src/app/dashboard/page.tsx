@@ -269,23 +269,23 @@ export default function DashboardPage() {
 
         {/* Alert Banner - Shows if review queue has items */}
         {reviewQueue && reviewQueue.length > 0 && (
-          <Card className="border-l-4 border-l-amber-600 bg-amber-50 border-amber-200">
+          <Card className="border-l-4 border-l-emerald-600 bg-emerald-50 border-emerald-200">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <AlertCircle className="h-5 w-5 text-emerald-600" />
                   <div>
-                    <p className="font-semibold text-amber-900">
-                      {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''} need{reviewQueue.length === 1 ? 's' : ''} your review
+                    <p className="font-semibold text-emerald-900">
+                      {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''} ready for your review
                     </p>
-                    <p className="text-sm text-amber-700">
-                      AI confidence below 95% threshold
+                    <p className="text-sm text-emerald-700">
+                      AI has analyzed and provided recommendations
                     </p>
                   </div>
                 </div>
                 <Button
                   onClick={() => router.push('/dashboard/review-queue')}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   Review Now <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -323,25 +323,25 @@ export default function DashboardPage() {
           </Card>
 
           {/* Review Queue */}
-          <Card className={reviewQueue && reviewQueue.length > 0 ? "border-amber-300 hover:border-amber-400" : "border-emerald-300 hover:border-emerald-400"}>
+          <Card className={reviewQueue && reviewQueue.length > 0 ? "border-emerald-300 hover:border-emerald-400" : "border-slate-300 hover:border-slate-400"}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700">Review Queue</CardTitle>
-              <AlertCircle className={reviewQueue && reviewQueue.length > 0 ? "h-5 w-5 text-amber-600" : "h-5 w-5 text-emerald-600"} />
+              <CardTitle className="text-sm font-medium text-slate-700">Ready to Review</CardTitle>
+              <AlertCircle className={reviewQueue && reviewQueue.length > 0 ? "h-5 w-5 text-emerald-600" : "h-5 w-5 text-slate-600"} />
             </CardHeader>
             <CardContent>
-              <div className={`text-4xl font-bold font-mono tabular-nums ${reviewQueue && reviewQueue.length > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+              <div className={`text-4xl font-bold font-mono tabular-nums ${reviewQueue && reviewQueue.length > 0 ? "text-emerald-600" : "text-slate-600"}`}>
                 {reviewQueue?.length || 0}
               </div>
               <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                {reviewQueue && reviewQueue.length > 0 ? "Awaiting Review" : "No Action Needed"}
+                {reviewQueue && reviewQueue.length > 0 ? "With AI Recommendations" : "No Disputes"}
               </p>
               <Button
                 size="sm"
                 variant={reviewQueue && reviewQueue.length > 0 ? "default" : "outline"}
-                className={`w-full mt-3 ${reviewQueue && reviewQueue.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
+                className={`w-full mt-3`}
                 onClick={() => router.push('/dashboard/review-queue')}
               >
-                {reviewQueue && reviewQueue.length > 0 ? 'Review Now' : 'View Queue'}
+                {reviewQueue && reviewQueue.length > 0 ? 'Review Now' : 'View History'}
               </Button>
             </CardContent>
           </Card>
@@ -425,9 +425,9 @@ export default function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-slate-900">Review Queue</CardTitle>
+                <CardTitle className="text-slate-900">Your Review Queue</CardTitle>
                 <CardDescription className="text-slate-600">
-                  Disputes where AI confidence is below 95% - your expertise needed
+                  AI provides recommendations - you make the final decision
                 </CardDescription>
               </div>
               <Button
@@ -443,9 +443,9 @@ export default function DashboardPage() {
             {!reviewQueue || reviewQueue.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
-                <p className="font-semibold text-slate-900 mb-1">All Clear!</p>
+                <p className="font-semibold text-slate-900 mb-1">All Caught Up!</p>
                 <p className="text-sm text-slate-600 mb-4">
-                  No disputes need review right now. AI is handling everything confidently.
+                  No new disputes to review. AI recommendations will appear here when disputes are filed.
                 </p>
                 <Button
                   variant="outline"
