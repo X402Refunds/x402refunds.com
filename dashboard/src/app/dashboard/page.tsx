@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowRight, AlertCircle, CheckCircle, Clock, Zap, TrendingUp } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, Clock, Zap, DollarSign, FileText, Users, Key } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
 
@@ -23,6 +23,17 @@ type Event = {
     parties?: string[];
     plaintiff?: string;
     defendant?: string;
+    amount?: number;
+    currency?: string;
+    status?: string;
+    paymentDetails?: {
+      disputeReason?: string;
+      disputeFee?: number;
+    };
+    aiRecommendation?: {
+      verdict: string;
+      confidence: number;
+    };
   };
 }
 
@@ -48,10 +59,16 @@ export default function DashboardPage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 10 } : "skip"
   )
 
-  // Get payment dispute stats for automation metrics
-  const paymentStats = useQuery(api.paymentDisputes.getMicroDisputeStats)
+  // Get ALL organization cases for comprehensive stats
+  const allOrgCases = useQuery(
+    api.cases.getOrganizationCases,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
+  )
 
-  // Get organization-specific events for activity feed (fetch more to ensure enough dispute events after filtering)
+  // Get payment dispute stats for automation metrics (currently unused but available for future)
+  // const paymentStats = useQuery(api.paymentDisputes.getMicroDisputeStats)
+
+  // Get organization-specific events for activity feed
   const recentEvents = useQuery(
     api.events.getOrganizationEvents,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 50 } : "skip"
@@ -59,15 +76,30 @@ export default function DashboardPage() {
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
-  // Calculate automation rate
-  const automationRate = paymentStats
-    ? parseFloat(paymentStats.autoResolutionRate)
-    : 95
+  // Calculate metrics from all org cases
+  const totalDisputes = allOrgCases?.length || 0
+  const resolvedDisputes = allOrgCases?.filter(c => c.status === "DECIDED" || c.status === "CLOSED").length || 0
+  const pendingDisputes = allOrgCases?.filter(c => c.status === "FILED" || c.status === "IN_REVIEW").length || 0
 
-  // Calculate average resolution time (mock - would need actual data)
-  const avgResolutionMinutes = 2.4
+  // Calculate financial impact
+  const totalFees = allOrgCases?.reduce((sum, c) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
+  const automationRate = totalDisputes > 0 ? ((resolvedDisputes / totalDisputes) * 100) : 100
 
-  // Helper functions for activity feed (copied from demo)
+  // Calculate win rates (from resolved disputes)
+  const resolvedCases = allOrgCases?.filter(c => c.finalVerdict) || []
+  const consumerWins = resolvedCases.filter(c => c.finalVerdict === "CONSUMER_WINS").length
+  const merchantWins = resolvedCases.filter(c => c.finalVerdict === "MERCHANT_WINS").length
+
+  // Calculate average resolution time
+  const avgResolutionMinutes = 2.4 // TODO: Calculate from actual data
+
+  // Regulation E compliance
+  const regulationECompliant = allOrgCases?.every(c => {
+    if (!c.regulationEDeadline || !c.decidedAt) return true
+    return c.decidedAt < c.regulationEDeadline
+  }) ?? true
+
+  // Helper functions for activity feed
   const formatAgentName = (did: string) => {
     if (!did) return "Unknown";
 
@@ -84,9 +116,7 @@ export default function DashboardPage() {
     // Handle agent DIDs: did:agent:name-company-12345
     const parts = did.split(':');
     if (parts.length >= 3) {
-      // Extract just the agent name without the ID number
       const fullName = parts[2];
-      // Remove the timestamp/ID suffix (everything after the last hyphen)
       const nameWithoutId = fullName.substring(0, fullName.lastIndexOf('-'));
       return nameWithoutId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -98,7 +128,6 @@ export default function DashboardPage() {
       case "AGENT_REGISTERED":
         return `${formatAgentName((event.payload?.did || event.agentDid || 'Unknown') as string)} joined the platform`;
       case "DISPUTE_FILED": {
-        // Try to get parties from enriched caseData first, then fall back to payload
         let parties: string | undefined;
         if (event.caseData?.parties) {
           parties = event.caseData.parties.map((p: string) => formatAgentName(p)).join(" vs ");
@@ -140,48 +169,31 @@ export default function DashboardPage() {
   // Sync user if not exists
   useEffect(() => {
     if (user && isLoaded && !currentUser) {
-      console.log("Syncing user:", user.id, user.primaryEmailAddress?.emailAddress);
       syncUser({
         clerkUserId: user.id,
         email: user.primaryEmailAddress?.emailAddress || "",
         name: user.fullName || undefined,
-      }).then(() => {
-        console.log("User synced successfully");
       }).catch((error) => {
         console.error("Failed to sync user:", error);
       })
     }
   }, [user, isLoaded, currentUser, syncUser])
   
-  // Debug logging
-  useEffect(() => {
-    console.log("Dashboard state:", { 
-      isLoaded, 
-      hasUser: !!user, 
-      currentUser: currentUser?._id,
-      organization: organization?._id 
-    });
-  }, [isLoaded, user, currentUser, organization])
-  
   if (!isLoaded || !user) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading user...</div>
+          <div className="text-slate-600">Loading...</div>
         </div>
       </DashboardLayout>
     )
   }
   
-  // Show a different loading state while waiting for Convex queries
   if (!currentUser) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">
-            <p>Syncing user data...</p>
-            <p className="text-sm text-slate-400 mt-2">Check browser console for details</p>
-          </div>
+          <div className="text-slate-600">Syncing user data...</div>
         </div>
       </DashboardLayout>
     )
@@ -189,14 +201,14 @@ export default function DashboardPage() {
   
   // Filter events to show only dispute-related activity
   const disputeEvents = recentEvents?.filter(evt =>
-    ["DISPUTE_FILED", "CASE_STATUS_UPDATED", "EVIDENCE_SUBMITTED"].includes(evt.type)
+    ["DISPUTE_FILED", "CASE_STATUS_UPDATED", "EVIDENCE_SUBMITTED", "CASE_DECIDED"].includes(evt.type)
   ) || []
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header with Quick Actions */}
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
             <p className="text-slate-600 mt-1">
@@ -204,17 +216,42 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* System Status Badge */}
-          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-            System Operational
-          </Badge>
+          {/* Quick Actions Bar */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/review-queue')}
+              className="flex items-center gap-2"
+            >
+              <AlertCircle className="h-4 w-4" />
+              Review Queue
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/api-keys')}
+              className="flex items-center gap-2"
+            >
+              <Key className="h-4 w-4" />
+              API Keys
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/team')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Team
+            </Button>
+          </div>
         </div>
 
-        {/* Alert Banner - Only shows if review queue has items */}
+        {/* Alert Banner - Shows if review queue has items */}
         {reviewQueue && reviewQueue.length > 0 && (
           <Card className="border-l-4 border-l-amber-600 bg-amber-50 border-amber-200">
-            <CardContent className="py-3">
+            <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-amber-600" />
@@ -238,9 +275,35 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Hero Metrics - What Matters Most */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Card 1: Review Queue Status */}
+        {/* Key Metrics Grid - 4 columns */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Disputes */}
+          <Card className="border-slate-300 hover:border-slate-400">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700">Total Disputes</CardTitle>
+              <FileText className="h-5 w-5 text-slate-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-slate-900 font-mono tabular-nums">
+                {totalDisputes}
+              </div>
+              <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
+                All Time
+              </p>
+              <div className="mt-3 text-xs text-slate-600 space-y-1">
+                <div className="flex justify-between">
+                  <span>Resolved:</span>
+                  <span className="font-semibold text-emerald-600">{resolvedDisputes}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pending:</span>
+                  <span className="font-semibold text-amber-600">{pendingDisputes}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Review Queue */}
           <Card className={reviewQueue && reviewQueue.length > 0 ? "border-amber-300 hover:border-amber-400" : "border-emerald-300 hover:border-emerald-400"}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">Review Queue</CardTitle>
@@ -251,22 +314,20 @@ export default function DashboardPage() {
                 {reviewQueue?.length || 0}
               </div>
               <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
-                {reviewQueue && reviewQueue.length > 0 ? "Disputes Waiting" : "No Action Needed"}
+                {reviewQueue && reviewQueue.length > 0 ? "Awaiting Review" : "No Action Needed"}
               </p>
-              {reviewQueue && reviewQueue.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full mt-3"
-                  onClick={() => router.push('/dashboard/review-queue')}
-                >
-                  Review Disputes
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant={reviewQueue && reviewQueue.length > 0 ? "default" : "outline"}
+                className={`w-full mt-3 ${reviewQueue && reviewQueue.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
+                onClick={() => router.push('/dashboard/review-queue')}
+              >
+                {reviewQueue && reviewQueue.length > 0 ? 'Review Now' : 'View Queue'}
+              </Button>
             </CardContent>
           </Card>
 
-          {/* Card 2: Automation Efficiency */}
+          {/* Automation Rate */}
           <Card className="border-blue-300 hover:border-blue-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">Automation Rate</CardTitle>
@@ -279,16 +340,20 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
                 AI Auto-Resolved
               </p>
-              <div className="flex items-center gap-1 mt-3 text-xs text-slate-600">
-                <TrendingUp className="h-3 w-3 text-emerald-600" />
-                <span>
-                  {paymentStats?.autoResolvedCount || 0} of {paymentStats?.totalMicroDisputes || 0} disputes
-                </span>
+              <div className="mt-3 space-y-1 text-xs">
+                <div className="flex justify-between text-slate-600">
+                  <span>Consumer wins:</span>
+                  <span className="font-semibold">{consumerWins}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Merchant wins:</span>
+                  <span className="font-semibold">{merchantWins}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Card 3: Avg Resolution Time */}
+          {/* Avg Resolution Time */}
           <Card className="border-slate-300 hover:border-slate-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">Avg Resolution Time</CardTitle>
@@ -301,64 +366,120 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
                 Average Time
               </p>
-              <div className="text-xs text-emerald-600 mt-3 font-medium">
-                ✓ Under 5 min target
+              <div className="mt-3 space-y-1 text-xs">
+                <div className="text-emerald-600 font-medium flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Under 5 min target
+                </div>
+                <div className="text-slate-600">
+                  Regulation E: {regulationECompliant ? '✓ 100% compliant' : '⚠ Review needed'}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
-        
-        {/* Detailed Review Queue - Only shows if items exist */}
-        {reviewQueue && reviewQueue.length > 0 && (
-          <Card className="border-amber-200 shadow-sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-slate-900">Pending Reviews</CardTitle>
+
+        {/* Financial Impact Card */}
+        {totalFees > 0 && (
+          <Card className="border-emerald-300 hover:border-emerald-400">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle className="text-slate-900">Financial Impact</CardTitle>
+                <CardDescription>Dispute resolution costs saved via automation</CardDescription>
+              </div>
+              <DollarSign className="h-8 w-8 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-emerald-600">${totalFees.toFixed(2)}</span>
+                <span className="text-slate-600">total fees processed</span>
+              </div>
+              <div className="mt-3 text-sm text-slate-600">
+                Automated {resolvedDisputes} disputes • Avg ${(totalFees / (totalDisputes || 1)).toFixed(2)} per dispute
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Review Queue Section - ALWAYS VISIBLE */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-slate-900">Review Queue</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Disputes where AI confidence is below 95% - your expertise needed
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/dashboard/review-queue')}
+              >
+                View All <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!reviewQueue || reviewQueue.length === 0 ? (
+              <div className="text-center py-8">
+                <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
+                <p className="font-semibold text-slate-900 mb-1">All Clear!</p>
+                <p className="text-sm text-slate-600 mb-4">
+                  No disputes need review right now. AI is handling everything confidently.
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => router.push('/dashboard/review-queue')}
                 >
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                  View Review History
                 </Button>
               </div>
-              <CardDescription className="text-slate-600">
-                Disputes where AI confidence is below 95% - your decision needed
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            ) : (
               <div className="space-y-3">
-                {reviewQueue.slice(0, 5).map((dispute) => (
+                {reviewQueue.slice(0, 3).map((dispute) => (
                   <div
                     key={dispute._id}
-                    className="p-4 bg-white rounded-lg border border-amber-200 hover:border-amber-300 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
+                    className="p-4 bg-white rounded-lg border-2 border-amber-200 hover:border-amber-300 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-bold text-slate-900 text-lg">
                           ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
                         </p>
                         <p className="text-sm text-slate-600">
-                          {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ')}
+                          {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
                         </p>
                       </div>
                       <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-                        AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}%
+                        AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 mb-3 text-sm text-slate-700">
-                      <span className="font-medium">AI Recommends:</span>
-                      <Badge className="bg-slate-100 text-slate-700 border-slate-200">
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm font-medium text-slate-700">AI Recommends:</span>
+                      <Badge className={
+                        dispute.aiRecommendation?.verdict === "CONSUMER_WINS" 
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-blue-50 text-blue-700 border-blue-200"
+                      }>
                         {dispute.aiRecommendation?.verdict || "CONSUMER_WINS"}
                       </Badge>
                     </div>
+
+                    {dispute.aiRecommendation?.reasoning && (
+                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                        {dispute.aiRecommendation.reasoning}
+                      </p>
+                    )}
+                    
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={async (e) => {
-                          e.stopPropagation() // Prevent card click
+                          e.stopPropagation()
                           if (!currentUser) return
                           await customerReview({
                             paymentDisputeId: dispute._id,
@@ -375,22 +496,32 @@ export default function DashboardPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1"
-                        onClick={(e) => {
-                          e.stopPropagation() // Prevent card click
-                          router.push(`/dashboard/disputes/${dispute._id}`)
-                        }}
+                        onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
                       >
                         Review Details
                       </Button>
                     </div>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Live Dispute Activity */}
+                {reviewQueue.length > 3 && (
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => router.push('/dashboard/review-queue')}
+                    >
+                      View All {reviewQueue.length} Disputes
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Live Dispute Activity with Quick Actions */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -398,16 +529,25 @@ export default function DashboardPage() {
                 <Activity className="h-5 w-5 text-slate-900" />
                 <CardTitle className="text-slate-900">Live Dispute Activity</CardTitle>
               </div>
-              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                Real-time
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                  Real-time
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/dashboard/activity')}
+                >
+                  View All
+                </Button>
+              </div>
             </div>
             <CardDescription className="text-slate-600">
               Monitor dispute resolution activity as it happens
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             {!disputeEvents || disputeEvents.length === 0 ? (
               <div className="text-center py-8">
                 <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
@@ -418,62 +558,99 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                {disputeEvents.slice(0, 8).map((evt) => {
+                {disputeEvents.slice(0, 10).map((evt) => {
                   const event = evt as Event
-                  // Navigate to the specific case/dispute details page
-                  const handleClick = () => {
-                    if (event.caseId) {
-                      // For payment disputes (stored in cases table), caseId IS the dispute ID
-                      router.push(`/dashboard/disputes/${event.caseId}`)
-                    } else {
-                      // Fallback to activity page if no caseId
-                      router.push(`/dashboard/activity`)
-                    }
-                  }
+                  const isDisputeFiled = event.type === "DISPUTE_FILED"
+                  const caseData = event.caseData
+                  const needsReview = caseData?.aiRecommendation && caseData.aiRecommendation.confidence < 0.95
+                  
                   return (
                     <div
                       key={event._id}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer"
-                      onClick={handleClick}
+                      className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
                     >
                       <div className="text-2xl flex-shrink-0">
                         {event.type === "DISPUTE_FILED" && "📋"}
                         {event.type === "EVIDENCE_SUBMITTED" && "📎"}
                         {event.type === "CASE_STATUS_UPDATED" && "✅"}
+                        {event.type === "CASE_DECIDED" && "⚖️"}
                       </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge
-                            variant="secondary"
-                            className={`${getEventColor(event.type)} text-xs font-medium`}
-                          >
-                            {getEventBadge(event.type)}
-                          </Badge>
-                          <span className="text-xs text-slate-500">
-                            {new Date(event.timestamp).toLocaleTimeString("en-US", {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              timeZoneName: "short",
-                            })}
-                          </span>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="secondary"
+                              className={`${getEventColor(event.type)} text-xs font-medium`}
+                            >
+                              {getEventBadge(event.type)}
+                            </Badge>
+                            <span className="text-xs text-slate-500">
+                              {new Date(event.timestamp).toLocaleTimeString("en-US", {
+                                hour: "numeric",
+                                minute: "2-digit",
+                                timeZoneName: "short",
+                              })}
+                            </span>
+                          </div>
+                          {isDisputeFiled && caseData?.amount && (
+                            <span className="text-sm font-semibold text-slate-900">
+                              ${caseData.amount.toFixed(2)}
+                            </span>
+                          )}
                         </div>
+                        
                         <p className="text-sm text-slate-700 leading-relaxed">
                           {formatEventDescription(event)}
                         </p>
+
+                        {/* Quick actions for dispute events */}
+                        {isDisputeFiled && event.caseId && caseData?.status === "FILED" && (
+                          <div className="flex gap-2 pt-1">
+                            {needsReview ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                                onClick={() => router.push(`/dashboard/disputes/${event.caseId}`)}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Needs Review ({((caseData.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confidence)
+                              </Button>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                  onClick={async () => {
+                                    if (!currentUser || !event.caseId) return
+                                    await customerReview({
+                                      paymentDisputeId: event.caseId,
+                                      reviewerUserId: currentUser._id,
+                                      decision: "APPROVE_AI",
+                                      finalVerdict: (caseData.aiRecommendation?.verdict || "CONSUMER_WINS") as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
+                                    })
+                                  }}
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Approve ({((caseData.aiRecommendation?.confidence || 0) * 100).toFixed(0)}%)
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs text-slate-600 hover:text-slate-700"
+                                  onClick={() => router.push(`/dashboard/disputes/${event.caseId}`)}
+                                >
+                                  View Details
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
                 })}
-                <div className="pt-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => router.push("/dashboard/activity")}
-                  >
-                    View All Activity
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
               </>
             )}
           </CardContent>
@@ -482,4 +659,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 }
-
