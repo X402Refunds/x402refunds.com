@@ -127,3 +127,45 @@
   }
 }
 
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .bg-grid-slate-100 {
+    background-image: 
+      linear-gradient(to right, rgb(241, 245, 249) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(241, 245, 249) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+  }
+
+  /* Syntax highlighting for code blocks */
+  code {
+    counter-reset: line;
+  }
+
+  code[class*="language-"],
+  pre[class*="language-"] {
+    color: #e2e8f0;
+    background: none;
+    font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+  }
+}
+
