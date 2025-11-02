@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
+import { MatrixRain } from "@/components/MatrixRain"
 import { useState } from "react"
 
 export default function HomePage() {
@@ -34,36 +35,39 @@ const result = await mcp.invoke("consulate_file_dispute", {
       <Navigation currentPage="home" />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-20 sm:py-32">
+      <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-20 sm:py-32 bg-black">
+        {/* Matrix Rain Effect */}
+        <MatrixRain opacity={0.4} speed={1} color="#10b981" />
+        
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px]">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-full blur-2xl animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-2xl animate-pulse" />
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full text-center relative z-10">
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <Badge className="bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-blue-200 text-sm font-semibold px-4 py-2 shadow-sm hover:shadow-md transition-shadow">
+            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-sm font-semibold px-4 py-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:bg-emerald-500/30 transition-all backdrop-blur-sm">
               FOR MCP SERVER BUILDERS · Production-ready dispute infrastructure
             </Badge>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
-              <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
                 The dispute layer for agentic payments
               </span>
             </h1>
             
-            <p className="text-xl sm:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl sm:text-2xl text-emerald-100 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
               One endpoint. Full dispute resolution infrastructure.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group"
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-black hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
                 onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
               >
                 Get Started Free
@@ -72,7 +76,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="border-2 border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                className="border-2 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md hover:shadow-emerald-500/20 transition-all duration-200 backdrop-blur-sm"
                 onClick={() => window.location.href = 'https://docs.consulatehq.com'}
               >
                 View Documentation →
@@ -82,16 +86,16 @@ const result = await mcp.invoke("consulate_file_dispute", {
             {/* Stats bar */}
             <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
               <div className="text-center">
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">95%</div>
-                <div className="text-sm text-slate-600 mt-1">Auto-resolved</div>
+                <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">95%</div>
+                <div className="text-sm text-emerald-200/70 mt-1">Auto-resolved</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">4.2m</div>
-                <div className="text-sm text-slate-600 mt-1">Avg resolution</div>
+                <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">4.2m</div>
+                <div className="text-sm text-emerald-200/70 mt-1">Avg resolution</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">5m</div>
-                <div className="text-sm text-slate-600 mt-1">Integration</div>
+                <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">5m</div>
+                <div className="text-sm text-emerald-200/70 mt-1">Integration</div>
               </div>
             </div>
           </div>
