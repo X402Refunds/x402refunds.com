@@ -457,40 +457,55 @@ export default function DashboardPage() {
                       </Badge>
                     </div>
                     
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm font-medium text-slate-700">AI Recommends:</span>
-                      <Badge className={
-                        dispute.aiRecommendation?.verdict === "CONSUMER_WINS" 
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-blue-50 text-blue-700 border-blue-200"
-                      }>
-                        {dispute.aiRecommendation?.verdict || "CONSUMER_WINS"}
-                      </Badge>
-                    </div>
+                    {dispute.aiRecommendation ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-sm font-medium text-slate-700">AI Recommends:</span>
+                          <Badge className={
+                            dispute.aiRecommendation.verdict === "CONSUMER_WINS" 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-blue-50 text-blue-700 border-blue-200"
+                          }>
+                            {dispute.aiRecommendation.verdict}
+                          </Badge>
+                        </div>
 
-                    {dispute.aiRecommendation?.reasoning && (
-                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                        {dispute.aiRecommendation.reasoning}
-                      </p>
+                        {dispute.aiRecommendation.reasoning && (
+                          <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                            {dispute.aiRecommendation.reasoning}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                          <p className="text-sm font-medium text-purple-900">AI Analysis Pending...</p>
+                        </div>
+                        <p className="text-xs text-purple-700 mt-1">
+                          Usually completes in under 2 minutes. Refresh to see recommendation.
+                        </p>
+                      </div>
                     )}
                     
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!dispute.aiRecommendation}
                         onClick={async (e) => {
                           e.stopPropagation()
-                          if (!currentUser) return
+                          if (!currentUser || !dispute.aiRecommendation) return
                           await customerReview({
                             paymentDisputeId: dispute._id,
                             reviewerUserId: currentUser._id,
                             decision: "APPROVE_AI",
-                            finalVerdict: (dispute.aiRecommendation?.verdict || "CONSUMER_WINS") as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
+                            finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                           })
                         }}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve AI
+                        {dispute.aiRecommendation ? 'Approve AI' : 'Waiting for AI...'}
                       </Button>
                       <Button
                         size="sm"
