@@ -272,6 +272,20 @@ export const getOrganizationCases = query({
   },
 });
 
+// Backfill mutation for missing reviewerOrganizationId
+export const backfillReviewerOrgId = mutation({
+  args: {
+    caseId: v.id("cases"),
+    reviewerOrganizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.caseId, {
+      reviewerOrganizationId: args.reviewerOrganizationId,
+    });
+    return { success: true };
+  },
+});
+
 export const updateCaseStatus = mutation({
   args: {
     caseId: v.id("cases"),
