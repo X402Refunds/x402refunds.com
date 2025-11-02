@@ -455,6 +455,12 @@ describe('Organization Events - Infrastructure Model', () => {
       reviewerOrganizationId: orgId, // THIS org reviews this dispute
     });
 
+    // Verify reviewerOrganizationId was stored on the case
+    const caseData = await t.run(async (ctx) => {
+      return await ctx.db.get(result.caseId);
+    });
+    expect(caseData.reviewerOrganizationId).toBe(orgId);
+
     // CRITICAL: Organization events should include this dispute
     const orgEvents = await t.query(api.events.getOrganizationEvents, {
       organizationId: orgId,
@@ -472,6 +478,7 @@ describe('Organization Events - Infrastructure Model', () => {
     console.log(`✅ Organization event feed correctly shows disputes where org is reviewer`);
     console.log(`   Dispute: ${result.caseId}`);
     console.log(`   Events found: ${disputeEvents.length}`);
+    console.log(`   reviewerOrganizationId correctly set: ${caseData.reviewerOrganizationId}`);
   });
 
   it('should include both owned-agent disputes AND reviewer disputes in organization feed', async () => {
@@ -564,5 +571,55 @@ describe('Organization Events - Infrastructure Model', () => {
     console.log(`✅ Organization sees both owned-agent disputes AND reviewer disputes`);
     console.log(`   Agent dispute events: ${agentDisputeEvents.length}`);
     console.log(`   Payment dispute events: ${paymentDisputeEvents.length}`);
+  });
+
+  it('should include MCP payment disputes in organization feed when reviewerOrganizationId is set', async () => {
+    // REGRESSION TEST: Verify payment disputes with reviewerOrganizationId appear in org dashboard
+    // This ensures disputes filed via Claude Desktop (MCP) with API key show up in activity feed
+
+    const timestamp = Date.now();
+    
+    // Create organization
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "MCP Test Org",
+        domain: `mcptest-${timestamp}.com`,
+        verified: true,
+        createdAt: timestamp,
+      });
+    });
+
+    // File payment dispute with reviewerOrganizationId (what MCP should do with API key)
+    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      transactionId: `txn_mcp_${timestamp}`,
+      amount: 2.50,
+      currency: "USD",
+      paymentProtocol: "ATXP",
+      plaintiff: "consumer:user@example.com",
+      defendant: "merchant:vendor@example.com",
+      disputeReason: "api_timeout",
+      description: "MCP filed dispute test",
+      reviewerOrganizationId: orgId, // CRITICAL: Must be set from API key
+    });
+
+    // Verify reviewerOrganizationId was stored
+    const caseData = await t.run(async (ctx) => {
+      return await ctx.db.get(result.caseId);
+    });
+    expect(caseData.reviewerOrganizationId).toBe(orgId);
+
+    // CRITICAL: Verify it appears in org's event feed
+    const orgEvents = await t.query(api.events.getOrganizationEvents, {
+      organizationId: orgId,
+      limit: 50,
+    });
+
+    const disputeEvents = orgEvents.filter(e => e.caseId === result.caseId);
+    expect(disputeEvents.length).toBeGreaterThan(0);
+
+    console.log(`✅ MCP payment dispute with reviewerOrganizationId appears in org feed`);
+    console.log(`   Case: ${result.caseId}`);
+    console.log(`   Org ID: ${orgId}`);
+    console.log(`   Events in feed: ${disputeEvents.length}`);
   });
 });

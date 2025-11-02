@@ -396,13 +396,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
 
-    // Public tools (no auth required): file_dispute, file_general_dispute, check_case_status
-    const publicTools = ['consulate_file_dispute', 'consulate_file_general_dispute', 'consulate_check_case_status'];
+    // Public tools (no auth required): check_case_status
+    const publicTools = ['consulate_check_case_status'];
     const isPublicTool = publicTools.includes(tool);
 
-    // Check for Bearer token (API key) in Authorization header (skip for public tools)
+    // Check for Bearer token (API key) in Authorization header
     const authHeader = request.headers.get("Authorization");
     let authenticatedOrg = null;
+    let apiKeyData = null;
 
     if (!isPublicTool) {
       // Authentication required for non-public tools
@@ -410,9 +411,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         // API Key authentication
         const apiKey = authHeader.substring(7);
 
-        // Validate API key using query
+        // Validate API key using query and get org ID
         try {
-          await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
+          apiKeyData = await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
+          
+          // Get organization ID from API key
+          if (apiKeyData?.organizationId) {
+            authenticatedOrg = apiKeyData.organizationId;
+          }
 
           // Update last used timestamp
           await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
@@ -506,6 +512,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           description: parameters.description,
           evidenceUrls: parameters.evidenceUrls || [],
           callbackUrl: parameters.callbackUrl,
+          reviewerOrganizationId: authenticatedOrg, // Auto-detected from API key (Infrastructure Model)
         });
 
         return new Response(JSON.stringify({
