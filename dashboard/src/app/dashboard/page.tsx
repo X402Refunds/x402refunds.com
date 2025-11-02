@@ -138,14 +138,32 @@ export default function DashboardPage() {
         } else {
           parties = "New dispute filed";
         }
-        return parties;
+        const amount = event.caseData?.amount ? ` • $${event.caseData.amount.toFixed(2)}` : '';
+        return `${parties}${amount}`;
       }
       case "EVIDENCE_SUBMITTED":
         return `${formatAgentName((event.payload?.agentDid || event.agentDid || 'Unknown') as string)} submitted evidence`;
-      case "CASE_STATUS_UPDATED": {
+      case "CASE_STATUS_UPDATED":
+      case "CASE_DECIDED": {
         const caseId = (event.payload?.caseId || event.caseId || '') as string;
         const shortId = caseId ? caseId.toString().substring(0, 8) : "Unknown";
-        return `Case ${shortId} status updated`;
+        let description = `Case ${shortId}`;
+        
+        if (event.caseData?.amount) {
+          description += ` ($${event.caseData.amount.toFixed(2)})`;
+        }
+        
+        if (event.type === "CASE_DECIDED" && event.caseData?.status === "DECIDED") {
+          description += ` decided`;
+          if (event.caseData?.parties) {
+            const parties = event.caseData.parties.map((p: string) => formatAgentName(p)).join(" vs ");
+            description = `${parties} • $${event.caseData?.amount?.toFixed(2) || '0.00'} resolved`;
+          }
+        } else {
+          description += ` status updated`;
+        }
+        
+        return description;
       }
       default:
         return event.type.replace(/_/g, ' ').toLowerCase();
@@ -154,10 +172,11 @@ export default function DashboardPage() {
 
   const getEventColor = (type: string) => {
     const colors: Record<string, string> = {
-      "AGENT_REGISTERED": "bg-blue-50 text-blue-700 border-blue-200",
-      "DISPUTE_FILED": "bg-red-50 text-red-700 border-red-200",
-      "EVIDENCE_SUBMITTED": "bg-amber-50 text-amber-700 border-amber-200",
-      "CASE_STATUS_UPDATED": "bg-emerald-50 text-emerald-700 border-emerald-200"
+      "AGENT_REGISTERED": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "DISPUTE_FILED": "bg-amber-50 text-amber-700 border-amber-200",
+      "EVIDENCE_SUBMITTED": "bg-blue-50 text-blue-700 border-blue-200",
+      "CASE_STATUS_UPDATED": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "CASE_DECIDED": "bg-emerald-50 text-emerald-700 border-emerald-200"
     };
     return colors[type] || "bg-slate-50 text-slate-700 border-slate-200"
   };
@@ -328,13 +347,13 @@ export default function DashboardPage() {
           </Card>
 
           {/* Automation Rate */}
-          <Card className="border-blue-300 hover:border-blue-400">
+          <Card className="border-emerald-300 hover:border-emerald-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">Automation Rate</CardTitle>
-              <Zap className="h-5 w-5 text-blue-600" />
+              <Zap className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-blue-600 font-mono tabular-nums">
+              <div className="text-4xl font-bold text-emerald-600 font-mono tabular-nums">
                 {automationRate.toFixed(0)}%
               </div>
               <p className="text-xs text-slate-600 mt-2 uppercase tracking-wide">
@@ -452,7 +471,7 @@ export default function DashboardPage() {
                           {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                         AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
                       </Badge>
                     </div>
@@ -464,7 +483,7 @@ export default function DashboardPage() {
                           <Badge className={
                             dispute.aiRecommendation.verdict === "CONSUMER_WINS" 
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-blue-50 text-blue-700 border-blue-200"
+                              : "bg-slate-50 text-slate-700 border-slate-200"
                           }>
                             {dispute.aiRecommendation.verdict}
                           </Badge>
@@ -582,7 +601,8 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={event._id}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+                      className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-emerald-300 transition-all cursor-pointer"
+                      onClick={() => event.caseId && router.push(`/dashboard/disputes/${event.caseId}`)}
                     >
                       <div className="text-2xl flex-shrink-0">
                         {event.type === "DISPUTE_FILED" && "📋"}
