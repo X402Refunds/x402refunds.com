@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-02T08:02:42.017Z
+**Auto-generated on**: 2025-11-02T08:07:01.102Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -115,8 +115,8 @@ Common HTTP routes exposed:
 ## ⚛️ Frontend Components
 
 ### React Components (48 components)
+- AnimatedGrid
 - Footer
-- MatrixRain
 - Navigation
 - StructuredData
 - chain-verification-badge
@@ -321,5 +321,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/2/2025, 1:02:42 AM
+Generated: 11/2/2025, 1:07:01 AM
 Files scanned: 263
