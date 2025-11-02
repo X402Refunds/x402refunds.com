@@ -57,15 +57,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
             </h1>
             
             <p className="text-xl sm:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-              Add one endpoint to your MCP server and instantly become compliant with{' '}
-              <a 
-                href="https://www.consumerfinance.gov/rules-policy/regulations/1005/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 underline decoration-2 underline-offset-4 transition-colors"
-              >
-                Regulation E
-              </a>.
+              One endpoint. Full dispute resolution infrastructure.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
