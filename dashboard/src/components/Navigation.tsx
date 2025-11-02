@@ -51,14 +51,14 @@ export function Navigation({ currentPage }: NavigationProps) {
   }
 
   return (
-    <nav className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm">
+    <nav className="border-b border-border bg-background sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <button 
                 onClick={() => window.location.href = '/'}
-                className="text-lg sm:text-2xl font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
+                className="text-lg sm:text-2xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg px-2 py-1"
               >
                 Consulate
               </button>
@@ -77,20 +77,20 @@ export function Navigation({ currentPage }: NavigationProps) {
                         <div className="grid grid-cols-2 gap-6">
                           {/* Core Features Column */}
                           <div>
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                               Core Features
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-identity')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                                  <Shield className="h-5 w-5 text-blue-600" />
+                                <div className="p-2 bg-accent rounded-lg group-hover:bg-accent/80 transition-colors">
+                                  <Shield className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-slate-900 mb-1">Persistent ID for Agents</div>
-                                  <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
+                                  <div className="font-semibold text-foreground mb-1">Persistent ID for Agents</div>
+                                  <div className="text-sm text-muted-foreground">Decentralized agent identity & reputation</div>
                                 </div>
                               </div>
                             </button>
@@ -98,20 +98,20 @@ export function Navigation({ currentPage }: NavigationProps) {
 
                           {/* Automation Column */}
                           <div>
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                               Automation
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-dispute')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                                  <Gavel className="h-5 w-5 text-emerald-600" />
+                                <div className="p-2 bg-accent rounded-lg group-hover:bg-accent/80 transition-colors">
+                                  <Gavel className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-slate-900 mb-1">Agent-to-Agent Dispute Resolution</div>
-                                  <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
+                                  <div className="font-semibold text-foreground mb-1">Agent-to-Agent Dispute Resolution</div>
+                                  <div className="text-sm text-muted-foreground">Automated arbitration in minutes</div>
                                 </div>
                               </div>
                             </button>
@@ -128,8 +128,8 @@ export function Navigation({ currentPage }: NavigationProps) {
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   currentPage === 'pricing' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'text-primary bg-accent' 
+                    : 'text-foreground hover:text-foreground hover:bg-accent'
                 )}
               >
                 Pricing
@@ -139,21 +139,21 @@ export function Navigation({ currentPage }: NavigationProps) {
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   currentPage === 'about' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'text-primary bg-accent' 
+                    : 'text-foreground hover:text-foreground hover:bg-accent'
                 )}
               >
                 About
               </button>
               <button
                 onClick={() => handleNavigation('https://docs.consulatehq.com', true)}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
               >
                 Docs
               </button>
               <button
                 onClick={() => handleNavigation('https://github.com/consulatehq/agentic-dispute-protocol', true)}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors whitespace-nowrap"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors whitespace-nowrap"
               >
                 Agentic Dispute Protocol
               </button>
@@ -165,7 +165,7 @@ export function Navigation({ currentPage }: NavigationProps) {
             {/* Sign In Button - Desktop */}
             <Button
               onClick={() => window.location.href = isSignedIn ? '/dashboard' : '/sign-in'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium hidden md:flex"
+              className="hidden md:flex"
               size="sm"
             >
               <User className="h-4 w-4 mr-2" />
@@ -182,49 +182,49 @@ export function Navigation({ currentPage }: NavigationProps) {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
-                  <SheetTitle className="text-2xl font-bold text-slate-900">Menu</SheetTitle>
+                  <SheetTitle className="text-2xl font-bold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
                   {/* Sign In - Mobile */}
                   <Button
                     onClick={() => handleNavigation(isSignedIn ? '/dashboard' : '/sign-in')}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium justify-start"
+                    className="w-full justify-start"
                   >
                     <User className="h-4 w-4 mr-2" />
                     {isSignedIn ? 'Dashboard' : 'Sign In'}
                   </Button>
 
-                  <div className="border-t border-slate-200 pt-4 space-y-3">
+                  <div className="border-t border-border pt-4 space-y-3">
                     {/* Features Section */}
                     <div className="space-y-2">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
                         Features
                       </div>
                       <button
                         onClick={() => handleFeatureClick('feature-identity')}
-                        className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <Shield className="h-4 w-4 text-blue-600" />
+                          <div className="p-2 bg-accent rounded-lg">
+                            <Shield className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900 text-sm">Persistent ID for Agents</div>
-                            <div className="text-xs text-slate-600">Decentralized agent identity</div>
+                            <div className="font-semibold text-foreground text-sm">Persistent ID for Agents</div>
+                            <div className="text-xs text-muted-foreground">Decentralized agent identity</div>
                           </div>
                         </div>
                       </button>
                       <button
                         onClick={() => handleFeatureClick('feature-dispute')}
-                        className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-emerald-100 rounded-lg">
-                            <Gavel className="h-4 w-4 text-emerald-600" />
+                          <div className="p-2 bg-accent rounded-lg">
+                            <Gavel className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900 text-sm">Dispute Resolution</div>
-                            <div className="text-xs text-slate-600">Automated arbitration</div>
+                            <div className="font-semibold text-foreground text-sm">Dispute Resolution</div>
+                            <div className="text-xs text-muted-foreground">Automated arbitration</div>
                           </div>
                         </div>
                       </button>
@@ -237,7 +237,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                         onClick={() => handleNavigation('/pricing')}
                         className={cn(
                           "w-full justify-start",
-                          currentPage === 'pricing' && 'bg-blue-50 text-blue-600'
+                          currentPage === 'pricing' && 'bg-accent text-primary'
                         )}
                       >
                         Pricing
@@ -247,7 +247,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                         onClick={() => handleNavigation('/about')}
                         className={cn(
                           "w-full justify-start",
-                          currentPage === 'about' && 'bg-blue-50 text-blue-600'
+                          currentPage === 'about' && 'bg-accent text-primary'
                         )}
                       >
                         About

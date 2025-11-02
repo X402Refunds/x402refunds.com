@@ -31,10 +31,10 @@ interface AgentListProps {
 }
 
 const STATUS_COLORS = {
-  active: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  suspended: "bg-amber-100 text-amber-800 border-amber-200",
-  banned: "bg-red-100 text-red-800 border-red-200",
-  deactivated: "bg-slate-100 text-slate-800 border-slate-200",
+  active: "bg-accent text-foreground border-border",
+  suspended: "bg-accent text-foreground border-border",
+  banned: "bg-destructive/10 text-destructive border-destructive/20",
+  deactivated: "bg-muted text-muted-foreground border-border",
 }
 
 const FUNCTIONAL_TYPE_LABELS: Record<string, string> = {
@@ -110,7 +110,7 @@ export function AgentList({ agents }: AgentListProps) {
   
   if (agents.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-600">
+      <div className="text-center py-12 text-muted-foreground">
         No agents deployed yet
       </div>
     )
@@ -141,7 +141,7 @@ export function AgentList({ agents }: AgentListProps) {
                   {agent.organizationName || "—"}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="bg-slate-50">
+                  <Badge variant="outline" className="bg-muted">
                     {FUNCTIONAL_TYPE_LABELS[agent.functionalType || "general"] || agent.functionalType || "General"}
                   </Badge>
                 </TableCell>
@@ -153,10 +153,10 @@ export function AgentList({ agents }: AgentListProps) {
                     {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm text-slate-600">
+                <TableCell className="text-sm text-muted-foreground">
                   {formatDistanceToNow(agent.createdAt, { addSuffix: true })}
                 </TableCell>
-                <TableCell className="font-mono text-xs text-slate-600">
+                <TableCell className="font-mono text-xs text-muted-foreground">
                   {agent.did.slice(0, 20)}...
                 </TableCell>
                 <TableCell className="text-right">
@@ -166,7 +166,7 @@ export function AgentList({ agents }: AgentListProps) {
                       size="sm"
                       onClick={() => handleSuspendClick(agent._id, agent.name || "Unnamed Agent")}
                       disabled={deactivatingId === agent._id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
                     >
                       {deactivatingId === agent._id ? (
                         <>
@@ -186,7 +186,7 @@ export function AgentList({ agents }: AgentListProps) {
                       size="sm"
                       onClick={() => handleActivate(agent._id)}
                       disabled={deactivatingId === agent._id}
-                      className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+                      className="text-foreground hover:text-foreground hover:bg-accent border-border"
                     >
                       {deactivatingId === agent._id ? (
                         <>
@@ -198,7 +198,7 @@ export function AgentList({ agents }: AgentListProps) {
                       )}
                     </Button>
                   ) : (
-                    <Badge variant="outline" className="bg-red-50 text-red-600">
+                    <Badge variant="destructive">
                       Banned
                     </Badge>
                   )}
@@ -211,12 +211,12 @@ export function AgentList({ agents }: AgentListProps) {
 
       {/* Suspend Confirmation Modal */}
       <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
-        <AlertDialogContent className="bg-white dark:bg-slate-900">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Suspend Agent?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                You&apos;re about to suspend <span className="font-semibold text-slate-900 dark:text-slate-100">&quot;{agentToSuspend?.name}&quot;</span>
+                You&apos;re about to suspend <span className="font-semibold text-foreground">&quot;{agentToSuspend?.name}&quot;</span>
               </p>
               <p>
                 This will stop the agent from processing disputes. You can reactivate it later.
@@ -227,7 +227,7 @@ export function AgentList({ agents }: AgentListProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSuspendConfirm}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Suspend Agent
             </AlertDialogAction>

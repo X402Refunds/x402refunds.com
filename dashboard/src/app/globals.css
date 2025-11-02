@@ -46,92 +46,75 @@
 :root {
   --radius: 0.5rem;
   
-  /* Sovereign Civic Design - Light Mode */
-  /* Institutional Slate - Authority & Foundation */
-  --background: 255 255 255; /* Pure white */
-  --foreground: 15 23 42; /* slate-900 - Deep institutional text */
-  --card: 255 255 255; /* Pure white cards */
-  --card-foreground: 15 23 42; /* slate-900 */
+  /* ShadCN Neutral Theme - Light Mode */
+  --background: 255 255 255;
+  --foreground: 9 9 11;
+  --card: 255 255 255;
+  --card-foreground: 9 9 11;
   --popover: 255 255 255;
-  --popover-foreground: 15 23 42;
-  
-  /* Sovereign Blue Primary - Trust & Action */
-  --primary: 37 99 235; /* blue-600 - Sovereign blue for interactive elements */
-  --primary-foreground: 255 255 255;
-  
-  /* Neutral Secondary - Operational clarity */
-  --secondary: 241 245 249; /* slate-100 */
-  --secondary-foreground: 15 23 42;
-  --muted: 248 250 252; /* slate-50 */
-  --muted-foreground: 100 116 139; /* slate-500 */
-  
-  /* Semantic Colors - Status indicators */
-  --accent: 248 250 252; /* slate-50 for hover states */
-  --accent-foreground: 15 23 42;
-  --destructive: 220 38 38; /* red-600 - Critical actions */
-  --border: 226 232 240; /* slate-200 - Subtle divisions */
-  --input: 226 232 240; /* slate-200 */
-  --ring: 37 99 235; /* blue-600 - Focus ring */
-  
-  /* Government Chart Colors - Institutional palette */
-  --chart-1: 37 99 235; /* blue-600 - Primary data */
-  --chart-2: 5 150 105; /* emerald-600 - Success/resolved */
-  --chart-3: 220 38 38; /* red-600 - Critical/violations */
-  --chart-4: 217 119 6; /* amber-600 - Warning/pending */
-  --chart-5: 71 85 105; /* slate-600 - Neutral data */
-  
-  /* Government Sidebar - Constitutional navigation */
-  --sidebar: 255 255 255; /* white background */
-  --sidebar-foreground: 51 65 85; /* slate-700 */
-  --sidebar-primary: 37 99 235; /* blue-600 */
-  --sidebar-primary-foreground: 255 255 255;
-  --sidebar-accent: 248 250 252; /* slate-50 */
-  --sidebar-accent-foreground: 15 23 42;
-  --sidebar-border: 226 232 240; /* slate-200 */
-  --sidebar-ring: 37 99 235; /* blue-600 */
+  --popover-foreground: 9 9 11;
+  --primary: 9 9 11;
+  --primary-foreground: 250 250 250;
+  --secondary: 244 244 245;
+  --secondary-foreground: 9 9 11;
+  --muted: 244 244 245;
+  --muted-foreground: 113 113 122;
+  --accent: 244 244 245;
+  --accent-foreground: 9 9 11;
+  --destructive: 239 68 68;
+  --destructive-foreground: 250 250 250;
+  --border: 228 228 231;
+  --input: 228 228 231;
+  --ring: 9 9 11;
+  --chart-1: 12 10 9;
+  --chart-2: 120 113 108;
+  --chart-3: 180 83 9;
+  --chart-4: 120 53 15;
+  --chart-5: 28 25 23;
+  --sidebar: 250 250 250;
+  --sidebar-foreground: 9 9 11;
+  --sidebar-primary: 9 9 11;
+  --sidebar-primary-foreground: 250 250 250;
+  --sidebar-accent: 244 244 245;
+  --sidebar-accent-foreground: 9 9 11;
+  --sidebar-border: 228 228 231;
+  --sidebar-ring: 9 9 11;
 }
 
 .dark {
-  /* Sovereign Civic Design - Dark Mode (for future use) */
-  --background: 15 23 42; /* slate-900 */
-  --foreground: 248 250 252; /* slate-50 */
-  --card: 30 41 59; /* slate-800 */
-  --card-foreground: 248 250 252;
-  --popover: 30 41 59;
-  --popover-foreground: 248 250 252;
-  
-  /* Brighter blue for dark mode visibility */
-  --primary: 59 130 246; /* blue-500 */
-  --primary-foreground: 15 23 42;
-  
-  --secondary: 51 65 85; /* slate-700 */
-  --secondary-foreground: 248 250 252;
-  --muted: 51 65 85;
-  --muted-foreground: 148 163 184; /* slate-400 */
-  
-  --accent: 51 65 85;
-  --accent-foreground: 248 250 252;
-  --destructive: 239 68 68; /* red-500 - Brighter for dark */
-  --border: 51 65 85;
-  --input: 51 65 85;
-  --ring: 59 130 246; /* blue-500 */
-  
-  /* Dark mode charts */
-  --chart-1: 59 130 246; /* blue-500 */
-  --chart-2: 16 185 129; /* emerald-500 */
-  --chart-3: 239 68 68; /* red-500 */
-  --chart-4: 245 158 11; /* amber-500 */
-  --chart-5: 148 163 184; /* slate-400 */
-  
-  /* Dark sidebar */
-  --sidebar: 30 41 59;
-  --sidebar-foreground: 226 232 240;
-  --sidebar-primary: 59 130 246;
-  --sidebar-primary-foreground: 15 23 42;
-  --sidebar-accent: 51 65 85;
-  --sidebar-accent-foreground: 226 232 240;
-  --sidebar-border: 51 65 85;
-  --sidebar-ring: 59 130 246;
+  /* ShadCN Neutral Theme - Dark Mode */
+  --background: 9 9 11;
+  --foreground: 250 250 250;
+  --card: 9 9 11;
+  --card-foreground: 250 250 250;
+  --popover: 9 9 11;
+  --popover-foreground: 250 250 250;
+  --primary: 250 250 250;
+  --primary-foreground: 9 9 11;
+  --secondary: 39 39 42;
+  --secondary-foreground: 250 250 250;
+  --muted: 39 39 42;
+  --muted-foreground: 161 161 170;
+  --accent: 39 39 42;
+  --accent-foreground: 250 250 250;
+  --destructive: 239 68 68;
+  --destructive-foreground: 250 250 250;
+  --border: 39 39 42;
+  --input: 39 39 42;
+  --ring: 212 212 216;
+  --chart-1: 220 38 38;
+  --chart-2: 217 119 6;
+  --chart-3: 5 150 105;
+  --chart-4: 37 99 235;
+  --chart-5: 168 85 247;
+  --sidebar: 9 9 11;
+  --sidebar-foreground: 250 250 250;
+  --sidebar-primary: 250 250 250;
+  --sidebar-primary-foreground: 9 9 11;
+  --sidebar-accent: 39 39 42;
+  --sidebar-accent-foreground: 250 250 250;
+  --sidebar-border: 39 39 42;
+  --sidebar-ring: 212 212 216;
 }
 
 @layer base {
@@ -144,123 +127,3 @@
   }
 }
 
-/* Sovereign Civic Design - Component Classes */
-@layer components {
-  /* Institutional Headers */
-  .gov-header {
-    @apply bg-white border-b border-slate-200;
-  }
-  
-  .gov-brand {
-    @apply text-slate-900 font-bold flex items-center gap-2;
-  }
-  
-  /* Status Indicators - Semantic colors */
-  .status-operational {
-    @apply bg-emerald-50 text-emerald-700 border-emerald-200;
-  }
-  
-  .status-warning {
-    @apply bg-amber-50 text-amber-700 border-amber-200;
-  }
-  
-  .status-error {
-    @apply bg-red-50 text-red-700 border-red-200 animate-pulse;
-  }
-  
-  .status-info {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
-  }
-  
-  /* Institutional Cards */
-  .institutional-card {
-    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
-    @apply hover:shadow-md hover:border-blue-200 transition-all duration-200;
-  }
-  
-  /* Navigation Styling */
-  .gov-nav {
-    @apply border-r border-slate-200 bg-white;
-  }
-  
-  .nav-item {
-    @apply text-slate-700 hover:bg-slate-100 hover:text-slate-900;
-    @apply transition-colors duration-200 rounded-md;
-  }
-  
-  .nav-item-active {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
-  }
-  
-  /* Typography Classes - Institutional hierarchy */
-  .heading-institutional {
-    @apply text-slate-900 font-bold tracking-tight;
-  }
-  
-  .text-authority {
-    @apply text-red-600 font-semibold;
-  }
-  
-  .text-success {
-    @apply text-emerald-600 font-medium;
-  }
-  
-  .text-sovereign {
-    @apply text-blue-600 font-semibold;
-  }
-  
-  /* Button Variants - Institutional actions */
-  .btn-institutional {
-    @apply bg-slate-900 text-white hover:bg-slate-800;
-    @apply px-6 py-3 rounded-lg font-semibold;
-    @apply transition-colors duration-200;
-  }
-  
-  .btn-sovereign {
-    @apply bg-blue-600 text-white hover:bg-blue-700;
-    @apply px-6 py-3 rounded-lg font-semibold;
-    @apply transition-colors duration-200;
-  }
-  
-  .btn-outline-sovereign {
-    @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white;
-    @apply px-6 py-3 rounded-lg font-semibold;
-    @apply transition-all duration-200;
-  }
-  
-  /* Badge variants - Semantic status */
-  .badge-operational {
-    @apply bg-emerald-50 text-emerald-700 border-emerald-200;
-  }
-  
-  .badge-warning {
-    @apply bg-amber-50 text-amber-700 border-amber-200;
-  }
-  
-  .badge-critical {
-    @apply bg-red-50 text-red-700 border-red-200;
-  }
-  
-  .badge-info {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
-  }
-  
-  /* Metrics Display - Government data presentation */
-  .metric-value {
-    @apply text-4xl font-bold text-slate-900 font-mono tabular-nums;
-  }
-  
-  .metric-label {
-    @apply text-sm font-medium text-slate-600 uppercase tracking-wide;
-  }
-  
-  /* Constitutional Compliance Styling */
-  .compliance-section {
-    @apply border-2 border-blue-200 bg-blue-50/30 rounded-lg p-6;
-  }
-  
-  /* Accessibility - WCAG AAA compliance */
-  .focus-sovereign {
-    @apply focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2;
-  }
-}

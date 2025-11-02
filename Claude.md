@@ -243,80 +243,51 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 🎨 Design System Reference
+## 🎨 UI Design Guidelines
 
-**CRITICAL**: All dashboard and UI elements MUST follow the Sovereign Civic Design System.
+**CRITICAL**: All dashboard and UI elements use **native ShadCN UI components** with the neutral theme.
 
-### Design System Location
-- **File**: `/Users/vkotecha/Desktop/consulate/internal/design/sovereign-civic-design-system.md`
-- **Version**: 1.0.0
-- **Last Updated**: October 2025
+### Design System
+- **Component Library**: ShadCN UI (native components)
+- **Theme**: Neutral base color theme
+- **Styling**: CSS variables via Tailwind (see `dashboard/src/app/globals.css`)
 
-### Core Design Rules (NEVER VIOLATE)
+### Core Design Principles
 
-1. **Color Palette**:
-   - Primary text: `slate-900` (institutional authority)
-   - Interactive elements: `blue-600` (sovereign action)
-   - Success: `emerald-600`
-   - Warning: `amber-600`
-   - Critical: `red-600`
-   - Info: `blue-50` backgrounds with `blue-700` text
-   - **❌ NEVER use purple, pink, violet, or playful gradients** (not in design system)
+1. **Use ShadCN Components**:
+   - Use `<Button>`, `<Card>`, `<Badge>`, etc. from `@/components/ui/`
+   - Prefer component variants over custom classes
+   - Use CSS variables: `text-foreground`, `bg-background`, `text-primary`, etc.
 
-2. **Typography**:
-   - Font: `Inter` (sans-serif), `JetBrains Mono` (monospace for data/IDs)
-   - Hierarchy:
-     - H1: `text-4xl lg:text-7xl`
-     - H2: `text-3xl`
-     - H3: `text-2xl`
-     - H4: `text-xl`
-     - Body: `text-base`
-     - Small: `text-sm`
-     - Metadata: `text-xs`
-   - Weights:
-     - `font-bold` (headers, authority)
-     - `font-semibold` (emphasis, section headers)
-     - `font-normal` (body text)
+2. **Color System** (ShadCN CSS Variables):
+   - Text: `text-foreground` (primary), `text-muted-foreground` (secondary)
+   - Backgrounds: `bg-background`, `bg-card`, `bg-muted`, `bg-accent`
+   - Primary actions: `bg-primary`, `text-primary`
+   - Destructive actions: `bg-destructive`, `text-destructive`
+   - Borders: `border-border`
 
-3. **Component Styling**:
-   - Cards: `border-2 border-slate-200 hover:border-blue-300 bg-white shadow-sm`
-   - Badges (Info): `bg-blue-50 text-blue-700 border-blue-200`
-   - Badges (Success): `bg-emerald-50 text-emerald-700 border-emerald-200`
-   - Badges (Warning): `bg-amber-50 text-amber-700 border-amber-200`
-   - Buttons (Primary): `bg-slate-900 text-white hover:bg-slate-800`
-   - Buttons (Secondary): `bg-blue-600 text-white hover:bg-blue-700`
-   - Buttons (Outline): `border-2 border-slate-300 text-slate-700 hover:bg-slate-50`
+3. **Component Variants**:
+   - Buttons: `variant="default"`, `variant="outline"`, `variant="ghost"`, `variant="destructive"`
+   - Badges: `variant="default"`, `variant="secondary"`, `variant="destructive"`, `variant="outline"`
+   - Cards: Use `<Card>`, `<CardHeader>`, `<CardContent>` components
 
-4. **Spacing (8-point grid)**:
-   - Section padding: `py-12 sm:py-16 lg:py-20`
-   - Card padding: `p-6`
-   - Element gaps: `gap-4`, `gap-6`, `gap-8`
-   - Margins: `mb-4`, `mb-6`, `mb-8`, `mb-12`
+4. **Typography**:
+   - Use standard Tailwind text utilities
+   - Font hierarchy: `text-4xl`, `text-3xl`, `text-2xl`, `text-xl`, `text-base`, `text-sm`, `text-xs`
+   - Weights: `font-bold`, `font-semibold`, `font-medium`, `font-normal`
 
-5. **Branding**:
-   - Landing page: "Consulate" (no subtitle)
-   - Dashboard: "Consulate" + "Governance OS" subtitle
-   - Logo: Shield icon + `bg-blue-600`
-   - Jurisdiction badge: "U.S. Federal Jurisdiction" (`bg-blue-50 text-blue-700 border-blue-200`)
+5. **Spacing**:
+   - Use Tailwind spacing scale: `p-4`, `p-6`, `gap-4`, `gap-6`, etc.
+   - Consistent spacing helps maintain visual hierarchy
 
 ### When Creating UI Elements
-- ✅ Read design system doc BEFORE starting
-- ✅ Use provided component patterns from design system
-- ✅ Follow 8-point spacing grid
-- ✅ Ensure WCAG AAA contrast ratios (slate-900 on white = 17.5:1)
+- ✅ Use ShadCN components from `@/components/ui/`
+- ✅ Use CSS variables instead of hardcoded colors
+- ✅ Use component variants instead of custom classes
 - ✅ Test mobile responsiveness (mobile-first approach)
-- ✅ Use semantic colors appropriately (emerald=success, amber=warning, red=critical, blue=info)
-- ❌ Don't create custom colors outside defined palette
-- ❌ Don't use purple/pink/violet (not in design system)
-- ❌ Don't use playful gradients (except subtle hero: `from-slate-50 to-blue-50`)
-- ❌ Don't violate z-index hierarchy (see design system doc)
-
-### Reference Examples
-See design system doc for complete component library:
-- Button variants (design-system.md:317-337)
-- Badge patterns (design-system.md:344-364)
-- Card layouts (design-system.md:371-404)
-- Typography scale (design-system.md:229-267)
+- ✅ Ensure accessibility (ShadCN components include ARIA attributes)
+- ❌ Don't use hardcoded Tailwind colors (e.g., `text-slate-900`, `bg-blue-600`)
+- ❌ Don't create custom component classes (use ShadCN variants)
 
 ---
 

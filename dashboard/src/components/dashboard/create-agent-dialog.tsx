@@ -152,7 +152,7 @@ export function CreateAgentDialog({
   
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] bg-white dark:bg-slate-900">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Register Agent</DialogTitle>
           <DialogDescription>
@@ -173,7 +173,7 @@ export function CreateAgentDialog({
                 onChange={(e) => setAgentName(e.target.value)}
                 disabled={isSubmitting}
               />
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-muted-foreground">
                 Leave empty to auto-generate a name
               </p>
             </div>
@@ -181,7 +181,7 @@ export function CreateAgentDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="publicKey">
-                  Public Key (Ed25519) <span className="text-red-500">*</span>
+                  Public Key (Ed25519) <span className="text-destructive">*</span>
                 </Label>
                 <Button
                   type="button"
@@ -213,14 +213,14 @@ export function CreateAgentDialog({
                 className="font-mono text-xs"
               />
               {generatedKeyPair && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="bg-accent border border-border rounded-lg p-3">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-xs font-semibold text-amber-900">
+                      <p className="text-xs font-semibold text-foreground">
                         Save Your Private Key!
                       </p>
-                      <p className="text-xs text-amber-800 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Download and store your private key securely. You&apos;ll need it for agent authentication.
                       </p>
                       <Button
@@ -228,7 +228,7 @@ export function CreateAgentDialog({
                         variant="outline"
                         size="sm"
                         onClick={downloadPrivateKey}
-                        className="mt-2 border-amber-300 hover:bg-amber-100"
+                        className="mt-2"
                       >
                         <Download className="h-3 w-3 mr-1" />
                         Download Private Key
@@ -238,7 +238,7 @@ export function CreateAgentDialog({
                 </div>
               )}
               {!generatedKeyPair && (
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-muted-foreground">
                   Paste your agent&apos;s public key or generate a new key pair above
                 </p>
               )}
@@ -264,7 +264,7 @@ export function CreateAgentDialog({
             </div>
             
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -274,7 +274,7 @@ export function CreateAgentDialog({
             <Button 
               onClick={handleManualRegister}
               disabled={isSubmitting || !publicKey.trim()}
-              className="flex-1 bg-slate-900 text-white hover:bg-slate-800"
+              className="flex-1"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register Agent

@@ -62,12 +62,12 @@ export default function LiveActivityFeed() {
   // Helper function to get event color
   const getEventColor = (type: string) => {
     const colors: Record<string, string> = {
-      "AGENT_REGISTERED": "bg-blue-50 text-blue-700 border-blue-200",
-      "DISPUTE_FILED": "bg-red-50 text-red-700 border-red-200", 
-      "EVIDENCE_SUBMITTED": "bg-amber-50 text-amber-700 border-amber-200",
-      "CASE_STATUS_UPDATED": "bg-emerald-50 text-emerald-700 border-emerald-200"
+      "AGENT_REGISTERED": "bg-accent text-primary border-border",
+      "DISPUTE_FILED": "bg-destructive/10 text-destructive border-destructive/20", 
+      "EVIDENCE_SUBMITTED": "bg-accent text-foreground border-border",
+      "CASE_STATUS_UPDATED": "bg-accent text-foreground border-border"
     };
-    return colors[type] || "bg-slate-50 text-slate-700 border-slate-200";
+    return colors[type] || "bg-muted text-muted-foreground border-border";
   };
 
   // Helper function to get the badge label - just format the event type
@@ -113,43 +113,43 @@ export default function LiveActivityFeed() {
       <HeroStats />
 
       {/* Live Activity Feed - PROMOTED TO TOP */}
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-slate-900" />
-              <CardTitle className="text-slate-900">Live Activity Feed</CardTitle>
+              <Activity className="h-5 w-5 text-foreground" />
+              <CardTitle className="text-foreground">Live Activity Feed</CardTitle>
             </div>
-            <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 whitespace-nowrap">
+            <Badge variant="secondary" className="whitespace-nowrap">
               🟢 Real-time Updates
             </Badge>
           </div>
-          <CardDescription className="text-slate-600">
+          <CardDescription>
             Watch disputes being filed and resolved automatically in real-time
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {!recentEvents || recentEvents.length === 0 ? (
             <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 mb-2">No recent activity</p>
-              <p className="text-xs text-slate-400">The system is idle. Activity will appear here when disputes are filed.</p>
+              <Activity className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-2">No recent activity</p>
+              <p className="text-xs text-muted-foreground/70">The system is idle. Activity will appear here when disputes are filed.</p>
             </div>
           ) : (
             <>
               {recentEvents?.slice(0, 10).map((event: DisputeEvent) => (
                 <div 
                   key={event._id} 
-                  className={`flex items-start gap-3 p-3 rounded-lg border border-slate-100 ${event.caseId ? 'cursor-pointer hover:bg-slate-50 hover:border-slate-200' : 'bg-slate-50/50'} transition-all`}
+                  className={`flex items-start gap-3 p-3 rounded-lg border border-border ${event.caseId ? 'cursor-pointer hover:bg-accent hover:border-border' : 'bg-muted/50'} transition-all`}
                   onClick={() => event.caseId && router.push(`/demo/dispute/${event.caseId}`)}
                 >
                   <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs font-medium`}>
                     {getEventBadge(event.type)}
                   </Badge>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-sm text-slate-700 leading-relaxed">{formatEventDescription(event)}</p>
+                    <p className="text-sm text-foreground leading-relaxed">{formatEventDescription(event)}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(event.timestamp).toLocaleTimeString('en-US', { 
                           hour: 'numeric', 
                           minute: '2-digit', 
@@ -161,20 +161,20 @@ export default function LiveActivityFeed() {
                         // Show payment dispute info (amount + tier) if available
                         if (event.paymentDispute) {
                           const tierColors: Record<string, string> = {
-                            micro: "text-green-700 border-green-300 bg-green-50",
-                            small: "text-blue-700 border-blue-300 bg-blue-50",
-                            medium: "text-yellow-700 border-yellow-300 bg-yellow-50",
-                            large: "text-orange-700 border-orange-300 bg-orange-50",
-                            enterprise: "text-purple-700 border-purple-300 bg-purple-50"
+                            micro: "text-foreground border-border bg-accent",
+                            small: "text-primary border-border bg-accent",
+                            medium: "text-foreground border-border bg-accent",
+                            large: "text-foreground border-border bg-accent",
+                            enterprise: "text-foreground border-border bg-accent"
                           };
-                          const tierColor = tierColors[event.paymentDispute.pricingTier || "micro"] || "text-slate-600 border-slate-300 bg-slate-50";
+                          const tierColor = tierColors[event.paymentDispute.pricingTier || "micro"] || "text-muted-foreground border-border bg-muted";
                           return (
                             <>
                               <Badge variant="outline" className={`text-[11px] px-2 py-0.5 font-normal ${tierColor}`}>
                                 ${event.paymentDispute.amount.toFixed(2)} • {event.paymentDispute.pricingTier || "micro"} tier
                               </Badge>
                               {event.paymentDispute.disputeFee && (
-                                <span className="text-[11px] text-slate-500">
+                                <span className="text-[11px] text-muted-foreground">
                                   (${event.paymentDispute.disputeFee.toFixed(2)} fee)
                                 </span>
                               )}
@@ -186,7 +186,7 @@ export default function LiveActivityFeed() {
                         const disputeType = event.payload?.type;
                         if (typeof disputeType === "string") {
                           return (
-                            <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-slate-600 border-slate-300 bg-slate-50 font-normal">
+                            <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-muted-foreground border-border bg-muted font-normal">
                               {formatDisputeType(disputeType)}
                             </Badge>
                           );
@@ -214,13 +214,13 @@ export default function LiveActivityFeed() {
 
       {/* Quick Links Section */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="border-slate-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => router.push('/demo/cases')}>
+        <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/cases')}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
-              <Gavel className="h-5 w-5 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-foreground text-base">
+              <Gavel className="h-5 w-5 text-primary" />
               View All Cases
             </CardTitle>
-            <CardDescription className="text-slate-600">
+            <CardDescription>
               {activeCases && activeCases.length > 0 ? (
                 <>{activeCases.length} active case{activeCases.length !== 1 ? 's' : ''} • {recentCases?.length ?? 0} resolved</>
               ) : (
@@ -236,13 +236,13 @@ export default function LiveActivityFeed() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => router.push('/demo/agents')}>
+        <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/agents')}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
-              <FileText className="h-5 w-5 text-emerald-600" />
+            <CardTitle className="flex items-center gap-2 text-foreground text-base">
+              <FileText className="h-5 w-5 text-primary" />
               View All Agents
             </CardTitle>
-            <CardDescription className="text-slate-600">
+            <CardDescription>
               Browse registered agents and their performance
             </CardDescription>
           </CardHeader>
@@ -259,12 +259,12 @@ export default function LiveActivityFeed() {
       <CollapsibleStats />
 
       {/* Recent Resolutions - Compact View */}
-      <Card className="border-slate-200">
+      <Card className="border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-slate-900" />
-              <CardTitle className="text-slate-900">Recent Resolutions</CardTitle>
+              <Clock className="h-5 w-5 text-foreground" />
+              <CardTitle className="text-foreground">Recent Resolutions</CardTitle>
             </div>
             <Button 
               variant="ghost" 
@@ -275,45 +275,45 @@ export default function LiveActivityFeed() {
               <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </div>
-          <CardDescription className="text-slate-600">
+          <CardDescription>
             Latest completed dispute cases
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!recentCases || recentCases.length === 0 ? (
             <div className="text-center py-6">
-              <Clock className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No resolved cases yet</p>
+              <Clock className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No resolved cases yet</p>
             </div>
           ) : (
             <div className="space-y-3">
               {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 3).map((case_: Record<string, unknown>, index: number) => (
                 <div key={case_._id as string}>
                   <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-all"
+                    className="flex items-center justify-between cursor-pointer hover:bg-accent p-3 rounded-lg border border-border hover:border-border transition-all"
                     onClick={() => router.push(`/demo/dispute/${case_._id}`)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {(case_.parties as string[]).map((p: string) => formatAgentName(p)).join(" vs ")}
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {case_.type as string} • {case_.ruling ? `${(case_.ruling as { verdict: string }).verdict}` : 'Processing...'}
                       </p>
                     </div>
                     <div className="text-right ml-3 flex-shrink-0">
-                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                      <Badge variant="secondary" className="text-xs">
                         Resolved
                       </Badge>
                       {case_.ruling && typeof case_.ruling === 'object' && 'decidedAt' in case_.ruling ? (
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {Math.floor((Date.now() - (case_.ruling as { decidedAt: number }).decidedAt) / 60000)}m ago
                         </p>
                       ) : null}
                     </div>
                   </div>
                   {index < Math.min(recentCases.filter((c: Record<string, unknown>) => c.status === "DECIDED").length - 1, 2) && (
-                    <Separator className="my-2 bg-slate-100" />
+                    <Separator className="my-2" />
                   )}
                 </div>
               ))}
