@@ -79,7 +79,7 @@ export default function DashboardPage() {
   // Calculate metrics from all org cases
   const totalDisputes = allOrgCases?.length || 0
   const resolvedDisputes = allOrgCases?.filter(c => c.status === "DECIDED" || c.status === "CLOSED").length || 0
-  const pendingDisputes = allOrgCases?.filter(c => c.status === "FILED" || c.status === "IN_REVIEW").length || 0
+  const reviewQueueCount = reviewQueue?.length || 0
 
   // Calculate financial impact
   const totalFees = allOrgCases?.reduce((sum, c) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
@@ -315,8 +315,8 @@ export default function DashboardPage() {
                   <span className="font-semibold text-emerald-600">{resolvedDisputes}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Pending:</span>
-                  <span className="font-semibold text-amber-600">{pendingDisputes}</span>
+                  <span>Need Review:</span>
+                  <span className="font-semibold text-emerald-600">{reviewQueueCount}</span>
                 </div>
               </div>
             </CardContent>
@@ -460,7 +460,8 @@ export default function DashboardPage() {
                 {reviewQueue.slice(0, 3).map((dispute) => (
                   <div
                     key={dispute._id}
-                    className="p-4 bg-white rounded-lg border-2 border-amber-200 hover:border-amber-300 transition-colors"
+                    className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
