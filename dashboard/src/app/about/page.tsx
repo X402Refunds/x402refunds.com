@@ -18,11 +18,11 @@ export default function AboutPage() {
       return (
         <button
           onClick={() => setEmailRevealed(true)}
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors group"
+          className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors group"
           aria-label="Click to reveal email address"
         >
           <Mail className="h-5 w-5" />
-          <span className="border-b border-blue-600 group-hover:border-blue-700">
+          <span className="border-b border-emerald-600 group-hover:border-emerald-700">
             Click to reveal email
           </span>
         </button>
@@ -34,7 +34,7 @@ export default function AboutPage() {
     return (
       <a
         href={`mailto:${emailParts[0]}@${emailParts[1]}.${emailParts[2]}`}
-        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+        className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
         aria-label="Send email to Vivek Kotecha"
       >
         <Mail className="h-5 w-5" />
@@ -53,7 +53,7 @@ export default function AboutPage() {
       <section className="pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-            <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 text-sm px-4 py-1.5">
+            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 text-sm px-4 py-1.5">
               About Consulate
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
@@ -73,7 +73,7 @@ export default function AboutPage() {
           <Card className="border-2 border-slate-200 shadow-lg">
             <CardHeader className="pb-6">
               <div className="flex items-start gap-4">
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-blue-100 flex-shrink-0">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-emerald-100 flex-shrink-0">
                   <Image
                     src="/vivek-headshot.jpg"
                     alt="Vivek Kotecha - Founder of Consulate"
@@ -175,9 +175,9 @@ export default function AboutPage() {
               </div>
 
               {/* Response Time */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <Calendar className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-slate-700">
                       <strong className="text-slate-900">Response time:</strong> I typically respond to emails 
@@ -206,7 +206,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-slate-200">
               <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-blue-600 mb-3">Billions</div>
+                <div className="text-4xl font-bold text-emerald-600 mb-3">Billions</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   Scale Problem
                 </h3>
@@ -263,7 +263,7 @@ export default function AboutPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-blue-600" />
+                    <Building2 className="h-5 w-5 text-emerald-600" />
                     Technology
                   </h3>
                   <ul className="space-y-2 text-slate-600 text-sm">

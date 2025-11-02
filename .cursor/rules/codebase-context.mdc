@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-02T08:07:01.102Z
+**Auto-generated on**: 2025-11-02T08:21:18.585Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -228,19 +228,19 @@ Common HTTP routes exposed:
 - docs/mcp-publishing-guide.md
 
 
-### Internal Documentation (27 files)
+### Internal Documentation (28 files)
 - internal/README.md
 - internal/analysis/AI-RULING-TERMINOLOGY-ANALYSIS.md
 - internal/analysis/DISPUTE-PRICING-MODEL.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
+- internal/design/digital-courthouse-design-system.md
 - internal/design/sovereign-civic-design-system.md
 - internal/product/branding-strategy.md
 - internal/product/competitive-analysis.md
 - internal/product/dispute-type-categorization.md
-- internal/product/market-opportunity-strategy.md
 
-... and 17 more in internal/
+... and 18 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -321,5 +321,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/2/2025, 1:07:01 AM
-Files scanned: 263
+Generated: 11/2/2025, 1:21:18 AM
+Files scanned: 265
