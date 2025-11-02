@@ -51,7 +51,7 @@ export function Navigation({ currentPage }: NavigationProps) {
   }
 
   return (
-    <nav className="border-b border-border bg-background sticky top-0 z-50 shadow-sm">
+    <nav className="border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
           <div className="flex items-center">
@@ -73,7 +73,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                       Features
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <div className="w-[600px] p-6">
+                      <div className="w-[600px] p-6 bg-white border-2 border-slate-200 shadow-2xl rounded-lg">
                         <div className="grid grid-cols-2 gap-6">
                           {/* Core Features Column */}
                           <div>
@@ -82,15 +82,15 @@ export function Navigation({ currentPage }: NavigationProps) {
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-identity')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-accent rounded-lg group-hover:bg-accent/80 transition-colors">
-                                  <Shield className="h-5 w-5 text-primary" />
+                                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                                  <Shield className="h-5 w-5 text-blue-600" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-foreground mb-1">Persistent ID for Agents</div>
-                                  <div className="text-sm text-muted-foreground">Decentralized agent identity & reputation</div>
+                                  <div className="font-semibold text-slate-900 mb-1">Persistent ID for Agents</div>
+                                  <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
                                 </div>
                               </div>
                             </button>
@@ -103,15 +103,15 @@ export function Navigation({ currentPage }: NavigationProps) {
                             </div>
                             <button
                               onClick={() => handleFeatureClick('feature-dispute')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group"
+                              className="w-full text-left p-3 rounded-lg hover:bg-purple-50 hover:border-purple-200 border border-transparent transition-all group"
                             >
                               <div className="flex items-start gap-3">
-                                <div className="p-2 bg-accent rounded-lg group-hover:bg-accent/80 transition-colors">
-                                  <Gavel className="h-5 w-5 text-primary" />
+                                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                                  <Gavel className="h-5 w-5 text-purple-600" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-foreground mb-1">Agent-to-Agent Dispute Resolution</div>
-                                  <div className="text-sm text-muted-foreground">Automated arbitration in minutes</div>
+                                  <div className="font-semibold text-slate-900 mb-1">Agent-to-Agent Dispute Resolution</div>
+                                  <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
                                 </div>
                               </div>
                             </button>
