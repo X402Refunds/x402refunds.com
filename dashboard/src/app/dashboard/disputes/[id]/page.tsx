@@ -56,7 +56,7 @@ export default function DisputeDetailPage() {
       setShowSuccess(true)
       // Wait for animation to play before navigating
       setTimeout(() => {
-        router.push("/dashboard/review-queue")
+      router.push("/dashboard/review-queue")
       }, 1500)
     } catch (error) {
       console.error("Failed to approve:", error)

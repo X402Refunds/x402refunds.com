@@ -70,7 +70,7 @@ export default function ReviewQueuePage() {
               <Badge variant="secondary" className="text-sm whitespace-nowrap">
                 {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''}
               </Badge>
-            </div>
+        </div>
             {organization?.aiEnabled === false && (
               <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
@@ -80,7 +80,7 @@ export default function ReviewQueuePage() {
             )}
           </div>
         </AnimatedSection>
-
+          
         {/* Review Queue Section */}
         <AnimatedSection direction="up" delay={0.2}>
           <Card className="border-slate-200 shadow-sm">
@@ -125,11 +125,11 @@ export default function ReviewQueuePage() {
                           <p className="text-sm text-slate-600">
                             {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
                           </p>
-                        </div>
+                </div>
                         <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                           AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
                         </Badge>
-                      </div>
+              </div>
                       
                       {dispute.aiRecommendation ? (
                         <>
@@ -142,8 +142,8 @@ export default function ReviewQueuePage() {
                             }>
                               {dispute.aiRecommendation.verdict}
                             </Badge>
-                          </div>
-
+        </div>
+        
                           {dispute.aiRecommendation.reasoning && (
                             <p className="text-sm text-slate-600 mb-3 line-clamp-2">
                               {dispute.aiRecommendation.reasoning}
@@ -158,8 +158,8 @@ export default function ReviewQueuePage() {
                           </div>
                           <p className="text-xs text-purple-700 mt-1">
                             Usually completes in under 2 minutes. Refresh to see recommendation.
-                          </p>
-                        </div>
+                </p>
+              </div>
                       )}
                       
                       <div className="flex gap-2">
@@ -193,7 +193,7 @@ export default function ReviewQueuePage() {
                         >
                           Review Details
                         </Button>
-                      </div>
+              </div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -201,21 +201,21 @@ export default function ReviewQueuePage() {
             </CardContent>
           </Card>
         </AnimatedSection>
-
+        
         {/* Footer Help */}
         {reviewQueue.length > 0 && (
           <AnimatedSection direction="up" delay={0.3}>
             <Card className="bg-gray-50 dark:bg-gray-900">
-              <CardContent className="pt-6">
-                <h4 className="text-sm font-semibold mb-2">Tips for Reviewing:</h4>
-                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <li>• <strong>Approve AI</strong> if the recommendation aligns with your knowledge</li>
-                  <li>• <strong>Override</strong> if you have context the AI doesn&apos;t (customer history, fraud patterns, etc.)</li>
-                  <li>• <strong>Be specific in notes</strong> - this helps the AI learn your business rules</li>
-                  <li>• <strong>Review by deadline</strong> - Regulation E requires resolution within 10 business days</li>
-                </ul>
-              </CardContent>
-            </Card>
+            <CardContent className="pt-6">
+              <h4 className="text-sm font-semibold mb-2">Tips for Reviewing:</h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• <strong>Approve AI</strong> if the recommendation aligns with your knowledge</li>
+                <li>• <strong>Override</strong> if you have context the AI doesn&apos;t (customer history, fraud patterns, etc.)</li>
+                <li>• <strong>Be specific in notes</strong> - this helps the AI learn your business rules</li>
+                <li>• <strong>Review by deadline</strong> - Regulation E requires resolution within 10 business days</li>
+              </ul>
+            </CardContent>
+          </Card>
           </AnimatedSection>
         )}
       </div>

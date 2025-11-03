@@ -250,13 +250,13 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         {/* Financial Overview - Full Width */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          whileHover={{ y: -4 }}
-        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ y: -4 }}
+          >
           <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -315,7 +315,7 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+          </motion.div>
 
         {/* Live Dispute Activity with Quick Actions */}
         <AnimatedSection direction="up" delay={0.4}>

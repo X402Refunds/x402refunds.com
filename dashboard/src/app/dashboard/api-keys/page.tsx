@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
@@ -190,7 +190,7 @@ export default function APIKeysPage() {
           </div>
           <Button 
             onClick={() => setShowCreateDialog(true)}
-            className="bg-slate-900 hover:bg-slate-800 text-white"
+            variant="default"
           >
             <Plus className="h-4 w-4 mr-2" />
             Generate New Key
@@ -198,37 +198,23 @@ export default function APIKeysPage() {
         </div>
         
         {/* API Keys Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Your API Keys</CardTitle>
-                <CardDescription>
-                  {apiKeys?.length === 0 
-                    ? "No API keys yet. Generate one to get started." 
-                    : `${apiKeys?.length} API key${apiKeys?.length === 1 ? '' : 's'} shown` +
-                      (allApiKeys ? ` (${allApiKeys.filter(k => k.status === "active").length} active, ${allApiKeys.filter(k => k.status === "revoked").length} revoked)` : '')
-                  }
-                </CardDescription>
-              </div>
-              {allApiKeys && allApiKeys.some(k => k.status === "revoked") && (
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="show-revoked" 
-                    checked={showRevokedKeys}
-                    onCheckedChange={(checked) => setShowRevokedKeys(checked === true)}
-                  />
-                  <label
-                    htmlFor="show-revoked"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    Show revoked keys
-                  </label>
-                </div>
-              )}
+        <div className="space-y-4">
+          {allApiKeys && allApiKeys.some(k => k.status === "revoked") && (
+            <div className="flex items-center justify-end space-x-2">
+              <Checkbox 
+                id="show-revoked" 
+                checked={showRevokedKeys}
+                onCheckedChange={(checked) => setShowRevokedKeys(checked === true)}
+              />
+              <label
+                htmlFor="show-revoked"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Show revoked keys
+              </label>
             </div>
-          </CardHeader>
-          <CardContent>
+          )}
+          <div>
             {apiKeys && apiKeys.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
@@ -355,8 +341,8 @@ export default function APIKeysPage() {
                 <p className="text-xs text-slate-400 mt-1">Generate your first key to start registering agents</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         
         {/* Info Card - Moved below API Keys table */}
         <Card className="border-blue-200 bg-blue-50">
@@ -457,7 +443,7 @@ export default function APIKeysPage() {
                   <Button 
                     type="submit" 
                     disabled={isCreating || !newKeyName.trim()}
-                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                    variant="default"
                   >
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Generate Key
@@ -525,7 +511,7 @@ export default function APIKeysPage() {
                 </div>
                 
                 <DialogFooter>
-                  <Button onClick={handleCloseCreateDialog} className="w-full bg-slate-900 hover:bg-slate-800 text-white">
+                  <Button onClick={handleCloseCreateDialog} variant="default" className="w-full">
                     I&apos;ve Saved the Key
                   </Button>
                 </DialogFooter>
