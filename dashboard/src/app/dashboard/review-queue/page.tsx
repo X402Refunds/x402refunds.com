@@ -11,10 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { AnimatedSection } from "@/components/ui/animated-section"
+import { SuccessCheckmark } from "@/components/ui/success-checkmark"
+import { useState } from "react"
 
 export default function ReviewQueuePage() {
   const { isLoaded } = useUser()
   const router = useRouter()
+  const [showSuccess, setShowSuccess] = useState(false)
   
   // Sync and get user
   const currentUser = useQuery(
@@ -22,7 +25,7 @@ export default function ReviewQueuePage() {
     {} // Auth verified server-side via ctx.auth
   )
   
-  // Get review queue for user's organization
+  // Get review queue for user's organization information
   const reviewQueue = useQuery(
     api.paymentDisputes.getCustomerReviewQueue,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
@@ -54,6 +57,7 @@ export default function ReviewQueuePage() {
   
   return (
     <DashboardLayout>
+      <SuccessCheckmark show={showSuccess} onComplete={() => setShowSuccess(false)} />
       <div className="space-y-6">
         {/* Header */}
         <AnimatedSection direction="down" delay={0.1}>
@@ -174,6 +178,7 @@ export default function ReviewQueuePage() {
                               decision: "APPROVE_AI",
                               finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                             })
+                            setShowSuccess(true)
                           }}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />

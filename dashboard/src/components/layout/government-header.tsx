@@ -1,13 +1,9 @@
 "use client"
 
-import * as React from "react"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "@convex/_generated/api"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 
@@ -28,24 +24,6 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
     user = null
   }
 
-  // Get current user and organization for AI toggle (only on dashboard routes)
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    isDashboardRoute ? {} : "skip"
-  )
-  const organization = useQuery(
-    api.users.getUserOrganization,
-    isDashboardRoute && currentUser ? { userId: currentUser._id } : "skip"
-  )
-  const updateOrganization = useMutation(api.users.updateOrganization)
-  const [isUpdating, setIsUpdating] = React.useState(false)
-  const [optimisticAiEnabled, setOptimisticAiEnabled] = React.useState<boolean | null>(null)
-  
-  // Use optimistic state if available, otherwise use organization state
-  const aiEnabledValue = optimisticAiEnabled !== null 
-    ? optimisticAiEnabled 
-    : (organization?.aiEnabled !== false)
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -114,38 +92,8 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
           </Breadcrumb>
         </div>
 
-        {/* Right Section: AI Toggle, Status and User */}
+        {/* Right Section: Status and User */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* AI Toggle - Only show on dashboard routes */}
-          {isDashboardRoute && currentUser?.organizationId && (
-            <div className="flex items-center gap-2 border border-slate-300 rounded-md px-2 py-1">
-              <span className="text-xs font-medium text-slate-700">AI</span>
-              <Switch
-                checked={aiEnabledValue}
-                disabled={isUpdating}
-                onCheckedChange={async (checked) => {
-                  // Optimistic update
-                  setOptimisticAiEnabled(checked)
-                  setIsUpdating(true)
-                  try {
-                    await updateOrganization({
-                      organizationId: currentUser.organizationId!,
-                      aiEnabled: checked,
-                    })
-                  } catch (error) {
-                    // Revert on error
-                    setOptimisticAiEnabled(null)
-                    console.error('Failed to update AI setting:', error)
-                  } finally {
-                    setIsUpdating(false)
-                    // Clear optimistic state after a short delay to let Convex update
-                    setTimeout(() => setOptimisticAiEnabled(null), 500)
-                  }
-                }}
-              />
-            </div>
-          )}
-
           {/* User Display Name - Hidden on mobile */}
           {user && (
             <div className="text-left hidden sm:block">

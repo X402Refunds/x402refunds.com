@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, Clock } from "lucide-react"
 import { useState } from "react"
+import { SuccessCheckmark } from "@/components/ui/success-checkmark"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 
@@ -20,6 +21,7 @@ export default function DisputeDetailPage() {
   const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const disputeId = params.id as string
 
@@ -51,7 +53,11 @@ export default function DisputeDetailPage() {
         decision: "APPROVE_AI",
         finalVerdict: (dispute.aiRecommendation?.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW") || "CONSUMER_WINS",
       })
-      router.push("/dashboard/review-queue")
+      setShowSuccess(true)
+      // Wait for animation to play before navigating
+      setTimeout(() => {
+        router.push("/dashboard/review-queue")
+      }, 1500)
     } catch (error) {
       console.error("Failed to approve:", error)
       alert("Failed to approve decision. Please try again.")
@@ -124,6 +130,7 @@ export default function DisputeDetailPage() {
 
   return (
     <DashboardLayout>
+      <SuccessCheckmark show={showSuccess} onComplete={() => setShowSuccess(false)} />
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
