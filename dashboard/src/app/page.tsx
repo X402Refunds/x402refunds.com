@@ -57,24 +57,38 @@ const result = await mcp.invoke("consulate_file_dispute", {
               Payment disputes. Support tickets. One API.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
-                onClick={() => window.location.href = isSignedIn ? '/dashboard' : 'https://www.consulatehq.com/sign-in/'}
-              >
-                {isSignedIn ? 'Go to Dashboard' : 'Get Started Free'}
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                onClick={() => window.location.href = 'https://docs.consulatehq.com'}
-              >
-                View Documentation →
-              </Button>
-            </div>
+            {!isSignedIn && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
+                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                >
+                  View Documentation →
+                </Button>
+              </div>
+            )}
+            {isSignedIn && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                >
+                  View Documentation →
+                </Button>
+              </div>
+            )}
 
             {/* Stats bar */}
             <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
@@ -437,15 +451,17 @@ const result = await mcp.invoke("consulate_file_dispute", {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button 
-              size="lg" 
-              className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
-              onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
-            >
-              <Key className="mr-2 h-5 w-5" />
-              Get Your API Key
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            {!isSignedIn && (
+              <Button 
+                size="lg" 
+                className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
+                onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+              >
+                <Key className="mr-2 h-5 w-5" />
+                Get Your API Key
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
             <Button 
               size="lg" 
               className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"

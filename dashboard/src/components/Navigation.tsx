@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { User, Menu } from "lucide-react"
+import { User, Menu, LayoutDashboard } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import {
@@ -88,6 +88,17 @@ export function Navigation({ currentPage }: NavigationProps) {
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
+            {/* Go to Dashboard Button - Desktop (when signed in) */}
+            {isSignedIn && (
+              <Button
+                onClick={() => window.location.href = '/dashboard'}
+                className="hidden md:flex"
+                size="sm"
+              >
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                Go to Dashboard
+              </Button>
+            )}
             {/* Sign In Button - Desktop */}
             {!isSignedIn && (
               <Button
@@ -113,6 +124,16 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <SheetTitle className="text-2xl font-bold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
+                  {/* Go to Dashboard - Mobile (when signed in) */}
+                  {isSignedIn && (
+                    <Button
+                      onClick={() => handleNavigation('/dashboard')}
+                      className="w-full justify-start"
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Go to Dashboard
+                    </Button>
+                  )}
                   {/* Sign In - Mobile */}
                   {!isSignedIn && (
                     <Button
