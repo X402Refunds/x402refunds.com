@@ -46,9 +46,6 @@ describe('HTTP API - Agent Registration', () => {
       expect(data.error).toContain("Authorization");
     });
 
-    it.skip('Duplicate organization test (endpoint deprecated)', async () => {
-      // This test is no longer relevant as /agents/register is deprecated
-    });
 
     it('should require valid API key', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
