@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Mail, Linkedin, Twitter, Calendar, MapPin, Key, ArrowRight, BookOpen, CheckCircle } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
+import { motion } from "framer-motion"
 
 export default function AboutPage() {
   const [emailRevealed, setEmailRevealed] = useState(false)
@@ -51,7 +52,12 @@ export default function AboutPage() {
 
       {/* Hero Section */}
       <section className="pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12 bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
+        <motion.div 
+          className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
             <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 text-sm px-4 py-1.5">
               About Consulate
@@ -64,12 +70,17 @@ export default function AboutPage() {
               for agents to self-govern—persistent ID, automated arbitration, and sovereignty at machine speed.
             </p>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Founder Section */}
       <section className="py-6 sm:py-8 lg:py-12">
-        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
+        <motion.div 
+          className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
           <Card className="border-2 border-slate-200 shadow-lg">
             <CardHeader className="pb-6">
               <div className="flex items-start gap-4">
@@ -188,7 +199,7 @@ export default function AboutPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </section>
 
       {/* Company Mission */}

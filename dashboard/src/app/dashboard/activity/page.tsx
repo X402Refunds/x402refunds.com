@@ -7,6 +7,7 @@ import { useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { Activity, TrendingUp, Zap } from "lucide-react"
 import { Id } from "@convex/_generated/dataModel"
+import { motion } from "framer-motion"
 
 type Event = {
   _id: Id<"events">;
@@ -72,99 +73,116 @@ export default function ActivityPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="space-y-2">
+        <motion.div 
+          className="space-y-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <h1 className="text-3xl font-bold tracking-tight">Activity</h1>
           <p className="text-muted-foreground">
             Real-time activity feed for your organization
           </p>
-        </div>
+        </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalEvents ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Your organization events
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.pendingCases ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Currently processing
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m</div>
-              <p className="text-xs text-muted-foreground">
-                Lightning fast
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <motion.div 
+          className="grid gap-4 md:grid-cols-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {[
+            { icon: Activity, title: "Total Events", value: stats?.totalEvents ?? 0, subtitle: "Your organization events" },
+            { icon: TrendingUp, title: "Active Cases", value: stats?.pendingCases ?? 0, subtitle: "Currently processing" },
+            { icon: Zap, title: "Avg Resolution", value: `${stats?.avgResolutionTimeMinutes?.toFixed(1) ?? '0.0'}m`, subtitle: "Lightning fast" }
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stat.subtitle}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
 
         {/* Activity Feed */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest events involving your organization&apos;s agents and cases
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {events.slice(0, 50).map((event: Event) => (
-                <div
-                  key={event._id}
-                  className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="text-2xl">{getEventIcon(event.type)}</div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge className={getEventColor(event.type)}>
-                        {event.type.replace(/_/g, " ")}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(event.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                    {event.payload && (
-                      <div className="text-sm text-muted-foreground">
-                        {JSON.stringify(event.payload, null, 2)}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>
+                Latest events involving your organization&apos;s agents and cases
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {events.slice(0, 50).map((event: Event, index) => (
+                  <motion.div
+                    key={event._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.6 + index * 0.05 }}
+                    whileHover={{ x: 4 }}
+                    className="flex items-start gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="text-2xl">{getEventIcon(event.type)}</div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge className={getEventColor(event.type)}>
+                          {event.type.replace(/_/g, " ")}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(event.timestamp).toLocaleString()}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {events.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No activity recorded yet
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                      {event.payload && (
+                        <div className="text-sm text-muted-foreground">
+                          {JSON.stringify(event.payload, null, 2)}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+                {events.length === 0 && (
+                  <motion.div 
+                    className="text-center py-8 text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                  >
+                    No activity recorded yet
+                  </motion.div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   )
 }

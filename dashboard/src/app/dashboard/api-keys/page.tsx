@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Key, Copy, Ban, Plus, CheckCircle2, AlertCircle, Loader2, Pencil } from "lucide-react"
 import { Id } from "@convex/_generated/dataModel"
 import { Checkbox } from "@/components/ui/checkbox"
+import { motion } from "framer-motion"
 
 export default function APIKeysPage() {
   const { user, isLoaded } = useUser()
@@ -179,28 +180,54 @@ export default function APIKeysPage() {
   
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <motion.div 
+          className="flex items-center justify-between"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <div>
             <h1 className="text-3xl font-bold text-slate-900">API Keys</h1>
             <p className="text-slate-600 mt-1">
               Manage API keys for agent registration and authentication
             </p>
           </div>
-          <Button 
-            onClick={() => setShowCreateDialog(true)}
-            variant="default"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Generate New Key
-          </Button>
-        </div>
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              variant="default"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Generate New Key
+            </Button>
+          </motion.div>
+        </motion.div>
         
         {/* API Keys Table */}
-        <div className="space-y-4">
+        <motion.div 
+          className="space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           {allApiKeys && allApiKeys.some(k => k.status === "revoked") && (
-            <div className="flex items-center justify-end space-x-2">
+            <motion.div 
+              className="flex items-center justify-end space-x-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <Checkbox 
                 id="show-revoked" 
                 checked={showRevokedKeys}
@@ -212,9 +239,13 @@ export default function APIKeysPage() {
               >
                 Show revoked keys
               </label>
-            </div>
+            </motion.div>
           )}
-          <div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             {apiKeys && apiKeys.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
@@ -230,7 +261,9 @@ export default function APIKeysPage() {
                   </TableHeader>
                   <TableBody>
                     {apiKeys.map((key) => (
-                      <TableRow key={key._id}>
+                      <TableRow 
+                        key={key._id}
+                      >
                         <TableCell className="font-medium">
                           {editingKeyId === key._id ? (
                             <div className="flex items-center gap-2">
@@ -335,17 +368,27 @@ export default function APIKeysPage() {
                 </Table>
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500">
+              <motion.div 
+                className="text-center py-8 text-slate-500"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
                 <Key className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-sm">No API keys yet</p>
                 <p className="text-xs text-slate-400 mt-1">Generate your first key to start registering agents</p>
-              </div>
+              </motion.div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
         {/* Info Card - Moved below API Keys table */}
-        <Card className="border-blue-200 bg-blue-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <Card className="border-blue-200 bg-blue-50">
           <CardHeader>
             <CardTitle className="text-base text-blue-900 flex items-center gap-2">
               <Key className="h-4 w-4" />
@@ -378,6 +421,7 @@ export default function APIKeysPage() {
             </p>
           </CardContent>
         </Card>
+        </motion.div>
         
         {/* Create API Key Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={handleCloseCreateDialog}>
@@ -548,7 +592,7 @@ export default function APIKeysPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </motion.div>
     </DashboardLayout>
   )
 }

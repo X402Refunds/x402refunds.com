@@ -7,6 +7,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Users, Crown, Mail, UserCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
 
 export default function TeamPage() {
   const { user, isLoaded } = useUser()
@@ -47,30 +48,58 @@ export default function TeamPage() {
   
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <motion.div 
+          className="flex justify-between items-start"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Team</h1>
           </div>
-        </div>
+        </motion.div>
         
         {/* Team Members List */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
             {teamMembers === undefined ? (
-              <div className="text-center py-8 text-slate-600">
+              <motion.div 
+                className="text-center py-8 text-slate-600"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
                 Loading team members...
-              </div>
+              </motion.div>
             ) : teamMembers.length === 0 ? (
-              <div className="text-center py-12">
+              <motion.div 
+                className="text-center py-12"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
                 <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-600 mb-4">No team members yet</p>
-              </div>
+              </motion.div>
             ) : (
               <div className="space-y-3">
-                {teamMembers.map((member) => (
-                  <div
+                {teamMembers.map((member, index) => (
+                  <motion.div
                     key={member._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+                    whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
@@ -100,12 +129,12 @@ export default function TeamPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   )
 }

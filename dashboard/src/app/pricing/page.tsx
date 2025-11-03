@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
+import { motion } from "framer-motion"
 
 export default function PricingPage() {
   return (
@@ -20,8 +21,18 @@ export default function PricingPage() {
 
       {/* Platform Access Plans */}
       <section className="py-12 sm:py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+        <motion.div 
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <motion.div 
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <Badge variant="outline" className="mb-4">
               Platform Access Plans
             </Badge>
@@ -31,11 +42,21 @@ export default function PricingPage() {
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
               All plans include AI resolution + your review queue. Per-dispute fees apply separately.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <motion.div 
+            className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             {/* Starter */}
-            <Card className="border-2 border-slate-200 hover:border-blue-300 shadow-sm transition-colors">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="border-2 border-slate-200 hover:border-blue-300 shadow-sm transition-colors">
               <CardHeader className="pb-6">
                 <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Starter</CardTitle>
                 <div className="mb-4">
@@ -103,9 +124,15 @@ export default function PricingPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
 
             {/* Growth (Popular) */}
-            <Card className="border-4 border-emerald-600 shadow-xl relative">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className="border-4 border-emerald-600 shadow-xl relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
                 Most Popular
               </div>
@@ -182,9 +209,15 @@ export default function PricingPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
 
             {/* Enterprise */}
-            <Card className="border-2 border-slate-200 hover:border-blue-300 shadow-sm transition-colors">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <Card className="border-2 border-slate-200 hover:border-blue-300 shadow-sm transition-colors">
               <CardHeader className="pb-6">
                 <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Enterprise</CardTitle>
                 <div className="mb-4">
@@ -252,8 +285,9 @@ export default function PricingPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Per-Dispute Fees */}

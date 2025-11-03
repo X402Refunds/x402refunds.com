@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, Clock } from "lucide-react"
 import { useState } from "react"
 import { SuccessCheckmark } from "@/components/ui/success-checkmark"
+import { motion } from "framer-motion"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 
@@ -131,9 +132,19 @@ export default function DisputeDetailPage() {
   return (
     <DashboardLayout>
       <SuccessCheckmark show={showSuccess} onComplete={() => setShowSuccess(false)} />
-      <div className="max-w-5xl mx-auto space-y-6">
+      <motion.div 
+        className="max-w-5xl mx-auto space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <motion.div 
+          className="flex items-center gap-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <Button
             variant="ghost"
             size="sm"
@@ -157,10 +168,15 @@ export default function DisputeDetailPage() {
               Pending Review
             </Badge>
           )}
-        </div>
+        </motion.div>
 
         {/* Transaction Info */}
-        <Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card>
           <CardHeader>
             <CardTitle>Transaction Information</CardTitle>
           </CardHeader>
@@ -199,10 +215,16 @@ export default function DisputeDetailPage() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {/* AI Recommendation */}
         {!isResolved && (
-          <Card className="border-l-4 border-l-blue-600">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="border-l-4 border-l-blue-600">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🤖</span>
@@ -238,11 +260,17 @@ export default function DisputeDetailPage() {
               )}
             </CardContent>
           </Card>
+          </motion.div>
         )}
 
         {/* Resolution Status */}
         {isResolved && (
-          <Card className="border-l-4 border-l-emerald-600">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="border-l-4 border-l-emerald-600">
             <CardHeader>
               <CardTitle>Resolution</CardTitle>
             </CardHeader>
@@ -282,11 +310,17 @@ export default function DisputeDetailPage() {
               )}
             </CardContent>
           </Card>
+          </motion.div>
         )}
 
         {/* Case Information */}
         {caseDetails && (
-          <Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card>
             <CardHeader>
               <CardTitle>Case Information</CardTitle>
             </CardHeader>
@@ -317,11 +351,17 @@ export default function DisputeDetailPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         )}
 
         {/* Action Buttons */}
         {!isResolved && (
-          <Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card>
             <CardHeader>
               <CardTitle>Review Actions</CardTitle>
               <CardDescription>
@@ -409,8 +449,9 @@ export default function DisputeDetailPage() {
               )}
             </CardContent>
           </Card>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </DashboardLayout>
   )
 }

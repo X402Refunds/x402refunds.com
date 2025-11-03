@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Plus, Users, Shield } from "lucide-react"
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog"
 import { AgentList } from "@/components/dashboard/agent-list"
+import { motion } from "framer-motion"
 
 export default function AgentsPage() {
   const { user, isLoaded } = useUser()
@@ -56,9 +57,19 @@ export default function AgentsPage() {
   
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <motion.div 
+          className="flex justify-between items-start"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Agents</h1>
             <p className="text-slate-600 mt-1">
@@ -66,92 +77,126 @@ export default function AgentsPage() {
               {organization && ` (${organization.name})`}
             </p>
           </div>
-          <Button
-            onClick={() => setShowCreateDialog(true)}
-            disabled={!currentUser || !organization}
-            className="bg-slate-900 hover:bg-slate-800 text-white"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Agent
-          </Button>
-        </div>
+            <Button
+              onClick={() => setShowCreateDialog(true)}
+              disabled={!currentUser || !organization}
+              className="bg-slate-900 hover:bg-slate-800 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Agent
+            </Button>
+          </motion.div>
+        </motion.div>
         
         {/* Info Card */}
-        <Card className="border-emerald-200 bg-emerald-50">
-          <CardHeader>
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-emerald-600 mt-0.5" />
-              <div>
-                <CardTitle className="text-base text-emerald-900">Agent Management</CardTitle>
-                <CardDescription className="text-emerald-700">
-                  Deploy and manage AI agents for your organization. Each agent can file disputes,
-                  respond to claims, and participate in arbitration proceedings.
-                </CardDescription>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="border-emerald-200 bg-emerald-50">
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-emerald-600 mt-0.5" />
+                <div>
+                  <CardTitle className="text-base text-emerald-900">Agent Management</CardTitle>
+                  <CardDescription className="text-emerald-700">
+                    Deploy and manage AI agents for your organization. Each agent can file disputes,
+                    respond to claims, and participate in arbitration proceedings.
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-        </Card>
+            </CardHeader>
+          </Card>
+        </motion.div>
         
         {/* Agents List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Agents</CardTitle>
-            <CardDescription>
-              {orgAgents === undefined
-                ? "Loading..."
-                : orgAgents.length === 0
-                ? "No agents deployed yet. Create one to get started."
-                : `You have ${orgAgents.length} agent${orgAgents.length !== 1 ? 's' : ''} deployed.`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {orgAgents === undefined ? (
-              <div className="text-center py-8 text-slate-600">
-                Loading agents...
-              </div>
-            ) : orgAgents.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-600 mb-4">No agents yet</p>
-                <Button
-                  onClick={() => setShowCreateDialog(true)}
-                  className="bg-slate-900 hover:bg-slate-800 text-white"
-                  disabled={!currentUser || !organization}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Agents</CardTitle>
+              <CardDescription>
+                {orgAgents === undefined
+                  ? "Loading..."
+                  : orgAgents.length === 0
+                  ? "No agents deployed yet. Create one to get started."
+                  : `You have ${orgAgents.length} agent${orgAgents.length !== 1 ? 's' : ''} deployed.`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {orgAgents === undefined ? (
+                <motion.div 
+                  className="text-center py-8 text-slate-600"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Agent
-                </Button>
-              </div>
-            ) : (
-              <AgentList agents={orgAgents} />
-            )}
-          </CardContent>
-        </Card>
+                  Loading agents...
+                </motion.div>
+              ) : orgAgents.length === 0 ? (
+                <motion.div 
+                  className="text-center py-12"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-600 mb-4">No agents yet</p>
+                  <Button
+                    onClick={() => setShowCreateDialog(true)}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                    disabled={!currentUser || !organization}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Agent
+                  </Button>
+                </motion.div>
+              ) : (
+                <AgentList agents={orgAgents} />
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
         
         {/* Documentation Link */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Agent Integration</CardTitle>
-            <CardDescription>
-              Learn how to integrate your agents with Consulate&apos;s platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Button variant="outline" asChild>
-                <a href="https://docs.consulatehq.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
-                  Integration Guide
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
-                  API Documentation
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Agent Integration</CardTitle>
+              <CardDescription>
+                Learn how to integrate your agents with Consulate&apos;s platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button variant="outline" asChild>
+                  <a href="https://docs.consulatehq.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
+                    Integration Guide
+                  </a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
+                    API Documentation
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
       
       {/* Create Agent Dialog */}
       <CreateAgentDialog

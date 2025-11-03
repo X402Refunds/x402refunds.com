@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { Clock, FileText, Scale, DollarSign, Calendar, Shield, ExternalLink } from "lucide-react";
+import { Clock, FileText, Scale, DollarSign, Calendar, Shield, ExternalLink } from "lucide-react"
+import { motion } from "framer-motion";
 
 export default function PublicCaseTrackingPage() {
   const params = useParams();
@@ -76,19 +77,39 @@ export default function PublicCaseTrackingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
-      <div className="container max-w-4xl mx-auto py-12 px-4">
+      <motion.div 
+        className="container max-w-4xl mx-auto py-12 px-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Header */}
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-slate-900">Consulate</h1>
           </div>
           <p className="text-sm text-slate-600">Dispute Resolution Case Tracking</p>
-        </div>
+        </motion.div>
 
-        <div className="space-y-6">
+        <motion.div 
+          className="space-y-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           {/* Status Overview */}
-          <Card className="border-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="border-2">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -121,7 +142,12 @@ export default function PublicCaseTrackingPage() {
 
           {/* Financial Information */}
           {(paymentDispute || caseDetails.amount) && (
-            <Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
@@ -159,11 +185,17 @@ export default function PublicCaseTrackingPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Payment Type & Details */}
           {caseDetails.paymentDetails && (
-            <Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -309,11 +341,17 @@ export default function PublicCaseTrackingPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Custom Metadata */}
           {(caseDetails.metadata || caseDetails.paymentDetails?.metadata) && (
-            <Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -327,10 +365,16 @@ export default function PublicCaseTrackingPage() {
                 </pre>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Timeline */}
-          <Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
@@ -398,10 +442,16 @@ export default function PublicCaseTrackingPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Final Decision (if available) */}
           {caseDetails.finalVerdict && (
-            <Card className="border-2 border-blue-200 bg-blue-50/50">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <Card className="border-2 border-blue-200 bg-blue-50/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Scale className="h-5 w-5 text-blue-700" />
@@ -425,10 +475,16 @@ export default function PublicCaseTrackingPage() {
                 )}
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Evidence Count */}
-          <Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+          >
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -444,6 +500,7 @@ export default function PublicCaseTrackingPage() {
               </p>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Footer */}
           <Card className="bg-slate-50 border-slate-200">
@@ -459,8 +516,9 @@ export default function PublicCaseTrackingPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
