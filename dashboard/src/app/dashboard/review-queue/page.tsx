@@ -55,8 +55,8 @@ export default function ReviewQueuePage() {
     )
   }
   
-  // Filter out the dispute that's showing success animation (will be removed after animation)
-  const displayQueue = reviewQueue.filter(dispute => dispute._id !== successDisputeId)
+  // Keep all disputes in display - we'll handle the animation on the card itself
+  const displayQueue = reviewQueue
   
   return (
     <DashboardLayout>
@@ -108,64 +108,52 @@ export default function ReviewQueuePage() {
                     },
                   }}
                 >
-                  {/* Show success animation card separately if exists */}
                   <AnimatePresence>
-                    {successDisputeId && (() => {
-                      const successDispute = reviewQueue.find(d => d._id === successDisputeId)
-                      if (!successDispute) return null
+                    {displayQueue.map((dispute) => {
+                      const isApproving = successDisputeId === dispute._id
                       return (
                         <motion.div
-                          key={`success-${successDisputeId}`}
-                          initial={{ opacity: 1, scale: 1 }}
-                          animate={{ opacity: 0, scale: 0.95 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.5, delay: 1.5 }}
-                          onAnimationComplete={() => setSuccessDisputeId(null)}
-                          className="p-4 bg-white rounded-lg border-2 border-emerald-200 relative"
+                          key={dispute._id}
+                          variants={{
+                            hidden: { opacity: 0, x: -20 },
+                            visible: { opacity: 1, x: 0 },
+                          }}
+                          initial={isApproving ? false : "hidden"}
+                          animate={isApproving ? { opacity: 0, scale: 0.95 } : "visible"}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={isApproving ? { duration: 0.5, delay: 1.5 } : {}}
+                          onAnimationComplete={isApproving ? () => {
+                            setSuccessDisputeId(null)
+                            // Remove from list after animation
+                            setTimeout(() => {
+                              // The query will automatically update and remove it
+                            }, 100)
+                          } : undefined}
+                          whileHover={isApproving ? {} : { x: 4 }}
+                          className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer relative overflow-hidden"
+                          onClick={() => !isApproving && router.push(`/dashboard/disputes/${dispute._id}`)}
                         >
+                          {/* Inline checkmark at top right - appears when approving */}
                           <SuccessCheckmark 
-                            show={true} 
+                            show={isApproving} 
                             onComplete={() => {}}
                             inline={true}
                           />
                           <div className="flex justify-between items-start mb-3">
                             <div>
                               <p className="font-bold text-slate-900 text-lg">
-                                ${successDispute.amount?.toFixed(2) || "0.00"} {successDispute.currency || "USD"}
+                                ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
                               </p>
                               <p className="text-sm text-slate-600">
-                                {successDispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
+                                {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
                               </p>
                             </div>
+                            {!isApproving && (
+                              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
+                              </Badge>
+                            )}
                           </div>
-                        </motion.div>
-                      )
-                    })()}
-                  </AnimatePresence>
-                  {displayQueue.map((dispute) => (
-                    <motion.div
-                      key={dispute._id}
-                      variants={{
-                        hidden: { opacity: 0, x: -20 },
-                        visible: { opacity: 1, x: 0 },
-                      }}
-                      whileHover={{ x: 4 }}
-                      className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer relative"
-                      onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <p className="font-bold text-slate-900 text-lg">
-                            ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
-                          </p>
-                          <p className="text-sm text-slate-600">
-                            {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
-                          </p>
-                </div>
-                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                          AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
-                        </Badge>
-              </div>
                       
                       {dispute.aiRecommendation ? (
                         <>
@@ -229,9 +217,11 @@ export default function ReviewQueuePage() {
                         >
                           Review Details
                         </Button>
-              </div>
+                      </div>
                     </motion.div>
-                  ))}
+                      )
+                    })}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </CardContent>
