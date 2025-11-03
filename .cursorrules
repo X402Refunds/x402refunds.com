@@ -325,10 +325,6 @@ test:     # Adding/updating tests
 <type>: <short description>
 
 <detailed explanation if needed>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ---
@@ -964,7 +960,7 @@ Before committing ANY code, verify:
 - [ ] `pnpm test:run` passes, even if the failing tests are unrelated to your changes.
 - [ ] `pnpm update-context` has been run (MANDATORY before push)
 - [ ] Changes are committed with semantic commit message
-- [ ] Commit message includes: description, Co-Authored-By
+- [ ] Commit message includes: description
 
 Before deploying to production, verify:
 - [ ] Deployed to preview first

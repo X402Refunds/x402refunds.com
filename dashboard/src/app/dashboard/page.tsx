@@ -8,7 +8,7 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
 import { motion, AnimatePresence } from "framer-motion"
@@ -213,52 +213,6 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header with Quick Actions */}
-        <AnimatedSection direction="down" delay={0.1}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          </div>
-
-          {/* Quick Actions Bar */}
-          <div className="flex items-center gap-2">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/review-queue')}
-              className="flex items-center gap-2"
-            >
-              <AlertCircle className="h-4 w-4" />
-              Review Queue
-            </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/api-keys')}
-              className="flex items-center gap-2"
-            >
-              <Key className="h-4 w-4" />
-              API Keys
-            </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/team')}
-              className="flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              Team
-            </Button>
-            </motion.div>
-          </div>
-        </div>
-        </AnimatedSection>
-
         {/* Alert Banner - Shows if review queue has items */}
         <AnimatePresence>
         {reviewQueue && reviewQueue.length > 0 && (
