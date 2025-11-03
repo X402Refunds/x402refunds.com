@@ -219,63 +219,63 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* Header with Quick Actions */}
         <AnimatedSection direction="down" delay={0.1}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
-              <p className="text-slate-600 mt-1">
-                {organization?.name || "Loading..."}
-              </p>
-            </div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
+            <p className="text-slate-600 mt-1">
+              {organization?.name || "Loading..."}
+            </p>
+          </div>
 
           {/* Quick Actions Bar */}
           <div className="flex items-center gap-2">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/review-queue')}
-                className="flex items-center gap-2"
-              >
-                <AlertCircle className="h-4 w-4" />
-                Review Queue
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/review-queue')}
+              className="flex items-center gap-2"
+            >
+              <AlertCircle className="h-4 w-4" />
+              Review Queue
+            </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/api-keys')}
-                className="flex items-center gap-2"
-              >
-                <Key className="h-4 w-4" />
-                API Keys
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/api-keys')}
+              className="flex items-center gap-2"
+            >
+              <Key className="h-4 w-4" />
+              API Keys
+            </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/team')}
-                className="flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Team
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/team')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Team
+            </Button>
             </motion.div>
           </div>
-          </div>
+        </div>
         </AnimatedSection>
 
         {/* Alert Banner - Shows if review queue has items */}
         <AnimatePresence>
-          {reviewQueue && reviewQueue.length > 0 && (
+        {reviewQueue && reviewQueue.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="border-l-4 border-l-emerald-600 bg-emerald-50 border-emerald-200">
+          <Card className="border-l-4 border-l-emerald-600 bg-emerald-50 border-emerald-200">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -299,7 +299,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
             </motion.div>
-          )}
+        )}
         </AnimatePresence>
 
         {/* Simplified 2-Card Layout - Focus on What Matters */}
@@ -312,7 +312,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ y: -4 }}
           >
-            <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
+          <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -375,7 +375,7 @@ export default function DashboardPage() {
 
         {/* Review Queue Section - ALWAYS VISIBLE */}
         <AnimatedSection direction="up" delay={0.3}>
-          <Card className="border-slate-200 shadow-sm">
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -534,7 +534,7 @@ export default function DashboardPage() {
 
         {/* Live Dispute Activity with Quick Actions */}
         <AnimatedSection direction="up" delay={0.4}>
-          <Card className="border-slate-200 shadow-sm">
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">

@@ -715,49 +715,89 @@ export const getMicroDisputeStats = query({
 export const getHeroStats = query({
   args: {},
   handler: async (ctx) => {
-    // Get all payment disputes
-    const allPaymentDisputes = await ctx.db
-      .query("cases")
-      .filter(q => q.eq(q.field("type"), "PAYMENT"))
-      .collect();
+    try {
+      // Get all payment disputes
+      const allPaymentDisputes = await ctx.db
+        .query("cases")
+        .filter(q => q.eq(q.field("type"), "PAYMENT"))
+        .collect();
 
-    // Calculate auto-resolved percentage
-    const totalDisputes = allPaymentDisputes.length;
-    const autoResolvedCount = allPaymentDisputes.filter(d => !d.humanReviewRequired).length;
-    const autoResolvedPercentage = totalDisputes > 0 
-      ? Math.round((autoResolvedCount / totalDisputes) * 100)
-      : 95; // Default to 95% if no disputes yet
-
-    // Calculate average resolution time from resolved cases
-    const resolvedCases = allPaymentDisputes.filter(c => 
-      c.status === "DECIDED" && 
-      c.filedAt && 
-      c.decidedAt
-    );
-
-    let avgResolutionMinutes = 4.2; // Default fallback
-    
-    if (resolvedCases.length > 0) {
-      const totalResolutionTimeMs = resolvedCases.reduce((sum, c) => {
-        const resolutionTime = (c.decidedAt || c.filedAt) - c.filedAt;
-        return sum + resolutionTime;
-      }, 0);
+      // Calculate auto-resolved percentage
+      // humanReviewRequired is optional - treat undefined/null/false as auto-resolved
+      const totalDisputes = allPaymentDisputes.length;
+      const autoResolvedCount = allPaymentDisputes.filter(d => {
+        // Only count as requiring review if explicitly set to true
+        return d.humanReviewRequired !== true;
+      }).length;
       
-      const avgResolutionTimeMs = totalResolutionTimeMs / resolvedCases.length;
-      avgResolutionMinutes = Math.round((avgResolutionTimeMs / (1000 * 60)) * 10) / 10; // Round to 1 decimal
+      const autoResolvedPercentage = totalDisputes > 0 
+        ? Math.round((autoResolvedCount / totalDisputes) * 100)
+        : 95; // Default to 95% if no disputes yet
+
+      // Calculate average resolution time from resolved cases
+      // Only use cases with both filedAt and decidedAt timestamps
+      const resolvedCases = allPaymentDisputes.filter(c => {
+        return (
+          c.status === "DECIDED" && 
+          typeof c.filedAt === "number" &&
+          typeof c.decidedAt === "number" &&
+          c.filedAt > 0 &&
+          c.decidedAt > 0 &&
+          c.decidedAt > c.filedAt // Sanity check: decidedAt must be after filedAt
+        );
+      });
+
+      let avgResolutionMinutes = 4.2; // Default fallback
       
-      // Cap at reasonable max (e.g., 60 minutes for display)
-      if (avgResolutionMinutes > 60) {
-        avgResolutionMinutes = 60;
+      if (resolvedCases.length > 0) {
+        const resolutionTimes = resolvedCases
+          .map(c => {
+            try {
+              const resolutionTimeMs = c.decidedAt! - c.filedAt;
+              // Only include positive, reasonable resolution times (less than 30 days)
+              if (resolutionTimeMs > 0 && resolutionTimeMs < 30 * 24 * 60 * 60 * 1000) {
+                return resolutionTimeMs;
+              }
+              return null;
+            } catch {
+              return null;
+            }
+          })
+          .filter((time): time is number => time !== null);
+        
+        if (resolutionTimes.length > 0) {
+          const totalResolutionTimeMs = resolutionTimes.reduce((sum, time) => sum + time, 0);
+          const avgResolutionTimeMs = totalResolutionTimeMs / resolutionTimes.length;
+          avgResolutionMinutes = Math.round((avgResolutionTimeMs / (1000 * 60)) * 10) / 10; // Round to 1 decimal
+          
+          // Cap at reasonable max (60 minutes for display)
+          if (avgResolutionMinutes > 60) {
+            avgResolutionMinutes = 60;
+          }
+          
+          // Ensure minimum of 0.1 minutes
+          if (avgResolutionMinutes < 0.1) {
+            avgResolutionMinutes = 0.1;
+          }
+        }
       }
-    }
 
-    return {
-      autoResolvedPercentage,
-      avgResolutionMinutes,
-      totalDisputes,
-      resolvedCases: resolvedCases.length,
-    };
+      return {
+        autoResolvedPercentage,
+        avgResolutionMinutes,
+        totalDisputes,
+        resolvedCases: resolvedCases.length,
+      };
+    } catch (error: any) {
+      console.error("Error calculating hero stats:", error);
+      // Return safe defaults on error
+      return {
+        autoResolvedPercentage: 95,
+        avgResolutionMinutes: 4.2,
+        totalDisputes: 0,
+        resolvedCases: 0,
+      };
+    }
   },
 });
 

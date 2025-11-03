@@ -96,27 +96,27 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
-                    onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
-                  >
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
+                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
                 </motion.div>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button 
-                    size="lg" 
-                    variant="secondary"
-                    className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                    onClick={() => window.location.href = 'https://docs.consulatehq.com'}
-                  >
-                    View Documentation →
-                  </Button>
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                >
+                  View Documentation →
+                </Button>
                 </motion.div>
               </motion.div>
             )}
@@ -131,14 +131,14 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button 
-                    size="lg" 
-                    variant="secondary"
-                    className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                    onClick={() => window.location.href = 'https://docs.consulatehq.com'}
-                  >
-                    View Documentation →
-                  </Button>
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                >
+                  View Documentation →
+                </Button>
                 </motion.div>
               </motion.div>
             )}
@@ -169,7 +169,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                       duration={stat.duration}
                       decimals={stat.decimals || 0}
                     />
-                  </div>
+              </div>
                   <div className="text-sm text-emerald-200/70 mt-1">{stat.label}</div>
                 </motion.div>
               ))}
@@ -187,7 +187,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
           <div className="grid lg:grid-cols-2 gap-16">
             {/* The Problem */}
             <AnimatedSection direction="right" delay={0.1}>
-              <div className="space-y-6">
+            <div className="space-y-6">
                 <motion.div 
                   className="inline-block"
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -195,37 +195,37 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4 }}
                 >
-                  <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE PROBLEM</p>
+                <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE PROBLEM</p>
                 </motion.div>
-                <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                  Every AI agent needs disputes. Nobody wants to build them.
-                </h2>
-                
+              <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
+                Every AI agent needs disputes. Nobody wants to build them.
+              </h2>
+              
                 <AnimatedList staggerDelay={0.1}>
-                  {[
-                    "Building dispute logic takes months of development",
-                    "Fraud detection requires specialized ML expertise",
-                    "Compliance and regulations are constantly changing",
-                    "Manual dispute handling doesn't scale with agents"
-                  ].map((problem, idx) => (
+                {[
+                  "Building dispute logic takes months of development",
+                  "Fraud detection requires specialized ML expertise",
+                  "Compliance and regulations are constantly changing",
+                  "Manual dispute handling doesn't scale with agents"
+                ].map((problem, idx) => (
                     <motion.div
-                      key={idx}
+                    key={idx} 
                       whileHover={{ x: 4 }}
-                      className="flex items-start gap-4 p-4 rounded-lg bg-red-50/50 border border-red-100/50 hover:bg-red-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                        <XCircle className="h-5 w-5 text-red-600" />
-                      </div>
-                      <p className="text-base text-slate-700 pt-1">{problem}</p>
+                    className="flex items-start gap-4 p-4 rounded-lg bg-red-50/50 border border-red-100/50 hover:bg-red-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                    </div>
+                    <p className="text-base text-slate-700 pt-1">{problem}</p>
                     </motion.div>
-                  ))}
+                ))}
                 </AnimatedList>
               </div>
             </AnimatedSection>
 
             {/* The Solution */}
             <AnimatedSection direction="left" delay={0.2}>
-              <div className="space-y-6">
+            <div className="space-y-6">
                 <motion.div 
                   className="inline-block"
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -233,30 +233,30 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4 }}
                 >
-                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
+                <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
                 </motion.div>
-                <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                  One API. Full dispute infrastructure.
-                </h2>
-                
+              <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
+                One API. Full dispute infrastructure.
+              </h2>
+              
                 <AnimatedList staggerDelay={0.1}>
-                  {[
-                    "Integrate disputes in minutes with one SDK call",
-                    "AI agents handle 95% of disputes automatically",
-                    "Built-in fraud detection and compliance",
-                    "Scale to millions of disputes without ops overhead"
-                  ].map((solution, idx) => (
+                {[
+                  "Integrate disputes in minutes with one SDK call",
+                  "AI agents handle 95% of disputes automatically",
+                  "Built-in fraud detection and compliance",
+                  "Scale to millions of disputes without ops overhead"
+                ].map((solution, idx) => (
                     <motion.div
-                      key={idx}
+                    key={idx} 
                       whileHover={{ x: 4 }}
-                      className="flex items-start gap-4 p-4 rounded-lg bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle className="h-5 w-5 text-emerald-600" />
-                      </div>
-                      <p className="text-base text-slate-700 pt-1">{solution}</p>
+                    className="flex items-start gap-4 p-4 rounded-lg bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <p className="text-base text-slate-700 pt-1">{solution}</p>
                     </motion.div>
-                  ))}
+                ))}
                 </AnimatedList>
               </div>
             </AnimatedSection>
@@ -268,15 +268,15 @@ const result = await mcp.invoke("consulate_file_dispute", {
       <section id="how-it-works" data-animate className="py-24 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <AnimatedSection direction="up" delay={0.1}>
-            <div className="text-center mb-16">
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">HOW IT WORKS</Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
-                Expose Consulate Tools
-              </h2>
-              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                Add our MCP tools to your server. Route disputes to us. Focus on building your agent.
-              </p>
-            </div>
+          <div className="text-center mb-16">
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">HOW IT WORKS</Badge>
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+              Expose Consulate Tools
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Add our MCP tools to your server. Route disputes to us. Focus on building your agent.
+            </p>
+          </div>
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
@@ -291,7 +291,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.6, delay: 0.2 }}
               whileHover={{ y: -8 }}
             >
-              <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
               <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 1
               </div>
@@ -305,7 +305,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 <p className="text-slate-600 leading-relaxed">
                   Add the consulate_file_dispute tool to your MCP server as a wrapper that forwards to our API. Your users get instant dispute resolution.
                 </p>
-                </CardContent>
+              </CardContent>
             </Card>
             </motion.div>
 
@@ -317,7 +317,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.6, delay: 0.3 }}
               whileHover={{ y: -8 }}
             >
-              <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
               <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 2
               </div>
@@ -331,7 +331,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 <p className="text-slate-600 leading-relaxed">
                   When users invoke the tool, disputes automatically route to Consulate with full transaction context. No additional integration needed.
                 </p>
-                </CardContent>
+              </CardContent>
             </Card>
             </motion.div>
 
@@ -343,7 +343,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.6, delay: 0.4 }}
               whileHover={{ y: -8 }}
             >
-              <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
+            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 group relative bg-white">
               <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 3
               </div>
@@ -374,15 +374,15 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <AnimatedSection direction="up" delay={0.1}>
-            <div className="text-center mb-16">
-              <Badge className="bg-white/10 text-white border-white/20 mb-4 backdrop-blur-sm">FEATURES</Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                Built for MCP server builders
-              </h2>
-              <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-                Everything you need to add world-class dispute resolution to your agent
-              </p>
-            </div>
+          <div className="text-center mb-16">
+            <Badge className="bg-white/10 text-white border-white/20 mb-4 backdrop-blur-sm">FEATURES</Badge>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+              Built for MCP server builders
+            </h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Everything you need to add world-class dispute resolution to your agent
+            </p>
+          </div>
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -454,7 +454,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <AnimatedSection direction="right" delay={0.1}>
-              <div>
+            <div>
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">DEVELOPER FIRST</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight">
                 Beautiful APIs. Comprehensive docs.
@@ -494,11 +494,11 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 View Documentation
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
-              </div>
+            </div>
             </AnimatedSection>
 
             <AnimatedSection direction="left" delay={0.2}>
-              <div className="relative">
+            <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-2xl blur-2xl" />
               <Card className="border-2 border-slate-200 shadow-2xl relative overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-t-lg border-b-0 pb-4">
@@ -547,7 +547,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   </pre>
                 </CardContent>
               </Card>
-              </div>
+            </div>
             </AnimatedSection>
           </div>
         </div>
@@ -562,48 +562,48 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimatedSection direction="up" delay={0.1}>
-            <div className="inline-block mb-6">
-              <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
-                Ready to get started?
-              </Badge>
-            </div>
-            
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Ship disputes in 5 minutes
-            </h2>
-            <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
-              Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="inline-block mb-6">
+            <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+              Ready to get started?
+            </Badge>
+          </div>
+          
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            Ship disputes in 5 minutes
+          </h2>
+          <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
+            Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             {!isSignedIn && (
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button 
-                  size="lg" 
-                  className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
-                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
-                >
-                  <Key className="mr-2 h-5 w-5" />
-                  Get Your API Key
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
+              <Button 
+                size="lg" 
+                className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
+                onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+              >
+                <Key className="mr-2 h-5 w-5" />
+                Get Your API Key
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
               </motion.div>
             )}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Button 
-                size="lg" 
-                className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
-                onClick={() => window.location.href = 'https://docs.consulatehq.com'}
-              >
-                <BookOpen className="mr-2 h-5 w-5" />
-                Read the Docs
-              </Button>
+            <Button 
+              size="lg" 
+              className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
+              onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+            >
+              <BookOpen className="mr-2 h-5 w-5" />
+              Read the Docs
+            </Button>
             </motion.div>
           </div>
 
