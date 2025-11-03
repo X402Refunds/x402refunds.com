@@ -115,12 +115,12 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </h2>
               
               {/* Problem Image */}
-              <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-2xl shadow-red-500/20 border-2 border-red-100 mb-8 bg-gradient-to-br from-slate-950 to-red-950">
+              <div className="relative w-full h-[450px] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-slate-200 hover:border-red-300 mb-8 bg-white group">
                 <Image
                   src="/consulate-one-api-illustration-index-page.png"
                   alt="Complex payment dispute infrastructure illustration"
                   fill
-                  className="object-contain p-8"
+                  className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
                   priority
                 />
               </div>
@@ -135,7 +135,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                     key={idx} 
                     className="flex items-start gap-3 p-3 rounded-lg bg-red-50/50 border border-red-100/50 hover:bg-red-50 transition-colors"
                   >
-                    <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <XCircle className="h-4 w-4 text-red-600" />
                     </div>
                     <p className="text-sm text-slate-700 leading-relaxed">{problem}</p>
@@ -154,12 +154,12 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </h2>
               
               {/* Solution Image */}
-              <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/20 border-2 border-emerald-100 mb-8 bg-gradient-to-br from-slate-950 to-emerald-950">
+              <div className="relative w-full h-[450px] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-slate-200 hover:border-emerald-300 mb-8 bg-white group">
                 <Image
                   src="/consulate-dispute-illustration-index-page.png"
                   alt="Automated dispute resolution with AI agents"
                   fill
-                  className="object-contain p-8"
+                  className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
                   priority
                 />
               </div>
@@ -174,7 +174,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                     key={idx} 
                     className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
                   >
-                    <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="h-4 w-4 text-emerald-600" />
                     </div>
                     <p className="text-sm text-slate-700 leading-relaxed">{solution}</p>
