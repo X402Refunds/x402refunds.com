@@ -71,14 +71,23 @@ pnpm lint && pnpm type-check && pnpm build && pnpm test:run && pnpm update-conte
 
 ### What These Checks Prevent
 - ❌ **Lint failures**: Catch code style issues before they reach CI
+- ❌ **Lint warnings**: Pre-commit hook enforces zero warnings (--max-warnings=0)
 - ❌ **Type errors**: Prevent TypeScript compilation failures
 - ❌ **Build failures**: Ensure all code compiles successfully
 - ❌ **Test failures**: Catch broken functionality before deployment
 - ❌ **Stale context**: Keep codebase context graph up-to-date
 
+### Pre-Commit Hook
+The pre-commit hook automatically:
+1. **Runs lint check** - Blocks commits if any warnings exist
+2. **Updates context graph** - Auto-generates codebase context
+3. **Hashes arbitration rules** - If rules files are being committed
+
+**To bypass (not recommended):** `git commit --no-verify`
+
 ### When to Commit
 **✅ ONLY commit when ALL checks pass:**
-- Lint: 0 errors
+- Lint: 0 errors, 0 warnings (enforced by pre-commit hook)
 - Type check: 0 errors
 - Build: Success
 - Tests: All passed (or documented known failures)

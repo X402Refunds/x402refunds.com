@@ -19,8 +19,22 @@ const HOOKS_DIR = path.join(ROOT_DIR, '.git/hooks');
 // Define hooks
 const HOOKS = {
   'pre-commit': `#!/bin/bash
-# Auto-update codebase context and hash arbitration rules on every commit
+# Pre-commit checks: lint (including warnings) and context updates
 
+echo "🔍 Running pre-commit checks..."
+
+# Run linting (will fail on warnings due to --max-warnings=0 in package.json)
+echo "📋 Checking for lint errors and warnings..."
+if ! pnpm lint; then
+  echo ""
+  echo "❌ Lint check failed!"
+  echo "   Please fix all lint warnings before committing."
+  echo "   Run 'pnpm lint' to see details."
+  exit 1
+fi
+echo "✅ Lint passed (no errors or warnings)"
+
+echo ""
 echo "📊 Updating codebase context..."
 
 # Generate context graph
