@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { AnimatedGrid } from "@/components/AnimatedGrid"
 import { AnimatedSection, AnimatedList } from "@/components/ui/animated-section"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { useUser } from "@clerk/nextjs"
@@ -140,9 +141,9 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               {[
-                { value: "95%", label: "Auto-resolved" },
-                { value: "4.2m", label: "Avg resolution" },
-                { value: "5m", label: "Integration" }
+                { value: 95, suffix: "%", label: "Auto-resolved", duration: 2 },
+                { value: 4.2, suffix: "m", label: "Avg resolution", duration: 2.5, decimals: 1 },
+                { value: 5, suffix: "m", label: "Integration", duration: 2.2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
@@ -151,7 +152,14 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 + idx * 0.1 }}
                 >
-                  <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">{stat.value}</div>
+                  <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
+                    <AnimatedCounter 
+                      value={stat.value} 
+                      suffix={stat.suffix}
+                      duration={stat.duration}
+                      decimals={stat.decimals || 0}
+                    />
+                  </div>
                   <div className="text-sm text-emerald-200/70 mt-1">{stat.label}</div>
                 </motion.div>
               ))}
