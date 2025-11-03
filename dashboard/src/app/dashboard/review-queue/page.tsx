@@ -58,9 +58,9 @@ export default function ReviewQueuePage() {
         {/* Header */}
         <AnimatedSection direction="down" delay={0.1}>
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Payment Dispute Review Queue</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Dispute Review Queue</h1>
             <p className="text-slate-600">
-              Review disputes that need your domain expertise. AI provides recommendations - you make the final decision.
+              AI analyzes disputes and provides recommendations. Review and approve or override based on your business rules.
             </p>
             {organization?.aiEnabled === false && (
               <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
