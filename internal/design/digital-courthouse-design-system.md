@@ -365,6 +365,103 @@ font-normal:    400  /* Body text */
 
 ---
 
+## 🧭 **Navigation & Layout Components**
+
+### Navigation Header (Public Pages)
+
+#### **Main Navigation**
+```tsx
+<nav className="border-b border-emerald-200 
+                bg-gradient-to-r from-white via-emerald-50/30 to-white 
+                backdrop-blur-sm sticky top-0 z-50 shadow-lg relative">
+  {/* Emerald accent bar */}
+  <div className="absolute top-0 left-0 right-0 h-1 
+                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+  
+  {/* Navigation content */}
+</nav>
+```
+
+**Pattern:**
+- Subtle emerald gradient background (white → emerald-50/30 → white)
+- Emerald border (border-emerald-200) instead of slate
+- Emerald accent bar at top (1px gradient line)
+- Enhanced shadow for depth (shadow-lg)
+- Backdrop blur for modern glass effect
+
+#### **Navigation Dropdown Menu**
+```tsx
+<div className="w-[600px] p-6 
+                bg-gradient-to-br from-white to-emerald-50/20 
+                border-2 border-emerald-200 shadow-2xl rounded-lg">
+  {/* Menu content */}
+</div>
+```
+
+**Pattern:**
+- Gradient background (white → emerald-50/20)
+- Emerald border (border-emerald-200)
+- Strong shadow for elevation (shadow-2xl)
+
+---
+
+### Footer
+
+#### **Main Footer**
+```tsx
+<footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 
+                  text-slate-400 py-12 sm:py-16 
+                  border-t-4 border-emerald-600/30 relative">
+  {/* Emerald accent bar */}
+  <div className="absolute top-0 left-0 right-0 h-1 
+                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+  
+  {/* Footer content */}
+</footer>
+```
+
+**Pattern:**
+- Dark gradient background (slate-900 → slate-900 → emerald-950)
+- Emerald accent border at top (border-t-4 border-emerald-600/30)
+- Emerald accent bar (1px gradient line)
+- Text color: slate-400 for readability
+
+**Why this works:**
+- Creates visual continuity with emerald brand throughout the page
+- Dark footer provides strong contrast to white content areas
+- Emerald gradient adds warmth and brand presence
+- Accent bars create cohesive design language
+
+---
+
+### Dashboard Header
+
+#### **Government/Dashboard Header**
+```tsx
+<header className="bg-gradient-to-r from-white via-emerald-50/20 to-white 
+                  border-b border-emerald-200 px-4 sm:px-6 py-3 relative shadow-sm">
+  {/* Emerald accent bar */}
+  <div className="absolute top-0 left-0 right-0 h-1 
+                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+  
+  {/* Header content */}
+</header>
+```
+
+**Pattern:**
+- Subtle emerald gradient (white → emerald-50/20 → white)
+- Emerald border (border-emerald-200)
+- Emerald accent bar (1px gradient)
+- Light shadow for separation (shadow-sm)
+
+**Design Rationale:**
+- Matches public navigation header for consistency
+- Subtle enough for dashboard context (less prominent than public nav)
+- Emerald accents maintain brand presence
+- Professional appearance suitable for internal tools
+
+---
+
 ## 📏 **Spacing & Layout**
 
 ### 8-Point Grid System
@@ -561,19 +658,33 @@ text-emerald-100                       /* Text (dark bg, accented) */
 
 /* Borders */
 border-slate-200                       /* Default borders */
-border-emerald-200                     /* Accented borders */
+border-emerald-200                     /* Accented borders (headers, footers) */
 hover:border-emerald-300               /* Hover states */
+
+/* Header/Footer Patterns */
+bg-gradient-to-r from-white via-emerald-50/30 to-white  /* Navigation header */
+bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950  /* Footer */
+border-t-4 border-emerald-600/30                         /* Footer accent border */
 ```
 
 ---
 
 ## 🎨 **Design System Version**
 
-**Version:** 2.0.0 (Digital Courthouse)  
+**Version:** 2.0.1 (Digital Courthouse)  
 **Last Updated:** November 2025  
-**Previous Version:** 1.0.0 (Sovereign Civic)
+**Previous Version:** 2.0.0 (Digital Courthouse)
 
 ### Changelog
+
+- **v2.0.1** (Nov 2025): Enhanced header/footer with emerald branding
+  - Navigation header: Added emerald gradient background (white → emerald-50/30 → white)
+  - Navigation header: Emerald borders and accent bars for brand consistency
+  - Footer: Added emerald gradient (slate-900 → emerald-950) for visual harmony
+  - Footer: Emerald accent border and accent bar
+  - Dashboard header: Enhanced with emerald gradient and accent bar
+  - Improved visual continuity across all pages
+  - Maintains professional appearance while strengthening brand presence
 
 - **v2.0.0** (Nov 2025): Digital Courthouse redesign
   - Emerald (#10b981) as primary brand color
