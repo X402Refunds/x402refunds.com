@@ -12,10 +12,20 @@ import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { useUser } from "@clerk/nextjs"
+import { useQuery } from "convex/react"
+import { api } from "@convex/_generated/api"
 
 export default function HomePage() {
   const [copiedCode, setCopiedCode] = useState(false)
   const { isSignedIn } = useUser()
+  
+  // Get real stats from backend
+  const heroStats = useQuery(api.paymentDisputes.getHeroStats)
+  
+  // Use real stats or fallback to defaults
+  const autoResolvedPercentage = heroStats?.autoResolvedPercentage ?? 95
+  const avgResolutionMinutes = heroStats?.avgResolutionMinutes ?? 4.2
+  const integrationMinutes = 2 // Fixed value as requested
 
   const copyCodeToClipboard = () => {
     const code = `// File a dispute via MCP tool
@@ -141,9 +151,9 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               {[
-                { value: 95, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: 4.2, suffix: "m", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { value: 5, suffix: "m", label: "Integration", duration: 2.2 }
+                { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
+                { value: avgResolutionMinutes, suffix: "m", label: "Avg resolution", duration: 2.5, decimals: 1 },
+                { value: integrationMinutes, suffix: "m", label: "Integration", duration: 2.2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
