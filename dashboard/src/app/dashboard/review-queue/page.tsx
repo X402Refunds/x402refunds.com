@@ -61,11 +61,16 @@ export default function ReviewQueuePage() {
       <div className="space-y-6">
         {/* Header */}
         <AnimatedSection direction="down" delay={0.1}>
-          <div className="mb-6">
+          <div className="mb-4">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Dispute Review Queue</h1>
-            <p className="text-slate-600">
-              AI analyzes disputes and provides recommendations. Review and approve or override based on your business rules.
-            </p>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-slate-600">
+                AI analyzes disputes and provides recommendations. Review and approve or override based on your business rules.
+              </p>
+              <Badge variant="secondary" className="text-sm whitespace-nowrap">
+                {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
             {organization?.aiEnabled === false && (
               <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
@@ -79,14 +84,7 @@ export default function ReviewQueuePage() {
         {/* Review Queue Section */}
         <AnimatedSection direction="up" delay={0.2}>
           <Card className="border-slate-200 shadow-sm">
-            <CardHeader>
-              <div className="flex items-center justify-end">
-                <Badge variant="secondary" className="text-sm">
-                  {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {!reviewQueue || reviewQueue.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
