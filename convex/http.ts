@@ -112,7 +112,7 @@ http.route({
     return new Response(JSON.stringify({ 
       status: "healthy", 
       timestamp: Date.now(),
-      service: "consulate-ai" 
+      service: "consulate-inc" 
     }), {
       headers: corsHeaders,
     });
