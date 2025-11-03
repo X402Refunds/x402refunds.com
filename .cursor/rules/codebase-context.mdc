@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-03T07:45:33.072Z
+**Auto-generated on**: 2025-11-03T09:27:39.289Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -115,9 +115,10 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (52 components)
+### React Components (54 components)
 - AnimatedGrid
 - Footer
+- MatrixRain
 - Navigation
 - StructuredData
 - chain-verification-badge
@@ -135,9 +136,8 @@ Common HTTP routes exposed:
 - accordion
 - alert-dialog
 - alert
-- animated-button
 
-... and 32 more
+... and 34 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -280,7 +280,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 52 components organized by feature
+- 54 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 21 TypeScript files with serverless functions
@@ -322,5 +322,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/2/2025, 11:45:33 PM
-Files scanned: 265
+Generated: 11/3/2025, 1:27:39 AM
+Files scanned: 267
