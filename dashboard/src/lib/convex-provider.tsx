@@ -21,14 +21,7 @@ export default function ConvexClientProvider({
     if (auth.isLoaded && auth.isSignedIn) {
       auth.getToken({ template: "convex" })
         .then((token) => {
-          if (token) {
-            // Decode token to verify issuer (just for debugging)
-            try {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-            } catch {
-              // Ignore decode errors
-            }
-          } else {
+          if (!token) {
             console.warn('[Convex Auth] No token retrieved - check Clerk JWT template "convex"');
           }
         })
