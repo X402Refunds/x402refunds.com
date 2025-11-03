@@ -85,7 +85,7 @@ export default function ReviewQueuePage() {
           
         {/* Review Queue Section */}
         <AnimatedSection direction="up" delay={0.2}>
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-2 border-slate-200 shadow-sm">
             <CardContent className="pt-6">
               {!displayQueue || displayQueue.length === 0 ? (
                 <div className="text-center py-8">
@@ -129,8 +129,8 @@ export default function ReviewQueuePage() {
                               // The query will automatically update and remove it
                             }, 100)
                           } : undefined}
-                          whileHover={isApproving ? {} : { x: 4 }}
-                          className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer relative overflow-hidden"
+                          whileHover={isApproving ? {} : { x: 2 }}
+                          className="p-4 bg-white rounded-lg border-2 border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer relative overflow-hidden"
                           onClick={() => !isApproving && router.push(`/dashboard/disputes/${dispute._id}`)}
                         >
                           {/* Inline checkmark at top right - appears when approving */}
@@ -141,15 +141,15 @@ export default function ReviewQueuePage() {
                           />
                           <div className="flex justify-between items-start mb-3">
                             <div>
-                              <p className="font-bold text-slate-900 text-lg">
+                              <p className="font-semibold text-slate-900 text-lg">
                                 ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
                               </p>
-                              <p className="text-sm text-slate-600">
+                              <p className="text-sm text-slate-600 mt-0.5">
                                 {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
                               </p>
                             </div>
                             {!isApproving && (
-                              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                                 AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
                               </Badge>
                             )}
@@ -158,18 +158,18 @@ export default function ReviewQueuePage() {
                       {dispute.aiRecommendation ? (
                         <>
                           <div className="flex items-center gap-2 mb-3">
-                            <span className="text-sm font-medium text-slate-700">AI Recommends:</span>
+                            <span className="text-sm font-medium text-slate-600">AI Recommends:</span>
                             <Badge className={
                               dispute.aiRecommendation.verdict === "CONSUMER_WINS" 
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : "bg-slate-50 text-slate-700 border-slate-200"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium"
+                                : "bg-slate-50 text-slate-700 border border-slate-200 font-medium"
                             }>
                               {dispute.aiRecommendation.verdict}
                             </Badge>
-        </div>
+                          </div>
         
                           {dispute.aiRecommendation.reasoning && (
-                            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                            <p className="text-sm text-slate-600 mb-3 line-clamp-2 leading-relaxed">
                               {dispute.aiRecommendation.reasoning}
                             </p>
                           )}
@@ -177,19 +177,19 @@ export default function ReviewQueuePage() {
                       ) : (
                         <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
-                            <p className="text-sm font-medium text-purple-900">AI Analysis Pending...</p>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent"></div>
+                            <p className="text-sm font-medium text-purple-800">AI Analysis Pending...</p>
                           </div>
                           <p className="text-xs text-purple-700 mt-1">
                             Usually completes in under 2 minutes. Refresh to see recommendation.
-                </p>
-              </div>
+                          </p>
+                        </div>
                       )}
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 pt-1">
                         <Button
                           size="sm"
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow transition-shadow"
                           disabled={!dispute.aiRecommendation}
                           onClick={async (e) => {
                             e.stopPropagation()
@@ -209,7 +209,7 @@ export default function ReviewQueuePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 border-slate-300 hover:bg-slate-50 hover:border-slate-400 text-slate-700"
                           onClick={(e) => {
                             e.stopPropagation()
                             router.push(`/dashboard/disputes/${dispute._id}`)
@@ -231,10 +231,10 @@ export default function ReviewQueuePage() {
         {/* Footer Help */}
         {displayQueue.length > 0 && (
           <AnimatedSection direction="up" delay={0.3}>
-            <Card className="bg-gray-50 dark:bg-gray-900">
+            <Card className="bg-slate-50 border-2 border-slate-200">
             <CardContent className="pt-6">
-              <h4 className="text-sm font-semibold mb-2">Tips for Reviewing:</h4>
-              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <h4 className="text-sm font-semibold mb-2 text-slate-700">Tips for Reviewing:</h4>
+              <ul className="text-sm text-slate-600 space-y-1">
                 <li>• <strong>Approve AI</strong> if the recommendation aligns with your knowledge</li>
                 <li>• <strong>Override</strong> if you have context the AI doesn&apos;t (customer history, fraud patterns, etc.)</li>
                 <li>• <strong>Be specific in notes</strong> - this helps the AI learn your business rules</li>
