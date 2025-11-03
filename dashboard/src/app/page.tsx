@@ -20,7 +20,7 @@ export default function HomePage() {
   // Static stats (average/marketing values)
   const autoResolvedPercentage = 95
   const avgResolutionMinutes = 4.2
-  const integrationMinutes = 2
+  const integrationMinutes = 5
 
   const copyCodeToClipboard = () => {
     const code = `// File a dispute via MCP tool
@@ -147,8 +147,8 @@ const result = await mcp.invoke("consulate_file_dispute", {
             >
               {[
                 { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: avgResolutionMinutes, suffix: "m", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { value: integrationMinutes, suffix: "m", label: "Integration", duration: 2.2 }
+                { value: avgResolutionMinutes, suffix: " minutes", label: "Avg resolution", duration: 2.5, decimals: 1 },
+                { value: integrationMinutes, suffix: " minutes", label: "Time to integrate", duration: 2.2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
