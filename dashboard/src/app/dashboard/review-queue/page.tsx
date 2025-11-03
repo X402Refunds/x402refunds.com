@@ -28,6 +28,12 @@ export default function ReviewQueuePage() {
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip"
   )
   
+  // Get organization to check AI status
+  const organization = useQuery(
+    api.users.getUserOrganization,
+    currentUser ? { userId: currentUser._id } : "skip"
+  )
+  
   const customerReview = useMutation(api.paymentDisputes.customerReview)
   
   if (!isLoaded || !currentUser) {
@@ -56,6 +62,13 @@ export default function ReviewQueuePage() {
             <p className="text-slate-600">
               Review disputes that need your domain expertise. AI provides recommendations - you make the final decision.
             </p>
+            {organization?.aiEnabled === false && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>AI Analysis Disabled:</strong> Existing AI recommendations are still shown below, but new disputes will not receive AI analysis until you re-enable AI.
+                </p>
+              </div>
+            )}
           </div>
         </AnimatedSection>
 

@@ -4,9 +4,9 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@convex/_generated/api"
-import { motion } from "framer-motion"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 
@@ -110,23 +110,15 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
         <div className="flex items-center gap-2 sm:gap-4">
           {/* AI Toggle - Only show on dashboard routes */}
           {isDashboardRoute && currentUser?.organizationId && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={async () => {
+            <Switch
+              checked={organization?.aiEnabled !== false}
+              onCheckedChange={async (checked) => {
                 await updateOrganization({
                   organizationId: currentUser.organizationId!,
-                  aiEnabled: !(organization?.aiEnabled !== false),
+                  aiEnabled: checked,
                 })
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                organization?.aiEnabled !== false
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-slate-300 text-slate-700 hover:bg-slate-400'
-              }`}
-            >
-              AI: {organization?.aiEnabled !== false ? 'ON' : 'OFF'}
-            </motion.button>
+            />
           )}
 
           {/* User Display Name - Hidden on mobile */}
