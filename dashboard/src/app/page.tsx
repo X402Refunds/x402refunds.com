@@ -1,7 +1,6 @@
 "use client"
 
 import { Code, Share, Sparkles, Plug, Webhook, ShieldCheck, Network, LineChart, Scale, Book, Terminal, Beaker, XCircle, CheckCircle, Key, BookOpen, ArrowRight, Copy, Check } from "lucide-react"
-import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -110,35 +109,25 @@ const result = await mcp.invoke("consulate_file_dispute", {
               <div className="inline-block">
                 <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE PROBLEM</p>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
+              <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
                 Every payment agent needs disputes. Nobody wants to build them.
               </h2>
               
-              {/* Problem Image */}
-              <div className="relative w-full h-[450px] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-slate-200 hover:border-red-300 mb-8 bg-white group">
-                <Image
-                  src="/consulate-one-api-illustration-index-page.png"
-                  alt="Complex payment dispute infrastructure illustration"
-                  fill
-                  className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                  priority
-                />
-              </div>
-              
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {[
                   "Building dispute logic takes months of development",
+                  "Fraud detection requires specialized ML expertise",
                   "Compliance and regulations are constantly changing",
                   "Manual dispute handling doesn't scale with agents"
                 ].map((problem, idx) => (
                   <div 
                     key={idx} 
-                    className="flex items-start gap-3 p-3 rounded-lg bg-red-50/50 border border-red-100/50 hover:bg-red-50 transition-colors"
+                    className="flex items-start gap-4 p-4 rounded-lg bg-red-50/50 border border-red-100/50 hover:bg-red-50 transition-colors"
                   >
-                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <XCircle className="h-4 w-4 text-red-600" />
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <XCircle className="h-5 w-5 text-red-600" />
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{problem}</p>
+                    <p className="text-base text-slate-700 pt-1">{problem}</p>
                   </div>
                 ))}
               </div>
@@ -149,35 +138,25 @@ const result = await mcp.invoke("consulate_file_dispute", {
               <div className="inline-block">
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
+              <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
                 One API. Full dispute infrastructure.
               </h2>
               
-              {/* Solution Image */}
-              <div className="relative w-full h-[450px] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-slate-200 hover:border-emerald-300 mb-8 bg-white group">
-                <Image
-                  src="/consulate-dispute-illustration-index-page.png"
-                  alt="Automated dispute resolution with AI agents"
-                  fill
-                  className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                  priority
-                />
-              </div>
-              
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {[
                   "Integrate disputes in minutes with one SDK call",
                   "AI agents handle 95% of disputes automatically",
+                  "Built-in fraud detection and compliance",
                   "Scale to millions of disputes without ops overhead"
                 ].map((solution, idx) => (
                   <div 
                     key={idx} 
-                    className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
+                    className="flex items-start gap-4 p-4 rounded-lg bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
                   >
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="h-4 w-4 text-emerald-600" />
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{solution}</p>
+                    <p className="text-base text-slate-700 pt-1">{solution}</p>
                   </div>
                 ))}
               </div>
