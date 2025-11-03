@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Linkedin, Twitter, Calendar, MapPin, Building2, Key, ArrowRight, BookOpen, CheckCircle } from "lucide-react"
+import { Mail, Linkedin, Twitter, Calendar, MapPin, Key, ArrowRight, BookOpen, CheckCircle } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -243,50 +243,6 @@ export default function AboutPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </section>
-
-      {/* Technology Stack */}
-      <section className="py-8 sm:py-12 lg:py-16">
-        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Built for Speed & Reliability
-            </h2>
-            <p className="text-lg text-slate-600">
-              Modern infrastructure for real-time dispute resolution
-            </p>
-          </div>
-
-          <Card className="border-2 border-slate-200">
-            <CardContent className="pt-6">
-              <div className="grid sm:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-emerald-600" />
-                    Technology
-                  </h3>
-                  <ul className="space-y-2 text-slate-600 text-sm">
-                    <li>• <strong>Backend:</strong> Convex (serverless functions & database)</li>
-                    <li>• <strong>Frontend:</strong> Next.js 15 + React 19 on Vercel</li>
-                    <li>• <strong>Language:</strong> TypeScript throughout</li>
-                    <li>• <strong>Auth:</strong> Clerk for secure authentication</li>
-                    <li>• <strong>Testing:</strong> Vitest for comprehensive test coverage</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-3">Key Metrics</h3>
-                  <ul className="space-y-2 text-slate-600 text-sm">
-                    <li>• <strong>Uptime:</strong> 99.9% (institutional-grade)</li>
-                    <li>• <strong>Avg Resolution:</strong> 2.4 minutes</li>
-                    <li>• <strong>API Response:</strong> &lt;200ms globally</li>
-                    <li>• <strong>Security:</strong> End-to-end encryption</li>
-                    <li>• <strong>Compliance:</strong> SOC 2 Type II ready</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
