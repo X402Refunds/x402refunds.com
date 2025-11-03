@@ -110,15 +110,18 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
         <div className="flex items-center gap-2 sm:gap-4">
           {/* AI Toggle - Only show on dashboard routes */}
           {isDashboardRoute && currentUser?.organizationId && (
-            <Switch
-              checked={organization?.aiEnabled !== false}
-              onCheckedChange={async (checked) => {
-                await updateOrganization({
-                  organizationId: currentUser.organizationId!,
-                  aiEnabled: checked,
-                })
-              }}
-            />
+            <div className="flex items-center gap-2 border border-slate-300 rounded-md px-2 py-1">
+              <span className="text-xs font-medium text-slate-700">AI</span>
+              <Switch
+                checked={organization?.aiEnabled !== false}
+                onCheckedChange={async (checked) => {
+                  await updateOrganization({
+                    organizationId: currentUser.organizationId!,
+                    aiEnabled: checked,
+                  })
+                }}
+              />
+            </div>
           )}
 
           {/* User Display Name - Hidden on mobile */}
