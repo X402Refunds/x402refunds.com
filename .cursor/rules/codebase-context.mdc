@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-03T03:52:52.671Z
+**Auto-generated on**: 2025-11-03T04:18:58.104Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -61,6 +61,8 @@ consulate/
 
 ### Other Images
 - dashboard/public/apple-touch-icon.png
+- dashboard/public/consulate-dispute-illustration-index-page.png
+- dashboard/public/consulate-one-api-illustration-index-page.png
 - dashboard/public/file.svg
 - dashboard/public/globe.svg
 - dashboard/public/next.svg
@@ -68,8 +70,6 @@ consulate/
 - dashboard/public/vivek-headshot.jpg
 - dashboard/public/window.svg
 - mintlify-docs/public/consulate-icon-simple.png
-- mintlify-docs/public/consulate-icon-simple.svg
-- public/consulate-icon-simple.png
 
 ## ⚡ Backend API (Convex Functions)
 
@@ -322,5 +322,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/2/2025, 7:52:52 PM
-Files scanned: 264
+Generated: 11/2/2025, 8:18:58 PM
+Files scanned: 268
