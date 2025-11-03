@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/ui/animated-section"
 import { SuccessCheckmark } from "@/components/ui/success-checkmark"
 import { useState } from "react"
@@ -17,7 +17,7 @@ import { useState } from "react"
 export default function ReviewQueuePage() {
   const { isLoaded } = useUser()
   const router = useRouter()
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [successDisputeId, setSuccessDisputeId] = useState<string | null>(null)
   
   // Sync and get user
   const currentUser = useQuery(
@@ -55,9 +55,11 @@ export default function ReviewQueuePage() {
     )
   }
   
+  // Filter out the dispute that's showing success animation (will be removed after animation)
+  const displayQueue = reviewQueue.filter(dispute => dispute._id !== successDisputeId)
+  
   return (
     <DashboardLayout>
-      <SuccessCheckmark show={showSuccess} onComplete={() => setShowSuccess(false)} />
       <div className="space-y-6">
         {/* Header */}
         <AnimatedSection direction="down" delay={0.1}>
@@ -68,7 +70,7 @@ export default function ReviewQueuePage() {
                 AI analyzes disputes and provides recommendations. Review and approve or override based on your business rules.
               </p>
               <Badge variant="secondary" className="text-sm whitespace-nowrap">
-                {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''}
+                {displayQueue.length} dispute{displayQueue.length !== 1 ? 's' : ''}
               </Badge>
         </div>
             {organization?.aiEnabled === false && (
@@ -85,7 +87,7 @@ export default function ReviewQueuePage() {
         <AnimatedSection direction="up" delay={0.2}>
           <Card className="border-slate-200 shadow-sm">
             <CardContent className="pt-6">
-              {!reviewQueue || reviewQueue.length === 0 ? (
+              {!displayQueue || displayQueue.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
                   <p className="font-semibold text-slate-900 mb-1">All Caught Up!</p>
@@ -106,7 +108,41 @@ export default function ReviewQueuePage() {
                     },
                   }}
                 >
-                  {reviewQueue.map((dispute) => (
+                  {/* Show success animation card separately if exists */}
+                  <AnimatePresence>
+                    {successDisputeId && (() => {
+                      const successDispute = reviewQueue.find(d => d._id === successDisputeId)
+                      if (!successDispute) return null
+                      return (
+                        <motion.div
+                          key={`success-${successDisputeId}`}
+                          initial={{ opacity: 1, scale: 1 }}
+                          animate={{ opacity: 0, scale: 0.95 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5, delay: 1.5 }}
+                          onAnimationComplete={() => setSuccessDisputeId(null)}
+                          className="p-4 bg-white rounded-lg border-2 border-emerald-200 relative"
+                        >
+                          <SuccessCheckmark 
+                            show={true} 
+                            onComplete={() => {}}
+                            inline={true}
+                          />
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="font-bold text-slate-900 text-lg">
+                                ${successDispute.amount?.toFixed(2) || "0.00"} {successDispute.currency || "USD"}
+                              </p>
+                              <p className="text-sm text-slate-600">
+                                {successDispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    })()}
+                  </AnimatePresence>
+                  {displayQueue.map((dispute) => (
                     <motion.div
                       key={dispute._id}
                       variants={{
@@ -114,7 +150,7 @@ export default function ReviewQueuePage() {
                         visible: { opacity: 1, x: 0 },
                       }}
                       whileHover={{ x: 4 }}
-                      className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer"
+                      className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer relative"
                       onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -176,7 +212,7 @@ export default function ReviewQueuePage() {
                               decision: "APPROVE_AI",
                               finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                             })
-                            setShowSuccess(true)
+                            setSuccessDisputeId(dispute._id)
                           }}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
@@ -203,7 +239,7 @@ export default function ReviewQueuePage() {
         </AnimatedSection>
         
         {/* Footer Help */}
-        {reviewQueue.length > 0 && (
+        {displayQueue.length > 0 && (
           <AnimatedSection direction="up" delay={0.3}>
             <Card className="bg-gray-50 dark:bg-gray-900">
             <CardContent className="pt-6">

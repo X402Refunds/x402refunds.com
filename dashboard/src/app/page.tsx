@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { AnimatedGrid } from "@/components/AnimatedGrid"
-import { MatrixRain } from "@/components/MatrixRain"
 import { AnimatedSection, AnimatedList } from "@/components/ui/animated-section"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { motion } from "framer-motion"
@@ -47,9 +46,6 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-20 sm:py-32 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950">
-        {/* Matrix rain effect */}
-        <MatrixRain color="#10b981" fontSize={14} columns={50} speed={1.5} />
-        
         {/* Professional animated grid background */}
         <AnimatedGrid color="#10b981" />
         
