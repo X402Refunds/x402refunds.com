@@ -5,9 +5,7 @@ import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Shield, Crown, Mail, UserCircle } from "lucide-react"
+import { Users, Crown, Mail, UserCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default function TeamPage() {
@@ -18,11 +16,6 @@ export default function TeamPage() {
   const currentUser = useQuery(
     api.users.getCurrentUser,
     {} // Auth verified server-side via ctx.auth
-  )
-  
-  const organization = useQuery(
-    api.users.getUserOrganization,
-    currentUser ? { userId: currentUser._id } : "skip"
   )
   
   const teamMembers = useQuery(
@@ -58,43 +51,12 @@ export default function TeamPage() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Team Members</h1>
-            <p className="text-slate-600 mt-1">
-              Manage your organization&apos;s team members
-              {organization && ` (${organization.name})`}
-            </p>
+            <h1 className="text-3xl font-bold text-slate-900">Team</h1>
           </div>
         </div>
         
-        {/* Info Card */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div>
-                <CardTitle className="text-base text-blue-900">Team Management</CardTitle>
-                <CardDescription className="text-blue-700">
-                  View and manage team members in your organization. Team members can access
-                  the dashboard, manage agents, and view case activity.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-        
         {/* Team Members List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>
-              {teamMembers === undefined
-                ? "Loading..."
-                : teamMembers.length === 0
-                ? "No team members yet."
-                : `${teamMembers.length} team member${teamMembers.length !== 1 ? 's' : ''} in your organization.`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div>
             {teamMembers === undefined ? (
               <div className="text-center py-8 text-slate-600">
                 Loading team members...
@@ -142,27 +104,7 @@ export default function TeamPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-        
-        {/* Documentation Link */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Team Collaboration</CardTitle>
-            <CardDescription>
-              Learn how to collaborate effectively with your team
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Button variant="outline" asChild>
-                <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
-                  Documentation
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   )
