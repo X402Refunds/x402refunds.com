@@ -247,126 +247,129 @@ export default function APIKeysPage() {
             transition={{ duration: 0.5 }}
           >
             {apiKeys && apiKeys.length > 0 ? (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name / Environment</TableHead>
-                      <TableHead>Key Preview</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Last Used</TableHead>
-                      <TableHead className="text-right min-w-[120px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {apiKeys.map((key) => (
-                      <TableRow 
-                        key={key._id}
-                      >
-                        <TableCell className="font-medium">
-                          {editingKeyId === key._id ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                value={editingKeyName}
-                                onChange={(e) => setEditingKeyName(e.target.value)}
-                                className="h-8 max-w-[200px]"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleSaveEdit(key._id)
-                                  if (e.key === "Escape") handleCancelEdit()
-                                }}
-                                autoFocus
-                              />
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleSaveEdit(key._id)}
-                                className="h-8 px-2"
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={handleCancelEdit}
-                                className="h-8 px-2"
-                              >
-                                ✕
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span>{key.name}</span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleStartEdit(key._id, key.name)}
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Pencil className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <code className="text-xs font-mono text-slate-600">
-                              {key.keyPreview}
-                            </code>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              Full key only shown at creation
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {key.status === "revoked" ? (
-                            <Badge 
-                              variant="secondary"
-                              className="bg-red-100 text-red-800 border-red-200"
-                            >
-                              REVOKED
-                            </Badge>
-                          ) : (
-                            <Badge 
-                              variant="default"
-                              className="bg-emerald-100 text-emerald-800 border-emerald-200"
-                            >
-                              ACTIVE
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600">
-                          {key.createdAt ? formatDate(key.createdAt) : "N/A"}
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600">
-                          {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
-                        </TableCell>
-                        <TableCell className="text-right min-w-[120px]">
-                          <div className="flex justify-end gap-2">
-                            {key.status !== "revoked" ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRevokeClick(key._id, key.name)}
-                                title="Revoke this key (stops authentication, preserves audit trail)"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                              >
-                                <Ban className="h-4 w-4 mr-1" />
-                                Revoke
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-slate-500">
-                                Audit trail preserved
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
+              <Card className="border-2 border-slate-200 shadow-sm">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent border-b border-slate-200">
+                        <TableHead className="text-slate-700 font-medium">Name / Environment</TableHead>
+                        <TableHead className="text-slate-700 font-medium">Key Preview</TableHead>
+                        <TableHead className="text-slate-700 font-medium">Status</TableHead>
+                        <TableHead className="text-slate-700 font-medium">Created</TableHead>
+                        <TableHead className="text-slate-700 font-medium">Last Used</TableHead>
+                        <TableHead className="text-right min-w-[120px] text-slate-700 font-medium">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {apiKeys.map((key) => (
+                        <TableRow 
+                          key={key._id}
+                          className="hover:bg-slate-50/50 border-b border-slate-100 transition-colors"
+                        >
+                          <TableCell className="font-medium text-slate-900">
+                            {editingKeyId === key._id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingKeyName}
+                                  onChange={(e) => setEditingKeyName(e.target.value)}
+                                  className="h-8 max-w-[200px] border-slate-300"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleSaveEdit(key._id)
+                                    if (e.key === "Escape") handleCancelEdit()
+                                  }}
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleSaveEdit(key._id)}
+                                  className="h-8 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEdit}
+                                  className="h-8 px-2 text-slate-600 hover:text-slate-700 hover:bg-slate-100"
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>{key.name}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleStartEdit(key._id, key.name)}
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-700"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <code className="text-xs font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                                {key.keyPreview}
+                              </code>
+                              <p className="text-xs text-slate-500 mt-1.5">
+                                Full key only shown at creation
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {key.status === "revoked" ? (
+                              <Badge 
+                                variant="secondary"
+                                className="bg-red-50 text-red-700 border border-red-200 font-medium"
+                              >
+                                REVOKED
+                              </Badge>
+                            ) : (
+                              <Badge 
+                                variant="default"
+                                className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium"
+                              >
+                                ACTIVE
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600">
+                            {key.createdAt ? formatDate(key.createdAt) : "N/A"}
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600">
+                            {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
+                          </TableCell>
+                          <TableCell className="text-right min-w-[120px]">
+                            <div className="flex justify-end gap-2">
+                              {key.status !== "revoked" ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRevokeClick(key._id, key.name)}
+                                  title="Revoke this key (stops authentication, preserves audit trail)"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                                >
+                                  <Ban className="h-4 w-4 mr-1" />
+                                  Revoke
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-slate-500">
+                                  Audit trail preserved
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
             ) : (
               <motion.div 
                 className="text-center py-8 text-slate-500"
