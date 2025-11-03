@@ -337,7 +337,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **CRITICAL**: All dashboard and UI elements use **native ShadCN UI components** with the neutral theme.
 
-**ALWAYS follow the design guidelines** documented in `DESIGN-SYSTEM.md` at the project root. This file contains:
+**ALWAYS follow the design guidelines** documented in `internal/design/digital-courthouse-design-system.md` This file contains:
 - Complete color scheme (Emerald #10b981 primary brand color)
 - Component patterns and variants
 - Professional design principles for enterprise B2B infrastructure
@@ -347,7 +347,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - **Component Library**: ShadCN UI (native components)
 - **Theme**: Neutral base color theme with Emerald primary
 - **Styling**: CSS variables via Tailwind (see `dashboard/src/app/globals.css`)
-- **Reference**: See `DESIGN-SYSTEM.md` for complete design system documentation
+- **Reference**: See `internal/design/digital-courthouse-design-system.md` for complete design system documentation
+- **Changes**: If you make a fundamental change to the design of any UI Elements, then reflect those changes in `internal/design/digital-courthouse-design-system.md` and make sure any or all UI elements elsewhere in the repo are also updated to match the new design system. 
 
 ### Core Design Principles
 

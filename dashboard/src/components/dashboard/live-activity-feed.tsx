@@ -11,6 +11,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { HeroStats } from "./hero-stats";
 import { CollapsibleStats } from "./collapsible-stats";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LiveActivityFeed() {
   const router = useRouter();
@@ -137,67 +138,83 @@ export default function LiveActivityFeed() {
             </div>
           ) : (
             <>
-              {recentEvents?.slice(0, 10).map((event: DisputeEvent) => (
-                <div 
-                  key={event._id} 
-                  className={`flex items-start gap-3 p-3 rounded-lg border border-border ${event.caseId ? 'cursor-pointer hover:bg-accent hover:border-border' : 'bg-muted/50'} transition-all`}
-                  onClick={() => event.caseId && router.push(`/demo/dispute/${event.caseId}`)}
-                >
-                  <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs font-medium`}>
-                    {getEventBadge(event.type)}
-                  </Badge>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-sm text-foreground leading-relaxed">{formatEventDescription(event)}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(event.timestamp).toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
-                          minute: '2-digit', 
-                          second: '2-digit',
-                          timeZoneName: 'short'
-                        })}
-                      </span>
-                      {event.type === "DISPUTE_FILED" && (() => {
-                        // Show payment dispute info (amount + tier) if available
-                        if (event.paymentDispute) {
-                          const tierColors: Record<string, string> = {
-                            micro: "text-foreground border-border bg-accent",
-                            small: "text-primary border-border bg-accent",
-                            medium: "text-foreground border-border bg-accent",
-                            large: "text-foreground border-border bg-accent",
-                            enterprise: "text-foreground border-border bg-accent"
-                          };
-                          const tierColor = tierColors[event.paymentDispute.pricingTier || "micro"] || "text-muted-foreground border-border bg-muted";
-                          return (
-                            <>
-                              <Badge variant="outline" className={`text-[11px] px-2 py-0.5 font-normal ${tierColor}`}>
-                                ${event.paymentDispute.amount.toFixed(2)} • {event.paymentDispute.pricingTier || "micro"} tier
-                              </Badge>
-                              {event.paymentDispute.disputeFee && (
-                                <span className="text-[11px] text-muted-foreground">
-                                  (${event.paymentDispute.disputeFee.toFixed(2)} fee)
-                                </span>
-                              )}
-                            </>
-                          );
-                        }
+              <AnimatePresence mode="popLayout">
+                {recentEvents?.slice(0, 10).map((event: DisputeEvent, index: number) => (
+                  <motion.div
+                    key={event._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: index * 0.05,
+                      ease: [0.22, 1, 0.36, 1]
+                    }}
+                    whileHover={{ x: 4 }}
+                    className={`flex items-start gap-3 p-3 rounded-lg border border-border ${event.caseId ? 'cursor-pointer hover:bg-accent hover:border-border' : 'bg-muted/50'} transition-all`}
+                    onClick={() => event.caseId && router.push(`/demo/dispute/${event.caseId}`)}
+                  >
+                    <Badge variant="secondary" className={`${getEventColor(event.type)} flex-shrink-0 text-xs font-medium`}>
+                      {getEventBadge(event.type)}
+                    </Badge>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm text-foreground leading-relaxed">{formatEventDescription(event)}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(event.timestamp).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            second: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </span>
+                        {event.type === "DISPUTE_FILED" && (() => {
+                          // Show payment dispute info (amount + tier) if available
+                          if (event.paymentDispute) {
+                            const tierColors: Record<string, string> = {
+                              micro: "text-foreground border-border bg-accent",
+                              small: "text-primary border-border bg-accent",
+                              medium: "text-foreground border-border bg-accent",
+                              large: "text-foreground border-border bg-accent",
+                              enterprise: "text-foreground border-border bg-accent"
+                            };
+                            const tierColor = tierColors[event.paymentDispute.pricingTier || "micro"] || "text-muted-foreground border-border bg-muted";
+                            return (
+                              <>
+                                <Badge variant="outline" className={`text-[11px] px-2 py-0.5 font-normal ${tierColor}`}>
+                                  ${event.paymentDispute.amount.toFixed(2)} • {event.paymentDispute.pricingTier || "micro"} tier
+                                </Badge>
+                                {event.paymentDispute.disputeFee && (
+                                  <span className="text-[11px] text-muted-foreground">
+                                    (${event.paymentDispute.disputeFee.toFixed(2)} fee)
+                                  </span>
+                                )}
+                              </>
+                            );
+                          }
 
-                        // Show agent dispute type if available
-                        const disputeType = event.payload?.type;
-                        if (typeof disputeType === "string") {
-                          return (
-                            <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-muted-foreground border-border bg-muted font-normal">
-                              {formatDisputeType(disputeType)}
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })()}
+                          // Show agent dispute type if available
+                          const disputeType = event.payload?.type;
+                          if (typeof disputeType === "string") {
+                            return (
+                              <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-muted-foreground border-border bg-muted font-normal">
+                                {formatDisputeType(disputeType)}
+                              </Badge>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-2">
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              <motion.div 
+                className="pt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
                 <Button 
                   variant="outline" 
                   className="w-full"
@@ -206,15 +223,25 @@ export default function LiveActivityFeed() {
                   View All Activity
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </div>
+              </motion.div>
             </>
           )}
         </CardContent>
       </Card>
 
       {/* Quick Links Section */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/cases')}>
+      <motion.div 
+        className="grid gap-4 sm:grid-cols-2"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.div
+          whileHover={{ y: -4 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/cases')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground text-base">
               <Gavel className="h-5 w-5 text-primary" />
@@ -235,8 +262,13 @@ export default function LiveActivityFeed() {
             </Button>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/agents')}>
+        <motion.div
+          whileHover={{ y: -4 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Card className="border-border hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/demo/agents')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground text-base">
               <FileText className="h-5 w-5 text-primary" />
@@ -253,7 +285,8 @@ export default function LiveActivityFeed() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Collapsible Detailed Stats */}
       <CollapsibleStats />
@@ -286,9 +319,27 @@ export default function LiveActivityFeed() {
               <p className="text-sm text-muted-foreground">No resolved cases yet</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <motion.div 
+              className="space-y-3"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+            >
               {recentCases.filter((case_: Record<string, unknown>) => case_.status === "DECIDED").slice(0, 3).map((case_: Record<string, unknown>, index: number) => (
-                <div key={case_._id as string}>
+                <motion.div 
+                  key={case_._id as string}
+                  variants={{
+                    hidden: { opacity: 0, x: -20 },
+                    visible: { opacity: 1, x: 0 },
+                  }}
+                  whileHover={{ x: 4 }}
+                >
                   <div 
                     className="flex items-center justify-between cursor-pointer hover:bg-accent p-3 rounded-lg border border-border hover:border-border transition-all"
                     onClick={() => router.push(`/demo/dispute/${case_._id}`)}
@@ -315,9 +366,9 @@ export default function LiveActivityFeed() {
                   {index < Math.min(recentCases.filter((c: Record<string, unknown>) => c.status === "DECIDED").length - 1, 2) && (
                     <Separator className="my-2" />
                   )}
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>
