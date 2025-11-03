@@ -3,8 +3,8 @@
   "name": "Consulate",
   "description": "Fast, automated dispute resolution when AI services break their promises",
   "logo": {
-    "light": "/consulate-icon-simple.svg",
-    "dark": "/consulate-icon-simple.svg",
+    "light": "/consulate-logo-square.svg",
+    "dark": "/consulate-logo-square.svg",
     "href": "https://consulatehq.com"
   },
   "favicon": "/consulate-icon-simple.png",

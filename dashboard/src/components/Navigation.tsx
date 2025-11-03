@@ -1,16 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, Gavel, User, Menu } from "lucide-react"
+import { User, Menu } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
 import {
   Sheet,
   SheetContent,
@@ -27,19 +20,6 @@ interface NavigationProps {
 export function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { isSignedIn } = useUser()
-
-  const handleFeatureClick = (sectionId: string) => {
-    setMobileMenuOpen(false)
-    // If we're not on the home page, navigate to home first
-    if (currentPage !== 'home') {
-      window.location.href = `/#${sectionId}`
-    } else {
-      const element = document.getElementById(sectionId)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
-  }
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -69,63 +49,6 @@ export function Navigation({ currentPage }: NavigationProps) {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-sm font-medium">
-                      Features
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <div className="w-[600px] p-6 bg-gradient-to-br from-white to-emerald-50/20 border-2 border-emerald-200 shadow-2xl rounded-lg">
-                        <div className="grid grid-cols-2 gap-6">
-                          {/* Core Features Column */}
-                          <div>
-                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                              Core Features
-                            </div>
-                            <button
-                              onClick={() => handleFeatureClick('feature-identity')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all group"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                                  <Shield className="h-5 w-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-slate-900 mb-1">Persistent ID for Agents</div>
-                                  <div className="text-sm text-slate-600">Decentralized agent identity & reputation</div>
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-
-                          {/* Automation Column */}
-                          <div>
-                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                              Automation
-                            </div>
-                            <button
-                              onClick={() => handleFeatureClick('feature-dispute')}
-                              className="w-full text-left p-3 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all group"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                                  <Gavel className="h-5 w-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-slate-900 mb-1">Agent-to-Agent Dispute Resolution</div>
-                                  <div className="text-sm text-slate-600">Automated arbitration in minutes</div>
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
-
               <button
                 onClick={() => handleNavigation('/pricing')}
                 className={cn(
@@ -198,41 +121,6 @@ export function Navigation({ currentPage }: NavigationProps) {
                   </Button>
 
                   <div className="border-t border-border pt-4 space-y-3">
-                    {/* Features Section */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-                        Features
-                      </div>
-                      <button
-                        onClick={() => handleFeatureClick('feature-identity')}
-                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-accent rounded-lg">
-                            <Shield className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-foreground text-sm">Persistent ID for Agents</div>
-                            <div className="text-xs text-muted-foreground">Decentralized agent identity</div>
-                          </div>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => handleFeatureClick('feature-dispute')}
-                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-accent rounded-lg">
-                            <Gavel className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-foreground text-sm">Dispute Resolution</div>
-                            <div className="text-xs text-muted-foreground">Automated arbitration</div>
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-
                     {/* Main Navigation */}
                     <div className="space-y-1">
                       <Button

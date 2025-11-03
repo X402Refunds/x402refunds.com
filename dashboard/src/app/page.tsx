@@ -279,7 +279,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               {
                 icon: ShieldCheck,
                 title: "Built-in Fraud Detection",
-                description: "ML models trained on millions of disputes catch fraudulent claims automatically.",
+                description: "ML models trained to catch fraudulent dispute claims automatically.",
                 color: "from-emerald-500 to-teal-500"
               },
               {
