@@ -8,9 +8,8 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key, Bot } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import { Id } from "@convex/_generated/dataModel"
 import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/ui/animated-section"
@@ -51,10 +50,6 @@ export default function DashboardPage() {
     {} // Auth verified server-side via ctx.auth
   )
 
-  const organization = useQuery(
-    api.users.getUserOrganization,
-    currentUser ? { userId: currentUser._id } : "skip"
-  )
 
   // Infrastructure Model: Get payment disputes needing review
   const reviewQueue = useQuery(
@@ -78,7 +73,6 @@ export default function DashboardPage() {
   )
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
-  const updateOrganization = useMutation(api.users.updateOrganization)
 
   // Calculate metrics from all org cases
   const totalDisputes = allOrgCases?.length || 0
@@ -263,39 +257,6 @@ export default function DashboardPage() {
             </motion.div>
           </div>
         </div>
-        </AnimatedSection>
-
-        {/* AI Toggle */}
-        <AnimatedSection direction="down" delay={0.15}>
-        <Card className="border-slate-200">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bot className="h-5 w-5 text-slate-600" />
-                <div>
-                  <p className="font-semibold text-slate-900">AI Analysis</p>
-                  <p className="text-sm text-slate-600">
-                    {organization?.aiEnabled !== false 
-                      ? "AI will analyze disputes and provide recommendations"
-                      : "AI analysis is disabled. Disputes will require manual review only."}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={organization?.aiEnabled !== false}
-                onCheckedChange={async (checked) => {
-                  if (currentUser?.organizationId) {
-                    await updateOrganization({
-                      organizationId: currentUser.organizationId,
-                      aiEnabled: checked,
-                    })
-                  }
-                }}
-                disabled={!currentUser?.organizationId}
-              />
-            </div>
-          </CardContent>
-        </Card>
         </AnimatedSection>
 
         {/* Alert Banner - Shows if review queue has items */}

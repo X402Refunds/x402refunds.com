@@ -4,6 +4,9 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@convex/_generated/api"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 
@@ -23,6 +26,18 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
     // Clerk not initialized - show generic user during build
     user = null
   }
+
+  // Get current user and organization for AI toggle (only on dashboard routes)
+  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    isDashboardRoute ? {} : "skip"
+  )
+  const organization = useQuery(
+    api.users.getUserOrganization,
+    isDashboardRoute && currentUser ? { userId: currentUser._id } : "skip"
+  )
+  const updateOrganization = useMutation(api.users.updateOrganization)
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -91,8 +106,21 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
           </Breadcrumb>
         </div>
 
-        {/* Right Section: Status and User */}
+        {/* Right Section: AI Toggle, Status and User */}
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* AI Toggle - Only show on dashboard routes */}
+          {isDashboardRoute && currentUser?.organizationId && (
+            <Switch
+              checked={organization?.aiEnabled !== false}
+              onCheckedChange={async (checked) => {
+                await updateOrganization({
+                  organizationId: currentUser.organizationId!,
+                  aiEnabled: checked,
+                })
+              }}
+              className="scale-75"
+            />
+          )}
 
           {/* User Display Name - Hidden on mobile */}
           {user && (
