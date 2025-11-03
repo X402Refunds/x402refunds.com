@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
@@ -38,6 +39,7 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
     isDashboardRoute && currentUser ? { userId: currentUser._id } : "skip"
   )
   const updateOrganization = useMutation(api.users.updateOrganization)
+  const [isUpdating, setIsUpdating] = React.useState(false)
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -114,11 +116,17 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
               <span className="text-xs font-medium text-slate-700">AI</span>
               <Switch
                 checked={organization?.aiEnabled !== false}
+                disabled={isUpdating}
                 onCheckedChange={async (checked) => {
-                  await updateOrganization({
-                    organizationId: currentUser.organizationId!,
-                    aiEnabled: checked,
-                  })
+                  setIsUpdating(true)
+                  try {
+                    await updateOrganization({
+                      organizationId: currentUser.organizationId!,
+                      aiEnabled: checked,
+                    })
+                  } finally {
+                    setIsUpdating(false)
+                  }
                 }}
               />
             </div>
