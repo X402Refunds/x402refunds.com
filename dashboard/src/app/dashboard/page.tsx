@@ -8,8 +8,9 @@ import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key } from "lucide-react"
+import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key, Bot } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { Id } from "@convex/_generated/dataModel"
 import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/ui/animated-section"
@@ -77,6 +78,7 @@ export default function DashboardPage() {
   )
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
+  const updateOrganization = useMutation(api.users.updateOrganization)
 
   // Calculate metrics from all org cases
   const totalDisputes = allOrgCases?.length || 0
@@ -221,10 +223,7 @@ export default function DashboardPage() {
         <AnimatedSection direction="down" delay={0.1}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
-            <p className="text-slate-600 mt-1">
-              {organization?.name || "Loading..."}
-            </p>
+            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
           </div>
 
           {/* Quick Actions Bar */}
@@ -266,6 +265,39 @@ export default function DashboardPage() {
         </div>
         </AnimatedSection>
 
+        {/* AI Toggle */}
+        <AnimatedSection direction="down" delay={0.15}>
+        <Card className="border-slate-200">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bot className="h-5 w-5 text-slate-600" />
+                <div>
+                  <p className="font-semibold text-slate-900">AI Analysis</p>
+                  <p className="text-sm text-slate-600">
+                    {organization?.aiEnabled !== false 
+                      ? "AI will analyze disputes and provide recommendations"
+                      : "AI analysis is disabled. Disputes will require manual review only."}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={organization?.aiEnabled !== false}
+                onCheckedChange={async (checked) => {
+                  if (currentUser?.organizationId) {
+                    await updateOrganization({
+                      organizationId: currentUser.organizationId,
+                      aiEnabled: checked,
+                    })
+                  }
+                }}
+                disabled={!currentUser?.organizationId}
+              />
+            </div>
+          </CardContent>
+        </Card>
+        </AnimatedSection>
+
         {/* Alert Banner - Shows if review queue has items */}
         <AnimatePresence>
         {reviewQueue && reviewQueue.length > 0 && (
@@ -302,16 +334,14 @@ export default function DashboardPage() {
         )}
         </AnimatePresence>
 
-        {/* Simplified 2-Card Layout - Focus on What Matters */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Card 1: Financial Overview - What's At Stake */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            whileHover={{ y: -4 }}
-          >
+        {/* Financial Overview - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          whileHover={{ y: -4 }}
+        >
           <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -370,167 +400,7 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          </motion.div>
-        </div>
-
-        {/* Review Queue Section - ALWAYS VISIBLE */}
-        <AnimatedSection direction="up" delay={0.3}>
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-slate-900">Your Review Queue</CardTitle>
-                <CardDescription className="text-slate-600">
-                  AI provides recommendations - you make the final decision
-                </CardDescription>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/review-queue')}
-              >
-                View All <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!reviewQueue || reviewQueue.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
-                <p className="font-semibold text-slate-900 mb-1">All Caught Up!</p>
-                <p className="text-sm text-slate-600 mb-4">
-                  No new disputes to review. AI recommendations will appear here when disputes are filed.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/dashboard/review-queue')}
-                >
-                  View Review History
-                </Button>
-              </div>
-            ) : (
-              <motion.div 
-                className="space-y-3"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.1,
-                    },
-                  },
-                }}
-              >
-                {reviewQueue.slice(0, 3).map((dispute) => (
-                  <motion.div
-                    key={dispute._id}
-                    variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      visible: { opacity: 1, x: 0 },
-                    }}
-                    whileHover={{ x: 4 }}
-                    className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-bold text-slate-900 text-lg">
-                          ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
-                        </p>
-                        <p className="text-sm text-slate-600">
-                          {dispute.paymentDetails?.disputeReason?.replace(/_/g, ' ') || 'Dispute'}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                        AI: {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(0)}% confident
-                      </Badge>
-                    </div>
-                    
-                    {dispute.aiRecommendation ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-sm font-medium text-slate-700">AI Recommends:</span>
-                          <Badge className={
-                            dispute.aiRecommendation.verdict === "CONSUMER_WINS" 
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-50 text-slate-700 border-slate-200"
-                          }>
-                            {dispute.aiRecommendation.verdict}
-                          </Badge>
-                        </div>
-
-                        {dispute.aiRecommendation.reasoning && (
-                          <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                            {dispute.aiRecommendation.reasoning}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
-                          <p className="text-sm font-medium text-purple-900">AI Analysis Pending...</p>
-                        </div>
-                        <p className="text-xs text-purple-700 mt-1">
-                          Usually completes in under 2 minutes. Refresh to see recommendation.
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!dispute.aiRecommendation}
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (!currentUser || !dispute.aiRecommendation) return
-                          await customerReview({
-                            paymentDisputeId: dispute._id,
-                            reviewerUserId: currentUser._id,
-                            decision: "APPROVE_AI",
-                            finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
-                          })
-                        }}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        {dispute.aiRecommendation ? 'Approve AI' : 'Waiting for AI...'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
-                      >
-                        Review Details
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-
-                {reviewQueue.length > 3 && (
-                  <motion.div 
-                    className="pt-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => router.push('/dashboard/review-queue')}
-                    >
-                      View All {reviewQueue.length} Disputes
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </CardContent>
-        </Card>
-        </AnimatedSection>
+        </motion.div>
 
         {/* Live Dispute Activity with Quick Actions */}
         <AnimatedSection direction="up" delay={0.4}>

@@ -27,6 +27,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
     // AI dispute resolution settings
+    aiEnabled: v.optional(v.boolean()), // Global toggle to enable/disable AI analysis
     aiAnalysisDelayMinutes: v.optional(v.number()),
     autoApprovalDeadlineDays: v.optional(v.number()),
   })

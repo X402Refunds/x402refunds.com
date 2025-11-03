@@ -217,6 +217,7 @@ export const updateOrganization = mutation({
     organizationId: v.id("organizations"),
     name: v.optional(v.string()),
     billingEmail: v.optional(v.string()),
+    aiEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { organizationId, ...updates } = args;
@@ -226,7 +227,7 @@ export const updateOrganization = mutation({
       updatedAt: Date.now(),
     });
     
-    console.info(`Updated organization: ${organizationId}`);
+    console.info(`Updated organization: ${organizationId}`, updates);
     return true;
   },
 });

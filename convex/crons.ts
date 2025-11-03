@@ -256,6 +256,14 @@ export const processFiledCases = internalMutation({
             continue;
           }
 
+          // Check if organization has AI enabled
+          const org = await getOrgForCase(ctx, caseData);
+          if (org && org.aiEnabled === false) {
+            skipped++;
+            console.log(`  ⏭️  Skipped case ${caseData._id} (AI disabled for organization ${org._id})`);
+            continue;
+          }
+
           // Trigger AI analysis using processWithAI (no age check - process immediately)
           await ctx.scheduler.runAfter(0, api.paymentDisputes.processWithAI, {
             caseId: caseData._id,
