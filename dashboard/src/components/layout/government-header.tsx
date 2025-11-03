@@ -45,9 +45,9 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 relative">
-      {/* Subtle emerald accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+    <header className="bg-gradient-to-r from-white via-emerald-50/20 to-white border-b border-emerald-200 px-4 sm:px-6 py-3 relative shadow-sm">
+      {/* Emerald accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
       
       <div className="flex items-center justify-between gap-3">
         {/* Mobile Menu Button - Integrated into header */}

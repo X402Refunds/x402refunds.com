@@ -2,7 +2,10 @@
 
 export function Footer() {
   return (
-    <footer className="bg-slate-900 text-slate-400 py-12 sm:py-16 border-t border-slate-800">
+    <footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-slate-400 py-12 sm:py-16 border-t-4 border-emerald-600/30 relative">
+      {/* Emerald accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+      
       <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
           <div>

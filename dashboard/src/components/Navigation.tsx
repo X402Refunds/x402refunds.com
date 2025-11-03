@@ -51,7 +51,10 @@ export function Navigation({ currentPage }: NavigationProps) {
   }
 
   return (
-    <nav className="border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-md">
+    <nav className="border-b border-emerald-200 bg-gradient-to-r from-white via-emerald-50/30 to-white backdrop-blur-sm sticky top-0 z-50 shadow-lg relative">
+      {/* Emerald accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
           <div className="flex items-center">
@@ -73,7 +76,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                       Features
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <div className="w-[600px] p-6 bg-white border-2 border-slate-200 shadow-2xl rounded-lg">
+                      <div className="w-[600px] p-6 bg-gradient-to-br from-white to-emerald-50/20 border-2 border-emerald-200 shadow-2xl rounded-lg">
                         <div className="grid grid-cols-2 gap-6">
                           {/* Core Features Column */}
                           <div>
