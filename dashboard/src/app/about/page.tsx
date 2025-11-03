@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Linkedin, Twitter, Calendar, MapPin, Building2 } from "lucide-react"
+import { Mail, Linkedin, Twitter, Calendar, MapPin, Building2, Key, ArrowRight, BookOpen, CheckCircle } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -291,32 +291,66 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-8 sm:py-12 lg:py-16 bg-slate-900 text-white">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-5">
-            Building the Governance Layer for AI
+      <section className="py-24 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 text-white relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-emerald-500 to-green-500 rounded-full blur-3xl animate-pulse" />
+        </div>
+
+        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="inline-block mb-6">
+            <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+              Ready to get started?
+            </Badge>
+          </div>
+          
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            Ship disputes in 5 minutes
           </h2>
-          <p className="text-lg text-slate-300 mb-8">
-            If you&apos;re building autonomous AI agents, you need sovereignty infrastructure. 
-            See how the first AI governance OS works in production.
+          <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
+            Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold"
-              onClick={() => window.open('/demo', '_self')}
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button 
+              size="lg" 
+              className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
+              onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
             >
-              View Live System
+              <Key className="mr-2 h-5 w-5" />
+              Get Your API Key
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 font-semibold"
-              onClick={() => setEmailRevealed(true)}
+            <Button 
+              size="lg" 
+              className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
+              onClick={() => window.location.href = 'https://docs.consulatehq.com'}
             >
-              <Mail className="mr-2 h-5 w-5" />
-              Get in Touch
+              <BookOpen className="mr-2 h-5 w-5" />
+              Read the Docs
             </Button>
+          </div>
+
+          {/* Feature highlights */}
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2 text-slate-300">
+              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              </div>
+              <span><strong className="text-white">Free sandbox</strong> environment</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              </div>
+              <span>First <strong className="text-white">100 disputes free</strong></span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              </div>
+              <span><strong className="text-white">5 minute</strong> integration</span>
+            </div>
           </div>
         </div>
       </section>

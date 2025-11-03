@@ -1,6 +1,6 @@
 "use client"
 
-import { Code, Share, Sparkles, Plug, Webhook, ShieldCheck, Network, LineChart, Scale, Book, Terminal, Beaker, XCircle, CheckCircle, Key, BookOpen, ArrowRight, Copy, Check } from "lucide-react"
+import { Code, Share, Sparkles, Plug, Webhook, ShieldCheck, Network, LineChart, Scale, Book, Beaker, XCircle, CheckCircle, Key, BookOpen, ArrowRight, Copy, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -343,16 +343,6 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 
                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
                   <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Terminal className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">SDKs for Every Language</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">TypeScript, Python, Go, Rust - we&apos;ve got you covered</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Beaker className="h-6 w-6 text-emerald-600" />
                   </div>
                   <div>
@@ -460,8 +450,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
             </Button>
             <Button 
               size="lg" 
-              variant="outline"
-              className="border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 text-lg px-8 h-14 font-semibold backdrop-blur-sm transition-all"
+              className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
               onClick={() => window.location.href = 'https://docs.consulatehq.com'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
