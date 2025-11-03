@@ -40,6 +40,12 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
   )
   const updateOrganization = useMutation(api.users.updateOrganization)
   const [isUpdating, setIsUpdating] = React.useState(false)
+  const [optimisticAiEnabled, setOptimisticAiEnabled] = React.useState<boolean | null>(null)
+  
+  // Use optimistic state if available, otherwise use organization state
+  const aiEnabledValue = optimisticAiEnabled !== null 
+    ? optimisticAiEnabled 
+    : (organization?.aiEnabled !== false)
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -115,17 +121,25 @@ export function GovernmentHeader({ sidebarOpen = false, onToggleSidebar }: Gover
             <div className="flex items-center gap-2 border border-slate-300 rounded-md px-2 py-1">
               <span className="text-xs font-medium text-slate-700">AI</span>
               <Switch
-                checked={organization?.aiEnabled !== false}
+                checked={aiEnabledValue}
                 disabled={isUpdating}
                 onCheckedChange={async (checked) => {
+                  // Optimistic update
+                  setOptimisticAiEnabled(checked)
                   setIsUpdating(true)
                   try {
                     await updateOrganization({
                       organizationId: currentUser.organizationId!,
                       aiEnabled: checked,
                     })
+                  } catch (error) {
+                    // Revert on error
+                    setOptimisticAiEnabled(null)
+                    console.error('Failed to update AI setting:', error)
                   } finally {
                     setIsUpdating(false)
+                    // Clear optimistic state after a short delay to let Convex update
+                    setTimeout(() => setOptimisticAiEnabled(null), 500)
                   }
                 }}
               />
