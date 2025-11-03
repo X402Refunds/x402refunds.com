@@ -147,8 +147,8 @@ const result = await mcp.invoke("consulate_file_dispute", {
             >
               {[
                 { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: avgResolutionMinutes, suffix: " minutes", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { value: integrationMinutes, suffix: " minutes", label: "Time to integrate", duration: 2.2 }
+                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 },
+                { value: integrationMinutes, suffix: " min", label: "Time to integrate", duration: 2.2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
