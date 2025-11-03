@@ -76,13 +76,10 @@ export default function ReviewQueuePage() {
         <AnimatedSection direction="up" delay={0.2}>
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-slate-900">Your Review Queue</CardTitle>
-                  <CardDescription className="text-slate-600">
-                    AI provides recommendations - you make the final decision
-                  </CardDescription>
-                </div>
+              <div className="flex items-center justify-end">
+                <Badge variant="secondary" className="text-sm">
+                  {reviewQueue.length} dispute{reviewQueue.length !== 1 ? 's' : ''}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
