@@ -49,12 +49,12 @@ const result = await mcp.invoke("consulate_file_dispute", {
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
               <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                The dispute layer for agentic payments
+                The dispute layer for AI agents
               </span>
             </h1>
             
             <p className="text-xl sm:text-2xl text-emerald-100 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
-              One endpoint. Full dispute resolution infrastructure.
+              Payment disputes. Support tickets. One API.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -108,7 +108,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE PROBLEM</p>
               </div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                Every payment agent needs disputes. Nobody wants to build them.
+                Every AI agent needs disputes. Nobody wants to build them.
               </h2>
               
               <div className="space-y-4">
