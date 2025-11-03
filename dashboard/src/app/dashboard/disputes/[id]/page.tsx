@@ -28,7 +28,7 @@ export default function DisputeDetailPage() {
   // Sync and get user
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
 
   // Get dispute details (payment disputes are now in cases table)

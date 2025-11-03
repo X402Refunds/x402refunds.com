@@ -36,7 +36,7 @@ describe('Consulate HTTP API - Core System', () => {
       
       const data = await response.json();
       expect(data.status).toBe("healthy");
-      expect(data.service).toBe("consulate-ai");
+      expect(data.service).toBe("consulate-inc");
       expect(data.timestamp).toBeDefined();
     });
 

@@ -19,12 +19,12 @@ type Event = {
 }
 
 export default function ActivityPage() {
-  const { user } = useUser()
+  // User authentication handled by Clerk + Convex
 
   // Get current user and organization
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
 
   // Get organization-specific events

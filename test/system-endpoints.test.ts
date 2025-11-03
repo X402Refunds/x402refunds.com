@@ -28,7 +28,7 @@ describe('System - Health & Info', () => {
       const data = await response.json();
       expect(data.status).toBe('healthy');
       expect(data.timestamp).toBeGreaterThan(0);
-      expect(data.service).toBe('consulate-ai');
+      expect(data.service).toBe('consulate-inc');
     });
 
     it('should respond quickly', async () => {

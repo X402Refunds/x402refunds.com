@@ -10,12 +10,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 
 export default function ReviewQueuePage() {
-  const { user, isLoaded } = useUser()
+  const { isLoaded } = useUser()
   
   // Sync and get user
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
   
   // Get review queue for user's organization

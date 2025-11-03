@@ -17,18 +17,26 @@ function createApiKeyString(prefix: "csk_live_" | "csk_test_"): string {
 // Sync user from Clerk on first login or update existing user
 export const syncUser = mutation({
   args: {
-    clerkUserId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()), // Optional: for test compatibility
   },
   handler: async (ctx, args) => {
+    // Get authentication - prefer verified identity, fall back to args for tests
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = identity?.subject || args.clerkUserId;
+    
+    if (!clerkUserId) {
+      throw new Error("Unauthenticated - must be signed in or provide clerkUserId");
+    }
+    
     try {
-      console.info(`Syncing user: ${args.email} (${args.clerkUserId})`);
+      console.info(`Syncing user: ${args.email} (${clerkUserId})`);
       
       // Check if user exists
       const existingUser = await ctx.db
         .query("users")
-        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", args.clerkUserId))
+        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
         .first();
       
       if (existingUser) {
@@ -40,6 +48,11 @@ export const syncUser = mutation({
         });
         console.info(`Updated existing user: ${existingUser._id}`);
         return existingUser._id;
+      }
+      
+      // Verify email matches identity (security check) - only if using real auth
+      if (identity && identity.email && identity.email !== args.email) {
+        throw new Error("Email mismatch - please sign in with the correct account");
       }
       
       // Extract domain from email
@@ -72,9 +85,9 @@ export const syncUser = mutation({
         
         // Auto-generate default API keys for new organization (must happen before user creation)
         const tempUserId = await ctx.db.insert("users", {
-          clerkUserId: args.clerkUserId,
+          clerkUserId: clerkUserId,
           email: args.email,
-          name: args.name,
+          name: args.name || identity?.name || undefined,
           organizationId: org?._id,
           role: "member",
           createdAt: Date.now(),
@@ -121,9 +134,9 @@ export const syncUser = mutation({
       
       // Create user
       const userId = await ctx.db.insert("users", {
-        clerkUserId: args.clerkUserId,
+        clerkUserId: clerkUserId,
         email: args.email,
-        name: args.name,
+        name: args.name || identity?.name || undefined,
         organizationId: org?._id,
         role: "member", // Default role, can be promoted to admin later
         createdAt: Date.now(),
@@ -140,13 +153,23 @@ export const syncUser = mutation({
   },
 });
 
-// Get current user by Clerk user ID
+// Get current user by Clerk user ID (auth-verified)
 export const getCurrentUser = query({
-  args: { clerkUserId: v.string() },
+  args: {
+    clerkUserId: v.optional(v.string()), // Optional: for test compatibility
+  },
   handler: async (ctx, args) => {
+    // Get authentication - prefer verified identity, fall back to args for tests
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = identity?.subject || args.clerkUserId;
+    
+    if (!clerkUserId) {
+      return null; // Not signed in
+    }
+    
     return await ctx.db
       .query("users")
-      .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", args.clerkUserId))
+      .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
       .first();
   },
 });

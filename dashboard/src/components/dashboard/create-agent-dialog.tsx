@@ -37,7 +37,6 @@ export function CreateAgentDialog({
   onOpenChange,
 }: CreateAgentDialogProps) {
   const router = useRouter()
-  const { user } = useUser()
   
   // Registration state
   const [agentName, setAgentName] = useState("")
@@ -51,7 +50,7 @@ export function CreateAgentDialog({
   // Get current user for manual registration
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
   
   const registerAgentManual = useMutation(api.agents.registerAgentManual)

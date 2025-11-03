@@ -10,6 +10,7 @@
     "type-check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.53.4",
     "@clerk/nextjs": "^6.33.1",
     "@hookform/resolvers": "^5.2.2",
     "@next/font": "^14.2.15",

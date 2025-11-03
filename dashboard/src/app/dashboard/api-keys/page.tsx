@@ -35,7 +35,7 @@ export default function APIKeysPage() {
   // Queries
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
   
   const allApiKeys = useQuery(

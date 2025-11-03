@@ -17,7 +17,7 @@ export default function TeamPage() {
   const syncUser = useMutation(api.users.syncUser)
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    user ? { clerkUserId: user.id } : "skip"
+    {} // Auth verified server-side via ctx.auth
   )
   
   const organization = useQuery(
@@ -34,7 +34,6 @@ export default function TeamPage() {
   useEffect(() => {
     if (user && isLoaded && !currentUser) {
       syncUser({
-        clerkUserId: user.id,
         email: user.primaryEmailAddress?.emailAddress || "",
         name: user.fullName || undefined,
       }).catch((error) => {
