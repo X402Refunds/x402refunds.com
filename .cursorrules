@@ -337,10 +337,17 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **CRITICAL**: All dashboard and UI elements use **native ShadCN UI components** with the neutral theme.
 
+**ALWAYS follow the design guidelines** documented in `DESIGN-SYSTEM.md` at the project root. This file contains:
+- Complete color scheme (Emerald #10b981 primary brand color)
+- Component patterns and variants
+- Professional design principles for enterprise B2B infrastructure
+- Find & replace patterns for consistent styling
+
 ### Design System
 - **Component Library**: ShadCN UI (native components)
-- **Theme**: Neutral base color theme
+- **Theme**: Neutral base color theme with Emerald primary
 - **Styling**: CSS variables via Tailwind (see `dashboard/src/app/globals.css`)
+- **Reference**: See `DESIGN-SYSTEM.md` for complete design system documentation
 
 ### Core Design Principles
 

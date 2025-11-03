@@ -1,7 +1,6 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { Id } from "@convex/_generated/dataModel"
@@ -17,7 +16,6 @@ type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NE
 export default function DisputeDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isLoaded } = useUser()
   const [showOverride, setShowOverride] = useState(false)
   const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
   const [notes, setNotes] = useState("")
@@ -102,7 +100,7 @@ export default function DisputeDetailPage() {
     }
   }
 
-  if (!isLoaded || !currentUser) {
+  if (!currentUser) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">

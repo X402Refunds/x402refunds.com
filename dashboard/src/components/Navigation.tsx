@@ -105,6 +105,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 onClick={() => window.location.href = '/sign-in'}
                 className="hidden md:flex"
                 size="sm"
+                variant="outline"
               >
                 <User className="h-4 w-4 mr-2" />
                 Sign In
@@ -139,6 +140,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     <Button
                       onClick={() => handleNavigation('/sign-in')}
                       className="w-full justify-start"
+                      variant="outline"
                     >
                       <User className="h-4 w-4 mr-2" />
                       Sign In

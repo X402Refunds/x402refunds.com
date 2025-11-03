@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Shield, LayoutDashboard, Key, AlertCircle } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, LayoutDashboard, Key, AlertCircle } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -108,13 +108,8 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
     <div className={cn("flex flex-col h-full bg-white border-r border-slate-200", className)}>
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="flex items-center space-x-3 group" onClick={onClick}>
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-            <Shield className="text-white h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="font-bold text-xl text-slate-900 group-hover:text-emerald-600 transition-colors">Consulate</h2>
-          </div>
+        <Link href="/" className="flex items-center group" onClick={onClick}>
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Consulate</h2>
         </Link>
       </div>
 

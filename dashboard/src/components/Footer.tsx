@@ -11,14 +11,13 @@ export function Footer() {
           <div>
             <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">Consulate</h3>
             <p className="text-sm sm:text-base leading-relaxed">
-              When AI services break their promises, get your money back in minutes instead of months of legal battles.
+              Automated arbitration infrastructure for AI service disputes. 95% AI-powered, 100% customer-controlled.
             </p>
           </div>
           <div>
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/demo', '_self')} className="hover:text-emerald-400 transition-colors">Demo</button></li>
-              <li><button onClick={() => window.open('https://youthful-orca-358.convex.site/health', '_blank')} className="hover:text-emerald-400 transition-colors">API Status</button></li>
+              <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-emerald-400 transition-colors">Uptime</button></li>
               <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
             </ul>
           </div>
@@ -32,18 +31,20 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10">
-          <div className="text-center mb-6">
-            <div className="text-white font-semibold mb-2">Consulate, Inc.</div>
-            <div className="text-xs sm:text-sm space-y-1">
-              <p>101a Clay St PMB 201, San Francisco CA 94111</p>
-              <p>
-                Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-emerald-400 transition-colors">vivek@consulatehq.com</a>
-              </p>
-              <p>Founder: Vivek Kotecha</p>
+          <div className="text-center text-xs sm:text-sm space-y-2">
+            <div>
+              <span className="text-white font-semibold">Consulate, Inc.</span>
+              <span className="mx-2">•</span>
+              <span>101a Clay St PMB 201, San Francisco CA 94111</span>
             </div>
-          </div>
-          <div className="text-center text-xs sm:text-sm border-t border-slate-800 pt-6">
-            <p>&copy; 2025 Consulate. Fast, automatic dispute resolution when AI services break their promises.</p>
+            <div>
+              Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-emerald-400 transition-colors">vivek@consulatehq.com</a>
+              <span className="mx-2">•</span>
+              Founder: Vivek Kotecha
+            </div>
+            <div className="pt-4">
+              &copy; 2025 Consulate. All rights reserved.
+            </div>
           </div>
         </div>
       </div>
