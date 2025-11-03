@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { GovernmentSidebar } from "./government-sidebar"
-import { GovernmentHeader } from "./government-header"
+import { DashboardHeader } from "./dashboard-header"
 import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
@@ -40,7 +40,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden w-full">
           {/* Header with integrated mobile menu button */}
-          <GovernmentHeader 
+          <DashboardHeader 
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
