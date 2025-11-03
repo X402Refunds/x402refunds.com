@@ -8,9 +8,11 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { AnimatedGrid } from "@/components/AnimatedGrid"
 import { useState } from "react"
+import { useUser } from "@clerk/nextjs"
 
 export default function HomePage() {
   const [copiedCode, setCopiedCode] = useState(false)
+  const { isSignedIn } = useUser()
 
   const copyCodeToClipboard = () => {
     const code = `// File a dispute via MCP tool
@@ -45,10 +47,6 @@ const result = await mcp.invoke("consulate_file_dispute", {
 
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full text-center relative z-10">
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-sm font-semibold px-4 py-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:bg-emerald-500/30 transition-all backdrop-blur-sm">
-              FOR MCP SERVER BUILDERS · Production-ready dispute infrastructure
-            </Badge>
-            
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
               <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
                 The dispute layer for agentic payments
@@ -63,9 +61,9 @@ const result = await mcp.invoke("consulate_file_dispute", {
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
-                onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                onClick={() => window.location.href = isSignedIn ? '/dashboard' : 'https://www.consulatehq.com/sign-in/'}
               >
-                Get Started Free
+                {isSignedIn ? 'Go to Dashboard' : 'Get Started Free'}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 

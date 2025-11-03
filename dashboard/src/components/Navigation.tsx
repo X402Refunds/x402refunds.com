@@ -89,14 +89,16 @@ export function Navigation({ currentPage }: NavigationProps) {
           {/* Right Section */}
           <div className="flex items-center gap-2">
             {/* Sign In Button - Desktop */}
-            <Button
-              onClick={() => window.location.href = isSignedIn ? '/dashboard' : '/sign-in'}
-              className="hidden md:flex"
-              size="sm"
-            >
-              <User className="h-4 w-4 mr-2" />
-              {isSignedIn ? 'Dashboard' : 'Sign In'}
-            </Button>
+            {!isSignedIn && (
+              <Button
+                onClick={() => window.location.href = '/sign-in'}
+                className="hidden md:flex"
+                size="sm"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            )}
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -112,13 +114,15 @@ export function Navigation({ currentPage }: NavigationProps) {
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
                   {/* Sign In - Mobile */}
-                  <Button
-                    onClick={() => handleNavigation(isSignedIn ? '/dashboard' : '/sign-in')}
-                    className="w-full justify-start"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    {isSignedIn ? 'Dashboard' : 'Sign In'}
-                  </Button>
+                  {!isSignedIn && (
+                    <Button
+                      onClick={() => handleNavigation('/sign-in')}
+                      className="w-full justify-start"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Button>
+                  )}
 
                   <div className="border-t border-border pt-4 space-y-3">
                     {/* Main Navigation */}
