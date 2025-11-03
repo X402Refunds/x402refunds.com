@@ -336,13 +336,9 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 <CardTitle className="text-2xl text-slate-900">We Handle Everything</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-600 leading-relaxed mb-6">
+                <p className="text-slate-600 leading-relaxed">
                   Our AI analyzes evidence, detects fraud, and provides recommendations. Your team reviews and makes final decisions in minutes.
                 </p>
-                <div className="text-center pt-4 border-t border-slate-200">
-                  <div className="text-sm text-slate-500 font-medium uppercase tracking-wide">avg resolution</div>
-                  <div className="text-3xl font-bold text-emerald-600 mt-1">4.2 minutes</div>
-                </div>
               </CardContent>
             </Card>
             </motion.div>

@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Activity, ArrowRight, AlertCircle, CheckCircle, DollarSign, Users, Key } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Id } from "@convex/_generated/dataModel"
+import { motion, AnimatePresence } from "framer-motion"
+import { AnimatedSection } from "@/components/ui/animated-section"
 
 type Event = {
   _id: Id<"events">;
@@ -216,49 +218,64 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header with Quick Actions */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
-            <p className="text-slate-600 mt-1">
-              {organization?.name || "Loading..."}
-            </p>
-          </div>
+        <AnimatedSection direction="down" delay={0.1}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Mission Control</h1>
+              <p className="text-slate-600 mt-1">
+                {organization?.name || "Loading..."}
+              </p>
+            </div>
 
           {/* Quick Actions Bar */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/review-queue')}
-              className="flex items-center gap-2"
-            >
-              <AlertCircle className="h-4 w-4" />
-              Review Queue
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/api-keys')}
-              className="flex items-center gap-2"
-            >
-              <Key className="h-4 w-4" />
-              API Keys
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard/team')}
-              className="flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              Team
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/dashboard/review-queue')}
+                className="flex items-center gap-2"
+              >
+                <AlertCircle className="h-4 w-4" />
+                Review Queue
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/dashboard/api-keys')}
+                className="flex items-center gap-2"
+              >
+                <Key className="h-4 w-4" />
+                API Keys
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/dashboard/team')}
+                className="flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Team
+              </Button>
+            </motion.div>
           </div>
-        </div>
+          </div>
+        </AnimatedSection>
 
         {/* Alert Banner - Shows if review queue has items */}
-        {reviewQueue && reviewQueue.length > 0 && (
-          <Card className="border-l-4 border-l-emerald-600 bg-emerald-50 border-emerald-200">
+        <AnimatePresence>
+          {reviewQueue && reviewQueue.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-l-4 border-l-emerald-600 bg-emerald-50 border-emerald-200">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -281,12 +298,21 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Simplified 2-Card Layout - Focus on What Matters */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Card 1: Financial Overview - What's At Stake */}
-          <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card className="border-2 border-emerald-300 hover:border-emerald-400 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -344,10 +370,12 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         </div>
 
         {/* Review Queue Section - ALWAYS VISIBLE */}
-        <Card className="border-slate-200 shadow-sm">
+        <AnimatedSection direction="up" delay={0.3}>
+          <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -382,10 +410,26 @@ export default function DashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <motion.div 
+                className="space-y-3"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+              >
                 {reviewQueue.slice(0, 3).map((dispute) => (
-                  <div
+                  <motion.div
                     key={dispute._id}
+                    variants={{
+                      hidden: { opacity: 0, x: -20 },
+                      visible: { opacity: 1, x: 0 },
+                    }}
+                    whileHover={{ x: 4 }}
                     className="p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer"
                     onClick={() => router.push(`/dashboard/disputes/${dispute._id}`)}
                   >
@@ -462,11 +506,16 @@ export default function DashboardPage() {
                         Review Details
                       </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
 
                 {reviewQueue.length > 3 && (
-                  <div className="pt-2">
+                  <motion.div 
+                    className="pt-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
                     <Button
                       variant="outline"
                       className="w-full"
@@ -475,15 +524,17 @@ export default function DashboardPage() {
                       View All {reviewQueue.length} Disputes
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             )}
           </CardContent>
         </Card>
+        </AnimatedSection>
 
         {/* Live Dispute Activity with Quick Actions */}
-        <Card className="border-slate-200 shadow-sm">
+        <AnimatedSection direction="up" delay={0.4}>
+          <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
@@ -518,16 +569,25 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <>
-                {disputeEvents.slice(0, 10).map((evt) => {
+              <AnimatePresence mode="popLayout">
+                {disputeEvents.slice(0, 10).map((evt, index) => {
                   const event = evt as Event
                   const isDisputeFiled = event.type === "DISPUTE_FILED"
                   const caseData = event.caseData
                   const needsReview = caseData?.aiRecommendation && caseData.aiRecommendation.confidence < 0.95
                   
                   return (
-                    <div
+                    <motion.div
                       key={event._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ 
+                        duration: 0.3, 
+                        delay: index * 0.05,
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
+                      whileHover={{ x: 4 }}
                       className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-emerald-300 transition-all cursor-pointer"
                       onClick={() => event.caseId && router.push(`/dashboard/disputes/${event.caseId}`)}
                     >
@@ -610,13 +670,14 @@ export default function DashboardPage() {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
-              </>
+              </AnimatePresence>
             )}
           </CardContent>
         </Card>
+        </AnimatedSection>
       </div>
     </DashboardLayout>
   )
