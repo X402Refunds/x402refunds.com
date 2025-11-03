@@ -14,12 +14,12 @@ import schema from '../convex/schema';
  */
 
 describe('MCP - Tool Definitions', () => {
-  it('should export all 9 MCP tools', async () => {
+  it('should export all 8 MCP tools (unified dispute endpoint)', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(9);
+    expect(MCP_TOOLS.length).toBe(8); // Unified dispute tool (payment + general)
   });
 
   it('should have valid tool schemas', async () => {
@@ -36,18 +36,19 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include consulate_file_dispute tool', async () => {
+  it('should include consulate_file_dispute tool (unified payment + general)', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain('PAYMENT DISPUTE');
+    expect(tool?.description).toContain('ANY dispute'); // Unified tool
     expect(tool?.input_schema.required).toContain('plaintiff');
     expect(tool?.input_schema.required).toContain('defendant');
-    expect(tool?.input_schema.required).toContain('transactionId');
     expect(tool?.input_schema.required).toContain('amount');
-    expect(tool?.input_schema.required).toContain('paymentProtocol');
-    expect(tool?.input_schema.required).toContain('disputeReason');
+    expect(tool?.input_schema.required).toContain('description');
+    // transactionId, paymentProtocol, disputeReason are OPTIONAL (not all disputes are payment)
+    expect(tool?.input_schema.required).not.toContain('transactionId');
+    expect(tool?.input_schema.required).not.toContain('paymentProtocol');
   });
 
   it('should include consulate_submit_evidence tool', async () => {

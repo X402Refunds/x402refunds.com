@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-03T00:36:03.156Z
+**Auto-generated on**: 2025-11-03T03:07:02.729Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -257,7 +257,7 @@ Common HTTP routes exposed:
 ## 📦 Dependencies
 
 ### Production Dependencies (3)
-- convex@^1.28.0
+- convex@^1.28.1
 - convex-test@^0.0.38
 - zod@^4.1.11
 
@@ -321,5 +321,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/2/2025, 4:36:03 PM
+Generated: 11/2/2025, 7:07:02 PM
 Files scanned: 263

@@ -167,7 +167,7 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 
 - ❌ Don't run deployment commands automatically
 - ✅ Always deploy to **preview first**, then production after validation
-- ❌ Never run `pnpm deploy` without user confirmation
+- ❌ Never run `pnpm exec convex deploy --yes` without user confirmation
 - ✅ After fixes: Run quality checks, commit to git, then STOP (don't deploy)
 - ✅ User says "deploy" → Ask "preview or production?"
 
@@ -241,7 +241,7 @@ pnpm test:run              # Run full test suite (400+ tests)
 pnpm update-context        # Update codebase context
 
 # Deployment
-pnpm deploy                # Deploy to Convex (production)
+pnpm exec convex deploy --yes                # Deploy to Convex (production)
 pnpm deploy:dev            # One-time dev build
 pnpm exec convex dev       # Watch mode with hot reload
 

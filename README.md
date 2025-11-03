@@ -172,12 +172,135 @@ GET  /version                           # Version info
 
 ---
 
-## 🚀 Integration Guide for Payment Platforms
+## 🚀 Integration Guide - Unified Dispute Endpoint
 
-### **Step 1: When Dispute Occurs (Your Platform)**
+Consulate now supports **ONE unified endpoint** for all dispute types: payment (crypto/traditional) and general (SLA/service quality).
+
+### **Payment Disputes**
+
+#### **Crypto Payment Example (USDC on Base)**
 
 ```javascript
-// When customer files payment dispute
+// Crypto non-custodial dispute (wallet-to-wallet)
+const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    tool: 'consulate_file_dispute',
+    parameters: {
+      plaintiff: 'consumer:alice@example.com',
+      defendant: 'merchant:openai-api',
+      amount: 50,
+      currency: 'USD',
+      description: 'Paid 50 USDC for API credits, service failed',
+      paymentType: 'non_custodial',
+      transactionId: '0x1234...abcd',
+      disputeReason: 'service_not_rendered',
+      crypto: {
+        currency: 'USDC',
+        blockchain: 'base',
+        layer: 'L2',
+        fromAddress: '0xAlice...',
+        toAddress: '0xOpenAI...',
+        transactionHash: '0x1234...abcd',
+        contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+        explorerUrl: 'https://basescan.org/tx/0x1234...abcd'
+      },
+      metadata: {
+        customerId: 'cus_alice_123',
+        orderId: 'ord_2024_001',
+        sessionId: 'sess_browser_xyz'
+      }
+    }
+  })
+});
+```
+
+#### **Traditional Payment Example (Stripe)**
+
+```javascript
+// Traditional payment dispute (Stripe/cards)
+const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    tool: 'consulate_file_dispute',
+    parameters: {
+      plaintiff: 'consumer:alice@example.com',
+      defendant: 'merchant:openai-api',
+      amount: 29.99,
+      currency: 'USD',
+      description: 'API call failed but charge went through',
+      paymentType: 'traditional',
+      transactionId: 'ch_stripe_abc123',
+      disputeReason: 'service_not_rendered',
+      traditional: {
+        paymentMethod: 'stripe',
+        processor: 'stripe',
+        processorTransactionId: 'ch_3ABC123',
+        cardBrand: 'visa',
+        lastFourDigits: '4242',
+        cardType: 'credit'
+      },
+      metadata: {
+        customerId: 'cus_stripe_alice',
+        subscriptionId: 'sub_annual_2024'
+      }
+    }
+  })
+});
+```
+
+### **General Disputes (SLA, Service Quality)**
+
+```javascript
+// General dispute (SLA violation, service quality, etc.)
+const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    tool: 'consulate_file_dispute',
+    parameters: {
+      plaintiff: 'acme-corp',
+      defendant: 'openai-api',
+      amount: 5000,
+      currency: 'USD',
+      description: 'API uptime was 97.2% instead of guaranteed 99.9%',
+      category: 'sla_violation',
+      priority: 'high',
+      breachDetails: {
+        duration: '72 hours',
+        slaRequirement: '99.9% uptime',
+        actualPerformance: '97.2% uptime',
+        impactLevel: 'high',
+        affectedUsers: 1000
+      },
+      evidenceUrls: [
+        'https://monitoring.acme.com/uptime-report.json',
+        'https://contracts.acme.com/sla-agreement.pdf'
+      ],
+      metadata: {
+        contractId: 'contract_2024_openai',
+        monitoringDashboard: 'https://status.acme.com'
+      }
+    }
+  })
+});
+```
+
+### **Legacy API (Still Supported)**
+
+```javascript
+// When customer files payment dispute (legacy API endpoint)
 const response = await fetch('https://api.consulatehq.com/api/payment-disputes', {
   method: 'POST',
   headers: {

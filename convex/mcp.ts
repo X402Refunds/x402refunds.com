@@ -50,110 +50,202 @@ function generateSHA256(input: string): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File a PAYMENT DISPUTE for failed transactions, incorrect charges, or service-not-rendered issues. Regulation E compliant with 10 business day resolution. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00). AI provides recommendations, customer teams make final decisions.",
+    description: "File ANY dispute - payment (crypto/traditional) OR general (SLA/service). Auto-detects type. Crypto: USDC/ETH/SOL on Base/Ethereum/Solana. Traditional: Stripe/PayPal/cards. General: SLA violations, contracts, service quality. 95% AI automation. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00).",
     input_schema: {
       type: "object",
       properties: {
-        transactionId: {
+        // UNIVERSAL (all disputes)
+        plaintiff: {
           type: "string",
-          description: "Unique transaction ID from the payment system (e.g., 'txn_abc123')"
+          description: "Who's filing the dispute (consumer email, agent DID, company name, or user ID)"
+        },
+        defendant: {
+          type: "string",
+          description: "Who's being disputed (merchant name, service provider, agent DID, or company)"
+        },
+        description: {
+          type: "string",
+          description: "Clear description of what went wrong (e.g., 'API was down for 3 hours' or 'Charged $50 but service failed')"
         },
         amount: {
           type: "number",
-          description: "Transaction amount in USD (e.g., 0.50 for $0.50). This determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
+          description: "Transaction amount OR claimed damages in USD (e.g., 29.99). Determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
         },
         currency: {
           type: "string",
           description: "Currency code (default: 'USD')"
+        },
+        evidenceUrls: {
+          type: "array",
+          items: { type: "string" },
+          description: "URLs to evidence: transaction logs, API monitoring data, contracts, SLA documents, screenshots, emails"
+        },
+        
+        // PAYMENT TYPE (optional - triggers payment flow if provided)
+        paymentType: {
+          type: "string",
+          enum: ["custodial", "non_custodial", "traditional"],
+          description: "Payment model: custodial (exchange), non_custodial (wallet-to-wallet), traditional (Stripe/cards). Required for payment disputes."
+        },
+        transactionId: {
+          type: "string",
+          description: "Payment-only: Transaction ID from payment system (e.g., 'txn_stripe_abc123', blockchain hash '0x123...', exchange ID). If provided, this becomes a PAYMENT dispute."
         },
         paymentProtocol: {
           type: "string",
           enum: ["ACP", "ATXP", "STRIPE", "OTHER"],
-          description: "Payment protocol used (ACP=Autonomous Commerce Protocol, ATXP=Autonomous Transaction Protocol)"
-        },
-        plaintiff: {
-          type: "string",
-          description: "Consumer identifier (e.g., 'consumer:alice@example.com' or email)"
-        },
-        defendant: {
-          type: "string",
-          description: "Merchant/service provider identifier (e.g., 'merchant:shop@example.com')"
+          description: "Payment-only: Payment protocol used. Optional if paymentType is provided."
         },
         disputeReason: {
           type: "string",
-          enum: ["api_timeout", "service_not_rendered", "quality_issue", "amount_incorrect", "fraud", "duplicate_charge"],
-          description: "Reason for the payment dispute"
+          enum: ["service_not_rendered", "unauthorized", "fraud", "amount_incorrect", "duplicate_charge", "quality_issue", "api_timeout", "rate_limit_breach"],
+          description: "Payment-only: Specific reason for payment dispute (e.g., 'service_not_rendered' for failed API calls)"
         },
-        description: {
+        
+        // CRYPTO (nested object)
+        crypto: {
+          type: "object",
+          properties: {
+            currency: {
           type: "string",
-          description: "Clear description of what went wrong (e.g., 'API timed out after 30s but charge went through')"
+              enum: ["USDC", "USDT", "ETH", "BTC", "SOL", "XRP", "MATIC", "ARB", "OP", "AVAX", "other"],
+              description: "Cryptocurrency used"
         },
-        evidenceUrls: {
-          type: "array",
-          items: { type: "string" },
-          description: "URLs to evidence: transaction logs, API responses, receipts, screenshots"
-        },
-        callbackUrl: {
+            blockchain: {
           type: "string",
-          description: "Optional webhook URL to receive dispute resolution result"
-        }
-      },
-      required: ["transactionId", "amount", "paymentProtocol", "plaintiff", "defendant", "disputeReason", "description"]
-    }
-  },
-  {
-    name: "consulate_file_general_dispute",
-    description: "File a GENERAL DISPUTE for service quality issues, SLA breaches, contract violations, API failures, data quality problems, or other non-payment disputes. For payment/transaction disputes, use consulate_file_dispute instead. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00).",
-    input_schema: {
+              enum: ["ethereum", "solana", "base", "polygon", "arbitrum", "optimism", "xrp_ledger", "bitcoin", "avalanche", "other"],
+              description: "Blockchain network"
+        },
+            layer: {
+          type: "string",
+              enum: ["L1", "L2"],
+              description: "Layer 1 (mainnet) or Layer 2 (rollup)"
+        },
+            fromAddress: {
+              type: "string",
+              description: "Sender's wallet address"
+        },
+            toAddress: {
+          type: "string",
+              description: "Recipient's wallet address"
+            },
+            transactionHash: {
+              type: "string",
+              description: "Blockchain transaction hash (if on-chain)"
+            },
+            contractAddress: {
+              type: "string",
+              description: "Token contract address (e.g., USDC contract on Base)"
+            },
+            blockNumber: {
+              type: "number",
+              description: "Block number where transaction was included"
+            },
+            explorerUrl: {
+              type: "string",
+              description: "Link to blockchain explorer (Etherscan, Basescan, Solscan, etc.)"
+            }
+          },
+          description: "Crypto-specific transaction details (required for custodial/non_custodial paymentType)"
+        },
+        
+        // CUSTODIAL (nested object)
+        custodial: {
+          type: "object",
+          properties: {
+            platform: {
+              type: "string",
+              enum: ["coinbase", "binance", "kraken", "gemini", "crypto_com", "bybit", "okx", "other"],
+              description: "Custodial platform/exchange"
+            },
+            platformTransactionId: {
+              type: "string",
+              description: "Internal transaction ID from exchange"
+            },
+            isOnChain: {
+              type: "boolean",
+              description: "Did transaction hit blockchain or stay internal?"
+            },
+            withdrawalId: {
+              type: "string",
+              description: "Withdrawal ID if moved to blockchain"
+            }
+          },
+          description: "Custodial exchange details (required if paymentType is 'custodial')"
+        },
+        
+        // TRADITIONAL (nested object)
+        traditional: {
       type: "object",
       properties: {
-        plaintiff: {
+            paymentMethod: {
           type: "string",
-          description: "Who's filing the dispute (agent DID, email, or company name)"
+              enum: ["stripe", "paypal", "square", "visa", "mastercard", "amex", "discover", "ach", "wire", "check", "other"],
+              description: "Payment method used"
         },
-        defendant: {
+            processor: {
           type: "string",
-          description: "Who's being disputed (service provider name, agent DID, or company)"
+              enum: ["stripe", "paypal", "square", "braintree", "adyen", "worldpay", "authorize_net", "other"],
+              description: "Payment processor"
         },
+            processorTransactionId: {
+          type: "string",
+              description: "Transaction ID from processor (Stripe: ch_..., PayPal: PAYID-...)"
+        },
+            cardBrand: {
+          type: "string",
+              enum: ["visa", "mastercard", "amex", "discover", "jcb", "diners", "other"],
+              description: "Card brand (if card payment)"
+        },
+            lastFourDigits: {
+              type: "string",
+              description: "Last 4 digits of card (for privacy)"
+        },
+            cardType: {
+          type: "string",
+              enum: ["credit", "debit", "prepaid"],
+              description: "Type of card"
+            }
+          },
+          description: "Traditional payment details (required if paymentType is 'traditional')"
+        },
+        
+        // CUSTOM METADATA (flexible JSON)
+        metadata: {
+          type: "object",
+          additionalProperties: true,
+          description: "Custom fields from merchant's system. Can include ANY data: customerId, orderId, invoiceId, sessionId, internal references, flags, notes, etc. Completely flexible JSON object."
+        },
+        
+        // GENERAL DISPUTE (optional - triggers general flow if provided)
         category: {
           type: "string",
-          enum: ["contract_breach", "sla_violation", "service_quality", "api_downtime", "api_latency", "data_quality", "data_breach", "feature_availability", "delivery_issue", "support_issue", "billing_dispute", "unauthorized_access"],
-          description: "Type of dispute: contract_breach (contract terms violated), sla_violation (SLA not met), service_quality (poor service), api_downtime (API unavailable), api_latency (slow performance), data_quality (bad data), data_breach (security incident), feature_availability (features not working), delivery_issue (delivery problems), support_issue (poor support), billing_dispute (billing problems), unauthorized_access (security breach)"
+          enum: ["sla_violation", "api_downtime", "api_latency", "service_quality", "contract_breach", "data_quality", "data_breach", "feature_availability", "delivery_issue", "support_issue", "billing_dispute", "unauthorized_access"],
+          description: "General-only: Type of non-payment dispute. If provided (and no transactionId), this becomes a GENERAL dispute. Examples: sla_violation (uptime/SLA not met), api_downtime (API unavailable), service_quality (poor service), contract_breach (contract violated)"
         },
-        description: {
+        priority: {
           type: "string",
-          description: "Clear description of what went wrong (e.g., 'API was down for 3 hours, violated 99.9% uptime SLA')"
-        },
-        amount: {
-          type: "number",
-          description: "Claimed damages in USD (e.g., 500.00 for $500). This determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
-        },
-        currency: {
-          type: "string",
-          description: "Currency code (default: 'USD')"
-        },
-        evidenceUrls: {
-          type: "array",
-          items: { type: "string" },
-          description: "URLs to evidence: contracts, SLA documents, monitoring logs, screenshots, communications"
+          enum: ["low", "medium", "high", "urgent"],
+          description: "General-only: Urgency level for non-payment disputes"
         },
         breachDetails: {
           type: "object",
           properties: {
             duration: { type: "string", description: "How long the issue lasted (e.g., '3 hours', '2 days')" },
             slaRequirement: { type: "string", description: "What the SLA required (e.g., '99.9% uptime', '<200ms latency')" },
-            actualPerformance: { type: "string", description: "What actually happened (e.g., '97.2% uptime', '450ms average latency')" },
-            impactLevel: { type: "string", description: "Impact severity: low, medium, high, critical" },
+            actualPerformance: { type: "string", description: "What actually happened (e.g., '97.2% uptime', '450ms latency')" },
+            impactLevel: { type: "string", description: "Impact: low, medium, high, critical" },
             affectedUsers: { type: "number", description: "Number of users affected" }
           },
-          description: "Optional detailed breach information for SLA/contract disputes"
+          description: "General-only: Detailed breach information for SLA/contract disputes"
         },
+        
         callbackUrl: {
           type: "string",
-          description: "Optional webhook URL to receive dispute resolution result"
+          description: "Optional webhook URL to receive resolution updates"
         }
       },
-      required: ["plaintiff", "defendant", "category", "description", "amount"]
+      required: ["plaintiff", "defendant", "description", "amount"]
     }
   },
   {
@@ -322,12 +414,28 @@ export const MCP_TOOLS = [
 export const mcpDiscovery = httpAction(async (ctx, request) => {
   return new Response(JSON.stringify({
     protocol: "mcp",
-    version: "1.0.0",
+    version: "2.0.0",
     server: {
       name: "Consulate Dispute Resolution",
-      version: "1.0.0",
-      description: "Automated dispute resolution for payments, service quality, contracts, SLAs, and more. Regulation E compliant. 5 pricing tiers: MICRO (<$1), SMALL ($1-$10), MEDIUM ($10-$100), LARGE ($100-$1k), ENTERPRISE (>$1k).",
-      dispute_types: "PAYMENT & GENERAL DISPUTES (payments, SLA violations, contracts, service quality, API issues)",
+      version: "2.0.0",
+      description: "Unified dispute resolution: crypto (USDC/ETH/SOL on Base/Ethereum/Solana), traditional (Stripe/cards), general (SLA/contracts). 95% AI automation. Regulation E compliant.",
+      
+      payment_types: {
+        crypto: {
+          custodial: ["Coinbase", "Binance", "Kraken", "Gemini", "Crypto.com"],
+          non_custodial: "Wallet-to-wallet on any blockchain",
+          currencies: ["USDC", "USDT", "ETH", "BTC", "SOL", "XRP", "MATIC", "ARB", "OP"],
+          blockchains: ["Ethereum", "Base", "Solana", "Polygon", "Arbitrum", "Optimism", "XRP Ledger", "Bitcoin"]
+        },
+        traditional: ["Stripe", "PayPal", "Square", "Visa", "Mastercard", "Amex", "ACH", "Wire"],
+        general: "SLA violations, service quality, contracts, API failures, support issues"
+      },
+      
+      custom_fields: {
+        metadata: "Flexible JSON object for merchant-specific identifiers (customerId, orderId, sessionId, etc.)"
+      },
+      
+      dispute_types: "UNIFIED ENDPOINT: Payment (crypto + traditional) + General disputes (SLA, contracts, service)",
       pricing: {
         micro: { range: "<$1", fee: "$0.10" },
         small: { range: "$1-$10", fee: "$0.25" },
@@ -335,7 +443,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
         large: { range: "$100-$1,000", fee: "$5.00" },
         enterprise: { range: ">$1,000", fee: "$25.00" }
       },
-      resolution_time: "10 business days (Regulation E)",
+      resolution_time: "95% auto-resolved in 4.2 minutes, 10 business days max (Regulation E)",
       url: "https://consulatehq.com"
     },
     tools: MCP_TOOLS,
@@ -500,23 +608,91 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     
     switch (tool) {
       case "consulate_file_dispute":
-        // File PAYMENT DISPUTE using the unified payment dispute endpoint
+        // UNIFIED HANDLER - Auto-detects payment vs general dispute
+        
+        // 1. Determine dispute type based on provided parameters
+        const hasPaymentFields = !!parameters.transactionId || !!parameters.paymentType;
+        const hasGeneralFields = !!parameters.category;
+        
+        // 2. Validation: must be one type, not both
+        if (hasPaymentFields && hasGeneralFields) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Cannot file both payment and general dispute simultaneously",
+              hint: "Provide either (transactionId/paymentType) OR (category), not both"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // 3. Validation: must be one of them
+        if (!hasPaymentFields && !hasGeneralFields) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Dispute type unclear - must provide payment OR general dispute fields",
+              hint: "For payment disputes: include 'transactionId' (required) and optionally 'paymentType'. For general disputes: include 'category'"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // 4. Route to appropriate backend based on type
+        if (hasPaymentFields) {
+          // Validation: payment disputes require transactionId
+          if (!parameters.transactionId) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                message: "Payment disputes require 'transactionId' field",
+                hint: "Provide transactionId (can be Stripe charge ID, blockchain hash, exchange ID, etc.)"
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
+          // PAYMENT DISPUTE PATH
+          // Normalize paymentProtocol: validator expects lowercase "other", but MCP schema allows uppercase
+          const normalizedPaymentProtocol = parameters.paymentProtocol 
+            ? (parameters.paymentProtocol === "OTHER" || parameters.paymentProtocol === "STRIPE" 
+                ? parameters.paymentProtocol.toLowerCase() 
+                : parameters.paymentProtocol)
+            : "other";
+            
         result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
           transactionId: parameters.transactionId,
           amount: parameters.amount,
           currency: parameters.currency || "USD",
-          paymentProtocol: parameters.paymentProtocol,
+            paymentProtocol: normalizedPaymentProtocol,
           plaintiff: parameters.plaintiff,
           defendant: parameters.defendant,
           disputeReason: parameters.disputeReason,
           description: parameters.description,
           evidenceUrls: parameters.evidenceUrls || [],
           callbackUrl: parameters.callbackUrl,
-          reviewerOrganizationId: authenticatedOrg, // Auto-detected from API key (Infrastructure Model)
+            reviewerOrganizationId: authenticatedOrg,
+            
+            // NEW FIELDS
+            paymentType: parameters.paymentType,
+            crypto: parameters.crypto,
+            custodial: parameters.custodial,
+            traditional: parameters.traditional,
+            metadata: parameters.metadata,
         });
 
         return new Response(JSON.stringify({
           success: true,
+            disputeType: "PAYMENT",
           caseId: result.caseId,
           paymentDisputeId: result.paymentDisputeId,
           status: result.status,
@@ -528,10 +704,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           message: `Payment dispute filed successfully. Case ID: ${result.caseId}`,
           trackingUrl: `https://consulatehq.com/cases/${result.caseId}`,
           nextSteps: [
-            "Submit additional evidence using consulate_submit_evidence tool (optional)",
-            "AI will analyze the dispute and provide a recommendation",
-            "Customer review team will make the final decision",
-            "Resolution guaranteed within 10 business days (Regulation E)"
+              "Submit additional evidence (optional)",
+              "AI analyzes dispute + provides recommendation",
+              "Your team reviews exceptions in dashboard",
+              "Resolution within 10 business days (Regulation E)"
           ],
           _links: {
             self: `https://consulatehq.com/cases/${result.caseId}`,
@@ -545,16 +721,30 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           headers: { "Content-Type": "application/json" }
         });
       
-      case "consulate_file_general_dispute":
-        // File GENERAL DISPUTE (non-payment: SLA, contract, service quality, etc.)
-        // First, submit evidence if provided
+        } else {
+          // GENERAL DISPUTE PATH
+          
+          // Create general dispute case first (evidence can be added after)
+        const caseId = await ctx.runMutation(api.cases.fileDispute, {
+          plaintiff: parameters.plaintiff,
+          defendant: parameters.defendant,
+            type: parameters.category,
+          jurisdictionTags: ["general"],
+          evidenceIds: [], // Evidence will be submitted after case creation
+          description: parameters.description,
+          claimedDamages: parameters.amount,
+          breachDetails: parameters.breachDetails,
+            metadata: parameters.metadata, // NEW
+          });
+
+          // Submit evidence if provided (now with valid caseId)
         const evidenceIds = [];
         if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
           for (const url of parameters.evidenceUrls) {
             const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
-              caseId: null as any, // Will be updated after case creation
+                caseId: caseId, // Now we have a valid caseId
               agentDid: parameters.plaintiff,
-              sha256: generateSHA256(url), // Generate hash for URL
+                sha256: generateSHA256(url),
               uri: url,
               signer: parameters.plaintiff,
               model: {
@@ -568,37 +758,31 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         }
 
-        // Create the general dispute case
-        const caseId = await ctx.runMutation(api.cases.fileDispute, {
-          plaintiff: parameters.plaintiff,
-          defendant: parameters.defendant,
-          type: parameters.category, // Category becomes the type (e.g., "api_downtime")
-          jurisdictionTags: ["general"],
-          evidenceIds: evidenceIds,
-          description: parameters.description,
-          claimedDamages: parameters.amount,
-          breachDetails: parameters.breachDetails,
-        });
-
-        return new Response(JSON.stringify({
-          success: true,
-          caseId,
-          message: `General dispute filed successfully: ${parameters.category}`,
-          category: parameters.category,
-          pricingTier: parameters.amount < 1 ? "MICRO" :
+          // Calculate pricing tier
+          const tier = parameters.amount < 1 ? "MICRO" :
                        parameters.amount < 10 ? "SMALL" :
                        parameters.amount < 100 ? "MEDIUM" :
-                       parameters.amount < 1000 ? "LARGE" : "ENTERPRISE",
-          estimatedFee: parameters.amount < 1 ? 0.10 :
+                       parameters.amount < 1000 ? "LARGE" : "ENTERPRISE";
+          
+          const fee = parameters.amount < 1 ? 0.10 :
                         parameters.amount < 10 ? 0.25 :
                         parameters.amount < 100 ? 1.00 :
-                        parameters.amount < 1000 ? 5.00 : 25.00,
+                      parameters.amount < 1000 ? 5.00 : 25.00;
+
+          return new Response(JSON.stringify({
+            success: true,
+            disputeType: "GENERAL",
+            caseId,
+            category: parameters.category,
+            pricingTier: tier,
+            disputeFee: fee,
+            message: `General dispute filed: ${parameters.category}`,
           trackingUrl: `https://consulatehq.com/cases/${caseId}`,
           nextSteps: [
-            "Submit additional evidence using consulate_submit_evidence tool (optional)",
-            "Defendant will be notified and can respond",
-            "AI will analyze the dispute and provide a recommendation",
-            "Final resolution will be provided"
+              "Submit additional evidence (optional)",
+              "Defendant notified to respond",
+              "AI analyzes dispute + provides recommendation",
+              "Final resolution provided"
           ],
           _links: {
             self: `https://consulatehq.com/cases/${caseId}`,
@@ -609,6 +793,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }), {
           headers: { "Content-Type": "application/json" }
         });
+        }
         
       case "consulate_submit_evidence":
         result = await ctx.runMutation(api.evidence.submitEvidence, {

@@ -152,6 +152,9 @@ export default defineSchema({
       size: v.optional(v.number()),
     }))),
 
+    // NEW: Custom merchant metadata (flexible JSON) - for both payment and general disputes
+    metadata: v.optional(v.any()),
+
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
 
@@ -189,8 +192,8 @@ export default defineSchema({
     paymentDetails: v.optional(v.object({
       transactionId: v.string(),
       transactionHash: v.optional(v.string()),
-      paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("STRIPE"), v.literal("OTHER")),
-      disputeReason: v.union(
+      paymentProtocol: v.optional(v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("STRIPE"), v.literal("OTHER"))), // Made optional for backward compat
+      disputeReason: v.optional(v.union(
         v.literal("unauthorized"),
         v.literal("service_not_rendered"),
         v.literal("amount_incorrect"),
@@ -200,7 +203,49 @@ export default defineSchema({
         v.literal("rate_limit_breach"),
         v.literal("quality_issue"),
         v.literal("other")
-      ),
+      )),
+      
+      // NEW: Payment type classification
+      paymentType: v.optional(v.union(
+        v.literal("custodial"),
+        v.literal("non_custodial"),
+        v.literal("traditional")
+      )),
+      
+      // NEW: Crypto transaction details
+      crypto: v.optional(v.object({
+        currency: v.string(),        // USDC, ETH, BTC, SOL, XRP, etc.
+        blockchain: v.string(),       // ethereum, base, solana, polygon, etc.
+        layer: v.optional(v.string()), // L1 or L2
+        fromAddress: v.optional(v.string()),
+        toAddress: v.optional(v.string()),
+        transactionHash: v.optional(v.string()),
+        contractAddress: v.optional(v.string()),
+        blockNumber: v.optional(v.number()),
+        explorerUrl: v.optional(v.string()),
+      })),
+      
+      // NEW: Custodial platform details
+      custodial: v.optional(v.object({
+        platform: v.string(),         // coinbase, binance, kraken, etc.
+        platformTransactionId: v.optional(v.string()),
+        isOnChain: v.optional(v.boolean()),
+        withdrawalId: v.optional(v.string()),
+      })),
+      
+      // NEW: Traditional payment details
+      traditional: v.optional(v.object({
+        paymentMethod: v.string(),    // stripe, paypal, visa, mastercard, etc.
+        processor: v.optional(v.string()),
+        processorTransactionId: v.optional(v.string()),
+        cardBrand: v.optional(v.string()),
+        lastFourDigits: v.optional(v.string()),
+        cardType: v.optional(v.string()),
+      })),
+      
+      // NEW: Custom merchant metadata (flexible JSON)
+      metadata: v.optional(v.any()),
+      
       regulationEDeadline: v.number(),      // Regulation E compliance (10 business days)
       pricingTier: v.union(
         v.literal("micro"),      // < $1: $0.10

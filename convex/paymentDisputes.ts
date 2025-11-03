@@ -81,7 +81,7 @@ export const receivePaymentDispute = mutation({
     transactionHash: v.optional(v.string()),
     amount: v.number(),
     currency: v.string(),
-    paymentProtocol: v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other")),
+    paymentProtocol: v.optional(v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other"))), // Made optional for crypto/traditional payments
 
     // Parties (customer-scoped identifiers)
     // plaintiff = YOUR CUSTOMER (Alice) who is disputing the charge
@@ -105,7 +105,7 @@ export const receivePaymentDispute = mutation({
     })),
 
     // Dispute details
-    disputeReason: v.union(
+    disputeReason: v.optional(v.union(
       v.literal("unauthorized"),
       v.literal("service_not_rendered"),
       v.literal("amount_incorrect"),
@@ -115,7 +115,7 @@ export const receivePaymentDispute = mutation({
       v.literal("rate_limit_breach"),
       v.literal("quality_issue"),
       v.literal("other")
-    ),
+    )),
     description: v.string(),
 
     // Evidence URLs (API logs, transaction records, etc.)
@@ -127,6 +127,43 @@ export const receivePaymentDispute = mutation({
     // Infrastructure Model: Customer's team reviews
     reviewerEmail: v.optional(v.string()),
     reviewerOrganizationId: v.optional(v.id("organizations")),
+    
+    // NEW: Payment type classification
+    paymentType: v.optional(v.union(v.literal("custodial"), v.literal("non_custodial"), v.literal("traditional"))),
+    
+    // NEW: Crypto transaction details
+    crypto: v.optional(v.object({
+      currency: v.string(),
+      blockchain: v.string(),
+      layer: v.optional(v.string()),
+      fromAddress: v.optional(v.string()),
+      toAddress: v.optional(v.string()),
+      transactionHash: v.optional(v.string()),
+      contractAddress: v.optional(v.string()),
+      blockNumber: v.optional(v.number()),
+      explorerUrl: v.optional(v.string()),
+    })),
+    
+    // NEW: Custodial platform details
+    custodial: v.optional(v.object({
+      platform: v.string(),
+      platformTransactionId: v.optional(v.string()),
+      isOnChain: v.optional(v.boolean()),
+      withdrawalId: v.optional(v.string()),
+    })),
+    
+    // NEW: Traditional payment details
+    traditional: v.optional(v.object({
+      paymentMethod: v.string(),
+      processor: v.optional(v.string()),
+      processorTransactionId: v.optional(v.string()),
+      cardBrand: v.optional(v.string()),
+      lastFourDigits: v.optional(v.string()),
+      cardType: v.optional(v.string()),
+    })),
+    
+    // NEW: Custom merchant metadata
+    metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     console.info(`📥 Payment dispute received: ${args.transactionId} ($${args.amount})`);
@@ -160,7 +197,7 @@ export const receivePaymentDispute = mutation({
       status: "FILED",
       type: "PAYMENT", // Changed from PAYMENT_DISPUTE
       filedAt: now,
-      description: `${args.disputeReason}: ${args.description}`,
+      description: args.disputeReason ? `${args.disputeReason}: ${args.description}` : args.description,
       amount: args.amount,
       currency: args.currency,
       evidenceIds: [], // Will be populated if evidence submitted
@@ -177,8 +214,16 @@ export const receivePaymentDispute = mutation({
       paymentDetails: {
         transactionId: args.transactionId,
         transactionHash: args.transactionHash,
-        paymentProtocol: args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol,
-        disputeReason: args.disputeReason,
+        paymentProtocol: args.paymentProtocol ? (args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol) : "OTHER",
+        disputeReason: args.disputeReason || "other",
+        
+        // NEW FIELDS
+        paymentType: args.paymentType,
+        crypto: args.crypto,
+        custodial: args.custodial,
+        traditional: args.traditional,
+        metadata: args.metadata,
+        
         regulationEDeadline, // Also stored here for backward compatibility
         plaintiffMetadata: args.plaintiffMetadata,
         defendantMetadata: args.defendantMetadata,
@@ -186,6 +231,9 @@ export const receivePaymentDispute = mutation({
         pricingTier: feeBreakdown.tier,
         // TODO: Add tokensUsed to schema if needed for billing tracking
       },
+      
+      // NEW: Store metadata at case level too (for consistency)
+      metadata: args.metadata,
     });
     
     // 3. Submit evidence if provided
@@ -200,7 +248,7 @@ export const receivePaymentDispute = mutation({
           ts: now,
           model: {
             provider: "payment_protocol",
-            name: args.paymentProtocol,
+            name: args.paymentProtocol || "OTHER",
             version: "1.0.0",
           },
         });

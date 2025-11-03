@@ -14,6 +14,7 @@ interface Dispute {
   currency: string
   transactionId: string
   disputeReason: string
+  paymentType?: "custodial" | "non_custodial" | "traditional"
   aiRecommendation?: PaymentVerdict
   aiRulingConfidence?: number
   aiReasoning?: string
@@ -25,6 +26,7 @@ interface Dispute {
   }
   disputeFee?: number
   pricingTier?: string
+  metadata?: Record<string, unknown>
 }
 
 interface DisputeReviewCardProps {
@@ -91,6 +93,20 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
             <p className="text-sm text-muted-foreground">
               {formatReason(dispute.disputeReason)}
             </p>
+            {/* Payment Type Badge */}
+            {dispute.paymentType && (
+              <Badge className={
+                dispute.paymentType === "non_custodial" ? "bg-purple-100 text-purple-700 border-purple-300 mt-2" :
+                dispute.paymentType === "custodial" ? "bg-blue-100 text-blue-700 border-blue-300 mt-2" :
+                dispute.paymentType === "traditional" ? "bg-green-100 text-green-700 border-green-300 mt-2" :
+                "mt-2"
+              }>
+                {dispute.paymentType === "non_custodial" ? "🔷 Crypto" :
+                 dispute.paymentType === "custodial" ? "🔵 Custodial" :
+                 dispute.paymentType === "traditional" ? "💳 Traditional" :
+                 dispute.paymentType}
+              </Badge>
+            )}
           </div>
           <Badge variant="secondary">
             Needs Review

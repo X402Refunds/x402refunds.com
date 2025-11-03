@@ -63,18 +63,24 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeReasonEnum).toContain("duplicate_charge");
     });
 
-    it("should have required fields matching payment dispute mutation", () => {
+    it("should have required fields matching unified dispute tool", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
+      // Unified tool - universal fields are required
       expect(required).toContain("plaintiff");
       expect(required).toContain("defendant");
-      expect(required).toContain("transactionId");
       expect(required).toContain("amount");
-      expect(required).toContain("paymentProtocol");
-      expect(required).toContain("disputeReason");
       expect(required).toContain("description");
+      
+      // Payment-specific fields are optional (only required when filing payment disputes)
+      expect(required).not.toContain("transactionId");
+      expect(required).not.toContain("paymentProtocol");
+      expect(required).not.toContain("disputeReason");
+      
+      // General dispute fields are also optional
+      expect(required).not.toContain("category");
     });
   });
 
@@ -145,12 +151,11 @@ describe("MCP Tool Schema Validation", () => {
       }
     });
 
-    it("should list exactly 9 tools", () => {
-      expect(MCP_TOOLS.length).toBe(9);
+    it("should list exactly 8 tools (unified dispute endpoint)", () => {
+      expect(MCP_TOOLS.length).toBe(8);
 
       const expectedTools = [
-        "consulate_file_dispute",
-        "consulate_file_general_dispute",
+        "consulate_file_dispute", // Unified tool (payment + general)
         "consulate_submit_evidence",
         "consulate_check_case_status",
         "consulate_register_agent",
@@ -162,6 +167,8 @@ describe("MCP Tool Schema Validation", () => {
 
       const actualNames = MCP_TOOLS.map(t => t.name);
       expect(actualNames).toEqual(expectedTools);
+      // Verify old tool is removed
+      expect(actualNames).not.toContain("consulate_file_general_dispute");
     });
   });
 });

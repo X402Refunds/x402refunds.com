@@ -48,12 +48,19 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.input_schema.properties).toBeDefined();
     expect(fileDisputeTool.input_schema.required).toBeDefined();
     
-    // Verify required fields
-    expect(fileDisputeTool.input_schema.required).toContain('transactionId');
+    // Verify required fields (unified tool - universal fields only)
     expect(fileDisputeTool.input_schema.required).toContain('amount');
     expect(fileDisputeTool.input_schema.required).toContain('plaintiff');
+    expect(fileDisputeTool.input_schema.required).toContain('description');
     expect(fileDisputeTool.input_schema.required).toContain('defendant');
-    expect(fileDisputeTool.input_schema.required).toContain('disputeReason');
+    
+    // Payment-specific fields are OPTIONAL (not all disputes are payment)
+    expect(fileDisputeTool.input_schema.required).not.toContain('transactionId');
+    expect(fileDisputeTool.input_schema.required).not.toContain('disputeReason');
+    expect(fileDisputeTool.input_schema.required).not.toContain('paymentProtocol');
+    
+    // General dispute fields are also OPTIONAL
+    expect(fileDisputeTool.input_schema.required).not.toContain('category');
     
     // Verify check_status schema
     expect(checkStatusTool).toBeDefined();
@@ -86,7 +93,9 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify schemas are preserved
     expect(customerSchema.tools.length).toBe(2);
     const fileDispute = customerSchema.tools.find((t: any) => t.name === 'file_dispute');
-    expect(fileDispute.input_schema.required).toContain('transactionId');
+    // Unified tool - transactionId is OPTIONAL
+    expect(fileDispute.input_schema.required).toContain('plaintiff');
+    expect(fileDispute.input_schema.required).toContain('amount');
   }, 30000);
 
   it('should preserve all schema properties when renaming', async () => {

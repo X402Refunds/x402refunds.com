@@ -165,6 +165,134 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       expect(data.pricingTier).toBe('small');
       expect(data.disputeFee).toBe(0.25);
     });
+
+    it('should file a crypto non-custodial dispute with blockchain details', async () => {
+      const timestamp = Date.now();
+      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+        transactionId: `0x${timestamp.toString(16)}`,
+        amount: 50.00,
+        currency: 'USD',
+        paymentType: 'non_custodial',
+        plaintiff: 'consumer:crypto@example.com',
+        defendant: 'merchant:api@example.com',
+        disputeReason: 'service_not_rendered',
+        description: 'Paid 50 USDC but API failed',
+        crypto: {
+          currency: 'USDC',
+          blockchain: 'base',
+          layer: 'L2',
+          fromAddress: '0xAlice123',
+          toAddress: '0xMerchant456',
+          transactionHash: `0x${timestamp.toString(16)}`,
+          contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          explorerUrl: 'https://basescan.org/tx/0x123'
+        },
+        metadata: {
+          customerId: 'cus_crypto_123',
+          orderId: 'ord_2024_001'
+        }
+      }, API_KEY);
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.caseId).toBeDefined();
+    });
+
+    it('should file a custodial crypto dispute', async () => {
+      const timestamp = Date.now();
+      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+        transactionId: `custodial_${timestamp}`,
+        amount: 25.00,
+        currency: 'USD',
+        paymentType: 'custodial',
+        plaintiff: 'consumer:custodial@example.com',
+        defendant: 'merchant:api@example.com',
+        disputeReason: 'service_not_rendered',
+        description: 'Exchange transaction but service failed',
+        custodial: {
+          platform: 'coinbase',
+          platformTransactionId: `cb_txn_${timestamp}`,
+          isOnChain: true
+        },
+        metadata: {
+          exchangeOrderId: 'order_coinbase_123'
+        }
+      }, API_KEY);
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.caseId).toBeDefined();
+    });
+
+    it('should file a traditional payment dispute (Stripe)', async () => {
+      const timestamp = Date.now();
+      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+        transactionId: `ch_stripe_${timestamp}`,
+        amount: 29.99,
+        currency: 'USD',
+        paymentType: 'traditional',
+        plaintiff: 'consumer:stripe@example.com',
+        defendant: 'merchant:api@example.com',
+        disputeReason: 'service_not_rendered',
+        description: 'Charged but service failed',
+        traditional: {
+          paymentMethod: 'stripe',
+          processor: 'stripe',
+          processorTransactionId: `ch_3ABC${timestamp}`,
+          cardBrand: 'visa',
+          lastFourDigits: '4242',
+          cardType: 'credit'
+        },
+        metadata: {
+          customerId: 'cus_stripe_123',
+          subscriptionId: 'sub_annual_2024'
+        }
+      }, API_KEY);
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.caseId).toBeDefined();
+    });
+
+    it('should file a general dispute (SLA violation) via unified endpoint', async () => {
+      const timestamp = Date.now();
+      // Register agent first (required for filing disputes)
+      const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
+        name: `General Dispute Agent ${timestamp}`,
+        functionalType: 'general'
+      }, API_KEY);
+      const plaintiffDid = agentData.agentDid;
+      
+      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+        plaintiff: plaintiffDid,
+        defendant: 'openai-api',
+        amount: 5000,
+        currency: 'USD',
+        description: 'API uptime was 97.2% instead of guaranteed 99.9%',
+        category: 'sla_violation',
+        priority: 'high',
+        breachDetails: {
+          duration: '72 hours',
+          slaRequirement: '99.9% uptime',
+          actualPerformance: '97.2% uptime',
+          impactLevel: 'high',
+          affectedUsers: 1000
+        },
+        evidenceUrls: [
+          'https://monitoring.acme.com/uptime-report.json'
+        ],
+        metadata: {
+          contractId: 'contract_2024_openai',
+          monitoringDashboard: 'https://status.acme.com'
+        }
+      }, API_KEY);
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.caseId).toBeDefined();
+      // General disputes don't have paymentDisputeId
+      expect(data.paymentDisputeId).toBeUndefined();
+    });
   });
 
   describe('3. consulate_submit_evidence', () => {

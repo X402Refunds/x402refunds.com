@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { Clock, FileText, Scale, DollarSign, Calendar, Shield } from "lucide-react";
+import { Clock, FileText, Scale, DollarSign, Calendar, Shield, ExternalLink } from "lucide-react";
 
 export default function PublicCaseTrackingPage() {
   const params = useParams();
@@ -157,6 +157,174 @@ export default function PublicCaseTrackingPage() {
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Type & Details */}
+          {caseDetails.paymentDetails && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Payment Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Payment Type Badge */}
+                {caseDetails.paymentDetails.paymentType && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-600 mb-2">Payment Type</p>
+                    <Badge className={
+                      caseDetails.paymentDetails.paymentType === "non_custodial" ? "bg-purple-100 text-purple-700 border-purple-300" :
+                      caseDetails.paymentDetails.paymentType === "custodial" ? "bg-blue-100 text-blue-700 border-blue-300" :
+                      caseDetails.paymentDetails.paymentType === "traditional" ? "bg-green-100 text-green-700 border-green-300" :
+                      "bg-slate-100 text-slate-700 border-slate-300"
+                    }>
+                      {caseDetails.paymentDetails.paymentType === "non_custodial" ? "🔷 Crypto (Non-Custodial)" :
+                       caseDetails.paymentDetails.paymentType === "custodial" ? "🔵 Crypto (Custodial)" :
+                       caseDetails.paymentDetails.paymentType === "traditional" ? "💳 Traditional Payment" :
+                       "Payment"}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Crypto Details */}
+                {caseDetails.paymentDetails.crypto && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+                    <p className="text-sm font-semibold text-purple-900">Crypto Transaction</p>
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-purple-700">Currency:</span>
+                        <span className="font-mono font-semibold">{caseDetails.paymentDetails.crypto.currency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-purple-700">Blockchain:</span>
+                        <span className="font-semibold capitalize">{caseDetails.paymentDetails.crypto.blockchain}</span>
+                      </div>
+                      {caseDetails.paymentDetails.crypto.layer && (
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">Layer:</span>
+                          <span className="font-semibold">{caseDetails.paymentDetails.crypto.layer}</span>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.crypto.fromAddress && (
+                        <div>
+                          <span className="text-purple-700 text-xs">From:</span>
+                          <p className="font-mono text-xs break-all">{caseDetails.paymentDetails.crypto.fromAddress}</p>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.crypto.toAddress && (
+                        <div>
+                          <span className="text-purple-700 text-xs">To:</span>
+                          <p className="font-mono text-xs break-all">{caseDetails.paymentDetails.crypto.toAddress}</p>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.crypto.transactionHash && (
+                        <div>
+                          <span className="text-purple-700 text-xs">Transaction Hash:</span>
+                          <p className="font-mono text-xs break-all">{caseDetails.paymentDetails.crypto.transactionHash}</p>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.crypto.explorerUrl && (
+                        <div className="pt-2">
+                          <a 
+                            href={caseDetails.paymentDetails.crypto.explorerUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-purple-600 hover:text-purple-800 text-sm font-semibold flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View on Blockchain Explorer
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custodial Details */}
+                {caseDetails.paymentDetails.custodial && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-semibold text-blue-900">Custodial Platform</p>
+                    <div className="text-sm">
+                      <span className="text-blue-700">Platform: </span>
+                      <span className="font-semibold capitalize">{caseDetails.paymentDetails.custodial.platform}</span>
+                    </div>
+                    {caseDetails.paymentDetails.custodial.platformTransactionId && (
+                      <div className="text-sm">
+                        <span className="text-blue-700">Transaction ID: </span>
+                        <span className="font-mono text-xs">{caseDetails.paymentDetails.custodial.platformTransactionId}</span>
+                      </div>
+                    )}
+                    {caseDetails.paymentDetails.custodial.isOnChain !== undefined && (
+                      <div className="text-sm">
+                        <span className="text-blue-700">On-Chain: </span>
+                        <span className="font-semibold">{caseDetails.paymentDetails.custodial.isOnChain ? "Yes" : "No (Internal Ledger)"}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Traditional Payment Details */}
+                {caseDetails.paymentDetails.traditional && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-semibold text-green-900">Traditional Payment</p>
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Method:</span>
+                        <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.paymentMethod}</span>
+                      </div>
+                      {caseDetails.paymentDetails.traditional.processor && (
+                        <div className="flex justify-between">
+                          <span className="text-green-700">Processor:</span>
+                          <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.processor}</span>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.traditional.processorTransactionId && (
+                        <div>
+                          <span className="text-green-700 text-xs">Transaction ID: </span>
+                          <span className="font-mono text-xs">{caseDetails.paymentDetails.traditional.processorTransactionId}</span>
+                        </div>
+                      )}
+                      {caseDetails.paymentDetails.traditional.cardBrand && (
+                        <div className="flex justify-between">
+                          <span className="text-green-700">Card:</span>
+                          <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.cardBrand}</span>
+                          {caseDetails.paymentDetails.traditional.lastFourDigits && (
+                            <span className="text-xs">•••• {caseDetails.paymentDetails.traditional.lastFourDigits}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Transaction ID */}
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">Transaction ID</p>
+                  <p className="text-sm font-mono bg-slate-50 px-3 py-2 rounded border break-all">
+                    {caseDetails.paymentDetails.transactionId}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Custom Metadata */}
+          {(caseDetails.metadata || caseDetails.paymentDetails?.metadata) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Custom Fields
+                </CardTitle>
+                <CardDescription>Merchant-specific identifiers and metadata</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <pre className="bg-slate-50 border rounded p-4 text-xs overflow-auto max-h-96">
+                  {JSON.stringify(caseDetails.metadata || caseDetails.paymentDetails?.metadata, null, 2)}
+                </pre>
               </CardContent>
             </Card>
           )}

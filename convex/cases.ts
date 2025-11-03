@@ -38,6 +38,7 @@ export const fileDispute = mutation({
       actualPerformance: v.optional(v.string()),
       rootCause: v.optional(v.string()),
     })),
+    metadata: v.optional(v.any()), // NEW: Custom merchant metadata
   },
   handler: async (ctx, args) => {
     // Validate plaintiff and defendant are different
@@ -95,6 +96,7 @@ export const fileDispute = mutation({
       category: args.type, // Store original dispute type as category
       tags: args.jurisdictionTags, // Jurisdiction tags become tags
       breachDetails: args.breachDetails, // Store SLA/breach details if provided
+      metadata: args.metadata, // NEW: Store custom metadata
       createdAt: now,
     };
 
