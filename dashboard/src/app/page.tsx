@@ -168,14 +168,15 @@ const ruling = await response.json();
 
             {/* Stats bar */}
             <motion.div 
-              className="grid grid-cols-2 gap-8 pt-12 max-w-2xl mx-auto"
+              className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               {[
                 { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 }
+                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 },
+                { value: 100, suffix: "%", label: "Neutral", duration: 2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
