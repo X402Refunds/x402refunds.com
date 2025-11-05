@@ -97,9 +97,11 @@ describe('MCP Protocol - Tool Discovery', () => {
       const manifest = await response.json();
 
       expect(manifest.authentication).toBeDefined();
-      expect(manifest.authentication.type).toBe('bearer');
-      expect(manifest.authentication.scheme).toBe('Bearer');
-      expect(manifest.authentication.description).toContain('Bearer token');
+      expect(manifest.authentication.type).toBe('optional');
+      expect(manifest.authentication.description).toContain('optional');
+      expect(manifest.authentication.optional_auth).toBeDefined();
+      expect(manifest.authentication.optional_auth.type).toBe('signature');
+      expect(manifest.authentication.optional_auth.algorithm).toBe('Ed25519');
     });
 
     it('should include CORS headers', async () => {
@@ -110,109 +112,73 @@ describe('MCP Protocol - Tool Discovery', () => {
 });
 
 describe('MCP Protocol - Authentication', () => {
-  // Pure HTTP tests - validate error responses without test data
+  // MCP endpoints are publicly accessible - authentication is optional
+  // Agent identity is verified via Ed25519 signatures on signed evidence
 
-  describe('POST /mcp/invoke - Auth', () => {
-    it.skipIf(USE_LIVE_API)('should reject missing Authorization header', async () => {
+  describe('POST /mcp/invoke - Public Access', () => {
+    it('should allow public access without Authorization header', async () => {
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'consulate_register_agent', // Non-public tool (requires auth)
+          tool: 'consulate_register_agent',
           parameters: {
             name: 'Test Agent',
-            functionalType: 'api',
-            domain: 'test.com'
+            publicKey: testPublicKey,
+            organizationName: 'Test Org',
+            functionalType: 'api'
           },
         }),
       });
 
-      expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.success).toBe(false);
-      expect(data.error).toBeDefined();
-      expect(data.error.code).toBe('MCP_AUTH_REQUIRED');
-      expect(data.error.message).toContain('Authentication required');
-    });
-
-    it.skipIf(USE_LIVE_API)('should reject invalid Bearer token format', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic invalid-format',
-        },
-        body: JSON.stringify({
-          tool: 'consulate_register_agent', // Non-public tool (requires auth)
-          parameters: {
-            name: 'Test Agent',
-            functionalType: 'api',
-            domain: 'test.com'
-          },
-        }),
-      });
-
-      expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.success).toBe(false);
-      expect(data.error).toBeDefined();
-      expect(data.error.code).toBe('MCP_AUTH_REQUIRED');
-      expect(data.error.message).toContain('Authentication required');
-    });
-
-    it.skipIf(USE_LIVE_API)('should reject invalid API key', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer csk_test_invalid_fake_12345',
-        },
-        body: JSON.stringify({
-          tool: 'consulate_register_agent', // Non-public tool (requires auth)
-          parameters: {
-            name: 'Test Agent',
-            functionalType: 'api',
-            domain: 'test.com'
-          },
-        }),
-      });
-
-      expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.success).toBe(false);
-      expect(data.error).toBeDefined();
-      expect(data.error.code).toBe('MCP_AUTH_FAILED');
-      expect(data.error.message).toContain('Invalid or expired API key');
-    });
-
-    it.skipIf(!process.env.TEST_API_KEY)('should accept valid API key and execute tool', async () => {
-      // This test requires TEST_API_KEY environment variable to be set
-      // This ensures validateApiKey works correctly in httpAction context
-      const testApiKey = process.env.TEST_API_KEY!;
-
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${testApiKey}`,
-        },
-        body: JSON.stringify({
-          tool: 'consulate_lookup_agent',
-          parameters: { query: 'test' },
-        }),
-      });
-
-      // Should NOT return 401 - auth should pass
-      expect(response.status).not.toBe(401);
-
-      // Should return 200 with tool response (even if no results found)
+      // Should succeed (200) or fail on validation (400), not auth (401)
+      expect([200, 400]).toContain(response.status);
       const data = await response.json();
       expect(data).toBeDefined();
-
-      // If it's a "not found" response, that's still success (auth worked)
-      if (response.status === 200 && data.success === false) {
-        expect(data.error).toContain('No agents found');
+      // Should not be auth error
+      if (data.error) {
+        expect(data.error.code).not.toBe('MCP_AUTH_REQUIRED');
+        expect(data.error.code).not.toBe('MCP_AUTH_FAILED');
       }
+    });
+
+    it('should reject registration without required publicKey', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tool: 'consulate_register_agent',
+          parameters: {
+            name: 'Test Agent',
+            organizationName: 'Test Org',
+            functionalType: 'api'
+            // Missing publicKey
+          },
+        }),
+      });
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
+      expect(data.error.message).toContain('publicKey');
+    });
+
+    it('should allow public tools without any auth', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tool: 'consulate_check_case_status',
+          parameters: { caseId: 'test-case-id' },
+        }),
+      });
+
+      // Public tool should work without auth (may return 500 if case not found internally)
+      expect([200, 400, 404, 500]).toContain(response.status);
+      const data = await response.json();
+      expect(data).toBeDefined();
     });
   });
 });
@@ -223,7 +189,7 @@ describe('MCP Protocol - Tool Invocation Error Handling', () => {
   // which would require hybrid testing (convex-test + HTTP). We test error cases only.
 
   describe('Error Handling', () => {
-    it.skipIf(USE_LIVE_API)('should reject unknown tool without authentication', async () => {
+    it('should reject unknown tool', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
@@ -235,11 +201,15 @@ describe('MCP Protocol - Tool Invocation Error Handling', () => {
         }),
       });
 
-      // Should fail on authentication, not tool validation
-      expect(response.status).toBe(401);
+      // Should fail on tool validation (400), not auth (401)
+      expect([400, 404]).toContain(response.status);
+      const data = await response.json();
+      if (data.error) {
+        expect(data.error.code).not.toBe('MCP_AUTH_REQUIRED');
+      }
     });
 
-    it.skipIf(USE_LIVE_API)('should handle malformed JSON without authentication', async () => {
+    it('should handle malformed JSON', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
@@ -248,11 +218,11 @@ describe('MCP Protocol - Tool Invocation Error Handling', () => {
         body: 'invalid json {{{',
       });
 
-      // Should fail on authentication (401) or JSON parsing (500)
-      expect([401, 500]).toContain(response.status);
+      // Should fail on JSON parsing (400/500), not auth (401)
+      expect([400, 500]).toContain(response.status);
     });
 
-    it.skipIf(USE_LIVE_API)('should reject request with missing tool field', async () => {
+    it('should reject request with missing tool field', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
@@ -264,8 +234,12 @@ describe('MCP Protocol - Tool Invocation Error Handling', () => {
         }),
       });
 
-      // Should fail on authentication
-      expect(response.status).toBe(401);
+      // Should fail on validation (400), not auth (401)
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      if (data.error) {
+        expect(data.error.code).not.toBe('MCP_AUTH_REQUIRED');
+      }
     });
 
   });

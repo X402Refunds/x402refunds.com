@@ -39,15 +39,13 @@ describe('Case Filing & Management - MVP', () => {
       });
     });
     
-    plaintiffApiKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: plaintiffUserId,
-      name: "Test API Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
 
     // Create plaintiff agent
     const plaintiffResult = await t.mutation(api.agents.joinAgent, {
-      apiKey: plaintiffApiKey.key,
       name: 'Plaintiff Agent',
+      publicKey: testPublicKey,
+      organizationName: "Plaintiff Corp",
       mock: false,
     });
     plaintiff = plaintiffResult.did;
@@ -74,15 +72,13 @@ describe('Case Filing & Management - MVP', () => {
       });
     });
     
-    defendantApiKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: defendantUserId,
-      name: "Test API Key",
-    });
+    const defendantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
 
     // Create defendant agent
     const defendantResult = await t.mutation(api.agents.joinAgent, {
-      apiKey: defendantApiKey.key,
       name: 'Defendant Agent',
+      publicKey: defendantPublicKey,
+      organizationName: "Defendant Corp",
       mock: false,
     });
     defendant = defendantResult.did;
@@ -103,7 +99,7 @@ describe('Case Filing & Management - MVP', () => {
 
   describe('Case Filing', () => {
     it('should file a dispute with plaintiff and defendant', async () => {
-      const caseId = await t.mutation(api.cases.fileDispute, {
+      const caseResult = await t.mutation(api.cases.fileDispute, {
         plaintiff,
         defendant,
         type: 'SLA_BREACH',
@@ -120,7 +116,9 @@ describe('Case Filing & Management - MVP', () => {
         },
       });
 
-      expect(caseId).toBeDefined();
+      expect(caseResult).toBeDefined();
+      expect(caseResult.caseId).toBeDefined();
+      const caseId = caseResult.caseId;
 
       const case_ = await t.query(api.cases.getCaseById, { caseId });
       expect(case_).toMatchObject({
@@ -149,8 +147,9 @@ describe('Case Filing & Management - MVP', () => {
 
     it('should prevent filing dispute with inactive agent', async () => {
       const inactiveResult = await t.mutation(api.agents.joinAgent, {
-        apiKey: plaintiffApiKey.key,
         name: 'Inactive Agent',
+        publicKey: "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk",
+        organizationName: "Inactive Corp",
         mock: false,
       });
 
@@ -177,21 +176,23 @@ describe('Case Filing & Management - MVP', () => {
     let caseId2: any;
 
     beforeEach(async () => {
-      caseId1 = await t.mutation(api.cases.fileDispute, {
+      const result1 = await t.mutation(api.cases.fileDispute, {
         plaintiff,
         defendant,
         type: 'SLA_BREACH',
         jurisdictionTags: ['sla'],
         evidenceIds: [evidenceId],
       });
+      caseId1 = result1.caseId;
 
-      caseId2 = await t.mutation(api.cases.fileDispute, {
+      const result2 = await t.mutation(api.cases.fileDispute, {
         plaintiff: defendant,
         defendant: plaintiff, // Reverse roles
         type: 'CONTRACT_DISPUTE',
         jurisdictionTags: ['contract'],
         evidenceIds: [evidenceId],
       });
+      caseId2 = result2.caseId;
     });
 
     it('should get cases by plaintiff', async () => {
@@ -233,7 +234,7 @@ describe('Case Filing & Management - MVP', () => {
     let caseId: any;
 
     beforeEach(async () => {
-      caseId = await t.mutation(api.cases.fileDispute, {
+      const caseResult = await t.mutation(api.cases.fileDispute, {
         plaintiff,
         defendant,
         type: 'SLA_BREACH',
@@ -244,6 +245,7 @@ describe('Case Filing & Management - MVP', () => {
           actualPerformance: '95% uptime',
         },
       });
+      caseId = caseResult.caseId;
     });
 
     it('should update case ruling and trigger reputation updates', async () => {
@@ -320,7 +322,7 @@ describe('Case Filing & Management - MVP', () => {
       });
 
       await t.mutation(api.cases.updateCaseRuling, {
-        caseId: slaCase,
+        caseId: slaCase.caseId,
         ruling: {
           verdict: 'UPHELD',
           winner: plaintiff,
@@ -330,7 +332,7 @@ describe('Case Filing & Management - MVP', () => {
       });
 
       // Verify breach details were stored
-      const case_ = await t.query(api.cases.getCaseById, { caseId: slaCase });
+      const case_ = await t.query(api.cases.getCaseById, { caseId: slaCase.caseId });
       expect(case_?.breachDetails).toBeDefined();
       expect(case_?.breachDetails?.slaRequirement).toBe('99.9% uptime');
     });
@@ -345,7 +347,7 @@ describe('Case Filing & Management - MVP', () => {
       });
 
       await t.mutation(api.cases.updateCaseRuling, {
-        caseId: contractCase,
+        caseId: contractCase.caseId,
         ruling: {
           verdict: 'UPHELD',
           winner: plaintiff,
@@ -355,7 +357,7 @@ describe('Case Filing & Management - MVP', () => {
       });
 
       // Verify it's not treated as SLA violation when breachDetails is undefined
-      const case_ = await t.query(api.cases.getCaseById, { caseId: contractCase });
+      const case_ = await t.query(api.cases.getCaseById, { caseId: contractCase.caseId });
       expect(case_?.breachDetails).toBeUndefined();
     });
   });

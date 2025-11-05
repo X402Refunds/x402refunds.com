@@ -206,6 +206,7 @@ export const receivePaymentDispute = mutation({
       createdAt: now,
       finalDecisionDue: regulationEDeadline,
       regulationEDeadline, // Regulation E compliance deadline (top-level for easy access)
+      retentionPolicy: "payment", // Payment disputes use payment retention policy
 
       // Infrastructure Model fields
       reviewerOrganizationId: args.reviewerOrganizationId,

@@ -44,18 +44,15 @@ describe("MCP Evidence Attachment", () => {
       });
     });
 
-    // Generate API key
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: testUserId,
-      name: "MCP Test Key",
-      expiresIn: 1, // 1 day
-    });
-    testApiKey = apiKeyResult.key;
+    // Using public key authentication
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
+    testApiKey = testPublicKey; // For backwards compatibility in tests
 
     // Register test agent
     testAgent = await t.mutation(api.agents.joinAgent, {
-      apiKey: testApiKey,
       name: "Evidence Test Agent",
+      publicKey: testPublicKey,
+      organizationName: `MCP Evidence Attachment Org ${Date.now()}`,
       functionalType: "api",
       mock: false,
     });
@@ -79,6 +76,7 @@ describe("MCP Evidence Attachment", () => {
       description: "Testing evidence attachment",
       claimedDamages: 1000,
     });
+    const caseId = result.caseId;
 
     // Simulate MCP handler creating evidence (this is what the fix does)
     const evidenceIds: any[] = [];
@@ -99,15 +97,15 @@ describe("MCP Evidence Attachment", () => {
 
     // Update case with evidence IDs (MCP handler does this)
     await t.run(async (ctx: any) => {
-      const existingCase = await ctx.db.get(result);
-      await ctx.db.patch(result, {
+      const existingCase = await ctx.db.get(caseId);
+      await ctx.db.patch(caseId, {
         evidenceIds: [...existingCase.evidenceIds, ...evidenceIds],
       });
     });
 
     // Verify case has evidence
     const caseData = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result);
+      return await ctx.db.get(caseId);
     });
 
     expect(caseData.evidenceIds).toHaveLength(2);
@@ -139,9 +137,10 @@ describe("MCP Evidence Attachment", () => {
       description: "Testing no evidence",
       claimedDamages: 500,
     });
+    const caseId = result.caseId;
 
     const caseData = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result);
+      return await ctx.db.get(caseId);
     });
 
     expect(caseData.evidenceIds).toHaveLength(0);
@@ -165,6 +164,7 @@ describe("MCP Evidence Attachment", () => {
       description: "Testing multiple evidence",
       claimedDamages: 2000,
     });
+    const caseId = result.caseId;
 
     // Create evidence for all URLs
     const evidenceIds: any[] = [];
@@ -185,13 +185,13 @@ describe("MCP Evidence Attachment", () => {
 
     // Attach to case
     await t.run(async (ctx: any) => {
-      await ctx.db.patch(result, {
+      await ctx.db.patch(caseId, {
         evidenceIds,
       });
     });
 
     const caseData = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result);
+      return await ctx.db.get(caseId);
     });
 
     expect(caseData.evidenceIds).toHaveLength(4);
@@ -211,6 +211,7 @@ describe("MCP Evidence Attachment", () => {
       description: "Testing evidence count in response",
       claimedDamages: 750,
     });
+    const caseId = result.caseId;
 
     // Create evidence
     const evidenceId = await t.mutation(api.evidence.submitEvidence, {
@@ -226,14 +227,14 @@ describe("MCP Evidence Attachment", () => {
     });
 
     await t.run(async (ctx: any) => {
-      await ctx.db.patch(result, {
+      await ctx.db.patch(caseId, {
         evidenceIds: [evidenceId],
       });
     });
 
     // Verify via case query
     const caseData = await t.query(api.cases.getCase, {
-      caseId: result,
+      caseId: caseId,
     });
 
     expect(caseData.evidenceIds).toHaveLength(1);

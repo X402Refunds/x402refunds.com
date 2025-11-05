@@ -19,26 +19,27 @@ import { API_BASE_URL } from './fixtures';
  */
 
 /**
- * NOTE: This test suite requires a valid API key for the target environment.
+ * NOTE: This test suite tests MCP tools via HTTP endpoints.
+ * Authentication is now optional - tools work without API keys.
+ *
+ * Run against PREVIEW with:
+ *   API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:run mcp-tools-comprehensive
  *
  * Run against PRODUCTION with:
- *   API_BASE_URL=https://api.consulatehq.com TEST_API_KEY=csk_live_... pnpm test:run mcp-tools-comprehensive
- *
- * For PREVIEW (youthful-orca-358): Most tests will work except auth-required endpoints.
+ *   API_BASE_URL=https://api.consulatehq.com pnpm test:run mcp-tools-comprehensive
  */
 
-describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test Suite', () => {
-  const API_KEY = process.env.TEST_API_KEY || '';
+describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   let testAgentDid: string;
   let testCaseId: string;
 
   // Helper function to invoke MCP tools via HTTP
-  async function invokeMcpTool(toolName: string, parameters: any, apiKey?: string) {
+  async function invokeMcpTool(toolName: string, parameters: any) {
     const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
+        // Auth is optional - no Authorization header needed
       },
       body: JSON.stringify({
         tool: toolName,
@@ -53,10 +54,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
   describe('1. consulate_register_agent', () => {
     it('should register a new agent successfully', async () => {
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { response, data } = await invokeMcpTool('consulate_register_agent', {
         name: `Test MCP Agent ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -68,30 +72,38 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       testAgentDid = data.agentDid;
     });
 
-    it('should fail to register agent without API key', async () => {
+    it('should fail to register agent without public key', async () => {
       const { response, data } = await invokeMcpTool('consulate_register_agent', {
         name: 'Invalid Agent',
+        organizationName: 'Test Org',
         functionalType: 'general'
-      }); // No API key
+        // Missing publicKey
+      });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(400);
       expect(data.success).toBe(false);
       expect(data.error).toBeDefined();
-      expect(data.error.code).toBe('MCP_AUTH_REQUIRED');
+      expect(data.error.message).toContain('publicKey');
     });
 
     it('should allow registering agents with same name (different DIDs)', async () => {
       const timestamp = Date.now();
 
+      const testPublicKey1 = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
+      const testPublicKey2 = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVkXzI";
       const { data: data1 } = await invokeMcpTool('consulate_register_agent', {
         name: `Duplicate Test ${timestamp}`,
+        publicKey: testPublicKey1,
+        organizationName: `Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       const { response: response2, data: data2 } = await invokeMcpTool('consulate_register_agent', {
         name: `Duplicate Test ${timestamp}`,
+        publicKey: testPublicKey2,
+        organizationName: `Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       expect(response2.status).toBe(200);
       expect(data2.success).toBe(true);
@@ -113,7 +125,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         disputeReason: 'api_timeout',
         description: 'API request timed out after 30 seconds',
         evidenceUrls: ['https://logs.example.com/timeout.json']
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -138,7 +150,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: 'merchant:api@example.com',
         disputeReason: 'fraud',
         description: 'Unauthorized micro-transaction'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -158,7 +170,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: 'merchant:api@example.com',
         disputeReason: 'quality_issue',
         description: 'API returned incorrect data'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -191,7 +203,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
           customerId: 'cus_crypto_123',
           orderId: 'ord_2024_001'
         }
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -217,7 +229,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         metadata: {
           exchangeOrderId: 'order_coinbase_123'
         }
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -247,7 +259,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
           customerId: 'cus_stripe_123',
           subscriptionId: 'sub_annual_2024'
         }
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -257,10 +269,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should file a general dispute (SLA violation) via unified endpoint', async () => {
       const timestamp = Date.now();
       // Register agent first (required for filing disputes)
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `General Dispute Agent ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `General Dispute Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
       const plaintiffDid = agentData.agentDid;
       
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
@@ -285,7 +300,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
           contractId: 'contract_2024_openai',
           monitoringDashboard: 'https://status.acme.com'
         }
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -303,10 +318,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       const timestamp = Date.now();
 
       // Register an agent for evidence submission
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `Evidence Agent ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Evidence Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
       evidenceAgentDid = agentData.agentDid;
 
       // Create a case for evidence
@@ -319,7 +337,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: 'merchant:evidence@example.com',
         disputeReason: 'api_timeout',
         description: 'Setup case for evidence tests'
-      }, API_KEY);
+      });
       evidenceCaseId = disputeData.caseId;
       testCaseId = evidenceCaseId; // Set for other tests
     });
@@ -334,7 +352,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         evidenceUrl: 'https://logs.example.com/evidence.json',
         sha256: uniqueHash,
         description: 'Server timeout logs showing API failure'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -353,7 +371,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         evidenceUrl: 'https://logs.example.com/evidence2.json',
         sha256: uniqueHash, // Currently accepts any string
         description: 'Evidence with non-standard hash'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -374,13 +392,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
           defendant: 'merchant:status@example.com',
           disputeReason: 'fraud',
           description: 'Check status test'
-        }, API_KEY);
+        });
         testCaseId = disputeData.caseId;
       }
 
       const { response, data } = await invokeMcpTool('consulate_check_case_status', {
         caseId: testCaseId
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -394,7 +412,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       const fakeCaseId = 'k17xm47xm47xm47xm47xm47xm47xm4';
       const { response, data } = await invokeMcpTool('consulate_check_case_status', {
         caseId: fakeCaseId
-      }, API_KEY);
+      });
 
       // Either 404 or 200 with null/undefined case
       if (response.status === 404) {
@@ -410,15 +428,18 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       // Register an agent first to ensure we have something to find
       const timestamp = Date.now();
       const orgName = `LookupTestOrg${timestamp}`;
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       await invokeMcpTool('consulate_register_agent', {
         name: `${orgName} Agent`,
+        publicKey: testPublicKey,
+        organizationName: orgName,
         functionalType: 'api'
-      }, API_KEY);
+      });
 
       // Now search for it
       const { response, data } = await invokeMcpTool('consulate_lookup_agent', {
         query: orgName
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -430,7 +451,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should return 404 for non-existent organization', async () => {
       const { response, data } = await invokeMcpTool('consulate_lookup_agent', {
         query: 'NonExistentOrganization999999'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(404);
       expect(data.success).toBe(false);
@@ -442,15 +463,18 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should filter agents by functional type', async () => {
       // Register an API agent first
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       await invokeMcpTool('consulate_register_agent', {
         name: `API Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `API Test Org ${timestamp}`,
         functionalType: 'api'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_lookup_agent', {
         query: `Test ${timestamp}`,
         functionalType: 'api'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -464,14 +488,17 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should search across all functional types', async () => {
       // Register an agent
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       await invokeMcpTool('consulate_register_agent', {
         name: `General Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `General Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_lookup_agent', {
         query: `General Test ${timestamp}`
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -483,10 +510,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should list cases for an agent', async () => {
       // Create an agent and file a dispute
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `Cases Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Cases Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       await invokeMcpTool('consulate_file_dispute', {
         transactionId: `txn_list_${timestamp}`,
@@ -497,11 +527,11 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: 'merchant:test@example.com',
         disputeReason: 'fraud',
         description: 'Test dispute for list_my_cases'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
         agentDid: agentData.agentDid
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -513,15 +543,18 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should filter by status', async () => {
       // Create an agent
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `Status Filter Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Status Filter Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
         agentDid: agentData.agentDid,
         status: 'FILED'
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -534,14 +567,17 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should list all cases for an agent', async () => {
       // Create an agent
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `Recent Cases Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Recent Cases Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
         agentDid: agentData.agentDid
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -552,10 +588,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
     it('should include case metadata when cases exist', async () => {
       // Create an agent and a dispute
       const timestamp = Date.now();
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: agentData } = await invokeMcpTool('consulate_register_agent', {
         name: `Metadata Test ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Metadata Test Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
 
       await invokeMcpTool('consulate_file_dispute', {
         transactionId: `txn_metadata_${timestamp}`,
@@ -566,11 +605,11 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: 'merchant:test@example.com',
         disputeReason: 'fraud',
         description: 'Test for metadata'
-      }, API_KEY);
+      });
 
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
         agentDid: agentData.agentDid
-      }, API_KEY);
+      });
 
       expect(response.status).toBe(200);
       expect(data.cases).toBeDefined();
@@ -588,18 +627,24 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       const timestamp = Date.now();
 
       // 1. Register consumer agent
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { data: consumerData } = await invokeMcpTool('consulate_register_agent', {
         name: `Consumer Agent ${timestamp}`,
+        publicKey: testPublicKey,
+        organizationName: `Consumer Org ${timestamp}`,
         functionalType: 'general'
-      }, API_KEY);
+      });
       expect(consumerData.success).toBe(true);
       const consumerDid = consumerData.agentDid;
 
       // 2. Register merchant agent
+      const merchantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
       const { data: merchantData } = await invokeMcpTool('consulate_register_agent', {
         name: `Merchant Agent ${timestamp}`,
+        publicKey: merchantPublicKey,
+        organizationName: `Merchant Org ${timestamp}`,
         functionalType: 'api'
-      }, API_KEY);
+      });
       expect(merchantData.success).toBe(true);
       const merchantDid = merchantData.agentDid;
 
@@ -613,7 +658,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         defendant: merchantDid, // Use DID directly
         disputeReason: 'service_not_rendered',
         description: 'API service never responded'
-      }, API_KEY);
+      });
       expect(disputeData.success).toBe(true);
       const caseId = disputeData.caseId;
 
@@ -625,13 +670,13 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
         evidenceUrl: `https://logs.example.com/integration-${timestamp}.json`,
         sha256: uniqueHash, // Unique hash based on timestamp
         description: 'Request logs showing no response'
-      }, API_KEY);
+      });
       expect(evidenceData.success).toBe(true);
 
       // 5. Check case status
       const { data: statusData } = await invokeMcpTool('consulate_check_case_status', {
         caseId: caseId
-      }, API_KEY);
+      });
       expect(statusData.success).toBe(true);
       expect(statusData.case).toBeDefined();
       expect(statusData.case.status).toBeDefined();
@@ -639,7 +684,7 @@ describe.skipIf(!process.env.TEST_API_KEY)('MCP Tools - Comprehensive HTTP Test 
       // 6. Verify cases can be listed
       const { data: casesData } = await invokeMcpTool('consulate_list_my_cases', {
         agentDid: consumerDid
-      }, API_KEY);
+      });
       expect(casesData.success).toBe(true);
       expect(casesData.cases).toBeDefined();
       expect(casesData.cases.length).toBeGreaterThan(0);

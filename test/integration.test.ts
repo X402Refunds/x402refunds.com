@@ -91,13 +91,14 @@ describe('Full Dispute Lifecycle', () => {
       evidenceIds.push(evidenceId);
     }
     
-    const caseId = await t.mutation(api.cases.fileDispute, {
+    const caseResult = await t.mutation(api.cases.fileDispute, {
       plaintiff,
       defendant,
       type: 'SLA_BREACH',
       jurisdictionTags: ['multi-evidence'],
       evidenceIds,
     });
+    const caseId = caseResult.caseId;
     
     const evidence = await t.query(api.evidence.getEvidenceByCaseId, { caseId });
     expect(evidence.length).toBeGreaterThanOrEqual(5);
@@ -118,7 +119,7 @@ describe('Full Dispute Lifecycle', () => {
       },
     });
     
-    const caseId = await t.mutation(api.cases.fileDispute, {
+    const caseResult = await t.mutation(api.cases.fileDispute, {
       plaintiff,
       defendant,
       type: 'SLA_BREACH',
@@ -126,6 +127,7 @@ describe('Full Dispute Lifecycle', () => {
       evidenceIds: [evidenceId],
       claimedDamages: 10000,
     });
+    const caseId = caseResult.caseId;
     
     // Partial ruling - some claims upheld, some dismissed
     await t.mutation(api.cases.updateCaseRuling, {
@@ -331,13 +333,14 @@ describe('Evidence Chain Validation', () => {
       evidenceIds.push(evidenceId);
     }
     
-    const caseId = await t.mutation(api.cases.fileDispute, {
+    const caseResult = await t.mutation(api.cases.fileDispute, {
       plaintiff,
       defendant,
       type: 'SLA_BREACH',
       jurisdictionTags: ['chain-validation'],
       evidenceIds,
     });
+    const caseId = caseResult.caseId;
     
     const evidence = await t.query(api.evidence.getEvidenceByCaseId, { caseId });
     expect(evidence.length).toBe(3);
@@ -409,13 +412,14 @@ describe('Reputation Propagation', () => {
         },
       });
       
-      const caseId = await t.mutation(api.cases.fileDispute, {
+      const caseResult = await t.mutation(api.cases.fileDispute, {
         plaintiff,
         defendant,
         type: 'SLA_BREACH',
         jurisdictionTags: ['reputation-test'],
         evidenceIds: [evidenceId],
       });
+      const caseId = caseResult.caseId;
       
       // Plaintiff wins
       await t.mutation(api.cases.updateCaseRuling, {

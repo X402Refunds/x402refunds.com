@@ -85,12 +85,9 @@ describe('Consulate HTTP API - Agent Management', () => {
         });
       });
       
-      const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-        userId,
-        name: "Test API Key",
-      });
+      const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       
-      testOwnerDid = apiKeyResult.key; // Store API key in testOwnerDid variable for simplicity
+      testOwnerDid = testPublicKey; // Store public key in testOwnerDid variable for simplicity
     }
   });
 
@@ -276,8 +273,9 @@ describe('Consulate HTTP API - Agent Management', () => {
       // Create agent first
       if (!USE_LIVE_API) {
         const agent = await t.mutation(api.agents.joinAgent, {
-          apiKey: testOwnerDid, // testOwnerDid now stores the API key
           name: 'Rep Test Agent',
+          publicKey: testOwnerDid, // testOwnerDid now stores the public key
+          organizationName: `Rep Test Org ${Date.now()}`,
         });
 
         const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
@@ -625,26 +623,29 @@ describe('Consulate HTTP API - Real-Time Monitoring', () => {
 });
 
 describe('Consulate HTTP API - Error Handling', () => {
-  it('should return 401 for endpoint without auth (malformed JSON)', async () => {
+  it('should return 400/500 for malformed JSON', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{'
     });
 
-    // Should return 401 without Authorization header (checked before parsing body)
-    expect(response.status).toBe(401);
+    // Should fail on JSON parsing (400/500), not auth (401)
+    expect([400, 500]).toContain(response.status);
   });
 
-  it('should return 401 for endpoint without auth (missing required fields)', async () => {
+  it('should return 400 for missing required fields', async () => {
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Incomplete Agent' })
     });
 
-    // Should return 401 without Authorization header
-    expect(response.status).toBe(401);
+    // Should fail on validation (400), not auth (401)
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBeDefined();
+    expect(data.error).toMatch(/publicKey|organizationName/i);
   });
 });
 

@@ -6,9 +6,9 @@ import { Id } from '../convex/_generated/dataModel';
 
 describe('Agent Registration & Reputation - MVP', () => {
   let t: ReturnType<typeof convexTest>;
-  let testApiKey: string;
   let testOrgId: Id<"organizations">;
   let testUserId: Id<"users">;
+  const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk"; // Mock Ed25519 public key
 
   beforeEach(async () => {
     const modules = import.meta.glob('../convex/**/*.{ts,js}');
@@ -37,27 +37,23 @@ describe('Agent Registration & Reputation - MVP', () => {
         lastLoginAt: Date.now(),
       });
     });
-
-    // Generate API key for testing
-    const keyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: testUserId,
-      name: "Test API Key",
-    });
-    testApiKey = keyResult.key;
   });
 
   describe('Agent Registration', () => {
-    it('should register an agent successfully with API key', async () => {
+    it('should register an agent successfully with public key', async () => {
       const agentData = {
-        apiKey: testApiKey,
         name: 'Test Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Test Organization',
         functionalType: 'general' as const,
       };
 
       const result = await t.mutation(api.agents.joinAgent, agentData);
       expect(result.agentId).toBeDefined();
       expect(result.did).toBeDefined();
-      expect(result.did).toMatch(/^did:agent:test-org-com-\d+$/);
+      expect(result.did).toMatch(/^did:agent:test-organization-\d+$/);
+      expect(result.disputeUrl).toContain('/disputes/claim?vendor=');
+      expect(result.publicKey).toBe(testPublicKey);
 
       // Verify agent was created correctly
       const agent = await t.query(api.agents.getAgent, { did: result.did });
@@ -65,6 +61,7 @@ describe('Agent Registration & Reputation - MVP', () => {
         did: result.did,
         name: agentData.name,
         organizationName: "Test Organization",
+        publicKey: testPublicKey,
         functionalType: 'general',
         status: 'active',
       });
@@ -72,8 +69,9 @@ describe('Agent Registration & Reputation - MVP', () => {
 
     it('should initialize reputation for new agent', async () => {
       const agentData = {
-        apiKey: testApiKey,
         name: 'Agent with Rep',
+        publicKey: testPublicKey,
+        organizationName: 'Test Organization',
         functionalType: 'coding' as const,
       };
 
@@ -95,15 +93,16 @@ describe('Agent Registration & Reputation - MVP', () => {
       });
     });
 
-    it('should fail with invalid API key', async () => {
+    it('should fail without public key', async () => {
       const agentData = {
-        apiKey: "csk_live_invalid",
         name: 'Fail Agent',
+        publicKey: '',
+        organizationName: 'Test Organization',
       };
 
       await expect(
         t.mutation(api.agents.joinAgent, agentData)
-      ).rejects.toThrow('Invalid API key');
+      ).rejects.toThrow();
     });
   });
 
@@ -114,41 +113,16 @@ describe('Agent Registration & Reputation - MVP', () => {
     beforeEach(async () => {
       // Create test agents
       const plaintiff = await t.mutation(api.agents.joinAgent, {
-        apiKey: testApiKey,
         name: 'Plaintiff Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Test Organization',
       });
       plaintiffDid = plaintiff.did;
 
-      // Create second org and API key for defendant
-      const defendantOrgId = await t.run(async (ctx) => {
-        return await ctx.db.insert("organizations", {
-          name: "Defendant Corp",
-          domain: "defendant.com",
-          verified: true,
-          verifiedAt: Date.now(),
-          createdAt: Date.now(),
-        });
-      });
-      
-      const defendantUserId = await t.run(async (ctx) => {
-        return await ctx.db.insert("users", {
-          clerkUserId: "defendant-user",
-          email: "test@defendant.com",
-          organizationId: defendantOrgId,
-          role: "admin",
-          createdAt: Date.now(),
-          lastLoginAt: Date.now(),
-        });
-      });
-      
-      const defendantKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-        userId: defendantUserId,
-        name: "Defendant API Key",
-      });
-      
       const defendant = await t.mutation(api.agents.joinAgent, {
-        apiKey: defendantKeyResult.key,
         name: 'Defendant Agent',
+        publicKey: "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ",
+        organizationName: 'Defendant Corp',
       });
       defendantDid = defendant.did;
     });
@@ -288,51 +262,26 @@ describe('Agent Registration & Reputation - MVP', () => {
   });
 
   describe('Agent Queries', () => {
-    let apiKey: string;
-    
     beforeEach(async () => {
-      // Create organization, user, and get API key
-      const org = await t.run(async (ctx) => {
-        return await ctx.db.insert("organizations", {
-          name: "Query Test Org",
-          createdAt: Date.now()
-        });
-      });
-      
-      const userId = await t.run(async (ctx) => {
-        return await ctx.db.insert("users", {
-          clerkUserId: `query-user-${Date.now()}`,
-          email: "query@test.com",
-          name: "Query User",
-          organizationId: org,
-          role: "admin",
-          createdAt: Date.now(),
-          lastLoginAt: Date.now(),
-        });
-      });
-      
-      const key = await t.mutation(api.apiKeys.generateApiKey, {
-        userId,
-        name: "Query Test Key",
-      });
-      apiKey = key.key;
-      
       // Create various agents for testing
       await t.mutation(api.agents.joinAgent, {
-        apiKey,
         name: 'Mock Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Query Test Org',
         mock: true,
       });
 
       await t.mutation(api.agents.joinAgent, {
-        apiKey,
         name: 'Real Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Query Test Org',
         mock: false,
       });
 
       await t.mutation(api.agents.joinAgent, {
-        apiKey,
         name: 'Coding Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Query Test Org',
         functionalType: 'coding' as const,
       });
     });
@@ -363,8 +312,9 @@ describe('Agent Registration & Reputation - MVP', () => {
 
     it('should list agents with status filter', async () => {
       const agent = await t.mutation(api.agents.joinAgent, {
-        apiKey,
         name: 'Suspended Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Test Organization',
       });
 
       const agentDoc = await t.query(api.agents.getAgent, { did: agent.did });
@@ -403,33 +353,10 @@ describe('Agent Registration & Reputation - MVP', () => {
 
   describe('Edge Cases', () => {
     it('should handle agent registration with all optional fields', async () => {
-      const org = await t.run(async (ctx) => {
-        return await ctx.db.insert("organizations", {
-          name: "Edge Case Org",
-          createdAt: Date.now()
-        });
-      });
-      
-      const userId = await t.run(async (ctx) => {
-        return await ctx.db.insert("users", {
-          clerkUserId: `edge-case-user-${Date.now()}`,
-          email: "edge@test.com",
-          name: "Edge Case User",
-          organizationId: org,
-          role: "admin",
-          createdAt: Date.now(),
-          lastLoginAt: Date.now(),
-        });
-      });
-      
-      const key = await t.mutation(api.apiKeys.generateApiKey, {
-        userId,
-        name: "Edge Case Key",
-      });
-      
       const result = await t.mutation(api.agents.joinAgent, {
-        apiKey: key.key,
         name: 'Full Featured Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Edge Case Org',
         mock: true,
         functionalType: 'healthcare' as const,
         buildHash: 'abc123',
@@ -442,13 +369,14 @@ describe('Agent Registration & Reputation - MVP', () => {
       expect(agent?.configHash).toBe('def456');
     });
 
-    it('should reject agent registration for non-existent owner', async () => {
+    it('should reject agent registration without required fields', async () => {
       await expect(
         t.mutation(api.agents.joinAgent, {
-          apiKey: 'csk_test_invalidkey123456789012',
           name: 'Test Agent',
+          publicKey: '',
+          organizationName: '',
         })
-      ).rejects.toThrow('Invalid API key');
+      ).rejects.toThrow();
     });
 
     it('should return null for non-existent agent', async () => {

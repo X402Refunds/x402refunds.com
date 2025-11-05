@@ -1,13 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { validateApiKey } from "./apiKeys";
 
-// Simplified agent registration using API key authentication
+// Agent registration with Ed25519 public key
 export const joinAgent = mutation({
   args: {
-    apiKey: v.string(),  // Organization API key (csk_live_* or csk_test_*)
     name: v.string(),
+    publicKey: v.string(),  // Ed25519 public key (base64 encoded)
+    organizationName: v.string(),
+    openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification
+    specVersion: v.optional(v.string()), // e.g., "3.0.0"
     mock: v.optional(v.boolean()), // Mark as mock/test data (defaults to false)
     functionalType: v.optional(v.union(
       // Communication & Interface
@@ -36,33 +38,30 @@ export const joinAgent = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      console.info(`Processing agent registration for ${args.name}`);
-
-      // 1. Validate API key and get organization
-      const apiKeyRecord = await validateApiKey(ctx, args.apiKey);
-      const org = await ctx.db.get(apiKeyRecord.organizationId);
-      
-      if (!org) {
-        throw new Error("Organization not found");
+      // Validate public key is provided and not empty
+      if (!args.publicKey || args.publicKey.trim() === '') {
+        throw new Error("Public key is required for agent registration");
       }
 
-      // 2. Generate owner DID for organization (no separate owners table needed)
-      // Type assertion: we know org is an organization document
-      const orgName = (org as any).name as string;
-      const orgDomain = ((org as any).domain as string | undefined || orgName).toLowerCase().replace(/[^a-z0-9]/g, '-');
+      console.info(`Processing agent registration for ${args.name}`);
+
+      // 1. Generate organization domain from name
+      const orgDomain = args.organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const ownerDid = `did:owner:org-${orgDomain}`;
 
-      // 3. Generate agent DID
+      // 2. Generate agent DID
       const timestamp = Date.now();
       const agentDid = `did:agent:${orgDomain}-${timestamp}`;
       
-      // 4. Create agent record
+      // 3. Create agent record with public key and optional OpenAPI spec
       const agentId = await ctx.db.insert("agents", {
         did: agentDid,
         ownerDid: ownerDid,
         name: args.name,
-        organizationName: orgName,
-        organizationId: (org as any)._id as Id<"organizations">,
+        organizationName: args.organizationName,
+        publicKey: args.publicKey,
+        openApiSpec: args.openApiSpec,
+        specVersion: args.specVersion,
         mock: args.mock ?? false,
         functionalType: args.functionalType || "general",
         buildHash: args.buildHash,
@@ -71,7 +70,7 @@ export const joinAgent = mutation({
         createdAt: timestamp,
       });
 
-      // 5. Initialize reputation for new agent
+      // 4. Initialize reputation for new agent
       await ctx.db.insert("agentReputation", {
         agentDid: agentDid,
         casesFiled: 0,
@@ -87,30 +86,30 @@ export const joinAgent = mutation({
         createdAt: timestamp,
       });
 
-      // 6. Log the registration event
+      // 5. Log the registration event
       await ctx.db.insert("events", {
         type: "AGENT_REGISTERED",
         payload: {
           did: agentDid,
           name: args.name,
-          organizationName: orgName,
+          organizationName: args.organizationName,
           functionalType: args.functionalType || "general",
+          hasOpenApiSpec: !!args.openApiSpec,
         },
         timestamp: timestamp,
         agentDid: agentDid,
       });
 
-      // 7. Update API key last used timestamp
-      await ctx.db.patch(apiKeyRecord._id, {
-        lastUsedAt: timestamp,
-      });
-
       console.info(`Agent registration successful: ${agentId} with DID: ${agentDid}`);
       
+      // 6. Return agent info with dispute URL
       return { 
         agentId, 
         did: agentDid,
-        organizationName: orgName,
+        disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${agentDid}`,
+        organizationName: args.organizationName,
+        publicKey: args.publicKey,
+        hasOpenApiSpec: !!args.openApiSpec,
         message: "Agent registered successfully"
       };
 
@@ -572,6 +571,8 @@ export const registerAgentManual = mutation({
     userId: v.id("users"),
     name: v.string(),
     publicKey: v.string(),
+    openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification
+    specVersion: v.optional(v.string()), // e.g., "3.0.0"
     functionalType: v.optional(v.union(
       // Communication & Interface
       v.literal("voice"), v.literal("chat"), v.literal("social"),
@@ -631,6 +632,8 @@ export const registerAgentManual = mutation({
         organizationName: orgName,
         organizationId: user.organizationId,
         publicKey: args.publicKey,
+        openApiSpec: args.openApiSpec,
+        specVersion: args.specVersion,
         deployedByUserId: args.userId,
         mock: false,
         functionalType: args.functionalType || "general",
@@ -660,7 +663,10 @@ export const registerAgentManual = mutation({
         success: true,
         agentId,
         did: agentDid,
+        disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${agentDid}`,
         organizationName: orgName,
+        publicKey: args.publicKey,
+        hasOpenApiSpec: !!args.openApiSpec,
         message: `Agent registered successfully with DID: ${agentDid}`,
       };
     } catch (error: any) {

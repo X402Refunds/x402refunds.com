@@ -1,14 +1,14 @@
 /**
- * Helper function to create API-key-authenticated agents for tests
- * Use this in place of the old createOwner + joinAgent pattern
+ * Helper function to create agents with Ed25519 public keys for tests
+ * Use this in place of the old API key authentication pattern
  */
 import { api } from '../convex/_generated/api';
 
 /**
- * Creates an organization, user, API key, and agent in one call
+ * Creates an organization, user, and agent in one call
  * @param t - Convex test instance
  * @param opts - Configuration options
- * @returns Object with orgId, userId, apiKey, and agentDid
+ * @returns Object with orgId, userId, publicKey, and agentDid
  */
 export async function createTestAgent(
   t: any,
@@ -18,6 +18,8 @@ export async function createTestAgent(
     functionalType?: string;
     email?: string;
     mock?: boolean;
+    publicKey?: string;
+    openApiSpec?: any;
   } = {}
 ) {
   const timestamp = Date.now();
@@ -46,16 +48,15 @@ export async function createTestAgent(
     });
   });
 
-  // Generate API key
-  const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-    userId: userId,
-    name: "Test API Key",
-  });
+  // Use provided public key or generate a mock one
+  const publicKey = opts.publicKey || "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
 
-  // Register agent
+  // Register agent with public key
   const agent = await t.mutation(api.agents.joinAgent, {
-    apiKey: apiKeyResult.key,
     name: opts.agentName || `Test Agent ${timestamp}`,
+    publicKey,
+    organizationName: opts.orgName || `Test Org ${timestamp}`,
+    openApiSpec: opts.openApiSpec,
     functionalType: opts.functionalType as any,
     mock: opts.mock !== undefined ? opts.mock : false,
   });
@@ -63,7 +64,7 @@ export async function createTestAgent(
   return {
     orgId,
     userId,
-    apiKey: apiKeyResult.key,
+    publicKey,
     agentDid: agent.did,
     agent,
   };

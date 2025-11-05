@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-03T10:03:41.644Z
+**Auto-generated on**: 2025-11-05T08:57:00.666Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -73,28 +73,44 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (21 files)
+### Convex Files (37 files)
+- **damageAgent.ts** - damageCalculationAgent, calculateRefund
+- **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
+- **index.ts** - quickDecision
+- **judgeAgent.ts** - createJudgeAgent, judgeAgent, judgeDecision
+- **researchAgent.ts** - legalResearchAgent, lawClerkResearch
+- **signatureAgent.ts** - signatureVerificationAgent, verifySignedEvidence
+- **specValidatorAgent.ts** - specValidatorAgent, validateApiContract
+- **supportAgent.ts** - customerSupportAgent, handleSupportTicket
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
-- **apiKeys.ts** - validateApiKeyQuery, generateApiKey, listApiKeys, revokeApiKey, getApiKeyInfo, updateApiKeyUsage, updateApiKeyName, deleteApiKey, getApiKeyAuditLog, ensureDefaultApiKeys, checkApiKey
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes
+- **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, processFiledCases, autoApproveOverdueDisputes
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **disputePricing.ts** - calculateDisputeFee, estimateTokens, estimateDisputeTokens, validateEvidenceSize, getPricingTierDescription, getFeexplanation
 - **events.ts** - getDisputeActivityEvents, getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getOrganizationEvents, getOrganizationStats, getApiKeyEvents
+- **cleanup.ts** - redactPersonalData, archiveToCloudStorage, deleteOldEvidence, deleteOldSupportData, deleteOldPaymentEvidence, optimizeStorage
+- **webFetcher.ts** - fetchWebContent, checkApiHealth, analyzeImage
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
+- **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
+- **openrouter.ts** - openrouter, selectModel, getModelConfig
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
+- **rulings.ts** - finalizeRuling, getRulingByCaseId
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
+- **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow
+- **workpools.ts** - evidencePool, judgePool, researchPool
 
 ### Key Backend Functions
 - **agents.ts** - Agent registration & management (joinAgent, listAgents, etc.)
@@ -147,12 +163,11 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (30 test files)
+### Test Suites (31 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
 - test/api.test.ts
-- test/apiKeys.test.ts
 - test/cases.test.ts
 - test/customer-review-workflow.test.ts
 - test/e2e-flow.test.ts
@@ -172,12 +187,14 @@ Common HTTP routes exposed:
 - test/payment-dispute-party-model.test.ts
 - test/performance.test.ts
 - test/production-smoke.test.ts
+- test/signature-verification.test.ts
 - test/system-endpoints.test.ts
 - test/unit/batch-processing.test.ts
 - test/unit/regulation-e-compliance.test.ts
 - test/unit/vector-similarity.test.ts
 - test/unit/webhooks.test.ts
 - test/users.test.ts
+- test/workflow-integration.test.ts
 
 ## 📦 Package Scripts
 
@@ -257,7 +274,12 @@ Common HTTP routes exposed:
 
 ## 📦 Dependencies
 
-### Production Dependencies (3)
+### Production Dependencies (8)
+- @ai-sdk/openai@^2.0.62
+- @convex-dev/agent@^0.2.12
+- @convex-dev/workflow@^0.2.7
+- @convex-dev/workpool@^0.2.19
+- ai@^5.0.87
 - convex@^1.28.1
 - convex-test@^0.0.38
 - zod@^4.1.11
@@ -283,13 +305,13 @@ Common HTTP routes exposed:
 - 54 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 21 TypeScript files with serverless functions
+- 37 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 30 test files using Vitest
+- 31 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -322,5 +344,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/3/2025, 2:03:41 AM
-Files scanned: 267
+Generated: 11/5/2025, 12:57:00 AM
+Files scanned: 284

@@ -20,82 +20,30 @@ export interface TestCase {
 }
 
 /**
- * Setup test agents with API keys
+ * Setup test agents with public keys
  */
 export async function setupTestAgents(t: ReturnType<typeof convexTest>) {
   const timestamp = Date.now();
-  
-  // Create plaintiff organization and user
-  const plaintiffOrgId = await t.run(async (ctx) => {
-    return await ctx.db.insert("organizations", {
-      name: `Plaintiff Corp ${timestamp}`,
-      domain: `plaintiff-${timestamp}.com`,
-      verified: true,
-      verifiedAt: Date.now(),
-      createdAt: Date.now(),
-    });
-  });
-  
-  const plaintiffUserId = await t.run(async (ctx) => {
-    return await ctx.db.insert("users", {
-      clerkUserId: `plaintiff-clerk-${timestamp}`,
-      email: `plaintiff-${timestamp}@test.com`,
-      organizationId: plaintiffOrgId,
-      role: "admin",
-      createdAt: Date.now(),
-      lastLoginAt: Date.now(),
-    });
-  });
-  
-  // Generate API key for plaintiff org
-  const plaintiffKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-    userId: plaintiffUserId,
-    name: "Test API Key",
-  });
-  
-  // Create defendant organization and user
-  const defendantOrgId = await t.run(async (ctx) => {
-    return await ctx.db.insert("organizations", {
-      name: `Defendant Corp ${timestamp}`,
-      domain: `defendant-${timestamp}.com`,
-      verified: true,
-      verifiedAt: Date.now(),
-      createdAt: Date.now(),
-    });
-  });
-  
-  const defendantUserId = await t.run(async (ctx) => {
-    return await ctx.db.insert("users", {
-      clerkUserId: `defendant-clerk-${timestamp}`,
-      email: `defendant-${timestamp}@test.com`,
-      organizationId: defendantOrgId,
-      role: "admin",
-      createdAt: Date.now(),
-      lastLoginAt: Date.now(),
-    });
-  });
-  
-  // Generate API key for defendant org
-  const defendantKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-    userId: defendantUserId,
-    name: "Test API Key",
-  });
+  const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
+  const defendantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
   
   // Create plaintiff agent
   const plaintiff = await t.mutation(api.agents.joinAgent, {
-    apiKey: plaintiffKeyResult.key,
     name: 'API Test Plaintiff',
+    publicKey: testPublicKey,
+    organizationName: `Plaintiff Corp ${timestamp}`,
     functionalType: 'general',
   });
   
   // Create defendant agent
   const defendant = await t.mutation(api.agents.joinAgent, {
-    apiKey: defendantKeyResult.key,
     name: 'API Test Defendant',
+    publicKey: defendantPublicKey,
+    organizationName: `Defendant Corp ${timestamp}`,
     functionalType: 'api',
   });
   
-  const ownerDid = `did:owner:org-plaintiff-${timestamp}.com`; // For backwards compatibility
+  const ownerDid = `did:owner:org-plaintiff-corp-${timestamp}`; // For backwards compatibility
   
   return {
     ownerDid,

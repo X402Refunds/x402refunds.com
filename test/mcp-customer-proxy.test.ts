@@ -137,8 +137,10 @@ describe('MCP Customer Proxy Pattern', () => {
     const schema = await response.json();
     
     expect(schema.authentication).toBeDefined();
-    expect(schema.authentication.type).toBe('bearer');
-    expect(schema.authentication.required_headers.Authorization).toContain('Bearer');
+    expect(schema.authentication.type).toBe('optional');
+    expect(schema.authentication.optional_auth).toBeDefined();
+    expect(schema.authentication.optional_auth.type).toBe('signature');
+    expect(schema.authentication.optional_auth.algorithm).toBe('Ed25519');
   }, 30000);
 
   it('should document dispute reasons in file_dispute tool', async () => {

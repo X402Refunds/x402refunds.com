@@ -41,6 +41,7 @@ http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsH
 // New unified dispute endpoints
 http.route({ path: "/api/disputes/payment", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/agent", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/disputes/claim", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
@@ -412,67 +413,13 @@ http.route({
 
 // === UNIFIED DISPUTE INGESTION (Multi-Product Architecture) ===
 
-// Helper: Extract and validate API key
-async function validateApiKeyFromRequest(ctx: any, request: Request): Promise<{
-  isValid: boolean;
-  organizationId?: any;
-  error?: string;
-  hint?: string;
-}> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader) {
-    return {
-      isValid: false,
-      error: "Missing Authorization header",
-      hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
-    };
-  }
-
-  const apiKey = authHeader.replace("Bearer ", "").trim();
-  if (!apiKey || !apiKey.startsWith("csk_")) {
-    return {
-      isValid: false,
-      error: "Invalid API key format",
-      hint: "API key should start with 'csk_live_' or 'csk_test_'"
-    };
-  }
-
-  const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
-
-  if (!keyValidation.isValid) {
-    return {
-      isValid: false,
-      error: keyValidation.error || "Invalid API key",
-      hint: "Ensure your API key is valid and active"
-    };
-  }
-
-  return {
-    isValid: true,
-    organizationId: keyValidation.organizationId
-  };
-}
-
-// === UNIFIED DISPUTE INGESTION ENDPOINTS ===
-
 // Payment disputes endpoint
 http.route({
   path: "/api/disputes/payment",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const validation = await validateApiKeyFromRequest(ctx, request);
-      if (!validation.isValid) {
-        return new Response(JSON.stringify({
-          error: validation.error,
-          hint: validation.hint
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
-      return await handlePaymentDispute(ctx, request, validation.organizationId!);
+      return await handlePaymentDispute(ctx, request, undefined);
     } catch (error: any) {
       console.error("Payment dispute error:", error);
       return new Response(JSON.stringify({
@@ -499,6 +446,142 @@ http.route({
       return new Response(JSON.stringify({
         error: error.message,
         hint: "Check API documentation at https://docs.consulatehq.com/disputes/agent"
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Buyer dispute claim endpoint with signature verification
+http.route({
+  path: "/disputes/claim",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const vendorId = url.searchParams.get("vendor");
+      
+      if (!vendorId) {
+        return new Response(JSON.stringify({
+          error: "Missing vendor parameter",
+          hint: "Use /disputes/claim?vendor=did:agent:vendor-123"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      const body = await request.json();
+      
+      // Validate required fields
+      const requiredFields = ["transactionId", "amount", "complaint", "signature", "requestHeaders", "responseHeaders", "responseBody"];
+      for (const field of requiredFields) {
+        if (!body[field]) {
+          return new Response(JSON.stringify({
+            error: `Missing required field: ${field}`,
+            required: requiredFields,
+          }), {
+            status: 400,
+            headers: corsHeaders,
+          });
+        }
+      }
+      
+      // 1. Get vendor's public key
+      const vendor = await ctx.runQuery(api.agents.getAgent, { did: vendorId });
+      if (!vendor) {
+        return new Response(JSON.stringify({
+          error: "Vendor not found",
+          vendorId
+        }), {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
+      
+      if (!vendor.publicKey) {
+        return new Response(JSON.stringify({
+          error: "Vendor has no public key registered",
+          hint: "Vendor must register with an Ed25519 public key"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      // 2. Verify signature
+      const payload = JSON.stringify({
+        requestHeaders: body.requestHeaders,
+        responseHeaders: body.responseHeaders,
+        responseBody: body.responseBody,
+        transactionMetadata: {
+          amount: body.amount,
+          currency: body.currency || "USD",
+          blockchain: body.blockchain,
+          txHash: body.txHash,
+        },
+      });
+      
+      const verified = await ctx.runAction(api.crypto.verifyEd25519Signature, {
+        publicKey: vendor.publicKey,
+        signature: body.signature,
+        payload,
+      });
+      
+      if (!verified) {
+        return new Response(JSON.stringify({
+          error: "Signature verification failed",
+          hint: "Evidence may be tampered or signature is invalid"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      // 3. Create dispute case with signed evidence
+      const caseId = await ctx.runMutation(api.cases.fileDispute, {
+        plaintiff: body.buyerId || `buyer:${body.buyerEmail || "anonymous"}`,
+        defendant: vendorId,
+        type: "PAYMENT",
+        jurisdictionTags: ["payment", "signature-verified"],
+        evidenceIds: [],
+        description: body.complaint,
+        amount: body.amount,
+        currency: body.currency || "USD",
+        signedEvidence: {
+          requestHeaders: body.requestHeaders,
+          responseHeaders: body.responseHeaders,
+          responseBody: body.responseBody,
+          transactionMetadata: {
+            amount: body.amount,
+            currency: body.currency || "USD",
+            blockchain: body.blockchain,
+            txHash: body.txHash,
+          },
+          signature: body.signature,
+          signatureVerified: true,
+          vendorDid: vendorId,
+        },
+      });
+      
+      return new Response(JSON.stringify({
+        success: true,
+        caseId,
+        disputeUrl: `https://api.consulatehq.com/cases/${caseId}`,
+        signatureVerified: true,
+        vendorDid: vendorId,
+        message: "Dispute filed successfully with verified evidence"
+      }), {
+        headers: corsHeaders,
+      });
+      
+    } catch (error: any) {
+      console.error("Buyer dispute claim error:", error);
+      return new Response(JSON.stringify({
+        error: error.message,
+        hint: "Ensure all required fields are provided and signature is valid"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -662,54 +745,55 @@ http.route({
 
 // === END DISPUTE INGESTION ENDPOINTS ===
 
-// Agent registration with API key authentication (Stripe-style)
+// Agent registration with Ed25519 public key
 http.route({
   path: "/agents/register",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      // Extract API key from Authorization header
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({ 
-          error: "Missing Authorization header",
-          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
-      const apiKey = authHeader.replace("Bearer ", "").trim();
-      if (!apiKey || !apiKey.startsWith("csk_")) {
-        return new Response(JSON.stringify({ 
-          error: "Invalid API key format",
-          hint: "API key should start with 'csk_live_' or 'csk_test_'"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
       // Parse request body
       const body = await request.json();
-      const { name, functionalType, buildHash, configHash, mock } = body;
+      const { name, publicKey, organizationName, openApiSpec, specVersion, functionalType, buildHash, configHash, mock } = body;
       
+      // Validate required fields
       if (!name) {
         return new Response(JSON.stringify({ 
           error: "Missing required field: name",
-          required: ["name"],
-          optional: ["functionalType", "buildHash", "configHash", "mock"]
+          required: ["name", "publicKey", "organizationName"],
+          optional: ["openApiSpec", "specVersion", "functionalType", "buildHash", "configHash", "mock"]
         }), {
           status: 400,
           headers: corsHeaders,
         });
       }
 
-      // Register agent using API key
+      if (!publicKey) {
+        return new Response(JSON.stringify({ 
+          error: "Missing required field: publicKey",
+          hint: "Provide base64-encoded Ed25519 public key"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      if (!organizationName) {
+        return new Response(JSON.stringify({ 
+          error: "Missing required field: organizationName",
+          hint: "Provide organization name for agent registration"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Register agent with public key
       const result = await ctx.runMutation(api.agents.joinAgent, {
-        apiKey,
         name,
+        publicKey,
+        organizationName,
+        openApiSpec,
+        specVersion,
         functionalType: functionalType || "general",
         buildHash,
         configHash,
@@ -720,7 +804,9 @@ http.route({
         success: true,
         agentId: result.agentId,
         agentDid: result.did,
+        disputeUrl: result.disputeUrl,
         organizationName: result.organizationName,
+        hasOpenApiSpec: result.hasOpenApiSpec,
         message: result.message
       }), {
         headers: corsHeaders,
@@ -730,9 +816,9 @@ http.route({
       console.error("Agent registration failed:", error);
       return new Response(JSON.stringify({ 
         error: error.message,
-        hint: "Ensure your API key is valid and active"
+        hint: "Ensure all required fields are provided"
       }), {
-        status: error.message.includes("Invalid API key") ? 401 : 400,
+        status: 400,
         headers: corsHeaders,
       });
     }
@@ -868,7 +954,7 @@ http.route({
         });
       }
 
-      // Check if agent exists (validation before auth)
+      // Check if agent exists
       const agent = await ctx.runQuery(api.agents.getAgent, { did: body.agentDid });
       if (!agent) {
         return new Response(JSON.stringify({
@@ -879,42 +965,7 @@ http.route({
         });
       }
 
-      // NOW check authentication (after validation)
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({
-          error: "Missing Authorization header",
-          hint: "Include 'Authorization: Bearer csk_live_...' header with your API key"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
-      const apiKey = authHeader.replace("Bearer ", "").trim();
-      if (!apiKey || !apiKey.startsWith("csk_")) {
-        return new Response(JSON.stringify({
-          error: "Invalid API key format",
-          hint: "API key should start with 'csk_live_' or 'csk_test_'"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
-      // Verify API key exists and is active
-      const keyValidation = await ctx.runQuery(api.apiKeys.checkApiKey, { key: apiKey });
-
-      if (!keyValidation.isValid) {
-        return new Response(JSON.stringify({
-          error: keyValidation.error || "Invalid API key",
-          hint: "Ensure your API key is valid and active"
-        }), {
-          status: 401,
-          headers: corsHeaders,
-        });
-      }
-
+      // Submit evidence (no authentication required - signature will be verified later)
       const result = await ctx.runMutation(api.evidence.submitEvidence, {
         ...body
       });

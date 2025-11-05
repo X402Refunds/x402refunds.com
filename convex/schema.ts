@@ -49,30 +49,6 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_organization", ["organizationId"]),
 
-  // API Keys
-  apiKeys: defineTable({
-    key: v.optional(v.string()),  // TEMP: Optional for migration - csk_live_xxx or csk_test_xxx
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    createdBy: v.optional(v.id("users")),
-    lastUsedAt: v.optional(v.number()),
-    expiresAt: v.optional(v.number()),
-    status: v.union(v.literal("active"), v.literal("revoked")),
-    revokedAt: v.optional(v.number()),
-    revokedBy: v.optional(v.id("users")),
-    createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
-
-    // TEMP: Deprecated fields for migration
-    token: v.optional(v.string()),  // Old field name, renamed to 'key'
-    active: v.optional(v.boolean()),  // Old field, use 'status' instead
-    createdByUserId: v.optional(v.id("users")),  // Old field name, renamed to 'createdBy'
-    permissions: v.optional(v.array(v.string())),  // Deprecated permissions field
-  })
-    .index("by_key", ["key"])
-    .index("by_organization", ["organizationId"])
-    .index("by_status", ["status"]),
-
-
   // Registered AI agents
   agents: defineTable({
     did: v.string(),
@@ -83,6 +59,8 @@ export default defineSchema({
     buildHash: v.optional(v.string()),
     configHash: v.optional(v.string()),
     publicKey: v.optional(v.string()),
+    openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification for contract validation
+    specVersion: v.optional(v.string()), // e.g., "3.0.0"
     organizationId: v.optional(v.id("organizations")),
     deployedByUserId: v.optional(v.id("users")),
     functionalType: v.optional(v.union(
@@ -158,6 +136,22 @@ export default defineSchema({
 
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
+
+    // NEW: Signed evidence from seller (cryptographically verified)
+    signedEvidence: v.optional(v.object({
+      requestHeaders: v.any(),
+      responseHeaders: v.any(),
+      responseBody: v.string(),
+      transactionMetadata: v.object({
+        amount: v.number(),
+        currency: v.string(),
+        blockchain: v.optional(v.string()),
+        txHash: v.optional(v.string()),
+      }),
+      signature: v.string(),        // Ed25519 signature
+      signatureVerified: v.boolean(),
+      vendorDid: v.string(),        // Seller's agent DID
+    })),
 
     // Deadlines
     analysisDue: v.optional(v.number()),    // When AI should complete analysis
@@ -275,6 +269,15 @@ export default defineSchema({
     mock: v.optional(v.boolean()),
     createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
 
+    // Retention policy fields
+    retentionPolicy: v.optional(v.union(
+      v.literal("payment"),      // Payment disputes: 60 days evidence, 2 years metadata
+      v.literal("customer_support"), // Customer support: 4 months total
+      v.literal("commercial")     // Commercial disputes: 7 years
+    )),
+    evidenceDeleteAfter: v.optional(v.number()), // When evidence should be deleted
+    metadataDeleteAfter: v.optional(v.number()),  // When metadata should be deleted
+
     // TEMP: Deprecated fields for migration
     claimedDamages: v.optional(v.number()),
     deadlines: v.optional(v.any()),
@@ -309,11 +312,23 @@ export default defineSchema({
       temp: v.optional(v.number()),
     }),
     tool: v.optional(v.string()),
+    // Retention policy fields
+    retentionPolicy: v.optional(v.union(
+      v.literal("payment"),      // Payment disputes: 60 days evidence, 2 years metadata
+      v.literal("customer_support"), // Customer support: 4 months total
+      v.literal("commercial")     // Commercial disputes: 7 years
+    )),
+    deleteAfter: v.optional(v.number()), // Timestamp when evidence should be deleted
+    archived: v.optional(v.boolean()),    // Whether evidence has been archived
+    archivedAt: v.optional(v.number()),   // When evidence was archived
+    redacted: v.optional(v.boolean()),    // Whether PII has been redacted
+    redactedAt: v.optional(v.number()),   // When PII was redacted
   })
     .index("by_case", ["caseId"])
     .index("by_agent", ["agentDid"])
     .index("by_sha256", ["sha256"])
-    .index("by_timestamp", ["ts"]),
+    .index("by_timestamp", ["ts"])
+    .index("by_retention", ["retentionPolicy", "deleteAfter"]),
 
   // Case rulings (ADP Award Message)
   rulings: defineTable({

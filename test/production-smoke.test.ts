@@ -69,20 +69,25 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
     });
 
-    it('POST /mcp/invoke - Requires authentication', async () => {
+    it('POST /mcp/invoke - Public access (no auth required)', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tool: 'consulate_register_agent', // Non-public tool (requires auth)
-          parameters: { name: 'test', functionalType: 'api' }
+          tool: 'consulate_register_agent',
+          parameters: { 
+            name: 'test', 
+            publicKey: 'dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk',
+            organizationName: 'Test Org',
+            functionalType: 'api' 
+          }
         })
       });
 
-      // Should fail auth and return 401
-      expect(response.status).toBe(401);
+      // Should succeed (200) or fail on validation (400), not auth (401)
+      expect([200, 400]).toContain(response.status);
       
       // Verify CORS headers even on errors (may be null in production if behind CDN)
       const corsHeader = response.headers.get('access-control-allow-origin');

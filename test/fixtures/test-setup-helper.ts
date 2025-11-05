@@ -3,10 +3,9 @@ import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 
 /**
- * Create a test organization with user and API key
- * Returns the API key for agent registration
+ * Create a test organization (for reference, agents don't need orgs anymore)
  */
-export async function createTestOrgWithApiKey(
+export async function createTestOrg(
   t: ReturnType<typeof convexTest>,
   orgName: string,
   timestamp: number = Date.now()
@@ -21,41 +20,25 @@ export async function createTestOrgWithApiKey(
     });
   });
   
-  const userId = await t.run(async (ctx) => {
-    return await ctx.db.insert("users", {
-      clerkUserId: `${orgName.toLowerCase()}-${timestamp}`,
-      email: `${orgName.toLowerCase()}-${timestamp}@test.com`,
-      organizationId: orgId,
-      role: "admin",
-      createdAt: Date.now(),
-      lastLoginAt: Date.now(),
-    });
-  });
-  
-  const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-    userId,
-    name: "Test API Key",
-  });
-  
   return {
     orgId,
-    userId,
-    apiKey: apiKeyResult.key,
   };
 }
 
 /**
- * Create a test agent with API key
+ * Create a test agent with public key
  */
 export async function createTestAgent(
   t: ReturnType<typeof convexTest>,
-  apiKey: string,
   name: string,
+  publicKey: string = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk",
+  organizationName: string = `Test Org ${Date.now()}`,
   functionalType: string = 'general'
 ) {
   const result = await t.mutation(api.agents.joinAgent, {
-    apiKey,
     name,
+    publicKey,
+    organizationName,
     functionalType: functionalType as any,
     mock: false,
   });

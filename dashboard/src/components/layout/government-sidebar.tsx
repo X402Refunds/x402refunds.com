@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, LayoutDashboard, Key, AlertCircle } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, LayoutDashboard, AlertCircle } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -25,11 +25,6 @@ const orgNavigationItems: NavigationItem[] = [
     title: "Review Queue",
     href: "/dashboard/review-queue",
     icon: AlertCircle,
-  },
-  {
-    title: "API Keys",
-    href: "/dashboard/api-keys",
-    icon: Key,
   },
   {
     title: "Team",

@@ -77,9 +77,10 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('Register');
     expect(tool?.input_schema.required).toContain('name');
-    expect(tool?.input_schema.required).toContain('functionalType');
-    // apiKey is now in Authorization header, not parameters
-    expect(tool?.input_schema.required).not.toContain('apiKey');
+    expect(tool?.input_schema.required).toContain('publicKey');
+    expect(tool?.input_schema.required).toContain('organizationName');
+    // functionalType is optional
+    expect(tool?.input_schema.required).not.toContain('functionalType');
   });
 
   it('should include consulate_list_my_cases tool', async () => {
@@ -189,15 +190,13 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "MCP Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     // Register agent (simulating MCP tool invocation)
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKeyResult.key,
       name: 'MCP Test Agent',
+      publicKey: testPublicKey,
+      organizationName: `MCP Test Org ${Date.now()}`,
       functionalType: 'api',
       mock: false,
     });
@@ -234,14 +233,12 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Evidence Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKeyResult.key,
       name: 'Evidence Agent',
+      publicKey: testPublicKey,
+      organizationName: `MCP Evidence Org ${Date.now()}`,
       functionalType: 'api',
     });
     
@@ -289,14 +286,12 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const plaintiffKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: plaintiffUserId,
-      name: "Plaintiff Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      apiKey: plaintiffKeyResult.key,
       name: 'Plaintiff Agent',
+      publicKey: testPublicKey,
+      organizationName: `MCP Plaintiff Org ${Date.now()}`,
       functionalType: 'api',
     });
     
@@ -320,14 +315,12 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const defendantKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: defendantUserId,
-      name: "Defendant Key",
-    });
+    const defendantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      apiKey: defendantKeyResult.key,
       name: 'Defendant Agent',
+      publicKey: defendantPublicKey,
+      organizationName: `MCP Defendant Org ${Date.now()}`,
       functionalType: 'api',
     });
     
@@ -345,7 +338,7 @@ describe('MCP - Tool Workflows', () => {
     });
     
     // File dispute (simulating MCP tool)
-    const caseId = await t.mutation(api.cases.fileDispute, {
+    const caseResult = await t.mutation(api.cases.fileDispute, {
       plaintiff: plaintiff.did,
       defendant: defendant.did,
       type: 'SLA_BREACH',
@@ -354,6 +347,7 @@ describe('MCP - Tool Workflows', () => {
       description: 'MCP test dispute case',
       claimedDamages: 10000,
     });
+    const caseId = caseResult.caseId;
     
     expect(caseId).toBeDefined();
     
@@ -388,14 +382,12 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Cases Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKeyResult.key,
       name: 'Cases Agent',
+      publicKey: testPublicKey,
+      organizationName: `MCP Cases Org ${Date.now()}`,
       functionalType: 'api',
     });
     
@@ -432,14 +424,12 @@ describe('MCP - Tool Workflows', () => {
       });
     });
     
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Lookup Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKeyResult.key,
       name: 'Lookup Test Agent',
+      publicKey: testPublicKey,
+      organizationName: `MCP Lookup Org ${Date.now()}`,
       functionalType: 'api',
     });
     

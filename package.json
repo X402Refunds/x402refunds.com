@@ -26,6 +26,11 @@
     "version-rules": "node scripts/version-rules.js"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.62",
+    "@convex-dev/agent": "^0.2.12",
+    "@convex-dev/workflow": "^0.2.7",
+    "@convex-dev/workpool": "^0.2.19",
+    "ai": "^5.0.87",
     "convex": "^1.28.1",
     "convex-test": "^0.0.38",
     "zod": "^4.1.11"

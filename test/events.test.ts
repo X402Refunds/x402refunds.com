@@ -509,16 +509,25 @@ describe('Organization Events - Infrastructure Model', () => {
       });
     });
 
-    const apiKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: userId,
-      name: "Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
 
     // Type 1: Register an agent owned by this org
     const agentResult = await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKey.key,
       name: "Org Test Agent",
+      publicKey: testPublicKey,
+      organizationName: `Org Test ${timestamp}`,
       mock: false,
+    });
+
+    // Link agent to the test organization (joinAgent doesn't set organizationId automatically)
+    await t.run(async (ctx) => {
+      const agent = await ctx.db
+        .query("agents")
+        .withIndex("by_did", (q) => q.eq("did", agentResult.did))
+        .first();
+      if (agent) {
+        await ctx.db.patch(agent._id, { organizationId: orgId });
+      }
     });
 
     // File agent dispute (agent-to-agent)
@@ -534,13 +543,14 @@ describe('Organization Events - Infrastructure Model', () => {
       },
     });
 
-    const agentDisputeId = await t.mutation(api.cases.fileDispute, {
+    const agentDisputeResult = await t.mutation(api.cases.fileDispute, {
       plaintiff: agentResult.did,
       defendant: `did:agent:other-${timestamp}`,
       type: 'SLA_BREACH',
       jurisdictionTags: ['test'],
       evidenceIds: [evidenceId],
     });
+    const agentDisputeId = agentDisputeResult.caseId;
 
     // Type 2: File payment dispute where org is reviewer
     const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {

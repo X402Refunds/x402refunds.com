@@ -42,16 +42,14 @@ describe('Concurrent Operations', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Performance Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     // Register 100 agents concurrently
     const registrations = Array.from({ length: 100 }, (_, i) =>
       t.mutation(api.agents.joinAgent, {
-        apiKey: key.key,
         name: `Concurrent Agent ${i}`,
+        publicKey: testPublicKey,
+        organizationName: `Perf Test Org ${i}`,
         mock: false,
       })
     );
@@ -90,14 +88,12 @@ describe('Concurrent Operations', () => {
       });
     });
     
-    const plaintiffKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: plaintiffUserId,
-      name: "Plaintiff Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      apiKey: plaintiffKey.key,
       name: 'Plaintiff',
+      publicKey: testPublicKey,
+      organizationName: "Plaintiff Perf Org",
     });
     
     // Defendant org and agent
@@ -120,14 +116,12 @@ describe('Concurrent Operations', () => {
       });
     });
     
-    const defendantKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: defendantUserId,
-      name: "Defendant Key",
-    });
+    const defendantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      apiKey: defendantKey.key,
       name: 'Defendant',
+      publicKey: defendantPublicKey,
+      organizationName: "Defendant Perf Org",
     });
     
     // Create evidence
@@ -186,14 +180,12 @@ describe('Concurrent Operations', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Evidence Perf Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: key.key,
       name: 'Evidence Agent',
+      publicKey: testPublicKey,
+      organizationName: `Evidence Perf Org ${Date.now()}`,
     });
     
     timer.start();
@@ -250,14 +242,12 @@ describe('Large Data Handling', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Large Data Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: key.key,
       name: 'Large Data Agent',
+      publicKey: testPublicKey,
+      organizationName: `Large Data Org ${Date.now()}`,
     });
     
     // Submit evidence with large hash/URI
@@ -303,14 +293,12 @@ describe('Large Data Handling', () => {
       });
     });
     
-    const plaintiffKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: plaintiffUserId,
-      name: "Plaintiff Cases Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const plaintiff = await t.mutation(api.agents.joinAgent, {
-      apiKey: plaintiffKey.key,
       name: 'Plaintiff',
+      publicKey: testPublicKey,
+      organizationName: "Plaintiff Cases Org",
     });
     
     // Defendant org and agent
@@ -333,14 +321,12 @@ describe('Large Data Handling', () => {
       });
     });
     
-    const defendantKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: defendantUserId,
-      name: "Defendant Cases Key",
-    });
+    const defendantPublicKey = "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ";
     
     const defendant = await t.mutation(api.agents.joinAgent, {
-      apiKey: defendantKey.key,
       name: 'Defendant',
+      publicKey: defendantPublicKey,
+      organizationName: "Defendant Cases Org",
     });
     
     const evidenceId = await t.mutation(api.evidence.submitEvidence, {
@@ -398,17 +384,15 @@ describe('Large Data Handling', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Many Agents Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     // Create 100 agents (scaled down from 1000)
     await Promise.all(
       Array.from({ length: 100 }, (_, i) =>
         t.mutation(api.agents.joinAgent, {
-          apiKey: key.key,
           name: `Agent ${i}`,
+          publicKey: testPublicKey,
+          organizationName: `Many Agents Org ${i}`,
         })
       )
     );
@@ -450,14 +434,12 @@ describe('Rate Limiting', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Rapid Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: key.key,
       name: 'Rapid Agent',
+      publicKey: testPublicKey,
+      organizationName: `Rapid Test Org ${Date.now()}`,
     });
     
     // Submit 50 evidence items as fast as possible
@@ -502,14 +484,12 @@ describe('Rate Limiting', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Consistency Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: key.key,
       name: 'Consistency Agent',
+      publicKey: testPublicKey,
+      organizationName: `Consistency Test Org ${Date.now()}`,
     });
     
     // Create many evidence items
@@ -557,17 +537,15 @@ describe('Rate Limiting', () => {
       });
     });
     
-    const key = await t.mutation(api.apiKeys.generateApiKey, {
-      userId,
-      name: "Burst Test Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     // Burst 1: Create 10 agents
     const burst1 = await Promise.all(
       Array.from({ length: 10 }, (_, i) =>
         t.mutation(api.agents.joinAgent, {
-          apiKey: key.key,
           name: `Burst Agent ${i}`,
+          publicKey: testPublicKey,
+          organizationName: `Burst Test Org ${i}`,
         })
       )
     );

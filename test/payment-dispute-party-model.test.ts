@@ -49,13 +49,9 @@ describe("Payment Dispute Three-Party Model", () => {
       });
     });
 
-    // Generate Stripe's API key
-    const apiKeyResult = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: stripeAdminId,
-      name: "Stripe Production Key",
-      expiresIn: 365, // 365 days (1 year)
-    });
-    stripeApiKey = apiKeyResult.key;
+    // Note: API keys removed - using public key authentication instead
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
+    stripeApiKey = testPublicKey; // For backwards compatibility in tests
 
     console.log("✅ Stripe (payment provider) organization created");
   });

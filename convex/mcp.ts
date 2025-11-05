@@ -299,7 +299,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_register_agent",
-    description: "Register your agent with Consulate to participate in ADP-compliant dispute resolution. Required before filing disputes. Establishes agent DID for protocol compliance. API key must be passed in Authorization header.",
+    description: "Register your agent with Consulate using Ed25519 public key. Required before filing disputes. Establishes agent DID for protocol compliance. Optionally provide OpenAPI spec for automated contract validation.",
     input_schema: {
       type: "object",
       properties: {
@@ -307,13 +307,29 @@ export const MCP_TOOLS = [
           type: "string",
           description: "Name of the agent (e.g., 'acme-monitoring-agent', 'openai-api-consumer')"
         },
+        publicKey: {
+          type: "string",
+          description: "Base64-encoded Ed25519 public key for signature verification"
+        },
+        organizationName: {
+          type: "string",
+          description: "Name of the organization registering the agent"
+        },
+        openApiSpec: {
+          type: "object",
+          description: "Optional OpenAPI 3.0 specification for automated API contract validation"
+        },
+        specVersion: {
+          type: "string",
+          description: "OpenAPI specification version (e.g., '3.0.0')"
+        },
         functionalType: {
           type: "string",
           enum: ["voice", "chat", "social", "translation", "presentation", "coding", "devops", "security", "data", "api", "writing", "design", "video", "music", "gaming", "research", "financial", "sales", "marketing", "legal", "healthcare", "education", "scientific", "manufacturing", "transportation", "scheduler", "workflow", "procurement", "project", "general"],
           description: "Agent functional type - use 'api' for API consumers/providers, 'general' for multi-purpose agents"
         }
       },
-      required: ["name", "functionalType"]
+      required: ["name", "publicKey", "organizationName"]
     }
   },
   {
@@ -448,32 +464,26 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     },
     tools: MCP_TOOLS,
     authentication: {
-      type: "bearer",
-      scheme: "Bearer",
-      description: "Bearer token authentication using Consulate API keys",
-      required_headers: {
-        "Authorization": "Bearer csk_live_... or Bearer csk_test_..."
-      },
-      how_to_get_key: {
-        dashboard: "https://consulatehq.com/settings/api-keys",
-        steps: [
-          "1. Sign in to Consulate dashboard",
-          "2. Navigate to Settings → API Keys",
-          "3. Click 'Generate New API Key'",
-          "4. Copy the key (starts with csk_live_ for production)"
-        ]
-      },
-      alternative_auth: {
+      type: "optional",
+      description: "Authentication is optional for MCP tools. Ed25519 public key authentication is used at the agent registration level, and signature verification happens at the evidence/dispute level.",
+      optional_auth: {
         type: "signature",
         algorithm: "Ed25519",
-        description: "Advanced: Cryptographic signature-based authentication for non-repudiation",
-        required_headers: {
-          "X-Agent-DID": "Your agent's DID",
+        description: "Cryptographic signature-based authentication for non-repudiation. Public keys are provided during agent registration.",
+        how_it_works: [
+          "1. Register agent with Ed25519 public key via consulate_register_agent",
+          "2. Sign transactions/evidence with your private key",
+          "3. Consulate verifies signatures using registered public key",
+          "4. This ensures tamper-proof evidence and non-repudiation"
+        ],
+        signature_headers: {
+          "X-Agent-DID": "Your agent's DID (from registration)",
           "X-Signature": "Hex-encoded Ed25519 signature (128 chars)",
           "X-Timestamp": "Current timestamp in milliseconds"
         },
         message_format: "METHOD:PATH:BODY:TIMESTAMP"
-      }
+      },
+      note: "MCP endpoints are publicly accessible. Agent identity is verified via Ed25519 signatures on signed evidence, not API keys."
     },
     documentation: "https://docs.consulatehq.com/mcp-quickstart",
     support: "support@consulatehq.com"
@@ -508,100 +518,18 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const publicTools = ['consulate_check_case_status'];
     const isPublicTool = publicTools.includes(tool);
 
-    // Check for Bearer token (API key) in Authorization header
-    const authHeader = request.headers.get("Authorization");
+    // For now, no authentication required for MCP tools
+    // In the future, we can add Ed25519 signature verification here
     let authenticatedOrg = null;
-    let apiKeyData = null;
 
     if (!isPublicTool) {
-      // Authentication required for non-public tools
-      if (authHeader?.startsWith("Bearer ")) {
-        // API Key authentication
-        const apiKey = authHeader.substring(7);
-
-        // Validate API key using query and get org ID
-        try {
-          apiKeyData = await ctx.runQuery(api.apiKeys.validateApiKeyQuery, { key: apiKey });
-          
-          // Get organization ID from API key
-          if (apiKeyData?.organizationId) {
-            authenticatedOrg = apiKeyData.organizationId;
-          }
-
-          // Update last used timestamp
-          await ctx.runMutation(api.apiKeys.updateApiKeyUsage, { key: apiKey });
-        } catch (error: any) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.AUTH_FAILED,
-              message: "Invalid or expired API key",
-              hint: "Get your API key from Settings → API Keys in the dashboard",
-              details: error.message
-            }
-          }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-      } else {
-        // Signature-based authentication (legacy)
-        const { extractAuthFromHeaders, validateAuth } = await import("./auth");
-        const signatureAuth = extractAuthFromHeaders(request.headers);
-
-        if (!signatureAuth) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.AUTH_REQUIRED,
-              message: "Authentication required",
-              hint: "Provide either Bearer token or Ed25519 signature",
-              methods: [
-                {
-                  type: "Bearer token (recommended)",
-                  header: "Authorization: Bearer csk_live_...",
-                  how: "Get API key from Settings → API Keys in dashboard"
-                },
-                {
-                  type: "Ed25519 signature (advanced)",
-                  headers: {
-                    "X-Agent-DID": "Your agent's DID",
-                    "X-Signature": "Hex-encoded Ed25519 signature",
-                    "X-Timestamp": "Current timestamp"
-                  }
-                }
-              ]
-            }
-          }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        // Validate signature
-        const isValid = await validateAuth(
-          ctx,
-          signatureAuth,
-          "POST",
-          "/mcp/invoke",
-          bodyStr
-        );
-
-        if (!isValid) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.AUTH_FAILED,
-              message: "Invalid signature",
-              hint: "Ensure you're signing the correct message format: METHOD:PATH:BODY:TIMESTAMP"
-            }
-          }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-      }
+      // For non-public tools, we'll eventually add signature verification
+      // For now, allow all requests
+      console.warn("MCP tool invoked without authentication:", tool);
     }
+
+    // Continue without auth check - signature verification will happen at the evidence/dispute level
+    // TODO: Add Ed25519 signature verification here in the future
 
     // Route to appropriate handler based on tool name
     let result;
@@ -669,26 +597,32 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
                 : parameters.paymentProtocol)
             : "other";
             
-        result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
+        // Build mutation args - only include reviewerOrganizationId if authenticatedOrg is set
+        const paymentDisputeArgs: any = {
           transactionId: parameters.transactionId,
           amount: parameters.amount,
           currency: parameters.currency || "USD",
-            paymentProtocol: normalizedPaymentProtocol,
+          paymentProtocol: normalizedPaymentProtocol,
           plaintiff: parameters.plaintiff,
           defendant: parameters.defendant,
           disputeReason: parameters.disputeReason,
           description: parameters.description,
           evidenceUrls: parameters.evidenceUrls || [],
           callbackUrl: parameters.callbackUrl,
-            reviewerOrganizationId: authenticatedOrg,
-            
-            // NEW FIELDS
-            paymentType: parameters.paymentType,
-            crypto: parameters.crypto,
-            custodial: parameters.custodial,
-            traditional: parameters.traditional,
-            metadata: parameters.metadata,
-        });
+          // NEW FIELDS
+          paymentType: parameters.paymentType,
+          crypto: parameters.crypto,
+          custodial: parameters.custodial,
+          traditional: parameters.traditional,
+          metadata: parameters.metadata,
+        };
+        
+        // Only include reviewerOrganizationId if authenticatedOrg is set (not null)
+        if (authenticatedOrg) {
+          paymentDisputeArgs.reviewerOrganizationId = authenticatedOrg;
+        }
+        
+        result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
 
         return new Response(JSON.stringify({
           success: true,
@@ -725,7 +659,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           // GENERAL DISPUTE PATH
           
           // Create general dispute case first (evidence can be added after)
-        const caseId = await ctx.runMutation(api.cases.fileDispute, {
+        const caseResult = await ctx.runMutation(api.cases.fileDispute, {
           plaintiff: parameters.plaintiff,
           defendant: parameters.defendant,
             type: parameters.category,
@@ -736,13 +670,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           breachDetails: parameters.breachDetails,
             metadata: parameters.metadata, // NEW
           });
+        const caseId = caseResult.caseId;
 
           // Submit evidence if provided (now with valid caseId)
         const evidenceIds = [];
         if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
           for (const url of parameters.evidenceUrls) {
             const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
-                caseId: caseId, // Now we have a valid caseId
+                caseId: caseId, // Now we have a valid caseId string
               agentDid: parameters.plaintiff,
                 sha256: generateSHA256(url),
               uri: url,
@@ -772,7 +707,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: true,
             disputeType: "GENERAL",
-            caseId,
+            caseId: caseId,
             category: parameters.category,
             pricingTier: tier,
             disputeFee: fee,
@@ -796,7 +731,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
       case "consulate_submit_evidence":
-        result = await ctx.runMutation(api.evidence.submitEvidence, {
+        // Build evidence args - include caseId if provided
+        const evidenceArgs: any = {
           agentDid: parameters.agentDid,
           sha256: parameters.sha256,
           uri: parameters.evidenceUrl,
@@ -805,15 +741,23 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             provider: "agent_submitted",
             name: "evidence_upload",
             version: "1.0.0"
-          }
-        });
+          },
+          evidenceType: parameters.evidenceType,
+        };
+        
+        // Include caseId if provided (required for case-linked evidence)
+        if (parameters.caseId) {
+          evidenceArgs.caseId = parameters.caseId;
+        }
+        
+        result = await ctx.runMutation(api.evidence.submitEvidence, evidenceArgs);
         
         return new Response(JSON.stringify({
           success: true,
           evidenceId: result,
           message: "Evidence submitted successfully",
           status: "pending_verification",
-          caseId: parameters.caseId
+          caseId: parameters.caseId || null
         }), {
           headers: { "Content-Type": "application/json" }
         });
@@ -831,27 +775,41 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         
       case "consulate_register_agent":
-        // Get the API key from the Authorization header
-        const authHeaderRegister = request.headers.get("Authorization");
-        if (!authHeaderRegister?.startsWith("Bearer ")) {
+        // Registration now requires publicKey and organizationName
+        if (!parameters.publicKey) {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.AUTH_REQUIRED,
-              message: "API key required",
-              hint: "Pass your API key in the Authorization header: 'Bearer csk_live_...'"
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "publicKey required",
+              hint: "Provide base64-encoded Ed25519 public key"
             }
           }), {
-            status: 401,
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        if (!parameters.organizationName) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "organizationName required",
+              hint: "Provide organization name for agent registration"
+            }
+          }), {
+            status: 400,
             headers: { "Content-Type": "application/json" }
           });
         }
         
-        const apiKeyRegister = authHeaderRegister.substring(7);
-        
         result = await ctx.runMutation(api.agents.joinAgent, {
-          apiKey: apiKeyRegister,
           name: parameters.name,
+          publicKey: parameters.publicKey,
+          organizationName: parameters.organizationName,
+          openApiSpec: parameters.openApiSpec,
+          specVersion: parameters.specVersion,
           functionalType: parameters.functionalType,
           mock: false
         });

@@ -39,6 +39,58 @@ crons.interval(
   {}
 );
 
+// =================================================================
+// EVIDENCE RETENTION & CLEANUP CRONS
+// =================================================================
+
+// Daily: Redact PII from evidence (prepare for archival)
+crons.daily(
+  "redactPII",
+  { hourUTC: 2, minuteUTC: 0 }, // Run at 2am UTC daily
+  internal.evidence.cleanup.redactPersonalData,
+  {}
+);
+
+// Weekly: Archive old evidence to cold storage
+crons.weekly(
+  "archiveOldEvidence",
+  { hourUTC: 3, minuteUTC: 0, dayOfWeek: "sunday" },
+  internal.evidence.cleanup.archiveToCloudStorage,
+  {}
+);
+
+// Weekly: Delete customer support evidence (4 month retention)
+crons.weekly(
+  "deleteOldSupportData",
+  { hourUTC: 4, minuteUTC: 0, dayOfWeek: "sunday" },
+  internal.evidence.cleanup.deleteOldSupportData,
+  {}
+);
+
+// Weekly: Delete payment dispute evidence (60 day retention)
+crons.weekly(
+  "deleteOldPaymentEvidence",
+  { hourUTC: 5, minuteUTC: 0, dayOfWeek: "sunday" },
+  internal.evidence.cleanup.deleteOldPaymentEvidence,
+  {}
+);
+
+// Monthly: Delete old commercial evidence (7 year retention)
+crons.monthly(
+  "deleteAncientEvidence",
+  { day: 1, hourUTC: 4, minuteUTC: 0 },
+  internal.evidence.cleanup.deleteOldEvidence,
+  { retentionYears: 7 }
+);
+
+// Monthly: Optimize storage (deduplication)
+crons.monthly(
+  "optimizeStorage",
+  { day: 15, hourUTC: 3, minuteUTC: 0 },
+  internal.evidence.cleanup.optimizeStorage,
+  {}
+);
+
 export default crons;
 
 // =================================================================

@@ -153,13 +153,14 @@ describe('Evidence Filtering', () => {
       },
     });
     
-    caseId = await t.mutation(api.cases.fileDispute, {
+    const caseResult = await t.mutation(api.cases.fileDispute, {
       plaintiff,
       defendant,
       type: 'SLA_BREACH',
       jurisdictionTags: ['test'],
       evidenceIds: [evidenceId],
     });
+    caseId = caseResult.caseId;
   });
 
   it('should filter by functional type', async () => {
@@ -343,14 +344,12 @@ describe('Healthcare Evidence Advanced Filtering', () => {
       });
     });
 
-    const apiKey = await t.mutation(api.apiKeys.generateApiKey, {
-      userId: userId,
-      name: "Healthcare Test API Key",
-    });
+    const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     
     const agent = await t.mutation(api.agents.joinAgent, {
-      apiKey: apiKey.key,
       name: 'Healthcare Test Agent',
+      publicKey: testPublicKey,
+      organizationName: `Healthcare Test Org ${timestamp}`,
       functionalType: 'healthcare',
     });
     agentDid = agent.did;

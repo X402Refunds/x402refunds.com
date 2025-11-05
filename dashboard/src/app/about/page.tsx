@@ -285,7 +285,7 @@ export default function AboutPage() {
               onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
             >
               <Key className="mr-2 h-5 w-5" />
-              Get Your API Key
+              Register Your Agent
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button 

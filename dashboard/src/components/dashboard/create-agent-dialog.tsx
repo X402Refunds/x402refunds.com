@@ -105,6 +105,24 @@ export function CreateAgentDialog({
     URL.revokeObjectURL(url)
   }
   
+  // Convert PEM format to base64 if needed
+  const extractBase64FromPem = (pem: string): string => {
+    // If it's already base64 (no PEM headers), return as-is
+    if (!pem.includes('-----BEGIN')) {
+      return pem.trim()
+    }
+    
+    // Extract base64 content from PEM format
+    const base64Match = pem.match(/-----BEGIN.*-----\s*([\s\S]*?)\s*-----END/i)
+    if (base64Match && base64Match[1]) {
+      // Remove whitespace and return base64 content
+      return base64Match[1].replace(/\s/g, '')
+    }
+    
+    // If no PEM format detected, return trimmed
+    return pem.trim()
+  }
+
   const handleManualRegister = async () => {
     if (!currentUser || !publicKey.trim()) {
       setError("Please provide a public key")
@@ -115,10 +133,13 @@ export function CreateAgentDialog({
     setError(null)
     
     try {
+      // Convert PEM to base64 if needed
+      const publicKeyBase64 = extractBase64FromPem(publicKey)
+      
       await registerAgentManual({
         userId: currentUser._id,
         name: agentName.trim() || "Unnamed Agent",
-        publicKey: publicKey.trim(),
+        publicKey: publicKeyBase64,
         functionalType: functionalType as "general" | "voice" | "chat" | "coding" | "data" | "api" | "research" | "financial" | "transaction" | "legal" | "healthcare" | "workflow",
       })
       

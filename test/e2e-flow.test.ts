@@ -1774,8 +1774,8 @@ describe('E2E: Real-Time Monitoring and Notifications', () => {
 });
 
 describe('E2E: Integration with External Systems', () => {
-  it('Flow: Third-party agent registration via API requires auth', async () => {
-    // This test validates that the API endpoint now requires API key authentication
+  it('Flow: Third-party agent registration via API requires public key', async () => {
+    // This test validates that the API endpoint requires publicKey and organizationName
     const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: 'POST',
       headers: {
@@ -1786,13 +1786,15 @@ describe('E2E: Integration with External Systems', () => {
       body: JSON.stringify({
         name: 'External AI Agent',
         functionalType: 'general',
+        // Missing publicKey and organizationName
       }),
     });
 
-    // Should return 401 without Authorization header
-    expect(response.status).toBe(401);
+    // Should return 400 for missing required fields, not 401
+    expect(response.status).toBe(400);
     const data = await response.json();
-    expect(data.error).toContain("Authorization");
+    expect(data.error).toBeDefined();
+    expect(data.error).toMatch(/publicKey|organizationName/i);
   });
 
   it('Flow: Evidence submission with authentication headers', async () => {

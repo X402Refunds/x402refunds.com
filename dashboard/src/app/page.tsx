@@ -22,11 +22,10 @@ export default function HomePage() {
   const avgResolutionMinutes = 4.2
 
   const copyCodeToClipboard = () => {
-    const code = `// Submit x402 dispute via REST API
+    const code = `// Submit payment dispute via REST API
 const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer csk_live_...',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
@@ -35,13 +34,13 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
     transactionHash: "0x1a2b3c4d...",  // On-chain proof
     amount: 29.99,
     currency: "USDC",
-    paymentProtocol: "X402",
+    paymentProtocol: "ACP",
     
     // Party information
     plaintiff: "consumer:alice@example.com",
-    plaintiffClaim: "Service not rendered after payment",
     defendant: "merchant:api-provider.com",
-    defendantClaim: "Service delivered, logs confirm",
+    disputeReason: "service_not_rendered",
+    description: "Service not rendered after payment",
     
     // Evidence
     evidenceUrls: [
@@ -555,11 +554,10 @@ const ruling = await response.json();
                 </CardHeader>
                 <CardContent className="bg-slate-950 text-slate-100 p-6 font-mono text-sm rounded-b-lg">
                   <pre className="overflow-x-auto leading-relaxed">
-{`// Submit x402 dispute via REST API
+{`// Submit payment dispute via REST API
 const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer csk_live_...',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
@@ -568,13 +566,13 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
     transactionHash: "0x1a2b3c4d...",  // On-chain proof
     amount: 29.99,
     currency: "USDC",
-    paymentProtocol: "X402",
+    paymentProtocol: "ACP",
     
     // Party information
     plaintiff: "consumer:alice@example.com",
-    plaintiffClaim: "Service not rendered after payment",
     defendant: "merchant:api-provider.com",
-    defendantClaim: "Service delivered, logs confirm",
+    disputeReason: "service_not_rendered",
+    description: "Service not rendered after payment",
     
     // Evidence
     evidenceUrls: [

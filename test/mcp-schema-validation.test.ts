@@ -42,7 +42,10 @@ describe("MCP Tool Schema Validation", () => {
 
       const required = registerTool?.input_schema.required;
       expect(required).toContain("name");
-      expect(required).toContain("functionalType");
+      expect(required).toContain("publicKey");
+      expect(required).toContain("organizationName");
+      // functionalType is now optional
+      expect(required).not.toContain("functionalType");
     });
   });
 

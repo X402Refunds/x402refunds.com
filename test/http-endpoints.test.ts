@@ -24,14 +24,14 @@ import { API_BASE_URL, USE_LIVE_API } from './fixtures';
  */
 
 describe('HTTP API - Agent Registration', () => {
-  // Pure HTTP tests - validate authentication and error responses
+  // Pure HTTP tests - validate public key registration
 
   describe('POST /agents/register', () => {
-    it('should require Authorization header', async () => {
-      // This endpoint now requires API key authentication
+    it('should require public key', async () => {
       const agentData = {
         name: 'HTTP Test Agent',
-        functionalType: 'general',
+        organizationName: 'Test Org',
+        // Missing publicKey
       };
 
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
@@ -40,53 +40,23 @@ describe('HTTP API - Agent Registration', () => {
         body: JSON.stringify(agentData),
       });
 
-      // Should return 401 without Authorization header
-      expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.error).toContain("Authorization");
+      // Should return 400 for missing required field
+      expect(response.status).toBe(400);
     });
 
-
-    it('should require valid API key', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer invalid_key_123'
-        },
-        body: JSON.stringify({
-          name: 'Test Agent',
-        }),
-      });
-
-      // Should return 401 with invalid API key
-      expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.error).toContain("Invalid API key");
-    });
-
-    it('should return 401 for missing Authorization', async () => {
+    it('should require organization name', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'Test Agent',
+          publicKey: 'dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk',
+          // Missing organizationName
         }),
       });
 
-      // Should return 401 without Authorization
-      expect(response.status).toBe(401);
-    });
-
-    it('should return 401 for malformed requests without auth', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'invalid json {',
-      });
-
-      // Should return 401 without Authorization (checked before parsing body)
-      expect(response.status).toBe(401);
+      // Should return 400 for missing required field
+      expect(response.status).toBe(400);
     });
   });
 });

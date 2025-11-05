@@ -126,8 +126,8 @@ export function AgentList({ agents }: AgentListProps) {
               <TableHead>Organization</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Dispute URL</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead>DID</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -153,11 +153,19 @@ export function AgentList({ agents }: AgentListProps) {
                     {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
                   </Badge>
                 </TableCell>
+                <TableCell className="font-mono text-xs">
+                  <a 
+                    href={`https://api.consulatehq.com/disputes/claim?vendor=${agent.did}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                    title={`Dispute URL: https://api.consulatehq.com/disputes/claim?vendor=${agent.did}`}
+                  >
+                    /disputes/claim?vendor={agent.did.slice(0, 20)}...
+                  </a>
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDistanceToNow(agent.createdAt, { addSuffix: true })}
-                </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {agent.did.slice(0, 20)}...
                 </TableCell>
                 <TableCell className="text-right">
                   {agent.status === "active" ? (
