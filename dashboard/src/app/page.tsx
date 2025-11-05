@@ -259,7 +259,7 @@ const ruling = await response.json();
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                Neutral dispute resolution. Send disputes. Get fair rulings.
+                One API. Neutral rulings.
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
