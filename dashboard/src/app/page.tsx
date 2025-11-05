@@ -105,7 +105,7 @@ const ruling = await response.json();
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              Fair dispute resolution in minutes
+              Fair rulings. No bias.
             </motion.p>
 
             {!isSignedIn && (
