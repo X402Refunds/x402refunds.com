@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-05T10:39:13.583Z
+**Auto-generated on**: 2025-11-05T11:11:15.428Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -109,7 +109,7 @@ consulate/
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
-- **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow
+- **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow, storeWorkflowStep, getWorkflowSteps, getWorkflowStatus, getAgentStepOutput, getWorkflowStepsPublic, getWorkflowStatusPublic
 - **workpools.ts** - evidencePool, judgePool, researchPool
 
 ### Key Backend Functions
@@ -131,7 +131,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (54 components)
+### React Components (55 components)
 - AnimatedGrid
 - Footer
 - MatrixRain
@@ -153,7 +153,7 @@ Common HTTP routes exposed:
 - alert-dialog
 - alert
 
-... and 34 more
+... and 35 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -163,7 +163,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (32 test files)
+### Test Suites (33 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
@@ -195,6 +195,7 @@ Common HTTP routes exposed:
 - test/unit/vector-similarity.test.ts
 - test/unit/webhooks.test.ts
 - test/users.test.ts
+- test/workflow-agent-outputs.test.ts
 - test/workflow-integration.test.ts
 
 ## 📦 Package Scripts
@@ -303,7 +304,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 54 components organized by feature
+- 55 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 37 TypeScript files with serverless functions
@@ -312,7 +313,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 32 test files using Vitest
+- 33 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -345,5 +346,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/5/2025, 2:39:13 AM
-Files scanned: 289
+Generated: 11/5/2025, 3:11:15 AM
+Files scanned: 291

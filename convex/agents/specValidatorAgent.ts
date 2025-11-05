@@ -79,23 +79,18 @@ export const validateApiContract = action({
   },
   handler: async (ctx, args) => {
     // Run the spec validator agent
-    const result = await specValidatorAgent.run(ctx, {
-      input: JSON.stringify({
-        openApiSpec: args.openApiSpec,
-        request: {
-          path: args.requestPath,
-          method: args.requestMethod || "POST",
-        },
-        response: {
-          status: args.responseStatus,
-          body: args.responseBody,
-        },
-      }),
-    });
+    const threadId = `case-${args.caseId}`;
+    const result = await specValidatorAgent.generateText(
+      ctx,
+      { threadId },
+      {
+        prompt: `Validate API contract for case ${args.caseId}. OpenAPI Spec: ${JSON.stringify(args.openApiSpec)}. Request: ${args.requestMethod || "POST"} ${args.requestPath}. Response: ${args.responseStatus} - ${args.responseBody}`,
+      }
+    );
     
     // Parse the agent's response
     try {
-      const output = result.output;
+      const output = result.text;
       
       // Try to parse as JSON
       let analysis;

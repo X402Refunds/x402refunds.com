@@ -12,6 +12,7 @@ import { ArrowLeft, CheckCircle, Clock } from "lucide-react"
 import { useState } from "react"
 import { SuccessCheckmark } from "@/components/ui/success-checkmark"
 import { motion } from "framer-motion"
+import { AgentWorkflowTimeline } from "@/components/workflow/agent-workflow-timeline"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 
@@ -168,6 +169,15 @@ export default function DisputeDetailPage() {
               Pending Review
             </Badge>
           )}
+        </motion.div>
+
+        {/* Agent Workflow Timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+        >
+          <AgentWorkflowTimeline caseId={disputeId as Id<"cases">} />
         </motion.div>
 
         {/* Transaction Info */}

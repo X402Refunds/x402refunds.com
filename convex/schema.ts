@@ -490,4 +490,44 @@ export default defineSchema({
     .index("by_case", ["caseId"])
     .index("by_agreement", ["agreedWithAI"])
     .index("by_type", ["disputeType"]),
+
+  // Workflow execution steps (agent outputs per case)
+  workflowSteps: defineTable({
+    caseId: v.id("cases"),
+    workflowId: v.string(), // Unique workflow execution ID
+    stepNumber: v.number(),
+    stepName: v.string(), // "signature_verification", "spec_validation", "evidence_review", etc.
+    agentName: v.string(), // "Signature Verification Agent"
+    
+    // Execution tracking
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("RUNNING"),
+      v.literal("COMPLETED"),
+      v.literal("SKIPPED"),
+      v.literal("FAILED")
+    ),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
+    
+    // Agent input/output
+    input: v.optional(v.any()), // What was passed to the agent
+    output: v.any(), // Full agent response with 'steps' array
+    
+    // Extracted results (for quick access without parsing output)
+    result: v.optional(v.string()), // Summary: "Signature valid", "3 similar cases found"
+    verdict: v.optional(v.string()), // If agent makes a determination
+    confidence: v.optional(v.number()), // ONLY for judge, NOT for signature
+    
+    // Error handling
+    error: v.optional(v.string()),
+    retryCount: v.optional(v.number()),
+    
+    createdAt: v.number(),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_workflow", ["workflowId"])
+    .index("by_case_step", ["caseId", "stepNumber"])
+    .index("by_status", ["status"]),
 });

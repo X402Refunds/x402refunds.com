@@ -57,9 +57,10 @@ Output format (JSON):
   ],
   "redFlags": [
     "Service returned error but still charged customer"
-  ],
-  "confidence": 0.95
+  ]
 }
+
+Note: Do NOT include a confidence score. Signature validity is binary - either the cryptographic signature is valid (true) or invalid (false).
 
 Be thorough, objective, and precise. Your analysis helps determine if the vendor delivered the promised service.`,
   maxSteps: 5,
@@ -72,7 +73,15 @@ export const verifySignedEvidence = action({
   args: {
     caseId: v.id("cases"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    signatureValid: boolean;
+    vendorVerified: string;
+    tampering: boolean;
+    keyFacts: string[];
+    redFlags: string[];
+    rawAnalysis?: string;
+    error?: string;
+  }> => {
     // Get case data with signed evidence
     const caseData = await ctx.runQuery(api.cases.getCase, { caseId: args.caseId });
     
@@ -84,26 +93,22 @@ export const verifySignedEvidence = action({
       throw new Error("No signed evidence found for this case");
     }
     
-    const evidence = caseData.signedEvidence;
+    const evidence: any = caseData.signedEvidence;
     
     // Run the signature verification agent
-    const result = await signatureVerificationAgent.run(ctx, {
-      input: JSON.stringify({
-        signatureVerified: evidence.signatureVerified,
-        vendorDid: evidence.vendorDid,
-        request: evidence.request,
-        response: evidence.response,
-        amountUsd: evidence.amountUsd,
-        crypto: evidence.crypto,
-        custodial: evidence.custodial,
-        traditional: evidence.traditional,
-      }),
-    });
+    const threadId = `case-${args.caseId}`;
+    const result = await signatureVerificationAgent.generateText(
+      ctx,
+      { threadId },
+      {
+        prompt: `Analyze signed evidence for case ${args.caseId}. Signature verified: ${evidence.signatureVerified}. Vendor: ${evidence.vendorDid}. Request: ${JSON.stringify(evidence.request)}. Response: ${JSON.stringify(evidence.response)}.`,
+      }
+    );
     
     // Parse the agent's response
     try {
       // Extract JSON from the response
-      const output = result.output;
+      const output = result.text;
       
       // Try to parse as JSON
       let analysis;
@@ -117,7 +122,6 @@ export const verifySignedEvidence = action({
           tampering: !evidence.signatureVerified,
           keyFacts: extractKeyFacts(evidence),
           redFlags: [],
-          confidence: evidence.signatureVerified ? 0.9 : 0.1,
           rawAnalysis: output,
         };
       }
@@ -133,7 +137,6 @@ export const verifySignedEvidence = action({
         tampering: !evidence.signatureVerified,
         keyFacts: extractKeyFacts(evidence),
         redFlags: evidence.signatureVerified ? [] : ["Signature verification failed"],
-        confidence: evidence.signatureVerified ? 0.8 : 0.1,
         error: error.message,
       };
     }
