@@ -105,7 +105,7 @@ const ruling = await response.json();
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              Build trust with your users through fair refunds
+              Build trust through transparent dispute resolution
             </motion.p>
 
             {!isSignedIn && (
@@ -168,15 +168,14 @@ const ruling = await response.json();
 
             {/* Stats bar */}
             <motion.div 
-              className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto"
+              className="grid grid-cols-2 gap-8 pt-12 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               {[
                 { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { label: "Protocol Native", isText: true }
+                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
@@ -185,20 +184,14 @@ const ruling = await response.json();
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 + idx * 0.1 }}
                 >
-                  {stat.isText ? (
-                    <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
-                      {stat.label}
-                    </div>
-                  ) : (
-                    <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
-                      <AnimatedCounter 
-                        value={stat.value} 
-                        suffix={stat.suffix}
-                        duration={stat.duration}
-                        decimals={stat.decimals || 0}
-                      />
-                    </div>
-                  )}
+                  <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
+                    <AnimatedCounter 
+                      value={stat.value} 
+                      suffix={stat.suffix}
+                      duration={stat.duration}
+                      decimals={stat.decimals || 0}
+                    />
+                  </div>
                   <div className="text-sm text-emerald-200/70 mt-1">{stat.label}</div>
                 </motion.div>
               ))}
