@@ -476,7 +476,7 @@ http.route({
       const body = await request.json();
       
       // Validate required fields
-      const requiredFields = ["transactionId", "amount", "complaint", "signature", "requestHeaders", "responseHeaders", "responseBody"];
+      const requiredFields = ["transactionId", "amount", "complaint", "signature", "request", "response"];
       for (const field of requiredFields) {
         if (!body[field]) {
           return new Response(JSON.stringify({
@@ -513,18 +513,15 @@ http.route({
       
       // 2. Verify signature
       const payload = JSON.stringify({
-        requestHeaders: body.requestHeaders,
-        responseHeaders: body.responseHeaders,
-        responseBody: body.responseBody,
-        transactionMetadata: {
-          amount: body.amount,
-          currency: body.currency || "USD",
-          blockchain: body.blockchain,
-          txHash: body.txHash,
-        },
+        request: body.request,
+        response: body.response,
+        amountUsd: body.amountUsd || body.amount,
+        crypto: body.crypto,
+        custodial: body.custodial,
+        traditional: body.traditional,
       });
       
-      const verified = await ctx.runAction(api.crypto.verifyEd25519Signature, {
+      const verified = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
         publicKey: vendor.publicKey,
         signature: body.signature,
         payload,
@@ -548,18 +545,15 @@ http.route({
         jurisdictionTags: ["payment", "signature-verified"],
         evidenceIds: [],
         description: body.complaint,
-        amount: body.amount,
-        currency: body.currency || "USD",
+        amount: body.amountUsd || body.amount, // Support both old and new field names
+        currency: body.crypto ? body.crypto.currency : (body.currency || "USD"),
         signedEvidence: {
-          requestHeaders: body.requestHeaders,
-          responseHeaders: body.responseHeaders,
-          responseBody: body.responseBody,
-          transactionMetadata: {
-            amount: body.amount,
-            currency: body.currency || "USD",
-            blockchain: body.blockchain,
-            txHash: body.txHash,
-          },
+          request: body.request,
+          response: body.response,
+          amountUsd: body.amountUsd || body.amount,
+          crypto: body.crypto,
+          custodial: body.custodial,
+          traditional: body.traditional,
           signature: body.signature,
           signatureVerified: true,
           vendorDid: vendorId,

@@ -40,6 +40,60 @@ export const fileDispute = mutation({
       rootCause: v.optional(v.string()),
     })),
     metadata: v.optional(v.any()), // NEW: Custom merchant metadata
+    
+    // NEW: Cryptographically signed evidence from seller
+    signedEvidence: v.optional(v.object({
+      request: v.object({
+        method: v.string(),
+        path: v.string(),
+        headers: v.optional(v.any()),
+        body: v.optional(v.any()),  // The original request (the "question")
+      }),
+      response: v.object({
+        status: v.number(),
+        headers: v.optional(v.object({
+          contentType: v.optional(v.string()),
+          disputeUrl: v.optional(v.string()),          // X-Dispute-URL header (signed!)
+          consulateAdp: v.optional(v.string()),        // X-Consulate-ADP header (signed!)
+          vendorDid: v.optional(v.string()),           // X-Vendor-DID header (signed!)
+          other: v.optional(v.any()),                  // Other headers as key-value
+        })),
+        body: v.string(),            // The API response (the "answer")
+      }),
+      amountUsd: v.optional(v.number()),
+      crypto: v.optional(v.object({
+        currency: v.string(),
+        blockchain: v.string(),
+        layer: v.optional(v.string()),
+        fromAddress: v.optional(v.string()),
+        toAddress: v.optional(v.string()),
+        transactionHash: v.optional(v.string()),
+        contractAddress: v.optional(v.string()),
+        blockNumber: v.optional(v.number()),
+        explorerUrl: v.optional(v.string()),
+      })),
+      custodial: v.optional(v.object({
+        platform: v.string(),
+        platformTransactionId: v.optional(v.string()),
+        isOnChain: v.optional(v.boolean()),
+        withdrawalId: v.optional(v.string()),
+      })),
+      traditional: v.optional(v.object({
+        paymentMethod: v.string(),
+        processor: v.optional(v.string()),
+        processorTransactionId: v.optional(v.string()),
+        cardBrand: v.optional(v.string()),
+        lastFourDigits: v.optional(v.string()),
+        cardType: v.optional(v.string()),
+      })),
+      signature: v.string(),        // Ed25519 signature
+      signatureVerified: v.boolean(),
+      vendorDid: v.string(),        // Seller's agent DID
+    })),
+    
+    // Payment dispute fields (for backward compatibility)
+    amount: v.optional(v.number()),
+    currency: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Validate plaintiff and defendant are different
@@ -90,7 +144,8 @@ export const fileDispute = mutation({
       type: "GENERAL", // Agent disputes are now type GENERAL (vs PAYMENT)
       filedAt: now,
       description: args.description || `Dispute filed: ${args.type}`,
-      amount: args.claimedDamages,
+      amount: args.claimedDamages || args.amount, // Support both claimedDamages and amount
+      currency: args.currency,
       evidenceIds: args.evidenceIds,
       finalDecisionDue,
       humanReviewRequired: false, // Default to no review
@@ -98,6 +153,7 @@ export const fileDispute = mutation({
       tags: args.jurisdictionTags, // Jurisdiction tags become tags
       breachDetails: args.breachDetails, // Store SLA/breach details if provided
       metadata: args.metadata, // NEW: Store custom metadata
+      signedEvidence: args.signedEvidence, // NEW: Cryptographically signed evidence
       retentionPolicy: "commercial", // General disputes use commercial retention policy
       createdAt: now,
     };

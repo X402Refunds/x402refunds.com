@@ -139,15 +139,58 @@ export default defineSchema({
 
     // NEW: Signed evidence from seller (cryptographically verified)
     signedEvidence: v.optional(v.object({
-      requestHeaders: v.any(),
-      responseHeaders: v.any(),
-      responseBody: v.string(),
-      transactionMetadata: v.object({
-        amount: v.number(),
-        currency: v.string(),
-        blockchain: v.optional(v.string()),
-        txHash: v.optional(v.string()),
+      request: v.object({
+        method: v.string(),
+        path: v.string(),
+        headers: v.optional(v.any()),
+        body: v.optional(v.any()),  // The original request (the "question")
       }),
+      response: v.object({
+        status: v.number(),
+        headers: v.optional(v.object({
+          contentType: v.optional(v.string()),
+          disputeUrl: v.optional(v.string()),          // X-Dispute-URL header (signed!)
+          consulateAdp: v.optional(v.string()),        // X-Consulate-ADP header (signed!)
+          vendorDid: v.optional(v.string()),           // X-Vendor-DID header (signed!)
+          other: v.optional(v.any()),                  // Other headers as key-value
+        })),
+        body: v.string(),            // The API response (the "answer")
+      }),
+      
+      // Payment details - support crypto, custodial, or traditional
+      amountUsd: v.optional(v.number()), // USD value for fee calculation
+      
+      // Crypto payment details (for USDC, ETH, SOL, etc.)
+      crypto: v.optional(v.object({
+        currency: v.string(),              // "USDC", "ETH", "SOL", "BTC"
+        blockchain: v.string(),             // "solana", "base", "ethereum", "bitcoin"
+        layer: v.optional(v.string()),      // "L1", "L2"
+        fromAddress: v.optional(v.string()), // Buyer's wallet address
+        toAddress: v.optional(v.string()),   // Seller's wallet address
+        transactionHash: v.optional(v.string()), // Blockchain tx hash (format varies by chain)
+        contractAddress: v.optional(v.string()), // Token contract address (e.g., USDC on Base)
+        blockNumber: v.optional(v.number()),
+        explorerUrl: v.optional(v.string()), // Link to block explorer
+      })),
+      
+      // Custodial platform details (for exchanges)
+      custodial: v.optional(v.object({
+        platform: v.string(),              // "coinbase", "binance", etc.
+        platformTransactionId: v.optional(v.string()),
+        isOnChain: v.optional(v.boolean()),
+        withdrawalId: v.optional(v.string()),
+      })),
+      
+      // Traditional payment details (for Stripe, PayPal, cards)
+      traditional: v.optional(v.object({
+        paymentMethod: v.string(),         // "stripe", "paypal", "visa", etc.
+        processor: v.optional(v.string()),
+        processorTransactionId: v.optional(v.string()),
+        cardBrand: v.optional(v.string()),
+        lastFourDigits: v.optional(v.string()),
+        cardType: v.optional(v.string()),
+      })),
+      
       signature: v.string(),        // Ed25519 signature
       signatureVerified: v.boolean(),
       vendorDid: v.string(),        // Seller's agent DID

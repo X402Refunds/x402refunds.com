@@ -65,10 +65,10 @@ export const paymentDisputeWorkflow = workflow.define({
         specValidation = await step.runAction(api.agents.validateApiContract, {
           caseId,
           openApiSpec: vendor.openApiSpec,
-          requestPath: caseData.signedEvidence.requestHeaders?.path || "/",
-          requestMethod: caseData.signedEvidence.requestHeaders?.method || "POST",
-          responseStatus: caseData.signedEvidence.responseHeaders?.status || 500,
-          responseBody: caseData.signedEvidence.responseBody || "",
+          requestPath: caseData.signedEvidence.request.path,
+          requestMethod: caseData.signedEvidence.request.method,
+          responseStatus: caseData.signedEvidence.response.status,
+          responseBody: caseData.signedEvidence.response.body,
         });
       }
     }

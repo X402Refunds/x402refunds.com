@@ -91,10 +91,12 @@ export const verifySignedEvidence = action({
       input: JSON.stringify({
         signatureVerified: evidence.signatureVerified,
         vendorDid: evidence.vendorDid,
-        requestHeaders: evidence.requestHeaders,
-        responseHeaders: evidence.responseHeaders,
-        responseBody: evidence.responseBody,
-        transactionMetadata: evidence.transactionMetadata,
+        request: evidence.request,
+        response: evidence.response,
+        amountUsd: evidence.amountUsd,
+        crypto: evidence.crypto,
+        custodial: evidence.custodial,
+        traditional: evidence.traditional,
       }),
     });
     
@@ -145,39 +147,75 @@ function extractKeyFacts(evidence: any): string[] {
   const facts: string[] = [];
   
   // Request details
-  if (evidence.requestHeaders) {
-    const method = evidence.requestHeaders.method || "UNKNOWN";
-    const path = evidence.requestHeaders.path || "UNKNOWN";
+  if (evidence.request) {
+    const method = evidence.request.method || "UNKNOWN";
+    const path = evidence.request.path || "UNKNOWN";
     facts.push(`API endpoint: ${method} ${path}`);
   }
   
   // Response details
-  if (evidence.responseHeaders) {
-    const status = evidence.responseHeaders.status || "UNKNOWN";
+  if (evidence.response) {
+    const status = evidence.response.status || "UNKNOWN";
     facts.push(`Response status: ${status}`);
   }
   
-  // Transaction details
-  if (evidence.transactionMetadata) {
-    const amount = evidence.transactionMetadata.amount || 0;
-    const currency = evidence.transactionMetadata.currency || "USD";
-    facts.push(`Transaction amount: $${amount.toFixed(2)} ${currency}`);
+  // Payment details - Crypto
+  if (evidence.crypto) {
+    const amount = evidence.amountUsd || 0;
+    const cryptoCurrency = evidence.crypto.currency;
+    const blockchain = evidence.crypto.blockchain;
+    facts.push(`Crypto payment: ${cryptoCurrency} on ${blockchain} ($${amount.toFixed(2)} USD)`);
     
-    if (evidence.transactionMetadata.blockchain) {
-      facts.push(`Blockchain: ${evidence.transactionMetadata.blockchain}`);
+    if (evidence.crypto.transactionHash) {
+      const shortHash = evidence.crypto.transactionHash.substring(0, 16);
+      facts.push(`Transaction hash: ${shortHash}...`);
     }
     
-    if (evidence.transactionMetadata.txHash) {
-      facts.push(`Transaction hash: ${evidence.transactionMetadata.txHash.substring(0, 16)}...`);
+    if (evidence.crypto.explorerUrl) {
+      facts.push(`Explorer: ${evidence.crypto.explorerUrl}`);
+    }
+    
+    if (evidence.crypto.layer) {
+      facts.push(`Layer: ${evidence.crypto.layer}`);
     }
   }
   
+  // Payment details - Custodial
+  if (evidence.custodial) {
+    facts.push(`Custodial platform: ${evidence.custodial.platform}`);
+    if (evidence.custodial.platformTransactionId) {
+      facts.push(`Platform TX ID: ${evidence.custodial.platformTransactionId}`);
+    }
+    if (evidence.custodial.isOnChain !== undefined) {
+      facts.push(`On-chain: ${evidence.custodial.isOnChain ? "yes" : "no (internal)"}`);
+    }
+  }
+  
+  // Payment details - Traditional
+  if (evidence.traditional) {
+    const amount = evidence.amountUsd || 0;
+    facts.push(`Traditional payment: ${evidence.traditional.paymentMethod} ($${amount.toFixed(2)} USD)`);
+    
+    if (evidence.traditional.processorTransactionId) {
+      facts.push(`Processor TX ID: ${evidence.traditional.processorTransactionId}`);
+    }
+    
+    if (evidence.traditional.cardBrand && evidence.traditional.lastFourDigits) {
+      facts.push(`Card: ${evidence.traditional.cardBrand} ****${evidence.traditional.lastFourDigits}`);
+    }
+  }
+  
+  // USD amount fallback
+  if (evidence.amountUsd && !evidence.crypto && !evidence.traditional && !evidence.custodial) {
+    facts.push(`Transaction amount: $${evidence.amountUsd.toFixed(2)} USD`);
+  }
+  
   // Check for errors in response
-  if (evidence.responseBody) {
+  if (evidence.response?.body) {
     try {
-      const body = typeof evidence.responseBody === 'string' 
-        ? JSON.parse(evidence.responseBody) 
-        : evidence.responseBody;
+      const body = typeof evidence.response.body === 'string' 
+        ? JSON.parse(evidence.response.body) 
+        : evidence.response.body;
       
       if (body.error) {
         facts.push(`Error: ${body.error}`);
@@ -187,7 +225,7 @@ function extractKeyFacts(evidence: any): string[] {
       }
     } catch {
       // Response body not JSON or parse error
-      if (typeof evidence.responseBody === 'string' && evidence.responseBody.includes('error')) {
+      if (typeof evidence.response.body === 'string' && evidence.response.body.includes('error')) {
         facts.push("Error response detected");
       }
     }

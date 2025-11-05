@@ -57,19 +57,23 @@ export const MCP_TOOLS = [
         // UNIVERSAL (all disputes)
         plaintiff: {
           type: "string",
-          description: "Who's filing the dispute (consumer email, agent DID, company name, or user ID)"
+          description: "REQUIRED. Who's filing the dispute (consumer email, agent DID, company name, or user ID). Examples: 'buyer:alice@example.com', 'did:agent:buyer-bot-123', 'consumer:alice-smith'"
         },
         defendant: {
           type: "string",
-          description: "Who's being disputed (merchant name, service provider, agent DID, or company)"
+          description: "OPTIONAL if disputeUrl provided. Who's being disputed (agent DID, company name, merchant). Examples: 'did:agent:seller-123', 'merchant:openai.com'. If you have X-Dispute-URL from seller's signed headers, use disputeUrl instead and this will be auto-extracted."
+        },
+        disputeUrl: {
+          type: "string",
+          description: "OPTIONAL: Complete dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Agent just passes this directly - defendant DID auto-extracted. SIMPLER AGENT UX: No URL parsing needed! Provide EITHER disputeUrl OR defendant (not both)."
         },
         description: {
           type: "string",
-          description: "Clear description of what went wrong (e.g., 'API was down for 3 hours' or 'Charged $50 but service failed')"
+          description: "REQUIRED. Clear description of what went wrong (e.g., 'API was down for 3 hours' or 'Charged $50 but service failed')"
         },
         amount: {
           type: "number",
-          description: "Transaction amount OR claimed damages in USD (e.g., 29.99). Determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
+          description: "REQUIRED. Transaction amount OR claimed damages in USD (e.g., 29.99). Determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
         },
         currency: {
           type: "string",
@@ -238,6 +242,88 @@ export const MCP_TOOLS = [
             affectedUsers: { type: "number", description: "Number of users affected" }
           },
           description: "General-only: Detailed breach information for SLA/contract disputes"
+        },
+        
+        // SIGNED EVIDENCE (cryptographically verified proof from seller)
+        signedEvidence: {
+          type: "object",
+          properties: {
+            request: {
+              type: "object",
+              properties: {
+                method: { type: "string", description: "HTTP method (POST, GET, etc.)" },
+                path: { type: "string", description: "API endpoint path (e.g., /v1/chat/completions)" },
+                headers: { type: "object", description: "Request headers" },
+                body: { type: "object", description: "Request body - the 'question' asked to seller" }
+              },
+              required: ["method", "path"],
+              description: "The original API request made by buyer to seller"
+            },
+            response: {
+              type: "object",
+              properties: {
+                status: { type: "number", description: "HTTP status code (e.g., 200, 500)" },
+                headers: { type: "object", description: "Response headers" },
+                body: { type: "string", description: "Response body (JSON string) - the 'answer' from seller" }
+              },
+              required: ["status", "body"],
+              description: "The actual API response from seller (may be bad output)"
+            },
+            amountUsd: {
+              type: "number",
+              description: "USD value of transaction (for fee calculation). Use this instead of amount when crypto is provided."
+            },
+            crypto: {
+              type: "object",
+              properties: {
+                currency: { type: "string", description: "Crypto token: USDC, ETH, SOL, BTC, etc." },
+                blockchain: { type: "string", description: "Blockchain: solana, base, ethereum, polygon, arbitrum, optimism, bitcoin, etc." },
+                layer: { type: "string", enum: ["L1", "L2"], description: "Layer 1 (mainnet) or Layer 2 (rollup)" },
+                fromAddress: { type: "string", description: "Buyer's wallet address" },
+                toAddress: { type: "string", description: "Seller's wallet address" },
+                transactionHash: { type: "string", description: "Blockchain transaction hash (format varies: Ethereum=0x..., Solana=base58, Bitcoin=hex)" },
+                contractAddress: { type: "string", description: "Token contract address (e.g., USDC contract on Base: 0x833589...)" },
+                blockNumber: { type: "number", description: "Block number where transaction was included" },
+                explorerUrl: { type: "string", description: "Link to blockchain explorer (Etherscan, Basescan, Solscan, etc.)" }
+              },
+              required: ["currency", "blockchain"],
+              description: "Crypto payment details (for USDC/ETH/SOL transactions)"
+            },
+            custodial: {
+              type: "object",
+              properties: {
+                platform: { type: "string", enum: ["coinbase", "binance", "kraken", "gemini", "crypto_com", "bybit", "okx", "other"], description: "Exchange platform" },
+                platformTransactionId: { type: "string", description: "Internal transaction ID from exchange" },
+                isOnChain: { type: "boolean", description: "Did transaction hit blockchain or stay internal?" },
+                withdrawalId: { type: "string", description: "Withdrawal ID if moved to blockchain" }
+              },
+              required: ["platform"],
+              description: "Custodial exchange details (for Coinbase/Binance transactions)"
+            },
+            traditional: {
+              type: "object",
+              properties: {
+                paymentMethod: { type: "string", enum: ["stripe", "paypal", "square", "visa", "mastercard", "amex", "ach", "wire", "other"], description: "Payment method" },
+                processor: { type: "string", enum: ["stripe", "paypal", "square", "braintree", "adyen", "other"], description: "Payment processor" },
+                processorTransactionId: { type: "string", description: "Transaction ID from processor (Stripe: ch_..., PayPal: PAYID-...)" },
+                cardBrand: { type: "string", enum: ["visa", "mastercard", "amex", "discover", "other"], description: "Card brand" },
+                lastFourDigits: { type: "string", description: "Last 4 digits of card" },
+                cardType: { type: "string", enum: ["credit", "debit", "prepaid"], description: "Type of card" }
+              },
+              required: ["paymentMethod"],
+              description: "Traditional payment details (for Stripe/PayPal/card transactions)"
+            },
+            signature: {
+              type: "string",
+              description: "Ed25519 signature (base64, 88 chars) from seller proving they delivered this output. Non-repudiation!"
+            },
+            vendorDid: {
+              type: "string",
+              description: "Seller's agent DID (who signed the evidence)"
+            }
+          },
+          required: ["request", "response", "signature", "vendorDid"],
+          description: "OPTIONAL: Cryptographically signed evidence from seller. Seller signs request+response proving they delivered bad output. Enables non-repudiation - seller can't deny delivering this response."
         },
         
         callbackUrl: {
@@ -538,6 +624,63 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
       case "consulate_file_dispute":
         // UNIFIED HANDLER - Auto-detects payment vs general dispute
         
+        // 0. SIMPLIFIED AX: Extract defendant from disputeUrl if provided
+        let defendant = parameters.defendant;
+        
+        if (parameters.disputeUrl) {
+          try {
+            const url = new URL(parameters.disputeUrl);
+            const vendorFromUrl = url.searchParams.get('vendor');
+            if (vendorFromUrl) {
+              defendant = vendorFromUrl;
+              console.log(`✅ Extracted vendor DID from dispute URL: ${vendorFromUrl}`);
+            } else {
+              return new Response(JSON.stringify({
+                success: false,
+                error: {
+                  code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                  message: "Invalid dispute URL: missing 'vendor' query parameter",
+                  hint: "Dispute URL should be in format: https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
+                  receivedUrl: parameters.disputeUrl
+                }
+              }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+              });
+            }
+          } catch (error: any) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                message: "Invalid dispute URL format",
+                hint: "Provide a valid URL like: https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
+                receivedUrl: parameters.disputeUrl,
+                parseError: error.message
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+        }
+        
+        // Validation: Must have either disputeUrl or defendant
+        if (!defendant) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Missing defendant information",
+              hint: "Provide either 'defendant' (agent DID) OR 'disputeUrl' (from seller's X-Dispute-URL header)",
+              simplestApproach: "If seller provided X-Dispute-URL header, just pass that entire URL as 'disputeUrl'"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
         // 1. Determine dispute type based on provided parameters
         const hasPaymentFields = !!parameters.transactionId || !!parameters.paymentType;
         const hasGeneralFields = !!parameters.category;
@@ -604,7 +747,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           currency: parameters.currency || "USD",
           paymentProtocol: normalizedPaymentProtocol,
           plaintiff: parameters.plaintiff,
-          defendant: parameters.defendant,
+          defendant: defendant, // ← Use extracted defendant (from disputeUrl or parameters.defendant)
           disputeReason: parameters.disputeReason,
           description: parameters.description,
           evidenceUrls: parameters.evidenceUrls || [],
@@ -661,14 +804,15 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           // Create general dispute case first (evidence can be added after)
         const caseResult = await ctx.runMutation(api.cases.fileDispute, {
           plaintiff: parameters.plaintiff,
-          defendant: parameters.defendant,
+          defendant: defendant, // ← Use extracted defendant (from disputeUrl or parameters.defendant)
             type: parameters.category,
-          jurisdictionTags: ["general"],
+          jurisdictionTags: parameters.disputeUrl ? ["general", "dispute-url-provided"] : ["general"],
           evidenceIds: [], // Evidence will be submitted after case creation
           description: parameters.description,
           claimedDamages: parameters.amount,
           breachDetails: parameters.breachDetails,
             metadata: parameters.metadata, // NEW
+            signedEvidence: parameters.signedEvidence, // NEW: Support signed evidence in MCP tool
           });
         const caseId = caseResult.caseId;
 

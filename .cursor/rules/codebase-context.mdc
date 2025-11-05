@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-05T09:07:45.908Z
+**Auto-generated on**: 2025-11-05T10:39:13.583Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -163,7 +163,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (31 test files)
+### Test Suites (32 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents.test.ts
@@ -188,6 +188,7 @@ Common HTTP routes exposed:
 - test/performance.test.ts
 - test/production-smoke.test.ts
 - test/signature-verification.test.ts
+- test/signed-evidence-workflow.test.ts
 - test/system-endpoints.test.ts
 - test/unit/batch-processing.test.ts
 - test/unit/regulation-e-compliance.test.ts
@@ -246,7 +247,7 @@ Common HTTP routes exposed:
 - docs/mcp-publishing-guide.md
 
 
-### Internal Documentation (27 files)
+### Internal Documentation (31 files)
 - internal/README.md
 - internal/analysis/AI-RULING-TERMINOLOGY-ANALYSIS.md
 - internal/analysis/DISPUTE-PRICING-MODEL.md
@@ -258,7 +259,7 @@ Common HTTP routes exposed:
 - internal/product/dispute-type-categorization.md
 - internal/product/market-opportunity-strategy.md
 
-... and 17 more in internal/
+... and 21 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -311,7 +312,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 31 test files using Vitest
+- 32 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -344,5 +345,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/5/2025, 1:07:45 AM
-Files scanned: 283
+Generated: 11/5/2025, 2:39:13 AM
+Files scanned: 289
