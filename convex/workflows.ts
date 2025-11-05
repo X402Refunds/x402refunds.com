@@ -183,7 +183,7 @@ export const paymentDisputeWorkflow = workflow.define({
       category: caseData.category,
       amountRange: amount < 1 ? "0-1" : amount < 10 ? "1-10" : "10+",
     });
-    
+
     // Store research step
     await step.runMutation(s.workflows.storeWorkflowStep, {
       caseId,
@@ -214,7 +214,7 @@ export const paymentDisputeWorkflow = workflow.define({
       transactionAmount: amount,
       disputeType: caseData.paymentDetails?.disputeReason || "other",
     });
-    
+
     // Store damage calculation step
     await step.runMutation(s.workflows.storeWorkflowStep, {
       caseId,

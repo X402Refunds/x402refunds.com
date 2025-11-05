@@ -316,12 +316,33 @@ export const processFiledCases = internalMutation({
             continue;
           }
 
-          // Trigger AI analysis using processWithAI (no age check - process immediately)
-          await ctx.scheduler.runAfter(0, api.paymentDisputes.processWithAI, {
-            caseId: caseData._id,
-          });
+          // Trigger workflow based on case type
+          const amount = caseData.amount || 0;
+          const evidenceCount = caseData.evidenceIds?.length || 0;
+          
+          if (caseData.type === "PAYMENT") {
+            // Payment disputes use payment workflow
+            if (amount < 1 && evidenceCount <= 2) {
+              await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
+                workflow: internal.workflows.microDisputeWorkflow,
+                args: { caseId: caseData._id },
+              });
+            } else {
+              await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
+                workflow: internal.workflows.paymentDisputeWorkflow,
+                args: { caseId: caseData._id },
+              });
+            }
+          } else {
+            // General disputes use general workflow
+            await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
+              workflow: internal.workflows.generalDisputeWorkflow,
+              args: { caseId: caseData._id },
+            });
+          }
+          
           processed++;
-          console.log(`  ✅ Triggered AI analysis for case ${caseData._id}`);
+          console.log(`  ✅ Triggered ${caseData.type} workflow for case ${caseData._id}`);
         } catch (error: any) {
           errors++;
           console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);
