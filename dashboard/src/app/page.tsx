@@ -221,7 +221,7 @@ const ruling = await response.json();
                 <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE CHALLENGE</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                x402 unlocked instant HTTP payments. But what happens when disputes arise?
+                x402 unlocked instant payments. But what happens when disputes arise?
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
@@ -259,7 +259,7 @@ const ruling = await response.json();
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                Neutral arbitration as an API. Send disputes. Get fair rulings.
+                Neutral dispute resolution. Send disputes. Get fair rulings.
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
