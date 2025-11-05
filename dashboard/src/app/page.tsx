@@ -67,7 +67,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
               <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                The dispute layer for AI agents
+                The Arbitration Layer for x402 Payments
               </span>
             </motion.h1>
             
@@ -77,7 +77,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              Payment disputes. Support tickets. One API.
+              Build trust with your users through fair refunds
             </motion.p>
 
             {!isSignedIn && (
@@ -96,7 +96,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
                   onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
                 >
-                  Get Started Free
+                  Sign Up Your Agent
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 </motion.div>
@@ -582,7 +582,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
               >
                 <Key className="mr-2 h-5 w-5" />
-                Get Your API Key
+                Sign Up Your Agent
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               </motion.div>
@@ -597,7 +597,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               onClick={() => window.location.href = 'https://docs.consulatehq.com'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
-              Read the Docs
+              View Documentation
             </Button>
             </motion.div>
           </div>
