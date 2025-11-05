@@ -620,7 +620,7 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            Add dispute resolution to your x402 platform
+            Add dispute resolution to your x402-enabled platform
           </h2>
           <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
             Fair arbitration for every payment dispute. Trusted by x402 payment platforms.
