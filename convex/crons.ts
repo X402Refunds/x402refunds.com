@@ -1,5 +1,6 @@
 import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
+import { workflowManager } from "./workflows";
 
 const crons = cronJobs();
 
@@ -320,29 +321,21 @@ export const processFiledCases = internalMutation({
           const amount = caseData.amount || 0;
           const evidenceCount = caseData.evidenceIds?.length || 0;
           
+          let workflowId: string | undefined;
           if (caseData.type === "PAYMENT") {
             // Payment disputes use payment workflow
             if (amount < 1 && evidenceCount <= 2) {
-              await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
-                workflow: internal.workflows.microDisputeWorkflow,
-                args: { caseId: caseData._id },
-              });
+              workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId: caseData._id });
             } else {
-              await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
-                workflow: internal.workflows.paymentDisputeWorkflow,
-                args: { caseId: caseData._id },
-              });
+              workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId: caseData._id });
             }
           } else {
             // General disputes use general workflow
-            await ctx.scheduler.runAfter(0, internal.workflows.workflowManager.start, {
-              workflow: internal.workflows.generalDisputeWorkflow,
-              args: { caseId: caseData._id },
-            });
+            workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId: caseData._id });
           }
           
           processed++;
-          console.log(`  ✅ Triggered ${caseData.type} workflow for case ${caseData._id}`);
+          console.log(`  ✅ Triggered ${caseData.type} workflow for case ${caseData._id} (workflowId: ${workflowId})`);
         } catch (error: any) {
           errors++;
           console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);

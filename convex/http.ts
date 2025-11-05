@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { mcpDiscovery, mcpInvoke } from "./mcp";
 
 const http = httpRouter();
@@ -1508,6 +1508,66 @@ http.route({
         error: error.message
       }), {
         status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Manual workflow trigger for testing (remove in production)
+http.route({
+  path: "/test/trigger-workflow",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const { caseId } = body;
+      
+      if (!caseId) {
+        return new Response(JSON.stringify({ error: "Missing caseId" }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Get case data
+      const caseData = await ctx.runQuery(api.cases.getCase, { caseId });
+      if (!caseData) {
+        return new Response(JSON.stringify({ error: "Case not found" }), {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
+
+      // Trigger workflow
+      const workflowManager = (await import("./workflows")).workflowManager;
+      const amount = caseData.amount || 0;
+      const evidenceCount = caseData.evidenceIds?.length || 0;
+      
+      let workflowId: string | undefined;
+      if (caseData.type === "PAYMENT") {
+        if (amount < 1 && evidenceCount <= 2) {
+          workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId });
+        } else {
+          workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId });
+        }
+      } else {
+        workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        caseId,
+        workflowId,
+        message: `Triggered ${caseData.type} workflow`,
+      }), {
+        headers: corsHeaders,
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message,
+      }), {
+        status: 500,
         headers: corsHeaders,
       });
     }
