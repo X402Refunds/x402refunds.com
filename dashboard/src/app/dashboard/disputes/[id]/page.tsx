@@ -433,7 +433,7 @@ export default function DisputeDetailPage() {
                     <Button
                       onClick={handleOverride}
                       disabled={submitting || !notes.trim()}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       Submit Override: {getVerdictDisplay(selectedVerdict)}
                     </Button>

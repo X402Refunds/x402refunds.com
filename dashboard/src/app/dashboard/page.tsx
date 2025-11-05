@@ -331,13 +331,6 @@ export default function DashboardPage() {
                   <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
                   Real-time
                 </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/dashboard/activity')}
-                >
-                  View All
-                </Button>
               </div>
             </div>
             <CardDescription className="text-slate-600">

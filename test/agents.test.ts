@@ -118,7 +118,7 @@ describe('Agent Registration & Reputation - MVP', () => {
         organizationName: 'Test Organization',
       });
       plaintiffDid = plaintiff.did;
-
+      
       const defendant = await t.mutation(api.agents.joinAgent, {
         name: 'Defendant Agent',
         publicKey: "ZGVmZW5kYW50X3B1YmxpY19rZXlfMzJfYnl0ZXNfYmFzZTY0X2VuY29kZWQ",

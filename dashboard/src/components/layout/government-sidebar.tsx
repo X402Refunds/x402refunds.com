@@ -36,11 +36,6 @@ const orgNavigationItems: NavigationItem[] = [
     href: "/dashboard/team",
     icon: Users,
   },
-  {
-    title: "Activity",
-    href: "/dashboard/activity",
-    icon: Activity,
-  },
 ]
 
 // Demo/public navigation (mock data only)

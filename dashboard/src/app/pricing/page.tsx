@@ -71,7 +71,7 @@ export default function PricingPage() {
 
                 <Button
                   size="lg"
-                  className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-white"
                   onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
                 >
                   Get Started
