@@ -1,6 +1,6 @@
 "use client"
 
-import { Code, Share, Sparkles, Plug, Webhook, ShieldCheck, Network, LineChart, Scale, Book, Beaker, XCircle, CheckCircle, Key, BookOpen, ArrowRight, Copy, Check } from "lucide-react"
+import { Sparkles, Plug, Network, Scale, Book, Beaker, XCircle, CheckCircle, Key, BookOpen, ArrowRight, Copy, Check, Upload, Zap, Eye } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,21 +20,49 @@ export default function HomePage() {
   // Static stats (average/marketing values)
   const autoResolvedPercentage = 95
   const avgResolutionMinutes = 4.2
-  const integrationMinutes = 5
 
   const copyCodeToClipboard = () => {
-    const code = `// File a dispute via MCP tool
-const result = await mcp.invoke("consulate_file_dispute", {
-  transactionId: "txn_abc123",
-  amount: 29.99,
-  currency: "USD",
-  paymentProtocol: "STRIPE",
-  plaintiff: "consumer:alice@example.com",
-  defendant: "merchant:openai-api",
-  disputeReason: "service_not_rendered",
-  description: "API call failed but charge went through",
-  evidenceUrls: ["https://logs.example.com/txn_abc123"]
-});`
+    const code = `// Submit x402 dispute via REST API
+const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer csk_live_...',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    // Transaction details
+    transactionId: "x402_abc123",
+    transactionHash: "0x1a2b3c4d...",  // On-chain proof
+    amount: 29.99,
+    currency: "USDC",
+    paymentProtocol: "X402",
+    
+    // Party information
+    plaintiff: "consumer:alice@example.com",
+    plaintiffClaim: "Service not rendered after payment",
+    defendant: "merchant:api-provider.com",
+    defendantClaim: "Service delivered, logs confirm",
+    
+    // Evidence
+    evidenceUrls: [
+      "https://logs.alice.com/timeout-proof.json",
+      "https://merchant.com/delivery-logs.json"
+    ]
+  })
+});
+
+// Response (within 5 minutes):
+const ruling = await response.json();
+// {
+//   success: true,
+//   caseId: "case_k123abc",
+//   ruling: "CONSUMER_WINS",      // or MERCHANT_WINS, PARTIAL_REFUND
+//   confidence: 0.96,
+//   refundAmount: 29.99,          // Amount you should refund
+//   reasoning: "Evidence shows API timeout before service delivery.",
+//   timeline: "2025-01-15T10:30:00Z",
+//   appealable: false             // Binding arbitration
+// }`
     navigator.clipboard.writeText(code)
     setCopiedCode(true)
     setTimeout(() => setCopiedCode(false), 2000)
@@ -67,7 +95,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
               <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                The Arbitration Layer for x402 Payments
+                Dispute Arbitration for x402 Payments
               </span>
             </motion.h1>
             
@@ -148,7 +176,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               {[
                 { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
                 { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { value: integrationMinutes, suffix: " min", label: "Time to integrate", duration: 2.2 }
+                { label: "x402 Native", isText: true }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
@@ -157,14 +185,20 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 + idx * 0.1 }}
                 >
-                  <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
-                    <AnimatedCounter 
-                      value={stat.value} 
-                      suffix={stat.suffix}
-                      duration={stat.duration}
-                      decimals={stat.decimals || 0}
-                    />
-              </div>
+                  {stat.isText ? (
+                    <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
+                      {stat.label}
+                    </div>
+                  ) : (
+                    <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
+                      <AnimatedCounter 
+                        value={stat.value} 
+                        suffix={stat.suffix}
+                        duration={stat.duration}
+                        decimals={stat.decimals || 0}
+                      />
+                    </div>
+                  )}
                   <div className="text-sm text-emerald-200/70 mt-1">{stat.label}</div>
                 </motion.div>
               ))}
@@ -190,18 +224,18 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4 }}
                 >
-                <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE PROBLEM</p>
+                <p className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2 px-3 py-1 bg-red-50 rounded-full border border-red-100">THE CHALLENGE</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                Every AI agent needs disputes. Nobody wants to build them.
+                x402 unlocked instant HTTP payments. But what happens when disputes arise?
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
                 {[
-                  "Building dispute logic takes months of development",
-                  "Fraud detection requires specialized ML expertise",
-                  "Compliance and regulations are constantly changing",
-                  "Manual dispute handling doesn't scale with agents"
+                  "x402 enables autonomous payments, but disputes still happen",
+                  "Building neutral arbitration requires AI/ML infrastructure",
+                  "Merchants need fair rulings, consumers need protection",
+                  "Manual dispute review doesn't scale with payment volume"
                 ].map((problem, idx) => (
                     <motion.div
                     key={idx} 
@@ -231,15 +265,15 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                One API. Full dispute infrastructure.
+                Neutral arbitration as an API. Send disputes. Get fair rulings.
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
                 {[
-                  "Integrate disputes in minutes with one SDK call",
-                  "AI agents handle 95% of disputes automatically",
-                  "Built-in fraud detection and compliance",
-                  "Scale to millions of disputes without ops overhead"
+                  "Integrate with one API endpoint",
+                  "95% auto-resolved by AI in < 5 minutes",
+                  "Neutral third-party with no merchant bias",
+                  "You execute refunds based on our rulings"
                 ].map((solution, idx) => (
                     <motion.div
                     key={idx} 
@@ -266,10 +300,10 @@ const result = await mcp.invoke("consulate_file_dispute", {
           <div className="text-center mb-16">
             <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">HOW IT WORKS</Badge>
             <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
-              Expose Consulate Tools
+              Three Steps to Fair Dispute Resolution
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Add our MCP tools to your server. Route disputes to us. Focus on building your agent.
+              Integrate into your x402 payment flow in minutes
             </p>
           </div>
           </AnimatedSection>
@@ -292,13 +326,13 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </div>
               <CardHeader>
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Code className="h-7 w-7 text-emerald-600" />
+                  <Upload className="h-7 w-7 text-emerald-600" />
                 </div>
-                <CardTitle className="text-2xl text-slate-900">Expose Consulate Tool</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">Submit Disputed Transaction</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  Add the consulate_file_dispute tool to your MCP server as a wrapper that forwards to our API. Your users get instant dispute resolution.
+                  POST disputed x402 payment to our API with transaction details, party claims, and evidence URLs.
                 </p>
               </CardContent>
             </Card>
@@ -318,13 +352,13 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </div>
               <CardHeader>
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Share className="h-7 w-7 text-emerald-600" />
+                  <Sparkles className="h-7 w-7 text-emerald-600" />
                 </div>
-                <CardTitle className="text-2xl text-slate-900">Auto-Route Disputes</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">AI Analysis + Human Review</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  When users invoke the tool, disputes automatically route to Consulate with full transaction context. No additional integration needed.
+                  Our AI analyzes evidence and precedents. 95% auto-resolve. 5% escalate to neutral human reviewers.
                 </p>
               </CardContent>
             </Card>
@@ -344,13 +378,13 @@ const result = await mcp.invoke("consulate_file_dispute", {
               </div>
               <CardHeader>
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Sparkles className="h-7 w-7 text-emerald-600" />
+                  <Scale className="h-7 w-7 text-emerald-600" />
                 </div>
-                <CardTitle className="text-2xl text-slate-900">We Handle Everything</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">Receive Ruling</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  Our AI analyzes evidence, detects fraud, and provides recommendations. Your team reviews and makes final decisions in minutes.
+                  Get verdict (CONSUMER_WINS, MERCHANT_WINS, PARTIAL_REFUND) with reasoning. You execute the refund based on our ruling.
                 </p>
               </CardContent>
             </Card>
@@ -372,10 +406,10 @@ const result = await mcp.invoke("consulate_file_dispute", {
           <div className="text-center mb-16">
             <Badge className="bg-white/10 text-white border-white/20 mb-4 backdrop-blur-sm">FEATURES</Badge>
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              Built for MCP server builders
+              Built for x402 Payment Platforms
             </h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Everything you need to add world-class dispute resolution to your agent
+              Everything you need for compliant x402 disputes. Fair, fast, and fully automated arbitration.
             </p>
           </div>
           </AnimatedSection>
@@ -383,39 +417,39 @@ const result = await mcp.invoke("consulate_file_dispute", {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                icon: Plug,
-                title: "Simple Integration",
-                description: "One SDK, one API key. Add dispute resolution to your MCP server in under 5 minutes.",
+                icon: Scale,
+                title: "Neutral Third-Party",
+                description: "Independent arbiter with no merchant bias. Fair rulings that build customer trust.",
                 color: "from-emerald-500 to-green-500"
               },
               {
-                icon: Webhook,
-                title: "Webhooks & Events",
-                description: "Get real-time updates on dispute status. Stay in control with webhook notifications.",
+                icon: Plug,
+                title: "x402 Native Integration",
+                description: "Built specifically for HTTP 402 payment disputes. One API endpoint, instant integration.",
                 color: "from-emerald-600 to-teal-500"
               },
               {
-                icon: ShieldCheck,
-                title: "Built-in Fraud Detection",
-                description: "ML models trained to catch fraudulent dispute claims automatically.",
+                icon: Sparkles,
+                title: "AI + Human Hybrid",
+                description: "95% auto-resolved by AI. 5% reviewed by neutral humans. Best of both worlds.",
                 color: "from-emerald-500 to-teal-500"
               },
               {
-                icon: Network,
-                title: "Custom Workflows",
-                description: "Define resolution rules specific to your use case. Escalate complex cases automatically.",
+                icon: Zap,
+                title: "Lightning Fast",
+                description: "Average 4.2 minute resolution. Match x402's speed with instant arbitration.",
                 color: "from-emerald-400 to-green-600"
               },
               {
-                icon: LineChart,
-                title: "Real-time Dashboard",
-                description: "Monitor disputes, view analytics, and track resolution rates from your dashboard.",
+                icon: Network,
+                title: "Evidence Analysis",
+                description: "Automated evidence parsing from URLs. Transaction history analysis. Precedent matching.",
                 color: "from-teal-500 to-emerald-600"
               },
               {
-                icon: Scale,
-                title: "Compliance Ready",
-                description: "SOC 2, GDPR compliant. Built-in audit logs and reporting for regulations.",
+                icon: Eye,
+                title: "Transparent Reasoning",
+                description: "Every ruling includes detailed explanation. No black box decisions. Full audit trail.",
                 color: "from-emerald-500 to-emerald-700"
               }
             ].map((feature, idx) => (
@@ -452,10 +486,10 @@ const result = await mcp.invoke("consulate_file_dispute", {
             <div>
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">DEVELOPER FIRST</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight">
-                Beautiful APIs. Comprehensive docs.
+                Simple REST API. Clear responses.
               </h2>
               <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                We&apos;re developers building for developers. Our APIs are RESTful, well-documented, and designed to get you up and running in minutes.
+                One endpoint to submit disputes. One webhook to receive rulings. Built for x402 payment platforms.
               </p>
 
               <div className="space-y-4 mb-8">
@@ -476,6 +510,16 @@ const result = await mcp.invoke("consulate_file_dispute", {
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Sandbox Environment</h3>
                     <p className="text-slate-600 text-sm leading-relaxed">Test your integration with fake disputes before going live</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Zap className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Fast Integration</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">Get up and running with x402 disputes in under 5 minutes</p>
                   </div>
                 </div>
               </div>
@@ -501,7 +545,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
                     <div className="w-3 h-3 rounded-full bg-amber-500"></div>
                     <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                    <span className="ml-auto text-sm text-slate-400 font-sans">consulate_file_dispute.ts</span>
+                    <span className="ml-auto text-sm text-slate-400 font-sans">x402-dispute-api.ts</span>
                     <button
                       onClick={copyCodeToClipboard}
                       className="ml-2 p-1.5 hover:bg-white/10 rounded transition-colors"
@@ -517,27 +561,45 @@ const result = await mcp.invoke("consulate_file_dispute", {
                 </CardHeader>
                 <CardContent className="bg-slate-950 text-slate-100 p-6 font-mono text-sm rounded-b-lg">
                   <pre className="overflow-x-auto leading-relaxed">
-{`// File a dispute via MCP tool
-const result = await mcp.invoke("consulate_file_dispute", {
-  transactionId: "txn_abc123",
-  amount: 29.99,
-  currency: "USD",
-  paymentProtocol: "STRIPE",
-  plaintiff: "consumer:alice@example.com",
-  defendant: "merchant:openai-api",
-  disputeReason: "service_not_rendered",
-  description: "API call failed but charge went through",
-  evidenceUrls: ["https://logs.example.com/txn_abc123"]
+{`// Submit x402 dispute via REST API
+const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer csk_live_...',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    // Transaction details
+    transactionId: "x402_abc123",
+    transactionHash: "0x1a2b3c4d...",  // On-chain proof
+    amount: 29.99,
+    currency: "USDC",
+    paymentProtocol: "X402",
+    
+    // Party information
+    plaintiff: "consumer:alice@example.com",
+    plaintiffClaim: "Service not rendered after payment",
+    defendant: "merchant:api-provider.com",
+    defendantClaim: "Service delivered, logs confirm",
+    
+    // Evidence
+    evidenceUrls: [
+      "https://logs.alice.com/timeout-proof.json",
+      "https://merchant.com/delivery-logs.json"
+    ]
+  })
 });
 
-// Returns:
+// Response (within 5 minutes):
 {
   success: true,
-  caseId: "k123abc",
-  status: "analyzing",
-  estimatedResolutionTime: "< 5 minutes",
-  pricingTier: "MEDIUM",
-  disputeFee: 1.00
+  caseId: "case_k123abc",
+  ruling: "CONSUMER_WINS",      // or MERCHANT_WINS, PARTIAL_REFUND
+  confidence: 0.96,
+  refundAmount: 29.99,          // Amount you should refund
+  reasoning: "Evidence shows API timeout before service delivery.",
+  timeline: "2025-01-15T10:30:00Z",
+  appealable: false             // Binding arbitration
 }`}
                   </pre>
                 </CardContent>
@@ -564,10 +626,10 @@ const result = await mcp.invoke("consulate_file_dispute", {
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            Ship disputes in 5 minutes
+            Add dispute resolution to your x402 platform
           </h2>
           <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
-            Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
+            Fair arbitration for every payment dispute. Trusted by x402 payment platforms.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -620,7 +682,7 @@ const result = await mcp.invoke("consulate_file_dispute", {
               <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
                 <CheckCircle className="h-3 w-3 text-emerald-400" />
               </div>
-              <span><strong className="text-white">5 minute</strong> integration</span>
+              <span><strong className="text-white">x402 compatible</strong></span>
             </div>
           </AnimatedList>
           </AnimatedSection>
