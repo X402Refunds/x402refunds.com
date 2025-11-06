@@ -250,17 +250,22 @@ export default defineSchema({
         v.literal("traditional")
       )),
       
-      // NEW: Crypto transaction details
+      // NEW: x402 payment details (STRICT schema for crypto payments)
+      // Stores x402paymentDetails from signed evidence
       crypto: v.optional(v.object({
-        currency: v.string(),        // USDC, ETH, BTC, SOL, XRP, etc.
-        blockchain: v.string(),       // ethereum, base, solana, polygon, etc.
-        layer: v.optional(v.string()), // L1 or L2
-        fromAddress: v.optional(v.string()),
-        toAddress: v.optional(v.string()),
-        transactionHash: v.optional(v.string()),
-        contractAddress: v.optional(v.string()),
-        blockNumber: v.optional(v.number()),
-        explorerUrl: v.optional(v.string()),
+        // REQUIRED fields for crypto payment proof
+        currency: v.string(),        // USDC, ETH, BTC, SOL, etc. (REQUIRED)
+        blockchain: v.string(),       // base, ethereum, solana, etc. (REQUIRED)
+        transactionHash: v.string(),  // Blockchain tx hash (REQUIRED - proof of payment)
+        fromAddress: v.string(),      // Buyer's wallet (REQUIRED - who paid)
+        toAddress: v.string(),        // Seller's wallet (REQUIRED - who received)
+        
+        // OPTIONAL but recommended
+        timestamp: v.optional(v.string()),      // When payment happened
+        blockNumber: v.optional(v.number()),    // Which block
+        contractAddress: v.optional(v.string()), // Token contract address
+        layer: v.optional(v.string()),          // L1 or L2
+        explorerUrl: v.optional(v.string()),    // Blockchain explorer link
       })),
       
       // NEW: Custodial platform details

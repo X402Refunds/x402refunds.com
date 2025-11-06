@@ -125,8 +125,20 @@ export const MCP_TOOLS = [
             },
             x402paymentDetails: {
               type: "object",
-              description: "REQUIRED. Payment details in any format (flexible). Common fields: transactionHash (blockchain), fromAddress/toAddress (wallets), blockchain (base/ethereum/solana), currency (USDC/ETH/SOL), etc. Seller includes whatever payment fields are relevant. This is part of what seller signs.",
-              additionalProperties: true
+              description: "REQUIRED. Crypto payment proof with STRICT schema. All fields below are REQUIRED for valid payment dispute.",
+              properties: {
+                currency: { type: "string", description: "REQUIRED. Cryptocurrency (USDC, ETH, SOL, BTC, etc.)" },
+                blockchain: { type: "string", description: "REQUIRED. Blockchain network (base, ethereum, solana, polygon, etc.)" },
+                transactionHash: { type: "string", description: "REQUIRED. Blockchain transaction hash - proof payment happened" },
+                fromAddress: { type: "string", description: "REQUIRED. Buyer's wallet address - who paid" },
+                toAddress: { type: "string", description: "REQUIRED. Seller's wallet address - who received payment" },
+                timestamp: { type: "string", description: "Optional. When payment occurred (ISO 8601 format)" },
+                blockNumber: { type: "number", description: "Optional. Block number where transaction was included" },
+                contractAddress: { type: "string", description: "Optional. Token contract address (e.g., USDC contract)" },
+                layer: { type: "string", enum: ["L1", "L2"], description: "Optional. Layer 1 (mainnet) or Layer 2 (rollup)" },
+                explorerUrl: { type: "string", description: "Optional. Link to blockchain explorer (Etherscan, Basescan, etc.)" }
+              },
+              required: ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"]
             }
           },
           required: ["request", "response", "amountUsd", "x402paymentDetails"]
