@@ -470,15 +470,19 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         }
         
-        // Validation: Must have either disputeUrl or defendant
+        // Validation: disputeUrl is REQUIRED (defendant is extracted from it)
         if (!defendant) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "Missing defendant information",
-              hint: "Provide either 'defendant' (agent DID) OR 'disputeUrl' (from seller's X-Dispute-URL header)",
-              simplestApproach: "If seller provided X-Dispute-URL header, just pass that entire URL as 'disputeUrl'"
+              message: "disputeUrl is required",
+              hint: "The 'disputeUrl' field is required. Get it from seller's X-Dispute-URL response header.",
+              format: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
+              youProvided: {
+                disputeUrl: parameters.disputeUrl || "missing",
+                defendant: parameters.defendant || "missing"
+              }
             }
           }), {
             status: 400,
@@ -492,8 +496,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "signedEvidence is required for X402 payment disputes",
-              hint: "Provide cryptographically signed evidence from seller (request, response, amountUsd, x402paymentDetails)"
+              message: "signedEvidence is required",
+              hint: "Provide signedEvidence object with: { request, response, amountUsd, x402paymentDetails }",
+              requiredFields: {
+                "signedEvidence.request": "The original API request (method, path, body)",
+                "signedEvidence.response": "The seller's API response (status, body)",
+                "signedEvidence.amountUsd": "Transaction amount in USD",
+                "signedEvidence.x402paymentDetails": "Payment proof (currency, blockchain, transactionHash, fromAddress, toAddress)"
+              }
             }
           }), {
             status: 400,
