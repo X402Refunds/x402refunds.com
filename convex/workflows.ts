@@ -9,7 +9,7 @@ import { WorkflowManager } from "@convex-dev/workflow";
 import { components } from "./_generated/api";
 import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
-import { selectModel } from "./lib/openrouter";
+import { selectModel, DEFAULT_MODEL } from "./lib/openrouter";
 import { internalMutation, internalQuery, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
@@ -502,13 +502,13 @@ export const microDisputeWorkflow = workflow.define({
       });
     }
 
-    // Quick decision using cheapest model
+    // Quick decision using default model
     const judgeStartTime = Date.now();
     const quickDecision = await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews: [evidenceCheck],
       quick: true,
-      modelId: "openai/gpt-oss-20b", // Force cheapest model
+      modelId: DEFAULT_MODEL,
     });
     
     // Store judge decision step
@@ -524,7 +524,7 @@ export const microDisputeWorkflow = workflow.define({
       input: {
         caseId,
         quick: true,
-        modelId: "openai/gpt-oss-20b",
+        modelId: DEFAULT_MODEL,
       },
       output: quickDecision || {},
       result: quickDecision?.verdict || "No verdict",

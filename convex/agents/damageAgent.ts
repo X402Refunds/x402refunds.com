@@ -7,7 +7,7 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, DEFAULT_MODEL } from "../lib/openrouter";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
@@ -87,7 +87,7 @@ const calculateDamages = createTool({
 // Define Damage Calculation Agent
 export const damageCalculationAgent = new Agent(components.agent, {
   name: "Damage Calculation Agent",
-  languageModel: openrouter.chat("openai/gpt-oss-20b"), // Cost-effective for calculations
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are a financial damage calculation specialist for a dispute resolution platform. Your job is to calculate fair refund amounts.
 
 CRITICAL RULES:

@@ -10,7 +10,7 @@ import { components } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, DEFAULT_MODEL } from "../lib/openrouter";
 
 /**
  * Signature Verification Agent
@@ -20,7 +20,7 @@ import { openrouter } from "../lib/openrouter";
  */
 export const signatureVerificationAgent = new Agent(components.agent, {
   name: "Signature Verification Agent",
-  languageModel: openrouter.chat("openai/gpt-4o-mini"),
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are a cryptographic evidence analyst for dispute resolution.
 
 Your responsibilities:

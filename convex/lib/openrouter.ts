@@ -2,7 +2,7 @@
  * OpenRouter Configuration
  * 
  * Provides OpenAI-compatible API client for OpenRouter
- * Supports dynamic model selection based on dispute complexity
+ * Centralized model configuration - all agents use GPT-OSS-20B
  */
 
 import { createOpenAI } from "@ai-sdk/openai";
@@ -14,39 +14,25 @@ export const openrouter = createOpenAI({
 });
 
 /**
- * Dynamic model selection based on dispute amount and complexity
+ * Centralized model configuration
+ * All agents use GPT-OSS-20B for cost-effective dispute resolution
+ */
+export const DEFAULT_MODEL = "openai/gpt-oss-20b";
+
+/**
+ * Model selection - always returns GPT-OSS-20B
  * 
- * Strategy:
- * - Micro disputes (<$1): GPT-OSS-20B (fast, cheap, sufficient for simple cases)
- * - Small disputes ($1-10): GPT-4o-mini (good balance)
- * - Medium+ disputes ($10+): Claude 3.5 Sonnet (highest quality for complex cases)
+ * All agents use the same model for consistency and cost optimization.
  * 
- * @param disputeAmount - Transaction amount or claimed damages
- * @param complexity - Complexity score 0-1 (default 0.5)
- * @returns Model identifier for OpenRouter
+ * @param disputeAmount - Transaction amount or claimed damages (unused, kept for API compatibility)
+ * @param complexity - Complexity score 0-1 (unused, kept for API compatibility)
+ * @returns Model identifier for OpenRouter (always GPT-OSS-20B)
  */
 export function selectModel(
   disputeAmount: number,
   complexity: number = 0.5
 ): string {
-  // Micro disputes: use cheapest model
-  if (disputeAmount < 1) {
-    return "openai/gpt-oss-20b";
-  }
-
-  // Small disputes: use efficient model
-  if (disputeAmount < 10) {
-    return "openai/gpt-4o-mini";
-  }
-
-  // Medium+ disputes: use highest quality model
-  // If complexity is high, always use Claude 3.5 Sonnet
-  if (disputeAmount >= 10 || complexity > 0.7) {
-    return "anthropic/claude-3.5-sonnet";
-  }
-
-  // Default to GPT-4o-mini for unknown cases
-  return "openai/gpt-4o-mini";
+  return DEFAULT_MODEL;
 }
 
 /**
@@ -58,6 +44,7 @@ export function getModelConfig(modelId: string) {
       maxTokens: 8192,
       costPer1kTokens: 0.01, // $0.01 per 1k tokens
     },
+    // Legacy models kept for backward compatibility
     "openai/gpt-4o-mini": {
       maxTokens: 16384,
       costPer1kTokens: 0.15, // $0.15 per 1k tokens
@@ -68,10 +55,11 @@ export function getModelConfig(modelId: string) {
     },
   };
 
+  // Default to GPT-OSS-20B config
   return (
     configs[modelId] || {
       maxTokens: 8192,
-      costPer1kTokens: 0.15,
+      costPer1kTokens: 0.01,
     }
   );
 }

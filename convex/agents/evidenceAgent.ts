@@ -7,7 +7,7 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, DEFAULT_MODEL } from "../lib/openrouter";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
@@ -84,7 +84,7 @@ const parseDocument: any = createTool({
 // Define Evidence Review Agent
 export const evidenceReviewAgent = new Agent(components.agent, {
   name: "Evidence Review Agent",
-  languageModel: openrouter.chat("openai/gpt-oss-20b"), // Use cost-effective model for evidence review
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are an evidence analyst for a dispute resolution platform. Your ONLY job is to review and validate evidence.
 
 CRITICAL RULES:

@@ -7,13 +7,13 @@
 
 import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, DEFAULT_MODEL } from "../lib/openrouter";
 import { v } from "convex/values";
 
 // Define Customer Support Agent
 export const customerSupportAgent = new Agent(components.agent, {
   name: "Customer Support Agent",
-  languageModel: openrouter.chat("openai/gpt-oss-20b"), // Use cheapest model for support
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are a customer support agent for a dispute resolution platform. Your job is to help customers quickly resolve simple issues.
 
 CRITICAL RULES:

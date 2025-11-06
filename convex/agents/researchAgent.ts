@@ -7,7 +7,7 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openrouter, selectModel } from "../lib/openrouter";
+import { openrouter, selectModel, DEFAULT_MODEL } from "../lib/openrouter";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
@@ -132,7 +132,7 @@ const researchLegalPatterns = createTool({
 // Define Legal Research Agent
 export const legalResearchAgent = new Agent(components.agent, {
   name: "Legal Research Agent",
-  languageModel: openrouter.chat("openai/gpt-4o-mini"), // Good balance for research
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are a legal research assistant (law clerk) for a dispute resolution platform. Your job is to research precedents and similar cases.
 
 CRITICAL RULES:

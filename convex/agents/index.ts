@@ -15,11 +15,12 @@ export { validateApiContract } from "./specValidatorAgent";
 
 /**
  * Quick decision action for micro disputes
- * Uses cheapest model and minimal steps
+ * Uses default model and minimal steps
  */
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
+import { DEFAULT_MODEL } from "../lib/openrouter";
 
 export const quickDecision = internalAction({
   args: {
@@ -41,7 +42,7 @@ export const quickDecision = internalAction({
       caseId: args.caseId,
       evidenceReviews: [],
       quick: true,
-      modelId: "openai/gpt-oss-20b",
+      modelId: DEFAULT_MODEL,
     });
 
     return result;

@@ -7,7 +7,7 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openrouter, selectModel } from "../lib/openrouter";
+import { openrouter, selectModel, DEFAULT_MODEL } from "../lib/openrouter";
 import { action, internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
@@ -106,10 +106,10 @@ Be decisive but careful. Your decisions are binding.`,
   });
 }
 
-// Default judge agent export (uses GPT-4o-mini)
+// Default judge agent export (uses GPT-OSS-20B)
 export const judgeAgent = new Agent(components.agent, {
   name: "Judge Decision Agent",
-  languageModel: openrouter.chat("openai/gpt-4o-mini"),
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are a judge for a dispute resolution platform. Your job is to make final, binding decisions on disputes.
 
 CRITICAL RULES:

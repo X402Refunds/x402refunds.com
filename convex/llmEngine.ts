@@ -1,6 +1,8 @@
 // Cost-Optimized LLM Engine for Dispute Resolution
 // Limits: 500 words max, efficient prompts, reduced API calls
 
+import { DEFAULT_MODEL } from "./lib/openrouter";
+
 export async function generateCostOptimizedDispute() {
   if (!process.env.OPENROUTER_API_KEY) {
     console.log("⚠️ No OpenRouter API key - using rule-based fallback");
@@ -58,7 +60,7 @@ IMPORTANT:
         "HTTP-Referer": "https://consulate.ai"
       },
       body: JSON.stringify({
-        model: "anthropic/claude-3.5-sonnet",
+        model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 400, // Cost limit
         temperature: 0.6
@@ -137,7 +139,7 @@ Keep under 200 words total.`;
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "anthropic/claude-3.5-sonnet",
+        model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 300, // Cost limit
         temperature: 0.5

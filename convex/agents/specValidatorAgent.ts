@@ -10,7 +10,7 @@ import { components } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
-import { openrouter } from "../lib/openrouter";
+import { openrouter, DEFAULT_MODEL } from "../lib/openrouter";
 
 /**
  * OpenAPI Spec Validator Agent
@@ -20,7 +20,7 @@ import { openrouter } from "../lib/openrouter";
  */
 export const specValidatorAgent = new Agent(components.agent, {
   name: "API Contract Validator",
-  languageModel: openrouter.chat("openai/gpt-4o"),
+  languageModel: openrouter.chat(DEFAULT_MODEL),
   instructions: `You are an API contract compliance analyst for dispute resolution.
 
 Your job is to compare a vendor's OpenAPI specification (their promised API contract) 
