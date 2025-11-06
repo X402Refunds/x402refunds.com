@@ -253,16 +253,24 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                     return (
                                       <>
                                         {/* Main reasoning/analysis */}
-                                        {(reasoning || analysis) && (
+                                        {(reasoning || analysis) && reasoning !== '' && analysis !== '' && (
                                           <div className="bg-blue-50 border border-blue-200 rounded p-3">
                                             <p className="text-sm font-medium text-blue-900 mb-2">
-                                              {output && typeof output === 'object' && output.calculation ? 'Calculation:' : 
-                                               output && typeof output === 'object' && output.research ? 'Research:' : 
+                                              {output && typeof output === 'object' && output.calculation !== undefined ? 'Calculation:' : 
+                                               output && typeof output === 'object' && output.research !== undefined ? 'Research:' : 
                                                'Agent Reasoning:'}
                                             </p>
                                             <p className="text-sm text-blue-800 whitespace-pre-wrap">
                                               {reasoning || analysis}
                                             </p>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Show message if agent returned empty response */}
+                                        {output && typeof output === 'object' && output.success && !reasoning && !analysis && (
+                                          <div className="bg-amber-50 border border-amber-200 rounded p-3">
+                                            <p className="text-sm font-medium text-amber-900">Agent completed but returned no analysis</p>
+                                            <p className="text-sm text-amber-700 mt-1">The AI model may have had an issue generating the response.</p>
                                           </div>
                                         )}
                                         
