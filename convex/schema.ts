@@ -285,13 +285,8 @@ export default defineSchema({
       metadata: v.optional(v.any()),
       
       regulationEDeadline: v.number(),      // Regulation E compliance (10 business days)
-      pricingTier: v.union(
-        v.literal("micro"),      // < $1: $0.10
-        v.literal("small"),      // $1-10: $0.25
-        v.literal("medium"),     // $10-100: $1.00
-        v.literal("large"),      // $100-1k: $5.00
-        v.literal("enterprise")  // > $1k: $25.00
-      ),
+      // Flat pricing: $0.05 per dispute (no tiers)
+      pricingTier: v.optional(v.string()), // DEPRECATED: Kept for backward compat with old data, will be removed
       disputeFee: v.number(),
       // Party metadata (for customer to identify users in their system)
       plaintiffMetadata: v.optional(v.object({

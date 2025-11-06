@@ -133,7 +133,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.paymentDisputeId).toBeDefined();
       expect(data.status).toBeDefined();
       expect(data.disputeFee).toBeDefined();
-      expect(data.pricingTier).toBeDefined();
+      // Flat fee (no pricing tiers)
 
       // Save for later tests
       testCaseId = data.caseId;
@@ -155,8 +155,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.isMicroDispute).toBe(true);
-      expect(data.pricingTier).toBe('micro');
-      expect(data.disputeFee).toBe(0.10);
+      // Flat fee for all disputes
+      expect(data.disputeFee).toBe(0.05);
     });
 
     it('should calculate correct fee for small dispute', async () => {
@@ -174,8 +174,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.pricingTier).toBe('small');
-      expect(data.disputeFee).toBe(0.25);
+      // Flat fee for all disputes
+      expect(data.disputeFee).toBe(0.05);
     });
 
     it('should file a crypto non-custodial dispute with blockchain details', async () => {

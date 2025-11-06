@@ -44,7 +44,7 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.server.name).toBe('Consulate Dispute Resolution');
       expect(manifest.server.dispute_types).toContain('UNIFIED ENDPOINT');
       expect(manifest.server.pricing).toBeDefined();
-      expect(manifest.server.pricing.micro.fee).toBe('$0.10');
+      expect(manifest.server.pricing.flat_fee).toBe('$0.05 per dispute (all disputes, no tiers)');
     });
 
     it('should list all 8 MCP tools (unified dispute endpoint)', async () => {

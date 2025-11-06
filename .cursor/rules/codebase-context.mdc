@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-06T10:07:45.876Z
+**Auto-generated on**: 2025-11-06T23:00:15.942Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -92,7 +92,7 @@ consulate/
 - **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, processFiledCases, autoApproveOverdueDisputes
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
-- **disputePricing.ts** - calculateDisputeFee, estimateTokens, estimateDisputeTokens, validateEvidenceSize, getPricingTierDescription, getFeexplanation
+- **disputePricing.ts** - calculateDisputeFee, getFeeExplanation
 - **events.ts** - getDisputeActivityEvents, getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getOrganizationEvents, getOrganizationStats, getApiKeyEvents
 - **cleanup.ts** - redactPersonalData, archiveToCloudStorage, deleteOldEvidence, deleteOldSupportData, deleteOldPaymentEvidence, optimizeStorage
 - **webFetcher.ts** - fetchWebContent, checkApiHealth, analyzeImage
@@ -346,5 +346,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/6/2025, 2:07:45 AM
+Generated: 11/6/2025, 3:00:15 PM
 Files scanned: 295

@@ -123,13 +123,10 @@ describe('MCP Customer Proxy Pattern', () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const schema = await response.json();
     
-    // Verify pricing is documented
+    // Verify flat pricing is documented
     expect(schema.server.pricing).toBeDefined();
-    expect(schema.server.pricing.micro).toBeDefined();
-    expect(schema.server.pricing.small).toBeDefined();
-    expect(schema.server.pricing.medium).toBeDefined();
-    expect(schema.server.pricing.large).toBeDefined();
-    expect(schema.server.pricing.enterprise).toBeDefined();
+    expect(schema.server.pricing.flat_fee).toBeDefined();
+    expect(schema.server.pricing.flat_fee).toBe("$0.05 per dispute (all disputes, no tiers)");
   }, 30000);
 
   it('should include authentication info for customers', async () => {

@@ -123,31 +123,25 @@ export const generatePaymentDisputeDemo = internalMutation({
       const merchant = COMPANIES[Math.floor(Math.random() * COMPANIES.length)];
       const consumer = CONSUMERS[Math.floor(Math.random() * CONSUMERS.length)];
 
-      // Generate amount based on random tier
-      const tierRoll = Math.random();
+      // Generate random amount (flat $0.05 fee for all, no tiers)
+      const amountRoll = Math.random();
       let amount: number;
-      let tier: string;
 
-      if (tierRoll < 0.60) {
-        // 60% micro (<$1)
+      if (amountRoll < 0.60) {
+        // 60% micro amounts (<$1)
         amount = 0.10 + (Math.random() * 0.89);
-        tier = "micro";
-      } else if (tierRoll < 0.85) {
-        // 25% small ($1-10)
+      } else if (amountRoll < 0.85) {
+        // 25% small amounts ($1-10)
         amount = 1 + (Math.random() * 9);
-        tier = "small";
-      } else if (tierRoll < 0.95) {
-        // 10% medium ($10-100)
+      } else if (amountRoll < 0.95) {
+        // 10% medium amounts ($10-100)
         amount = 10 + (Math.random() * 90);
-        tier = "medium";
-      } else if (tierRoll < 0.99) {
-        // 4% large ($100-1k)
+      } else if (amountRoll < 0.99) {
+        // 4% large amounts ($100-1k)
         amount = 100 + (Math.random() * 900);
-        tier = "large";
       } else {
-        // 1% enterprise (>$1k)
+        // 1% very large amounts (>$1k)
         amount = 1000 + (Math.random() * 4000);
-        tier = "enterprise";
       }
 
       const disputeReasons = [
@@ -183,7 +177,7 @@ export const generatePaymentDisputeDemo = internalMutation({
         description: descriptions[reason] || `Dispute regarding transaction ${transactionId}`,
       });
 
-      console.log(`✅ Payment dispute created: $${amount.toFixed(2)} (${tier} tier) - ${reason}`);
+      console.log(`✅ Payment dispute created: $${amount.toFixed(2)} - ${reason}`);
       console.log(`   Consumer: ${consumer} vs Merchant: ${merchant}`);
       console.log(`   Transaction: ${transactionId}`);
       console.log(`   Fee: $${result.fee.toFixed(2)}`);

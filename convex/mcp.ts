@@ -50,7 +50,7 @@ function generateSHA256(input: string): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File ANY dispute - payment (crypto/traditional) OR general (SLA/service). Auto-detects type. Crypto: USDC/ETH/SOL on Base/Ethereum/Solana. Traditional: Stripe/PayPal/cards. General: SLA violations, contracts, service quality. 95% AI automation. Pricing tiers: MICRO (<$1: $0.10), SMALL ($1-$10: $0.25), MEDIUM ($10-$100: $1.00), LARGE ($100-$1k: $5.00), ENTERPRISE (>$1k: $25.00).",
+    description: "File ANY dispute - payment (crypto/traditional) OR general (SLA/service). Auto-detects type. Crypto: USDC/ETH/SOL on Base/Ethereum/Solana. Traditional: Stripe/PayPal/cards. General: SLA violations, contracts, service quality. 95% AI automation. Flat pricing: $0.05 per dispute.",
     input_schema: {
       type: "object",
       properties: {
@@ -73,7 +73,7 @@ export const MCP_TOOLS = [
         },
         amount: {
           type: "number",
-          description: "REQUIRED. Transaction amount OR claimed damages in USD (e.g., 29.99). Determines pricing tier: <$1=MICRO($0.10), $1-$10=SMALL($0.25), $10-$100=MEDIUM($1.00), $100-$1k=LARGE($5.00), >$1k=ENTERPRISE($25.00)"
+          description: "REQUIRED. Transaction amount OR claimed damages in USD (e.g., 29.99). Flat $0.05 fee per dispute."
         },
         currency: {
           type: "string",
@@ -539,11 +539,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       
       dispute_types: "UNIFIED ENDPOINT: Payment (crypto + traditional) + General disputes (SLA, contracts, service)",
       pricing: {
-        micro: { range: "<$1", fee: "$0.10" },
-        small: { range: "$1-$10", fee: "$0.25" },
-        medium: { range: "$10-$100", fee: "$1.00" },
-        large: { range: "$100-$1,000", fee: "$5.00" },
-        enterprise: { range: ">$1,000", fee: "$25.00" }
+        flat_fee: "$0.05 per dispute (all disputes, no tiers)"
       },
       resolution_time: "95% auto-resolved in 4.2 minutes, 10 business days max (Regulation E)",
       url: "https://consulatehq.com"
@@ -774,7 +770,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           paymentDisputeId: result.paymentDisputeId,
           status: result.status,
           isMicroDispute: result.isMicroDispute,
-          pricingTier: result.tier,
           disputeFee: result.fee,
           humanReviewRequired: result.humanReviewRequired,
           estimatedResolutionTime: result.estimatedResolutionTime,
@@ -837,23 +832,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         }
 
-          // Calculate pricing tier
-          const tier = parameters.amount < 1 ? "MICRO" :
-                       parameters.amount < 10 ? "SMALL" :
-                       parameters.amount < 100 ? "MEDIUM" :
-                       parameters.amount < 1000 ? "LARGE" : "ENTERPRISE";
-          
-          const fee = parameters.amount < 1 ? 0.10 :
-                        parameters.amount < 10 ? 0.25 :
-                        parameters.amount < 100 ? 1.00 :
-                      parameters.amount < 1000 ? 5.00 : 25.00;
+          // Flat fee for all disputes
+          const fee = 0.05;
 
           return new Response(JSON.stringify({
             success: true,
             disputeType: "GENERAL",
             caseId: caseId,
             category: parameters.category,
-            pricingTier: tier,
             disputeFee: fee,
             message: `General dispute filed: ${parameters.category}`,
           trackingUrl: `https://consulatehq.com/cases/${caseId}`,

@@ -16,8 +16,6 @@ import { api } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
 import {
   calculateDisputeFee,
-  estimateDisputeTokens,
-  validateEvidenceSize,
   type PaymentVerdict,
 } from "./disputePricing";
 
@@ -168,16 +166,8 @@ export const receivePaymentDispute = mutation({
   handler: async (ctx, args) => {
     console.info(`📥 Payment dispute received: ${args.transactionId} ($${args.amount})`);
 
-    // 1. Validate evidence size and estimate tokens
-    const evidenceTexts: string[] = []; // In production: fetch from URLs
-    const validation = validateEvidenceSize(args.description, evidenceTexts);
-
-    if (!validation.valid) {
-      throw new Error(validation.message);
-    }
-
-    // 2. Calculate pricing
-    const feeBreakdown = calculateDisputeFee(args.amount, validation.estimatedTokens);
+    // Calculate flat fee (no tiers, no token limits)
+    const feeBreakdown = calculateDisputeFee();
 
     // 3. Create consolidated payment dispute case
     const now = Date.now();
@@ -228,9 +218,8 @@ export const receivePaymentDispute = mutation({
         regulationEDeadline, // Also stored here for backward compatibility
         plaintiffMetadata: args.plaintiffMetadata,
         defendantMetadata: args.defendantMetadata,
-        disputeFee: feeBreakdown.totalFee,
-        pricingTier: feeBreakdown.tier,
-        // TODO: Add tokensUsed to schema if needed for billing tracking
+        disputeFee: feeBreakdown.fee,
+        // Flat $0.05 fee for all disputes (MVP pricing)
       },
       
       // NEW: Store metadata at case level too (for consistency)
@@ -296,10 +285,8 @@ export const receivePaymentDispute = mutation({
       estimatedResolutionTime: isMicroDispute ? "5 minutes" : "24 hours",
       regulationECompliant: true,
       callbackUrl: args.callbackUrl,
-      // NEW: Fee information
-      fee: feeBreakdown.totalFee,
-      feeBreakdown,
-      tier: feeBreakdown.tier,
+      // Flat fee (no tiers)
+      fee: feeBreakdown.fee,
     };
   },
 });
@@ -398,8 +385,8 @@ export const processWithAI = action({
     // Clamp confidence to [0, 1]
     confidence = Math.max(0, Math.min(1, confidence));
 
-    // Estimate AI tokens used (simplified for now)
-    const tokensUsed = estimateDisputeTokens(reasoning, []);
+    // Estimate AI tokens used (simplified - not used for pricing since flat fee)
+    const tokensUsed = reasoning.split(/\s+/).length * 1.3; // Rough estimate
 
     // 4. ALL disputes now require human review (Option 3)
     const humanReviewRequired: boolean = true;
