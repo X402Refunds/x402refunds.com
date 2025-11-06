@@ -7,9 +7,9 @@
 
 import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { openrouter } from "../lib/openrouter";
 
 /**
@@ -69,7 +69,7 @@ Be thorough, objective, and precise. Your analysis helps determine if the vendor
 /**
  * Verify signed evidence and extract facts
  */
-export const verifySignedEvidence = action({
+export const verifySignedEvidence = internalAction({
   args: {
     caseId: v.id("cases"),
   },
@@ -82,8 +82,9 @@ export const verifySignedEvidence = action({
     rawAnalysis?: string;
     error?: string;
   }> => {
-    // Get case data with signed evidence
-    const caseData = await ctx.runQuery(api.cases.getCase, { caseId: args.caseId });
+    // Get case data with signed evidence (actions can call internal queries)
+    const { internal } = await import("../_generated/api");
+    const caseData = await ctx.runQuery(internal.cases.getCase, { caseId: args.caseId });
     
     if (!caseData) {
       throw new Error("Case not found");
@@ -96,10 +97,9 @@ export const verifySignedEvidence = action({
     const evidence: any = caseData.signedEvidence;
     
     // Run the signature verification agent
-    const threadId = `case-${args.caseId}`;
     const result = await signatureVerificationAgent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Analyze signed evidence for case ${args.caseId}. Signature verified: ${evidence.signatureVerified}. Vendor: ${evidence.vendorDid}. Request: ${JSON.stringify(evidence.request)}. Response: ${JSON.stringify(evidence.response)}.`,
       }

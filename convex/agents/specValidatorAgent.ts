@@ -7,7 +7,7 @@
 
 import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
 import { openrouter } from "../lib/openrouter";
@@ -68,7 +68,7 @@ what they documented in their OpenAPI specification.`,
 /**
  * Validate API response against OpenAPI spec
  */
-export const validateApiContract = action({
+export const validateApiContract = internalAction({
   args: {
     caseId: v.id("cases"),
     openApiSpec: v.any(),
@@ -79,10 +79,9 @@ export const validateApiContract = action({
   },
   handler: async (ctx, args) => {
     // Run the spec validator agent
-    const threadId = `case-${args.caseId}`;
     const result = await specValidatorAgent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Validate API contract for case ${args.caseId}. OpenAPI Spec: ${JSON.stringify(args.openApiSpec)}. Request: ${args.requestMethod || "POST"} ${args.requestPath}. Response: ${args.responseStatus} - ${args.responseBody}`,
       }

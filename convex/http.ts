@@ -332,7 +332,7 @@ const custodyHandler = httpAction(async (ctx, request) => {
   try {
     // Cast to Id<"cases"> for type safety
     const caseId = caseIdString as any;
-    const caseData = await ctx.runQuery(api.cases.getCase, { caseId });
+    const caseData = await ctx.runQuery(internal.cases.getCase, { caseId });
 
     if (!caseData) {
       return new Response(JSON.stringify({
@@ -1530,8 +1530,8 @@ http.route({
         });
       }
 
-      // Get case data
-      const caseData = await ctx.runQuery(api.cases.getCase, { caseId });
+      // Get case data (httpActions can call internal queries)
+      const caseData = await ctx.runQuery(internal.cases.getCase, { caseId });
       if (!caseData) {
         return new Response(JSON.stringify({ error: "Case not found" }), {
           status: 404,
@@ -1560,6 +1560,85 @@ http.route({
         caseId,
         workflowId,
         message: `Triggered ${caseData.type} workflow`,
+      }), {
+        headers: corsHeaders,
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message,
+      }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Workflow steps endpoint - for dashboard visualization
+http.route({
+  path: "/api/workflow/steps",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const caseId = url.searchParams.get("caseId");
+      
+      if (!caseId) {
+        return new Response(JSON.stringify({ error: "Missing caseId parameter" }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Call the public query to get workflow steps
+      const steps = await ctx.runQuery(api.workflows.getWorkflowStepsPublic, { 
+        caseId: caseId as any 
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        caseId,
+        steps,
+        count: steps?.length || 0,
+      }), {
+        headers: corsHeaders,
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        error: error.message,
+      }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
+
+// Workflow status endpoint - for dashboard
+http.route({
+  path: "/api/workflow/status",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const caseId = url.searchParams.get("caseId");
+      
+      if (!caseId) {
+        return new Response(JSON.stringify({ error: "Missing caseId parameter" }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
+      // Call the public query to get workflow status
+      const status = await ctx.runQuery(api.workflows.getWorkflowStatusPublic, { 
+        caseId: caseId as any 
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        caseId,
+        status,
       }), {
         headers: corsHeaders,
       });

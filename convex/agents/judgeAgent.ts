@@ -8,7 +8,7 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { openrouter, selectModel } from "../lib/openrouter";
-import { action } from "../_generated/server";
+import { action, internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
 
@@ -140,17 +140,18 @@ Be decisive but careful. Your decisions are binding.`,
 });
 
 // Export as action for workflow integration
-export const judgeDecision = action({
+export const judgeDecision = internalAction({
   args: {
     caseId: v.id("cases"),
     evidenceReviews: v.optional(v.any()),
     research: v.optional(v.any()),
     damageCalculation: v.optional(v.any()),
+    signatureVerified: v.optional(v.boolean()),
+    contractBreach: v.optional(v.boolean()),
     quick: v.optional(v.boolean()),
     modelId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const threadId = `case-${args.caseId}`;
     // Use dynamic model if provided, otherwise use default judge agent
     let agent = judgeAgent;
     if (args.modelId) {
@@ -192,7 +193,7 @@ Be decisive but careful. Your decisions are binding.`;
 
     const result = await agent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Make final decision for case ${args.caseId}. Evidence reviews: ${JSON.stringify(args.evidenceReviews || [])}. Research: ${JSON.stringify(args.research || {})}. Damage calculation: ${JSON.stringify(args.damageCalculation || {})}. ${args.quick ? "Quick decision mode." : ""}`,
       }
@@ -218,7 +219,7 @@ Be decisive but careful. Your decisions are binding.`;
       verdict,
       confidence,
       reasoning: result.text,
-      steps: result.steps,
+      // Don't include result.steps - contains non-Convex types
     };
   },
 });

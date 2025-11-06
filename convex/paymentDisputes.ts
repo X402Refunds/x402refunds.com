@@ -322,8 +322,9 @@ export const processWithAI = action({
     similarDisputesFound: number;
     tokensUsed: number;
   }> => {
-    // Get case data first
-    const caseData = await ctx.runQuery(api.cases.getCase, { caseId: args.caseId });
+    // Get case data first (actions can call internal queries)
+    const { internal } = await import("./_generated/api");
+    const caseData = await ctx.runQuery(internal.cases.getCase, { caseId: args.caseId });
     if (!caseData) {
       throw new Error("Case not found");
     }

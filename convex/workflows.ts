@@ -30,6 +30,9 @@ export const paymentDisputeWorkflow = workflow.define({
     // Generate unique workflow ID for this execution
     const workflowId = `${caseId}-${Date.now()}`;
     
+    // Clean up old workflow steps for this case
+    await step.runMutation(s.workflows.cleanupOldWorkflowSteps, { caseId });
+    
     // Get case data
     const caseData = await step.runQuery(s.cases.getCase, { caseId });
     if (!caseData) {
@@ -44,7 +47,7 @@ export const paymentDisputeWorkflow = workflow.define({
     if (caseData.signedEvidence) {
       console.log(`Verifying signature for case: ${caseId}`);
       const stepStartTime = Date.now();
-      signatureResult = await step.runAction(api.agents.verifySignedEvidence, {
+      signatureResult = await step.runAction(s.agents.verifySignedEvidence, {
         caseId,
       });
       
@@ -69,7 +72,7 @@ export const paymentDisputeWorkflow = workflow.define({
       if (!signatureResult?.signatureValid) {
         // Signature verification failed - reject dispute immediately
         console.error(`Signature verification failed for case: ${caseId}`);
-        await step.runMutation(api.cases.updateCaseStatus, {
+        await step.runMutation(s.cases.updateCaseStatus, {
           caseId,
           status: "CLOSED",
         });
@@ -80,14 +83,14 @@ export const paymentDisputeWorkflow = workflow.define({
     // STEP 1: Validate against OpenAPI spec if available
     let specValidation = null;
     if (caseData.signedEvidence && caseData.defendant) {
-      const vendor = await step.runQuery(api.agents.getAgent, {
+      const vendor = await step.runQuery(s.agents.getAgent, {
         did: caseData.defendant,
       });
       
       if (vendor && vendor.openApiSpec) {
         console.log(`Validating API contract for case: ${caseId}`);
         const stepStartTime = Date.now();
-        specValidation = await step.runAction(api.agents.validateApiContract, {
+        specValidation = await step.runAction(s.agents.validateApiContract, {
           caseId,
           openApiSpec: vendor.openApiSpec,
           requestPath: caseData.signedEvidence.request.path,
@@ -138,7 +141,7 @@ export const paymentDisputeWorkflow = workflow.define({
     // Micro dispute fast path (<$1, <=2 evidence items)
     if (amount < 1 && evidenceCount <= 2 && !caseData.signedEvidence) {
       console.log(`Fast-track micro dispute: ${caseId}`);
-      return await step.runAction(api.agents.quickDecision, { caseId });
+      return await step.runAction(s.agents.quickDecision, { caseId });
     }
 
     // Full workflow for larger disputes
@@ -147,7 +150,7 @@ export const paymentDisputeWorkflow = workflow.define({
     // STEP 2: Review evidence in parallel
     const evidenceReviewPromises = (caseData.evidenceIds || []).map(async (evidenceId: any, index: number) => {
       const stepStartTime = Date.now();
-      const reviewResult = await step.runAction(api.agents.reviewEvidence, {
+      const reviewResult = await step.runAction(s.agents.reviewEvidence, {
         caseId,
         evidenceId,
       });
@@ -177,7 +180,7 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // STEP 3: Research legal precedents
     const researchStartTime = Date.now();
-    const research = await step.runAction(api.agents.lawClerkResearch, {
+    const research = await step.runAction(s.agents.lawClerkResearch, {
       caseId,
       caseType: caseData.type || "PAYMENT",
       category: caseData.category,
@@ -209,7 +212,7 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // STEP 4: Calculate damages (if applicable)
     const damageStartTime = Date.now();
-    const damageCalculation = await step.runAction(api.agents.calculateRefund, {
+    const damageCalculation = await step.runAction(s.agents.calculateRefund, {
       caseId,
       transactionAmount: amount,
       disputeType: caseData.paymentDetails?.disputeReason || "other",
@@ -222,7 +225,7 @@ export const paymentDisputeWorkflow = workflow.define({
       stepNumber: 3 + evidenceReviews.length, // After research
       stepName: "damage_calculation",
       agentName: "Damage Calculation Agent",
-      status: damageCalculation ? "COMPLETED" : "FAILED",
+      status: damageCalculation?.success ? "COMPLETED" : "FAILED",
       startedAt: damageStartTime,
       completedAt: Date.now(),
       input: {
@@ -231,8 +234,8 @@ export const paymentDisputeWorkflow = workflow.define({
         disputeType: caseData.paymentDetails?.disputeReason || "other",
       },
       output: damageCalculation || {},
-      result: damageCalculation?.refundAmount 
-        ? `Recommended refund: $${damageCalculation.refundAmount}` 
+      result: damageCalculation?.calculation 
+        ? `Damage calculation: ${damageCalculation.calculation.substring(0, 100)}...` 
         : damageCalculation?.error || "Damage calculation failed",
       error: damageCalculation?.error,
     });
@@ -242,7 +245,7 @@ export const paymentDisputeWorkflow = workflow.define({
     const modelId = selectModel(amount, complexity);
     const judgeStartTime = Date.now();
 
-    const judgeResult = await step.runAction(api.agents.judgeDecision, {
+    const judgeResult = await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews,
       research,
@@ -289,12 +292,12 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // Step 6: Update case status
     if (judgeResult.confidence >= 0.95) {
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "AUTORULED",
       });
     } else {
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "IN_REVIEW",
       });
@@ -302,7 +305,7 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // Step 7: Notify parties (if callback URL provided)
     if (caseData.paymentDetails?.callbackUrl) {
-      await step.runAction(api.notifications.sendRuling, {
+      await step.runAction(s.notifications.sendRuling, {
         caseId,
         callbackUrl: caseData.paymentDetails.callbackUrl,
         verdict: judgeResult.verdict,
@@ -322,6 +325,9 @@ export const paymentDisputeWorkflow = workflow.define({
 export const generalDisputeWorkflow = workflow.define({
   args: { caseId: v.id("cases") },
   handler: async (step, { caseId }): Promise<string> => {
+    // Clean up old workflow steps for this case
+    await step.runMutation(s.workflows.cleanupOldWorkflowSteps, { caseId });
+    
     // Get case data
     const caseData = await step.runQuery(s.cases.getCase, { caseId });
     if (!caseData) {
@@ -333,7 +339,7 @@ export const generalDisputeWorkflow = workflow.define({
 
     // Step 1: Review evidence in parallel
     const evidenceReviewPromises = (caseData.evidenceIds || []).map((evidenceId: any) =>
-      step.runAction(api.agents.reviewEvidence, {
+        step.runAction(s.agents.reviewEvidence, {
         caseId,
         evidenceId,
       })
@@ -342,7 +348,7 @@ export const generalDisputeWorkflow = workflow.define({
     const evidenceReviews = await Promise.all(evidenceReviewPromises);
 
     // Step 2: Research legal precedents (more thorough for general disputes)
-    const research = await step.runAction(api.agents.lawClerkResearch, {
+    const research = await step.runAction(s.agents.lawClerkResearch, {
       caseId,
       caseType: "GENERAL",
       category: caseData.category,
@@ -352,7 +358,7 @@ export const generalDisputeWorkflow = workflow.define({
     // Step 3: Calculate damages (if applicable)
     let damageCalculation = null;
     if (amount > 0) {
-      damageCalculation = await step.runAction(api.agents.calculateRefund, {
+      damageCalculation = await step.runAction(s.agents.calculateRefund, {
         caseId,
         transactionAmount: amount,
         disputeType: caseData.category || "other",
@@ -363,7 +369,7 @@ export const generalDisputeWorkflow = workflow.define({
     const complexity = Math.min(1, (amount / 10000) + (evidenceCount / 5));
     const modelId = selectModel(amount, complexity);
 
-    const judgeResult = await step.runAction(api.agents.judgeDecision, {
+    const judgeResult = await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews,
       research,
@@ -382,17 +388,17 @@ export const generalDisputeWorkflow = workflow.define({
 
     // Step 6: Update case status
     if (judgeResult.confidence >= 0.95) {
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "AUTORULED",
       });
     } else {
       // Low confidence = assign to judge panel
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "PANELED",
       });
-      await step.runMutation(api.judges.assignPanel, {
+      await step.runMutation(s.judges.assignPanel, {
         caseId,
         panelSize: 3,
       });
@@ -414,6 +420,9 @@ export const microDisputeWorkflow = workflow.define({
     // Generate unique workflow ID for this execution
     const workflowId = `${caseId}-${Date.now()}`;
     
+    // Clean up old workflow steps for this case
+    await step.runMutation(s.workflows.cleanupOldWorkflowSteps, { caseId });
+    
     const caseData = await step.runQuery(s.cases.getCase, { caseId });
     if (!caseData) {
       throw new Error(`Case ${caseId} not found`);
@@ -422,7 +431,7 @@ export const microDisputeWorkflow = workflow.define({
     // Quick evidence check (single pass)
     const evidenceId = caseData.evidenceIds?.[0];
     const evidenceStartTime = Date.now();
-    const evidenceCheck = await step.runAction(api.agents.reviewEvidence, {
+    const evidenceCheck = await step.runAction(s.agents.reviewEvidence, {
       caseId,
       evidenceId,
       quick: true,
@@ -450,7 +459,7 @@ export const microDisputeWorkflow = workflow.define({
 
     // Quick decision using cheapest model
     const judgeStartTime = Date.now();
-    const quickDecision = await step.runAction(api.agents.judgeDecision, {
+    const quickDecision = await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews: [evidenceCheck],
       quick: true,
@@ -489,13 +498,13 @@ export const microDisputeWorkflow = workflow.define({
         auto: true,
       });
 
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "AUTORULED",
       });
     } else {
       // Low confidence = escalate to full workflow
-      await step.runMutation(api.cases.updateCaseStatus, {
+      await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "IN_REVIEW",
       });
@@ -542,6 +551,25 @@ export const storeWorkflowStep = internalMutation({
       durationMs,
       createdAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Clean up old workflow steps when starting a new workflow
+ */
+export const cleanupOldWorkflowSteps = internalMutation({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const oldSteps = await ctx.db
+      .query("workflowSteps")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .collect();
+    
+    for (const step of oldSteps) {
+      await ctx.db.delete(step._id);
+    }
+    
+    return { deleted: oldSteps.length };
   },
 });
 

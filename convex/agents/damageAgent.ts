@@ -8,7 +8,7 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { openrouter } from "../lib/openrouter";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
 
@@ -117,17 +117,16 @@ Your output should include:
 });
 
 // Export as action for workflow integration
-export const calculateRefund = action({
+export const calculateRefund = internalAction({
   args: {
     caseId: v.id("cases"),
     transactionAmount: v.number(),
     disputeType: v.string(),
   },
   handler: async (ctx, args) => {
-    const threadId = `case-${args.caseId}`;
     const result = await damageCalculationAgent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Calculate refund for case ${args.caseId}. Transaction amount: $${args.transactionAmount}, Dispute type: ${args.disputeType}`,
       }
@@ -136,7 +135,7 @@ export const calculateRefund = action({
     return {
       success: true,
       calculation: result.text,
-      steps: result.steps,
+      // Don't include result.steps - contains non-Convex types
     };
   },
 });

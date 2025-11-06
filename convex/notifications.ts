@@ -4,13 +4,13 @@
  * Handles sending notifications for dispute resolutions
  */
 
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
  * Send ruling notification to callback URL
  */
-export const sendRuling = action({
+export const sendRuling = internalAction({
   args: {
     caseId: v.id("cases"),
     callbackUrl: v.string(),

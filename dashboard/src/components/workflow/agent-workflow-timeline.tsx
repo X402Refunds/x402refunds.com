@@ -221,6 +221,8 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                       reasoning?: string;
                                       text?: string;
                                       analysis?: string;
+                                      research?: string;
+                                      calculation?: string;
                                       steps?: Array<{
                                         tool?: string;
                                         text?: string;
@@ -236,13 +238,15 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                     // Try to extract reasoning from various formats
                                     let reasoning: string | null = null;
                                     let analysis: string | null = null;
-                                    let agentSteps: AgentOutput['steps'] = null;
+                                    let agentSteps: AgentOutput['steps'] | null = null;
                                     
                                     if (typeof output === 'string') {
                                       reasoning = output;
                                     } else if (output && typeof output === 'object') {
-                                      reasoning = output.reasoning || output.text || output.analysis || null;
-                                      analysis = output.analysis || output.text || null;
+                                      // Extract text content from any of these fields
+                                      const textContent = output.reasoning || output.research || output.calculation || output.analysis || output.text || null;
+                                      reasoning = textContent;
+                                      analysis = textContent;
                                       agentSteps = output.steps || null;
                                     }
                                     

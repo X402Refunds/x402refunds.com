@@ -1,4 +1,4 @@
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
@@ -232,7 +232,35 @@ export const getAllCases = internalQuery({
   },
 });
 
-export const getCase = query({
+// Internal version for workflows (workflows can only call internal functions)
+export const getCase = internalQuery({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const case_ = await ctx.db.get(args.caseId);
+    if (!case_) return null;
+
+    // Get associated evidence
+    const evidence = await ctx.db
+      .query("evidenceManifests")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .collect();
+
+    // Get ruling if exists
+    const ruling = await ctx.db
+      .query("rulings")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .first();
+
+    return {
+      ...case_,
+      evidence,
+      ruling,
+    };
+  },
+});
+
+// Public version for frontend
+export const getCasePublic = query({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
     const case_ = await ctx.db.get(args.caseId);
@@ -395,7 +423,8 @@ export const backfillReviewerOrgId = mutation({
   },
 });
 
-export const updateCaseStatus = mutation({
+// Internal version for workflows (workflows can only call internal functions)
+export const updateCaseStatus = internalMutation({
   args: {
     caseId: v.id("cases"),
     status: v.union(

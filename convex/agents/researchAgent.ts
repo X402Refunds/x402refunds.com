@@ -8,7 +8,7 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { openrouter, selectModel } from "../lib/openrouter";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
 
@@ -157,7 +157,7 @@ Do NOT make final judgments - provide research to inform decision-making.`,
 });
 
 // Export as action for workflow integration
-export const lawClerkResearch = action({
+export const lawClerkResearch = internalAction({
   args: {
     caseId: v.id("cases"),
     caseType: v.string(),
@@ -165,10 +165,9 @@ export const lawClerkResearch = action({
     amountRange: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const threadId = `case-${args.caseId}`;
     const result = await legalResearchAgent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Research legal precedents for case ${args.caseId}. Type: ${args.caseType}, Category: ${args.category || "none"}, Amount Range: ${args.amountRange || "any"}`,
       }
@@ -177,7 +176,7 @@ export const lawClerkResearch = action({
     return {
       success: true,
       research: result.text,
-      steps: result.steps,
+      // Don't include result.steps - contains non-Convex types
     };
   },
 });

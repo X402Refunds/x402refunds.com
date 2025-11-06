@@ -14,7 +14,7 @@
  */
 
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 /**
  * MCP Error Codes
@@ -907,7 +907,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         
       case "consulate_check_case_status":
-        result = await ctx.runQuery(api.cases.getCase, {
+        result = await ctx.runQuery(internal.cases.getCase, {
           caseId: parameters.caseId as any
         });
         

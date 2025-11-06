@@ -1,4 +1,4 @@
-import { action, mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
@@ -175,7 +175,7 @@ export const registerJudge = mutation({
 });
 
 // DEPRECATED: Panels table removed during schema consolidation
-export const assignPanel = mutation({
+export const assignPanel = internalMutation({
   args: {
     caseId: v.id("cases"),
     panelSize: v.optional(v.number()),

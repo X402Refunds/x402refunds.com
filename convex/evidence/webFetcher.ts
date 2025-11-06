@@ -5,14 +5,14 @@
  * Used by Evidence Review Agent to check URLs, APIs, and documents
  */
 
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
  * Fetch web content from a URL
  * Truncates to maxLength to avoid token limits
  */
-export const fetchWebContent = action({
+export const fetchWebContent = internalAction({
   args: {
     url: v.string(),
     maxLength: v.optional(v.number()),
@@ -62,7 +62,7 @@ export const fetchWebContent = action({
  * Check API endpoint health
  * Validates that an API is responding correctly
  */
-export const checkApiHealth = action({
+export const checkApiHealth = internalAction({
   args: {
     endpoint: v.string(),
     expectedStatus: v.optional(v.number()),
@@ -103,7 +103,7 @@ export const checkApiHealth = action({
  * Analyze image from URL
  * Returns image metadata and basic validation
  */
-export const analyzeImage = action({
+export const analyzeImage = internalAction({
   args: {
     imageUrl: v.string(),
     context: v.string(), // Description of what the image should show

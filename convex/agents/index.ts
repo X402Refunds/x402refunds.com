@@ -17,17 +17,18 @@ export { validateApiContract } from "./specValidatorAgent";
  * Quick decision action for micro disputes
  * Uses cheapest model and minimal steps
  */
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
 
-export const quickDecision = action({
+export const quickDecision = internalAction({
   args: {
     caseId: v.id("cases"),
   },
   handler: async (ctx, args) => {
-    // Get case
-    const caseData = await ctx.runQuery(api.cases.getCase, {
+    // Get case (actions can call internal queries)
+    const { internal } = await import("../_generated/api");
+    const caseData = await ctx.runQuery(internal.cases.getCase, {
       caseId: args.caseId,
     });
 
@@ -36,7 +37,7 @@ export const quickDecision = action({
     }
 
     // Quick decision with minimal evidence review
-    const result = await ctx.runAction(api.agents.judgeDecision, {
+    const result = await ctx.runAction(internal.agents.judgeDecision, {
       caseId: args.caseId,
       evidenceReviews: [],
       quick: true,

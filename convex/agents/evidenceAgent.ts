@@ -8,7 +8,7 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { openrouter } from "../lib/openrouter";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
 import { z } from "zod";
@@ -22,7 +22,7 @@ const fetchWebEvidence: any = createTool({
     maxLength: z.number().optional().describe("Maximum length of content to return"),
   }),
   handler: async (ctx: any, args: { url: string; maxLength?: number }) => {
-    const result = await ctx.runAction(api.evidence.webFetcher.fetchWebContent, args);
+    const result = await ctx.runAction(internal.evidence.webFetcher.fetchWebContent, args);
     return result;
   },
 });
@@ -37,7 +37,7 @@ const checkApiEndpoint: any = createTool({
     method: z.string().optional().describe("HTTP method to use (default: GET)"),
   }),
   handler: async (ctx: any, args: { endpoint: string; expectedStatus?: number; method?: string }) => {
-    const result = await ctx.runAction(api.evidence.webFetcher.checkApiHealth, args);
+    const result = await ctx.runAction(internal.evidence.webFetcher.checkApiHealth, args);
     return result;
   },
 });
@@ -51,7 +51,7 @@ const analyzeScreenshot: any = createTool({
     context: z.string().describe("Context about what to look for in the image"),
   }),
   handler: async (ctx: any, args: { imageUrl: string; context: string }) => {
-    const result = await ctx.runAction(api.evidence.webFetcher.analyzeImage, args);
+    const result = await ctx.runAction(internal.evidence.webFetcher.analyzeImage, args);
     return result;
   },
 });
@@ -66,7 +66,7 @@ const parseDocument: any = createTool({
   }),
   handler: async (ctx: any, args: { documentUrl: string; documentType: string }) => {
     // Fetch document and return basic info
-    const content = await ctx.runAction(api.evidence.webFetcher.fetchWebContent, {
+    const content = await ctx.runAction(internal.evidence.webFetcher.fetchWebContent, {
       url: args.documentUrl,
       maxLength: 100000,
     });
@@ -112,20 +112,17 @@ Do NOT make legal judgments - just validate evidence quality.`,
 });
 
 // Export as action for workflow integration
-export const reviewEvidence = action({
+export const reviewEvidence = internalAction({
   args: {
     caseId: v.id("cases"),
     evidenceId: v.optional(v.id("evidenceManifests")),
     quick: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    // Create or get thread for this case
-    const threadId = `case-${args.caseId}`;
-    
     // Use agent to review evidence
     const result = await evidenceReviewAgent.generateText(
       ctx,
-      { threadId },
+      { userId: args.caseId },
       {
         prompt: `Review evidence for case ${args.caseId}. Evidence ID: ${args.evidenceId || "all"}. ${args.quick ? "Quick review mode." : ""}`,
       }
@@ -134,7 +131,7 @@ export const reviewEvidence = action({
     return {
       success: true,
       analysis: result.text,
-      steps: result.steps,
+      // Don't include result.steps - contains non-Convex types
     };
   },
 });
