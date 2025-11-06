@@ -8,11 +8,15 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CheckCircle, Clock } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import { useState } from "react"
 import { SuccessCheckmark } from "@/components/ui/success-checkmark"
 import { motion } from "framer-motion"
 import { AgentWorkflowTimeline } from "@/components/workflow/agent-workflow-timeline"
+import { SignedEvidenceCard } from "@/components/dispute/SignedEvidenceCard"
+import { PaymentProofCard } from "@/components/dispute/PaymentProofCard"
+import { PartiesCard } from "@/components/dispute/PartiesCard"
+import { DisputeHeader } from "@/components/dispute/DisputeHeader"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 
@@ -33,15 +37,11 @@ export default function DisputeDetailPage() {
     {} // Auth verified server-side via ctx.auth
   )
 
-  // Get dispute details (payment disputes are now in cases table)
-  // The dispute IS the case, so we only need one query
+  // Get dispute details
   const dispute = useQuery(
     api.paymentDisputes.getPaymentDispute,
     disputeId ? { paymentDisputeId: disputeId as Id<"cases"> } : "skip"
   )
-
-  // caseDetails is just an alias for dispute (they're the same now)
-  const caseDetails = dispute
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
@@ -56,9 +56,8 @@ export default function DisputeDetailPage() {
         finalVerdict: (dispute.aiRecommendation?.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW") || "CONSUMER_WINS",
       })
       setShowSuccess(true)
-      // Wait for animation to play before navigating
       setTimeout(() => {
-      router.push("/dashboard/review-queue")
+        router.push("/dashboard/review-queue")
       }, 1500)
     } catch (error) {
       console.error("Failed to approve:", error)
@@ -92,12 +91,6 @@ export default function DisputeDetailPage() {
     }
   }
 
-  const formatReason = (reason: string) => {
-    return reason.split("_").map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(" ")
-  }
-
   const getVerdictDisplay = (verdict?: PaymentVerdict) => {
     switch (verdict) {
       case "CONSUMER_WINS": return "Consumer Wins (Full Refund)"
@@ -129,6 +122,23 @@ export default function DisputeDetailPage() {
   }
 
   const isResolved = dispute.humanReviewedAt || dispute.finalVerdict
+  
+  // Extract party information
+  const consumerInfo = {
+    identifier: dispute.plaintiff,
+    email: dispute.plaintiffMetadata?.email,
+    name: dispute.plaintiffMetadata?.name,
+    customerId: dispute.plaintiffMetadata?.customerId,
+    walletAddress: dispute.signedEvidence?.crypto?.fromAddress,
+  }
+
+  const merchantInfo = {
+    identifier: dispute.defendant,
+    email: dispute.defendantMetadata?.email,
+    name: dispute.defendantMetadata?.name,
+    merchantId: dispute.defendantMetadata?.merchantId,
+    walletAddress: dispute.signedEvidence?.crypto?.toAddress,
+  }
 
   return (
     <DashboardLayout>
@@ -140,227 +150,161 @@ export default function DisputeDetailPage() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Header */}
-        <motion.div 
-          className="flex items-center gap-4"
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
+          <DisputeHeader
+            disputeReason={dispute.paymentDetails?.disputeReason || "payment_dispute"}
+            amount={dispute.amount || 0}
+            currency={dispute.currency || "USD"}
+            plaintiff={dispute.plaintiff}
+            defendant={dispute.defendant}
+            filedAt={dispute.filedAt}
+            deadline={dispute.regulationEDeadline}
+            isResolved={isResolved}
+          />
+        </motion.div>
+
+        {/* Signed Evidence Card - Show if available */}
+        {dispute.signedEvidence && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-900">Dispute Details</h1>
-            <p className="text-slate-600 mt-1">Transaction: {dispute.paymentDetails?.transactionId || dispute._id}</p>
-          </div>
-          {isResolved ? (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Resolved
-            </Badge>
-          ) : (
-            <Badge className="bg-amber-50 text-amber-700 border-amber-200">
-              <Clock className="h-4 w-4 mr-1" />
-              Pending Review
-            </Badge>
-          )}
-        </motion.div>
+            <SignedEvidenceCard
+              signedEvidence={dispute.signedEvidence}
+              description={dispute.description}
+            />
+          </motion.div>
+        )}
 
-        {/* Agent Workflow Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        >
-          <AgentWorkflowTimeline caseId={disputeId as Id<"cases">} />
-        </motion.div>
-
-        {/* Transaction Info */}
+        {/* Payment Proof Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card>
-          <CardHeader>
-            <CardTitle>Transaction Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Amount</p>
-                <p className="text-2xl font-bold text-slate-900">
-                  ${dispute.amount?.toFixed(2) || "0.00"} {dispute.currency || "USD"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">Transaction ID</p>
-                <p className="text-sm font-mono text-slate-900">{dispute.paymentDetails?.transactionId || dispute._id}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">Dispute Reason</p>
-                <p className="text-sm text-slate-900">{formatReason(dispute.paymentDetails?.disputeReason || "")}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">Payment Protocol</p>
-                <p className="text-sm text-slate-900">{dispute.paymentDetails?.paymentProtocol || "N/A"}</p>
-              </div>
-              {dispute.paymentDetails?.disputeFee && (
-                <>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Resolution Fee</p>
-                    <p className="text-sm text-slate-900">${dispute.paymentDetails.disputeFee.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Pricing Tier</p>
-                    <Badge variant="secondary">{dispute.paymentDetails.pricingTier}</Badge>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          <PaymentProofCard
+            amount={dispute.amount || 0}
+            currency={dispute.currency || "USD"}
+            crypto={dispute.signedEvidence?.crypto || dispute.paymentDetails?.crypto}
+            custodial={dispute.signedEvidence?.custodial || dispute.paymentDetails?.custodial}
+            traditional={dispute.signedEvidence?.traditional || dispute.paymentDetails?.traditional}
+          />
         </motion.div>
 
-        {/* AI Recommendation */}
-        {!isResolved && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card className="border-l-4 border-l-blue-600">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🤖</span>
-                <div>
-                  <CardTitle>AI Recommendation</CardTitle>
-                  <CardDescription>
-                    Based on {dispute.aiRecommendation?.similarCases?.length || 0} similar cases
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Verdict</p>
-                  <p className="text-lg font-bold text-slate-900">
-                    {getVerdictDisplay(dispute.aiRecommendation?.verdict as PaymentVerdict)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-600">Confidence</p>
-                  <p className="text-lg font-bold text-blue-600">
-                    {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(1)}%
-                  </p>
-                </div>
-              </div>
+        {/* Parties Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+        >
+          <PartiesCard consumer={consumerInfo} merchant={merchantInfo} />
+        </motion.div>
 
-              {dispute.aiRecommendation?.reasoning && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-blue-900 mb-2">AI Analysis</p>
-                  <p className="text-sm text-blue-800">{dispute.aiRecommendation.reasoning}</p>
+        {/* AI Analysis & Workflow */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          {/* AI Recommendation */}
+          {!isResolved && dispute.aiRecommendation && (
+            <Card className="border-l-4 border-l-blue-600 mb-6">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🤖</span>
+                  <div className="flex-1">
+                    <CardTitle>AI Recommendation</CardTitle>
+                    <CardDescription>
+                      Based on {dispute.aiRecommendation?.similarCases?.length || 0} similar cases
+                      {dispute.regulationEDeadline && (
+                        <> • Must resolve by: {new Date(dispute.regulationEDeadline).toLocaleDateString()}</>
+                      )}
+                    </CardDescription>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-          </motion.div>
-        )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Verdict</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {getVerdictDisplay(dispute.aiRecommendation?.verdict as PaymentVerdict)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-slate-600">Confidence</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      {((dispute.aiRecommendation?.confidence || 0) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                {dispute.aiRecommendation?.reasoning && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900 mb-2">AI Analysis</p>
+                    <p className="text-sm text-blue-800">{dispute.aiRecommendation.reasoning}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Workflow Timeline - Collapsed by default */}
+          <AgentWorkflowTimeline caseId={disputeId as Id<"cases">} defaultExpanded={false} />
+        </motion.div>
 
         {/* Resolution Status */}
         {isResolved && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
           >
             <Card className="border-l-4 border-l-emerald-600">
-            <CardHeader>
-              <CardTitle>Resolution</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Final Verdict</p>
-                  <p className="text-lg font-bold text-slate-900">
-                    {getVerdictDisplay(dispute.finalVerdict as PaymentVerdict)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Reviewed By</p>
-                  <p className="text-sm text-slate-900">{dispute.humanReviewedBy || "System"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Reviewed At</p>
-                  <p className="text-sm text-slate-900">
-                    {dispute.humanReviewedAt
-                      ? new Date(dispute.humanReviewedAt).toLocaleString()
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Decision Type</p>
-                  <Badge variant={dispute.humanAgreesWithAI ? "default" : "secondary"}>
-                    {dispute.humanAgreesWithAI ? "Approved AI" : "Human Override"}
-                  </Badge>
-                </div>
-              </div>
-
-              {dispute.humanOverrideReason && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm font-medium text-slate-600 mb-2">Review Notes</p>
-                  <p className="text-sm text-slate-700">{dispute.humanOverrideReason}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          </motion.div>
-        )}
-
-        {/* Case Information */}
-        {caseDetails && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Card>
-            <CardHeader>
-              <CardTitle>Case Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Case ID</p>
-                  <p className="text-sm font-mono text-slate-900">{caseDetails._id}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Status</p>
-                  <Badge variant="secondary">{caseDetails.status}</Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Filed At</p>
-                  <p className="text-sm text-slate-900">
-                    {new Date(caseDetails._creationTime).toLocaleString()}
-                  </p>
-                </div>
-                {dispute.paymentDetails?.regulationEDeadline && (
+              <CardHeader>
+                <CardTitle>Resolution</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Regulation E Deadline</p>
-                    <p className="text-sm text-slate-900">
-                      {new Date(dispute.paymentDetails.regulationEDeadline).toLocaleDateString()}
+                    <p className="text-sm font-medium text-slate-600">Final Verdict</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {getVerdictDisplay(dispute.finalVerdict as PaymentVerdict)}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Reviewed By</p>
+                    <p className="text-sm text-slate-900">{dispute.humanReviewedBy || "System"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Reviewed At</p>
+                    <p className="text-sm text-slate-900">
+                      {dispute.humanReviewedAt
+                        ? new Date(dispute.humanReviewedAt).toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Decision Type</p>
+                    <Badge variant={dispute.humanAgreesWithAI ? "default" : "secondary"}>
+                      {dispute.humanAgreesWithAI ? "Approved AI" : "Human Override"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {dispute.humanOverrideReason && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Review Notes</p>
+                    <p className="text-sm text-slate-700">{dispute.humanOverrideReason}</p>
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 
@@ -369,96 +313,96 @@ export default function DisputeDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Card>
-            <CardHeader>
-              <CardTitle>Review Actions</CardTitle>
-              <CardDescription>
-                Make your final decision on this dispute
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!showOverride ? (
-                <div className="flex gap-4">
-                  <Button
-                    onClick={handleApprove}
-                    disabled={submitting}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Approve AI Recommendation
-                  </Button>
-                  <Button
-                    onClick={() => setShowOverride(true)}
-                    disabled={submitting}
-                    variant="outline"
-                    className="flex-1 h-12"
-                  >
-                    Override AI Decision
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 mb-3">Select Your Verdict</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(["CONSUMER_WINS", "MERCHANT_WINS", "PARTIAL_REFUND", "NEED_REVIEW"] as const).map((verdict) => (
-                        <label
-                          key={verdict}
-                          className={`cursor-pointer p-3 border-2 rounded-lg transition-colors ${
-                            selectedVerdict === verdict
-                              ? "border-blue-600 bg-blue-50"
-                              : "border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="verdict"
-                            value={verdict}
-                            checked={selectedVerdict === verdict}
-                            onChange={() => setSelectedVerdict(verdict)}
-                            className="mr-2"
-                          />
-                          <span className="text-sm font-medium">{getVerdictDisplay(verdict)}</span>
-                        </label>
-                      ))}
+              <CardHeader>
+                <CardTitle>Review Actions</CardTitle>
+                <CardDescription>
+                  Make your final decision on this dispute
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!showOverride ? (
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={handleApprove}
+                      disabled={submitting}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
+                    >
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Approve AI Recommendation
+                    </Button>
+                    <Button
+                      onClick={() => setShowOverride(true)}
+                      disabled={submitting}
+                      variant="outline"
+                      className="flex-1 h-12"
+                    >
+                      Override AI Decision
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700 mb-3">Select Your Verdict</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {(["CONSUMER_WINS", "MERCHANT_WINS", "PARTIAL_REFUND", "NEED_REVIEW"] as const).map((verdict) => (
+                          <label
+                            key={verdict}
+                            className={`cursor-pointer p-3 border-2 rounded-lg transition-colors ${
+                              selectedVerdict === verdict
+                                ? "border-blue-600 bg-blue-50"
+                                : "border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="verdict"
+                              value={verdict}
+                              checked={selectedVerdict === verdict}
+                              onChange={() => setSelectedVerdict(verdict)}
+                              className="mr-2"
+                            />
+                            <span className="text-sm font-medium">{getVerdictDisplay(verdict)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-2 block">
+                        Explain Your Decision (required)
+                      </label>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Provide context that helps the AI learn from your decision..."
+                        className="w-full border-2 border-slate-200 rounded-lg p-3 text-sm min-h-[100px] focus:border-blue-600 focus:outline-none"
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleOverride}
+                        disabled={submitting || !notes.trim()}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        Submit Override: {getVerdictDisplay(selectedVerdict)}
+                      </Button>
+                      <Button
+                        onClick={() => setShowOverride(false)}
+                        disabled={submitting}
+                        variant="ghost"
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-2 block">
-                      Explain Your Decision (required)
-                    </label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Provide context that helps the AI learn from your decision..."
-                      className="w-full border-2 border-slate-200 rounded-lg p-3 text-sm min-h-[100px] focus:border-blue-600 focus:outline-none"
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleOverride}
-                      disabled={submitting || !notes.trim()}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      Submit Override: {getVerdictDisplay(selectedVerdict)}
-                    </Button>
-                    <Button
-                      onClick={() => setShowOverride(false)}
-                      disabled={submitting}
-                      variant="ghost"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         )}
       </motion.div>

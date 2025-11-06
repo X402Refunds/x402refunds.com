@@ -28,10 +28,17 @@ type WorkflowStep = {
   error?: string;
 };
 
-export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
+export function AgentWorkflowTimeline({
+  caseId,
+  defaultExpanded = false,
+}: {
+  caseId: Id<"cases">;
+  defaultExpanded?: boolean;
+}) {
   const workflowSteps = useQuery(api.workflows.getWorkflowStepsPublic, { caseId });
   const workflowStatus = useQuery(api.workflows.getWorkflowStatusPublic, { caseId });
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const [timelineExpanded, setTimelineExpanded] = useState(defaultExpanded);
 
   if (!workflowSteps || workflowSteps.length === 0) {
     return (
@@ -107,19 +114,29 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Agent Workflow Timeline</CardTitle>
-            <CardDescription>
-              {workflowStatus && (
-                <>
-                  {workflowStatus.completed} of {workflowStatus.total} steps completed
-                  {workflowStatus.totalDurationMs > 0 && (
-                    <> • Total duration: {formatDuration(workflowStatus.totalDurationMs)}</>
-                  )}
-                </>
-              )}
-            </CardDescription>
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setTimelineExpanded(!timelineExpanded)}
+        >
+          <div className="flex items-center gap-2 flex-1">
+            {timelineExpanded ? (
+              <ChevronDown className="h-5 w-5 text-slate-400" />
+            ) : (
+              <ChevronRight className="h-5 w-5 text-slate-400" />
+            )}
+            <div>
+              <CardTitle>Agent Workflow Timeline</CardTitle>
+              <CardDescription>
+                {workflowStatus && (
+                  <>
+                    {workflowStatus.completed} of {workflowStatus.total} steps completed
+                    {workflowStatus.totalDurationMs > 0 && (
+                      <> • Total duration: {formatDuration(workflowStatus.totalDurationMs)}</>
+                    )}
+                  </>
+                )}
+              </CardDescription>
+            </div>
           </div>
           {workflowStatus && workflowStatus.currentStep && (
             <Badge className="bg-blue-50 text-blue-700 border-blue-200">
@@ -129,8 +146,17 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <AnimatePresence>
+        {timelineExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <CardContent>
+              <div className="space-y-4">
           {workflowSteps.map((step: WorkflowStep, index: number) => {
             const isExpanded = expandedSteps.has(step._id);
             const isLast = index === workflowSteps.length - 1;
@@ -231,6 +257,9 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                       keyFacts?: string[];
                                       redFlags?: string[];
                                       violations?: string[];
+                                      success?: boolean;
+                                      skipped?: boolean;
+                                      reason?: string;
                                     };
                                     
                                     const output = step.output as string | AgentOutput | undefined;
@@ -310,7 +339,7 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                         )}
                                         
                                         {/* Full output as fallback */}
-                                        {!reasoning && !analysis && !steps && (
+                                        {!reasoning && !analysis && !agentSteps && (
                                           <pre className="text-xs bg-white p-3 rounded border border-slate-200 overflow-auto max-h-64">
                                             {typeof step.output === 'string' 
                                               ? step.output 
@@ -395,8 +424,11 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
               </motion.div>
             );
           })}
-        </div>
-      </CardContent>
+              </div>
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Card>
   );
 }
