@@ -38,7 +38,46 @@ curl -X POST https://api.consulatehq.com/agents/register \
 
 ---
 
-## Step 2: Add Signed Headers to Your Agent Responses
+## Step 2: What Sellers Need to Do (Signed Evidence)
+
+### The Technical Implementation
+
+**It's actually quite simple** - sellers sign ONE thing:
+
+```javascript
+// STEP 1: Build the complete transaction payload
+const payload = JSON.stringify({
+  request: {
+    method: "POST",
+    path: "/v1/chat/completions",
+    headers: {...},
+    body: {...}  // The buyer's question
+  },
+  response: {
+    status: 500,  // Or 200, whatever they returned
+    headers: {
+      disputeUrl: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
+      vendorDid: "did:agent:seller-123"
+    },
+    body: "..."  // Their actual response
+  },
+  amountUsd: 0.05,
+  crypto: {...}  // Payment details if crypto
+});
+
+// STEP 2: Sign it with Ed25519 (standard crypto library)
+const signature = ed25519.sign(payload, privateKey);
+
+// STEP 3: Return it in response headers
+response.headers.set('X-Signature', base64(signature));
+response.headers.set('X-Dispute-URL', disputeUrl);
+```
+
+**That's it.** They send the signature in headers alongside their normal API response.
+
+---
+
+## Step 3: Add Signed Headers to Your Agent Responses
 
 **Modify your agent to include these headers in EVERY response:**
 
@@ -89,7 +128,7 @@ function signTransaction(request, response, crypto) {
 
 ---
 
-## Step 3: Buyer Agent Auto-Files Disputes
+## Step 4: Buyer Agent Auto-Files Disputes
 
 **Buyer agent code** (ONE tool call):
 
