@@ -301,125 +301,52 @@ export default function PricingPage() {
               Per-Dispute Resolution Fees
             </h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Paid separately, in addition to platform access. Tiered pricing based on transaction amount.
+              Paid separately, in addition to platform access. Simple flat pricing for all disputes.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
-            {/* Micro Tier */}
-            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-sm bg-white dark:bg-slate-900 transition-colors">
-              <CardHeader className="pb-3">
-                <Badge className="mb-2 bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">Micro</Badge>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">$0.10</CardTitle>
-                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
+          <div className="flex justify-center max-w-2xl mx-auto">
+            {/* Flat Fee Card */}
+            <Card className="border-4 border-emerald-600 shadow-xl bg-white dark:bg-slate-900 w-full max-w-md">
+              <CardHeader className="pb-6 text-center">
+                <Badge className="mb-4 bg-emerald-50 text-emerald-700 border-emerald-200 mx-auto w-fit">All Disputes</Badge>
+                <CardTitle className="text-6xl font-bold text-slate-900 dark:text-slate-100 mb-2">$0.05</CardTitle>
+                <p className="text-lg text-slate-600 dark:text-slate-400">per dispute</p>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Transactions &lt; $1</p>
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>20k tokens included</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>$0.01 per 1k tokens over</span>
-                    </div>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-center py-4 bg-emerald-50 dark:bg-emerald-950 rounded-lg border-2 border-emerald-200 dark:border-emerald-800">
+                    <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
+                      No tiers. No complexity.
+                    </p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                      Same price whether it&apos;s $0.50 or $5,000
+                    </p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Small Tier */}
-            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-sm bg-white dark:bg-slate-900 transition-colors">
-              <CardHeader className="pb-3">
-                <Badge className="mb-2 bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">Small</Badge>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">$0.25</CardTitle>
-                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">$1 - $10</p>
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>20k tokens included</span>
+                  <div className="space-y-3 pt-4">
+                    <div className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        95% auto-resolved in &lt; 10 minutes
+                      </span>
                     </div>
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>$0.01 per 1k tokens over</span>
+                    <div className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        Cryptographic evidence verification
+                      </span>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Medium Tier */}
-            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-sm bg-white dark:bg-slate-900 transition-colors">
-              <CardHeader className="pb-3">
-                <Badge className="mb-2 bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">Medium</Badge>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">$1.00</CardTitle>
-                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">$10 - $100</p>
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>20k tokens included</span>
+                    <div className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        Regulation E compliant
+                      </span>
                     </div>
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>$0.01 per 1k tokens over</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Large Tier */}
-            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-sm bg-white dark:bg-slate-900 transition-colors">
-              <CardHeader className="pb-3">
-                <Badge className="mb-2 bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">Large</Badge>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">$5.00</CardTitle>
-                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">$100 - $1,000</p>
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>20k tokens included</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span>$0.01 per 1k tokens over</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Tier */}
-            <Card className="border-2 border-slate-200 hover:border-emerald-300 shadow-sm bg-white dark:bg-slate-900 transition-colors">
-              <CardHeader className="pb-3">
-                <Badge className="mb-2 bg-emerald-900 text-white border-0 w-fit">Enterprise</Badge>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">$25.00</CardTitle>
-                <p className="text-xs text-slate-600 dark:text-slate-400">per dispute</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">&gt; $1,000</p>
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-slate-700 mt-0.5 flex-shrink-0" />
-                      <span>20k tokens included</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                      <Check className="h-3 w-3 text-slate-700 mt-0.5 flex-shrink-0" />
-                      <span>$0.01 per 1k tokens over</span>
+                    <div className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        Full chain of custody tracking
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -429,7 +356,7 @@ export default function PricingPage() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Example: A $0.05 transaction dispute costs <strong>$0.10</strong> (micro tier). A $500 transaction costs <strong>$5.00</strong> (large tier).
+              Example: A $0.50 transaction dispute costs <strong>$0.05</strong>. A $500 transaction also costs <strong>$0.05</strong>. Simple.
             </p>
           </div>
         </div>
@@ -517,7 +444,7 @@ export default function PricingPage() {
                   <td className="py-5 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
                     <div className="flex items-center justify-center">
                       <Check className="h-7 w-7 text-emerald-600 mr-2 flex-shrink-0" />
-                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">$0.10-$25</span>
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">$0.05</span>
                     </div>
                   </td>
                   <td className="py-5 px-6 text-center">
@@ -656,8 +583,8 @@ export default function PricingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
                 The platform fee ($0 or $249/month) covers: API access, review queue dashboard, team collaboration,
-                precedent AI, webhooks, and support. Dispute resolution fees are separate - you pay per dispute based
-                on transaction value ($0.10 for micro, up to $25.00 for enterprise).
+                precedent AI, webhooks, and support. Dispute resolution fees are separate - a flat $0.05 per dispute
+                regardless of transaction amount.
               </AccordionContent>
             </AccordionItem>
 
