@@ -255,7 +255,11 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                         {/* Main reasoning/analysis */}
                                         {(reasoning || analysis) && (
                                           <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                                            <p className="text-sm font-medium text-blue-900 mb-2">Agent Reasoning:</p>
+                                            <p className="text-sm font-medium text-blue-900 mb-2">
+                                              {output && typeof output === 'object' && output.calculation ? 'Calculation:' : 
+                                               output && typeof output === 'object' && output.research ? 'Research:' : 
+                                               'Agent Reasoning:'}
+                                            </p>
                                             <p className="text-sm text-blue-800 whitespace-pre-wrap">
                                               {reasoning || analysis}
                                             </p>
@@ -306,8 +310,16 @@ export function AgentWorkflowTimeline({ caseId }: { caseId: Id<"cases"> }) {
                                           </pre>
                                         )}
                                         
-                                        {/* Show structured data if available */}
-                                        {output && typeof output === 'object' && !Array.isArray(output) && (output.keyFacts || output.redFlags || output.violations) && (
+                                               {/* Show skipped reason if applicable */}
+                                               {output && typeof output === 'object' && output.skipped && (
+                                                 <div className="bg-slate-50 border border-slate-200 rounded p-3">
+                                                   <p className="text-sm font-medium text-slate-700">Skipped:</p>
+                                                   <p className="text-sm text-slate-600 mt-1">{output.reason}</p>
+                                                 </div>
+                                               )}
+                                               
+                                               {/* Show structured data if available */}
+                                               {output && typeof output === 'object' && !Array.isArray(output) && (output.keyFacts || output.redFlags || output.violations) && (
                                           <div className="space-y-2">
                                             {output.keyFacts && Array.isArray(output.keyFacts) && output.keyFacts.length > 0 && (
                                               <div>

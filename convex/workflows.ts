@@ -78,6 +78,20 @@ export const paymentDisputeWorkflow = workflow.define({
         });
         return "DISMISSED_INVALID_SIGNATURE";
       }
+    } else {
+      // Store skipped signature verification step
+      await step.runMutation(s.workflows.storeWorkflowStep, {
+        caseId,
+        workflowId,
+        stepNumber: 0,
+        stepName: "signature_verification",
+        agentName: "Signature Verification Agent",
+        status: "SKIPPED",
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        result: "No signed evidence provided",
+        output: { skipped: true, reason: "No signed evidence in case" },
+      });
     }
 
     // STEP 1: Validate against OpenAPI spec if available
@@ -133,9 +147,23 @@ export const paymentDisputeWorkflow = workflow.define({
           startedAt: Date.now(),
           completedAt: Date.now(),
           result: "No OpenAPI spec available",
-          output: {},
+          output: { skipped: true, reason: "Vendor has no OpenAPI specification" },
         });
       }
+    } else {
+      // Store skipped step if no signed evidence at all
+      await step.runMutation(s.workflows.storeWorkflowStep, {
+        caseId,
+        workflowId,
+        stepNumber: 1,
+        stepName: "spec_validation",
+        agentName: "API Contract Validator",
+        status: "SKIPPED",
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        result: "No signed evidence to validate",
+        output: { skipped: true, reason: "No signed evidence in case" },
+      });
     }
 
     // Micro dispute fast path (<$1, <=2 evidence items)
@@ -148,7 +176,9 @@ export const paymentDisputeWorkflow = workflow.define({
     console.log(`Full workflow for dispute: ${caseId}`);
 
     // STEP 2: Review evidence in parallel
-    const evidenceReviewPromises = (caseData.evidenceIds || []).map(async (evidenceId: any, index: number) => {
+    let evidenceReviews: any[] = [];
+    if (caseData.evidenceIds && caseData.evidenceIds.length > 0) {
+      const evidenceReviewPromises = (caseData.evidenceIds || []).map(async (evidenceId: any, index: number) => {
       const stepStartTime = Date.now();
       const reviewResult = await step.runAction(s.agents.reviewEvidence, {
         caseId,
@@ -174,9 +204,24 @@ export const paymentDisputeWorkflow = workflow.define({
       });
       
       return reviewResult;
-    });
+      });
 
-    const evidenceReviews = await Promise.all(evidenceReviewPromises);
+      evidenceReviews = await Promise.all(evidenceReviewPromises);
+    } else {
+      // Store skipped evidence review step
+      await step.runMutation(s.workflows.storeWorkflowStep, {
+        caseId,
+        workflowId,
+        stepNumber: 2,
+        stepName: "evidence_review",
+        agentName: "Evidence Review Agent",
+        status: "SKIPPED",
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        result: "No evidence files to review",
+        output: { skipped: true, reason: "Case has no evidence files uploaded" },
+      });
+    }
 
     // STEP 3: Research legal precedents
     const researchStartTime = Date.now();
