@@ -54,36 +54,24 @@ describe("MCP Tool Schema Validation", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      const disputeReasonEnum = disputeTool?.input_schema.properties.disputeReason.enum;
-      expect(disputeReasonEnum).toBeDefined();
-
-      // Valid payment dispute reasons
-      expect(disputeReasonEnum).toContain("api_timeout");
-      expect(disputeReasonEnum).toContain("service_not_rendered");
-      expect(disputeReasonEnum).toContain("quality_issue");
-      expect(disputeReasonEnum).toContain("amount_incorrect");
-      expect(disputeReasonEnum).toContain("fraud");
-      expect(disputeReasonEnum).toContain("duplicate_charge");
+      // signedEvidence is now the primary path, disputeReason not needed at top level
+      expect(disputeTool?.input_schema.properties.signedEvidence).toBeDefined();
     });
 
-    it("should have required fields matching unified dispute tool", () => {
+    it("should have required fields matching simplified dispute tool", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
-      // Unified tool - universal fields are required
-      expect(required).toContain("plaintiff");
-      expect(required).toContain("defendant");
-      expect(required).toContain("amount");
+      // X402 payment disputes - 3 fields required
+      expect(required).toContain("disputeUrl");
       expect(required).toContain("description");
+      expect(required).toContain("signedEvidence");
       
-      // Payment-specific fields are optional (only required when filing payment disputes)
-      expect(required).not.toContain("transactionId");
-      expect(required).not.toContain("paymentProtocol");
-      expect(required).not.toContain("disputeReason");
-      
-      // General dispute fields are also optional
-      expect(required).not.toContain("category");
+      // Plaintiff, defendant, amount all optional (extracted from signedEvidence)
+      expect(required).not.toContain("plaintiff");
+      expect(required).not.toContain("defendant");
+      expect(required).not.toContain("amount");
     });
   });
 

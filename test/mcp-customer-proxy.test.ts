@@ -48,19 +48,15 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.input_schema.properties).toBeDefined();
     expect(fileDisputeTool.input_schema.required).toBeDefined();
     
-    // Verify required fields (unified tool - universal fields only)
-    expect(fileDisputeTool.input_schema.required).toContain('amount');
-    expect(fileDisputeTool.input_schema.required).toContain('plaintiff');
+    // Verify required fields (simplified X402 payment disputes only)
+    expect(fileDisputeTool.input_schema.required).toContain('disputeUrl');
     expect(fileDisputeTool.input_schema.required).toContain('description');
-    expect(fileDisputeTool.input_schema.required).toContain('defendant');
+    expect(fileDisputeTool.input_schema.required).toContain('signedEvidence');
     
-    // Payment-specific fields are OPTIONAL (not all disputes are payment)
-    expect(fileDisputeTool.input_schema.required).not.toContain('transactionId');
-    expect(fileDisputeTool.input_schema.required).not.toContain('disputeReason');
-    expect(fileDisputeTool.input_schema.required).not.toContain('paymentProtocol');
-    
-    // General dispute fields are also OPTIONAL
-    expect(fileDisputeTool.input_schema.required).not.toContain('category');
+    // These are auto-extracted (not required)
+    expect(fileDisputeTool.input_schema.required).not.toContain('amount');
+    expect(fileDisputeTool.input_schema.required).not.toContain('plaintiff');
+    expect(fileDisputeTool.input_schema.required).not.toContain('defendant');
     
     // Verify check_status schema
     expect(checkStatusTool).toBeDefined();
@@ -93,9 +89,9 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify schemas are preserved
     expect(customerSchema.tools.length).toBe(2);
     const fileDispute = customerSchema.tools.find((t: any) => t.name === 'file_dispute');
-    // Unified tool - transactionId is OPTIONAL
-    expect(fileDispute.input_schema.required).toContain('plaintiff');
-    expect(fileDispute.input_schema.required).toContain('amount');
+    // X402 payment disputes - disputeUrl and signedEvidence are REQUIRED
+    expect(fileDispute.input_schema.required).toContain('disputeUrl');
+    expect(fileDispute.input_schema.required).toContain('signedEvidence');
   }, 30000);
 
   it('should preserve all schema properties when renaming', async () => {
@@ -114,9 +110,9 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(renamedTool.name).toBe('file_dispute');
     expect(renamedTool.description).toBe(originalTool.description);
     expect(renamedTool.input_schema).toEqual(originalTool.input_schema);
-    expect(renamedTool.input_schema.properties.transactionId).toBeDefined();
-    expect(renamedTool.input_schema.properties.amount).toBeDefined();
-    expect(renamedTool.input_schema.properties.disputeReason).toBeDefined();
+    expect(renamedTool.input_schema.properties.disputeUrl).toBeDefined();
+    expect(renamedTool.input_schema.properties.description).toBeDefined();
+    expect(renamedTool.input_schema.properties.signedEvidence).toBeDefined();
   }, 30000);
 
   it('should include pricing information in schema', async () => {
@@ -126,7 +122,7 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify flat pricing is documented
     expect(schema.server.pricing).toBeDefined();
     expect(schema.server.pricing.flat_fee).toBeDefined();
-    expect(schema.server.pricing.flat_fee).toBe("$0.05 per dispute (all disputes, no tiers)");
+    expect(schema.server.pricing.flat_fee).toBe("$0.05 per dispute");
   }, 30000);
 
   it('should include authentication info for customers', async () => {
@@ -145,14 +141,13 @@ describe('MCP Customer Proxy Pattern', () => {
     const schema = await response.json();
     
     const fileDisputeTool = schema.tools.find((t: any) => t.name === 'consulate_file_dispute');
-    const disputeReasonProperty = fileDisputeTool.input_schema.properties.disputeReason;
+    // X402 payment disputes use signedEvidence (simplified - no top-level enums)
+    const signedEvidenceProperty = fileDisputeTool.input_schema.properties.signedEvidence;
     
-    expect(disputeReasonProperty.enum).toBeDefined();
-    expect(disputeReasonProperty.enum).toContain('service_not_rendered');
-    expect(disputeReasonProperty.enum).toContain('api_timeout');
-    expect(disputeReasonProperty.enum).toContain('amount_incorrect');
-    expect(disputeReasonProperty.enum).toContain('duplicate_charge');
-    expect(disputeReasonProperty.enum).toContain('fraud');
+    expect(signedEvidenceProperty).toBeDefined();
+    expect(signedEvidenceProperty.properties.request).toBeDefined();
+    expect(signedEvidenceProperty.properties.response).toBeDefined();
+    expect(signedEvidenceProperty.properties.x402paymentDetails).toBeDefined();
   }, 30000);
 });
 

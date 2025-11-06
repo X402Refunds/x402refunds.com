@@ -44,210 +44,59 @@ function generateSHA256(input: string): string {
 }
 
 /**
+ * Extract plaintiff identifier from payment details
+ * If buyer doesn't provide plaintiff, we extract from payment proof
+ */
+function extractPlaintiffFromPayment(signedEvidence: any): string {
+  const payment = signedEvidence.x402paymentDetails || {};
+  
+  // Try to extract from wallet address
+  if (payment.fromAddress) {
+    return `wallet:${payment.fromAddress}`;
+  }
+  
+  // Try to extract from custodial platform
+  if (payment.platform) {
+    return `${payment.platform}:customer`;
+  }
+  
+  // Try to extract from traditional processor
+  if (payment.processor) {
+    return `${payment.processor}:customer`;
+  }
+  
+  // Fallback
+  return "buyer:anonymous";
+}
+
+/**
  * MCP Tool Definitions
  * These are discoverable by any MCP-compatible agent
  */
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File ANY dispute - payment (crypto/traditional) OR general (SLA/service). Auto-detects type. Crypto: USDC/ETH/SOL on Base/Ethereum/Solana. Traditional: Stripe/PayPal/cards. General: SLA violations, contracts, service quality. 95% AI automation. Flat pricing: $0.05 per dispute.",
+    description: "File payment dispute with cryptographically signed evidence from seller. Seller signs their API response proving what they delivered. Enables non-repudiation. $0.05 flat fee per dispute.",
     input_schema: {
       type: "object",
       properties: {
-        // UNIVERSAL (all disputes)
         plaintiff: {
           type: "string",
-          description: "REQUIRED. Who's filing the dispute (consumer email, agent DID, company name, or user ID). Examples: 'buyer:alice@example.com', 'did:agent:buyer-bot-123', 'consumer:alice-smith'"
-        },
-        defendant: {
-          type: "string",
-          description: "OPTIONAL if disputeUrl provided. Who's being disputed (agent DID, company name, merchant). Examples: 'did:agent:seller-123', 'merchant:openai.com'. If you have X-Dispute-URL from seller's signed headers, use disputeUrl instead and this will be auto-extracted."
+          description: "Optional. Who's filing the dispute. Auto-extracted from signedEvidence.x402paymentDetails if not provided. Examples: 'buyer:alice@example.com', 'wallet:0xAbc123...'"
         },
         disputeUrl: {
           type: "string",
-          description: "OPTIONAL: Complete dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Agent just passes this directly - defendant DID auto-extracted. SIMPLER AGENT UX: No URL parsing needed! Provide EITHER disputeUrl OR defendant (not both)."
+          description: "REQUIRED. Dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Buyer passes this directly from header."
         },
         description: {
           type: "string",
-          description: "REQUIRED. Clear description of what went wrong (e.g., 'API was down for 3 hours' or 'Charged $50 but service failed')"
-        },
-        amount: {
-          type: "number",
-          description: "REQUIRED. Transaction amount OR claimed damages in USD (e.g., 29.99). Flat $0.05 fee per dispute."
-        },
-        currency: {
-          type: "string",
-          description: "Currency code (default: 'USD')"
-        },
-        evidenceUrls: {
-          type: "array",
-          items: { type: "string" },
-          description: "URLs to evidence: transaction logs, API monitoring data, contracts, SLA documents, screenshots, emails"
-        },
-        
-        // PAYMENT TYPE (optional - triggers payment flow if provided)
-        paymentType: {
-          type: "string",
-          enum: ["custodial", "non_custodial", "traditional"],
-          description: "Payment model: custodial (exchange), non_custodial (wallet-to-wallet), traditional (Stripe/cards). Required for payment disputes."
-        },
-        transactionId: {
-          type: "string",
-          description: "Payment-only: Transaction ID from payment system (e.g., 'txn_stripe_abc123', blockchain hash '0x123...', exchange ID). If provided, this becomes a PAYMENT dispute."
-        },
-        paymentProtocol: {
-          type: "string",
-          enum: ["ACP", "ATXP", "STRIPE", "OTHER"],
-          description: "Payment-only: Payment protocol used. Optional if paymentType is provided."
-        },
-        disputeReason: {
-          type: "string",
-          enum: ["service_not_rendered", "unauthorized", "fraud", "amount_incorrect", "duplicate_charge", "quality_issue", "api_timeout", "rate_limit_breach"],
-          description: "Payment-only: Specific reason for payment dispute (e.g., 'service_not_rendered' for failed API calls)"
-        },
-        
-        // CRYPTO (nested object)
-        crypto: {
-          type: "object",
-          properties: {
-            currency: {
-          type: "string",
-              enum: ["USDC", "USDT", "ETH", "BTC", "SOL", "XRP", "MATIC", "ARB", "OP", "AVAX", "other"],
-              description: "Cryptocurrency used"
-        },
-            blockchain: {
-          type: "string",
-              enum: ["ethereum", "solana", "base", "polygon", "arbitrum", "optimism", "xrp_ledger", "bitcoin", "avalanche", "other"],
-              description: "Blockchain network"
-        },
-            layer: {
-          type: "string",
-              enum: ["L1", "L2"],
-              description: "Layer 1 (mainnet) or Layer 2 (rollup)"
-        },
-            fromAddress: {
-              type: "string",
-              description: "Sender's wallet address"
-        },
-            toAddress: {
-          type: "string",
-              description: "Recipient's wallet address"
-            },
-            transactionHash: {
-              type: "string",
-              description: "Blockchain transaction hash (if on-chain)"
-            },
-            contractAddress: {
-              type: "string",
-              description: "Token contract address (e.g., USDC contract on Base)"
-            },
-            blockNumber: {
-              type: "number",
-              description: "Block number where transaction was included"
-            },
-            explorerUrl: {
-              type: "string",
-              description: "Link to blockchain explorer (Etherscan, Basescan, Solscan, etc.)"
-            }
-          },
-          description: "Crypto-specific transaction details (required for custodial/non_custodial paymentType)"
-        },
-        
-        // CUSTODIAL (nested object)
-        custodial: {
-          type: "object",
-          properties: {
-            platform: {
-              type: "string",
-              enum: ["coinbase", "binance", "kraken", "gemini", "crypto_com", "bybit", "okx", "other"],
-              description: "Custodial platform/exchange"
-            },
-            platformTransactionId: {
-              type: "string",
-              description: "Internal transaction ID from exchange"
-            },
-            isOnChain: {
-              type: "boolean",
-              description: "Did transaction hit blockchain or stay internal?"
-            },
-            withdrawalId: {
-              type: "string",
-              description: "Withdrawal ID if moved to blockchain"
-            }
-          },
-          description: "Custodial exchange details (required if paymentType is 'custodial')"
-        },
-        
-        // TRADITIONAL (nested object)
-        traditional: {
-      type: "object",
-      properties: {
-            paymentMethod: {
-          type: "string",
-              enum: ["stripe", "paypal", "square", "visa", "mastercard", "amex", "discover", "ach", "wire", "check", "other"],
-              description: "Payment method used"
-        },
-            processor: {
-          type: "string",
-              enum: ["stripe", "paypal", "square", "braintree", "adyen", "worldpay", "authorize_net", "other"],
-              description: "Payment processor"
-        },
-            processorTransactionId: {
-          type: "string",
-              description: "Transaction ID from processor (Stripe: ch_..., PayPal: PAYID-...)"
-        },
-            cardBrand: {
-          type: "string",
-              enum: ["visa", "mastercard", "amex", "discover", "jcb", "diners", "other"],
-              description: "Card brand (if card payment)"
-        },
-            lastFourDigits: {
-              type: "string",
-              description: "Last 4 digits of card (for privacy)"
-        },
-            cardType: {
-          type: "string",
-              enum: ["credit", "debit", "prepaid"],
-              description: "Type of card"
-            }
-          },
-          description: "Traditional payment details (required if paymentType is 'traditional')"
-        },
-        
-        // CUSTOM METADATA (flexible JSON)
-        metadata: {
-          type: "object",
-          additionalProperties: true,
-          description: "Custom fields from merchant's system. Can include ANY data: customerId, orderId, invoiceId, sessionId, internal references, flags, notes, etc. Completely flexible JSON object."
-        },
-        
-        // GENERAL DISPUTE (optional - triggers general flow if provided)
-        category: {
-          type: "string",
-          enum: ["sla_violation", "api_downtime", "api_latency", "service_quality", "contract_breach", "data_quality", "data_breach", "feature_availability", "delivery_issue", "support_issue", "billing_dispute", "unauthorized_access"],
-          description: "General-only: Type of non-payment dispute. If provided (and no transactionId), this becomes a GENERAL dispute. Examples: sla_violation (uptime/SLA not met), api_downtime (API unavailable), service_quality (poor service), contract_breach (contract violated)"
-        },
-        priority: {
-          type: "string",
-          enum: ["low", "medium", "high", "urgent"],
-          description: "General-only: Urgency level for non-payment disputes"
-        },
-        breachDetails: {
-          type: "object",
-          properties: {
-            duration: { type: "string", description: "How long the issue lasted (e.g., '3 hours', '2 days')" },
-            slaRequirement: { type: "string", description: "What the SLA required (e.g., '99.9% uptime', '<200ms latency')" },
-            actualPerformance: { type: "string", description: "What actually happened (e.g., '97.2% uptime', '450ms latency')" },
-            impactLevel: { type: "string", description: "Impact: low, medium, high, critical" },
-            affectedUsers: { type: "number", description: "Number of users affected" }
-          },
-          description: "General-only: Detailed breach information for SLA/contract disputes"
+          description: "REQUIRED. What went wrong. Examples: 'API returned 500 error', 'Service timeout after 30s', 'Charged but no response'"
         },
         
         // SIGNED EVIDENCE (cryptographically verified proof from seller)
         signedEvidence: {
           type: "object",
-          description: "OPTIONAL: Cryptographically signed evidence from seller proving they delivered this output. Seller signs the complete transaction (request+response+payment) with their Ed25519 private key. The signature proves non-repudiation - seller cannot deny delivering this response. SIGNING FORMAT: Seller creates payload = JSON.stringify({ request, response, amountUsd, crypto/custodial/traditional }), then signature = ed25519.sign(payload, privateKey). Buyer receives signature in X-Signature header and passes it here. Full implementation guide: https://docs.consulatehq.com",
+          description: "RECOMMENDED. Cryptographically signed evidence from seller proving they delivered this output. Seller signs the complete transaction (request+response+payment) with their Ed25519 private key. SIGNING FORMAT: Seller creates payload = JSON.stringify({ request, response, amountUsd, x402paymentDetails }), then signature = ed25519.sign(payload, privateKey). Buyer receives signature in X-Signature header. Implementation guide: https://docs.consulatehq.com",
           properties: {
             request: {
               type: "object",
@@ -272,58 +121,15 @@ export const MCP_TOOLS = [
             },
             amountUsd: {
               type: "number",
-              description: "USD value of transaction (for fee calculation). Use this instead of amount when crypto is provided."
+              description: "REQUIRED. USD value of transaction."
             },
-            crypto: {
+            x402paymentDetails: {
               type: "object",
-              properties: {
-                currency: { type: "string", description: "Crypto token: USDC, ETH, SOL, BTC, etc." },
-                blockchain: { type: "string", description: "Blockchain: solana, base, ethereum, polygon, arbitrum, optimism, bitcoin, etc." },
-                layer: { type: "string", enum: ["L1", "L2"], description: "Layer 1 (mainnet) or Layer 2 (rollup)" },
-                fromAddress: { type: "string", description: "Buyer's wallet address" },
-                toAddress: { type: "string", description: "Seller's wallet address" },
-                transactionHash: { type: "string", description: "Blockchain transaction hash (format varies: Ethereum=0x..., Solana=base58, Bitcoin=hex)" },
-                contractAddress: { type: "string", description: "Token contract address (e.g., USDC contract on Base: 0x833589...)" },
-                blockNumber: { type: "number", description: "Block number where transaction was included" },
-                explorerUrl: { type: "string", description: "Link to blockchain explorer (Etherscan, Basescan, Solscan, etc.)" }
-              },
-              required: ["currency", "blockchain"],
-              description: "Crypto payment details (for USDC/ETH/SOL transactions)"
-            },
-            custodial: {
-              type: "object",
-              properties: {
-                platform: { type: "string", enum: ["coinbase", "binance", "kraken", "gemini", "crypto_com", "bybit", "okx", "other"], description: "Exchange platform" },
-                platformTransactionId: { type: "string", description: "Internal transaction ID from exchange" },
-                isOnChain: { type: "boolean", description: "Did transaction hit blockchain or stay internal?" },
-                withdrawalId: { type: "string", description: "Withdrawal ID if moved to blockchain" }
-              },
-              required: ["platform"],
-              description: "Custodial exchange details (for Coinbase/Binance transactions)"
-            },
-            traditional: {
-              type: "object",
-              properties: {
-                paymentMethod: { type: "string", enum: ["stripe", "paypal", "square", "visa", "mastercard", "amex", "ach", "wire", "other"], description: "Payment method" },
-                processor: { type: "string", enum: ["stripe", "paypal", "square", "braintree", "adyen", "other"], description: "Payment processor" },
-                processorTransactionId: { type: "string", description: "Transaction ID from processor (Stripe: ch_..., PayPal: PAYID-...)" },
-                cardBrand: { type: "string", enum: ["visa", "mastercard", "amex", "discover", "other"], description: "Card brand" },
-                lastFourDigits: { type: "string", description: "Last 4 digits of card" },
-                cardType: { type: "string", enum: ["credit", "debit", "prepaid"], description: "Type of card" }
-              },
-              required: ["paymentMethod"],
-              description: "Traditional payment details (for Stripe/PayPal/card transactions)"
-            },
-            signature: {
-              type: "string",
-              description: "Ed25519 signature (base64, 88 chars) from seller's X-Signature response header. This signature is computed over the complete payload: JSON.stringify({ request, response, amountUsd, crypto/custodial/traditional }). Seller signs with their private key, Consulate verifies with their registered public key. Provides cryptographic proof of what seller actually delivered (non-repudiation)."
-            },
-            vendorDid: {
-              type: "string",
-              description: "Seller's agent DID (who signed the evidence). Format: 'did:agent:seller-name-123'. Must match the DID used during agent registration with public key."
+              description: "REQUIRED. Payment details in any format (flexible). Common fields: transactionHash (blockchain), fromAddress/toAddress (wallets), blockchain (base/ethereum/solana), currency (USDC/ETH/SOL), etc. Seller includes whatever payment fields are relevant. This is part of what seller signs.",
+              additionalProperties: true
             }
           },
-          required: ["request", "response", "signature", "vendorDid"]
+          required: ["request", "response", "amountUsd", "x402paymentDetails"]
         },
         
         callbackUrl: {
@@ -331,7 +137,7 @@ export const MCP_TOOLS = [
           description: "Optional webhook URL to receive resolution updates"
         }
       },
-      required: ["plaintiff", "defendant", "description", "amount"]
+      required: ["disputeUrl", "description", "signedEvidence"]
     }
   },
   {
@@ -520,28 +326,19 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     server: {
       name: "Consulate Dispute Resolution",
       version: "2.0.0",
-      description: "Unified dispute resolution: crypto (USDC/ETH/SOL on Base/Ethereum/Solana), traditional (Stripe/cards), general (SLA/contracts). 95% AI automation. Regulation E compliant.",
+      description: "Payment dispute resolution with cryptographically signed evidence. Seller signs API responses, buyer files disputes with proof. Non-repudiation enabled. Regulation E compliant.",
       
-      payment_types: {
-        crypto: {
-          custodial: ["Coinbase", "Binance", "Kraken", "Gemini", "Crypto.com"],
-          non_custodial: "Wallet-to-wallet on any blockchain",
-          currencies: ["USDC", "USDT", "ETH", "BTC", "SOL", "XRP", "MATIC", "ARB", "OP"],
-          blockchains: ["Ethereum", "Base", "Solana", "Polygon", "Arbitrum", "Optimism", "XRP Ledger", "Bitcoin"]
-        },
-        traditional: ["Stripe", "PayPal", "Square", "Visa", "Mastercard", "Amex", "ACH", "Wire"],
-        general: "SLA violations, service quality, contracts, API failures, support issues"
+      payment_details: {
+        format: "x402paymentDetails (flexible JSON)",
+        common_fields: "transactionHash, blockchain, currency, fromAddress, toAddress, etc.",
+        note: "Seller includes whatever payment fields are relevant. Buyer just forwards what seller signed."
       },
       
-      custom_fields: {
-        metadata: "Flexible JSON object for merchant-specific identifiers (customerId, orderId, sessionId, etc.)"
-      },
-      
-      dispute_types: "UNIFIED ENDPOINT: Payment (crypto + traditional) + General disputes (SLA, contracts, service)",
+      dispute_types: "Payment disputes only (crypto transactions with signed evidence)",
       pricing: {
-        flat_fee: "$0.05 per dispute (all disputes, no tiers)"
+        flat_fee: "$0.05 per dispute"
       },
-      resolution_time: "95% auto-resolved in 4.2 minutes, 10 business days max (Regulation E)",
+      resolution_time: "< 10 minutes avg, 10 business days max (Regulation E)",
       url: "https://consulatehq.com"
     },
     tools: MCP_TOOLS,
@@ -677,18 +474,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // 1. Determine dispute type based on provided parameters
-        const hasPaymentFields = !!parameters.transactionId || !!parameters.paymentType;
-        const hasGeneralFields = !!parameters.category;
-        
-        // 2. Validation: must be one type, not both
-        if (hasPaymentFields && hasGeneralFields) {
+        // Validation: signedEvidence is REQUIRED
+        if (!parameters.signedEvidence) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "Cannot file both payment and general dispute simultaneously",
-              hint: "Provide either (transactionId/paymentType) OR (category), not both"
+              message: "signedEvidence is required for X402 payment disputes",
+              hint: "Provide cryptographically signed evidence from seller (request, response, amountUsd, x402paymentDetails)"
             }
           }), {
             status: 400,
@@ -696,67 +489,31 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // 3. Validation: must be one of them
-        if (!hasPaymentFields && !hasGeneralFields) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "Dispute type unclear - must provide payment OR general dispute fields",
-              hint: "For payment disputes: include 'transactionId' (required) and optionally 'paymentType'. For general disputes: include 'category'"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
+        // Extract plaintiff from signedEvidence payment details if not provided
+        const plaintiff = parameters.plaintiff || extractPlaintiffFromPayment(parameters.signedEvidence);
         
-        // 4. Route to appropriate backend based on type
-        if (hasPaymentFields) {
-          // Validation: payment disputes require transactionId
-          if (!parameters.transactionId) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: {
-                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-                message: "Payment disputes require 'transactionId' field",
-                hint: "Provide transactionId (can be Stripe charge ID, blockchain hash, exchange ID, etc.)"
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-          
-          // PAYMENT DISPUTE PATH
-          // Normalize paymentProtocol: validator expects lowercase "other", but MCP schema allows uppercase
-          const normalizedPaymentProtocol = parameters.paymentProtocol 
-            ? (parameters.paymentProtocol === "OTHER" || parameters.paymentProtocol === "STRIPE" 
-                ? parameters.paymentProtocol.toLowerCase() 
-                : parameters.paymentProtocol)
-            : "other";
-            
-        // Build mutation args - only include reviewerOrganizationId if authenticatedOrg is set
+        // Extract transaction ID from x402paymentDetails
+        const transactionId = parameters.signedEvidence.x402paymentDetails?.transactionHash 
+          || parameters.signedEvidence.x402paymentDetails?.processorTransactionId
+          || `x402_${Date.now()}`;
+        
+        // Build mutation args for payment dispute
         const paymentDisputeArgs: any = {
-          transactionId: parameters.transactionId,
-          amount: parameters.amount,
-          currency: parameters.currency || "USD",
-          paymentProtocol: normalizedPaymentProtocol,
-          plaintiff: parameters.plaintiff,
-          defendant: defendant, // ← Use extracted defendant (from disputeUrl or parameters.defendant)
-          disputeReason: parameters.disputeReason,
+          transactionId,
+          amount: parameters.signedEvidence.amountUsd,
+          currency: parameters.signedEvidence.x402paymentDetails?.currency || "USD",
+          paymentProtocol: "other", // X402 protocol
+          plaintiff,
+          defendant: defendant,
+          disputeReason: "quality_issue",
           description: parameters.description,
-          evidenceUrls: parameters.evidenceUrls || [],
+          evidenceUrls: [],
           callbackUrl: parameters.callbackUrl,
-          // NEW FIELDS
-          paymentType: parameters.paymentType,
-          crypto: parameters.crypto,
-          custodial: parameters.custodial,
-          traditional: parameters.traditional,
-          metadata: parameters.metadata,
+          // Store x402 payment details in crypto field
+          crypto: parameters.signedEvidence.x402paymentDetails,
         };
         
-        // Only include reviewerOrganizationId if authenticatedOrg is set (not null)
+        // Only include reviewerOrganizationId if authenticatedOrg is set
         if (authenticatedOrg) {
           paymentDisputeArgs.reviewerOrganizationId = authenticatedOrg;
         }
@@ -792,73 +549,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }), {
           headers: { "Content-Type": "application/json" }
         });
-      
-        } else {
-          // GENERAL DISPUTE PATH
-          
-          // Create general dispute case first (evidence can be added after)
-        const caseResult = await ctx.runMutation(api.cases.fileDispute, {
-          plaintiff: parameters.plaintiff,
-          defendant: defendant, // ← Use extracted defendant (from disputeUrl or parameters.defendant)
-            type: parameters.category,
-          jurisdictionTags: parameters.disputeUrl ? ["general", "dispute-url-provided"] : ["general"],
-          evidenceIds: [], // Evidence will be submitted after case creation
-          description: parameters.description,
-          claimedDamages: parameters.amount,
-          breachDetails: parameters.breachDetails,
-            metadata: parameters.metadata, // NEW
-            signedEvidence: parameters.signedEvidence, // NEW: Support signed evidence in MCP tool
-          });
-        const caseId = caseResult.caseId;
-
-          // Submit evidence if provided (now with valid caseId)
-        const evidenceIds = [];
-        if (parameters.evidenceUrls && parameters.evidenceUrls.length > 0) {
-          for (const url of parameters.evidenceUrls) {
-            const evidenceId = await ctx.runMutation(api.evidence.submitEvidence, {
-                caseId: caseId, // Now we have a valid caseId string
-              agentDid: parameters.plaintiff,
-                sha256: generateSHA256(url),
-              uri: url,
-              signer: parameters.plaintiff,
-              model: {
-                provider: "agent_submitted",
-                name: "evidence_upload",
-                version: "1.0.0"
-              },
-              tool: `general_dispute_${parameters.category}`,
-            });
-            evidenceIds.push(evidenceId);
-          }
-        }
-
-          // Flat fee for all disputes
-          const fee = 0.05;
-
-          return new Response(JSON.stringify({
-            success: true,
-            disputeType: "GENERAL",
-            caseId: caseId,
-            category: parameters.category,
-            disputeFee: fee,
-            message: `General dispute filed: ${parameters.category}`,
-          trackingUrl: `https://consulatehq.com/cases/${caseId}`,
-          nextSteps: [
-              "Submit additional evidence (optional)",
-              "Defendant notified to respond",
-              "AI analyzes dispute + provides recommendation",
-              "Final resolution provided"
-          ],
-          _links: {
-            self: `https://consulatehq.com/cases/${caseId}`,
-            evidence: `https://api.consulatehq.com/cases/${caseId}/evidence`,
-            timeline: `https://consulatehq.com/cases/${caseId}#timeline`,
-            api: `https://api.consulatehq.com/cases/${caseId}`
-          }
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        }
         
       case "consulate_submit_evidence":
         // Build evidence args - include caseId if provided

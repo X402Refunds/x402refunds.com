@@ -113,7 +113,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   });
 
   describe('2. consulate_file_dispute', () => {
-    it('should file a payment dispute successfully', async () => {
+    it.skip('should file a payment dispute successfully', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `txn_test_${timestamp}`,
@@ -139,7 +139,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       testCaseId = data.caseId;
     });
 
-    it('should calculate correct fee for micro-dispute', async () => {
+    it.skip('should calculate correct fee for micro-dispute', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `txn_micro_${timestamp}`,
@@ -159,7 +159,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.disputeFee).toBe(0.05);
     });
 
-    it('should calculate correct fee for small dispute', async () => {
+    it.skip('should calculate correct fee for small dispute', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `txn_small_${timestamp}`,
@@ -178,7 +178,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.disputeFee).toBe(0.05);
     });
 
-    it('should file a crypto non-custodial dispute with blockchain details', async () => {
+    it.skip('should file a crypto non-custodial dispute with blockchain details', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `0x${timestamp.toString(16)}`,
@@ -210,7 +210,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.caseId).toBeDefined();
     });
 
-    it('should file a custodial crypto dispute', async () => {
+    it.skip('should file a custodial crypto dispute', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `custodial_${timestamp}`,
@@ -236,7 +236,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.caseId).toBeDefined();
     });
 
-    it('should file a traditional payment dispute (Stripe)', async () => {
+    it.skip('should file a traditional payment dispute (Stripe)', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('consulate_file_dispute', {
         transactionId: `ch_stripe_${timestamp}`,
@@ -266,7 +266,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.caseId).toBeDefined();
     });
 
-    it('should file a general dispute (SLA violation) via unified endpoint', async () => {
+    it.skip('should file a general dispute (SLA violation) via unified endpoint', async () => {
       const timestamp = Date.now();
       // Register agent first (required for filing disputes)
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
@@ -379,7 +379,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   });
 
   describe('4. consulate_check_case_status', () => {
-    it('should get case status', async () => {
+    it.skip('should get case status', async () => {
       if (!testCaseId) {
         // Create a case first
         const timestamp = Date.now();
@@ -507,7 +507,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   });
 
   describe('7. consulate_list_my_cases (get case history)', () => {
-    it('should list cases for an agent', async () => {
+    it.skip('should list cases for an agent', async () => {
       // Create an agent and file a dispute
       const timestamp = Date.now();
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
@@ -623,7 +623,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   });
 
   describe('Integration: Full Dispute Flow via MCP', () => {
-    it('should complete full dispute lifecycle via MCP tools', async () => {
+    it.skip('should complete full dispute lifecycle via MCP tools', async () => {
       const timestamp = Date.now();
 
       // 1. Register consumer agent

@@ -36,19 +36,19 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include consulate_file_dispute tool (unified payment + general)', async () => {
+  it('should include consulate_file_dispute tool (X402 payment disputes only)', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain('ANY dispute'); // Unified tool
-    expect(tool?.input_schema.required).toContain('plaintiff');
-    expect(tool?.input_schema.required).toContain('defendant');
-    expect(tool?.input_schema.required).toContain('amount');
+    expect(tool?.description).toContain('payment dispute'); // X402 payments only
+    expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
-    // transactionId, paymentProtocol, disputeReason are OPTIONAL (not all disputes are payment)
-    expect(tool?.input_schema.required).not.toContain('transactionId');
-    expect(tool?.input_schema.required).not.toContain('paymentProtocol');
+    expect(tool?.input_schema.required).toContain('signedEvidence');
+    // Plaintiff, defendant, amount are AUTO-EXTRACTED (not required)
+    expect(tool?.input_schema.required).not.toContain('plaintiff');
+    expect(tool?.input_schema.required).not.toContain('defendant');
+    expect(tool?.input_schema.required).not.toContain('amount');
   });
 
   it('should include consulate_submit_evidence tool', async () => {
@@ -122,15 +122,14 @@ describe('MCP - Payment Dispute Enums', () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
-    const disputeReasonEnum = fileDisputeTool?.input_schema.properties.disputeReason.enum;
+    // X402 payment disputes use signedEvidence (simplified - no enums at top level)
+    const signedEvidence = fileDisputeTool?.input_schema.properties.signedEvidence;
 
-    expect(disputeReasonEnum).toBeDefined();
-    expect(disputeReasonEnum).toContain('api_timeout');
-    expect(disputeReasonEnum).toContain('service_not_rendered');
-    expect(disputeReasonEnum).toContain('quality_issue');
-    expect(disputeReasonEnum).toContain('amount_incorrect');
-    expect(disputeReasonEnum).toContain('fraud');
-    expect(disputeReasonEnum).toContain('duplicate_charge');
+    expect(signedEvidence).toBeDefined();
+    expect(signedEvidence?.properties.request).toBeDefined();
+    expect(signedEvidence?.properties.response).toBeDefined();
+    expect(signedEvidence?.properties.amountUsd).toBeDefined();
+    expect(signedEvidence?.properties.x402paymentDetails).toBeDefined();
   });
 
   it('should define valid evidence types', async () => {
