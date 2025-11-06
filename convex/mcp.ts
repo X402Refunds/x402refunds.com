@@ -247,27 +247,28 @@ export const MCP_TOOLS = [
         // SIGNED EVIDENCE (cryptographically verified proof from seller)
         signedEvidence: {
           type: "object",
+          description: "OPTIONAL: Cryptographically signed evidence from seller proving they delivered this output. Seller signs the complete transaction (request+response+payment) with their Ed25519 private key. The signature proves non-repudiation - seller cannot deny delivering this response. SIGNING FORMAT: Seller creates payload = JSON.stringify({ request, response, amountUsd, crypto/custodial/traditional }), then signature = ed25519.sign(payload, privateKey). Buyer receives signature in X-Signature header and passes it here. Full implementation guide: https://docs.consulatehq.com",
           properties: {
             request: {
               type: "object",
               properties: {
                 method: { type: "string", description: "HTTP method (POST, GET, etc.)" },
                 path: { type: "string", description: "API endpoint path (e.g., /v1/chat/completions)" },
-                headers: { type: "object", description: "Request headers" },
-                body: { type: "object", description: "Request body - the 'question' asked to seller" }
+                headers: { type: "object", description: "Request headers sent by buyer" },
+                body: { type: "object", description: "Request body - the buyer's question/input to seller's API" }
               },
               required: ["method", "path"],
-              description: "The original API request made by buyer to seller"
+              description: "The original API request made by buyer to seller. This is part of what seller signs."
             },
             response: {
               type: "object",
               properties: {
-                status: { type: "number", description: "HTTP status code (e.g., 200, 500)" },
-                headers: { type: "object", description: "Response headers" },
-                body: { type: "string", description: "Response body (JSON string) - the 'answer' from seller" }
+                status: { type: "number", description: "HTTP status code (e.g., 200, 500, 503)" },
+                headers: { type: "object", description: "Response headers from seller (should include disputeUrl and vendorDid)" },
+                body: { type: "string", description: "Response body (JSON string) - the seller's actual output (may be bad/failed)" }
               },
               required: ["status", "body"],
-              description: "The actual API response from seller (may be bad output)"
+              description: "The actual API response from seller (may be bad output). This is part of what seller signs."
             },
             amountUsd: {
               type: "number",
@@ -315,15 +316,14 @@ export const MCP_TOOLS = [
             },
             signature: {
               type: "string",
-              description: "Ed25519 signature (base64, 88 chars) from seller proving they delivered this output. Non-repudiation!"
+              description: "Ed25519 signature (base64, 88 chars) from seller's X-Signature response header. This signature is computed over the complete payload: JSON.stringify({ request, response, amountUsd, crypto/custodial/traditional }). Seller signs with their private key, Consulate verifies with their registered public key. Provides cryptographic proof of what seller actually delivered (non-repudiation)."
             },
             vendorDid: {
               type: "string",
-              description: "Seller's agent DID (who signed the evidence)"
+              description: "Seller's agent DID (who signed the evidence). Format: 'did:agent:seller-name-123'. Must match the DID used during agent registration with public key."
             }
           },
-          required: ["request", "response", "signature", "vendorDid"],
-          description: "OPTIONAL: Cryptographically signed evidence from seller. Seller signs request+response proving they delivered bad output. Enables non-repudiation - seller can't deny delivering this response."
+          required: ["request", "response", "signature", "vendorDid"]
         },
         
         callbackUrl: {
