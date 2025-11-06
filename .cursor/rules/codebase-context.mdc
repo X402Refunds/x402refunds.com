@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-05T11:24:51.251Z
+**Auto-generated on**: 2025-11-06T08:17:25.497Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -85,7 +85,7 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes
 - **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -100,7 +100,7 @@ consulate/
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
-- **openrouter.ts** - openrouter, selectModel, getModelConfig
+- **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **notifications.ts** - sendRuling
@@ -109,7 +109,7 @@ consulate/
 - **schema.ts** - Core logic
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
-- **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow, storeWorkflowStep, getWorkflowSteps, getWorkflowStatus, getAgentStepOutput, getWorkflowStepsPublic, getWorkflowStatusPublic
+- **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow, storeWorkflowStep, cleanupOldWorkflowSteps, getWorkflowSteps, getWorkflowStatus, getAgentStepOutput, getWorkflowStepsPublic, getWorkflowStatusPublic
 - **workpools.ts** - evidencePool, judgePool, researchPool
 
 ### Key Backend Functions
@@ -131,7 +131,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (55 components)
+### React Components (59 components)
 - AnimatedGrid
 - Footer
 - MatrixRain
@@ -143,17 +143,17 @@ Common HTTP routes exposed:
 - create-agent-dialog
 - hero-stats
 - live-activity-feed
+- DisputeHeader
+- PartiesCard
+- PaymentProofCard
+- SignedEvidenceCard
 - doc-layout
 - doc-sidebar
 - dashboard-header
 - dashboard-layout
 - government-sidebar
-- DisputeReviewCard
-- accordion
-- alert-dialog
-- alert
 
-... and 35 more
+... and 39 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -282,7 +282,7 @@ Common HTTP routes exposed:
 - @convex-dev/workflow@^0.2.7
 - @convex-dev/workpool@^0.2.19
 - ai@^5.0.87
-- convex@^1.28.1
+- convex@^1.28.2
 - convex-test@^0.0.38
 - zod@^4.1.11
 
@@ -304,7 +304,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 55 components organized by feature
+- 59 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 37 TypeScript files with serverless functions
@@ -346,5 +346,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/5/2025, 3:24:51 AM
-Files scanned: 292
+Generated: 11/6/2025, 12:17:25 AM
+Files scanned: 295
