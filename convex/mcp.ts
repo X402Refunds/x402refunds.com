@@ -76,7 +76,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File payment dispute with cryptographically signed evidence from seller. PREREQUISITES: Seller must send pre-signed payload in X-Payload, X-Signature, and X-Dispute-URL headers. Buyer forwards these exact values untouched. Tamper-proof verification ensures non-repudiation. $0.05 flat fee per dispute. RELATED TOOLS: Use consulate_check_case_status after filing to track progress.",
+    description: "File payment dispute with cryptographically signed evidence from seller. PREREQUISITES: Seller must send pre-signed payload in X-Payload, X-Signature, and X-Dispute-URL headers. Buyer forwards these exact values untouched. CRITICAL: The evidencePayload (when decoded from base64) MUST contain x402paymentDetails with these 5 REQUIRED fields: currency (e.g., 'USDC'), blockchain (e.g., 'base'), transactionHash (e.g., '0xabc123'), fromAddress (buyer's wallet), toAddress (seller's wallet). Tamper-proof verification ensures non-repudiation. $0.05 flat fee per dispute. RELATED TOOLS: Use consulate_check_case_status after filing to track progress.",
     input_schema: {
       type: "object",
       properties: {
@@ -112,17 +112,10 @@ export const MCP_TOOLS = [
         evidencePayload: {
           type: "string",
           contentEncoding: "base64",
-          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is - do NOT decode or reconstruct. This is what seller cryptographically signed. Must decode to JSON with this structure: {request: {method, path, headers, body}, response: {status, headers, body}, amountUsd: number, x402paymentDetails: {currency (REQUIRED), blockchain (REQUIRED), transactionHash (REQUIRED), fromAddress (REQUIRED), toAddress (REQUIRED), timestamp (optional), blockNumber (optional), contractAddress (optional), layer (optional), explorerUrl (optional)}}. The 5 required fields in x402paymentDetails are: currency, blockchain, transactionHash, fromAddress, toAddress.",
+          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is - do NOT decode or reconstruct. When decoded, must be JSON containing: {request, response, amountUsd, x402paymentDetails}. The x402paymentDetails object MUST have 5 required fields: currency='USDC', blockchain='base', transactionHash='0x...', fromAddress='0x...', toAddress='0x...'. Example decoded: {amountUsd:2.5, request:{method:'POST'...}, response:{status:500...}, x402paymentDetails:{currency:'USDC',blockchain:'base',transactionHash:'0xabc',fromAddress:'0xBuyer',toAddress:'0xSeller'}}",
           examples: [
             "eyJyZXF1ZXN0Ijp7Im1ldGhvZCI6IlBPU1QiLCJwYXRoIjoiL3YxL2NoYXQifSwicmVzcG9uc2UiOnsic3RhdHVzIjo1MDB9LCJhbW91bnRVc2QiOjIuNSwicDQwMnBheW1lbnREZXRhaWxzIjp7ImN1cnJlbmN5IjoiVVNEQyIsImJsb2NrY2hhaW4iOiJiYXNlIiwidHJhbnNhY3Rpb25IYXNoIjoiMHhhYmMxMjMiLCJmcm9tQWRkcmVzcyI6IjB4QnV5ZXIxMjMiLCJ0b0FkZHJlc3MiOiIweFNlbGxlcjQ1NiJ9fQ=="
-          ],
-          requiredStructure: {
-            root: ["request", "response", "amountUsd", "x402paymentDetails"],
-            x402paymentDetails: {
-              required: ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"],
-              optional: ["timestamp", "blockNumber", "contractAddress", "layer", "explorerUrl"]
-            }
-          }
+          ]
         },
         signature: {
           type: "string",
