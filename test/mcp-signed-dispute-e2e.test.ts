@@ -306,6 +306,58 @@ describe('MCP Signed Dispute E2E', () => {
     console.log("✅ Base64 error validated:", data.error.message);
   });
 
+  it('should reject payload with missing x402paymentDetails.blockchain', async () => {
+    const timestamp = Date.now();
+    
+    // Register vendor
+    const publicKeyBase64 = extractPublicKey(PRIVATE_KEY_PEM);
+    const registerResponse = await fetch(`${API_BASE_URL}/agents/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `missing-blockchain-test-${timestamp}`,
+        publicKey: publicKeyBase64,
+        organizationName: `Missing Blockchain Test ${timestamp}`,
+        functionalType: 'api'
+      })
+    });
+    const registerData = await registerResponse.json();
+    const vendorDid = registerData.agentDid;
+    
+    // Create payload with INCOMPLETE x402paymentDetails (missing blockchain)
+    const incompletePayload = {
+      request: { method: "POST", path: "/api" },
+      response: { status: 500 },
+      amountUsd: 0.50,
+      x402paymentDetails: {
+        currency: "USDC",
+        // blockchain: MISSING!
+        transactionHash: "0xabc123",
+        fromAddress: "0xBuyer",
+        toAddress: "0xSeller"
+      }
+    };
+    
+    const { payloadBase64, signatureBase64 } = signPayload(incompletePayload, PRIVATE_KEY_PEM);
+    
+    const { data } = await invokeMcpTool('consulate_file_dispute', {
+      plaintiff: "buyer:eve@example.com",
+      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      description: "Testing payment details validation",
+      evidencePayload: payloadBase64,
+      signature: signatureBase64
+    });
+    
+    // Verify structured error with missing field info
+    expect(data.success).toBe(false);
+    expect(data.error.code).toBe('INVALID_PAYMENT_DETAILS');
+    expect(data.error.field).toBe('evidencePayload.x402paymentDetails');
+    expect(data.error.missingFields).toContain('blockchain');
+    expect(data.error.suggestion).toContain('blockchain');
+    
+    console.log("✅ Missing blockchain field error validated:", data.error.message);
+  });
+
   it('should reject disputes for unregistered vendors', async () => {
     // Try to file against non-existent vendor
     const payload = createTestPayload(1.00);

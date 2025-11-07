@@ -112,10 +112,17 @@ export const MCP_TOOLS = [
         evidencePayload: {
           type: "string",
           contentEncoding: "base64",
-          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is - do NOT decode or reconstruct. This is what seller cryptographically signed. Contains: request, response, amountUsd, x402paymentDetails.",
+          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is - do NOT decode or reconstruct. This is what seller cryptographically signed. Must decode to JSON with this structure: {request: {method, path, headers, body}, response: {status, headers, body}, amountUsd: number, x402paymentDetails: {currency (REQUIRED), blockchain (REQUIRED), transactionHash (REQUIRED), fromAddress (REQUIRED), toAddress (REQUIRED), timestamp (optional), blockNumber (optional), contractAddress (optional), layer (optional), explorerUrl (optional)}}. The 5 required fields in x402paymentDetails are: currency, blockchain, transactionHash, fromAddress, toAddress.",
           examples: [
-            "eyJhbW91bnRVc2QiOjIuNSwicmVxdWVzdCI6ey4uLn0sInJlc3BvbnNlIjp7Li4ufX0="
-          ]
+            "eyJyZXF1ZXN0Ijp7Im1ldGhvZCI6IlBPU1QiLCJwYXRoIjoiL3YxL2NoYXQifSwicmVzcG9uc2UiOnsic3RhdHVzIjo1MDB9LCJhbW91bnRVc2QiOjIuNSwicDQwMnBheW1lbnREZXRhaWxzIjp7ImN1cnJlbmN5IjoiVVNEQyIsImJsb2NrY2hhaW4iOiJiYXNlIiwidHJhbnNhY3Rpb25IYXNoIjoiMHhhYmMxMjMiLCJmcm9tQWRkcmVzcyI6IjB4QnV5ZXIxMjMiLCJ0b0FkZHJlc3MiOiIweFNlbGxlcjQ1NiJ9fQ=="
+          ],
+          requiredStructure: {
+            root: ["request", "response", "amountUsd", "x402paymentDetails"],
+            x402paymentDetails: {
+              required: ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"],
+              optional: ["timestamp", "blockNumber", "contractAddress", "layer", "explorerUrl"]
+            }
+          }
         },
         signature: {
           type: "string",
@@ -493,6 +500,47 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               expected: "Base64-encoded JSON string from X-Payload header",
               suggestion: "Copy the exact X-Payload header value. Do NOT decode, parse, or modify it. Forward as-is.",
               details: error.message
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Validate x402paymentDetails structure
+        const paymentDetails = evidence.x402paymentDetails;
+        if (!paymentDetails) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "MISSING_PAYMENT_DETAILS",
+              message: "evidencePayload must contain x402paymentDetails",
+              field: "evidencePayload",
+              received: Object.keys(evidence).join(", "),
+              expected: "JSON with x402paymentDetails object",
+              suggestion: "Ensure seller includes x402paymentDetails in the signed payload with: currency, blockchain, transactionHash, fromAddress, toAddress"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Validate required fields in x402paymentDetails
+        const requiredPaymentFields = ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"];
+        const missingFields = requiredPaymentFields.filter(field => !paymentDetails[field]);
+        
+        if (missingFields.length > 0) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "INVALID_PAYMENT_DETAILS",
+              message: `Missing required fields in x402paymentDetails: ${missingFields.join(", ")}`,
+              field: "evidencePayload.x402paymentDetails",
+              received: Object.keys(paymentDetails).join(", "),
+              expected: "x402paymentDetails must include: currency, blockchain, transactionHash, fromAddress, toAddress",
+              suggestion: `Add these missing fields to x402paymentDetails: ${missingFields.join(", ")}. Example: {currency: "USDC", blockchain: "base", transactionHash: "0xabc123", fromAddress: "0xBuyer", toAddress: "0xSeller"}`,
+              missingFields: missingFields
             }
           }), {
             status: 400,
