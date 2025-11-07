@@ -37,6 +37,13 @@ export const verifyEd25519Signature = action({
       try {
         publicKeyBytes = base64ToUint8Array(args.publicKey);
         console.log("✅ Public key decoded:", publicKeyBytes.length, "bytes");
+        
+        // Handle SPKI format (44 bytes with ASN.1 header) - extract last 32 bytes
+        if (publicKeyBytes.length === 44) {
+          console.log("📦 Detected SPKI format public key, extracting raw 32 bytes...");
+          publicKeyBytes = publicKeyBytes.slice(-32);
+          console.log("✅ Extracted raw public key:", publicKeyBytes.length, "bytes");
+        }
       } catch (error: any) {
         console.error("❌ Failed to decode public key:", error.message);
         return { 
