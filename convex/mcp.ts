@@ -488,7 +488,9 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         let payloadString: string;
         let evidence: any;
         try {
-          payloadString = Buffer.from(parameters.evidencePayload, 'base64').toString('utf-8');
+          // Decode base64 using atob (Convex-compatible)
+          const cleaned = parameters.evidencePayload.replace(/\s/g, '');
+          payloadString = atob(cleaned);
           evidence = JSON.parse(payloadString);
         } catch (error: any) {
           return new Response(JSON.stringify({
@@ -497,7 +499,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
               message: "Invalid evidencePayload format",
               hint: "evidencePayload must be base64-encoded JSON string from X-Payload header",
-              parseError: error.message
+              parseError: error.message,
+              received: parameters.evidencePayload?.substring(0, 50)
             }
           }), {
             status: 400,
@@ -535,27 +538,40 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             });
           }
           
-        // Verify signature
-        const signatureValid = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
+        // Verify signature with detailed error reporting
+        console.log("🔐 Verifying signature for seller:", defendant);
+        const verificationResult = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
           publicKey: seller.publicKey,
           signature: parameters.signature,
           payload: payloadString  // ← EXACT string that was signed
         });
         
-        if (!signatureValid) {
+        console.log("🔍 Verification result:", JSON.stringify(verificationResult));
+        
+        if (!verificationResult.valid) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
               message: "Signature verification failed",
-              hint: "Evidence may have been tampered with, or signature is invalid. Seller's signature does not match the payload.",
-              sellerDid: defendant
+              reason: verificationResult.error || "Signature does not match payload",
+              details: verificationResult.details || {},
+              debugging: {
+                sellerDid: defendant,
+                sellerPublicKey: seller.publicKey.substring(0, 20) + "...",
+                payloadLength: payloadString.length,
+                payloadPreview: payloadString.substring(0, 150),
+                signatureProvided: parameters.signature.substring(0, 20) + "...",
+                hint: "Check that: 1) Seller signed the EXACT payload string, 2) Used correct private key, 3) Signature is base64-encoded"
+              }
             }
           }), {
             status: 400,
             headers: { "Content-Type": "application/json" }
           });
         }
+        
+        console.log("✅ Signature verified successfully!");
         
         // Extract transaction ID from verified evidence
         const transactionId = evidence.x402paymentDetails?.transactionHash || `x402_${Date.now()}`;

@@ -23,30 +23,66 @@ export const verifyEd25519Signature = action({
     signature: v.string(),     // Base64 signature
     payload: v.string(),       // JSON stringified payload
   },
-  handler: async (ctx, args): Promise<boolean> => {
+  handler: async (ctx, args): Promise<{ valid: boolean; error?: string; details?: any }> => {
     try {
+      console.log("🔐 Starting signature verification...");
+      console.log("📝 Payload length:", args.payload.length, "bytes");
+      console.log("📝 Payload preview:", args.payload.substring(0, 100) + "...");
+      
       // Decode base64 strings to Uint8Array
-      const publicKeyBytes = base64ToUint8Array(args.publicKey);
-      const signatureBytes = base64ToUint8Array(args.signature);
-      const messageBytes = new TextEncoder().encode(args.payload);
+      let publicKeyBytes: Uint8Array;
+      let signatureBytes: Uint8Array;
+      let messageBytes: Uint8Array;
+      
+      try {
+        publicKeyBytes = base64ToUint8Array(args.publicKey);
+        console.log("✅ Public key decoded:", publicKeyBytes.length, "bytes");
+      } catch (error: any) {
+        console.error("❌ Failed to decode public key:", error.message);
+        return { 
+          valid: false, 
+          error: "Invalid public key format",
+          details: { publicKey: args.publicKey.substring(0, 20) + "...", decodeError: error.message }
+        };
+      }
+      
+      try {
+        signatureBytes = base64ToUint8Array(args.signature);
+        console.log("✅ Signature decoded:", signatureBytes.length, "bytes");
+      } catch (error: any) {
+        console.error("❌ Failed to decode signature:", error.message);
+        return { 
+          valid: false, 
+          error: "Invalid signature format",
+          details: { signature: args.signature.substring(0, 20) + "...", decodeError: error.message }
+        };
+      }
+      
+      messageBytes = new TextEncoder().encode(args.payload);
+      console.log("✅ Payload encoded:", messageBytes.length, "bytes");
 
       // Validate key and signature lengths
       if (publicKeyBytes.length !== 32) {
-        console.error("Invalid public key length:", publicKeyBytes.length, "expected 32");
-        return false;
+        console.error("❌ Invalid public key length:", publicKeyBytes.length, "expected 32");
+        return { 
+          valid: false, 
+          error: "Invalid public key length",
+          details: { expected: 32, actual: publicKeyBytes.length }
+        };
       }
 
       if (signatureBytes.length !== 64) {
-        console.error("Invalid signature length:", signatureBytes.length, "expected 64");
-        return false;
+        console.error("❌ Invalid signature length:", signatureBytes.length, "expected 64");
+        return { 
+          valid: false, 
+          error: "Invalid signature length",
+          details: { expected: 64, actual: signatureBytes.length }
+        };
       }
 
       // Use Web Crypto API to verify Ed25519 signature
-      // Note: Ed25519 support in Web Crypto API depends on the runtime environment
-      // For Convex, we'll use a polyfill approach with subtle.verify
-      
       try {
-        // Import the public key
+        console.log("🔑 Importing public key...");
         const cryptoKey = await crypto.subtle.importKey(
           "raw",
           publicKeyBytes,
@@ -58,7 +94,9 @@ export const verifyEd25519Signature = action({
           ["verify"]
         );
 
-        // Verify the signature
+        console.log("✅ Public key imported successfully");
+        console.log("🔍 Verifying signature...");
+        
         const isValid = await crypto.subtle.verify(
           "Ed25519",
           cryptoKey,
@@ -66,29 +104,43 @@ export const verifyEd25519Signature = action({
           messageBytes
         );
 
-        return isValid;
+        console.log(isValid ? "✅ Signature VALID!" : "❌ Signature INVALID!");
+        return { valid: isValid };
       } catch (error: any) {
-        // If Web Crypto API doesn't support Ed25519, fall back to manual verification
-        console.warn("Web Crypto API Ed25519 not supported, using fallback:", error.message);
+        console.warn("⚠️  Web Crypto API Ed25519 not supported:", error.message);
+        console.error("Ed25519 verification not available in this environment");
         
-        // For now, we'll return false and recommend using a proper Ed25519 library
-        // In production, integrate tweetnacl or @noble/ed25519
-        console.error("Ed25519 verification not available. Please integrate a proper library.");
-        
-        // Temporary: Allow verification to pass in development mode
-        // TODO: Replace with actual Ed25519 verification
+        // Temporary: Allow verification to pass in non-production
         const isDevelopment = process.env.NODE_ENV !== "production";
         if (isDevelopment) {
-          console.warn("⚠️  DEV MODE: Skipping actual Ed25519 verification");
-          // Simple length check as placeholder
-          return publicKeyBytes.length === 32 && signatureBytes.length === 64;
+          console.warn("⚠️  DEV MODE: Skipping actual Ed25519 verification (length check only)");
+          return { 
+            valid: true,  // Allow in dev mode
+            error: "DEV_MODE: Signature verification bypassed",
+            details: { 
+              publicKeyLength: publicKeyBytes.length, 
+              signatureLength: signatureBytes.length,
+              note: "Using development mode bypass - real Ed25519 not available"
+            }
+          };
         }
         
-        return false;
+        return { 
+          valid: false, 
+          error: "Ed25519 not supported in production environment",
+          details: { 
+            cryptoApiError: error.message,
+            solution: "Need to integrate @noble/ed25519 or tweetnacl library"
+          }
+        };
       }
     } catch (error: any) {
-      console.error("Signature verification error:", error);
-      return false;
+      console.error("❌ Signature verification error:", error);
+      return { 
+        valid: false, 
+        error: "Signature verification exception",
+        details: { exception: error.message }
+      };
     }
   },
 });

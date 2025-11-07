@@ -1,6 +1,6 @@
 /**
  * Dispute Resolution Pricing
- * 
+ *
  * FLAT PRICING MODEL FOR MVP:
  * - All disputes: $0.05 (5 cents)
  * - No tiers, no token limits, no complexity
