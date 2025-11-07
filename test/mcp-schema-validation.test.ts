@@ -10,7 +10,7 @@ import { MCP_TOOLS } from "../convex/mcp";
 
 describe("MCP Tool Schema Validation", () => {
   describe("consulate_register_agent", () => {
-    it("should have functionalType enum matching backend schema", () => {
+    it.skip("should have functionalType enum matching backend schema (tool removed)", () => {
       const registerTool = MCP_TOOLS.find(t => t.name === "consulate_register_agent");
       expect(registerTool).toBeDefined();
 
@@ -36,7 +36,7 @@ describe("MCP Tool Schema Validation", () => {
       }
     });
 
-    it("should have required fields matching backend mutation", () => {
+    it.skip("should have required fields matching backend mutation (tool removed)", () => {
       const registerTool = MCP_TOOLS.find(t => t.name === "consulate_register_agent");
       expect(registerTool).toBeDefined();
 
@@ -78,7 +78,7 @@ describe("MCP Tool Schema Validation", () => {
   });
 
   describe("consulate_submit_evidence", () => {
-    it("should have evidenceType enum matching backend validators", () => {
+    it.skip("should have evidenceType enum matching backend validators (tool removed)", () => {
       const evidenceTool = MCP_TOOLS.find(t => t.name === "consulate_submit_evidence");
       expect(evidenceTool).toBeDefined();
 
@@ -144,18 +144,13 @@ describe("MCP Tool Schema Validation", () => {
       }
     });
 
-    it("should list exactly 8 tools (unified dispute endpoint)", () => {
-      expect(MCP_TOOLS.length).toBe(8);
+    it("should list exactly 3 tools (simplified set)", () => {
+      expect(MCP_TOOLS.length).toBe(3);
 
       const expectedTools = [
-        "consulate_file_dispute", // Unified tool (payment + general)
-        "consulate_submit_evidence",
-        "consulate_check_case_status",
-        "consulate_register_agent",
+        "consulate_file_dispute",
         "consulate_list_my_cases",
-        "consulate_get_sla_status",
-        "consulate_lookup_agent",
-        "consulate_request_vendor_registration"
+        "consulate_check_case_status"
       ];
 
       const actualNames = MCP_TOOLS.map(t => t.name);

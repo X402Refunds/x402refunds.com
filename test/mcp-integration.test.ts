@@ -14,12 +14,12 @@ import schema from '../convex/schema';
  */
 
 describe('MCP - Tool Definitions', () => {
-  it('should export all 8 MCP tools (unified dispute endpoint)', async () => {
+  it('should export 3 simplified MCP tools', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(8); // Unified dispute tool (payment + general)
+    expect(MCP_TOOLS.length).toBe(3); // Simplified: file_dispute, list_my_cases, check_case_status
   });
 
   it('should have valid tool schemas', async () => {
@@ -36,32 +36,24 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include consulate_file_dispute tool (X402 payment disputes only)', async () => {
+  it('should include consulate_file_dispute tool with improved schema', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain('payment dispute'); // X402 payments only
-    expect(tool?.description).toContain('pre-signed payload'); // New approach
+    expect(tool?.description).toContain('payment dispute');
+    expect(tool?.description).toContain('PREREQUISITES'); // Improved description
     expect(tool?.input_schema.required).toContain('plaintiff');
     expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
     expect(tool?.input_schema.required).toContain('evidencePayload');
     expect(tool?.input_schema.required).toContain('signature');
-    // Defendant, amount are extracted from evidencePayload
-    expect(tool?.input_schema.required).not.toContain('defendant');
-    expect(tool?.input_schema.required).not.toContain('amount');
-  });
-
-  it('should include consulate_submit_evidence tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_submit_evidence');
-    expect(tool).toBeDefined();
-    expect(tool?.description).toContain('evidence');
-    expect(tool?.input_schema.required).toContain('caseId');
-    expect(tool?.input_schema.required).toContain('agentDid');
-    expect(tool?.input_schema.required).toContain('sha256');
+    // Check for new schema improvements
+    expect(tool?.input_schema.properties.plaintiff.pattern).toBeDefined(); // Pattern validation
+    expect(tool?.input_schema.properties.plaintiff.examples).toBeDefined(); // Examples
+    expect(tool?.input_schema.properties.dryRun).toBeDefined(); // dryRun parameter
+    expect(tool?.returns).toBeDefined(); // Response schema
   });
 
   it('should include consulate_check_case_status tool', async () => {
@@ -72,19 +64,6 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.input_schema.required).toContain('caseId');
   });
 
-  it('should include consulate_register_agent tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_register_agent');
-    expect(tool).toBeDefined();
-    expect(tool?.description).toContain('Register');
-    expect(tool?.input_schema.required).toContain('name');
-    expect(tool?.input_schema.required).toContain('publicKey');
-    expect(tool?.input_schema.required).toContain('organizationName');
-    // functionalType is optional
-    expect(tool?.input_schema.required).not.toContain('functionalType');
-  });
-
   it('should include consulate_list_my_cases tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
@@ -92,71 +71,43 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.input_schema.required).toContain('agentDid');
   });
-
-  it('should include consulate_get_sla_status tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_get_sla_status');
-    expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('agentDid');
-  });
-
-  it('should include consulate_lookup_agent tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_lookup_agent');
-    expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('query');
-  });
-
-  it('should include consulate_request_vendor_registration tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_request_vendor_registration');
-    expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('vendorName');
-    expect(tool?.input_schema.required).toContain('domain');
-  });
 });
 
-describe('MCP - Payment Dispute Enums', () => {
-  it('should define valid payment dispute reasons', async () => {
+describe('MCP - Schema Improvements', () => {
+  it('should have pattern validation for plaintiff field', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
-    // X402 payment disputes use pre-signed payload (base64 string)
+    const plaintiff = fileDisputeTool?.input_schema.properties.plaintiff;
+
+    expect(plaintiff).toBeDefined();
+    expect(plaintiff?.pattern).toBe('^(buyer:|wallet:|user:).+');
+    expect(plaintiff?.examples).toBeDefined();
+    expect(plaintiff?.examples?.length).toBeGreaterThan(0);
+  });
+
+  it('should have contentEncoding for base64 fields', async () => {
+    const { MCP_TOOLS } = await import('../convex/mcp');
+    
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     const evidencePayload = fileDisputeTool?.input_schema.properties.evidencePayload;
     const signature = fileDisputeTool?.input_schema.properties.signature;
-
-    expect(evidencePayload).toBeDefined();
-    expect(signature).toBeDefined();
-    expect(evidencePayload?.description.toLowerCase()).toContain('base64');
-    expect(signature?.description).toContain('Ed25519');
+    
+    expect(evidencePayload?.contentEncoding).toBe('base64');
+    expect(signature?.contentEncoding).toBe('base64');
+    expect(evidencePayload?.examples).toBeDefined();
   });
 
-  it('should define valid evidence types', async () => {
+  it('should have dryRun parameter for testing', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const submitEvidenceTool = MCP_TOOLS.find(t => t.name === 'consulate_submit_evidence');
-    const evidenceTypeEnum = submitEvidenceTool?.input_schema.properties.evidenceType.enum;
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
+    const dryRun = fileDisputeTool?.input_schema.properties.dryRun;
     
-    expect(evidenceTypeEnum).toBeDefined();
-    expect(evidenceTypeEnum).toContain('api_logs');
-    expect(evidenceTypeEnum).toContain('monitoring_data');
-    expect(evidenceTypeEnum).toContain('contract');
-    expect(evidenceTypeEnum).toContain('sla_document');
-  });
-
-  it('should define valid functional types', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const registerAgentTool = MCP_TOOLS.find(t => t.name === 'consulate_register_agent');
-    const functionalTypeEnum = registerAgentTool?.input_schema.properties.functionalType.enum;
-    
-    expect(functionalTypeEnum).toBeDefined();
-    expect(Array.isArray(functionalTypeEnum)).toBe(true);
-    // Check for some expected types (note: actual schema uses different values)
-    expect(functionalTypeEnum?.length).toBeGreaterThan(0);
+    expect(dryRun).toBeDefined();
+    expect(dryRun?.type).toBe('boolean');
+    expect(dryRun?.default).toBe(false);
+    expect(dryRun?.description).toContain('validates');
   });
 });
 

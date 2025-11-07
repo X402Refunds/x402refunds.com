@@ -76,120 +76,118 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File payment dispute with cryptographically signed evidence from seller. Seller sends pre-signed payload in X-Payload header. Buyer forwards it untouched. Tamper-proof, deterministic verification. $0.05 flat fee per dispute.",
+    description: "File payment dispute with cryptographically signed evidence from seller. PREREQUISITES: Seller must send pre-signed payload in X-Payload, X-Signature, and X-Dispute-URL headers. Buyer forwards these exact values untouched. Tamper-proof verification ensures non-repudiation. $0.05 flat fee per dispute. RELATED TOOLS: Use consulate_check_case_status after filing to track progress.",
     input_schema: {
       type: "object",
       properties: {
         plaintiff: {
           type: "string",
-          description: "REQUIRED. Who's filing the dispute. Use buyer's wallet address or identifier. Examples: 'wallet:0xBuyer123...', 'buyer:alice@example.com'"
+          pattern: "^(buyer:|wallet:|user:).+",
+          description: "REQUIRED. Buyer filing the dispute. Format: 'buyer:email@domain.com', 'wallet:0xAddress', or 'user:unique-id'. DO NOT use DID format (did:agent:...).",
+          examples: [
+            "buyer:alice@example.com",
+            "wallet:0xBuyer123456789",
+            "user:alice-shop-789"
+          ]
         },
         disputeUrl: {
           type: "string",
-          description: "REQUIRED. Dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Just copy this header value."
+          pattern: "^https://api\\.consulatehq\\.com/disputes/claim\\?vendor=did:agent:",
+          description: "REQUIRED. Exact dispute URL from seller's X-Dispute-URL header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Copy this header value as-is. The vendor DID in this URL must be registered.",
+          examples: [
+            "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-api-123"
+          ]
         },
         description: {
           type: "string",
-          description: "REQUIRED. What went wrong. Examples: 'API returned 500 error', 'Service timeout after 30s', 'Charged but no response received'"
+          minLength: 10,
+          maxLength: 500,
+          description: "REQUIRED. What went wrong. Be specific about the issue. Examples: 'API returned 500 error after payment processed', 'Service timeout after 30 seconds, no response received'.",
+          examples: [
+            "API returned 500 error after payment was processed",
+            "Service timeout after 30 seconds, no response received",
+            "Charged but received empty response body"
+          ]
         },
         evidencePayload: {
           type: "string",
-          description: "REQUIRED. Base64-encoded payload string from seller's X-Payload header. This is the EXACT string seller signed. Forward as-is - do NOT decode, parse, or reconstruct. Contains: request, response, amountUsd, x402paymentDetails."
-            },
-            signature: {
-              type: "string",
-          description: "REQUIRED. Base64-encoded Ed25519 signature from seller's X-Signature header. Cryptographic proof that seller signed the evidencePayload. Forward as-is."
+          contentEncoding: "base64",
+          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is - do NOT decode or reconstruct. This is what seller cryptographically signed. Contains: request, response, amountUsd, x402paymentDetails.",
+          examples: [
+            "eyJhbW91bnRVc2QiOjIuNSwicmVxdWVzdCI6ey4uLn0sInJlc3BvbnNlIjp7Li4ufX0="
+          ]
+        },
+        signature: {
+          type: "string",
+          contentEncoding: "base64",
+          description: "REQUIRED. Base64-encoded Ed25519 signature from seller's X-Signature header. Cryptographic proof seller signed the evidencePayload. Forward as-is.",
+          examples: [
+            "uHCzxGW7/ufryqrv9r3zMXt01rNjlpTDHjSUnZetODQ="
+          ]
         },
         callbackUrl: {
           type: "string",
-          description: "Optional webhook URL to receive resolution updates"
+          format: "uri",
+          pattern: "^https://",
+          description: "Optional. Webhook URL to receive resolution updates. Must be HTTPS. Will receive POST requests when case status changes.",
+          examples: [
+            "https://api.myapp.com/webhooks/dispute-updates"
+          ]
+        },
+        dryRun: {
+          type: "boolean",
+          default: false,
+          description: "Optional. If true, validates parameters without filing. Returns validation results and what would happen. Useful for testing before actual submission."
         }
       },
       required: ["plaintiff", "disputeUrl", "description", "evidencePayload", "signature"]
-    }
-  },
-  {
-    name: "consulate_submit_evidence",
-    description: "Submit ADP-compliant evidence to support a dispute case. Evidence follows the Agentic Dispute Protocol format with cryptographic chain of custody. Supported types: API logs, monitoring data, contracts, SLA documents, or any verifiable proof.",
-    input_schema: {
-      type: "object",
-      properties: {
-        caseId: {
-          type: "string",
-          description: "The case ID you're submitting evidence for (received when filing dispute)"
-        },
-        agentDid: {
-          type: "string",
-          description: "Your agent DID (the party submitting evidence)"
-        },
-        evidenceType: {
-          type: "string",
-          enum: ["api_logs", "monitoring_data", "contract", "sla_document", "communication", "financial_record"],
-          description: "Type of evidence being submitted"
-        },
-        evidenceUrl: {
-          type: "string",
-          description: "URL where the evidence can be accessed (must be publicly accessible or provide credentials)"
-        },
-        sha256: {
-          type: "string",
-          description: "SHA-256 hash of the evidence file for integrity verification"
-        },
-        description: {
-          type: "string",
-          description: "Brief description of what this evidence proves"
-        }
-      },
-      required: ["caseId", "agentDid", "evidenceType", "evidenceUrl", "sha256"]
-    }
-  },
-  {
-    name: "consulate_check_case_status",
-    description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
-    input_schema: {
-      type: "object",
-      properties: {
-        caseId: {
-          type: "string",
-          description: "The case ID to check status for"
-        }
-      },
-      required: ["caseId"]
-    }
-  },
-  {
-    name: "consulate_register_agent",
-    description: "Register your agent with Consulate using Ed25519 public key. Required before filing disputes. Establishes agent DID for protocol compliance. Optionally provide OpenAPI spec for automated contract validation.",
-    input_schema: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: "Name of the agent (e.g., 'acme-monitoring-agent', 'openai-api-consumer')"
-        },
-        publicKey: {
-          type: "string",
-          description: "Base64-encoded Ed25519 public key for signature verification"
-        },
-        organizationName: {
-          type: "string",
-          description: "Name of the organization registering the agent"
-        },
-        openApiSpec: {
+    },
+    returns: {
+      oneOf: [
+        {
           type: "object",
-          description: "Optional OpenAPI 3.0 specification for automated API contract validation"
+          description: "Success response when dispute is filed",
+          properties: {
+            success: { type: "boolean", const: true },
+            disputeType: { type: "string", enum: ["PAYMENT"] },
+            caseId: { type: "string", description: "Unique case identifier for tracking" },
+            paymentDisputeId: { type: "string", description: "Payment dispute record ID" },
+            status: { type: "string", description: "Current case status" },
+            isMicroDispute: { type: "boolean", description: "Whether this is a micro-dispute (<$1)" },
+            disputeFee: { type: "number", description: "Fee charged in USD (always $0.05)" },
+            humanReviewRequired: { type: "boolean", description: "Whether human review is needed" },
+            estimatedResolutionTime: { type: "string", description: "Expected resolution timeframe" },
+            message: { type: "string" },
+            trackingUrl: { type: "string", description: "URL to track case status" },
+            nextSteps: { 
+              type: "array", 
+              items: { type: "string" },
+              description: "What happens next in the process"
+            }
+          },
+          required: ["success", "caseId", "trackingUrl", "disputeFee"]
         },
-        specVersion: {
-          type: "string",
-          description: "OpenAPI specification version (e.g., '3.0.0')"
-        },
-        functionalType: {
-          type: "string",
-          enum: ["voice", "chat", "social", "translation", "presentation", "coding", "devops", "security", "data", "api", "writing", "design", "video", "music", "gaming", "research", "financial", "sales", "marketing", "legal", "healthcare", "education", "scientific", "manufacturing", "transportation", "scheduler", "workflow", "procurement", "project", "general"],
-          description: "Agent functional type - use 'api' for API consumers/providers, 'general' for multi-purpose agents"
+        {
+          type: "object",
+          description: "Error response with actionable guidance",
+          properties: {
+            success: { type: "boolean", const: false },
+            error: {
+              type: "object",
+              properties: {
+                code: { type: "string", description: "Error code (e.g., INVALID_PLAINTIFF_FORMAT)" },
+                message: { type: "string", description: "Human-readable error message" },
+                field: { type: "string", description: "Which parameter caused the error" },
+                received: { type: "string", description: "What value was received" },
+                expected: { type: "string", description: "What format was expected" },
+                suggestion: { type: "string", description: "How to fix the error" }
+              },
+              required: ["code", "message"]
+            }
+          },
+          required: ["success", "error"]
         }
-      },
-      required: ["name", "publicKey", "organizationName"]
+      ]
     }
   },
   {
@@ -212,70 +210,17 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "consulate_get_sla_status",
-    description: "Check your current SLA compliance status and any active violations",
+    name: "consulate_check_case_status",
+    description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
     input_schema: {
       type: "object",
       properties: {
-        agentDid: {
+        caseId: {
           type: "string",
-          description: "Your agent DID"
+          description: "The case ID to check status for"
         }
       },
-      required: ["agentDid"]
-    }
-  },
-  {
-    name: "consulate_lookup_agent",
-    description: "Look up an agent's DID by organization name, domain, or service name. Use this to find the defendant's DID before filing a dispute.",
-    input_schema: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "Organization name (e.g., 'OpenAI'), domain (e.g., 'openai.com'), or service name (e.g., 'ChatGPT')"
-        },
-        functionalType: {
-          type: "string",
-          description: "Optional: Filter by agent type (e.g., 'api', 'voice', 'chat')"
-        }
-      },
-      required: ["query"]
-    }
-  },
-  {
-    name: "consulate_request_vendor_registration",
-    description: "Request that Consulate register a vendor that isn't currently in the system. Use this when lookup_agent returns no results.",
-    input_schema: {
-      type: "object",
-      properties: {
-        vendorName: {
-          type: "string",
-          description: "Official organization name (e.g., 'OpenAI', 'Anthropic')"
-        },
-        domain: {
-          type: "string",
-          description: "Primary domain of the vendor's service (e.g., 'api.openai.com')"
-        },
-        serviceType: {
-          type: "string",
-          description: "What type of service they provide (e.g., 'AI API', 'Voice Assistant', 'Translation')"
-        },
-        reasonForRequest: {
-          type: "string",
-          description: "Why you need this vendor registered (e.g., 'Need to file SLA breach dispute')"
-        },
-        yourContact: {
-          type: "string",
-          description: "Your email or agent DID for follow-up"
-        },
-        urgency: {
-          type: "string",
-          enum: ["low", "medium", "high", "critical"],
-          description: "How urgent is this request (critical = active SLA breach)"
-        }
-      },
-      required: ["vendorName", "domain", "serviceType", "reasonForRequest"]
+      required: ["caseId"]
     }
   }
 ];
@@ -294,7 +239,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     server: {
       name: "Consulate Dispute Resolution",
       version: "2.0.0",
-      description: "Payment dispute resolution with cryptographically signed evidence. Seller signs API responses, buyer files disputes with proof. Non-repudiation enabled. Regulation E compliant.",
+      description: "File payment disputes with cryptographically signed evidence. Minimal, focused API for dispute resolution. Seller signs API responses, buyer files disputes with tamper-proof evidence. Non-repudiation enabled. Regulation E compliant.",
       
       payment_details: {
         format: "x402paymentDetails (flexible JSON)",
@@ -399,10 +344,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               return new Response(JSON.stringify({
                 success: false,
                 error: {
-                  code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                  code: "INVALID_DISPUTE_URL",
                   message: "Invalid dispute URL: missing 'vendor' query parameter",
-                  hint: "Dispute URL should be in format: https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
-                  receivedUrl: parameters.disputeUrl
+                  field: "disputeUrl",
+                  received: parameters.disputeUrl,
+                  expected: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
+                  suggestion: "Dispute URL must contain '?vendor=did:agent:...' query parameter. Copy the exact X-Dispute-URL header from seller."
                 }
               }), {
                 status: 400,
@@ -413,11 +360,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             return new Response(JSON.stringify({
               success: false,
               error: {
-                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                code: "INVALID_DISPUTE_URL",
                 message: "Invalid dispute URL format",
-                hint: "Provide a valid URL like: https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
-                receivedUrl: parameters.disputeUrl,
-                parseError: error.message
+                field: "disputeUrl",
+                received: parameters.disputeUrl,
+                expected: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
+                suggestion: "Provide a valid URL. Copy the exact X-Dispute-URL header value from seller's response.",
+                details: error.message
               }
             }), {
               status: 400,
@@ -426,14 +375,34 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         }
         
-        // Validation: All required fields
+        // Validation: All required fields with structured errors
         if (!parameters.plaintiff) {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              code: "MISSING_PLAINTIFF",
               message: "plaintiff is required",
-              hint: "Provide plaintiff field. Examples: 'wallet:0xBuyer...', 'buyer:alice@example.com'"
+              field: "plaintiff",
+              expected: "buyer:email@domain.com, wallet:0xAddress, or user:unique-id",
+              suggestion: "Add plaintiff field with format: 'buyer:alice@example.com', 'wallet:0xBuyer123', or 'user:alice-shop-789'"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Validate plaintiff format
+        if (!/^(buyer:|wallet:|user:).+/.test(parameters.plaintiff)) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "INVALID_PLAINTIFF_FORMAT",
+              message: "Plaintiff must start with 'buyer:', 'wallet:', or 'user:' prefix",
+              field: "plaintiff",
+              received: parameters.plaintiff,
+              expected: "buyer:alice@example.com, wallet:0x..., or user:id-123",
+              suggestion: "Change format to use one of the supported prefixes. DO NOT use DID format (did:agent:...)"
             }
           }), {
             status: 400,
@@ -445,10 +414,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "disputeUrl is required",
-              hint: "Copy the X-Dispute-URL header from seller's response",
-              format: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123"
+              code: "INVALID_DISPUTE_URL",
+              message: "disputeUrl is required or invalid",
+              field: "disputeUrl",
+              expected: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
+              suggestion: "Copy the exact X-Dispute-URL header value from seller's response"
             }
           }), {
             status: 400,
@@ -460,9 +430,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              code: "MISSING_EVIDENCE_PAYLOAD",
               message: "evidencePayload is required",
-              hint: "Copy the X-Payload header from seller's response (base64 string). Do NOT decode or modify it."
+              field: "evidencePayload",
+              expected: "Base64-encoded string from X-Payload header",
+              suggestion: "Copy the exact X-Payload header value from seller's response. Do NOT decode, parse, or modify it."
             }
           }), {
             status: 400,
@@ -474,9 +446,27 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              code: "MISSING_SIGNATURE",
               message: "signature is required",
-              hint: "Copy the X-Signature header from seller's response (base64 string)"
+              field: "signature",
+              expected: "Base64-encoded Ed25519 signature from X-Signature header",
+              suggestion: "Copy the exact X-Signature header value from seller's response"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        if (!parameters.description) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "MISSING_DESCRIPTION",
+              message: "description is required",
+              field: "description",
+              expected: "String between 10-500 characters describing what went wrong",
+              suggestion: "Add a description like: 'API returned 500 error after payment was processed'"
             }
           }), {
             status: 400,
@@ -496,11 +486,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "Invalid evidencePayload format",
-              hint: "evidencePayload must be base64-encoded JSON string from X-Payload header",
-              parseError: error.message,
-              received: parameters.evidencePayload?.substring(0, 50)
+              code: "INVALID_BASE64",
+              message: "Invalid evidencePayload format - must be valid base64-encoded JSON",
+              field: "evidencePayload",
+              received: parameters.evidencePayload?.substring(0, 50) + "...",
+              expected: "Base64-encoded JSON string from X-Payload header",
+              suggestion: "Copy the exact X-Payload header value. Do NOT decode, parse, or modify it. Forward as-is.",
+              details: error.message
             }
           }), {
             status: 400,
@@ -514,9 +506,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.NOT_FOUND,
-              message: "Seller not registered",
-              hint: `Seller with DID ${defendant} is not registered in Consulate. They must register with Ed25519 public key first.`
+              code: "VENDOR_NOT_FOUND",
+              message: "Seller not registered in Consulate",
+              field: "disputeUrl",
+              received: defendant,
+              expected: "A registered vendor DID",
+              suggestion: `Vendor with DID '${defendant}' is not registered. They must register with Ed25519 public key first. Contact the vendor or use a different service.`
             }
           }), {
             status: 404,
@@ -528,9 +523,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             return new Response(JSON.stringify({
               success: false,
               error: {
-                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+                code: "VENDOR_NOT_FOUND",
               message: "Seller has no public key registered",
-              hint: "Seller must register with Ed25519 public key to enable signature verification"
+                field: "disputeUrl",
+                received: defendant,
+                expected: "A vendor with Ed25519 public key",
+              suggestion: "Vendor must register with Ed25519 public key to enable signature verification. Contact the vendor to complete registration."
               }
             }), {
               status: 400,
@@ -552,17 +550,17 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "Signature verification failed",
-              reason: verificationResult.error || "Signature does not match payload",
-              details: verificationResult.details || {},
-              debugging: {
+              code: "SIGNATURE_VERIFICATION_FAILED",
+              message: "Cryptographic signature verification failed",
+              field: "signature",
+              received: parameters.signature.substring(0, 30) + "...",
+              expected: "Valid Ed25519 signature matching the evidencePayload",
+              suggestion: "Signature does not match the payload. Ensure: 1) You copied the EXACT X-Signature header, 2) You copied the EXACT X-Payload header, 3) Both are from the same seller response. Do NOT modify either value.",
+              details: {
+                reason: verificationResult.error || "Signature does not match payload",
                 sellerDid: defendant,
-                sellerPublicKey: seller.publicKey.substring(0, 20) + "...",
                 payloadLength: payloadString.length,
-                payloadPreview: payloadString.substring(0, 150),
-                signatureProvided: parameters.signature.substring(0, 20) + "...",
-                hint: "Check that: 1) Seller signed the EXACT payload string, 2) Used correct private key, 3) Signature is base64-encoded"
+                verificationDetails: verificationResult.details || {}
               }
             }
           }), {
@@ -575,6 +573,40 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         // Extract transaction ID from verified evidence
         const transactionId = evidence.x402paymentDetails?.transactionHash || `x402_${Date.now()}`;
+        
+        // If dry run, return validation results without filing
+        if (parameters.dryRun) {
+          return new Response(JSON.stringify({
+            success: true,
+            dryRun: true,
+            wouldExecute: {
+              action: "file_payment_dispute",
+              plaintiff: parameters.plaintiff,
+              defendant: defendant,
+              transactionId: transactionId,
+              amount: evidence.amountUsd,
+              currency: evidence.x402paymentDetails?.currency || "USD",
+              estimatedFee: 0.05
+            },
+            validations: {
+              plaintiffFormat: "✓ Valid format",
+              disputeUrl: "✓ Valid URL with vendor DID",
+              vendorExists: `✓ Vendor '${defendant}' is registered`,
+              evidencePayload: "✓ Valid base64-encoded JSON",
+              signature: "✓ Signature verified successfully",
+              description: "✓ Description provided",
+              allFieldsPresent: "✓ All required fields validated"
+            },
+            nextSteps: [
+              "Remove 'dryRun: true' parameter to file the dispute",
+              "Dispute will be filed immediately upon next call",
+              `You'll receive a caseId for tracking (estimated fee: $0.05)`,
+              "Resolution typically within 2-5 minutes for micro-disputes"
+            ]
+          }), {
+            headers: { "Content-Type": "application/json" }
+          });
+        }
         
         // Build mutation args for payment dispute with VERIFIED evidence
         const paymentDisputeArgs: any = {
@@ -629,38 +661,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           headers: { "Content-Type": "application/json" }
         });
         
-      case "consulate_submit_evidence":
-        // Build evidence args - include caseId if provided
-        const evidenceArgs: any = {
-          agentDid: parameters.agentDid,
-          sha256: parameters.sha256,
-          uri: parameters.evidenceUrl,
-          signer: parameters.agentDid,
-          model: {
-            provider: "agent_submitted",
-            name: "evidence_upload",
-            version: "1.0.0"
-          },
-          evidenceType: parameters.evidenceType,
-        };
-        
-        // Include caseId if provided (required for case-linked evidence)
-        if (parameters.caseId) {
-          evidenceArgs.caseId = parameters.caseId;
-        }
-        
-        result = await ctx.runMutation(api.evidence.submitEvidence, evidenceArgs);
-        
-        return new Response(JSON.stringify({
-          success: true,
-          evidenceId: result,
-          message: "Evidence submitted successfully",
-          status: "pending_verification",
-          caseId: parameters.caseId || null
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        
       case "consulate_check_case_status":
         result = await ctx.runQuery(internal.cases.getCase, {
           caseId: parameters.caseId as any
@@ -669,61 +669,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         return new Response(JSON.stringify({
           success: true,
           case: result
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        
-      case "consulate_register_agent":
-        // Registration now requires publicKey and organizationName
-        if (!parameters.publicKey) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "publicKey required",
-              hint: "Provide base64-encoded Ed25519 public key"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        if (!parameters.organizationName) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "organizationName required",
-              hint: "Provide organization name for agent registration"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        result = await ctx.runMutation(api.agents.joinAgent, {
-          name: parameters.name,
-          publicKey: parameters.publicKey,
-          organizationName: parameters.organizationName,
-          openApiSpec: parameters.openApiSpec,
-          specVersion: parameters.specVersion,
-          functionalType: parameters.functionalType,
-          mock: false
-        });
-        
-        return new Response(JSON.stringify({
-          success: true,
-          agentDid: result.did,
-          agentId: result.agentId,
-          message: "Agent registered successfully",
-          status: "active", // All new agents start with active status
-          nextSteps: [
-            "Save your agent DID for future API calls",
-            "Configure SLA monitoring",
-            "Start filing disputes when needed"
-          ]
         }), {
           headers: { "Content-Type": "application/json" }
         });
@@ -742,215 +687,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           agentDid: parameters.agentDid,
           totalCases: filteredCases.length,
           cases: filteredCases
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        
-      case "consulate_get_sla_status":
-        // Use the existing HTTP endpoint logic
-        const agent = await ctx.runQuery(api.agents.getAgent, { 
-          did: parameters.agentDid 
-        });
-        
-        if (!agent) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: MCP_ERROR_CODES.NOT_FOUND,
-              message: "Agent not found",
-              hint: "Check that the agent DID is correct or register the agent first"
-            }
-          }), {
-            status: 404,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        const cases = await ctx.runQuery(api.cases.getCasesByParty, { 
-          agentDid: parameters.agentDid 
-        });
-        
-        return new Response(JSON.stringify({
-          success: true,
-          agentDid: parameters.agentDid,
-          slaStatus: {
-            currentStanding: "GOOD",
-            totalDisputes: cases.length,
-            activeDisputes: cases.filter((c: any) => c.status === "FILED").length,
-            resolvedDisputes: cases.filter((c: any) => c.status === "DECIDED").length,
-            winRate: cases.length > 0 
-              ? (cases.filter((c: any) => 
-                  c.ruling?.verdict === "DISMISSED" || c.ruling?.verdict === "CONSUMER_LIABLE"
-                ).length / cases.length * 100).toFixed(1) 
-              : "100.0",
-            riskLevel: "LOW"
-          }
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        
-      case "consulate_lookup_agent":
-        // Search for agents by organization name or DID pattern
-        const query = parameters.query.toLowerCase();
-        let allAgents = await ctx.runQuery(api.agents.listAgents, { limit: 1000 });
-        
-        // Filter by functional type if provided
-        if (parameters.functionalType) {
-          allAgents = allAgents.filter((a: any) => 
-            a.functionalType === parameters.functionalType
-          );
-        }
-        
-        // Search by organization name, DID, or agent name
-        const matches = allAgents.filter((a: any) => {
-          const orgMatch = a.organizationName?.toLowerCase().includes(query);
-          const didMatch = a.did?.toLowerCase().includes(query);
-          const nameMatch = a.name?.toLowerCase().includes(query);
-          return orgMatch || didMatch || nameMatch;
-        });
-        
-        if (matches.length === 0) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: `No agents found matching "${parameters.query}"`,
-            searchedIn: "Consulate registry",
-            totalAgentsSearched: allAgents.length,
-            suggestions: [
-              {
-                option: "Try different search terms",
-                examples: [
-                  "Organization name: 'OpenAI', 'Anthropic', 'Google'",
-                  "Domain: 'openai.com', 'anthropic.com'",
-                  "Service: 'ChatGPT', 'Claude', 'Gemini'"
-                ]
-              },
-              {
-                option: "Register the vendor yourself",
-                description: "If you know the vendor's details, register them as an agent",
-                tool: "consulate_register_agent",
-                example: {
-                  ownerDid: "did:org:your-company",
-                  name: "vendor-name",
-                  organizationName: parameters.query,
-                  functionalType: "api"
-                }
-              },
-              {
-                option: "Request Consulate to add vendor",
-                description: "Submit a request for Consulate to verify and add this vendor",
-                action: "Email support@consulatehq.com with vendor details"
-              },
-              {
-                option: "Check if vendor uses a different name",
-                description: "Some companies use different names for their API services",
-                examples: [
-                  "OpenAI API → 'OpenAI'",
-                  "Google AI → 'Google' or 'Google AI'",
-                  "Azure OpenAI → 'Microsoft' or 'Azure'"
-                ]
-              }
-            ],
-            nextSteps: [
-              "1. Verify the vendor name spelling",
-              "2. Try searching by domain or service name",
-              "3. If vendor is legitimate, register them or contact Consulate support",
-              "4. Check vendor's website for their Consulate agent DID"
-            ]
-          }), {
-            status: 404,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        return new Response(JSON.stringify({
-          success: true,
-          query: parameters.query,
-          matches: matches.map((a: any) => ({
-            did: a.did,
-            name: a.name,
-            organization: a.organizationName,
-            functionalType: a.functionalType,
-            status: a.status
-          })),
-          hint: matches.length === 1 
-            ? `Use DID '${matches[0].did}' as the defendant when filing dispute`
-            : `Multiple matches found. Choose the most relevant DID for your dispute.`
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        
-      case "consulate_request_vendor_registration":
-        // Log vendor registration request
-        // In production, this would create a ticket/record in a queue for Consulate team
-        const requestId = `vr_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        const registrationRequest = {
-          requestId,
-          vendorName: parameters.vendorName,
-          domain: parameters.domain,
-          serviceType: parameters.serviceType,
-          reasonForRequest: parameters.reasonForRequest,
-          yourContact: parameters.yourContact || "not provided",
-          urgency: parameters.urgency || "medium",
-          requestedAt: Date.now(),
-          status: "pending"
-        };
-        
-        // Log to console for now (in production: save to database, send to team, create Slack alert)
-        console.log("🆕 VENDOR REGISTRATION REQUEST:", JSON.stringify(registrationRequest, null, 2));
-        
-        // Determine response time based on urgency
-        const urgencyLevels: Record<string, { eta: string; action: string }> = {
-          critical: {
-            eta: "1-2 hours",
-            action: "Immediate escalation to Consulate team + automated vendor outreach"
-          },
-          high: {
-            eta: "4-8 hours",
-            action: "Priority review by Consulate team"
-          },
-          medium: {
-            eta: "1-2 business days",
-            action: "Standard review queue"
-          },
-          low: {
-            eta: "3-5 business days",
-            action: "Backlog for batch processing"
-          }
-        };
-        
-        const urgencyInfo = urgencyLevels[parameters.urgency || "medium"];
-        
-        return new Response(JSON.stringify({
-          success: true,
-          requestId,
-          message: `Vendor registration request submitted for ${parameters.vendorName}`,
-          status: "pending",
-          expectedResponseTime: urgencyInfo.eta,
-          nextActions: urgencyInfo.action,
-          whatHappensNext: [
-            "1. Consulate team will verify vendor legitimacy",
-            "2. We'll reach out to vendor requesting they join Consulate",
-            "3. Once vendor registers, we'll notify you",
-            `4. Estimated completion: ${urgencyInfo.eta}`
-          ],
-          alternatives: [
-            {
-              option: "Register vendor yourself (faster)",
-              description: "If you have vendor's authorization, register them directly",
-              tool: "consulate_register_agent"
-            },
-            {
-              option: "File dispute with manual DID",
-              description: "Create a temporary agent DID and file dispute now",
-              note: "Vendor will be contacted to claim their DID and respond to dispute"
-            }
-          ],
-          trackingUrl: `https://consulatehq.com/vendor-requests/${requestId}`,
-          support: {
-            email: "support@consulatehq.com",
-            subject: `[${requestId}] Vendor Registration Request: ${parameters.vendorName}`,
-            urgency: parameters.urgency
-          }
         }), {
           headers: { "Content-Type": "application/json" }
         });

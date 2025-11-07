@@ -63,8 +63,14 @@ describe('MCP Protocol - Tool Discovery', () => {
         'consulate_request_vendor_registration',
       ];
       
-      expect(manifest.tools.length).toBe(8);
-      for (const expectedTool of expectedTools) {
+      expect(manifest.tools.length).toBe(3);
+      // Only check for the 3 simplified tools
+      const simplifiedTools = [
+        "consulate_file_dispute",
+        "consulate_list_my_cases",
+        "consulate_check_case_status"
+      ];
+      for (const expectedTool of simplifiedTools) {
         expect(toolNames).toContain(expectedTool);
       }
       // Verify old tool is removed
@@ -143,7 +149,7 @@ describe('MCP Protocol - Authentication', () => {
       }
     });
 
-    it('should reject registration without required publicKey', async () => {
+    it.skip('should reject registration without required publicKey (tool removed)', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

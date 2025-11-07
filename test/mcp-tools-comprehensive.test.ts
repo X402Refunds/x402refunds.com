@@ -52,7 +52,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   }
 
   describe('1. consulate_register_agent', () => {
-    it('should register a new agent successfully', async () => {
+    it.skip('should register a new agent successfully (tool removed)', async () => {
       const timestamp = Date.now();
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
       const { response, data } = await invokeMcpTool('consulate_register_agent', {
@@ -72,7 +72,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       testAgentDid = data.agentDid;
     });
 
-    it('should fail to register agent without public key', async () => {
+    it.skip('should fail to register agent without public key (tool removed)', async () => {
       const { response, data } = await invokeMcpTool('consulate_register_agent', {
         name: 'Invalid Agent',
         organizationName: 'Test Org',
@@ -86,7 +86,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.error.message).toContain('publicKey');
     });
 
-    it('should allow registering agents with same name (different DIDs)', async () => {
+    it.skip('should allow registering agents with same name (different DIDs) (tool removed)', async () => {
       const timestamp = Date.now();
 
       const testPublicKey1 = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
@@ -310,7 +310,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
     });
   });
 
-  describe('3. consulate_submit_evidence', () => {
+  describe.skip('3. consulate_submit_evidence (tool removed)', () => {
     let evidenceAgentDid: string;
     let evidenceCaseId: string;
 
@@ -423,7 +423,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
     });
   });
 
-  describe('5. consulate_lookup_agent (search agents by query)', () => {
+  describe.skip('5. consulate_lookup_agent (search agents by query) (tool removed)', () => {
     it('should lookup agent by organization name', async () => {
       // Register an agent first to ensure we have something to find
       const timestamp = Date.now();
@@ -459,7 +459,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
     });
   });
 
-  describe('6. consulate_lookup_agent (discover agents by functional type)', () => {
+  describe.skip('6. consulate_lookup_agent (discover agents by functional type) (tool removed)', () => {
     it('should filter agents by functional type', async () => {
       // Register an API agent first
       const timestamp = Date.now();
@@ -540,7 +540,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(data.cases.length).toBeGreaterThan(0);
     });
 
-    it('should filter by status', async () => {
+    it.skip('should filter by status (requires register_agent)', async () => {
       // Create an agent
       const timestamp = Date.now();
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
@@ -564,7 +564,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
   });
 
   describe('8. consulate_list_my_cases (list recent cases)', () => {
-    it('should list all cases for an agent', async () => {
+    it.skip('should list all cases for an agent (requires register_agent)', async () => {
       // Create an agent
       const timestamp = Date.now();
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
@@ -585,7 +585,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite', () => {
       expect(Array.isArray(data.cases)).toBe(true);
     });
 
-    it('should include case metadata when cases exist', async () => {
+    it.skip('should include case metadata when cases exist (requires register_agent)', async () => {
       // Create an agent and a dispute
       const timestamp = Date.now();
       const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";

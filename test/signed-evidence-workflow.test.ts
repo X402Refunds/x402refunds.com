@@ -350,7 +350,7 @@ describe("Signed Evidence Workflow", () => {
     });
 
     // In dev mode, this checks length, so it should fail (not 64 bytes)
-    expect(verified).toBe(false);
+    expect(verified.valid).toBe(false);
     console.log("✅ Invalid signature correctly rejected");
   });
 
