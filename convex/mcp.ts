@@ -76,80 +76,36 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File payment dispute with cryptographically signed evidence from seller. Seller signs their API response proving what they delivered. Enables non-repudiation. $0.05 flat fee per dispute.",
+    description: "File payment dispute with cryptographically signed evidence from seller. Seller sends pre-signed payload in X-Payload header. Buyer forwards it untouched. Tamper-proof, deterministic verification. $0.05 flat fee per dispute.",
     input_schema: {
       type: "object",
       properties: {
         plaintiff: {
           type: "string",
-          description: "Optional. Who's filing the dispute. Auto-extracted from signedEvidence.x402paymentDetails if not provided. Examples: 'buyer:alice@example.com', 'wallet:0xAbc123...'"
+          description: "REQUIRED. Who's filing the dispute. Use buyer's wallet address or identifier. Examples: 'wallet:0xBuyer123...', 'buyer:alice@example.com'"
         },
         disputeUrl: {
           type: "string",
-          description: "REQUIRED. Dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Buyer passes this directly from header."
+          description: "REQUIRED. Dispute URL from seller's X-Dispute-URL response header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Just copy this header value."
         },
         description: {
           type: "string",
-          description: "REQUIRED. What went wrong. Examples: 'API returned 500 error', 'Service timeout after 30s', 'Charged but no response'"
+          description: "REQUIRED. What went wrong. Examples: 'API returned 500 error', 'Service timeout after 30s', 'Charged but no response received'"
         },
-        
-        // SIGNED EVIDENCE (cryptographically verified proof from seller)
-        signedEvidence: {
-          type: "object",
-          description: "RECOMMENDED. Cryptographically signed evidence from seller proving they delivered this output. Seller signs the complete transaction (request+response+payment) with their Ed25519 private key. SIGNING FORMAT: Seller creates payload = JSON.stringify({ request, response, amountUsd, x402paymentDetails }), then signature = ed25519.sign(payload, privateKey). Buyer receives signature in X-Signature header. Implementation guide: https://docs.consulatehq.com",
-          properties: {
-            request: {
-              type: "object",
-              properties: {
-                method: { type: "string", description: "HTTP method (POST, GET, etc.)" },
-                path: { type: "string", description: "API endpoint path (e.g., /v1/chat/completions)" },
-                headers: { type: "object", description: "Request headers sent by buyer" },
-                body: { type: "object", description: "Request body - the buyer's question/input to seller's API" }
-              },
-              required: ["method", "path"],
-              description: "The original API request made by buyer to seller. This is part of what seller signs."
+        evidencePayload: {
+          type: "string",
+          description: "REQUIRED. Base64-encoded payload string from seller's X-Payload header. This is the EXACT string seller signed. Forward as-is - do NOT decode, parse, or reconstruct. Contains: request, response, amountUsd, x402paymentDetails."
             },
-            response: {
-              type: "object",
-              properties: {
-                status: { type: "number", description: "HTTP status code (e.g., 200, 500, 503)" },
-                headers: { type: "object", description: "Response headers from seller (should include disputeUrl and vendorDid)" },
-                body: { type: "string", description: "Response body (JSON string) - the seller's actual output (may be bad/failed)" }
-              },
-              required: ["status", "body"],
-              description: "The actual API response from seller (may be bad output). This is part of what seller signs."
-            },
-            amountUsd: {
-              type: "number",
-              description: "REQUIRED. USD value of transaction."
-            },
-            x402paymentDetails: {
-              type: "object",
-              description: "REQUIRED. Crypto payment proof with STRICT schema. All fields below are REQUIRED for valid payment dispute.",
-              properties: {
-                currency: { type: "string", description: "REQUIRED. Cryptocurrency (USDC, ETH, SOL, BTC, etc.)" },
-                blockchain: { type: "string", description: "REQUIRED. Blockchain network (base, ethereum, solana, polygon, etc.)" },
-                transactionHash: { type: "string", description: "REQUIRED. Blockchain transaction hash - proof payment happened" },
-                fromAddress: { type: "string", description: "REQUIRED. Buyer's wallet address - who paid" },
-                toAddress: { type: "string", description: "REQUIRED. Seller's wallet address - who received payment" },
-                timestamp: { type: "string", description: "Optional. When payment occurred (ISO 8601 format)" },
-                blockNumber: { type: "number", description: "Optional. Block number where transaction was included" },
-                contractAddress: { type: "string", description: "Optional. Token contract address (e.g., USDC contract)" },
-                layer: { type: "string", enum: ["L1", "L2"], description: "Optional. Layer 1 (mainnet) or Layer 2 (rollup)" },
-                explorerUrl: { type: "string", description: "Optional. Link to blockchain explorer (Etherscan, Basescan, etc.)" }
-              },
-              required: ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"]
-            }
-          },
-          required: ["request", "response", "amountUsd", "x402paymentDetails"]
+            signature: {
+              type: "string",
+          description: "REQUIRED. Base64-encoded Ed25519 signature from seller's X-Signature header. Cryptographic proof that seller signed the evidencePayload. Forward as-is."
         },
-        
         callbackUrl: {
           type: "string",
           description: "Optional webhook URL to receive resolution updates"
         }
       },
-      required: ["disputeUrl", "description", "signedEvidence"]
+      required: ["plaintiff", "disputeUrl", "description", "evidencePayload", "signature"]
     }
   },
   {
@@ -470,19 +426,29 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         }
         
-        // Validation: disputeUrl is REQUIRED (defendant is extracted from it)
+        // Validation: All required fields
+        if (!parameters.plaintiff) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "plaintiff is required",
+              hint: "Provide plaintiff field. Examples: 'wallet:0xBuyer...', 'buyer:alice@example.com'"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
         if (!defendant) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
               message: "disputeUrl is required",
-              hint: "The 'disputeUrl' field is required. Get it from seller's X-Dispute-URL response header.",
-              format: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
-              youProvided: {
-                disputeUrl: parameters.disputeUrl || "missing",
-                defendant: parameters.defendant || "missing"
-              }
+              hint: "Copy the X-Dispute-URL header from seller's response",
+              format: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123"
             }
           }), {
             status: 400,
@@ -490,20 +456,13 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // Validation: signedEvidence is REQUIRED
-        if (!parameters.signedEvidence) {
+        if (!parameters.evidencePayload) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: MCP_ERROR_CODES.INVALID_PARAMETERS,
-              message: "signedEvidence is required",
-              hint: "Provide signedEvidence object with: { request, response, amountUsd, x402paymentDetails }",
-              requiredFields: {
-                "signedEvidence.request": "The original API request (method, path, body)",
-                "signedEvidence.response": "The seller's API response (status, body)",
-                "signedEvidence.amountUsd": "Transaction amount in USD",
-                "signedEvidence.x402paymentDetails": "Payment proof (currency, blockchain, transactionHash, fromAddress, toAddress)"
-              }
+              message: "evidencePayload is required",
+              hint: "Copy the X-Payload header from seller's response (base64 string). Do NOT decode or modify it."
             }
           }), {
             status: 400,
@@ -511,28 +470,110 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // Extract plaintiff from signedEvidence payment details if not provided
-        const plaintiff = parameters.plaintiff || extractPlaintiffFromPayment(parameters.signedEvidence);
+        if (!parameters.signature) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "signature is required",
+              hint: "Copy the X-Signature header from seller's response (base64 string)"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
         
-        // Extract transaction ID from x402paymentDetails
-        const transactionId = parameters.signedEvidence.x402paymentDetails?.transactionHash 
-          || parameters.signedEvidence.x402paymentDetails?.processorTransactionId
-          || `x402_${Date.now()}`;
+        // Decode and parse evidencePayload
+        let payloadString: string;
+        let evidence: any;
+        try {
+          payloadString = Buffer.from(parameters.evidencePayload, 'base64').toString('utf-8');
+          evidence = JSON.parse(payloadString);
+        } catch (error: any) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Invalid evidencePayload format",
+              hint: "evidencePayload must be base64-encoded JSON string from X-Payload header",
+              parseError: error.message
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
         
-        // Build mutation args for payment dispute
+        // Get seller's public key for verification
+        const seller = await ctx.runQuery(api.agents.getAgent, { did: defendant });
+        if (!seller) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.NOT_FOUND,
+              message: "Seller not registered",
+              hint: `Seller with DID ${defendant} is not registered in Consulate. They must register with Ed25519 public key first.`
+            }
+          }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        if (!seller.publicKey) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Seller has no public key registered",
+              hint: "Seller must register with Ed25519 public key to enable signature verification"
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
+        // Verify signature
+        const signatureValid = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
+          publicKey: seller.publicKey,
+          signature: parameters.signature,
+          payload: payloadString  // ← EXACT string that was signed
+        });
+        
+        if (!signatureValid) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: MCP_ERROR_CODES.INVALID_PARAMETERS,
+              message: "Signature verification failed",
+              hint: "Evidence may have been tampered with, or signature is invalid. Seller's signature does not match the payload.",
+              sellerDid: defendant
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Extract transaction ID from verified evidence
+        const transactionId = evidence.x402paymentDetails?.transactionHash || `x402_${Date.now()}`;
+        
+        // Build mutation args for payment dispute with VERIFIED evidence
         const paymentDisputeArgs: any = {
           transactionId,
-          amount: parameters.signedEvidence.amountUsd,
-          currency: parameters.signedEvidence.x402paymentDetails?.currency || "USD",
-          paymentProtocol: "other", // X402 protocol
-          plaintiff,
+          amount: evidence.amountUsd,
+          currency: evidence.x402paymentDetails?.currency || "USD",
+          paymentProtocol: "other",
+          plaintiff: parameters.plaintiff,
           defendant: defendant,
           disputeReason: "quality_issue",
           description: parameters.description,
           evidenceUrls: [],
           callbackUrl: parameters.callbackUrl,
-          // Store x402 payment details in crypto field
-          crypto: parameters.signedEvidence.x402paymentDetails,
+          // Store verified x402 payment details
+          crypto: evidence.x402paymentDetails,
         };
         
         // Only include reviewerOrganizationId if authenticatedOrg is set

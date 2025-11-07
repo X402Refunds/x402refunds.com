@@ -42,11 +42,13 @@ describe('MCP - Tool Definitions', () => {
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute'); // X402 payments only
+    expect(tool?.description).toContain('pre-signed payload'); // New approach
+    expect(tool?.input_schema.required).toContain('plaintiff');
     expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
-    expect(tool?.input_schema.required).toContain('signedEvidence');
-    // Plaintiff, defendant, amount are AUTO-EXTRACTED (not required)
-    expect(tool?.input_schema.required).not.toContain('plaintiff');
+    expect(tool?.input_schema.required).toContain('evidencePayload');
+    expect(tool?.input_schema.required).toContain('signature');
+    // Defendant, amount are extracted from evidencePayload
     expect(tool?.input_schema.required).not.toContain('defendant');
     expect(tool?.input_schema.required).not.toContain('amount');
   });
@@ -122,14 +124,14 @@ describe('MCP - Payment Dispute Enums', () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
-    // X402 payment disputes use signedEvidence (simplified - no enums at top level)
-    const signedEvidence = fileDisputeTool?.input_schema.properties.signedEvidence;
+    // X402 payment disputes use pre-signed payload (base64 string)
+    const evidencePayload = fileDisputeTool?.input_schema.properties.evidencePayload;
+    const signature = fileDisputeTool?.input_schema.properties.signature;
 
-    expect(signedEvidence).toBeDefined();
-    expect(signedEvidence?.properties.request).toBeDefined();
-    expect(signedEvidence?.properties.response).toBeDefined();
-    expect(signedEvidence?.properties.amountUsd).toBeDefined();
-    expect(signedEvidence?.properties.x402paymentDetails).toBeDefined();
+    expect(evidencePayload).toBeDefined();
+    expect(signature).toBeDefined();
+    expect(evidencePayload?.description.toLowerCase()).toContain('base64');
+    expect(signature?.description).toContain('Ed25519');
   });
 
   it('should define valid evidence types', async () => {

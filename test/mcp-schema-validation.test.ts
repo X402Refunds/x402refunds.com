@@ -54,8 +54,9 @@ describe("MCP Tool Schema Validation", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      // signedEvidence is now the primary path, disputeReason not needed at top level
-      expect(disputeTool?.input_schema.properties.signedEvidence).toBeDefined();
+      // Pre-signed payload approach - evidencePayload contains the signed data
+      expect(disputeTool?.input_schema.properties.evidencePayload).toBeDefined();
+      expect(disputeTool?.input_schema.properties.signature).toBeDefined();
     });
 
     it("should have required fields matching simplified dispute tool", () => {
@@ -63,13 +64,14 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
-      // X402 payment disputes - 3 fields required
+      // X402 payment disputes with pre-signed payload
+      expect(required).toContain("plaintiff");
       expect(required).toContain("disputeUrl");
       expect(required).toContain("description");
-      expect(required).toContain("signedEvidence");
+      expect(required).toContain("evidencePayload");
+      expect(required).toContain("signature");
       
-      // Plaintiff, defendant, amount all optional (extracted from signedEvidence)
-      expect(required).not.toContain("plaintiff");
+      // Defendant, amount extracted from evidencePayload
       expect(required).not.toContain("defendant");
       expect(required).not.toContain("amount");
     });

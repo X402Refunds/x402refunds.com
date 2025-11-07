@@ -42,89 +42,84 @@ curl -X POST https://api.consulatehq.com/agents/register \
 
 ### The Technical Implementation
 
-**It's actually quite simple** - sellers sign ONE thing:
+**It's actually quite simple** - sellers sign ONE thing and send TWO headers:
 
 ```javascript
-// STEP 1: Build the complete transaction payload
+// STEP 1: Build the canonical payload (EXACT format)
 const payload = JSON.stringify({
   request: {
     method: "POST",
     path: "/v1/chat/completions",
     headers: {...},
-    body: {...}  // The buyer's question
+    body: {...}
   },
   response: {
     status: 500,  // Or 200, whatever they returned
-    headers: {
-      disputeUrl: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
-      vendorDid: "did:agent:seller-123"
-    },
-    body: "..."  // Their actual response
+    body: "Internal Server Error"  // Their actual response
   },
   amountUsd: 0.05,
-  crypto: {...}  // Payment details if crypto
+  x402paymentDetails: {
+    currency: "USDC",
+    blockchain: "base",
+    transactionHash: "0x123...",
+    fromAddress: "0xBuyer...",
+    toAddress: "0xSeller...",
+    timestamp: "2025-11-07T15:30:00Z"  // Optional
+  }
 });
 
 // STEP 2: Sign it with Ed25519 (standard crypto library)
 const signature = ed25519.sign(payload, privateKey);
 
-// STEP 3: Return it in response headers
-response.headers.set('X-Signature', base64(signature));
+// STEP 3: Return BOTH payload and signature in headers
+response.headers.set('X-Payload', base64Encode(payload));      // ← The exact string that was signed
+response.headers.set('X-Signature', base64Encode(signature));  // ← The signature proving it
 response.headers.set('X-Dispute-URL', disputeUrl);
 ```
 
-**That's it.** They send the signature in headers alongside their normal API response.
+**Why send the payload?** Prevents JSON formatting mismatches. Buyer forwards the EXACT string seller signed - no reconstruction needed, tamper-proof.
 
 ---
 
-## Step 3: Add Signed Headers to Your Agent Responses
+## Step 3: Canonical Payload Format
 
-**Modify your agent to include these headers in EVERY response:**
-
-```javascript
-// Your agent's existing response code:
-const apiResponse = {
-  status: 200,  // or 500, 503, etc.
-  body: JSON.stringify({ result: "..." })
-};
-
-// ADD THESE 3 LINES:
-const signedEvidence = signTransaction(request, apiResponse, paymentDetails);
-apiResponse.headers['X-Dispute-URL'] = 'https://api.consulatehq.com/disputes/claim?vendor=YOUR_AGENT_DID';
-apiResponse.headers['X-Signature'] = signedEvidence.signature;
-
-return apiResponse;
-```
-
-**Sign function** (add to your agent):
+**Sellers must use this EXACT format** when building the payload to sign:
 
 ```javascript
-function signTransaction(request, response, crypto) {
-  const payload = JSON.stringify({
-    request: {
-      method: request.method,
-      path: request.path,
-      headers: request.headers,
-      body: request.body
-    },
-    response: {
-      status: response.status,
-      headers: {
-        contentType: "application/json",
-        disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${YOUR_AGENT_DID}`,
-        vendorDid: YOUR_AGENT_DID
-      },
-      body: response.body
-    },
-    amountUsd: crypto.amountUsd,
-    crypto: crypto  // {currency: "USDC", blockchain: "base", transactionHash: "0x...", ...}
-  });
-  
-  return {
-    signature: ed25519Sign(payload, YOUR_PRIVATE_KEY)
-  };
-}
+const payload = JSON.stringify({
+  request: {
+    method: string,        // "POST", "GET", etc.
+    path: string,          // "/v1/chat/completions"
+    headers: object,       // Request headers (optional)
+    body: object           // Request body (optional)
+  },
+  response: {
+    status: number,        // 200, 500, 503, etc.
+    body: string           // Response body as string
+  },
+  amountUsd: number,       // Transaction amount in USD
+  x402paymentDetails: {
+    // REQUIRED FIELDS:
+    currency: string,           // "USDC", "ETH", "SOL", etc.
+    blockchain: string,         // "base", "ethereum", "solana", etc.
+    transactionHash: string,    // Blockchain tx hash (proof of payment)
+    fromAddress: string,        // Buyer's wallet address
+    toAddress: string,          // Seller's wallet address
+    
+    // OPTIONAL FIELDS:
+    timestamp: string,          // ISO 8601 format
+    blockNumber: number,        // Block number
+    contractAddress: string,    // Token contract address
+    layer: string,              // "L1" or "L2"
+    explorerUrl: string         // Blockchain explorer URL
+  }
+});
+
+// Use JSON.stringify with NO formatting (compact, no spaces)
+// Field order MUST match above for deterministic signatures
 ```
+
+**Why this matters:** Buyer will forward your EXACT payload string to Consulate. Any formatting differences will break signature verification.
 
 ---
 
@@ -139,37 +134,18 @@ const response = await fetch(sellerApiUrl, {...});
 // If bad output detected
 if (response.status >= 400 || detectBadOutput(response.body)) {
   
-  // File dispute - JUST PASS THE URL FROM HEADERS!
+  // File dispute - Copy 3 headers from seller, that's it!
   await consulate_file_dispute({
-    plaintiff: "buyer:your-agent-id",
-    disputeUrl: response.headers.get('X-Dispute-URL'),  // ← That's it!
-    description: "Describe what went wrong",
-    amount: 0.05,
-    category: "api_timeout",
-    signedEvidence: {
-      request: originalRequest,
-      response: {
-        status: response.status,
-        headers: {
-          disputeUrl: response.headers.get('X-Dispute-URL'),
-          vendorDid: response.headers.get('X-Vendor-DID')
-        },
-        body: await response.text()
-      },
-      crypto: {
-        currency: "USDC",
-        blockchain: "base",
-        layer: "L2",
-        transactionHash: "0x123...",
-        contractAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-      },
-      signature: response.headers.get('X-Signature')
-    }
+    plaintiff: "wallet:0xBuyer123...",  // Buyer's wallet address
+    disputeUrl: response.headers.get('X-Dispute-URL'),
+    description: "API returned 500 error but charged me",
+    evidencePayload: response.headers.get('X-Payload'),      // ← Exact signed string
+    signature: response.headers.get('X-Signature')           // ← Signature proving it
   });
 }
 ```
 
-**Done!** Consulate auto-extracts vendor DID from URL.
+**That's it!** Buyer just copies 3 header values. No reconstruction, no tampering possible.
 
 ---
 
