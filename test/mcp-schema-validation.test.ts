@@ -59,21 +59,25 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeTool?.input_schema.properties.signature).toBeDefined();
     });
 
-    it("should have required fields matching simplified dispute tool", () => {
+    it("should have required fields matching flattened dispute tool", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
-      // X402 payment disputes with pre-signed payload
+      // Flattened payment parameters
       expect(required).toContain("plaintiff");
       expect(required).toContain("disputeUrl");
       expect(required).toContain("description");
-      expect(required).toContain("evidencePayload");
-      expect(required).toContain("signature");
+      expect(required).toContain("amountUsd");
+      expect(required).toContain("currency");
+      expect(required).toContain("blockchain");
+      expect(required).toContain("transactionHash");
+      expect(required).toContain("fromAddress");
+      expect(required).toContain("toAddress");
       
-      // Defendant, amount extracted from evidencePayload
-      expect(required).not.toContain("defendant");
-      expect(required).not.toContain("amount");
+      // evidencePayload and signature now optional (for pre-signed mode)
+      expect(required).not.toContain("evidencePayload");
+      expect(required).not.toContain("signature");
     });
   });
 

@@ -42,18 +42,28 @@ describe('MCP - Tool Definitions', () => {
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
-    expect(tool?.description).toContain('PREREQUISITES'); // Improved description
+    
+    // Check for flattened parameters (new approach)
     expect(tool?.input_schema.required).toContain('plaintiff');
     expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
-    expect(tool?.input_schema.required).toContain('evidencePayload');
-    expect(tool?.input_schema.required).toContain('signature');
+    expect(tool?.input_schema.required).toContain('amountUsd');
+    expect(tool?.input_schema.required).toContain('currency');
+    expect(tool?.input_schema.required).toContain('blockchain');
+    expect(tool?.input_schema.required).toContain('transactionHash');
+    expect(tool?.input_schema.required).toContain('fromAddress');
+    expect(tool?.input_schema.required).toContain('toAddress');
     
-    // Check for new schema improvements
-    expect(tool?.input_schema.properties.plaintiff.pattern).toBeDefined(); // Pattern validation
-    expect(tool?.input_schema.properties.plaintiff.examples).toBeDefined(); // Examples
-    expect(tool?.input_schema.properties.dryRun).toBeDefined(); // dryRun parameter
-    expect(tool?.returns).toBeDefined(); // Response schema
+    // evidencePayload and signature are now optional (for pre-signed mode)
+    expect(tool?.input_schema.required).not.toContain('evidencePayload');
+    expect(tool?.input_schema.required).not.toContain('signature');
+    
+    // Check for schema improvements
+    expect(tool?.input_schema.properties.plaintiff.pattern).toBeDefined();
+    expect(tool?.input_schema.properties.currency.enum).toBeDefined(); // Enum validation
+    expect(tool?.input_schema.properties.blockchain.enum).toBeDefined(); // Enum validation
+    expect(tool?.input_schema.properties.dryRun).toBeDefined();
+    expect(tool?.returns).toBeDefined();
   });
 
   it('should include consulate_check_case_status tool', async () => {

@@ -117,7 +117,56 @@ async function invokeMcpTool(toolName: string, parameters: any) {
 }
 
 describe('MCP Signed Dispute E2E', () => {
-  it('should file dispute with cryptographically signed evidence', async () => {
+  it('should file dispute with flattened parameters (Mode A)', async () => {
+    const timestamp = Date.now();
+    
+    // Register vendor (via HTTP since MCP tool removed)
+    const publicKeyBase64 = extractPublicKey(PRIVATE_KEY_PEM);
+    const registerResponse = await fetch(`${API_BASE_URL}/agents/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `flattened-test-${timestamp}`,
+        publicKey: publicKeyBase64,
+        organizationName: `Flattened Test ${timestamp}`,
+        functionalType: 'api'
+      })
+    });
+    const registerData = await registerResponse.json();
+    const vendorDid = registerData.agentDid;
+    
+    // File dispute with FLATTENED parameters (no evidencePayload/signature)
+    const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      plaintiff: "buyer:alice@example.com",
+      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      description: "API returned 500 error after payment was processed",
+      amountUsd: 2.50,
+      currency: "USDC",
+      blockchain: "base",
+      transactionHash: `0x${timestamp}abc123`,
+      fromAddress: "0xBuyer123456789",
+      toAddress: "0xSeller987654321",
+      callbackUrl: "https://example.com/webhook"
+    });
+    
+    console.log("📥 Flattened mode response:", JSON.stringify(data, null, 2));
+    
+    // Debug if failed
+    if (response.status !== 200) {
+      console.error("❌ Flattened mode failed. Error:", data.error);
+    }
+    
+    // Verify dispute filed successfully
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.caseId).toBeDefined();
+    expect(data.trackingUrl).toContain('/cases/');
+    
+    console.log("✅ Dispute filed with flattened params!");
+    console.log("   Case ID:", data.caseId);
+  });
+
+  it('should file dispute with cryptographically signed evidence (Mode B)', async () => {
     const timestamp = Date.now();
     
     // 1. Extract public key from private key

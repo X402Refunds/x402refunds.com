@@ -76,7 +76,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "consulate_file_dispute",
-    description: "File payment dispute with cryptographically signed evidence. CRITICAL STRUCTURE REQUIREMENT: The evidencePayload when decoded MUST match this exact structure - x402paymentDetails:{currency:'USDC',blockchain:'base',transactionHash:'0xABC123',fromAddress:'0xBuyerWallet',toAddress:'0xSellerWallet'}. Do NOT use: paymentId, paymentMethod, transactionId, paidAt. Use ONLY: currency, blockchain, transactionHash, fromAddress, toAddress. PREREQUISITES: Seller sends pre-signed payload in X-Payload, X-Signature, X-Dispute-URL headers. Buyer forwards untouched. $0.05 flat fee.",
+    description: "File payment dispute. Two modes: (1) Flattened params for easy LLM use - provide currency, blockchain, transactionHash, fromAddress, toAddress directly. (2) Pre-signed evidence - provide evidencePayload + signature from seller. Mode 1 recommended for testing/demos. $0.05 flat fee.",
     input_schema: {
       type: "object",
       properties: {
@@ -93,7 +93,7 @@ export const MCP_TOOLS = [
         disputeUrl: {
           type: "string",
           pattern: "^https://api\\.consulatehq\\.com/disputes/claim\\?vendor=did:agent:",
-          description: "REQUIRED. Exact dispute URL from seller's X-Dispute-URL header. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. Copy this header value as-is. The vendor DID in this URL must be registered.",
+          description: "REQUIRED. Dispute URL. Format: 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123'. The vendor DID must be registered.",
           examples: [
             "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-api-123"
           ]
@@ -102,25 +102,58 @@ export const MCP_TOOLS = [
           type: "string",
           minLength: 10,
           maxLength: 500,
-          description: "REQUIRED. What went wrong. Be specific about the issue. Examples: 'API returned 500 error after payment processed', 'Service timeout after 30 seconds, no response received'.",
+          description: "REQUIRED. What went wrong. Be specific about the issue.",
           examples: [
             "API returned 500 error after payment was processed",
             "Service timeout after 30 seconds, no response received",
             "Charged but received empty response body"
           ]
         },
+        amountUsd: {
+          type: "number",
+          description: "REQUIRED. Transaction amount in USD.",
+          minimum: 0.01,
+          examples: [0.25, 2.50, 10.00]
+        },
+        currency: {
+          type: "string",
+          enum: ["USDC", "ETH", "SOL", "BTC", "MATIC", "USDT"],
+          description: "REQUIRED. Payment currency. Use the token symbol (USDC, ETH, SOL, BTC, MATIC, USDT).",
+          examples: ["USDC", "ETH", "SOL"]
+        },
+        blockchain: {
+          type: "string",
+          enum: ["base", "ethereum", "solana", "polygon", "arbitrum", "optimism"],
+          description: "REQUIRED. Blockchain network where payment occurred. Use lowercase network name.",
+          examples: ["base", "ethereum", "solana"]
+        },
+        transactionHash: {
+          type: "string",
+          description: "REQUIRED. Blockchain transaction hash. Format varies by chain (0x... for EVM, base58 for Solana).",
+          examples: ["0xabc123def456...", "5J7Qw8..."]
+        },
+        fromAddress: {
+          type: "string",
+          description: "REQUIRED. Buyer's wallet address (who paid).",
+          examples: ["0xBuyer123456789...", "buyer.eth"]
+        },
+        toAddress: {
+          type: "string",
+          description: "REQUIRED. Seller's wallet address (who received payment).",
+          examples: ["0xSeller987654321...", "seller.eth"]
+        },
         evidencePayload: {
           type: "string",
           contentEncoding: "base64",
-          description: "REQUIRED. Base64-encoded payload from seller's X-Payload header. Forward EXACT string as-is. WHEN CREATING A MOCK/TEST: Payload must decode to JSON with x402paymentDetails containing EXACTLY these field names: currency, blockchain, transactionHash, fromAddress, toAddress. WRONG field names (paymentId, transactionId, paymentMethod, method, paidAt) will fail validation. CORRECT template: {\"request\":{\"method\":\"POST\"},\"response\":{\"status\":500},\"amountUsd\":2.5,\"x402paymentDetails\":{\"currency\":\"USDC\",\"blockchain\":\"base\",\"transactionHash\":\"0xABC123\",\"fromAddress\":\"0xBuyerWallet\",\"toAddress\":\"0xSellerWallet\"}}",
+          description: "OPTIONAL. Only needed for pre-signed evidence mode. Base64-encoded payload from seller's X-Payload header. If omitted, payload will be constructed from the flattened parameters above.",
           examples: [
-            "eyJyZXF1ZXN0Ijp7Im1ldGhvZCI6IlBPU1QiLCJwYXRoIjoiL3YxL2NoYXQifSwicmVzcG9uc2UiOnsic3RhdHVzIjo1MDB9LCJhbW91bnRVc2QiOjIuNSwicDQwMnBheW1lbnREZXRhaWxzIjp7ImN1cnJlbmN5IjoiVVNEQyIsImJsb2NrY2hhaW4iOiJiYXNlIiwidHJhbnNhY3Rpb25IYXNoIjoiMHhhYmMxMjMiLCJmcm9tQWRkcmVzcyI6IjB4QnV5ZXIxMjMiLCJ0b0FkZHJlc3MiOiIweFNlbGxlcjQ1NiJ9fQ=="
+            "eyJyZXF1ZXN0Ijp7Im1ldGhvZCI6IlBPU1QifSwicmVzcG9uc2UiOnsic3RhdHVzIjo1MDB9LCJhbW91bnRVc2QiOjIuNSwicDQwMnBheW1lbnREZXRhaWxzIjp7ImN1cnJlbmN5IjoiVVNEQyIsImJsb2NrY2hhaW4iOiJiYXNlIiwidHJhbnNhY3Rpb25IYXNoIjoiMHhhYmMxMjMiLCJmcm9tQWRkcmVzcyI6IjB4QnV5ZXIxMjMiLCJ0b0FkZHJlc3MiOiIweFNlbGxlcjQ1NiJ9fQ=="
           ]
         },
         signature: {
           type: "string",
           contentEncoding: "base64",
-          description: "REQUIRED. Base64-encoded Ed25519 signature from seller's X-Signature header. Cryptographic proof seller signed the evidencePayload. Forward as-is.",
+          description: "OPTIONAL. Only needed for pre-signed evidence mode. Base64-encoded Ed25519 signature from seller's X-Signature header.",
           examples: [
             "uHCzxGW7/ufryqrv9r3zMXt01rNjlpTDHjSUnZetODQ="
           ]
@@ -129,7 +162,7 @@ export const MCP_TOOLS = [
           type: "string",
           format: "uri",
           pattern: "^https://",
-          description: "Optional. Webhook URL to receive resolution updates. Must be HTTPS. Will receive POST requests when case status changes.",
+          description: "Optional. Webhook URL to receive resolution updates. Must be HTTPS.",
           examples: [
             "https://api.myapp.com/webhooks/dispute-updates"
           ]
@@ -137,10 +170,10 @@ export const MCP_TOOLS = [
         dryRun: {
           type: "boolean",
           default: false,
-          description: "Optional. If true, validates parameters without filing. Returns validation results and what would happen. Useful for testing before actual submission."
+          description: "Optional. If true, validates parameters without filing. Returns validation results."
         }
       },
-      required: ["plaintiff", "disputeUrl", "description", "evidencePayload", "signature"]
+      required: ["plaintiff", "disputeUrl", "description", "amountUsd", "currency", "blockchain", "transactionHash", "fromAddress", "toAddress"]
     },
     returns: {
       oneOf: [
@@ -426,15 +459,16 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        if (!parameters.evidencePayload) {
+        // Check mode: If evidencePayload provided, signature is required
+        if (parameters.evidencePayload && !parameters.signature) {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: "MISSING_EVIDENCE_PAYLOAD",
-              message: "evidencePayload is required",
-              field: "evidencePayload",
-              expected: "Base64-encoded string from X-Payload header",
-              suggestion: "Copy the exact X-Payload header value from seller's response. Do NOT decode, parse, or modify it."
+              code: "MISSING_SIGNATURE",
+              message: "signature is required when evidencePayload is provided",
+              field: "signature",
+              expected: "Base64-encoded Ed25519 signature from X-Signature header",
+              suggestion: "Copy the exact X-Signature header value from seller's response. Or omit both evidencePayload and signature to use flattened parameter mode."
             }
           }), {
             status: 400,
@@ -442,15 +476,16 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        if (!parameters.signature) {
+        // If signature provided, evidencePayload is required
+        if (parameters.signature && !parameters.evidencePayload) {
           return new Response(JSON.stringify({
             success: false,
             error: {
-              code: "MISSING_SIGNATURE",
-              message: "signature is required",
-              field: "signature",
-              expected: "Base64-encoded Ed25519 signature from X-Signature header",
-              suggestion: "Copy the exact X-Signature header value from seller's response"
+              code: "MISSING_EVIDENCE_PAYLOAD",
+              message: "evidencePayload is required when signature is provided",
+              field: "evidencePayload",
+              expected: "Base64-encoded string from X-Payload header",
+              suggestion: "Copy the exact X-Payload header value from seller's response. Or omit both to use flattened parameter mode."
             }
           }), {
             status: 400,
@@ -474,35 +509,39 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // Decode and parse evidencePayload
+        // MODE DETECTION: Flattened params OR pre-signed evidence?
         let payloadString: string;
         let evidence: any;
-        try {
-          // Decode base64 using atob (Convex-compatible)
-          const cleaned = parameters.evidencePayload.replace(/\s/g, '');
-          payloadString = atob(cleaned);
-          evidence = JSON.parse(payloadString);
-        } catch (error: any) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_BASE64",
-              message: "Invalid evidencePayload format - must be valid base64-encoded JSON",
-              field: "evidencePayload",
-              received: parameters.evidencePayload?.substring(0, 50) + "...",
-              expected: "Base64-encoded JSON string from X-Payload header",
-              suggestion: "Copy the exact X-Payload header value. Do NOT decode, parse, or modify it. Forward as-is.",
-              details: error.message
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
+        let isPresignedMode = !!(parameters.evidencePayload && parameters.signature);
         
-        // Validate x402paymentDetails structure
-        const paymentDetails = evidence.x402paymentDetails;
-        if (!paymentDetails) {
+        if (isPresignedMode) {
+          // MODE B: Pre-signed evidence (cryptographic verification)
+          try {
+            // Decode base64 using atob (Convex-compatible)
+            const cleaned = parameters.evidencePayload.replace(/\s/g, '');
+            payloadString = atob(cleaned);
+            evidence = JSON.parse(payloadString);
+          } catch (error: any) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: "INVALID_BASE64",
+                message: "Invalid evidencePayload format - must be valid base64-encoded JSON",
+                field: "evidencePayload",
+                received: parameters.evidencePayload?.substring(0, 50) + "...",
+                expected: "Base64-encoded JSON string from X-Payload header",
+                suggestion: "Copy the exact X-Payload header value. Do NOT decode, parse, or modify it. Forward as-is.",
+                details: error.message
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
+          // Validate x402paymentDetails structure
+          const paymentDetails = evidence.x402paymentDetails;
+          if (!paymentDetails) {
           return new Response(JSON.stringify({
             success: false,
             error: {
@@ -523,25 +562,74 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         const requiredPaymentFields = ["currency", "blockchain", "transactionHash", "fromAddress", "toAddress"];
         const missingFields = requiredPaymentFields.filter(field => !paymentDetails[field]);
         
-        if (missingFields.length > 0) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_PAYMENT_DETAILS",
-              message: `Missing required fields in x402paymentDetails: ${missingFields.join(", ")}`,
-              field: "evidencePayload.x402paymentDetails",
-              received: Object.keys(paymentDetails).join(", "),
-              expected: "x402paymentDetails must include: currency, blockchain, transactionHash, fromAddress, toAddress",
-              suggestion: `Add these missing fields to x402paymentDetails: ${missingFields.join(", ")}. Example: {currency: "USDC", blockchain: "base", transactionHash: "0xabc123", fromAddress: "0xBuyer", toAddress: "0xSeller"}`,
-              missingFields: missingFields
+          if (missingFields.length > 0) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: "INVALID_PAYMENT_DETAILS",
+                message: `Missing required fields in x402paymentDetails: ${missingFields.join(", ")}`,
+                field: "evidencePayload.x402paymentDetails",
+                received: Object.keys(paymentDetails).join(", "),
+                expected: "x402paymentDetails must include: currency, blockchain, transactionHash, fromAddress, toAddress",
+                suggestion: `Add these missing fields to x402paymentDetails: ${missingFields.join(", ")}. Example: {currency: "USDC", blockchain: "base", transactionHash: "0xabc123", fromAddress: "0xBuyer", toAddress: "0xSeller"}`,
+                missingFields: missingFields
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+        } else {
+          // MODE A: Flattened parameters (LLM-friendly)
+          // Validate flattened params are present
+          const requiredFlatFields = ["amountUsd", "currency", "blockchain", "transactionHash", "fromAddress", "toAddress"];
+          const missingFlatFields = requiredFlatFields.filter(field => !parameters[field]);
+          
+          if (missingFlatFields.length > 0) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: "MISSING_PAYMENT_FIELDS",
+                message: `Missing required payment fields: ${missingFlatFields.join(", ")}`,
+                field: missingFlatFields[0],
+                expected: "amountUsd, currency, blockchain, transactionHash, fromAddress, toAddress",
+                suggestion: `Provide these fields at the top level: ${missingFlatFields.join(", ")}. Example: currency: "USDC", blockchain: "base", transactionHash: "0xabc123", fromAddress: "0xBuyer", toAddress: "0xSeller"`,
+                missingFields: missingFlatFields
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
+          // Construct evidence payload from flattened params
+          evidence = {
+            request: {
+              method: "POST",
+              path: "/api",
+              timestamp: new Date().toISOString()
+            },
+            response: {
+              status: 500,
+              body: { error: parameters.description },
+              timestamp: new Date().toISOString()
+            },
+            amountUsd: parameters.amountUsd,
+            x402paymentDetails: {
+              currency: parameters.currency,
+              blockchain: parameters.blockchain,
+              transactionHash: parameters.transactionHash,
+              fromAddress: parameters.fromAddress,
+              toAddress: parameters.toAddress
+              // Note: timestamp not included per schema v.optional constraint
             }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          };
+          
+          payloadString = JSON.stringify(evidence);
+          console.log("✅ Constructed payload from flattened parameters");
         }
         
-        // Get seller's public key for verification
+        // Get seller for verification (only for pre-signed mode, otherwise just check existence)
         const seller = await ctx.runQuery(api.agents.getAgent, { did: defendant });
         if (!seller) {
           return new Response(JSON.stringify({
@@ -560,16 +648,18 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        if (!seller.publicKey) {
+        // Verify signature only for pre-signed mode
+        if (isPresignedMode) {
+          if (!seller.publicKey) {
             return new Response(JSON.stringify({
               success: false,
               error: {
                 code: "VENDOR_NOT_FOUND",
-              message: "Seller has no public key registered",
+                message: "Seller has no public key registered",
                 field: "disputeUrl",
                 received: defendant,
                 expected: "A vendor with Ed25519 public key",
-              suggestion: "Vendor must register with Ed25519 public key to enable signature verification. Contact the vendor to complete registration."
+                suggestion: "Vendor must register with Ed25519 public key to enable signature verification. Contact the vendor to complete registration."
               }
             }), {
               status: 400,
@@ -577,40 +667,43 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             });
           }
           
-        // Verify signature with detailed error reporting
-        console.log("🔐 Verifying signature for seller:", defendant);
-        const verificationResult = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
-          publicKey: seller.publicKey,
-          signature: parameters.signature,
-          payload: payloadString  // ← EXACT string that was signed
-        });
-        
-        console.log("🔍 Verification result:", JSON.stringify(verificationResult));
-        
-        if (!verificationResult.valid) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "SIGNATURE_VERIFICATION_FAILED",
-              message: "Cryptographic signature verification failed",
-              field: "signature",
-              received: parameters.signature.substring(0, 30) + "...",
-              expected: "Valid Ed25519 signature matching the evidencePayload",
-              suggestion: "Signature does not match the payload. Ensure: 1) You copied the EXACT X-Signature header, 2) You copied the EXACT X-Payload header, 3) Both are from the same seller response. Do NOT modify either value.",
-              details: {
-                reason: verificationResult.error || "Signature does not match payload",
-                sellerDid: defendant,
-                payloadLength: payloadString.length,
-                verificationDetails: verificationResult.details || {}
-              }
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
+          // Verify signature with detailed error reporting
+          console.log("🔐 Verifying signature for seller:", defendant);
+          const verificationResult = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
+            publicKey: seller.publicKey,
+            signature: parameters.signature,
+            payload: payloadString  // ← EXACT string that was signed
           });
+          
+          console.log("🔍 Verification result:", JSON.stringify(verificationResult));
+          
+          if (!verificationResult.valid) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
+                code: "SIGNATURE_VERIFICATION_FAILED",
+                message: "Cryptographic signature verification failed",
+                field: "signature",
+                received: parameters.signature.substring(0, 30) + "...",
+                expected: "Valid Ed25519 signature matching the evidencePayload",
+                suggestion: "Signature does not match the payload. Ensure: 1) You copied the EXACT X-Signature header, 2) You copied the EXACT X-Payload header, 3) Both are from the same seller response. Do NOT modify either value.",
+                details: {
+                  reason: verificationResult.error || "Signature does not match payload",
+                  sellerDid: defendant,
+                  payloadLength: payloadString.length,
+                  verificationDetails: verificationResult.details || {}
+                }
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
+          console.log("✅ Signature verified successfully!");
+        } else {
+          console.log("✅ Using flattened parameters mode (no signature verification needed)");
         }
-        
-        console.log("✅ Signature verified successfully!");
         
         // Extract transaction ID from verified evidence
         const transactionId = evidence.x402paymentDetails?.transactionHash || `x402_${Date.now()}`;

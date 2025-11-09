@@ -52,8 +52,9 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.input_schema.required).toContain('plaintiff');
     expect(fileDisputeTool.input_schema.required).toContain('disputeUrl');
     expect(fileDisputeTool.input_schema.required).toContain('description');
-    expect(fileDisputeTool.input_schema.required).toContain('evidencePayload');
-    expect(fileDisputeTool.input_schema.required).toContain('signature');
+    // Flattened params now required (evidencePayload/signature optional)
+    expect(fileDisputeTool.input_schema.required).toContain('currency');
+    expect(fileDisputeTool.input_schema.required).toContain('blockchain');
     
     // These are auto-extracted from evidencePayload
     expect(fileDisputeTool.input_schema.required).not.toContain('amount');
@@ -93,8 +94,10 @@ describe('MCP Customer Proxy Pattern', () => {
     // X402 payment disputes - pre-signed payload approach
     expect(fileDispute.input_schema.required).toContain('plaintiff');
     expect(fileDispute.input_schema.required).toContain('disputeUrl');
-    expect(fileDispute.input_schema.required).toContain('evidencePayload');
-    expect(fileDispute.input_schema.required).toContain('signature');
+    // Flattened params now required (evidencePayload/signature optional)
+    expect(fileDispute.input_schema.required).toContain('currency');
+    expect(fileDispute.input_schema.required).toContain('blockchain');
+    expect(fileDispute.input_schema.required).toContain('transactionHash');
   }, 30000);
 
   it('should preserve all schema properties when renaming', async () => {
