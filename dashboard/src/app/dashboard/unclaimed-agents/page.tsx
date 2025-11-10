@@ -12,7 +12,10 @@ type UnclaimedAgent = NonNullable<ReturnType<typeof useQuery<typeof api.agents.l
 export default function UnclaimedAgentsPage() {
   const unclaimedAgents = useQuery(api.agents.listUnclaimedAgents, { limit: 50 });
   const currentUser = useQuery(api.users.getCurrentUser);
-  const organization = useQuery(api.users.getUserOrganization);
+  const organization = useQuery(
+    api.users.getUserOrganization,
+    currentUser?._id ? { userId: currentUser._id } : "skip"
+  );
   const [selectedAgent, setSelectedAgent] = useState<UnclaimedAgent | null>(null);
 
   return (
