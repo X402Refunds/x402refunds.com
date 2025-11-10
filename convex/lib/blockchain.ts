@@ -33,8 +33,10 @@ export const queryTransaction = action({
   args: {
     blockchain: v.string(),
     transactionHash: v.string(),
+    expectedFromAddress: v.optional(v.string()), // For mock mode: use this as fromAddress
+    expectedToAddress: v.optional(v.string()), // For mock mode: use this as toAddress
   },
-  handler: async (ctx, { blockchain, transactionHash }) => {
+  handler: async (ctx, { blockchain, transactionHash, expectedFromAddress, expectedToAddress }) => {
     try {
       // Get API key from environment (if needed)
       const apiKeys = {
@@ -50,12 +52,13 @@ export const queryTransaction = action({
       // MOCK MODE: If no API key or test environment, return mock data
       if (!apiKey || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
         console.log(`🧪 MOCK MODE: Returning mock blockchain data for ${blockchain}:${transactionHash}`);
+        // Use expected addresses if provided (for MCP integration), otherwise use defaults
         return {
           success: true,
           transactionHash,
           blockchain,
-          fromAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",  // Mock buyer (40 hex chars)
-          toAddress: "0x9876543210987654321098765432109876543210",  // Mock seller
+          fromAddress: expectedFromAddress || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",  // Use provided or mock buyer
+          toAddress: expectedToAddress || "0x9876543210987654321098765432109876543210",  // Use provided or mock seller
           value: "250000000000000000", // 0.25 ETH or USDC
           currency: "USDC",
           amountUsd: 2.50,

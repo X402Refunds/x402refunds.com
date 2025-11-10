@@ -567,7 +567,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         try {
           txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
             blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash
+            transactionHash: parameters.transactionHash,
+            // Pass expected addresses for mock mode compatibility
+            expectedFromAddress: parameters.plaintiff,
+            expectedToAddress: defendant
           });
         } catch (error: any) {
           // Handle action execution errors
