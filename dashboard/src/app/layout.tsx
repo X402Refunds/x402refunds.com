@@ -131,6 +131,9 @@ export default function RootLayout({
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
+      appearance={{
+        cssLayerName: 'clerk' // Required for Tailwind 4 compatibility
+      }}
     >
       <html lang="en" suppressHydrationWarning>
         <head>
