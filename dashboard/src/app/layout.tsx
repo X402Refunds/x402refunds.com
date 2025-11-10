@@ -167,14 +167,14 @@ export default function RootLayout({
               __html: `
                 // Detect if Clerk is trying to use custom domain and warn
                 window.addEventListener('error', function(e) {
-                  if (e.message && e.message.includes('clerk.consulatehq.com')) {
+                  if (e.message && e.message.includes('clerk.x402disputes.com')) {
                     console.error(
                       '%c⚠️ Clerk Custom Domain Issue Detected',
                       'color: red; font-weight: bold; font-size: 14px;'
                     );
                     console.error(
-                      'Clerk is configured to use clerk.consulatehq.com but this domain has SSL issues.\\n' +
-                      'SOLUTION: Go to Clerk Dashboard → Domains → Delete clerk.consulatehq.com\\n' +
+                      'Clerk is configured to use clerk.x402disputes.com but this domain has SSL issues.\\n' +
+                      'SOLUTION: Go to Clerk Dashboard → Domains → Delete clerk.x402disputes.com\\n' +
                       'Clerk will automatically fall back to *.clerk.accounts.dev'
                     );
                   }
