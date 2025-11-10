@@ -769,9 +769,32 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           },
         };
         
-        // Include reviewerOrganizationId if authenticated
-        if (authenticatedOrg) {
-          paymentDisputeArgs.reviewerOrganizationId = authenticatedOrg;
+        // Auto-detect reviewerOrganizationId
+        let reviewerOrgId = authenticatedOrg; // Use API key org if provided
+        
+        if (!reviewerOrgId) {
+          // Try defendant's organization first
+          const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
+            walletAddress: defendant
+          });
+          
+          if (defendantAgent?.organizationId) {
+            reviewerOrgId = defendantAgent.organizationId;
+          }
+          // Fallback to plaintiff's organization
+          else {
+            const plaintiffAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
+              walletAddress: parameters.plaintiff
+            });
+            
+            if (plaintiffAgent?.organizationId) {
+              reviewerOrgId = plaintiffAgent.organizationId;
+            }
+          }
+        }
+        
+        if (reviewerOrgId) {
+          paymentDisputeArgs.reviewerOrganizationId = reviewerOrgId;
         }
         
         result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
