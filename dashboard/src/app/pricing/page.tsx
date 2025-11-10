@@ -573,7 +573,7 @@ export default function PricingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
                 YOU do. Your team reviews all cases that need human judgment (typically 5%).
-                Consulate provides AI recommendations based on historical patterns, but you have
+                x402Disputes provides AI recommendations based on historical patterns, but you have
                 the final say. This is the <strong>Infrastructure Model</strong> - we provide tools,
                 you make decisions.
               </AccordionContent>
@@ -607,7 +607,7 @@ export default function PricingPage() {
                 Is this Regulation E compliant?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                Yes. Consulate provides the workflow, logging, and timeline management required by
+                Yes. x402Disputes provides the workflow, logging, and timeline management required by
                 Regulation E. YOU remain the decision-maker (as required by law for consumer
                 protection), we just make the process automated, compliant, and trackable.
               </AccordionContent>

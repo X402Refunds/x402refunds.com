@@ -31,8 +31,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Consulate - Automated Dispute Resolution for AI Agents",
-    template: "%s | Consulate"
+    default: "x402Disputes - Automated Dispute Resolution for AI Agents",
+    template: "%s | x402Disputes"
   },
   description: "Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.",
   keywords: [
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Vivek Kotecha", url: "https://www.x402disputes.com" }],
   creator: "Vivek Kotecha",
-  publisher: "Consulate",
+  publisher: "x402Disputes",
   robots: {
     index: true,
     follow: true,
@@ -75,23 +75,23 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://www.x402disputes.com/',
-    siteName: 'Consulate',
-    title: 'Consulate - Agentic Dispute Arbitration',
+    siteName: 'x402Disputes',
+    title: 'x402Disputes - Agentic Dispute Arbitration',
     description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'Consulate - Automated Dispute Resolution for AI Agents',
+        alt: 'x402Disputes - Automated Dispute Resolution for AI Agents',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@consulatehq',
-    creator: '@consulatehq',
-    title: 'Consulate - Automated Dispute Resolution for AI Agents',
+    site: '@x402disputes',
+    creator: '@x402disputes',
+    title: 'x402Disputes - Automated Dispute Resolution for AI Agents',
     description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster.',
     images: ['/opengraph-image'],
   },
@@ -105,7 +105,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title': 'Consulate',
+    'apple-mobile-web-app-title': 'x402Disputes',
   },
 };
 

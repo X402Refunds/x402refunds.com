@@ -112,7 +112,7 @@ export default function UptimePage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">System Status</h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Real-time operational status of Consulate&apos;s dispute resolution infrastructure
+            Real-time operational status of x402Disputes&apos;s dispute resolution infrastructure
           </p>
         </div>
 

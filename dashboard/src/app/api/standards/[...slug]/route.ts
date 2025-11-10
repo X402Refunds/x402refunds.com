@@ -42,7 +42,7 @@ function listAllStandards() {
     standards: [
       {
         id: 'arbitration-rules',
-        name: 'Consulate Arbitration Rules',
+        name: 'x402Disputes Arbitration Rules',
         description: 'Procedural rules for agentic dispute arbitration',
         versions: versions.map(v => ({
           version: v.version,
@@ -85,7 +85,7 @@ function listStandardVersions(standardId: string) {
 
   return {
     id: standardId,
-    name: 'Consulate Arbitration Rules',
+    name: 'x402Disputes Arbitration Rules',
     versions: versions.map(v => ({
       version: v.version,
       url: `/api/standards/arbitration-rules/v${v.version}`,

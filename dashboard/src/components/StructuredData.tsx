@@ -2,7 +2,7 @@ export function OrganizationStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Consulate",
+    "name": "x402Disputes",
     "url": "https://www.x402disputes.com",
     "logo": "https://www.x402disputes.com/consulate-logo-square.svg",
     "description": "Automated dispute resolution for AI agents. Resolve enterprise AI service agreements and SLA violations in minutes, not months.",
@@ -40,7 +40,7 @@ export function WebSiteStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "Consulate",
+    "name": "x402Disputes",
     "url": "https://www.x402disputes.com",
     "description": "Automated dispute resolution for AI agents",
     "potentialAction": {
@@ -65,7 +65,7 @@ export function ServiceStructuredData() {
     "serviceType": "Agentic Dispute Arbitration",
     "provider": {
       "@type": "Organization",
-      "name": "Consulate",
+      "name": "x402Disputes",
       "url": "https://www.x402disputes.com"
     },
     "areaServed": "Worldwide",
@@ -120,7 +120,7 @@ export function SoftwareApplicationStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Consulate AI Agent Platform",
+    "name": "x402Disputes AI Agent Platform",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -178,34 +178,34 @@ export function FAQStructuredData() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "How fast does Consulate resolve disputes?",
+        "name": "How fast does x402Disputes resolve disputes?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Consulate resolves AI agent disputes in an average of 2.4 minutes, compared to traditional legal processes that can take 4-8 weeks."
+          "text": "x402Disputes resolves AI agent disputes in an average of 2.4 minutes, compared to traditional legal processes that can take 4-8 weeks."
         }
       },
       {
         "@type": "Question",
-        "name": "What types of disputes can Consulate handle?",
+        "name": "What types of disputes can x402Disputes handle?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Consulate handles SLA violations, API downtime disputes, performance breaches, and service agreement violations between AI agents and service providers."
+          "text": "x402Disputes handles SLA violations, API downtime disputes, performance breaches, and service agreement violations between AI agents and service providers."
         }
       },
       {
         "@type": "Question",
-        "name": "How much does Consulate cost?",
+        "name": "How much does x402Disputes cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Consulate charges $500-$3,000 in platform fees, providing 95% cost reduction compared to traditional legal arbitration which typically costs $50,000+."
+          "text": "x402Disputes charges $500-$3,000 in platform fees, providing 95% cost reduction compared to traditional legal arbitration which typically costs $50,000+."
         }
       },
       {
         "@type": "Question",
-        "name": "Is Consulate available 24/7?",
+        "name": "Is x402Disputes available 24/7?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes, Consulate operates as a fully automated system with 24/7 availability for dispute resolution, evidence submission, and case tracking."
+          "text": "Yes, x402Disputes operates as a fully automated system with 24/7 availability for dispute resolution, evidence submission, and case tracking."
         }
       },
       {
@@ -213,7 +213,7 @@ export function FAQStructuredData() {
         "name": "How does automated arbitration work?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Consulate automatically collects evidence (logs, metrics, SLA data), validates claims against service agreements, and executes resolutions (credits, refunds, penalties) without manual intervention."
+          "text": "x402Disputes automatically collects evidence (logs, metrics, SLA data), validates claims against service agreements, and executes resolutions (credits, refunds, penalties) without manual intervention."
         }
       }
     ]

@@ -60,7 +60,7 @@ export default function AboutPage() {
         >
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
             <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 text-sm px-4 py-1.5">
-              About Consulate
+              About x402Disputes
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
               The First AI Governance Operating System
@@ -87,7 +87,7 @@ export default function AboutPage() {
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-emerald-100 flex-shrink-0">
                   <Image
                     src="/vivek-headshot.jpg"
-                    alt="Vivek Kotecha - Founder of Consulate"
+                    alt="Vivek Kotecha - Founder of x402Disputes"
                     fill
                     className="object-cover"
                     priority
@@ -124,7 +124,7 @@ export default function AboutPage() {
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  That&apos;s why I built Consulate: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
+                  That&apos;s why I built x402Disputes: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
                   Persistent identity for every agent. Automated dispute resolution in minutes. Cross-platform reputation. 
                   It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes the default.
                 </p>

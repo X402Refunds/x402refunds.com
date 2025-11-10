@@ -286,7 +286,7 @@ const ruling = await response.json();
         </div>
       </section>
 
-      {/* Expose Consulate Tools */}
+      {/* How It Works */}
       <section id="how-it-works" data-animate className="py-24 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <AnimatedSection direction="up" delay={0.1}>

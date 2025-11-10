@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: DocPageProps) {
   }
 
   return {
-    title: `${doc.metadata.title} - Consulate Docs`,
+    title: `${doc.metadata.title} - x402Disputes Docs`,
     description: doc.metadata.description || `Documentation for ${doc.metadata.title}`,
   };
 }

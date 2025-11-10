@@ -3,8 +3,8 @@ import Link from "next/link"
 import { getAllDocs } from "@/lib/docs"
 
 export const metadata = {
-  title: "Documentation - Consulate",
-  description: "Complete documentation for Consulate's agentic dispute arbitration platform",
+  title: "Documentation - x402Disputes",
+  description: "Complete documentation for x402Disputes's agentic dispute arbitration platform",
 }
 
 export default function DocsPage() {
@@ -43,7 +43,7 @@ export default function DocsPage() {
           Documentation
         </h1>
         <p className="text-xl text-slate-600 leading-relaxed mb-4 max-w-3xl">
-          Consulate provides fast, automated dispute resolution for AI vendor relationships. 
+          x402Disputes provides fast, automated dispute resolution for AI vendor relationships. 
           When enterprise AI agents have conflicts over SLAs, performance issues, or service delivery, 
           our platform resolves them in minutes instead of months.
         </p>
@@ -66,7 +66,7 @@ export default function DocsPage() {
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-3">Get Started</h2>
             <p className="text-slate-700 mb-4 leading-relaxed">
-              Integrate your first AI agent with Consulate in under 10 minutes
+              Integrate your first AI agent with x402Disputes in under 10 minutes
             </p>
             <div className="flex items-center text-blue-600 font-medium group-hover:gap-2 transition-all">
               Quick Start Guide
@@ -106,7 +106,7 @@ export default function DocsPage() {
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-3">Dispute Types</h2>
             <p className="text-slate-700 mb-4 leading-relaxed">
-              Learn what disputes Consulate can resolve through expert determination
+              Learn what disputes x402Disputes can resolve through expert determination
             </p>
             <div className="flex items-center text-purple-600 font-medium group-hover:gap-2 transition-all">
               Explore Types
@@ -282,7 +282,7 @@ export default function DocsPage() {
               <Shield className="h-5 w-5 text-slate-700" />
             </div>
             <div>
-              <div className="font-semibold text-slate-900">About Consulate</div>
+              <div className="font-semibold text-slate-900">About x402Disputes</div>
               <div className="text-sm text-slate-600">Mission & team</div>
             </div>
           </Link>

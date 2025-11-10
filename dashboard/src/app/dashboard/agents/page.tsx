@@ -179,7 +179,7 @@ export default function AgentsPage() {
             <CardHeader>
               <CardTitle className="text-base">Agent Integration</CardTitle>
               <CardDescription>
-                Learn how to integrate your agents with Consulate&apos;s platform
+                Learn how to integrate your agents with x402Disputes&apos;s platform
               </CardDescription>
             </CardHeader>
             <CardContent>
