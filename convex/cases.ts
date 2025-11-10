@@ -93,6 +93,9 @@ export const fileDispute = mutation({
     // Payment dispute fields (for backward compatibility)
     amount: v.optional(v.number()),
     currency: v.optional(v.string()),
+    
+    // Organization reviewer field (for X-402 disputes)
+    reviewerOrganizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
     // Validate plaintiff and defendant are different
@@ -153,6 +156,7 @@ export const fileDispute = mutation({
       breachDetails: args.breachDetails, // Store SLA/breach details if provided
       signedEvidence: args.signedEvidence, // NEW: Cryptographically signed evidence
       retentionPolicy: "commercial", // General disputes use commercial retention policy
+      reviewerOrganizationId: args.reviewerOrganizationId, // Link to organization for review
       createdAt: now,
     };
 
@@ -392,18 +396,42 @@ export const getOrganizationCases = query({
     
     const agentDids = orgAgents.map(a => a.did);
     
+    // Get cases where organization is the reviewer (payment disputes)
+    const reviewerCases = await ctx.db
+      .query("cases")
+      .withIndex("by_reviewer_org", (q) => q.eq("reviewerOrganizationId", args.organizationId))
+      .order("desc")
+      .take(args.limit ?? 100);
+    
     // Get cases where any org agent is plaintiff or defendant
-    const cases = await ctx.db
+    const agentCases = await ctx.db
       .query("cases")
       .withIndex("by_filed_at")
       .order("desc")
-      .take(args.limit ?? 10);
+      .take(args.limit ?? 100);
     
-    // Filter to only cases involving org agents
-    return cases.filter(c => 
-      (c.plaintiff && agentDids.includes(c.plaintiff)) || 
-      (c.defendant && agentDids.includes(c.defendant))
-    );
+    // Combine and deduplicate cases
+    const caseMap = new Map();
+    
+    // Add reviewer cases first (payment disputes where org is reviewer)
+    for (const c of reviewerCases) {
+      caseMap.set(c._id, c);
+    }
+    
+    // Add cases where org's agents are involved
+    for (const c of agentCases) {
+      if ((c.plaintiff && agentDids.includes(c.plaintiff)) || 
+          (c.defendant && agentDids.includes(c.defendant))) {
+        caseMap.set(c._id, c);
+      }
+    }
+    
+    // Convert back to array and sort by filed date
+    const allCases = Array.from(caseMap.values());
+    allCases.sort((a, b) => b.filedAt - a.filedAt);
+    
+    // Limit results
+    return allCases.slice(0, args.limit ?? 10);
   },
 });
 

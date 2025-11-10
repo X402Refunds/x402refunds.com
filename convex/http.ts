@@ -535,6 +535,12 @@ http.route({
         });
       }
       
+      // 3. Determine reviewerOrganizationId from defendant's organization
+      let reviewerOrganizationId: any = undefined;
+      if (vendor.organizationId) {
+        reviewerOrganizationId = vendor.organizationId;
+      }
+
       // 3. Create dispute case with signed evidence
       const caseId = await ctx.runMutation(api.cases.fileDispute, {
         plaintiff: body.buyerId || `buyer:${body.buyerEmail || "anonymous"}`,
@@ -545,6 +551,7 @@ http.route({
         description: body.complaint,
         amount: body.amountUsd || body.amount, // Support both old and new field names
         currency: body.crypto ? body.crypto.currency : (body.currency || "USD"),
+        reviewerOrganizationId, // Link to defendant's organization
         signedEvidence: {
           request: body.request,
           response: body.response,
