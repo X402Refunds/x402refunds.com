@@ -128,7 +128,7 @@ export const MCP_TOOLS = [
           }]
         },
         response: {
-          type: "object",
+      type: "object",
           description: "REQUIRED. The error response buyer received. Include status, headers, body.",
           examples: [{
             status: 500,
@@ -171,9 +171,9 @@ export const MCP_TOOLS = [
     returns: {
       oneOf: [
         {
-          type: "object",
+      type: "object",
           description: "Success response when dispute is filed",
-          properties: {
+      properties: {
             success: { type: "boolean", const: true },
             disputeType: { type: "string", enum: ["PAYMENT"] },
             caseId: { type: "string", description: "Unique case identifier for tracking" },
@@ -194,12 +194,12 @@ export const MCP_TOOLS = [
           required: ["success", "caseId", "trackingUrl", "disputeFee"]
         },
         {
-          type: "object",
+      type: "object",
           description: "Error response with actionable guidance",
-          properties: {
+      properties: {
             success: { type: "boolean", const: false },
             error: {
-              type: "object",
+          type: "object",
               properties: {
                 code: { type: "string", description: "Error code (e.g., INVALID_PLAINTIFF_FORMAT)" },
                 message: { type: "string", description: "Human-readable error message" },
@@ -209,8 +209,8 @@ export const MCP_TOOLS = [
                 suggestion: { type: "string", description: "How to fix the error" }
               },
               required: ["code", "message"]
-            }
-          },
+        }
+      },
           required: ["success", "error"]
         }
       ]
@@ -506,21 +506,21 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
         if (!parameters.transactionHash) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
+            return new Response(JSON.stringify({
+              success: false,
+              error: {
               code: "MISSING_TRANSACTION_HASH",
               message: "transactionHash is required",
               field: "transactionHash",
               expected: "Blockchain transaction hash",
               suggestion: "Provide the transaction hash from X-402-Transaction-Hash header or your wallet"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          
         if (!parameters.blockchain) {
           return new Response(JSON.stringify({
             success: false,
@@ -538,7 +538,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
         if (!parameters.description) {
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
             success: false,
             error: {
               code: "MISSING_DESCRIPTION",
@@ -546,11 +546,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               field: "description",
               expected: "String between 10-500 characters describing what went wrong",
               suggestion: "Add a description like: 'API returned 500 error after payment was confirmed on-chain'"
-            }
-          }), {
+          }
+        }), {
             status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         }
         
         // 3. Query blockchain to verify payment and get details
@@ -563,7 +563,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         } catch (error: any) {
           // Handle action execution errors
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
             success: false,
             error: {
               code: "TRANSACTION_NOT_FOUND",
@@ -574,14 +574,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
               details: error.message
             }
-          }), {
+        }), {
             status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         }
         
         if (!txDetails || !txDetails.success) {
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
             success: false,
             error: {
               code: "TRANSACTION_NOT_FOUND",
@@ -594,8 +594,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             }
           }), {
             status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         }
         
         // 4. Validate addresses match blockchain transaction
@@ -615,7 +615,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             headers: { "Content-Type": "application/json" }
           });
         }
-        
+
         if (txDetails.toAddress.toLowerCase() !== defendant.toLowerCase()) {
           return new Response(JSON.stringify({
             success: false,
@@ -681,8 +681,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             publicKey: defendantAgent.publicKey,
             signature: parameters.sellerXSignature,
             payload: payloadString
-          });
-          
+        });
+        
           if (!verificationResult.valid) {
             console.warn("⚠️  Seller signature verification failed, but continuing (signature is optional)");
             console.warn("   Reason:", verificationResult.error);
@@ -696,8 +696,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         // If dry run, return validation results without filing
         if (parameters.dryRun) {
-          return new Response(JSON.stringify({
-            success: true,
+        return new Response(JSON.stringify({
+          success: true,
             dryRun: true,
             wouldExecute: {
               action: "file_x402_payment_dispute",
@@ -731,9 +731,9 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               `Fee: $0.05`,
               "Resolution within 5-10 minutes for micro-disputes"
             ]
-          }), {
-            headers: { "Content-Type": "application/json" }
-          });
+        }), {
+          headers: { "Content-Type": "application/json" }
+        });
         }
         
         // 8. File payment dispute with blockchain-verified details
@@ -768,7 +768,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
 
-        return new Response(JSON.stringify({
+          return new Response(JSON.stringify({
           success: true,
             disputeType: "PAYMENT",
           caseId: result.caseId,
@@ -780,7 +780,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           estimatedResolutionTime: result.estimatedResolutionTime,
           message: `X-402 payment dispute filed successfully. Case ID: ${result.caseId}`,
           trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
-          nextSteps: [
+            nextSteps: [
               "Submit additional evidence (optional)",
               "AI analyzes dispute + provides recommendation",
               "Your team reviews exceptions in dashboard",
@@ -795,8 +795,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`
           }
         }), {
-          headers: { "Content-Type": "application/json" }
-        });
+            headers: { "Content-Type": "application/json" }
+          });
         
       case "consulate_check_case_status":
         result = await ctx.runQuery(internal.cases.getCase, {

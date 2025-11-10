@@ -27,6 +27,29 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
   },
 
+  // Webpack configuration to handle optional dependencies
+  webpack: (config, { isServer }) => {
+    // Ignore optional dependencies that aren't needed for Next.js builds
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        '@react-native-async-storage/async-storage': false,
+        'pino-pretty': false,
+      };
+    }
+    
+    // Externalize modules that shouldn't be bundled
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push({
+        '@react-native-async-storage/async-storage': 'commonjs @react-native-async-storage/async-storage',
+        'pino-pretty': 'commonjs pino-pretty',
+      });
+    }
+    
+    return config;
+  },
+
   // Security Headers
   async headers() {
     return [

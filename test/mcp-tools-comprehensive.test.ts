@@ -133,7 +133,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         request: { method: 'POST', url: 'https://api.test.com' },
         response: { status: 500 },
         transactionHash: `0x${timestamp.toString(16)}`,
-        blockchain: 'base',
+          blockchain: 'base',
         dryRun: true
       });
 
@@ -187,7 +187,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         });
         
         if (disputeData.success) {
-          testCaseId = disputeData.caseId;
+        testCaseId = disputeData.caseId;
         }
       }
 
@@ -204,8 +204,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       expect([200, 400, 404, 500]).toContain(response.status);
       
       if (data.success && data.case) {
-        expect(data.case.status).toBeDefined();
-        expect(data.case.type).toMatch(/PAYMENT/);
+      expect(data.case.status).toBeDefined();
+      expect(data.case.type).toMatch(/PAYMENT/);
       }
     });
 
@@ -302,12 +302,12 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
       // 2. Check case status (if case was created)
       if (disputeData.caseId) {
-        const { data: statusData } = await invokeMcpTool('consulate_check_case_status', {
+      const { data: statusData } = await invokeMcpTool('consulate_check_case_status', {
           caseId: disputeData.caseId
-        });
+      });
 
         if (statusData.success) {
-          expect(statusData.case).toBeDefined();
+      expect(statusData.case).toBeDefined();
         }
       }
 
