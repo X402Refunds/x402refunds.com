@@ -27,15 +27,17 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
-      // X-402 ultra-minimal (8 required fields)
+      // X-402 ultra-minimal (7 required fields - disputeUrl is now optional)
       expect(required).toContain("plaintiff");  // Ethereum address
       expect(required).toContain("defendant");  // Ethereum address
-      expect(required).toContain("disputeUrl");
       expect(required).toContain("description");
       expect(required).toContain("request");  // Object
       expect(required).toContain("response");  // Object
       expect(required).toContain("transactionHash");
       expect(required).toContain("blockchain");
+      
+      // disputeUrl is now optional (can be derived from defendant)
+      expect(required).not.toContain("disputeUrl");
       
       // These are derived from blockchain or optional
       expect(required).not.toContain("amountUsd");

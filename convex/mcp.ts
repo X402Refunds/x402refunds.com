@@ -101,7 +101,7 @@ export const MCP_TOOLS = [
         disputeUrl: {
           type: "string",
           pattern: "^https://api\\.x402disputes\\.com/disputes/claim\\?vendor=0x[a-fA-F0-9]{40}$",
-          description: "REQUIRED. Dispute URL. Format: 'https://api.x402disputes.com/disputes/claim?vendor=0x[sellerAddress]'.",
+          description: "OPTIONAL. Dispute URL (can be auto-constructed from defendant address). Format: 'https://api.x402disputes.com/disputes/claim?vendor=0x[sellerAddress]'. If provided, vendor parameter will override defendant field.",
           examples: [
             "https://api.x402disputes.com/disputes/claim?vendor=0x9876543210987654321098765432109876543210"
           ]
@@ -166,7 +166,7 @@ export const MCP_TOOLS = [
           description: "Optional. If true, validates parameters without filing."
         }
       },
-      required: ["plaintiff", "defendant", "disputeUrl", "description", "request", "response", "transactionHash", "blockchain"]
+      required: ["plaintiff", "defendant", "description", "request", "response", "transactionHash", "blockchain"]
     },
     returns: {
       oneOf: [
@@ -363,7 +363,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         // Uses Ethereum addresses as canonical identities
         // Queries blockchain for payment verification
         
-        // 1. Extract defendant (seller wallet address) from disputeUrl
+        // 1. Extract defendant (seller wallet address) from disputeUrl (if provided)
         let defendant = parameters.defendant;
         
         if (parameters.disputeUrl) {
@@ -406,6 +406,9 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               headers: { "Content-Type": "application/json" }
             });
           }
+        } else {
+          // disputeUrl is optional - use defendant parameter directly
+          console.log(`ℹ️  No disputeUrl provided, using defendant parameter: ${defendant}`);
         }
         
         // 2. Validate Ethereum addresses (X-402 identity)
