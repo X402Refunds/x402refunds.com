@@ -604,6 +604,30 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     }
   }
 
+  // Auto-detect reviewerOrganizationId if not provided via API key
+  let reviewerOrgId = organizationId;
+  
+  if (!reviewerOrgId) {
+    // Try defendant's organization first
+    const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
+      walletAddress: body.defendant
+    });
+    
+    if (defendantAgent?.organizationId) {
+      reviewerOrgId = defendantAgent.organizationId;
+    }
+    // Fallback to plaintiff's organization
+    else {
+      const plaintiffAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
+        walletAddress: body.plaintiff
+      });
+      
+      if (plaintiffAgent?.organizationId) {
+        reviewerOrgId = plaintiffAgent.organizationId;
+      }
+    }
+  }
+
   // Create payment dispute (organizationId auto-injected)
   const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
     transactionId: body.transactionId,
@@ -616,7 +640,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     description: body.description || "Payment dispute",
     evidenceUrls: body.evidenceUrls || [],
     callbackUrl: body.callbackUrl,
-    reviewerOrganizationId: organizationId, // Auto-detected from API key
+    reviewerOrganizationId: reviewerOrgId, // Auto-detected from API key OR agent lookup
     // Party metadata - helps customer identify parties in their system
     plaintiffMetadata: body.plaintiffMetadata,
     defendantMetadata: body.defendantMetadata,
