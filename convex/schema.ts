@@ -145,6 +145,9 @@ export default defineSchema({
       size: v.optional(v.number()),
     }))),
 
+    // DEPRECATED: metadata field kept for backward compatibility with existing data
+    metadata: v.optional(v.any()),
+
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
 
@@ -252,6 +255,14 @@ export default defineSchema({
         v.literal("quality_issue"),
         v.literal("other")
       )),
+      
+      // DEPRECATED: These fields are ignored but kept for backward compatibility with existing data
+      paymentProtocol: v.optional(v.any()),
+      paymentType: v.optional(v.any()),
+      crypto: v.optional(v.any()),
+      custodial: v.optional(v.any()),
+      traditional: v.optional(v.any()),
+      metadata: v.optional(v.any()),
       
       regulationEDeadline: v.number(),      // Regulation E compliance (10 business days)
       // Flat pricing: $0.05 per dispute (no tiers)

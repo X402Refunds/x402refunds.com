@@ -79,6 +79,10 @@ export const receivePaymentDispute = mutation({
     transactionHash: v.optional(v.string()),
     amount: v.number(),
     currency: v.string(),
+    
+    // DEPRECATED: paymentProtocol kept for backward compatibility with tests/existing code
+    // Will be ignored, not validated, not stored
+    paymentProtocol: v.optional(v.any()),
 
     // Parties (customer-scoped identifiers)
     // plaintiff = YOUR CUSTOMER (Alice) who is disputing the charge
