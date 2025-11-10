@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Key, Download, Loader2, AlertCircle } from "lucide-react"
+import { Key, Download, Loader2, AlertCircle, CheckCircle2, Copy } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface CreateAgentDialogProps {
@@ -46,6 +46,8 @@ export function CreateAgentDialog({
   const [error, setError] = useState<string | null>(null)
   const [generatedKeyPair, setGeneratedKeyPair] = useState<{publicKey: string, privateKey: string} | null>(null)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+  const [successData, setSuccessData] = useState<{disputeUrl: string, agentName: string} | null>(null)
+  const [copied, setCopied] = useState(false)
   
   // Validate Ethereum address format (client-side)
   const isValidEthereumAddress = (address: string): boolean => {
@@ -153,7 +155,7 @@ export function CreateAgentDialog({
       // Convert PEM to base64 if needed
       const publicKeyBase64 = extractBase64FromPem(publicKey)
       
-      await registerAgentManual({
+      const result = await registerAgentManual({
         userId: currentUser._id,
         name: agentName.trim() || "Unnamed Agent",
         publicKey: publicKeyBase64,
@@ -161,13 +163,11 @@ export function CreateAgentDialog({
         functionalType: functionalType as "general" | "voice" | "chat" | "coding" | "data" | "api" | "research" | "financial" | "transaction" | "legal" | "healthcare" | "workflow",
       })
       
-      // Success - reset form and close
-      setAgentName("")
-      setPublicKey("")
-      setWalletAddress("")
-      setFunctionalType("general")
-      setGeneratedKeyPair(null)
-      onOpenChange(false)
+      // Show success state with dispute URL
+      setSuccessData({
+        disputeUrl: result.disputeUrl,
+        agentName: agentName.trim() || "Unnamed Agent"
+      })
       
       // Refresh the page to show new agent
       router.refresh()
@@ -179,13 +179,55 @@ export function CreateAgentDialog({
     }
   }
   
+  const handleCopyDisputeUrl = async () => {
+    if (!successData) return
+    
+    try {
+      await navigator.clipboard.writeText(successData.disputeUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = successData.disputeUrl
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+  
+  const handleSuccessClose = () => {
+    // Reset everything and close
+    setAgentName("")
+    setPublicKey("")
+    setWalletAddress("")
+    setFunctionalType("general")
+    setGeneratedKeyPair(null)
+    setSuccessData(null)
+    setError(null)
+    setCopied(false)
+    onOpenChange(false)
+  }
+  
   const handleClose = () => {
+    // If showing success, reset and close
+    if (successData) {
+      handleSuccessClose()
+      return
+    }
+    
+    // Otherwise just reset and close
     setAgentName("")
     setPublicKey("")
     setWalletAddress("")
     setFunctionalType("general")
     setGeneratedKeyPair(null)
     setError(null)
+    setSuccessData(null)
+    setCopied(false)
     onOpenChange(false)
   }
   
@@ -193,13 +235,68 @@ export function CreateAgentDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Register Agent</DialogTitle>
+          <DialogTitle>
+            {successData ? "Agent Registered Successfully!" : "Register Agent"}
+          </DialogTitle>
           <DialogDescription>
-            Manually register an agent with a public key
+            {successData 
+              ? `Your agent "${successData.agentName}" has been registered.`
+              : "Manually register an agent with a public key"
+            }
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 mt-4">
+        {successData ? (
+          <div className="space-y-4 mt-4">
+            <div className="bg-accent border border-border rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground mb-2">
+                    Dispute URL
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Share this URL with buyers so they can file disputes against your agent:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs font-mono break-all">
+                      {successData.disputeUrl}
+                    </code>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyDisputeUrl}
+                      className="flex-shrink-0"
+                    >
+                      {copied ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-1" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 pt-2">
+              <Button 
+                onClick={handleSuccessClose}
+                className="flex-1"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 mt-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="agentName">
@@ -350,6 +447,7 @@ export function CreateAgentDialog({
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   )
