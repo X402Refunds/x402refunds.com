@@ -40,11 +40,17 @@ export function CreateAgentDialog({
   // Registration state
   const [agentName, setAgentName] = useState("")
   const [publicKey, setPublicKey] = useState("")
+  const [walletAddress, setWalletAddress] = useState("")
   const [functionalType, setFunctionalType] = useState("general")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generatedKeyPair, setGeneratedKeyPair] = useState<{publicKey: string, privateKey: string} | null>(null)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+  
+  // Validate Ethereum address format (client-side)
+  const isValidEthereumAddress = (address: string): boolean => {
+    return /^0x[a-fA-F0-9]{40}$/.test(address.trim())
+  }
   
   // Get current user for manual registration
   const currentUser = useQuery(
@@ -129,6 +135,17 @@ export function CreateAgentDialog({
       return
     }
     
+    if (!walletAddress.trim()) {
+      setError("Please provide an Ethereum wallet address")
+      return
+    }
+    
+    // Validate Ethereum address format
+    if (!isValidEthereumAddress(walletAddress)) {
+      setError("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)")
+      return
+    }
+    
     setIsSubmitting(true)
     setError(null)
     
@@ -140,12 +157,14 @@ export function CreateAgentDialog({
         userId: currentUser._id,
         name: agentName.trim() || "Unnamed Agent",
         publicKey: publicKeyBase64,
+        walletAddress: walletAddress.trim(),
         functionalType: functionalType as "general" | "voice" | "chat" | "coding" | "data" | "api" | "research" | "financial" | "transaction" | "legal" | "healthcare" | "workflow",
       })
       
       // Success - reset form and close
       setAgentName("")
       setPublicKey("")
+      setWalletAddress("")
       setFunctionalType("general")
       setGeneratedKeyPair(null)
       onOpenChange(false)
@@ -163,6 +182,7 @@ export function CreateAgentDialog({
   const handleClose = () => {
     setAgentName("")
     setPublicKey("")
+    setWalletAddress("")
     setFunctionalType("general")
     setGeneratedKeyPair(null)
     setError(null)
@@ -195,6 +215,28 @@ export function CreateAgentDialog({
               <p className="text-xs text-muted-foreground">
                 Leave empty to auto-generate a name
               </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="walletAddress">
+                Ethereum Wallet Address <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="walletAddress"
+                placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
+                disabled={isSubmitting}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your agent&apos;s Ethereum wallet address (ERC-8004 identity). This will be used in dispute URLs.
+              </p>
+              {walletAddress && !isValidEthereumAddress(walletAddress) && (
+                <p className="text-xs text-destructive">
+                  Invalid format. Must be 0x followed by 40 hexadecimal characters.
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -292,7 +334,7 @@ export function CreateAgentDialog({
           <div className="flex gap-3 pt-2">
             <Button 
               onClick={handleManualRegister}
-              disabled={isSubmitting || !publicKey.trim()}
+              disabled={isSubmitting || !publicKey.trim() || !walletAddress.trim() || !isValidEthereumAddress(walletAddress)}
               className="flex-1"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

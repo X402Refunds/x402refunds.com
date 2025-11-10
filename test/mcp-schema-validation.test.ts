@@ -11,9 +11,9 @@ import { MCP_TOOLS } from "../convex/mcp";
 describe("MCP Tool Schema Validation", () => {
   // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint
 
-  describe("consulate_file_dispute", () => {
+  describe("x402_file_dispute", () => {
     it("should have blockchain enum and Ethereum address patterns", () => {
-      const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
+      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
       // X-402 ultra-minimal schema
@@ -23,7 +23,7 @@ describe("MCP Tool Schema Validation", () => {
     });
 
     it("should have required fields matching X-402 ultra-minimal schema", () => {
-      const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
+      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
@@ -47,9 +47,9 @@ describe("MCP Tool Schema Validation", () => {
 
   // Note: consulate_submit_evidence tool was removed - evidence is included in dispute filing
 
-  describe("consulate_check_case_status", () => {
+  describe("x402_check_case_status", () => {
     it("should have required fields", () => {
-      const statusTool = MCP_TOOLS.find(t => t.name === "consulate_check_case_status");
+      const statusTool = MCP_TOOLS.find(t => t.name === "x402_check_case_status");
       expect(statusTool).toBeDefined();
 
       const required = statusTool?.input_schema.required;
@@ -57,9 +57,9 @@ describe("MCP Tool Schema Validation", () => {
     });
   });
 
-  describe("consulate_list_my_cases", () => {
+  describe("x402_list_my_cases", () => {
     it("should have status enum matching backend case statuses", () => {
-      const listTool = MCP_TOOLS.find(t => t.name === "consulate_list_my_cases");
+      const listTool = MCP_TOOLS.find(t => t.name === "x402_list_my_cases");
       expect(listTool).toBeDefined();
 
       const statusEnum = listTool?.input_schema.properties.status.enum;
@@ -100,9 +100,9 @@ describe("MCP Tool Schema Validation", () => {
       expect(MCP_TOOLS.length).toBe(3);
 
       const expectedTools = [
-        "consulate_file_dispute",
-        "consulate_list_my_cases",
-        "consulate_check_case_status"
+        "x402_file_dispute",
+        "x402_list_my_cases",
+        "x402_check_case_status"
       ];
 
       const actualNames = MCP_TOOLS.map(t => t.name);

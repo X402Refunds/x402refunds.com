@@ -42,18 +42,8 @@ function log(message, data = null) {
   }
 }
 
-// Validation
-if (!API_KEY) {
-  console.error('❌ ERROR: CONSULATE_API_KEY environment variable is required');
-  console.error('');
-  console.error('Usage:');
-  console.error('  CONSULATE_API_KEY=csk_live_... node claude-desktop-mcp-proxy.js');
-  console.error('');
-  console.error('Get your API key from: https://x402disputes.com/settings/api-keys');
-  process.exit(1);
-}
-
-if (!API_KEY.startsWith('csk_live_') && !API_KEY.startsWith('csk_test_')) {
+// Validation (API key is optional - MCP endpoints are publicly accessible)
+if (API_KEY && !API_KEY.startsWith('csk_live_') && !API_KEY.startsWith('csk_test_')) {
   console.error('❌ ERROR: Invalid API key format');
   console.error('');
   console.error('API keys must start with:');
@@ -66,7 +56,7 @@ if (!API_KEY.startsWith('csk_live_') && !API_KEY.startsWith('csk_test_')) {
 
 log('🚀 Consulate MCP Proxy starting...');
 log(`API Base URL: ${API_BASE_URL}`);
-log(`API Key: ${API_KEY.substring(0, 15)}...`);
+log(`API Key: ${API_KEY ? API_KEY.substring(0, 15) + '...' : 'none (public access)'}`);
 
 /**
  * Fetch helper that supports both http and https
@@ -143,13 +133,19 @@ async function invokeTool(toolName, parameters) {
   try {
     log(`Invoking tool: ${toolName}`, parameters);
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Consulate-MCP-Proxy/1.0'
+    };
+    
+    // Add Authorization header only if API key is provided
+    if (API_KEY) {
+      headers['Authorization'] = `Bearer ${API_KEY}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-        'User-Agent': 'Consulate-MCP-Proxy/1.0'
-      },
+      headers: headers,
       body: JSON.stringify({
         tool: toolName,
         parameters: parameters

@@ -5,9 +5,9 @@ import { API_BASE_URL } from './fixtures';
  * Comprehensive MCP Tools Test Suite - HTTP Endpoint Testing
  *
  * Tests all 3 MCP server tools via HTTP endpoints:
- * 1. consulate_file_dispute - File X-402 payment disputes (ultra-minimal schema)
- * 2. consulate_list_my_cases - List cases for an Ethereum address
- * 3. consulate_check_case_status - Check case status
+ * 1. x402_file_dispute - File X-402 payment disputes (ultra-minimal schema)
+ * 2. x402_list_my_cases - List cases for an Ethereum address
+ * 3. x402_check_case_status - Check case status
  *
  * IMPORTANT: These tests use real HTTP endpoints, not in-memory convex-test.
  * This ensures we're testing the actual MCP protocol implementation.
@@ -41,10 +41,10 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     return { response, data };
   }
 
-  describe('1. consulate_file_dispute (X-402 Ultra-Minimal)', () => {
+  describe('1. x402_file_dispute (X-402 Ultra-Minimal)', () => {
     it('should file X-402 payment dispute with Ethereum addresses', async () => {
       const timestamp = Date.now();
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
@@ -79,7 +79,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should validate Ethereum address format for plaintiff', async () => {
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: 'not-an-ethereum-address', // Invalid
         defendant: testSellerAddress,
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
@@ -96,7 +96,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should validate Ethereum address format for defendant', async () => {
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: 'invalid-address', // Invalid
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=invalid`,
@@ -113,7 +113,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should validate required fields', async () => {
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         // Missing required fields
         plaintiff: testBuyerAddress
       });
@@ -125,7 +125,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should support dryRun mode for validation', async () => {
       const timestamp = Date.now();
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
@@ -150,7 +150,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should validate blockchain enum', async () => {
-      const { response, data } = await invokeMcpTool('consulate_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
@@ -170,12 +170,12 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
   });
 
-  describe('2. consulate_check_case_status', () => {
+  describe('2. x402_check_case_status', () => {
     it('should get case status', async () => {
       // First create a case if we don't have one
       if (!testCaseId) {
         const timestamp = Date.now();
-        const { data: disputeData } = await invokeMcpTool('consulate_file_dispute', {
+        const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
           plaintiff: testBuyerAddress,
           defendant: testSellerAddress,
           disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
@@ -196,7 +196,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         testCaseId = 'k17test123456789012345678901234567890';
       }
 
-      const { response, data } = await invokeMcpTool('consulate_check_case_status', {
+      const { response, data } = await invokeMcpTool('x402_check_case_status', {
         caseId: testCaseId
       });
 
@@ -211,7 +211,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should return error for non-existent case', async () => {
       const fakeCaseId = 'k17xm47xm47xm47xm47xm47xm47xm4';
-      const { response, data } = await invokeMcpTool('consulate_check_case_status', {
+      const { response, data } = await invokeMcpTool('x402_check_case_status', {
         caseId: fakeCaseId
       });
 
@@ -224,11 +224,11 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
   });
 
-  describe('3. consulate_list_my_cases', () => {
+  describe('3. x402_list_my_cases', () => {
     it('should list cases for an Ethereum address', async () => {
       // Note: This requires the address to have cases filed
       // In test environment, may return empty array
-      const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
         walletAddress: testBuyerAddress // Using ERC-8004 Ethereum wallet address
       });
 
@@ -239,7 +239,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should filter by status', async () => {
-      const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
         walletAddress: testBuyerAddress,
         status: 'FILED'
       });
@@ -251,7 +251,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should return all statuses when status is "all"', async () => {
-      const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
         walletAddress: testBuyerAddress,
         status: 'all'
       });
@@ -269,7 +269,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       const sellerAddress = `0x${(timestamp + 1).toString(16).padStart(40, '0')}`;
 
       // 1. File dispute
-      const { data: disputeData } = await invokeMcpTool('consulate_file_dispute', {
+      const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: buyerAddress,
         defendant: sellerAddress,
         disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${sellerAddress}`,

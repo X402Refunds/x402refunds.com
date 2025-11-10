@@ -19,7 +19,7 @@ describe('MCP - Tool Definitions', () => {
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(3); // Simplified: file_dispute, list_my_cases, check_case_status
+    expect(MCP_TOOLS.length).toBe(3); // Simplified: x402_file_dispute, x402_list_my_cases, x402_check_case_status
   });
 
   it('should have valid tool schemas', async () => {
@@ -36,10 +36,10 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include consulate_file_dispute tool with improved schema', async () => {
+  it('should include x402_file_dispute tool with improved schema', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
     
@@ -67,18 +67,18 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.returns).toBeDefined();
   });
 
-  it('should include consulate_check_case_status tool', async () => {
+  it('should include x402_check_case_status tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_check_case_status');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_check_case_status');
     expect(tool).toBeDefined();
     expect(tool?.input_schema.required).toContain('caseId');
   });
 
-  it('should include consulate_list_my_cases tool', async () => {
+  it('should include x402_list_my_cases tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'consulate_list_my_cases');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_list_my_cases');
     expect(tool).toBeDefined();
     expect(tool?.input_schema.required).toContain('walletAddress');
   });
@@ -88,7 +88,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have Ethereum address validation for plaintiff/defendant fields', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
     const plaintiff = fileDisputeTool?.input_schema.properties.plaintiff;
     const defendant = fileDisputeTool?.input_schema.properties.defendant;
 
@@ -103,7 +103,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have contentEncoding for optional sellerXSignature field', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
     const sellerXSignature = fileDisputeTool?.input_schema.properties.sellerXSignature;
     
     expect(sellerXSignature).toBeDefined();
@@ -117,7 +117,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have dryRun parameter for testing', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
     const dryRun = fileDisputeTool?.input_schema.properties.dryRun;
     
     expect(dryRun).toBeDefined();

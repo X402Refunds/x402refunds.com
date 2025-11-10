@@ -24,6 +24,7 @@ interface Agent {
   deactivatedAt?: number
   deactivatedBy?: Id<"users">
   anonymizedAt?: number
+  walletAddress?: string // Ethereum address (ERC-8004 identity)
 }
 
 interface AgentListProps {
@@ -154,15 +155,19 @@ export function AgentList({ agents }: AgentListProps) {
                   </Badge>
                 </TableCell>
                 <TableCell className="font-mono text-xs">
-                  <a 
-                    href={`https://api.x402disputes.com/disputes/claim?vendor=${agent.did}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                    title={`Dispute URL: https://api.x402disputes.com/disputes/claim?vendor=${agent.did}`}
-                  >
-                    /disputes/claim?vendor={agent.did.slice(0, 20)}...
-                  </a>
+                  {agent.walletAddress ? (
+                    <a 
+                      href={`https://api.x402disputes.com/disputes/claim?vendor=${agent.walletAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                      title={`Dispute URL: https://api.x402disputes.com/disputes/claim?vendor=${agent.walletAddress}`}
+                    >
+                      /disputes/claim?vendor={agent.walletAddress.slice(0, 20)}...
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">No wallet address</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDistanceToNow(agent.createdAt, { addSuffix: true })}

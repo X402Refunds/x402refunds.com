@@ -467,7 +467,7 @@ http.route({
       if (!vendorId) {
         return new Response(JSON.stringify({
           error: "Missing vendor parameter",
-          hint: "Use /disputes/claim?vendor=did:agent:vendor-123"
+          hint: "Use /disputes/claim?vendor=0x[ethereum-address] (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)"
         }), {
           status: 400,
           headers: corsHeaders,

@@ -75,7 +75,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
  */
 export const MCP_TOOLS = [
   {
-    name: "consulate_file_dispute",
+    name: "x402_file_dispute",
     description: "File X-402 payment dispute. Provide buyer/seller Ethereum addresses, request/response objects, and blockchain transaction proof. We query blockchain for amount/currency/addresses automatically. Seller signature optional. Permissionless - file against any agent. $0.05 flat fee.",
     input_schema: {
       type: "object",
@@ -217,7 +217,7 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "consulate_list_my_cases",
+    name: "x402_list_my_cases",
     description: "List all X-402 payment dispute cases where you are a party (plaintiff or defendant). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
     input_schema: {
       type: "object",
@@ -241,7 +241,7 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "consulate_check_case_status",
+    name: "x402_check_case_status",
     description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
     input_schema: {
       type: "object",
@@ -338,7 +338,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const bodyStr = JSON.stringify(body);
 
     // Public tools (no auth required): check_case_status
-    const publicTools = ['consulate_check_case_status'];
+    const publicTools = ['x402_check_case_status'];
     const isPublicTool = publicTools.includes(tool);
 
     // For now, no authentication required for MCP tools
@@ -358,7 +358,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     let result;
     
     switch (tool) {
-      case "consulate_file_dispute":
+      case "x402_file_dispute":
         // X-402 PAYMENT DISPUTE HANDLER
         // Uses Ethereum addresses as canonical identities
         // Queries blockchain for payment verification
@@ -803,7 +803,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             headers: { "Content-Type": "application/json" }
           });
         
-      case "consulate_check_case_status":
+      case "x402_check_case_status":
         result = await ctx.runQuery(internal.cases.getCase, {
           caseId: parameters.caseId as any
         });
@@ -815,7 +815,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           headers: { "Content-Type": "application/json" }
         });
         
-      case "consulate_list_my_cases":
+      case "x402_list_my_cases":
         // Validate Ethereum address format
         if (!parameters.walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(parameters.walletAddress)) {
           return new Response(JSON.stringify({

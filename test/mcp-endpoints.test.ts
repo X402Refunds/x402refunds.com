@@ -53,11 +53,11 @@ describe('MCP Protocol - Tool Discovery', () => {
       
       const toolNames = manifest.tools.map((t: any) => t.name);
       const expectedTools = [
-        'consulate_file_dispute', // Unified tool (payment + general)
+        'x402_file_dispute', // Unified tool (payment + general)
         'consulate_submit_evidence',
-        'consulate_check_case_status',
+        'x402_check_case_status',
         'consulate_register_agent',
-        'consulate_list_my_cases',
+        'x402_list_my_cases',
         'consulate_get_sla_status',
         'consulate_lookup_agent',
         'consulate_request_vendor_registration',
@@ -66,9 +66,9 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.tools.length).toBe(3);
       // Only check for the 3 simplified tools
       const simplifiedTools = [
-        "consulate_file_dispute",
-        "consulate_list_my_cases",
-        "consulate_check_case_status"
+        "x402_file_dispute",
+        "x402_list_my_cases",
+        "x402_check_case_status"
       ];
       for (const expectedTool of simplifiedTools) {
         expect(toolNames).toContain(expectedTool);
@@ -156,7 +156,7 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'consulate_check_case_status',
+          tool: 'x402_check_case_status',
           parameters: { caseId: 'test-case-id' },
         }),
       });

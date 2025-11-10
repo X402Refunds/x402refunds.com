@@ -170,13 +170,13 @@ Submit cryptographic evidence to support a case.
 **Example usage in Claude:**
 > "Submit API logs from https://logs.acme.com/downtime.json to case k12345..."
 
-### 4. **consulate_check_case_status**
+### 4. **x402_check_case_status**
 Check the current status of a dispute case.
 
 **Example usage in Claude:**
 > "What's the status of case k12345...?"
 
-### 5. **consulate_list_my_cases**
+### 5. **x402_list_my_cases**
 List all X-402 payment dispute cases where you're a party (plaintiff or defendant). Uses your Ethereum wallet address (ERC-8004) as identity.
 
 **Example usage in Claude:**

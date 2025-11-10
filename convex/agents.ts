@@ -2,12 +2,18 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
+// Validate Ethereum address format (0x followed by 40 hex characters)
+function isValidEthereumAddress(address: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
 // Agent registration with Ed25519 public key
 export const joinAgent = mutation({
   args: {
     name: v.string(),
     publicKey: v.string(),  // Ed25519 public key (base64 encoded)
     organizationName: v.string(),
+    walletAddress: v.string(), // Ethereum address (required for dispute URLs)
     openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification
     specVersion: v.optional(v.string()), // e.g., "3.0.0"
     mock: v.optional(v.boolean()), // Mark as mock/test data (defaults to false)
@@ -43,6 +49,12 @@ export const joinAgent = mutation({
         throw new Error("Public key is required for agent registration");
       }
 
+      // Validate Ethereum address format
+      const normalizedWalletAddress = args.walletAddress.trim();
+      if (!isValidEthereumAddress(normalizedWalletAddress)) {
+        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      }
+
       console.info(`Processing agent registration for ${args.name}`);
 
       // 1. Generate organization domain from name
@@ -60,6 +72,7 @@ export const joinAgent = mutation({
         name: args.name,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
+        walletAddress: normalizedWalletAddress.toLowerCase(), // Store normalized Ethereum address
         openApiSpec: args.openApiSpec,
         specVersion: args.specVersion,
         mock: args.mock ?? false,
@@ -102,11 +115,12 @@ export const joinAgent = mutation({
 
       console.info(`Agent registration successful: ${agentId} with DID: ${agentDid}`);
       
-      // 6. Return agent info with dispute URL
+      // 6. Return agent info with dispute URL (using Ethereum address, not DID)
       return { 
         agentId, 
         did: agentDid,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${agentDid}`,
+        walletAddress: normalizedWalletAddress.toLowerCase(),
+        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}`,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
@@ -582,6 +596,7 @@ export const registerAgentManual = mutation({
     userId: v.id("users"),
     name: v.string(),
     publicKey: v.string(),
+    walletAddress: v.string(), // Ethereum address (required for dispute URLs)
     openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification
     specVersion: v.optional(v.string()), // e.g., "3.0.0"
     functionalType: v.optional(v.union(
@@ -610,6 +625,12 @@ export const registerAgentManual = mutation({
   handler: async (ctx, args) => {
     try {
       console.info(`Manual agent registration for ${args.name}`);
+
+      // Validate Ethereum address format
+      const normalizedWalletAddress = args.walletAddress.trim();
+      if (!isValidEthereumAddress(normalizedWalletAddress)) {
+        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      }
 
       // 1. Get user and organization
       const user = await ctx.db.get(args.userId);
@@ -643,6 +664,7 @@ export const registerAgentManual = mutation({
         organizationName: orgName,
         organizationId: user.organizationId,
         publicKey: args.publicKey,
+        walletAddress: normalizedWalletAddress.toLowerCase(), // Store normalized Ethereum address
         openApiSpec: args.openApiSpec,
         specVersion: args.specVersion,
         deployedByUserId: args.userId,
@@ -674,7 +696,8 @@ export const registerAgentManual = mutation({
         success: true,
         agentId,
         did: agentDid,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${agentDid}`,
+        walletAddress: normalizedWalletAddress.toLowerCase(),
+        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}`,
         organizationName: orgName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
