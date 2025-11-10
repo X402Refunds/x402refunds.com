@@ -207,7 +207,6 @@ Common HTTP routes exposed:
 ## 📦 Package Scripts
 
 ### Root Package Commands
-- `pnpm deploy` - pnpm
 - `pnpm deploy:dev` - pnpm
 - `pnpm check-logs` - pnpm
 - `pnpm build` - pnpm

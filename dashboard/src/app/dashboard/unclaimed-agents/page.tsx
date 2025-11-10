@@ -7,11 +7,13 @@ import { UnclaimedAgentCard } from '@/components/dashboard/unclaimed-agent-card'
 import { ClaimAgentDialog } from '@/components/dashboard/claim-agent-dialog';
 import { AlertTriangle } from 'lucide-react';
 
+type UnclaimedAgent = NonNullable<ReturnType<typeof useQuery<typeof api.agents.listUnclaimedAgents>>>[number];
+
 export default function UnclaimedAgentsPage() {
   const unclaimedAgents = useQuery(api.agents.listUnclaimedAgents, { limit: 50 });
   const currentUser = useQuery(api.users.getCurrentUser);
   const organization = useQuery(api.users.getUserOrganization);
-  const [selectedAgent, setSelectedAgent] = useState<typeof unclaimedAgents[number] | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<UnclaimedAgent | null>(null);
 
   return (
     <div className="space-y-6">
