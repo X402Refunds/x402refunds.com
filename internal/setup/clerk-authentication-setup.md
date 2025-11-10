@@ -231,26 +231,39 @@ To add more authentication methods (not recommended per requirements):
 
 **This error occurs when Clerk is configured with a custom domain that has SSL issues.**
 
-**Solution: Remove or fix the custom domain**
+**CRITICAL: This MUST be fixed in Clerk Dashboard - code changes alone won't fix it.**
 
-1. **Option A: Remove Custom Domain (Recommended)**
-   - Go to Clerk dashboard → **Domains**
-   - Find `clerk.consulatehq.com` (or your custom domain)
-   - Click **Delete** or **Remove**
-   - Clerk will automatically fall back to `*.clerk.accounts.dev`
-   - Wait a few minutes for DNS propagation
+**Solution: Remove Custom Domain from Clerk Dashboard (REQUIRED)**
 
-2. **Option B: Fix Custom Domain SSL**
-   - Ensure DNS CNAME is correctly configured
-   - Wait for SSL certificate provisioning (can take up to 24 hours)
-   - Verify SSL certificate is valid: `openssl s_client -connect clerk.consulatehq.com:443`
+1. **Go to Clerk Dashboard:**
+   - Visit https://dashboard.clerk.com
+   - Select your application
+   - Navigate to **Configure** → **Domains** (or **Settings** → **Domains**)
 
-**After removing/fixing custom domain:**
-- Clear browser cache
-- Redeploy your application
-- Test again
+2. **Remove the Custom Domain:**
+   - Find `clerk.consulatehq.com` (or your custom domain) in the list
+   - Click **Delete** or **Remove** button
+   - Confirm the deletion
+   - **Important:** Clerk will automatically fall back to `*.clerk.accounts.dev`
 
-**Note:** The CSP has been updated to only allow `*.clerk.accounts.dev` (default domain). If you need a custom domain, ensure SSL is working before adding it back to CSP.
+3. **Wait for Propagation:**
+   - Wait 2-5 minutes for changes to propagate
+   - Clear browser cache (or use incognito mode)
+   - Redeploy your application if needed
+
+4. **Verify Fix:**
+   - Check browser console - should no longer see `clerk.consulatehq.com` errors
+   - Clerk should now load from `*.clerk.accounts.dev`
+   - Sign-in page should work correctly
+
+**Why This Happens:**
+- Clerk Dashboard has `clerk.consulatehq.com` configured as a custom domain
+- Clerk SDK automatically uses this domain when configured
+- The custom domain has SSL/TLS issues (certificate not valid/provisioned)
+- CSP correctly blocks the broken custom domain and allows default domain
+- **You MUST remove it from Clerk Dashboard** - code cannot override this
+
+**Note:** The CSP has been updated to only allow `*.clerk.accounts.dev` (default domain). If you need a custom domain in the future, ensure SSL is working before adding it back to CSP.
 
 ### "Invalid Publishable Key" or Authentication Not Working
 
