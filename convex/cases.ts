@@ -394,7 +394,11 @@ export const getOrganizationCases = query({
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .collect();
     
+    // Get both DIDs and wallet addresses for matching
     const agentDids = orgAgents.map(a => a.did);
+    const agentWallets = orgAgents
+      .map(a => a.walletAddress?.toLowerCase())
+      .filter((w): w is string => !!w); // Remove undefined/null
     
     // Get cases where organization is the reviewer (payment disputes)
     const reviewerCases = await ctx.db
@@ -418,10 +422,18 @@ export const getOrganizationCases = query({
       caseMap.set(c._id, c);
     }
     
-    // Add cases where org's agents are involved
+    // Add cases where org's agents are involved (check both DID and wallet address)
     for (const c of agentCases) {
-      if ((c.plaintiff && agentDids.includes(c.plaintiff)) || 
-          (c.defendant && agentDids.includes(c.defendant))) {
+      const plaintiffMatch = c.plaintiff && (
+        agentDids.includes(c.plaintiff) || 
+        agentWallets.includes(c.plaintiff.toLowerCase())
+      );
+      const defendantMatch = c.defendant && (
+        agentDids.includes(c.defendant) || 
+        agentWallets.includes(c.defendant.toLowerCase())
+      );
+      
+      if (plaintiffMatch || defendantMatch) {
         caseMap.set(c._id, c);
       }
     }
