@@ -47,7 +47,7 @@ The `server.json` file defines:
 
 - **Name**: `io.github.vbkotecha/consulate`
 - **Type**: Remote HTTP server (`streamable-http`)
-- **URL**: `https://api.consulatehq.com`
+- **URL**: `https://api.x402disputes.com`
 - **Endpoints**:
   - Discovery: `/.well-known/mcp.json`
   - Invoke: `/mcp/invoke`
@@ -104,8 +104,8 @@ Check `server.json` structure:
 
 ### Endpoints Not Accessible
 
-- Verify `https://api.consulatehq.com/.well-known/mcp.json` returns 200
-- Verify `https://api.consulatehq.com/mcp/invoke` returns 401 (auth required), not 404
+- Verify `https://api.x402disputes.com/.well-known/mcp.json` returns 200
+- Verify `https://api.x402disputes.com/mcp/invoke` returns 401 (auth required), not 404
 
 ### Publication Not Appearing
 

@@ -3,7 +3,7 @@
 
 /* TEAM */
 Creator: Vivek Kotecha
-Site: https://consulatehq.com
+Site: https://x402disputes.com
 Location: San Francisco, CA
 
 /* THANKS */

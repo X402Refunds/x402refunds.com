@@ -87,7 +87,7 @@ http.route({
         sla_report: "/sla/report",
         sla_status: "/sla/status/:agentDid"
       },
-      documentation: "https://docs.consulatehq.com",
+      documentation: "https://docs.x402disputes.com",
       protocol: {
         name: "Agentic Dispute Protocol (ADP)",
         repository: "https://github.com/consulatehq/agentic-dispute-protocol",
@@ -169,8 +169,8 @@ http.route({
         jurisdiction: "Global",
         description: "Automated AI vendor dispute resolution platform",
         contact: {
-          email: "support@consulatehq.com",
-          website: "https://consulatehq.com"
+          email: "support@x402disputes.com",
+          website: "https://x402disputes.com"
         }
       },
       protocolVersion: "1.0",
@@ -212,7 +212,7 @@ http.route({
         checkStatus: "/cases/:caseId",
         custody: "/api/custody/:caseId",
         neutrals: "/.well-known/adp/neutrals",
-        documentation: "https://docs.consulatehq.com/adp"
+        documentation: "https://docs.x402disputes.com/adp"
       },
       fees: {
         currency: "USD",
@@ -424,7 +424,7 @@ http.route({
       console.error("Payment dispute error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.consulatehq.com/disputes/payment"
+        hint: "Check API documentation at https://docs.x402disputes.com/disputes/payment"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -445,7 +445,7 @@ http.route({
       console.error("Agent dispute error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.consulatehq.com/disputes/agent"
+        hint: "Check API documentation at https://docs.x402disputes.com/disputes/agent"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -563,7 +563,7 @@ http.route({
       return new Response(JSON.stringify({
         success: true,
         caseId,
-        disputeUrl: `https://api.consulatehq.com/cases/${caseId}`,
+        disputeUrl: `https://api.x402disputes.com/cases/${caseId}`,
         signatureVerified: true,
         vendorDid: vendorId,
         message: "Dispute filed successfully with verified evidence"

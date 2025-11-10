@@ -29,7 +29,7 @@ echo "Private key (hex):"
 echo "$HEX_KEY"
 echo ""
 echo "Copy this value for use with:"
-echo "  mcp-publisher login dns --domain consulatehq.com --private-key $HEX_KEY"
+echo "  mcp-publisher login dns --domain x402disputes.com --private-key $HEX_KEY"
 echo ""
 echo "Or save as GitHub secret MCP_DNS_PRIVATE_KEY_HEX"
 

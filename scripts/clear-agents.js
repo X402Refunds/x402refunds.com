@@ -6,7 +6,7 @@
 
 const { ConvexHttpClient } = require("convex/browser");
 
-const CONVEX_URL = process.env.CONVEX_URL || "https://api.consulatehq.com";
+const CONVEX_URL = process.env.CONVEX_URL || "https://api.x402disputes.com";
 
 async function clearAgents() {
   const client = new ConvexHttpClient(CONVEX_URL);

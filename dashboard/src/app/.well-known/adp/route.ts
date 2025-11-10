@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   const manifest = {
-    disputeService: "https://api.consulatehq.com/adp/v1",
+    disputeService: "https://api.x402disputes.com/adp/v1",
     protocolVersion: "draft-01",
     supportedResolutionMethods: [
       "expert-determination",
@@ -55,9 +55,9 @@ export async function GET() {
       "smb",
       "enterprise"
     ],
-    termsOfService: "https://consulatehq.com/terms",
-    privacyPolicy: "https://consulatehq.com/privacy",
-    documentation: "https://docs.consulatehq.com",
+    termsOfService: "https://x402disputes.com/terms",
+    privacyPolicy: "https://x402disputes.com/privacy",
+    documentation: "https://docs.x402disputes.com",
     standards: {
       disputeRules: "/api/standards/arbitration-rules",
       evidenceFormat: "/docs/standards/evidence-format-specification",
@@ -70,9 +70,9 @@ export async function GET() {
       repository: "https://github.com/consulatehq/agentic-dispute-protocol"
     },
     contact: {
-      email: "support@consulatehq.com",
-      support: "https://consulatehq.com/support",
-      documentation: "https://docs.consulatehq.com"
+      email: "support@x402disputes.com",
+      support: "https://x402disputes.com/support",
+      documentation: "https://docs.x402disputes.com"
     }
   };
 

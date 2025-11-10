@@ -80,7 +80,7 @@ export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 // Only use production when explicitly set via API_BASE_URL env var
 export const API_BASE_URL = process.env.API_BASE_URL || 'https://youthful-orca-358.convex.site';
 export const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || 'https://youthful-orca-358.convex.site';
-// USE_LIVE_API is true ONLY when explicitly testing against production (consulatehq.com)
+// USE_LIVE_API is true ONLY when explicitly testing against production (x402disputes.com)
 // All other environments (dev, preview, youthful-orca) should run full test suite
-export const USE_LIVE_API = !!process.env.API_BASE_URL && API_BASE_URL.includes('consulatehq.com');
+export const USE_LIVE_API = !!process.env.API_BASE_URL && API_BASE_URL.includes('x402disputes.com');
 

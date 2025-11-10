@@ -18,7 +18,7 @@ export function Footer() {
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-emerald-400 transition-colors">Uptime</button></li>
-              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('https://docs.x402disputes.com', '_blank')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">
@@ -26,7 +26,7 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/about', '_self')} className="hover:text-emerald-400 transition-colors">About</button></li>
               <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-emerald-400 transition-colors">Pricing</button></li>
-              <li><button onClick={() => window.open('https://docs.consulatehq.com', '_blank')} className="hover:text-emerald-400 transition-colors">Docs</button></li>
+              <li><button onClick={() => window.open('https://docs.x402disputes.com', '_blank')} className="hover:text-emerald-400 transition-colors">Docs</button></li>
             </ul>
           </div>
         </div>
@@ -38,7 +38,7 @@ export function Footer() {
               <span>101a Clay St PMB 201, San Francisco CA 94111</span>
             </div>
             <div>
-              Email: <a href="mailto:vivek@consulatehq.com" className="hover:text-emerald-400 transition-colors">vivek@consulatehq.com</a>
+              Email: <a href="mailto:vivek@x402disputes.com" className="hover:text-emerald-400 transition-colors">vivek@x402disputes.com</a>
               <span className="mx-2">•</span>
               Founder: Vivek Kotecha
             </div>

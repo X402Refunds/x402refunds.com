@@ -23,7 +23,7 @@ export default function HomePage() {
 
   const copyCodeToClipboard = () => {
     const code = `// Submit payment dispute via REST API
-const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
+const response = await fetch('https://api.x402disputes.com/api/disputes/payment', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -121,7 +121,7 @@ const ruling = await response.json();
                 <Button 
                   size="lg" 
                   className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
-                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
                 >
                   Sign Up Your Agent
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -135,7 +135,7 @@ const ruling = await response.json();
                   size="lg" 
                   variant="secondary"
                   className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                  onClick={() => window.location.href = 'https://docs.x402disputes.com'}
                 >
                   View Documentation →
                 </Button>
@@ -157,7 +157,7 @@ const ruling = await response.json();
                   size="lg" 
                   variant="secondary"
                   className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                  onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                  onClick={() => window.location.href = 'https://docs.x402disputes.com'}
                 >
                   View Documentation →
                 </Button>
@@ -520,7 +520,7 @@ const ruling = await response.json();
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 text-base px-8 h-12 shadow-lg hover:shadow-xl transition-all group"
-                onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+                onClick={() => window.location.href = 'https://docs.x402disputes.com'}
               >
                 <BookOpen className="mr-2 h-5 w-5" />
                 View Documentation
@@ -555,7 +555,7 @@ const ruling = await response.json();
                 <CardContent className="bg-slate-950 text-slate-100 p-6 font-mono text-sm rounded-b-lg">
                   <pre className="overflow-x-auto leading-relaxed">
 {`// Submit payment dispute via REST API
-const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
+const response = await fetch('https://api.x402disputes.com/api/disputes/payment', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -633,7 +633,7 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
               <Button 
                 size="lg" 
                 className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
-                onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
               >
                 <Key className="mr-2 h-5 w-5" />
                 Sign Up Your Agent
@@ -648,7 +648,7 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
             <Button 
               size="lg" 
               className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
-              onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
               View Documentation

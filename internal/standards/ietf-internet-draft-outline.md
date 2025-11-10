@@ -243,7 +243,7 @@ Table of Contents
 All messages MUST use JSON format with the following base structure:
 
 {
-  "@context": "https://consulatehq.com/schema/cdrp/v1",
+  "@context": "https://x402disputes.com/schema/cdrp/v1",
   "@type": "[MessageType]",
   "messageId": "[UUID]",
   "timestamp": "[ISO8601]",
@@ -384,9 +384,9 @@ All messages MUST use JSON format with the following base structure:
    https://[arbitration-service]/cdrp/v1/[resource]
 
    Example endpoints:
-   - POST https://api.consulatehq.com/cdrp/v1/disputes
-   - GET  https://api.consulatehq.com/cdrp/v1/disputes/{caseId}
-   - POST https://api.consulatehq.com/cdrp/v1/evidence
+   - POST https://api.x402disputes.com/cdrp/v1/disputes
+   - GET  https://api.x402disputes.com/cdrp/v1/disputes/{caseId}
+   - POST https://api.x402disputes.com/cdrp/v1/evidence
 
 4.2. Authentication
 
@@ -485,13 +485,13 @@ All messages MUST use JSON format with the following base structure:
 
    Example:
    {
-     "arbitrationService": "https://api.consulatehq.com/cdrp/v1",
+     "arbitrationService": "https://api.x402disputes.com/cdrp/v1",
      "protocolVersion": "1.0",
      "supportedRules": ["Consulate-v1.0"],
      "supportedEvidenceTypes": ["SYSTEM_LOGS", "CONTRACTS", ...],
      "maxClaimValue": 10000000,
      "supportedCurrencies": ["USD", "EUR", "ETH"],
-     "publicKeyEndpoint": "https://consulatehq.com/.well-known/jwks.json"
+     "publicKeyEndpoint": "https://x402disputes.com/.well-known/jwks.json"
    }
 
 7.2. Capability Negotiation
@@ -574,8 +574,8 @@ Author's Address
 
    Vivek Kotecha
    Consulate, Inc.
-   Email: vivek@consulatehq.com
-   URI:   https://consulatehq.com
+   Email: vivek@x402disputes.com
+   URI:   https://x402disputes.com
 ```
 
 ---

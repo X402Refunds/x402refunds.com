@@ -42,7 +42,7 @@ node --version
 
 ### 3. Consulate API Key
 
-1. Sign in to [Consulate Dashboard](https://consulatehq.com)
+1. Sign in to [Consulate Dashboard](https://x402disputes.com)
 2. Navigate to **Settings → API Keys**
 3. Click **Generate New API Key**
 4. Copy the key (starts with `csk_live_` for production)
@@ -468,7 +468,7 @@ The proxy script supports these environment variables:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `CONSULATE_API_KEY` | Your API key (required) | - |
-| `CONSULATE_API_URL` | API endpoint | `https://api.consulatehq.com` |
+| `CONSULATE_API_URL` | API endpoint | `https://api.x402disputes.com` |
 | `CONSULATE_DEBUG` | Enable debug logging | `false` |
 
 ---
@@ -508,18 +508,18 @@ Use test keys for development and learning. Use production keys only for real di
 ## Support
 
 ### Documentation
-- MCP Quickstart: [https://docs.consulatehq.com/mcp-quickstart](https://docs.consulatehq.com/mcp-quickstart)
-- API Reference: [https://docs.consulatehq.com/api](https://docs.consulatehq.com/api)
+- MCP Quickstart: [https://docs.x402disputes.com/mcp-quickstart](https://docs.x402disputes.com/mcp-quickstart)
+- API Reference: [https://docs.x402disputes.com/api](https://docs.x402disputes.com/api)
 - Agentic Dispute Protocol: [https://github.com/consulatehq/agentic-dispute-protocol](https://github.com/consulatehq/agentic-dispute-protocol)
 
 ### Help & Support
-- Email: support@consulatehq.com
+- Email: support@x402disputes.com
 - GitHub Issues: [https://github.com/consulatehq/consulate/issues](https://github.com/consulatehq/consulate/issues)
 - Community Discord: [https://discord.gg/consulate](https://discord.gg/consulate)
 
 ### Emergency Support
 For urgent issues (active disputes, SLA breaches):
-- Email: urgent@consulatehq.com (monitored 24/7)
+- Email: urgent@x402disputes.com (monitored 24/7)
 - Include: Case ID, agent DID, and issue description
 
 ---
@@ -536,4 +536,4 @@ For urgent issues (active disputes, SLA breaches):
 
 **Last Updated**: 2025-10-27
 **Version**: 1.0.0
-**Feedback**: docs@consulatehq.com
+**Feedback**: docs@x402disputes.com

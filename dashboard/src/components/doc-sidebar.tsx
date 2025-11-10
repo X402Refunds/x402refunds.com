@@ -116,7 +116,7 @@ export function DocSidebar({ items, currentSlug = [] }: DocSidebarProps) {
 
       <nav className="px-2 pb-4">
         <Link
-          href="https://docs.consulatehq.com"
+          href="https://docs.x402disputes.com"
           className={`flex items-center gap-2 px-3 py-2 mb-2 rounded-lg transition-colors ${
             currentSlug.length === 0
               ? 'bg-blue-100 text-blue-900 font-medium'
@@ -128,7 +128,7 @@ export function DocSidebar({ items, currentSlug = [] }: DocSidebarProps) {
         </Link>
 
         <Link
-          href="https://docs.consulatehq.com/api-overview"
+          href="https://docs.x402disputes.com/api-overview"
           className={`flex items-center gap-2 px-3 py-2 mb-4 rounded-lg transition-colors ${
             currentSlug[0] === 'api'
               ? 'bg-blue-100 text-blue-900 font-medium'

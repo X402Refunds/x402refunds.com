@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     "AI Contract Enforcement",
     "Machine-to-Machine Arbitration"
   ],
-  authors: [{ name: "Vivek Kotecha", url: "https://www.consulatehq.com" }],
+  authors: [{ name: "Vivek Kotecha", url: "https://www.x402disputes.com" }],
   creator: "Vivek Kotecha",
   publisher: "Consulate",
   formatDetection: {
@@ -71,14 +71,14 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  metadataBase: new URL('https://www.consulatehq.com'),
+  metadataBase: new URL('https://www.x402disputes.com'),
   alternates: {
-    canonical: 'https://www.consulatehq.com/',
+    canonical: 'https://www.x402disputes.com/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://www.consulatehq.com/',
+    url: 'https://www.x402disputes.com/',
     siteName: 'Consulate',
     title: 'Consulate - Agentic Dispute Arbitration',
     description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.',

@@ -16,11 +16,11 @@ This will output something like: `ABC123XYZ789...` (32 bytes, base64 encoded)
 
 ## Step 2: Add DNS TXT Record
 
-Add this TXT record to your `consulatehq.com` DNS:
+Add this TXT record to your `x402disputes.com` DNS:
 
 ```
 Type: TXT
-Name: @ (or consulatehq.com)
+Name: @ (or x402disputes.com)
 Value: v=MCPv1; k=ed25519; p=<YOUR_PUBLIC_KEY>
 TTL: 3600 (or default)
 ```
@@ -35,7 +35,7 @@ v=MCPv1; k=ed25519; p=ABC123XYZ789...
 Wait for DNS propagation (can take a few minutes), then verify:
 
 ```bash
-dig TXT consulatehq.com +short
+dig TXT x402disputes.com +short
 ```
 
 You should see your MCP record.
@@ -58,7 +58,7 @@ This will output something like: `1a2b3c4d5e6f...` (64 hex characters)
 
 **Local testing:**
 ```bash
-mcp-publisher login dns --domain consulatehq.com --private-key <HEX_KEY_VALUE>
+mcp-publisher login dns --domain x402disputes.com --private-key <HEX_KEY_VALUE>
 ```
 
 Replace `<HEX_KEY_VALUE>` with the hex string from step 4.
@@ -81,7 +81,7 @@ The workflow will read the hex-encoded private key from `MCP_DNS_PRIVATE_KEY_HEX
 
 First authenticate:
 ```bash
-mcp-publisher login dns --domain consulatehq.com --private-key <HEX_KEY_VALUE>
+mcp-publisher login dns --domain x402disputes.com --private-key <HEX_KEY_VALUE>
 ```
 
 Then publish:

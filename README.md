@@ -4,24 +4,24 @@
 
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://modelcontextprotocol.io) [![Status](https://img.shields.io/badge/Status-Active-success)](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
 
-🌐 **Production**: [consulatehq.com](https://consulatehq.com)  
-🔧 **API Base**: `https://api.consulatehq.com` (HTTP Routes/Actions)  
+🌐 **Production**: [x402disputes.com](https://x402disputes.com)  
+🔧 **API Base**: `https://api.x402disputes.com` (HTTP Routes/Actions)  
 🗄️ **Convex API**: `https://youthful-orca-358.convex.cloud` (SDK Only)  
 📄 **Protocol Spec**: [Agentic Dispute Protocol](https://github.com/consulatehq/agentic-dispute-protocol)  
 🤖 **MCP Server**: `com.consulatehq/consulate` - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
 
 ### 🔗 Key Endpoints
-- **MCP Discovery**: [`https://api.consulatehq.com/.well-known/mcp.json`](https://api.consulatehq.com/.well-known/mcp.json) - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
-- **ADP Discovery**: [`https://api.consulatehq.com/.well-known/adp`](https://api.consulatehq.com/.well-known/adp)
-- **Payment Disputes**: `https://api.consulatehq.com/api/payment-disputes`
-- **Agent Registration**: `https://api.consulatehq.com/api/agents/register`
+- **MCP Discovery**: [`https://api.x402disputes.com/.well-known/mcp.json`](https://api.x402disputes.com/.well-known/mcp.json) - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
+- **ADP Discovery**: [`https://api.x402disputes.com/.well-known/adp`](https://api.x402disputes.com/.well-known/adp)
+- **Payment Disputes**: `https://api.x402disputes.com/api/payment-disputes`
+- **Agent Registration**: `https://api.x402disputes.com/api/agents/register`
 
 ### 🤖 MCP Integration
 Consulate is available as an **MCP (Model Context Protocol) server** in the official directory. AI agents can discover and use Consulate's dispute resolution tools automatically with zero-code integration.
 
 - **Server Name**: `com.consulatehq/consulate`
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
-- **Quick Start**: https://docs.consulatehq.com/mcp-quickstart
+- **Quick Start**: https://docs.x402disputes.com/mcp-quickstart
 - **8 Tools Available**: Agent registration, dispute filing, evidence submission, case tracking, and more
 
 ---
@@ -141,7 +141,7 @@ Margin:           90%+ on micro-disputes
 ## 🛠️ Technical Architecture
 
 ### **Live API Endpoints**
-**Base URL**: `https://api.consulatehq.com/`
+**Base URL**: `https://api.x402disputes.com/`
 
 ```bash
 # Payment Dispute Webhook (ACP/ATXP Integration)
@@ -164,7 +164,7 @@ GET  /version                           # Version info
 
 ### **Production Infrastructure**
 - **Backend**: Convex (Serverless database and functions)
-- **Frontend**: Vercel (Next.js dashboard at consulatehq.com)
+- **Frontend**: Vercel (Next.js dashboard at x402disputes.com)
 - **Authentication**: Clerk (Secure user authentication)
 - **Compliance**: Regulation E, ADP protocol, SOC2/PCI standards
 - **Languages**: TypeScript/JavaScript
@@ -182,7 +182,7 @@ Consulate now supports **ONE unified endpoint** for all dispute types: payment (
 
 ```javascript
 // Crypto non-custodial dispute (wallet-to-wallet)
-const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -223,7 +223,7 @@ const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
 
 ```javascript
 // Traditional payment dispute (Stripe/cards)
-const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -261,7 +261,7 @@ const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
 
 ```javascript
 // General dispute (SLA violation, service quality, etc.)
-const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
+const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -301,7 +301,7 @@ const response = await fetch('https://api.consulatehq.com/mcp/invoke', {
 
 ```javascript
 // When customer files payment dispute (legacy API endpoint)
-const response = await fetch('https://api.consulatehq.com/api/payment-disputes', {
+const response = await fetch('https://api.x402disputes.com/api/payment-disputes', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -364,7 +364,7 @@ For the 5% of disputes that need human review:
 
 ```javascript
 // Get review queue for your team
-const queue = await fetch('https://api.consulatehq.com/api/payment-disputes/review-queue', {
+const queue = await fetch('https://api.x402disputes.com/api/payment-disputes/review-queue', {
   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
 });
 
@@ -439,13 +439,13 @@ When your team overrides AI recommendations, the system learns:
 
 ```bash
 # 1. Check system health
-curl https://api.consulatehq.com/health
+curl https://api.x402disputes.com/health
 
 # 2. Register a payment agent
 curl -X POST -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{"name":"Payment Agent","functionalType":"payment_processor"}' \
-  https://api.consulatehq.com/agents/register
+  https://api.x402disputes.com/agents/register
 
 # 3. Submit a micro-dispute
 curl -X POST -H "Content-Type: application/json" \
@@ -460,7 +460,7 @@ curl -X POST -H "Content-Type: application/json" \
     "disputeReason":"api_timeout",
     "description":"Test micro-dispute - API timeout"
   }' \
-  https://api.consulatehq.com/api/payment-disputes
+  https://api.x402disputes.com/api/payment-disputes
 ```
 
 ---
@@ -586,10 +586,10 @@ Enterprise Tier: Custom
 
 ## 📞 Contact & Support
 
-**Production**: [consulatehq.com](https://consulatehq.com)
-**API Documentation**: [docs.consulatehq.com](https://docs.consulatehq.com)
+**Production**: [x402disputes.com](https://x402disputes.com)
+**API Documentation**: [docs.x402disputes.com](https://docs.x402disputes.com)
 **GitHub**: [github.com/consulatehq](https://github.com/consulatehq)
-**Support**: support@consulatehq.com
+**Support**: support@x402disputes.com
 
 ---
 

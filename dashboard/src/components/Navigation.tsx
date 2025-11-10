@@ -72,7 +72,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 About
               </button>
               <button
-                onClick={() => handleNavigation('https://docs.consulatehq.com', true)}
+                onClick={() => handleNavigation('https://docs.x402disputes.com', true)}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
               >
                 Docs
@@ -172,7 +172,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => handleNavigation('https://docs.consulatehq.com', true)}
+                        onClick={() => handleNavigation('https://docs.x402disputes.com', true)}
                         className="w-full justify-start"
                       >
                         Documentation

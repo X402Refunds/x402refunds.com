@@ -9,11 +9,11 @@ import schema from '../convex/schema';
  * These tests validate the HTTP API layer on top of Convex functions.
  * Tests use convex-test for data setup, then test HTTP endpoints.
  * 
- * To run against production: API_BASE_URL=https://api.consulatehq.com pnpm test:run test/api.test.ts
+ * To run against production: API_BASE_URL=https://api.x402disputes.com pnpm test:run test/api.test.ts
  * To run against local: API_BASE_URL=http://localhost:3000 pnpm test:run test/api.test.ts
  */
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.consulatehq.com';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402disputes.com';
 const USE_LIVE_API = !!process.env.API_BASE_URL;
 
 describe('Consulate HTTP API - Core System', () => {

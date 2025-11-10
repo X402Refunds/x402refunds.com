@@ -33,6 +33,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/'],
       },
     ],
-    sitemap: 'https://www.consulatehq.com/sitemap.xml',
+    sitemap: 'https://www.x402disputes.com/sitemap.xml',
   }
 }

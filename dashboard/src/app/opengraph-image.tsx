@@ -106,7 +106,7 @@ export default async function Image() {
             fontWeight: '500',
           }}
         >
-          consulatehq.com
+          x402disputes.com
         </p>
 
         {/* Accent bar - bottom */}

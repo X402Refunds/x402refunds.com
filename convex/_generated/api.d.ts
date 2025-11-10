@@ -31,6 +31,7 @@ import type * as evidence_webFetcher from "../evidence/webFetcher.js";
 import type * as evidence from "../evidence.js";
 import type * as http from "../http.js";
 import type * as judges from "../judges.js";
+import type * as lib_blockchain from "../lib/blockchain.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_openrouter from "../lib/openrouter.js";
 import type * as llmEngine from "../llmEngine.js";
@@ -81,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   evidence: typeof evidence;
   http: typeof http;
   judges: typeof judges;
+  "lib/blockchain": typeof lib_blockchain;
   "lib/crypto": typeof lib_crypto;
   "lib/openrouter": typeof lib_openrouter;
   llmEngine: typeof llmEngine;

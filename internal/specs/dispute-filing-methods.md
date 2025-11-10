@@ -20,7 +20,7 @@ const response = await fetch('https://seller-api.com/endpoint', {...});
 if (isBadOutput(response)) {
   // Step 3: Extract dispute URL from seller's signed headers
   const disputeUrl = response.headers.get('X-Dispute-URL');
-  // Example: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123"
+  // Example: "https://api.x402disputes.com/disputes/claim?vendor=did:agent:seller-123"
   
   // Step 4: File dispute - JUST PASS THE URL!
   await consulate_file_dispute({
@@ -206,8 +206,8 @@ case "consulate_file_dispute":
   "status": 500,
   "headers": {
     "contentType": "application/json",
-    "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:seller-123",
-    "consulateAdp": "https://api.consulatehq.com/.well-known/adp",
+    "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:seller-123",
+    "consulateAdp": "https://api.x402disputes.com/.well-known/adp",
     "vendorDid": "did:agent:seller-123"
   },
   "body": "{\"error\": \"Internal Server Error\"}"
@@ -227,7 +227,7 @@ case "consulate_file_dispute":
 const sellerResponse = {
   status: 500,
   headers: {
-    'X-Dispute-URL': 'https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-123',
+    'X-Dispute-URL': 'https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-123',
     'X-Signature': 'Y2NjY2NjY2NjY2...'
   },
   body: '{"error": "Internal Server Error"}'
@@ -370,5 +370,5 @@ consulate_file_dispute({
 
 **All three work!** Agent chooses based on their use case and available information.
 
-**Production ready!** ✅ Deployed to `api.consulatehq.com`
+**Production ready!** ✅ Deployed to `api.x402disputes.com`
 

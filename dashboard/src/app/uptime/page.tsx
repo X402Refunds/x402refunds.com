@@ -25,7 +25,7 @@ export default function UptimePage() {
 
   useEffect(() => {
     // Check system health
-    fetch('https://api.consulatehq.com/health')
+    fetch('https://api.x402disputes.com/health')
       .then(res => res.json())
       .then(data => {
         setSystemStatus({
@@ -230,7 +230,7 @@ export default function UptimePage() {
           <p>
             Need help or experiencing issues?{' '}
             <a 
-              href="mailto:vivek@consulatehq.com" 
+              href="mailto:vivek@x402disputes.com" 
               className="text-emerald-600 hover:text-emerald-700 font-medium underline"
             >
               Contact Support

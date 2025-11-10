@@ -17,7 +17,7 @@ description: "Enable cryptographic dispute filing for agents already transacting
 **Call once per agent:**
 
 ```bash
-curl -X POST https://api.consulatehq.com/agents/register \
+curl -X POST https://api.x402disputes.com/agents/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Your Agent Name",
@@ -32,7 +32,7 @@ curl -X POST https://api.consulatehq.com/agents/register \
 ```json
 {
   "did": "did:agent:your-company-123",
-  "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:your-company-123"
+  "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:your-company-123"
 }
 ```
 
@@ -227,7 +227,7 @@ if (response.status >= 400 || detectBadOutput(response.body)) {
 
 **Your agent discovers tools via**:
 ```bash
-GET https://api.consulatehq.com/.well-known/mcp.json
+GET https://api.x402disputes.com/.well-known/mcp.json
 ```
 
 **Available tools**:
@@ -243,8 +243,8 @@ GET https://api.consulatehq.com/.well-known/mcp.json
 ## Support
 
 <Card title="Questions?" icon="question">
-  **Email**: support@consulatehq.com  
-  **Dashboard**: [consulatehq.com](https://consulatehq.com)  
+  **Email**: support@x402disputes.com  
+  **Dashboard**: [x402disputes.com](https://x402disputes.com)  
   **Response time**: < 1 hour during business hours
 </Card>
 

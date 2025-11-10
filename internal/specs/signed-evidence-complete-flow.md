@@ -52,7 +52,7 @@ This document describes the complete end-to-end flow for agent-to-agent (A2A) tr
 {
   "agentId": "10000;agents",
   "did": "did:agent:openai-inc-1234567890",
-  "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
+  "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
   "publicKey": "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=",
   "message": "Agent registered successfully"
 }
@@ -90,8 +90,8 @@ Authorization: Bearer buyer-token-123
 ```http
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
-X-Dispute-URL: https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-1234567890
-X-Consulate-ADP: https://api.consulatehq.com/.well-known/adp
+X-Dispute-URL: https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-1234567890
+X-Consulate-ADP: https://api.x402disputes.com/.well-known/adp
 X-Vendor-DID: did:agent:openai-inc-1234567890
 X-Signature: Y2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2M=
 
@@ -121,8 +121,8 @@ X-Signature: Y2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2N
     "status": 500,
     "headers": {
       "contentType": "application/json",
-      "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
-      "consulateAdp": "https://api.consulatehq.com/.well-known/adp",
+      "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
+      "consulateAdp": "https://api.x402disputes.com/.well-known/adp",
       "vendorDid": "did:agent:openai-inc-1234567890"
     },
     "body": "{\"error\":{\"message\":\"Internal Server Error\",\"code\":500}}"
@@ -179,7 +179,7 @@ if (response.status === 500 || detectBadOutput(response.body)) {
 **Buyer POSTs to the URL from seller's headers**:
 
 ```http
-POST https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-1234567890
+POST https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-1234567890
 Content-Type: application/json
 
 {
@@ -198,7 +198,7 @@ Content-Type: application/json
     "status": 500,
     "headers": {
       "contentType": "application/json",
-      "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
+      "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-1234567890",
       "vendorDid": "did:agent:openai-inc-1234567890"
     },
     "body": "{\"error\":{\"message\":\"Internal Server Error\",\"code\":500}}"
@@ -398,7 +398,7 @@ const vendorDid = url.searchParams.get("vendor");
 **Buyer extracts from seller's response**:
 ```javascript
 const disputeUrl = response.headers.get('X-Dispute-URL');
-// Result: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:openai-inc-123"
+// Result: "https://api.x402disputes.com/disputes/claim?vendor=did:agent:openai-inc-123"
 
 // POST directly to that URL
 await fetch(disputeUrl, {
@@ -460,7 +460,7 @@ await fetch(disputeUrl, {
   "response": {
     "status": 500,
     "headers": {
-      "disputeUrl": "https://api.consulatehq.com/disputes/claim?vendor=did:agent:...",
+      "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:...",
       "vendorDid": "did:agent:..."
     },
     "body": "..."  // ← The "bad answer"
@@ -662,7 +662,7 @@ signedEvidence: {
 ## ✅ Deployment Status
 
 - ✅ **Preview**: `youthful-orca-358.convex.cloud`
-- ✅ **Production**: `api.consulatehq.com`
+- ✅ **Production**: `api.x402disputes.com`
 - ✅ **Tests**: 489 passing
 - ✅ **MCP Tools**: Available via `/.well-known/mcp.json`
 - ✅ **HTTP Endpoints**: `/disputes/claim?vendor={vendorDid}`
@@ -681,8 +681,8 @@ pnpm test test/signed-evidence-workflow.test.ts
 
 ### Production API
 ```bash
-curl https://api.consulatehq.com/.well-known/adp
-curl https://api.consulatehq.com/.well-known/mcp.json
+curl https://api.x402disputes.com/.well-known/adp
+curl https://api.x402disputes.com/.well-known/mcp.json
 ```
 
 ---

@@ -26,7 +26,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "node",
       "args": ["/Users/vkotecha/Desktop/consulate/scripts/claude-desktop-mcp-proxy.js"],
       "env": {
-        "CONSULATE_API_URL": "https://api.consulatehq.com",
+        "CONSULATE_API_URL": "https://api.x402disputes.com",
         "OPENROUTER_API_KEY": "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"
       }
     }
@@ -301,7 +301,7 @@ When Claude files the dispute, you'll see:
   "caseId": "k123abc456def789",
   "pricingTier": "MICRO",  // <$1 = $0.10 fee
   "disputeFee": 0.10,
-  "trackingUrl": "https://consulatehq.com/cases/k123abc456def789",
+  "trackingUrl": "https://x402disputes.com/cases/k123abc456def789",
   "nextSteps": [
     "Submit additional evidence (optional)",
     "AI analyzes dispute + provides recommendation",

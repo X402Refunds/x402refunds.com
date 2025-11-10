@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-09T03:44:58.831Z
+**Auto-generated on**: 2025-11-10T01:32:19.838Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -73,7 +73,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (37 files)
+### Convex Files (38 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -82,7 +82,7 @@ consulate/
 - **signatureAgent.ts** - signatureVerificationAgent, verifySignedEvidence
 - **specValidatorAgent.ts** - specValidatorAgent, validateApiContract
 - **supportAgent.ts** - customerSupportAgent, handleSupportTicket
-- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema
+- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet, createUnclaimedAgent, claimAgent, listUnclaimedAgents
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
 - **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
@@ -99,6 +99,7 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
+- **blockchain.ts** - queryTransaction, mockQueryTransaction
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **llmEngine.ts** - Core logic
@@ -309,7 +310,7 @@ Common HTTP routes exposed:
 - 59 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 37 TypeScript files with serverless functions
+- 38 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -348,5 +349,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/8/2025, 9:44:58 PM
-Files scanned: 298
+Generated: 11/9/2025, 7:32:19 PM
+Files scanned: 299

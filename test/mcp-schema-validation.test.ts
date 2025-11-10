@@ -50,34 +50,36 @@ describe("MCP Tool Schema Validation", () => {
   });
 
   describe("consulate_file_dispute", () => {
-    it("should have disputeReason enum matching payment dispute types", () => {
+    it("should have blockchain enum and Ethereum address patterns", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      // Pre-signed payload approach - evidencePayload contains the signed data
-      expect(disputeTool?.input_schema.properties.evidencePayload).toBeDefined();
-      expect(disputeTool?.input_schema.properties.signature).toBeDefined();
+      // X-402 ultra-minimal schema
+      expect(disputeTool?.input_schema.properties.blockchain.enum).toBeDefined();
+      expect(disputeTool?.input_schema.properties.plaintiff.pattern).toContain('0x');
+      expect(disputeTool?.input_schema.properties.defendant.pattern).toContain('0x');
     });
 
-    it("should have required fields matching flattened dispute tool", () => {
+    it("should have required fields matching X-402 ultra-minimal schema", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "consulate_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.input_schema.required;
-      // Flattened payment parameters
-      expect(required).toContain("plaintiff");
+      // X-402 ultra-minimal (8 required fields)
+      expect(required).toContain("plaintiff");  // Ethereum address
+      expect(required).toContain("defendant");  // Ethereum address
       expect(required).toContain("disputeUrl");
       expect(required).toContain("description");
-      expect(required).toContain("amountUsd");
-      expect(required).toContain("currency");
-      expect(required).toContain("blockchain");
+      expect(required).toContain("request");  // Object
+      expect(required).toContain("response");  // Object
       expect(required).toContain("transactionHash");
-      expect(required).toContain("fromAddress");
-      expect(required).toContain("toAddress");
+      expect(required).toContain("blockchain");
       
-      // evidencePayload and signature now optional (for pre-signed mode)
-      expect(required).not.toContain("evidencePayload");
-      expect(required).not.toContain("signature");
+      // These are derived from blockchain or optional
+      expect(required).not.toContain("amountUsd");
+      expect(required).not.toContain("currency");
+      expect(required).not.toContain("fromAddress");
+      expect(required).not.toContain("toAddress");
     });
   });
 

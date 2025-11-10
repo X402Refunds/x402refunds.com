@@ -142,7 +142,7 @@ Open http://localhost:3000 and check:
 
 ### **Production Testing**
 After deployment:
-1. Visit https://consulatehq.com in different browsers
+1. Visit https://x402disputes.com in different browsers
 2. Check browser tab icon
 3. Test "Add to Home Screen" on mobile devices
 4. Verify PWA installation icon

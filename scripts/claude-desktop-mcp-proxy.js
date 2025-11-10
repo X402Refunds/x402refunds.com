@@ -28,7 +28,7 @@ import http from 'http';
 
 // Configuration
 const API_KEY = process.env.CONSULATE_API_KEY;
-const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://api.consulatehq.com';
+const API_BASE_URL = process.env.CONSULATE_API_URL || 'https://api.x402disputes.com';
 const DEBUG = process.env.CONSULATE_DEBUG === 'true';
 
 // Logging helper (writes to stderr to not interfere with stdio protocol)
@@ -49,7 +49,7 @@ if (!API_KEY) {
   console.error('Usage:');
   console.error('  CONSULATE_API_KEY=csk_live_... node claude-desktop-mcp-proxy.js');
   console.error('');
-  console.error('Get your API key from: https://consulatehq.com/settings/api-keys');
+  console.error('Get your API key from: https://x402disputes.com/settings/api-keys');
   process.exit(1);
 }
 
@@ -60,7 +60,7 @@ if (!API_KEY.startsWith('csk_live_') && !API_KEY.startsWith('csk_test_')) {
   console.error('  - csk_live_... (production)');
   console.error('  - csk_test_... (testing)');
   console.error('');
-  console.error('Get your API key from: https://consulatehq.com/settings/api-keys');
+  console.error('Get your API key from: https://x402disputes.com/settings/api-keys');
   process.exit(1);
 }
 

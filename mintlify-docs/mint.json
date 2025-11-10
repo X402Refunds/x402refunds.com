@@ -5,7 +5,7 @@
   "logo": {
     "light": "/consulate-logo-square.svg",
     "dark": "/consulate-logo-square.svg",
-    "href": "https://consulatehq.com"
+    "href": "https://x402disputes.com"
   },
   "favicon": "/consulate-icon-simple.png",
   "colors": {
@@ -20,12 +20,12 @@
   "topbarLinks": [
     {
       "name": "Dashboard",
-      "url": "https://consulatehq.com/dashboard"
+      "url": "https://x402disputes.com/dashboard"
     }
   ],
   "topbarCtaButton": {
     "name": "Get Started",
-    "url": "https://consulatehq.com/dashboard"
+    "url": "https://x402disputes.com/dashboard"
   },
   "navigation": [
     {
@@ -42,7 +42,7 @@
   },
   "theme": "quill",
   "api": {
-    "baseUrl": "https://api.consulatehq.com"
+    "baseUrl": "https://api.x402disputes.com"
   },
   "ignore": [
     "**/*.xml"

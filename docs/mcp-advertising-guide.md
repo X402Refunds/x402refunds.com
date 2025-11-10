@@ -18,7 +18,7 @@ Your Consulate MCP server is now published! Here's how to promote it and help us
 
 ### 2. Direct Discovery
 Users can discover via:
-- **MCP Discovery Endpoint**: `https://api.consulatehq.com/.well-known/mcp.json`
+- **MCP Discovery Endpoint**: `https://api.x402disputes.com/.well-known/mcp.json`
 - **Server Name**: `com.consulatehq/consulate`
 
 ## 📢 Advertising Channels
@@ -83,7 +83,7 @@ Consulate is available as an MCP server in the official directory:
 
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
 - **Server Name**: `com.consulatehq/consulate`
-- **Quick Start**: https://docs.consulatehq.com/mcp-quickstart
+- **Quick Start**: https://docs.x402disputes.com/mcp-quickstart
 ```
 
 ### 4. Product Pages
@@ -135,8 +135,8 @@ Make sure your server description and title are optimized:
 
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
 - **Server**: `com.consulatehq/consulate`
-- **Discovery**: https://api.consulatehq.com/.well-known/mcp.json
-- **Docs**: https://docs.consulatehq.com/mcp-quickstart
+- **Discovery**: https://api.x402disputes.com/.well-known/mcp.json
+- **Docs**: https://docs.x402disputes.com/mcp-quickstart
 - **GitHub**: https://github.com/consulatehq/consulate
 
 ## 📝 Press Release Template

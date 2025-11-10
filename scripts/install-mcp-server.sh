@@ -60,7 +60,7 @@ if [ -z "$1" ]; then
     echo "  ./install-mcp-server.sh csk_live_abc123..."
     echo ""
     echo "Get your API key from:"
-    echo "  https://consulatehq.com/settings/api-keys"
+    echo "  https://x402disputes.com/settings/api-keys"
     echo ""
     exit 1
 fi
@@ -76,7 +76,7 @@ if [[ ! "$API_KEY" =~ ^csk_(live|test)_ ]]; then
     echo "  - csk_test_... (testing)"
     echo ""
     echo "Get your API key from:"
-    echo "  https://consulatehq.com/settings/api-keys"
+    echo "  https://x402disputes.com/settings/api-keys"
     echo ""
     exit 1
 fi
@@ -270,10 +270,10 @@ echo "  • Test manually:"
 echo "    CONSULATE_API_KEY=$API_KEY node $PROXY_SCRIPT"
 echo ""
 echo "Documentation:"
-echo "  https://docs.consulatehq.com/mcp-quickstart"
+echo "  https://docs.x402disputes.com/mcp-quickstart"
 echo ""
 echo "Support:"
-echo "  support@consulatehq.com"
+echo "  support@x402disputes.com"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

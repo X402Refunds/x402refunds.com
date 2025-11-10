@@ -183,12 +183,12 @@ export default function AgentsPage() {
             <CardContent>
               <div className="flex gap-4">
                 <Button variant="outline" asChild>
-                  <a href="https://docs.consulatehq.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
+                  <a href="https://docs.x402disputes.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
                     Integration Guide
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="https://docs.consulatehq.com/api-overview" target="_blank" rel="noopener noreferrer">
+                  <a href="https://docs.x402disputes.com/api-overview" target="_blank" rel="noopener noreferrer">
                     API Documentation
                   </a>
                 </Button>

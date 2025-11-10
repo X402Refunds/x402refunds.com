@@ -140,7 +140,7 @@ function createSignedEvidence(request, response, paymentInfo) {
   return {
     'X-Payload': base64Encode(payload),
     'X-Signature': base64Encode(signature),
-    'X-Dispute-URL': `https://api.consulatehq.com/disputes/claim?vendor=${sellerDid}`
+    'X-Dispute-URL': `https://api.x402disputes.com/disputes/claim?vendor=${sellerDid}`
   };
 }
 ```
@@ -231,7 +231,7 @@ const stillValid = ed25519.verify(tampered, signature, publicKey);
 
 ## Support
 
-Questions about this format? Contact: support@consulatehq.com
+Questions about this format? Contact: support@x402disputes.com
 
 **Protocol:** Agentic Dispute Protocol (ADP)  
 **Repository:** https://github.com/consulatehq/agentic-dispute-protocol

@@ -26,7 +26,7 @@ import { API_BASE_URL } from './fixtures';
  *   API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:run mcp-tools-comprehensive
  *
  * Run against PRODUCTION with:
- *   API_BASE_URL=https://api.consulatehq.com pnpm test:run mcp-tools-comprehensive
+ *   API_BASE_URL=https://api.x402disputes.com pnpm test:run mcp-tools-comprehensive
  */
 
 describe('MCP Tools - Comprehensive HTTP Test Suite', () => {

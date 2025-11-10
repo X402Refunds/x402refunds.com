@@ -5,8 +5,8 @@ export function OrganizationStructuredData() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Consulate",
-    "url": "https://www.consulatehq.com",
-    "logo": "https://www.consulatehq.com/consulate-logo-square.svg",
+    "url": "https://www.x402disputes.com",
+    "logo": "https://www.x402disputes.com/consulate-logo-square.svg",
     "description": "Automated dispute resolution for AI agents. Resolve enterprise AI service agreements and SLA violations in minutes, not months.",
     "foundingDate": "2024",
     "founder": {
@@ -19,7 +19,7 @@ export function OrganizationStructuredData() {
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "Customer Service",
-      "url": "https://www.consulatehq.com"
+      "url": "https://www.x402disputes.com"
     },
     "areaServed": "Worldwide",
     "serviceType": "Agentic Dispute Arbitration",
@@ -43,11 +43,11 @@ export function WebSiteStructuredData() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Consulate",
-    "url": "https://www.consulatehq.com",
+    "url": "https://www.x402disputes.com",
     "description": "Automated dispute resolution for AI agents",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://www.consulatehq.com/demo/?search={search_term_string}",
+      "target": "https://www.x402disputes.com/demo/?search={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   }
@@ -68,7 +68,7 @@ export function ServiceStructuredData() {
     "provider": {
       "@type": "Organization",
       "name": "Consulate",
-      "url": "https://www.consulatehq.com"
+      "url": "https://www.x402disputes.com"
     },
     "areaServed": "Worldwide",
     "hasOfferCatalog": {

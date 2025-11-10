@@ -43,24 +43,25 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
     
-    // Check for flattened parameters (new approach)
-    expect(tool?.input_schema.required).toContain('plaintiff');
+    // Check for X-402 ultra-minimal schema (8 required fields)
+    expect(tool?.input_schema.required).toContain('plaintiff');  // Ethereum address
+    expect(tool?.input_schema.required).toContain('defendant');  // Ethereum address
     expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
-    expect(tool?.input_schema.required).toContain('amountUsd');
-    expect(tool?.input_schema.required).toContain('currency');
-    expect(tool?.input_schema.required).toContain('blockchain');
+    expect(tool?.input_schema.required).toContain('request');  // Object
+    expect(tool?.input_schema.required).toContain('response');  // Object
     expect(tool?.input_schema.required).toContain('transactionHash');
-    expect(tool?.input_schema.required).toContain('fromAddress');
-    expect(tool?.input_schema.required).toContain('toAddress');
+    expect(tool?.input_schema.required).toContain('blockchain');
     
-    // evidencePayload and signature are now optional (for pre-signed mode)
-    expect(tool?.input_schema.required).not.toContain('evidencePayload');
-    expect(tool?.input_schema.required).not.toContain('signature');
+    // These are now derived from blockchain or optional
+    expect(tool?.input_schema.required).not.toContain('amountUsd');
+    expect(tool?.input_schema.required).not.toContain('currency');
+    expect(tool?.input_schema.required).not.toContain('fromAddress');
+    expect(tool?.input_schema.required).not.toContain('toAddress');
     
-    // Check for schema improvements
-    expect(tool?.input_schema.properties.plaintiff.pattern).toBeDefined();
-    expect(tool?.input_schema.properties.currency.enum).toBeDefined(); // Enum validation
+    // Check for Ethereum address validation
+    expect(tool?.input_schema.properties.plaintiff.pattern).toContain('0x');
+    expect(tool?.input_schema.properties.defendant.pattern).toContain('0x');
     expect(tool?.input_schema.properties.blockchain.enum).toBeDefined(); // Enum validation
     expect(tool?.input_schema.properties.dryRun).toBeDefined();
     expect(tool?.returns).toBeDefined();
@@ -84,28 +85,33 @@ describe('MCP - Tool Definitions', () => {
 });
 
 describe('MCP - Schema Improvements', () => {
-  it('should have pattern validation for plaintiff field', async () => {
+  it('should have Ethereum address validation for plaintiff/defendant fields', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
     const plaintiff = fileDisputeTool?.input_schema.properties.plaintiff;
+    const defendant = fileDisputeTool?.input_schema.properties.defendant;
 
     expect(plaintiff).toBeDefined();
-    expect(plaintiff?.pattern).toBe('^(buyer:|wallet:|user:).+');
+    expect(defendant).toBeDefined();
+    expect(plaintiff?.pattern).toContain('0x[a-fA-F0-9]{40}');
+    expect(defendant?.pattern).toContain('0x[a-fA-F0-9]{40}');
     expect(plaintiff?.examples).toBeDefined();
     expect(plaintiff?.examples?.length).toBeGreaterThan(0);
   });
 
-  it('should have contentEncoding for base64 fields', async () => {
+  it('should have contentEncoding for optional sellerXSignature field', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'consulate_file_dispute');
-    const evidencePayload = fileDisputeTool?.input_schema.properties.evidencePayload;
-    const signature = fileDisputeTool?.input_schema.properties.signature;
+    const sellerXSignature = fileDisputeTool?.input_schema.properties.sellerXSignature;
     
-    expect(evidencePayload?.contentEncoding).toBe('base64');
-    expect(signature?.contentEncoding).toBe('base64');
-    expect(evidencePayload?.examples).toBeDefined();
+    expect(sellerXSignature).toBeDefined();
+    expect(sellerXSignature?.contentEncoding).toBe('base64');
+    expect(sellerXSignature?.examples).toBeDefined();
+    
+    // sellerXSignature is optional (not required)
+    expect(fileDisputeTool?.input_schema.required).not.toContain('sellerXSignature');
   });
 
   it('should have dryRun parameter for testing', async () => {

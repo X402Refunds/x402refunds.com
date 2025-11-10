@@ -138,7 +138,7 @@ describe('MCP Signed Dispute E2E', () => {
     // File dispute with FLATTENED parameters (no evidencePayload/signature)
     const { response, data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "buyer:alice@example.com",
-      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`,
       description: "API returned 500 error after payment was processed",
       amountUsd: 2.50,
       currency: "USDC",
@@ -203,7 +203,7 @@ describe('MCP Signed Dispute E2E', () => {
     console.log("✅ Payload signed (signature length:", signatureBase64.length, "chars)");
     
     // 5. Construct dispute URL
-    const disputeUrl = `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`;
+    const disputeUrl = `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`;
     
     // 6. File dispute via MCP with signed evidence
     const { response: disputeResponse, data: disputeData } = await invokeMcpTool('consulate_file_dispute', {
@@ -254,7 +254,7 @@ describe('MCP Signed Dispute E2E', () => {
     // Try to file with WRONG plaintiff format (DID instead of buyer:/wallet:/user:)
     const { data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "did:agent:buyer-wrong-format", // ❌ Wrong format
-      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`,
       description: "Testing plaintiff validation",
       evidencePayload: payloadBase64,
       signature: signatureBase64
@@ -297,7 +297,7 @@ describe('MCP Signed Dispute E2E', () => {
     // Test with dryRun = true
     const { data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "buyer:bob@example.com",
-      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`,
       description: "Testing dryRun validation",
       evidencePayload: payloadBase64,
       signature: signatureBase64,
@@ -340,7 +340,7 @@ describe('MCP Signed Dispute E2E', () => {
     // Try with invalid base64
     const { data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "buyer:charlie@example.com",
-      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`,
       description: "Testing base64 validation",
       evidencePayload: "not-valid-base64!@#$", // ❌ Invalid
       signature: "fake-signature"
@@ -391,7 +391,7 @@ describe('MCP Signed Dispute E2E', () => {
     
     const { data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "buyer:eve@example.com",
-      disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${vendorDid}`,
+      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`,
       description: "Testing payment details validation",
       evidencePayload: payloadBase64,
       signature: signatureBase64
@@ -414,7 +414,7 @@ describe('MCP Signed Dispute E2E', () => {
     
     const { data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff: "buyer:diana@example.com",
-      disputeUrl: "https://api.consulatehq.com/disputes/claim?vendor=did:agent:nonexistent-vendor-999",
+      disputeUrl: "https://api.x402disputes.com/disputes/claim?vendor=did:agent:nonexistent-vendor-999",
       description: "Testing vendor verification",
       evidencePayload: payloadBase64,
       signature: signatureBase64

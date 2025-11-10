@@ -73,19 +73,33 @@ export default defineSchema({
       v.literal("manufacturing"), v.literal("transportation"), v.literal("scheduler"),
       v.literal("workflow"), v.literal("procurement"), v.literal("project"), v.literal("general")
     )),
-    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("banned"), v.literal("deactivated")),
+    status: v.union(
+      v.literal("active"), 
+      v.literal("suspended"), 
+      v.literal("banned"), 
+      v.literal("deactivated"),
+      v.literal("unclaimed")  // NEW: Agent created from dispute, not yet claimed by owner
+    ),
     deactivatedAt: v.optional(v.number()),
     deactivatedBy: v.optional(v.id("users")),
     anonymizedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    
+    // NEW: X-402 identity fields
+    walletAddress: v.optional(v.string()), // Ethereum address (canonical ERC-8004 identity)
+    endpoint: v.optional(v.string()), // API endpoint URL
+    x402MetadataUrl: v.optional(v.string()), // .well-known/x402.json location
+    claimedAt: v.optional(v.number()), // When agent was claimed by owner
+    claimedByUserId: v.optional(v.id("users")), // Who claimed it
   })
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
     .index("by_status", ["status"])
     .index("by_functional_type", ["functionalType"])
     .index("by_organization", ["organizationId"])
-    .index("by_public_key", ["publicKey"]),
+    .index("by_public_key", ["publicKey"])
+    .index("by_wallet", ["walletAddress"]), // NEW: Query by Ethereum address
 
   // ========================================
   // CASES TABLE - SINGLE SOURCE OF TRUTH

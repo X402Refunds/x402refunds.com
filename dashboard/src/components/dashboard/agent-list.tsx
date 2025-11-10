@@ -155,11 +155,11 @@ export function AgentList({ agents }: AgentListProps) {
                 </TableCell>
                 <TableCell className="font-mono text-xs">
                   <a 
-                    href={`https://api.consulatehq.com/disputes/claim?vendor=${agent.did}`}
+                    href={`https://api.x402disputes.com/disputes/claim?vendor=${agent.did}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
-                    title={`Dispute URL: https://api.consulatehq.com/disputes/claim?vendor=${agent.did}`}
+                    title={`Dispute URL: https://api.x402disputes.com/disputes/claim?vendor=${agent.did}`}
                   >
                     /disputes/claim?vendor={agent.did.slice(0, 20)}...
                   </a>

@@ -30,7 +30,7 @@ async function generateDispute() {
       console.log(`   Auto-resolve eligible: ${result.autoResolveEligible ? 'Yes' : 'No'}`);
       console.log(`   Fee: $${(result.fee || 0).toFixed(2)} (${result.tier} tier)`);
       console.log("\n🎉 Dispute created successfully!");
-      console.log("   View all disputes: https://www.consulatehq.com/dashboard/review-queue\n");
+      console.log("   View all disputes: https://www.x402disputes.com/dashboard/review-queue\n");
     } else {
       console.log(`\n❌ Failed to generate dispute: ${result.reason || 'Unknown error'}`);
     }

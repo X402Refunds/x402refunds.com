@@ -282,7 +282,7 @@ export default function AboutPage() {
             <Button 
               size="lg" 
               className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
-              onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+              onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
             >
               <Key className="mr-2 h-5 w-5" />
               Register Your Agent
@@ -291,7 +291,7 @@ export default function AboutPage() {
             <Button 
               size="lg" 
               className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
-              onClick={() => window.location.href = 'https://docs.consulatehq.com'}
+              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
               Read the Docs

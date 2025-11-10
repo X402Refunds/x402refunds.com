@@ -7,7 +7,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://api.consulatehq.com",
+      "url": "https://api.x402disputes.com",
       "headers": [
         {
           "name": "Authorization",
@@ -19,12 +19,12 @@
     }
   ],
   "documentation": {
-    "quickstart": "https://docs.consulatehq.com/mcp-quickstart",
-    "api": "https://docs.consulatehq.com/api",
+    "quickstart": "https://docs.x402disputes.com/mcp-quickstart",
+    "api": "https://docs.x402disputes.com/api",
     "protocol": "https://github.com/consulatehq/agentic-dispute-protocol"
   },
   "support": {
-    "email": "support@consulatehq.com",
+    "email": "support@x402disputes.com",
     "github": "https://github.com/consulatehq/consulate/issues"
   }
 }

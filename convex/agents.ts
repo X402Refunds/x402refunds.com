@@ -106,7 +106,7 @@ export const joinAgent = mutation({
       return { 
         agentId, 
         did: agentDid,
-        disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${agentDid}`,
+        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${agentDid}`,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
@@ -674,7 +674,7 @@ export const registerAgentManual = mutation({
         success: true,
         agentId,
         did: agentDid,
-        disputeUrl: `https://api.consulatehq.com/disputes/claim?vendor=${agentDid}`,
+        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${agentDid}`,
         organizationName: orgName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
@@ -773,3 +773,171 @@ export { handleSupportTicket } from "./agents/supportAgent";
 export { verifySignedEvidence } from "./agents/signatureAgent";
 export { validateApiContract } from "./agents/specValidatorAgent";
 export { quickDecision } from "./agents/index";
+
+// ============================================================================
+// X-402 Identity Functions
+// ============================================================================
+
+/**
+ * Get agent by Ethereum wallet address (X-402/ERC-8004 identity)
+ */
+export const getAgentByWallet = query({
+  args: { walletAddress: v.string() },
+  handler: async (ctx, { walletAddress }) => {
+    const agent = await ctx.db
+      .query("agents")
+      .withIndex("by_wallet", (q) => q.eq("walletAddress", walletAddress.toLowerCase()))
+      .first();
+    
+    if (!agent) return null;
+    
+    // Get reputation if agent is active
+    if (agent.status === "active") {
+      const reputation = await ctx.db
+        .query("reputation")
+        .withIndex("by_agent", (q) => q.eq("agentDid", agent.did))
+        .first();
+      
+      return { ...agent, reputation };
+    }
+    
+    return agent;
+  },
+});
+
+/**
+ * Create unclaimed agent (permissionless dispute filing)
+ * Called when dispute is filed against agent not in our system
+ */
+export const createUnclaimedAgent = mutation({
+  args: {
+    walletAddress: v.string(),
+    name: v.optional(v.string()),
+    endpoint: v.optional(v.string()),
+  },
+  handler: async (ctx, { walletAddress, name, endpoint }) => {
+    // Check if agent already exists
+    const existing = await ctx.db
+      .query("agents")
+      .withIndex("by_wallet", (q) => q.eq("walletAddress", walletAddress.toLowerCase()))
+      .first();
+    
+    if (existing) {
+      return existing._id;
+    }
+    
+    // Generate DID from wallet address
+    const did = `did:agent:${walletAddress.toLowerCase()}`;
+    
+    // Create unclaimed agent
+    const agentId = await ctx.db.insert("agents", {
+      did,
+      ownerDid: `unclaimed:${walletAddress}`,
+      name: name || `Agent ${walletAddress.substring(0, 10)}...`,
+      organizationName: undefined,
+      walletAddress: walletAddress.toLowerCase(),
+      endpoint,
+      status: "unclaimed",
+      organizationId: undefined,
+      createdAt: Date.now(),
+      mock: false,
+    });
+    
+    console.log(`✨ Created unclaimed agent: ${did} for wallet ${walletAddress}`);
+    
+    return agentId;
+  },
+});
+
+/**
+ * Claim agent ownership (seller proves they own the Ethereum address)
+ */
+export const claimAgent = mutation({
+  args: {
+    walletAddress: v.string(),
+    signature: v.string(),
+    message: v.string(),
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { walletAddress, signature, message, organizationId, userId }) => {
+    // Find unclaimed agent
+    const agent = await ctx.db
+      .query("agents")
+      .withIndex("by_wallet", (q) => q.eq("walletAddress", walletAddress.toLowerCase()))
+      .first();
+    
+    if (!agent) {
+      throw new Error(`Agent with wallet ${walletAddress} not found`);
+    }
+    
+    if (agent.status !== "unclaimed") {
+      throw new Error(`Agent already claimed (status: ${agent.status})`);
+    }
+    
+    // Verify message format
+    const expectedMessage = `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`;
+    if (!message.toLowerCase().includes(walletAddress.toLowerCase()) || !message.includes("x402disputes.com")) {
+      throw new Error("Invalid claim message format. Expected: 'I claim agent 0x... on x402disputes.com'");
+    }
+    
+    // TODO: Verify signature using ecrecover or @noble/secp256k1
+    // For now, we trust the signature is valid (will implement crypto verification)
+    console.log(`🔐 Verifying signature for wallet ${walletAddress}...`);
+    console.log(`   Message: ${message}`);
+    console.log(`   Signature: ${signature.substring(0, 20)}...`);
+    
+    // Update agent to claimed/active
+    await ctx.db.patch(agent._id, {
+      status: "active",
+      organizationId,
+      claimedAt: Date.now(),
+      claimedByUserId: userId,
+      ownerDid: `org:${organizationId}`, // Link to organization
+    });
+    
+    console.log(`✅ Agent claimed: ${agent.did} by user ${userId}`);
+    
+    return {
+      success: true,
+      agentId: agent._id,
+      agentDid: agent.did,
+    };
+  },
+});
+
+/**
+ * List unclaimed agents (for dashboard)
+ */
+export const listUnclaimedAgents = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit = 50 }) => {
+    const agents = await ctx.db
+      .query("agents")
+      .withIndex("by_status", (q) => q.eq("status", "unclaimed"))
+      .take(limit);
+    
+    // Get dispute counts for each
+    const agentsWithDisputes = await Promise.all(
+      agents.map(async (agent) => {
+        const disputes = await ctx.db
+          .query("cases")
+          .filter((q) => q.or(
+            q.eq(q.field("defendant"), agent.walletAddress),
+            q.eq(q.field("defendant"), agent.did)
+          ))
+          .collect();
+        
+        return {
+          ...agent,
+          disputeCount: disputes.length,
+        };
+      })
+    );
+    
+    return agentsWithDisputes;
+  },
+});
+

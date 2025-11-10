@@ -62,7 +62,7 @@ export default function Error({
           <p className="text-sm text-slate-500">
             If this problem persists, please{' '}
             <a 
-              href="mailto:support@consulatehq.com" 
+              href="mailto:support@x402disputes.com" 
               className="text-blue-600 hover:text-blue-700 underline"
             >
               contact support

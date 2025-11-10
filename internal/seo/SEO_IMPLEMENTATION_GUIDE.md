@@ -53,7 +53,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 - Professional gradient design
 - Optimized for social sharing (Twitter, LinkedIn, Facebook)
 
-**Preview URL**: `https://consulatehq.com/opengraph-image`
+**Preview URL**: `https://x402disputes.com/opengraph-image`
 
 ---
 
@@ -77,7 +77,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 - Evidence page (Priority: 0.7, Hourly updates)
 - Auth pages (Priority: 0.5, Monthly updates)
 
-**Live URL**: `https://consulatehq.com/sitemap.xml`
+**Live URL**: `https://x402disputes.com/sitemap.xml`
 
 ---
 
@@ -92,7 +92,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 - Shortcuts to key pages (Dashboard, Agents, Cases)
 - Business category classification
 
-**Live URL**: `https://consulatehq.com/manifest.webmanifest`
+**Live URL**: `https://x402disputes.com/manifest.webmanifest`
 
 ---
 
@@ -169,7 +169,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 
 #### **security.txt** (/dashboard/public/security.txt)
 ✅ Security disclosure policy
-- Contact: security@consulatehq.com
+- Contact: security@x402disputes.com
 - Expires: 2025-12-31
 - Responsible disclosure guidelines
 
@@ -259,7 +259,7 @@ This document outlines the comprehensive SEO implementation for Consulate's webs
 
 4. **Configure Environment Variables** (`.env.local`):
    ```bash
-   NEXT_PUBLIC_SITE_URL=https://consulatehq.com
+   NEXT_PUBLIC_SITE_URL=https://x402disputes.com
    NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX  # ⚠️ Add Google Analytics ID
    NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=xxx    # ⚠️ Add verification code
    ```

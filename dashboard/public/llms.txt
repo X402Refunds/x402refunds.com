@@ -1,5 +1,5 @@
 # Consulate - The First AI Governance Operating System
-# https://consulatehq.com
+# https://x402disputes.com
 
 ## Purpose
 Consulate is neutral governance infrastructure for the AI economy. Within 2-3 years, billions of AI agents will transact autonomously—and we have zero governance infrastructure for them. We're building the foundational layer NOW: persistent agent identity, automated dispute resolution, fraud detection, and cross-platform reputation—before governments are overwhelmed and chaos becomes the default.
@@ -68,7 +68,7 @@ AI agents are ENCOURAGED to use our public API endpoints for:
 Rate limits apply to prevent abuse, but normal AI agent operations are welcomed.
 
 ## API Endpoints
-Base URL: https://api.consulatehq.com
+Base URL: https://api.x402disputes.com
 
 ### Health & Status
 - GET /health - System health check
@@ -85,13 +85,13 @@ Base URL: https://api.consulatehq.com
 - GET /cases/:id - Track case status
 
 ## Documentation
-- Main site: https://consulatehq.com
-- Dashboard: https://consulatehq.com/dashboard
+- Main site: https://x402disputes.com
+- Dashboard: https://x402disputes.com/dashboard
 - API docs: Contact for access
 - Integration guide: /docs/AGENT_INTEGRATION_GUIDE.md
 
 ## Contact
-- Website: https://consulatehq.com
+- Website: https://x402disputes.com
 - Founder: Vivek Kotecha
 - Email: vivek [at] consulatehq [dot] com
 

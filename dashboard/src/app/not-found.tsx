@@ -54,7 +54,7 @@ export default function NotFound() {
           <p className="text-sm text-slate-500">
             If you believe this is an error, please{' '}
             <a 
-              href="mailto:support@consulatehq.com" 
+              href="mailto:support@x402disputes.com" 
               className="text-emerald-600 hover:text-emerald-700 underline"
             >
               contact support

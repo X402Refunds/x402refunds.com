@@ -15,8 +15,8 @@ The MCP directory is a public registry where MCP-compatible agents can discover 
 ## Prerequisites
 
 1. **MCP Server Running**: Your server must be deployed and accessible
-   - Discovery endpoint: `https://api.consulatehq.com/.well-known/mcp.json`
-   - Invoke endpoint: `https://api.consulatehq.com/mcp/invoke`
+   - Discovery endpoint: `https://api.x402disputes.com/.well-known/mcp.json`
+   - Invoke endpoint: `https://api.x402disputes.com/mcp/invoke`
 
 2. **GitHub Account**: For authentication with the MCP registry
 
@@ -107,7 +107,7 @@ cat server.json | jq .
 Ensure your discovery endpoint returns valid MCP JSON:
 
 ```bash
-curl https://api.consulatehq.com/.well-known/mcp.json | jq .
+curl https://api.x402disputes.com/.well-known/mcp.json | jq .
 ```
 
 **Expected response:**
@@ -200,10 +200,10 @@ mcp-publisher publish server.json
 **Debug**:
 ```bash
 # Test discovery endpoint
-curl -v https://api.consulatehq.com/.well-known/mcp.json
+curl -v https://api.x402disputes.com/.well-known/mcp.json
 
 # Test invoke endpoint (will fail auth, but should return 401, not 404)
-curl -X POST https://api.consulatehq.com/mcp/invoke \
+curl -X POST https://api.x402disputes.com/mcp/invoke \
   -H "Content-Type: application/json" \
   -d '{"tool":"test","parameters":{}}'
 ```
@@ -260,11 +260,11 @@ curl -X POST https://api.consulatehq.com/mcp/invoke \
 
 ```bash
 # Test discovery endpoint
-curl https://api.consulatehq.com/.well-known/mcp.json | jq '.tools | length'
+curl https://api.x402disputes.com/.well-known/mcp.json | jq '.tools | length'
 # Should return: 8
 
 # Test invoke endpoint (will return auth error, but confirms endpoint exists)
-curl -X POST https://api.consulatehq.com/mcp/invoke \
+curl -X POST https://api.x402disputes.com/mcp/invoke \
   -H "Content-Type: application/json" \
   -d '{"tool":"consulate_file_dispute","parameters":{}}'
 # Should return: 401 (auth required), not 404 (not found)
@@ -296,7 +296,7 @@ After publishing, test integration from a real MCP client:
 {
   "mcpServers": {
     "consulate": {
-      "url": "https://api.consulatehq.com"
+      "url": "https://api.x402disputes.com"
     }
   }
 }
@@ -305,8 +305,8 @@ After publishing, test integration from a real MCP client:
 ### Other MCP Clients
 
 Refer to your `server.json` endpoints:
-- Discovery: `GET https://api.consulatehq.com/.well-known/mcp.json`
-- Invoke: `POST https://api.consulatehq.com/mcp/invoke`
+- Discovery: `GET https://api.x402disputes.com/.well-known/mcp.json`
+- Invoke: `POST https://api.x402disputes.com/mcp/invoke`
 
 ---
 
@@ -315,7 +315,7 @@ Refer to your `server.json` endpoints:
 - **MCP Directory**: https://modelcontextprotocol.info/directory
 - **Publishing Guide**: https://modelcontextprotocol.info/tools/registry/publishing
 - **MCP Specification**: https://modelcontextprotocol.info/specification
-- **Consulate Docs**: https://docs.consulatehq.com/mcp-quickstart
+- **Consulate Docs**: https://docs.x402disputes.com/mcp-quickstart
 - **GitHub Registry Repo**: https://github.com/modelcontextprotocol/registry
 
 ---
@@ -326,7 +326,7 @@ If you encounter issues publishing:
 
 1. **Check MCP Registry Documentation**: https://modelcontextprotocol.info/tools/registry/publishing
 2. **GitHub Issues**: https://github.com/modelcontextprotocol/registry/issues
-3. **Consulate Support**: support@consulatehq.com
+3. **Consulate Support**: support@x402disputes.com
 
 ---
 

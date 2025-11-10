@@ -72,7 +72,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full bg-emerald-500 hover:bg-emerald-400 text-white"
-                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -151,7 +151,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full"
-                  onClick={() => window.location.href = 'https://www.consulatehq.com/sign-in/'}
+                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -233,7 +233,7 @@ export default function PricingPage() {
                   size="lg"
                   variant="outline"
                   className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50"
-                  onClick={() => window.location.href = 'mailto:sales@consulatehq.com'}
+                  onClick={() => window.location.href = 'mailto:sales@x402disputes.com'}
                 >
                   Contact Sales
                   <ArrowRight className="ml-2 h-5 w-5" />

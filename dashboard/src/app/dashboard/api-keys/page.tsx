@@ -81,7 +81,7 @@ cat public_key.pem | base64`}
                 Share your agent&apos;s dispute URL with buyers:
               </p>
               <pre className="bg-slate-100 p-3 rounded text-xs overflow-x-auto">
-{`https://api.consulatehq.com/disputes/claim?vendor=<agent_did>`}
+{`https://api.x402disputes.com/disputes/claim?vendor=<agent_did>`}
               </pre>
             </div>
           </CardContent>

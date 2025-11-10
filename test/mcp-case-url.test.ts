@@ -20,7 +20,7 @@ describe("MCP Case Tracking URL", () => {
   it("should return tracking URL in correct PUBLIC format", () => {
     // The MCP tool should return public tracking URLs (no auth required)
     const caseId = "jd74gne63sjx484m0zcrxse98h7tb8dp";
-    const expectedUrl = `https://consulatehq.com/cases/${caseId}`;
+    const expectedUrl = `https://x402disputes.com/cases/${caseId}`;
 
     // Verify URL structure
     expect(expectedUrl).toContain("/cases/");
@@ -32,11 +32,11 @@ describe("MCP Case Tracking URL", () => {
   it("should use PUBLIC /cases/ route (not authenticated /demo/dispute/)", () => {
     const caseId = "test_case_123";
 
-    // PUBLIC (CORRECT): https://consulatehq.com/cases/{id} - no auth required
-    const publicUrl = `https://consulatehq.com/cases/${caseId}`;
+    // PUBLIC (CORRECT): https://x402disputes.com/cases/{id} - no auth required
+    const publicUrl = `https://x402disputes.com/cases/${caseId}`;
 
-    // AUTHENTICATED (for dashboard): https://consulatehq.com/demo/dispute/{id} - requires login
-    const authUrl = `https://consulatehq.com/demo/dispute/${caseId}`;
+    // AUTHENTICATED (for dashboard): https://x402disputes.com/demo/dispute/{id} - requires login
+    const authUrl = `https://x402disputes.com/demo/dispute/${caseId}`;
 
     expect(publicUrl).toContain("/cases/");
     expect(publicUrl).not.toContain("/demo/");
@@ -47,7 +47,7 @@ describe("MCP Case Tracking URL", () => {
 
   it("should include caseId in tracking URL", () => {
     const caseId = "k123abc456def789";
-    const trackingUrl = `https://consulatehq.com/cases/${caseId}`;
+    const trackingUrl = `https://x402disputes.com/cases/${caseId}`;
 
     // Extract caseId from URL
     const urlParts = trackingUrl.split("/");
@@ -66,11 +66,11 @@ describe("MCP Case Tracking URL", () => {
     ];
 
     for (const caseId of testCases) {
-      const url = `https://consulatehq.com/cases/${caseId}`;
+      const url = `https://x402disputes.com/cases/${caseId}`;
 
       // Verify URL components
       expect(url).toMatch(/^https:\/\//);
-      expect(url).toContain("consulatehq.com");
+      expect(url).toContain("x402disputes.com");
       expect(url).toContain("/cases/");
       expect(url.endsWith(caseId)).toBe(true);
     }
@@ -81,12 +81,12 @@ describe("MCP Case Tracking URL", () => {
   it("should differentiate between public and authenticated routes", () => {
     const caseId = "test_123";
 
-    const publicUrl = `https://consulatehq.com/cases/${caseId}`; // PUBLIC - no auth
-    const authUrl = `https://consulatehq.com/demo/dispute/${caseId}`; // AUTHENTICATED - requires login
+    const publicUrl = `https://x402disputes.com/cases/${caseId}`; // PUBLIC - no auth
+    const authUrl = `https://x402disputes.com/demo/dispute/${caseId}`; // AUTHENTICATED - requires login
 
     // Public URL should NOT have /demo/
     expect(publicUrl).not.toContain("/demo/");
-    expect(publicUrl).toBe(`https://consulatehq.com/cases/${caseId}`);
+    expect(publicUrl).toBe(`https://x402disputes.com/cases/${caseId}`);
 
     // Authenticated URL SHOULD have /demo/
     expect(authUrl).toContain("/demo/");
