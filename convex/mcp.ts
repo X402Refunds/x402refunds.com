@@ -278,7 +278,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
         flat_fee: "$0.05 per dispute"
       },
       resolution_time: "< 10 minutes avg, 10 business days max (Regulation E)",
-      url: "https://x402disputes.com"
+      url: "https://api.x402disputes.com"
     },
     tools: MCP_TOOLS,
     authentication: {
