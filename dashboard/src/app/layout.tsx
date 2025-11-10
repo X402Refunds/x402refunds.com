@@ -11,6 +11,9 @@ import {
   SoftwareApplicationStructuredData,
   FAQStructuredData 
 } from "@/components/StructuredData";
+import { WagmiProvider } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { wagmiConfig } from '@/lib/wagmi';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -166,9 +169,13 @@ export default function RootLayout({
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
           suppressHydrationWarning
         >
-          <ConvexClientProvider>
-            {children}
-          </ConvexClientProvider>
+          <WagmiProvider config={wagmiConfig}>
+            <QueryClientProvider client={new QueryClient()}>
+              <ConvexClientProvider>
+                {children}
+              </ConvexClientProvider>
+            </QueryClientProvider>
+          </WagmiProvider>
           <Analytics />
         </body>
       </html>
