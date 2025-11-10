@@ -770,10 +770,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         };
         
         // Auto-detect reviewerOrganizationId
+        // SECURITY: ONLY use defendant's organization (they review disputes filed against them)
+        // NEVER use plaintiff's org (conflict of interest - they'd approve their own refunds!)
         let reviewerOrgId = authenticatedOrg; // Use API key org if provided
         
         if (!reviewerOrgId) {
-          // Try defendant's organization first
+          // Check defendant's organization ONLY
           const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
             walletAddress: defendant
           });
@@ -781,16 +783,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           if (defendantAgent?.organizationId) {
             reviewerOrgId = defendantAgent.organizationId;
           }
-          // Fallback to plaintiff's organization
-          else {
-            const plaintiffAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
-              walletAddress: parameters.plaintiff
-            });
-            
-            if (plaintiffAgent?.organizationId) {
-              reviewerOrgId = plaintiffAgent.organizationId;
-            }
-          }
+          // If defendant has no org, they can claim later (unclaimed agent flow)
         }
         
         if (reviewerOrgId) {

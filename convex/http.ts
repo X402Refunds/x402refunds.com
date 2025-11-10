@@ -536,10 +536,13 @@ http.route({
       }
       
       // 3. Determine reviewerOrganizationId from defendant's organization
+      // SECURITY: ONLY use defendant's org (they review disputes filed against them)
+      // NEVER use plaintiff's org (conflict of interest!)
       let reviewerOrganizationId: any = undefined;
       if (vendor.organizationId) {
         reviewerOrganizationId = vendor.organizationId;
       }
+      // If defendant has no org, they can claim later (unclaimed agent flow)
 
       // 3. Create dispute case with signed evidence
       const caseId = await ctx.runMutation(api.cases.fileDispute, {
@@ -605,10 +608,12 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
   }
 
   // Auto-detect reviewerOrganizationId if not provided via API key
+  // SECURITY: ONLY use defendant's organization (they review disputes filed against them)
+  // NEVER use plaintiff's org (conflict of interest - they'd approve their own refunds!)
   let reviewerOrgId = organizationId;
   
   if (!reviewerOrgId) {
-    // Try defendant's organization first
+    // Check defendant's organization ONLY
     const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
       walletAddress: body.defendant
     });
@@ -616,16 +621,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     if (defendantAgent?.organizationId) {
       reviewerOrgId = defendantAgent.organizationId;
     }
-    // Fallback to plaintiff's organization
-    else {
-      const plaintiffAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
-        walletAddress: body.plaintiff
-      });
-      
-      if (plaintiffAgent?.organizationId) {
-        reviewerOrgId = plaintiffAgent.organizationId;
-      }
-    }
+    // If defendant has no org, they can claim later (unclaimed agent flow)
   }
 
   // Create payment dispute (organizationId auto-injected)
