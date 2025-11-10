@@ -40,8 +40,11 @@ node --version
 - Download from: [https://nodejs.org/](https://nodejs.org/)
 - Or with Homebrew: `brew install node`
 
-### 3. Consulate API Key
+### 3. Consulate API Key (Optional)
 
+**Note**: API keys are **optional** for MCP access. The MCP endpoints are publicly accessible. Authentication happens via Ed25519 signatures at the evidence/dispute level, not API keys.
+
+If you want to use an API key (for organization-scoped features):
 1. Sign in to [Consulate Dashboard](https://x402disputes.com)
 2. Navigate to **Settings → API Keys**
 3. Click **Generate New API Key**
@@ -57,16 +60,23 @@ node --version
 
 ```bash
 cd /path/to/consulate
+./scripts/install-mcp-server.sh
+```
+
+**Or with an API key** (optional):
+```bash
 ./scripts/install-mcp-server.sh csk_live_YOUR_KEY_HERE
 ```
 
 **What this does:**
-1. Validates your API key format
+1. Validates your API key format (if provided)
 2. Finds your Claude Desktop config location
 3. Backs up existing config (if any)
 4. Adds Consulate MCP server to config
 5. Tests the proxy script
 6. Shows you next steps
+
+**Note**: You can skip the API key - the script will work without it. MCP endpoints are publicly accessible.
 
 **After installation:**
 1. Restart Claude Desktop app
@@ -101,16 +111,18 @@ Add the Consulate MCP server (or merge with existing config):
 ```json
 {
   "mcpServers": {
-    "consulate": {
+    "x402Disputes": {
       "command": "node",
       "args": ["/absolute/path/to/consulate/scripts/claude-desktop-mcp-proxy.js"],
-      "env": {
-        "CONSULATE_API_KEY": "csk_live_YOUR_KEY_HERE"
-      }
+      "env": {}
     }
   }
 }
 ```
+
+**Optional API Key**: If you want to use organization-scoped features, add `"CONSULATE_API_KEY": "csk_live_YOUR_KEY_HERE"` to the `env` section. It's not required - MCP endpoints are publicly accessible.
+
+**Note**: You can use either `"consulate"` or `"x402Disputes"` as the server name - both work. The name is just an identifier in Claude Desktop.
 
 **IMPORTANT**: Replace `/absolute/path/to/consulate` with your actual Consulate directory path.
 
@@ -165,10 +177,10 @@ Check the current status of a dispute case.
 > "What's the status of case k12345...?"
 
 ### 5. **consulate_list_my_cases**
-List all cases where you're a party (plaintiff or defendant).
+List all X-402 payment dispute cases where you're a party (plaintiff or defendant). Uses your Ethereum wallet address (ERC-8004) as identity.
 
 **Example usage in Claude:**
-> "Show me all my active disputes"
+> "Show me all my active disputes for wallet 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
 
 ### 6. **consulate_get_sla_status**
 Check your SLA compliance status and any active violations.

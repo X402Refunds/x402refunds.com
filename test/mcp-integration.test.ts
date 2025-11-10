@@ -80,7 +80,7 @@ describe('MCP - Tool Definitions', () => {
     
     const tool = MCP_TOOLS.find(t => t.name === 'consulate_list_my_cases');
     expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('agentDid');
+    expect(tool?.input_schema.required).toContain('walletAddress');
   });
 });
 

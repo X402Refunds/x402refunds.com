@@ -49,46 +49,36 @@ echo "  Consulate MCP Server Installer for Claude Desktop"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Check if API key was provided
-if [ -z "$1" ]; then
-    log_error "API key is required"
-    echo ""
-    echo "Usage:"
-    echo "  ./install-mcp-server.sh <your-api-key>"
-    echo ""
-    echo "Example:"
-    echo "  ./install-mcp-server.sh csk_live_abc123..."
-    echo ""
-    echo "Get your API key from:"
-    echo "  https://x402disputes.com/settings/api-keys"
-    echo ""
-    exit 1
-fi
-
+# Check if API key was provided (optional)
 API_KEY="$1"
 
-# Validate API key format
-if [[ ! "$API_KEY" =~ ^csk_(live|test)_ ]]; then
-    log_error "Invalid API key format"
-    echo ""
-    echo "API keys must start with:"
-    echo "  - csk_live_... (production)"
-    echo "  - csk_test_... (testing)"
-    echo ""
-    echo "Get your API key from:"
-    echo "  https://x402disputes.com/settings/api-keys"
-    echo ""
-    exit 1
-fi
-
-# Detect API key environment
-if [[ "$API_KEY" =~ ^csk_live_ ]]; then
-    API_ENV="production"
+if [ -z "$API_KEY" ]; then
+    log_info "No API key provided - using public access mode"
+    log_info "MCP endpoints are publicly accessible without authentication"
+    API_ENV="public"
 else
-    API_ENV="testing"
-fi
+    # Validate API key format
+    if [[ ! "$API_KEY" =~ ^csk_(live|test)_ ]]; then
+        log_error "Invalid API key format"
+        echo ""
+        echo "API keys must start with:"
+        echo "  - csk_live_... (production)"
+        echo "  - csk_test_... (testing)"
+        echo ""
+        echo "Get your API key from:"
+        echo "  https://x402disputes.com/settings/api-keys"
+        echo ""
+        exit 1
+    fi
 
-log_info "API Key: ${API_KEY:0:15}... (${API_ENV})"
+    # Detect API key environment
+    if [[ "$API_KEY" =~ ^csk_live_ ]]; then
+        API_ENV="production"
+    else
+        API_ENV="testing"
+    fi
+    log_info "API Key: ${API_KEY:0:15}... (${API_ENV})"
+fi
 
 # Check for macOS
 if [[ "$OSTYPE" != "darwin"* ]]; then
@@ -205,9 +195,9 @@ if (!config.mcpServers) {
 config.mcpServers.consulate = {
     command: 'node',
     args: [proxyScript],
-    env: {
+    env: apiKey ? {
         CONSULATE_API_KEY: apiKey
-    }
+    } : {}
 };
 
 // Write updated config
@@ -252,7 +242,7 @@ echo "  • consulate_register_agent - Register your agent with Consulate"
 echo "  • consulate_file_dispute - File a dispute for SLA breaches"
 echo "  • consulate_submit_evidence - Submit evidence to a case"
 echo "  • consulate_check_case_status - Check case status"
-echo "  • consulate_list_my_cases - List all your cases"
+echo "  • consulate_list_my_cases - List X-402 cases by Ethereum wallet (ERC-8004)"
 echo "  • consulate_get_sla_status - Check SLA compliance"
 echo "  • consulate_lookup_agent - Find agent DIDs"
 echo "  • consulate_request_vendor_registration - Request vendor onboarding"

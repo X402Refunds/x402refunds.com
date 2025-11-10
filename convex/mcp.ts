@@ -218,13 +218,18 @@ export const MCP_TOOLS = [
   },
   {
     name: "consulate_list_my_cases",
-    description: "List all cases where you are a party (plaintiff or defendant)",
+    description: "List all X-402 payment dispute cases where you are a party (plaintiff or defendant). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
     input_schema: {
       type: "object",
       properties: {
-        agentDid: {
+        walletAddress: {
           type: "string",
-          description: "Your agent DID"
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Your Ethereum wallet address (ERC-8004 canonical identity for X-402 protocol)",
+          examples: [
+            "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+            "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+          ]
         },
         status: {
           type: "string",
@@ -232,7 +237,7 @@ export const MCP_TOOLS = [
           description: "Filter by case status (default: 'all')"
         }
       },
-      required: ["agentDid"]
+      required: ["walletAddress"]
     }
   },
   {
@@ -811,8 +816,26 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         
       case "consulate_list_my_cases":
+        // Validate Ethereum address format
+        if (!parameters.walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(parameters.walletAddress)) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "INVALID_WALLET_ADDRESS",
+              message: "Invalid Ethereum wallet address",
+              field: "walletAddress",
+              received: parameters.walletAddress,
+              expected: "0x-prefixed 40-character hex string (ERC-8004)",
+              suggestion: "Provide a valid Ethereum wallet address, e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
         result = await ctx.runQuery(api.cases.getCasesByParty, {
-          agentDid: parameters.agentDid
+          agentDid: parameters.walletAddress  // Maps to existing function (works with string matching)
         });
         
         const filteredCases = parameters.status && parameters.status !== "all"
@@ -821,7 +844,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         return new Response(JSON.stringify({
           success: true,
-          agentDid: parameters.agentDid,
+          walletAddress: parameters.walletAddress,
           totalCases: filteredCases.length,
           cases: filteredCases
         }), {

@@ -229,7 +229,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       // Note: This requires the address to have cases filed
       // In test environment, may return empty array
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
-        agentDid: testBuyerAddress // Using Ethereum address as DID
+        walletAddress: testBuyerAddress // Using ERC-8004 Ethereum wallet address
       });
 
       expect(response.status).toBe(200);
@@ -240,7 +240,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should filter by status', async () => {
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
-        agentDid: testBuyerAddress,
+        walletAddress: testBuyerAddress,
         status: 'FILED'
       });
 
@@ -252,7 +252,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should return all statuses when status is "all"', async () => {
       const { response, data } = await invokeMcpTool('consulate_list_my_cases', {
-        agentDid: testBuyerAddress,
+        walletAddress: testBuyerAddress,
         status: 'all'
       });
 
@@ -313,7 +313,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
       // 3. List cases for buyer
       const { data: casesData } = await invokeMcpTool('consulate_list_my_cases', {
-        agentDid: buyerAddress
+        walletAddress: buyerAddress
       });
 
       expect(casesData.success).toBe(true);
