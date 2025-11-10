@@ -57,11 +57,6 @@ export const metadata: Metadata = {
   authors: [{ name: "Vivek Kotecha", url: "https://www.x402disputes.com" }],
   creator: "Vivek Kotecha",
   publisher: "Consulate",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
   robots: {
     index: true,
     follow: true,

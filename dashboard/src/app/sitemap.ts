@@ -4,40 +4,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://www.x402disputes.com'
   
   // Static routes with priorities and update frequencies
+  const now = new Date().toISOString();
+  
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/uptime/`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/sign-in/`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/sign-up/`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/about/`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.6,
     },
     {
       url: `${baseUrl}/pricing/`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.6,
     },

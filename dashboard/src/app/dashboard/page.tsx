@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useQuery, useMutation } from "convex/react"
