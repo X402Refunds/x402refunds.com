@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-10T01:32:19.838Z
+**Auto-generated on**: 2025-11-10T01:50:34.078Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -184,8 +184,8 @@ Common HTTP routes exposed:
 - test/mcp-integration.test.ts
 - test/mcp-proxy-jsonrpc.test.ts
 - test/mcp-schema-validation.test.ts
-- test/mcp-signed-dispute-e2e.test.ts
 - test/mcp-tools-comprehensive.test.ts
+- test/mcp-x402-dispute.test.ts
 - test/payment-dispute-party-model.test.ts
 - test/performance.test.ts
 - test/production-smoke.test.ts
@@ -349,5 +349,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/9/2025, 7:32:19 PM
+Generated: 11/9/2025, 7:50:34 PM
 Files scanned: 299

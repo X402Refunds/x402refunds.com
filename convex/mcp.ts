@@ -620,15 +620,15 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         const evidence: any = {
           request: parameters.request,
           response: parameters.response,
-          amountUsd: txDetails.amountUsd || 0,
+          amountUsd: txDetails.amountUsd || parseFloat(txDetails.value),
           x402paymentDetails: {
             currency: txDetails.currency,
             blockchain: parameters.blockchain,
             transactionHash: parameters.transactionHash,
             fromAddress: parameters.plaintiff,
             toAddress: defendant,
-            blockNumber: txDetails.blockNumber,
-            value: txDetails.value
+            blockNumber: txDetails.blockNumber
+            // Note: 'value' not included - schema doesn't support it
           }
         };
         

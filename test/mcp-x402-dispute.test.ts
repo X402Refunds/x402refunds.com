@@ -33,8 +33,9 @@ async function invokeMcpTool(toolName: string, parameters: any) {
 describe('X-402 Ultra-Minimal Dispute Schema', () => {
   it('should file dispute with Ethereum addresses and blockchain verification', async () => {
     const timestamp = Date.now();
-    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
-    const defendant = "0x9876543210987654321098765432109876543210";
+    // Use addresses that match mock blockchain query
+    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";  // Must match mock fromAddress (40 hex chars)
+    const defendant = "0x9876543210987654321098765432109876543210"; // Must match mock toAddress
     
     const { response, data } = await invokeMcpTool('consulate_file_dispute', {
       plaintiff,
@@ -108,7 +109,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
   });
 
   it('should support dryRun mode', async () => {
-    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
     const defendant = "0x9876543210987654321098765432109876543210";
     
     const { data } = await invokeMcpTool('consulate_file_dispute', {

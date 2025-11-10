@@ -48,17 +48,21 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.input_schema.properties).toBeDefined();
     expect(fileDisputeTool.input_schema.required).toBeDefined();
     
-    // Verify required fields (X402 with pre-signed payload)
+    // Verify required fields (X-402 ultra-minimal)
     expect(fileDisputeTool.input_schema.required).toContain('plaintiff');
+    expect(fileDisputeTool.input_schema.required).toContain('defendant');
     expect(fileDisputeTool.input_schema.required).toContain('disputeUrl');
     expect(fileDisputeTool.input_schema.required).toContain('description');
-    // Flattened params now required (evidencePayload/signature optional)
-    expect(fileDisputeTool.input_schema.required).toContain('currency');
+    expect(fileDisputeTool.input_schema.required).toContain('request');
+    expect(fileDisputeTool.input_schema.required).toContain('response');
+    expect(fileDisputeTool.input_schema.required).toContain('transactionHash');
     expect(fileDisputeTool.input_schema.required).toContain('blockchain');
     
-    // These are auto-extracted from evidencePayload
-    expect(fileDisputeTool.input_schema.required).not.toContain('amount');
-    expect(fileDisputeTool.input_schema.required).not.toContain('defendant');
+    // These are now derived from blockchain query
+    expect(fileDisputeTool.input_schema.required).not.toContain('amountUsd');
+    expect(fileDisputeTool.input_schema.required).not.toContain('currency');
+    expect(fileDisputeTool.input_schema.required).not.toContain('fromAddress');
+    expect(fileDisputeTool.input_schema.required).not.toContain('toAddress');
     
     // Verify check_status schema
     expect(checkStatusTool).toBeDefined();
@@ -91,11 +95,13 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify schemas are preserved
     expect(customerSchema.tools.length).toBe(2);
     const fileDispute = customerSchema.tools.find((t: any) => t.name === 'file_dispute');
-    // X402 payment disputes - pre-signed payload approach
-    expect(fileDispute.input_schema.required).toContain('plaintiff');
+    // X-402 ultra-minimal schema
+    expect(fileDispute.input_schema.required).toContain('plaintiff');  // Ethereum address
+    expect(fileDispute.input_schema.required).toContain('defendant');  // Ethereum address
     expect(fileDispute.input_schema.required).toContain('disputeUrl');
-    // Flattened params now required (evidencePayload/signature optional)
-    expect(fileDispute.input_schema.required).toContain('currency');
+    expect(fileDispute.input_schema.required).toContain('request');
+    expect(fileDispute.input_schema.required).toContain('response');
+    expect(fileDispute.input_schema.required).toContain('transactionHash');
     expect(fileDispute.input_schema.required).toContain('blockchain');
     expect(fileDispute.input_schema.required).toContain('transactionHash');
   }, 30000);
@@ -117,9 +123,12 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(renamedTool.description).toBe(originalTool.description);
     expect(renamedTool.input_schema).toEqual(originalTool.input_schema);
     expect(renamedTool.input_schema.properties.plaintiff).toBeDefined();
+    expect(renamedTool.input_schema.properties.defendant).toBeDefined();
     expect(renamedTool.input_schema.properties.disputeUrl).toBeDefined();
-    expect(renamedTool.input_schema.properties.evidencePayload).toBeDefined();
-    expect(renamedTool.input_schema.properties.signature).toBeDefined();
+    expect(renamedTool.input_schema.properties.request).toBeDefined();
+    expect(renamedTool.input_schema.properties.response).toBeDefined();
+    expect(renamedTool.input_schema.properties.transactionHash).toBeDefined();
+    expect(renamedTool.input_schema.properties.blockchain).toBeDefined();
   }, 30000);
 
   it('should include pricing information in schema', async () => {
@@ -148,14 +157,17 @@ describe('MCP Customer Proxy Pattern', () => {
     const schema = await response.json();
     
     const fileDisputeTool = schema.tools.find((t: any) => t.name === 'consulate_file_dispute');
-    // X402 payment disputes use pre-signed payload approach
-    const evidencePayloadProperty = fileDisputeTool.input_schema.properties.evidencePayload;
-    const signatureProperty = fileDisputeTool.input_schema.properties.signature;
+    // X-402 ultra-minimal uses Ethereum addresses and blockchain verification
+    const plaintiffProperty = fileDisputeTool.input_schema.properties.plaintiff;
+    const defendantProperty = fileDisputeTool.input_schema.properties.defendant;
+    const blockchainProperty = fileDisputeTool.input_schema.properties.blockchain;
     
-    expect(evidencePayloadProperty).toBeDefined();
-    expect(signatureProperty).toBeDefined();
-    expect(evidencePayloadProperty.description.toLowerCase()).toContain('base64');
-    expect(signatureProperty.description).toContain('Ed25519');
+    expect(plaintiffProperty).toBeDefined();
+    expect(defendantProperty).toBeDefined();
+    expect(blockchainProperty).toBeDefined();
+    expect(plaintiffProperty.pattern).toContain('0x');
+    expect(defendantProperty.pattern).toContain('0x');
+    expect(blockchainProperty.enum).toBeDefined();
   }, 30000);
 });
 

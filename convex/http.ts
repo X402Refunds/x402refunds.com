@@ -30,6 +30,7 @@ http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp/neutrals", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/register", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents/claim", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
@@ -738,6 +739,90 @@ http.route({
 });
 
 // === END DISPUTE INGESTION ENDPOINTS ===
+
+// Agent claiming - sellers prove ownership of Ethereum address
+http.route({
+  path: "/agents/claim",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const { walletAddress, signature, message, organizationId, userId } = body;
+      
+      // Validate required fields
+      if (!walletAddress) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: walletAddress"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      if (!signature) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: signature"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      if (!message) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: message"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      if (!organizationId) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: organizationId"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      if (!userId) {
+        return new Response(JSON.stringify({
+          error: "Missing required field: userId"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+      
+      // Claim the agent
+      const result = await ctx.runMutation(api.agents.claimAgent, {
+        walletAddress,
+        signature,
+        message,
+        organizationId: organizationId as any,
+        userId: userId as any,
+      });
+      
+      return new Response(JSON.stringify({
+        success: true,
+        ...result,
+        message: "Agent claimed successfully"
+      }), {
+        headers: corsHeaders,
+      });
+      
+    } catch (error: any) {
+      console.error("Agent claiming failed:", error);
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+  })
+});
 
 // Agent registration with Ed25519 public key
 http.route({
