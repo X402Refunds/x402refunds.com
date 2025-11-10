@@ -753,7 +753,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           humanReviewRequired: result.humanReviewRequired,
           estimatedResolutionTime: result.estimatedResolutionTime,
           message: `X-402 payment dispute filed successfully. Case ID: ${result.caseId}`,
-          trackingUrl: `https://x402disputes.com/cases/${result.caseId}`,
+          trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
           nextSteps: [
               "Submit additional evidence (optional)",
               "AI analyzes dispute + provides recommendation",
@@ -761,12 +761,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               "Resolution within 10 business days (Regulation E)"
           ],
           _links: {
-            self: `https://x402disputes.com/cases/${result.caseId}`,
-            evidence: `https://api.x402disputes.com/cases/${result.caseId}/evidence`,
-            timeline: `https://x402disputes.com/cases/${result.caseId}#timeline`,
-            api: `https://api.x402disputes.com/cases/${result.caseId}`,
-            submitEvidence: `https://api.x402disputes.com/evidence`,
-            checkStatus: `https://api.x402disputes.com/cases/${result.caseId}`
+            self: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
+            evidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}/evidence`,
+            timeline: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}#timeline`,
+            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`,
+            submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/evidence`,
+            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`
           }
         }), {
           headers: { "Content-Type": "application/json" }
