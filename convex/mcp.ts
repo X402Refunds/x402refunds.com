@@ -555,12 +555,32 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         // 3. Query blockchain to verify payment and get details
         console.log(`🔍 Querying blockchain ${parameters.blockchain} for tx: ${parameters.transactionHash}`);
-        const txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
-          blockchain: parameters.blockchain,
-          transactionHash: parameters.transactionHash
-        });
+        let txDetails;
+        try {
+          txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
+            blockchain: parameters.blockchain,
+            transactionHash: parameters.transactionHash
+          });
+        } catch (error: any) {
+          // Handle action execution errors
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "TRANSACTION_NOT_FOUND",
+              message: `Failed to query blockchain: ${error.message}`,
+              field: "transactionHash",
+              received: parameters.transactionHash,
+              expected: "Valid confirmed transaction on specified blockchain",
+              suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
+              details: error.message
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
         
-        if (!txDetails.success) {
+        if (!txDetails || !txDetails.success) {
           return new Response(JSON.stringify({
             success: false,
             error: {
@@ -570,7 +590,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               received: parameters.transactionHash,
               expected: "Valid confirmed transaction on specified blockchain",
               suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
-              details: txDetails.error
+              details: txDetails?.error || "Unknown error"
             }
           }), {
             status: 400,
@@ -730,9 +750,15 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           callbackUrl: parameters.callbackUrl,
           // Store blockchain-verified x402 payment details
           crypto: evidence.x402paymentDetails,
-          // Store request/response for evidence
-          plaintiffMetadata: { request: parameters.request },
-          defendantMetadata: { response: parameters.response },
+          // Store request/response as JSON strings in metadata (X-402 evidence)
+          plaintiffMetadata: { 
+            walletAddress: parameters.plaintiff,
+            requestJson: JSON.stringify(parameters.request)
+          },
+          defendantMetadata: { 
+            walletAddress: defendant,
+            responseJson: JSON.stringify(parameters.response)
+          },
         };
         
         // Include reviewerOrganizationId if authenticated

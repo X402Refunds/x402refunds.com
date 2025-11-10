@@ -20,13 +20,15 @@ describe('X-402 Agent Functions', () => {
     // Create agent with wallet address
     const walletAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0';
     
-    const agentId = await t.mutation(api.agents.joinAgent, {
+    const result = await t.mutation(api.agents.joinAgent, {
       name: 'Test Agent',
       publicKey: 'test-public-key-base64',
       organizationName: 'Test Org',
       functionalType: 'api',
       mock: false,
     });
+
+    const agentId = result.agentId;
 
     // Update with wallet address
     await t.run(async (ctx) => {

@@ -94,12 +94,14 @@ export const receivePaymentDispute = mutation({
       name: v.optional(v.string()),           // YOUR customer's name (Alice Smith)
       customerId: v.optional(v.string()),     // Alice's ID in YOUR database
       walletAddress: v.optional(v.string()),
+      requestJson: v.optional(v.string()),    // X-402 request object as JSON string
     })),
     defendantMetadata: v.optional(v.object({
       email: v.optional(v.string()),          // Merchant's contact email
       name: v.optional(v.string()),           // Merchant's business name
       merchantId: v.optional(v.string()),     // Merchant's ID in YOUR platform
       walletAddress: v.optional(v.string()),
+      responseJson: v.optional(v.string()),  // X-402 response object as JSON string
     })),
 
     // Dispute details

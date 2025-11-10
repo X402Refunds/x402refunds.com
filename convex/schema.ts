@@ -313,12 +313,14 @@ export default defineSchema({
         name: v.optional(v.string()),
         customerId: v.optional(v.string()),  // Customer's internal user ID
         walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
+        requestJson: v.optional(v.string()), // X-402 request object as JSON string
       })),
       defendantMetadata: v.optional(v.object({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
         merchantId: v.optional(v.string()),  // Customer's internal merchant ID
         walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
+        responseJson: v.optional(v.string()), // X-402 response object as JSON string
       })),
     })),
 
