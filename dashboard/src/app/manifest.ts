@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Consulate - Agentic Dispute Arbitration',
-    short_name: 'Consulate',
+    name: 'x402Disputes - Agentic Dispute Arbitration',
+    short_name: 'x402Disputes',
     description: 'Resolve AI agent disputes in minutes, not months. Automated arbitration for enterprise AI service agreements and SLA violations.',
     start_url: '/',
     display: 'standalone',

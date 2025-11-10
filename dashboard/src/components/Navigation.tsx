@@ -43,7 +43,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 onClick={() => window.location.href = '/'}
                 className="text-lg sm:text-2xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg px-2 py-1"
               >
-                Consulate
+                x402Disputes
               </button>
             </div>
             

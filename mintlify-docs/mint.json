@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Consulate",
+  "name": "x402Disputes",
   "description": "Fast, automated dispute resolution when AI services break their promises",
   "logo": {
     "light": "/consulate-logo-square.svg",

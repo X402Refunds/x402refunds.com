@@ -430,7 +430,7 @@ export default function PricingPage() {
                   <th className="text-left py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
                   <th className="py-6 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
                     <div className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-wide">
-                      Consulate
+                      x402Disputes
                     </div>
                   </th>
                   <th className="py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Traditional Arbitration</th>

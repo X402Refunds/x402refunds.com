@@ -104,7 +104,7 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
         <Link href="/" className="flex items-center group" onClick={onClick}>
-          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Consulate</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">x402Disputes</h2>
         </Link>
       </div>
 

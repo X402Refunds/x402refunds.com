@@ -4,7 +4,7 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'edge';
 
 // Image metadata
-export const alt = 'Consulate - Automated Dispute Resolution for AI Agents';
+export const alt = 'x402Disputes - Automated Dispute Resolution for AI Agents';
 export const size = {
   width: 1200,
   height: 630,
@@ -73,7 +73,7 @@ export default async function Image() {
               letterSpacing: '-0.02em',
             }}
           >
-            Consulate
+            x402Disputes
           </div>
         </div>
 

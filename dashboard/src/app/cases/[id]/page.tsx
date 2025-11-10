@@ -49,7 +49,7 @@ export default function PublicCaseTrackingPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Shield className="h-8 w-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-slate-900">Consulate</h1>
+              <h1 className="text-3xl font-bold text-slate-900">x402Disputes</h1>
             </div>
             <p className="text-sm text-slate-600">Case Tracking</p>
           </div>
@@ -92,7 +92,7 @@ export default function PublicCaseTrackingPage() {
         >
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-slate-900">Consulate</h1>
+            <h1 className="text-3xl font-bold text-slate-900">x402Disputes</h1>
           </div>
           <p className="text-sm text-slate-600">Dispute Resolution Case Tracking</p>
         </motion.div>
