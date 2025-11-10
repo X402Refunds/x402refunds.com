@@ -9,45 +9,7 @@ import { describe, it, expect } from "vitest";
 import { MCP_TOOLS } from "../convex/mcp";
 
 describe("MCP Tool Schema Validation", () => {
-  describe("consulate_register_agent", () => {
-    it.skip("should have functionalType enum matching backend schema (tool removed)", () => {
-      const registerTool = MCP_TOOLS.find(t => t.name === "consulate_register_agent");
-      expect(registerTool).toBeDefined();
-
-      const functionalTypeEnum = registerTool?.input_schema.properties.functionalType.enum;
-      expect(functionalTypeEnum).toBeDefined();
-
-      // These are the exact values from convex/schema.ts agents table
-      const expectedValues = [
-        "voice", "chat", "social", "translation", "presentation",
-        "coding", "devops", "security", "data", "api",
-        "writing", "design", "video", "music", "gaming",
-        "research", "financial", "sales", "marketing", "legal",
-        "healthcare", "education", "scientific", "manufacturing", "transportation",
-        "scheduler", "workflow", "procurement", "project", "general"
-      ];
-
-      expect(functionalTypeEnum).toEqual(expectedValues);
-
-      // Ensure NO invalid values are present
-      const invalidValues = ["ai_provider", "ai_consumer", "monitoring"];
-      for (const invalid of invalidValues) {
-        expect(functionalTypeEnum).not.toContain(invalid);
-      }
-    });
-
-    it.skip("should have required fields matching backend mutation (tool removed)", () => {
-      const registerTool = MCP_TOOLS.find(t => t.name === "consulate_register_agent");
-      expect(registerTool).toBeDefined();
-
-      const required = registerTool?.input_schema.required;
-      expect(required).toContain("name");
-      expect(required).toContain("publicKey");
-      expect(required).toContain("organizationName");
-      // functionalType is now optional
-      expect(required).not.toContain("functionalType");
-    });
-  });
+  // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint
 
   describe("consulate_file_dispute", () => {
     it("should have blockchain enum and Ethereum address patterns", () => {
@@ -83,23 +45,7 @@ describe("MCP Tool Schema Validation", () => {
     });
   });
 
-  describe("consulate_submit_evidence", () => {
-    it.skip("should have evidenceType enum matching backend validators (tool removed)", () => {
-      const evidenceTool = MCP_TOOLS.find(t => t.name === "consulate_submit_evidence");
-      expect(evidenceTool).toBeDefined();
-
-      const evidenceTypeEnum = evidenceTool?.input_schema.properties.evidenceType.enum;
-      expect(evidenceTypeEnum).toBeDefined();
-
-      // Valid evidence types
-      expect(evidenceTypeEnum).toContain("api_logs");
-      expect(evidenceTypeEnum).toContain("monitoring_data");
-      expect(evidenceTypeEnum).toContain("contract");
-      expect(evidenceTypeEnum).toContain("sla_document");
-      expect(evidenceTypeEnum).toContain("communication");
-      expect(evidenceTypeEnum).toContain("financial_record");
-    });
-  });
+  // Note: consulate_submit_evidence tool was removed - evidence is included in dispute filing
 
   describe("consulate_check_case_status", () => {
     it("should have required fields", () => {

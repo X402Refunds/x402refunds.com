@@ -149,27 +149,7 @@ describe('MCP Protocol - Authentication', () => {
       }
     });
 
-    it.skip('should reject registration without required publicKey (tool removed)', async () => {
-      const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tool: 'consulate_register_agent',
-          parameters: {
-            name: 'Test Agent',
-            organizationName: 'Test Org',
-            functionalType: 'api'
-            // Missing publicKey
-          },
-        }),
-      });
-
-      expect(response.status).toBe(400);
-      const data = await response.json();
-      expect(data.success).toBe(false);
-      expect(data.error).toBeDefined();
-      expect(data.error.message).toContain('publicKey');
-    });
+    // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint /agents/register
 
     it('should allow public tools without any auth', async () => {
       const response = await fetch(`${API_BASE_URL}/mcp/invoke`, {
