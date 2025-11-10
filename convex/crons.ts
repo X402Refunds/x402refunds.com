@@ -170,7 +170,6 @@ export const generatePaymentDisputeDemo = internalMutation({
         transactionId,
         amount,
         currency: "USD",
-        paymentProtocol: Math.random() < 0.5 ? "ACP" : "ATXP",
         plaintiff: `consumer:${consumer.toLowerCase()}@demo.com`,
         defendant: `merchant:${merchant.toLowerCase()}@demo.com`,
         disputeReason: reason as any,

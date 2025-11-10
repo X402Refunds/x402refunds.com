@@ -145,9 +145,6 @@ export default defineSchema({
       size: v.optional(v.number()),
     }))),
 
-    // NEW: Custom merchant metadata (flexible JSON) - for both payment and general disputes
-    metadata: v.optional(v.any()),
-
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
 
@@ -244,7 +241,6 @@ export default defineSchema({
     paymentDetails: v.optional(v.object({
       transactionId: v.string(),
       transactionHash: v.optional(v.string()),
-      paymentProtocol: v.optional(v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("STRIPE"), v.literal("OTHER"))), // Made optional for backward compat
       disputeReason: v.optional(v.union(
         v.literal("unauthorized"),
         v.literal("service_not_rendered"),
@@ -256,52 +252,6 @@ export default defineSchema({
         v.literal("quality_issue"),
         v.literal("other")
       )),
-      
-      // NEW: Payment type classification
-      paymentType: v.optional(v.union(
-        v.literal("custodial"),
-        v.literal("non_custodial"),
-        v.literal("traditional")
-      )),
-      
-      // NEW: x402 payment details (STRICT schema for crypto payments)
-      // Stores x402paymentDetails from signed evidence
-      crypto: v.optional(v.object({
-        // REQUIRED fields for crypto payment proof
-        currency: v.string(),        // USDC, ETH, BTC, SOL, etc. (REQUIRED)
-        blockchain: v.string(),       // base, ethereum, solana, etc. (REQUIRED)
-        transactionHash: v.string(),  // Blockchain tx hash (REQUIRED - proof of payment)
-        fromAddress: v.string(),      // Buyer's wallet (REQUIRED - who paid)
-        toAddress: v.string(),        // Seller's wallet (REQUIRED - who received)
-        
-        // OPTIONAL but recommended
-        timestamp: v.optional(v.string()),      // When payment happened
-        blockNumber: v.optional(v.number()),    // Which block
-        contractAddress: v.optional(v.string()), // Token contract address
-        layer: v.optional(v.string()),          // L1 or L2
-        explorerUrl: v.optional(v.string()),    // Blockchain explorer link
-      })),
-      
-      // NEW: Custodial platform details
-      custodial: v.optional(v.object({
-        platform: v.string(),         // coinbase, binance, kraken, etc.
-        platformTransactionId: v.optional(v.string()),
-        isOnChain: v.optional(v.boolean()),
-        withdrawalId: v.optional(v.string()),
-      })),
-      
-      // NEW: Traditional payment details
-      traditional: v.optional(v.object({
-        paymentMethod: v.string(),    // stripe, paypal, visa, mastercard, etc.
-        processor: v.optional(v.string()),
-        processorTransactionId: v.optional(v.string()),
-        cardBrand: v.optional(v.string()),
-        lastFourDigits: v.optional(v.string()),
-        cardType: v.optional(v.string()),
-      })),
-      
-      // NEW: Custom merchant metadata (flexible JSON)
-      metadata: v.optional(v.any()),
       
       regulationEDeadline: v.number(),      // Regulation E compliance (10 business days)
       // Flat pricing: $0.05 per dispute (no tiers)

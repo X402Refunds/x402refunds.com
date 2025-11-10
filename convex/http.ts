@@ -517,9 +517,6 @@ http.route({
         request: body.request,
         response: body.response,
         amountUsd: body.amountUsd || body.amount,
-        crypto: body.crypto,
-        custodial: body.custodial,
-        traditional: body.traditional,
       });
       
       const verified = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
@@ -552,9 +549,6 @@ http.route({
           request: body.request,
           response: body.response,
           amountUsd: body.amountUsd || body.amount,
-          crypto: body.crypto,
-          custodial: body.custodial,
-          traditional: body.traditional,
           signature: body.signature,
           signatureVerified: true,
           vendorDid: vendorId,
@@ -609,7 +603,6 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     transactionHash: body.transactionHash,
     amount: body.amount,
     currency: body.currency,
-    paymentProtocol: body.paymentProtocol || "other",
     plaintiff: body.plaintiff,
     defendant: body.defendant,
     disputeReason: body.disputeReason,

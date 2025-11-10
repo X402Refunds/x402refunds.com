@@ -752,15 +752,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           transactionId: parameters.transactionHash,
           amount: txDetails.amountUsd || parseFloat(txDetails.value),
           currency: txDetails.currency,
-          paymentProtocol: "x402",
           plaintiff: parameters.plaintiff,
           defendant: defendant,
           disputeReason: "quality_issue",
           description: parameters.description,
           evidenceUrls: [],
           callbackUrl: parameters.callbackUrl,
-          // Store blockchain-verified x402 payment details
-          crypto: evidence.x402paymentDetails,
           // Store request/response as JSON strings in metadata (X-402 evidence)
           plaintiffMetadata: { 
             walletAddress: parameters.plaintiff,

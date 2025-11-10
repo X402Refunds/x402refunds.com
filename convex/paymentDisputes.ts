@@ -79,7 +79,6 @@ export const receivePaymentDispute = mutation({
     transactionHash: v.optional(v.string()),
     amount: v.number(),
     currency: v.string(),
-    paymentProtocol: v.optional(v.union(v.literal("ACP"), v.literal("ATXP"), v.literal("other"))), // Made optional for crypto/traditional payments
 
     // Parties (customer-scoped identifiers)
     // plaintiff = YOUR CUSTOMER (Alice) who is disputing the charge
@@ -127,43 +126,6 @@ export const receivePaymentDispute = mutation({
     // Infrastructure Model: Customer's team reviews
     reviewerEmail: v.optional(v.string()),
     reviewerOrganizationId: v.optional(v.id("organizations")),
-    
-    // NEW: Payment type classification
-    paymentType: v.optional(v.union(v.literal("custodial"), v.literal("non_custodial"), v.literal("traditional"))),
-    
-    // NEW: Crypto transaction details
-    crypto: v.optional(v.object({
-      currency: v.string(),
-      blockchain: v.string(),
-      layer: v.optional(v.string()),
-      fromAddress: v.optional(v.string()),
-      toAddress: v.optional(v.string()),
-      transactionHash: v.optional(v.string()),
-      contractAddress: v.optional(v.string()),
-      blockNumber: v.optional(v.number()),
-      explorerUrl: v.optional(v.string()),
-    })),
-    
-    // NEW: Custodial platform details
-    custodial: v.optional(v.object({
-      platform: v.string(),
-      platformTransactionId: v.optional(v.string()),
-      isOnChain: v.optional(v.boolean()),
-      withdrawalId: v.optional(v.string()),
-    })),
-    
-    // NEW: Traditional payment details
-    traditional: v.optional(v.object({
-      paymentMethod: v.string(),
-      processor: v.optional(v.string()),
-      processorTransactionId: v.optional(v.string()),
-      cardBrand: v.optional(v.string()),
-      lastFourDigits: v.optional(v.string()),
-      cardType: v.optional(v.string()),
-    })),
-    
-    // NEW: Custom merchant metadata
-    metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     console.info(`📥 Payment dispute received: ${args.transactionId} ($${args.amount})`);
@@ -207,15 +169,7 @@ export const receivePaymentDispute = mutation({
       paymentDetails: {
         transactionId: args.transactionId,
         transactionHash: args.transactionHash,
-        paymentProtocol: args.paymentProtocol ? (args.paymentProtocol === "other" ? "OTHER" : args.paymentProtocol) : "OTHER",
         disputeReason: args.disputeReason || "other",
-        
-        // NEW FIELDS
-        paymentType: args.paymentType,
-        crypto: args.crypto,
-        custodial: args.custodial,
-        traditional: args.traditional,
-        metadata: args.metadata,
         
         regulationEDeadline, // Also stored here for backward compatibility
         plaintiffMetadata: args.plaintiffMetadata,
@@ -223,9 +177,6 @@ export const receivePaymentDispute = mutation({
         disputeFee: feeBreakdown.fee,
         // Flat $0.05 fee for all disputes (MVP pricing)
       },
-      
-      // NEW: Store metadata at case level too (for consistency)
-      metadata: args.metadata,
     });
     
     // 3. Submit evidence if provided
@@ -239,8 +190,8 @@ export const receivePaymentDispute = mutation({
           caseId,
           ts: now,
           model: {
-            provider: "payment_protocol",
-            name: args.paymentProtocol || "OTHER",
+            provider: "payment_dispute",
+            name: "payment_dispute",
             version: "1.0.0",
           },
         });
@@ -264,7 +215,6 @@ export const receivePaymentDispute = mutation({
         type: "PAYMENT_DISPUTE",
         amount: args.amount,
         currency: args.currency,
-        protocol: args.paymentProtocol,
         microDispute: isMicroDispute,
         adpVersion: "draft-01",
       },
@@ -956,7 +906,6 @@ export const getCustomerReviewQueue = query({
     return limited.map(d => ({
       ...d,
       transactionId: d.paymentDetails?.transactionId,
-      paymentProtocol: d.paymentDetails?.paymentProtocol,
       disputeReason: d.paymentDetails?.disputeReason,
     }));
   },
