@@ -34,6 +34,11 @@ export default {
       domain: normalizedDomain,
       applicationID: "convex",
     },
+    // Also accept custom domain (clerk.x402disputes.com) if configured in Clerk
+    {
+      domain: "https://clerk.x402disputes.com",
+      applicationID: "convex",
+    },
   ],
 } satisfies AuthConfig;
 
