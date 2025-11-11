@@ -58,7 +58,8 @@ export function ReputationSidebar() {
       <CardContent>
         <div className="space-y-3">
           {topAgents.map((agent: typeof topAgents[number], index: number) => {
-            const formatAddress = (address: string) => {
+            const formatAddress = (address: string | null | undefined) => {
+              if (!address) return 'Unknown'
               if (address.startsWith('0x')) {
                 return `${address.slice(0, 6)}...${address.slice(-4)}`
               }
@@ -83,8 +84,11 @@ export function ReputationSidebar() {
 
             return (
               <div
-                key={agent._id}
-                onClick={() => router.push(`/agents/${agent.walletAddress || agent.agentDid}`)}
+                key={agent._id || index}
+                onClick={() => {
+                  const agentId = agent.walletAddress || agent.agentDid
+                  if (agentId) router.push(`/agents/${agentId}`)
+                }}
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100"
               >
                 <div className="flex items-center gap-3">
@@ -96,15 +100,15 @@ export function ReputationSidebar() {
                       {formatAddress(agent.walletAddress || agent.agentDid)}
                     </div>
                     <div className="text-xs text-slate-500 flex items-center gap-1">
-                      Score: <span className={`font-bold ${getScoreColor(agent.reputationScore)}`}>
-                        {agent.reputationScore}
+                      Score: <span className={`font-bold ${getScoreColor(agent.reputationScore ?? 0)}`}>
+                        {agent.reputationScore ?? 0}
                       </span>
-                      {getTrendIcon(agent.reputationScore)}
+                      {getTrendIcon(agent.reputationScore ?? 0)}
                     </div>
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {agent.casesAsDefendant || 0} disputes
+                  {agent.casesAsDefendant ?? 0} disputes
                 </Badge>
               </div>
             )
