@@ -41,40 +41,31 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(manifest.server.name).toBe('Consulate Dispute Resolution');
+      expect(manifest.server.name).toBe('x402disputes.com - Permissionless X-402 Dispute Resolution');
       expect(manifest.server.dispute_types).toContain('Payment disputes only');
       expect(manifest.server.pricing).toBeDefined();
       expect(manifest.server.pricing.flat_fee).toBe('$0.05 per dispute');
     });
 
-    it('should list all 8 MCP tools (unified dispute endpoint)', async () => {
+    it('should list all 3 X-402 MCP tools', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
       const toolNames = manifest.tools.map((t: any) => t.name);
       const expectedTools = [
-        'x402_file_dispute', // Unified tool (payment + general)
-        'consulate_submit_evidence',
-        'x402_check_case_status',
-        'consulate_register_agent',
-        'x402_list_my_cases',
-        'consulate_get_sla_status',
-        'consulate_lookup_agent',
-        'consulate_request_vendor_registration',
-      ];
-      
-      expect(manifest.tools.length).toBe(3);
-      // Only check for the 3 simplified tools
-      const simplifiedTools = [
         "x402_file_dispute",
         "x402_list_my_cases",
         "x402_check_case_status"
       ];
-      for (const expectedTool of simplifiedTools) {
+      
+      expect(manifest.tools.length).toBe(3);
+      // Check for the 3 X-402 tools
+      for (const expectedTool of expectedTools) {
         expect(toolNames).toContain(expectedTool);
       }
-      // Verify old tool is removed
+      // Verify old tools are removed
       expect(toolNames).not.toContain('consulate_file_general_dispute');
+      expect(toolNames).not.toContain('consulate_file_dispute');
     });
 
     it('should include tool descriptions', async () => {
@@ -128,7 +119,7 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'consulate_register_agent',
+          tool: 'x402_file_dispute', // Using x402_file_dispute instead of non-existent register tool
           parameters: {
             name: 'Test Agent',
             publicKey: testPublicKey,

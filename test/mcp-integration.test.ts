@@ -43,15 +43,17 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
     
-    // Check for X-402 ultra-minimal schema (8 required fields)
+    // Check for X-402 ultra-minimal schema (7 required fields)
     expect(tool?.input_schema.required).toContain('plaintiff');  // Ethereum address
     expect(tool?.input_schema.required).toContain('defendant');  // Ethereum address
-    expect(tool?.input_schema.required).toContain('disputeUrl');
     expect(tool?.input_schema.required).toContain('description');
     expect(tool?.input_schema.required).toContain('request');  // Object
     expect(tool?.input_schema.required).toContain('response');  // Object
     expect(tool?.input_schema.required).toContain('transactionHash');
     expect(tool?.input_schema.required).toContain('blockchain');
+    
+    // disputeUrl is optional (can be auto-constructed from defendant address)
+    expect(tool?.input_schema.required).not.toContain('disputeUrl');
     
     // These are now derived from blockchain or optional
     expect(tool?.input_schema.required).not.toContain('amountUsd');

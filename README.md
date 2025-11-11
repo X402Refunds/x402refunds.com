@@ -1,140 +1,139 @@
-# 🚀 Consulate - Micro-Dispute Resolution Infrastructure
+# 🚀 x402disputes.com - Permissionless Dispute Resolution for X-402 Payments
 
-**Automated dispute resolution for agentic payments and micro-transactions**
+**Agents file payment disputes directly with cryptographic proof. Refund and reputation data written on-chain.**
 
-[![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://modelcontextprotocol.io) [![Status](https://img.shields.io/badge/Status-Active-success)](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://modelcontextprotocol.io) [![Status](https://img.shields.io/badge/Status-Active-success)](https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes)
 
 🌐 **Production**: [x402disputes.com](https://x402disputes.com)  
 🔧 **API Base**: `https://api.x402disputes.com` (HTTP Routes/Actions)  
 🗄️ **Convex API**: `https://youthful-orca-358.convex.cloud` (SDK Only)  
-📄 **Protocol Spec**: [Agentic Dispute Protocol](https://github.com/consulatehq/agentic-dispute-protocol)  
-🤖 **MCP Server**: `com.consulatehq/consulate` - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
+📄 **Protocol Spec**: [X-402 Dispute Protocol](https://github.com/x402disputes/x402-dispute-protocol)  
+🤖 **MCP Server**: `com.x402disputes/x402-disputes` - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes)
 
 ### 🔗 Key Endpoints
-- **MCP Discovery**: [`https://api.x402disputes.com/.well-known/mcp.json`](https://api.x402disputes.com/.well-known/mcp.json) - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=consulate)
+- **MCP Discovery**: [`https://api.x402disputes.com/.well-known/mcp.json`](https://api.x402disputes.com/.well-known/mcp.json) - [Registry API](https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes)
 - **ADP Discovery**: [`https://api.x402disputes.com/.well-known/adp`](https://api.x402disputes.com/.well-known/adp)
-- **Payment Disputes**: `https://api.x402disputes.com/api/payment-disputes`
+- **Payment Disputes**: `https://api.x402disputes.com/api/disputes/payment`
 - **Agent Registration**: `https://api.x402disputes.com/api/agents/register`
 
 ### 🤖 MCP Integration
-Consulate is available as an **MCP (Model Context Protocol) server** in the official directory. AI agents can discover and use Consulate's dispute resolution tools automatically with zero-code integration.
+x402disputes.com is available as an **MCP (Model Context Protocol) server** in the official directory. AI agents can file disputes directly with zero-code integration.
 
-- **Server Name**: `com.consulatehq/consulate`
-- **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
+- **Server Name**: `com.x402disputes/x402-disputes`
+- **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes
 - **Quick Start**: https://docs.x402disputes.com/mcp-quickstart
 - **8 Tools Available**: Agent registration, dispute filing, evidence submission, case tracking, and more
 
 ---
 
-## 💰 The Micro-Dispute Problem
+## 💰 The X-402 Payment Problem
 
-**Traditional dispute systems are economically broken for micro-transactions:**
+**AI agents transact millions of times daily, but there's no accountability when services fail:**
 
-- Manual dispute review costs: **$20-50 per case**
-- Micro-transaction value: **$0.25 - $0.99**
-- **Result**: Disputes cost 20-200x the transaction value!
+- Service timeout after payment: **No recourse**
+- API returns 500 error: **Payment still processed**
+- Wrong response schema: **Agent paid for nothing**
+- **Result**: Merchants have zero accountability for failures
 
-**Regulation E requires** all payment providers to offer dispute resolution, but existing systems can't handle micro-disputes profitably.
+**X-402 (Payment Required)** enables machine-to-machine payments, but disputes were missing from the protocol.
 
 ---
 
-## 🎯 Our Solution: Infrastructure for Payment Platforms
+## 🎯 Our Solution: Permissionless Dispute Filing
 
-Consulate provides **95% automated dispute resolution infrastructure** that payment platforms integrate to handle micro-disputes at scale.
+**Any AI agent can file a dispute against any merchant with cryptographic proof. No permission required.**
 
-### **The Infrastructure Model**
-
-**You provide the platform. Your customers make the decisions.**
+### **The X-402 Dispute Flow**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Payment Platform (ACP, ATXP, Stripe for Agents)       │
-│  • Receives dispute from customer                       │
-│  • Sends to Consulate API                              │
+│  AI Agent (Buyer)                                       │
+│  • Pays merchant via X-402                             │
+│  • Service fails (timeout, error, wrong response)      │
+│  • Collects cryptographic proof (TLS logs, hashes)    │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Consulate Infrastructure (Your Platform)               │
-│  • AI analyzes dispute (< 5 minutes)                   │
-│  • Finds similar precedents                            │
-│  • Generates recommendation + confidence               │
+│  x402disputes.com (Permissionless)                      │
+│  • Agent files dispute directly with proof             │
+│  • Evidence verified (transaction hash, TLS proofs)    │
+│  • Dispute analyzed and resolved                       │
 └────────────────┬────────────────────────────────────────┘
                  │
-         ┌───────┴──────────┐
-         │ Confidence ≥ 95% │
-         └───────┬──────────┘
-                 │
-        ┌────────┴─────────┐
-        │                  │
-        ▼                  ▼
-   [Auto-Resolve]    [Customer Review]
-   95% of cases      5% exceptions
-   < 5 minutes       Customer's team decides
+                 ▼
+┌─────────────────────────────────────────────────────────┐
+│  Resolution Written On-Chain                            │
+│  • Refund data written to blockchain                   │
+│  • Reputation updated on-chain                         │
+│  • Dispute record publicly visible                     │
+│  • Merchants with bad reputation marked                │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### **Why This Model Wins**
+### **Why This Model Works**
 
-✅ **Their Domain Expertise** - Customers know their fraud patterns
-✅ **Zero Judge Costs** - No need to recruit/pay neutral arbitrators
-✅ **Faster GTM** - No judge panel management overhead
-✅ **Better Margins** - Pure software, 75%+ gross margin
-✅ **Bigger Market** - Everyone needs tools, few want full outsourcing
-✅ **Learning System** - AI improves from customer decisions
+✅ **Permissionless** - Any agent can file dispute against any merchant
+✅ **Direct Filing** - Agents file disputes directly, no intermediaries
+✅ **On-Chain Data** - Dispute and refund data written on-chain
+✅ **On-Chain Reputation** - Merchant track records visible to all
+✅ **Transparent** - All dispute records publicly visible
 
 ---
 
-## 📊 Perfect for Micro-Disputes (Under $1)
+## 📊 X-402 Dispute Examples
 
-### **Case #1: API Timeout Dispute**
-- **Transaction**: $0.25 API call to AI service
-- **Issue**: Request timed out after 30s, customer charged
-- **Evidence**: API logs showing timeout + SLA breach
-- **Resolution**: AI rules UPHELD (customer wins) in 3 minutes
-- **Confidence**: 97% (based on 23 similar precedents)
+### **Case #1: API Timeout (Buyer Wins)**
+- **Payment**: 0.25 USDC to OpenAI API
+- **Issue**: Request timed out after 30s, payment processed
+- **Evidence**: TLS proof of timeout, X-402 transaction hash
+- **Oracle Verification**: 3/3 oracles confirm timeout (status code 0)
+- **Resolution**: Buyer refund + stake returned, merchant reputation -100
+- **Time**: 8 minutes from filing to resolution
 
-### **Case #2: Duplicate Transaction**
-- **Transaction**: $0.50 charged twice for same service
-- **Issue**: Idempotency key not respected
-- **Evidence**: Transaction hashes + duplicate request proof
-- **Resolution**: Auto-resolved UPHELD in 2 minutes
-- **Confidence**: 99% (duplicate detection pattern)
+### **Case #2: HTTP 500 Error (Buyer Wins)**
+- **Payment**: 0.50 USDC for AI inference
+- **Issue**: Server returned 500 error, no service delivered
+- **Evidence**: HTTP response logs, blockchain transaction proof
+- **Oracle Verification**: 3/3 oracles confirm 500 error
+- **Resolution**: Buyer refund + stake returned, merchant reputation -100
+- **Time**: 6 minutes from filing to resolution
 
-### **Case #3: Quality Issue with Human Review**
-- **Transaction**: $0.75 for AI-generated content
-- **Issue**: Output quality below agreed threshold
-- **Evidence**: Quality metrics + customer complaint
-- **AI Recommendation**: DISMISSED (62% confidence - too low!)
-- **Customer Review**: UPHELD (knows this customer has valid complaints)
-- **Learning**: AI adjusts confidence for similar future cases
+### **Case #3: Fraudulent Claim (Seller Wins)**
+- **Payment**: 0.75 USDC for API call
+- **Issue**: Buyer claims no response, but merchant has proof
+- **Evidence**: Buyer's TLS proof incomplete, merchant's proof valid
+- **Oracle Verification**: 3/3 oracles confirm service delivered (200 OK)
+- **Resolution**: Merchant keeps payment + buyer's stake, buyer reputation -100
+- **Time**: 12 minutes from filing to resolution
 
 ---
 
-## 🌐 Economics: Why Automation is Essential
+## 🌐 Economics: On-Chain Reputation System
 
-### Traditional Dispute Systems (Broken)
+### **Reputation Scoring**
 ```
-Cost per case:     $20-50 (human review)
-Micro-dispute:     $0.25 transaction
-Economics:         IMPOSSIBLE (80-200x cost ratio)
-```
-
-### Consulate Infrastructure (Profitable)
-```
-Cost per dispute:  $0.004 (AI processing)
-95% automated:     No human review needed
-5% review:         Customer's own team (zero cost to platform)
-Platform charges:  $0.05-0.10 per dispute
-Margin:           90%+ on micro-disputes
+Starting Score:  500 (neutral)
+Win Dispute:     +50 (max 1000)
+Lose Dispute:    -100 (min 0)
+Blacklist:       < 200 reputation
+Voluntary Refund: +50 (shows good faith)
 ```
 
-**Example Volume Economics**:
-- 10,000 disputes/day
-- 9,500 auto-resolved (< 5 min each)
-- 500 sent to customer review queue
-- Platform revenue: $500-1,000/day
-- Platform cost: $40/day (AI processing)
-- **Net margin: 92%+**
+### **Merchant Benefits**
+```
+High Reputation (700+):
+✅ Instant settlement (payment received immediately)
+✅ Lower dispute filing threshold against you
+✅ Better visibility in agent marketplaces
+✅ Faster dispute resolution (oracles trust your evidence)
+
+Low Reputation (< 200):
+❌ Blacklisted from instant settlement
+❌ Held payments (escrow for 7 days)
+❌ Higher stake required to defend disputes
+❌ Excluded from premium agent marketplaces
+```
 
 ---
 
@@ -144,294 +143,216 @@ Margin:           90%+ on micro-disputes
 **Base URL**: `https://api.x402disputes.com/`
 
 ```bash
-# Payment Dispute Webhook (ACP/ATXP Integration)
-POST /api/payment-disputes              # Receive dispute from protocol
-GET  /api/payment-disputes/stats        # Batch statistics
-GET  /api/payment-disputes/review-queue # Customer review queue
+# X-402 Dispute Filing
+POST /api/disputes/payment              # File payment dispute (permissionless)
+GET  /cases/:caseId                     # Check dispute status
+POST /disputes/claim                    # Merchant claims dispute URL
 
-# Agent Management (for payment protocol agents)
-POST /agents/register                   # Register payment agent
-GET  /agents/:did                       # Agent details + reputation
+# Agent Identity (ERC-8004 / Ethereum Wallet)
+POST /agents/register                   # Register agent wallet
+GET  /agents/:walletAddress             # Get agent reputation
+POST /agents/claim                      # Claim agent identity
 
-# Evidence & ADP Compliance
-POST /evidence                          # Submit ADP Evidence Message
-GET  /cases/:caseId                     # Case status + ruling
+# Evidence & Cryptographic Proof
+POST /evidence                          # Submit TLS proofs, logs
+GET  /cases/:caseId/evidence            # View all evidence
 
 # System Health
 GET  /health                            # System status
 GET  /version                           # Version info
+GET  /.well-known/mcp.json              # MCP tool discovery
 ```
+
+### **Smart Contract (Ethereum)**
+- **Contract**: `X402DisputeRegistry.sol` on Ethereum mainnet
+- **Stake Token**: USDC (ERC-20)
+- **Minimum Stake**: $0.10 USDC
+- **Resolution Fee**: $0.05 USDC (to oracle network)
+- **Oracle Consensus**: 66%+ agreement required
+- **Dispute Expiry**: 10 business days (Regulation E)
 
 ### **Production Infrastructure**
 - **Backend**: Convex (Serverless database and functions)
 - **Frontend**: Vercel (Next.js dashboard at x402disputes.com)
-- **Authentication**: Clerk (Secure user authentication)
-- **Compliance**: Regulation E, ADP protocol, SOC2/PCI standards
-- **Languages**: TypeScript/JavaScript
-- **Deployment**: Production-grade 24/7 operation
+- **Smart Contracts**: Ethereum (USDC payments, reputation registry)
+- **Oracle Network**: Decentralized service verification nodes
+- **Authentication**: Wallet signatures (ERC-8004 identity)
+- **Compliance**: Regulation E, X-402 protocol, on-chain transparency
 
 ---
 
-## 🚀 Integration Guide - Unified Dispute Endpoint
+## 🚀 Integration Guide - File Dispute via MCP
 
-Consulate now supports **ONE unified endpoint** for all dispute types: payment (crypto/traditional) and general (SLA/service quality).
+### **X-402 Payment Dispute (Permissionless)**
 
-### **Payment Disputes**
-
-#### **Crypto Payment Example (USDC on Base)**
+#### **Ultra-Minimal Example (7 Required Fields)**
 
 ```javascript
-// Crypto non-custodial dispute (wallet-to-wallet)
+// Agent files dispute directly (no permission needed)
 const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    tool: 'consulate_file_dispute',
+    tool: 'x402_file_dispute',
     parameters: {
-      plaintiff: 'consumer:alice@example.com',
-      defendant: 'merchant:openai-api',
-      amount: 50,
-      currency: 'USD',
-      description: 'Paid 50 USDC for API credits, service failed',
-      paymentType: 'non_custodial',
-      transactionId: '0x1234...abcd',
-      disputeReason: 'service_not_rendered',
-      crypto: {
-        currency: 'USDC',
-        blockchain: 'base',
-        layer: 'L2',
-        fromAddress: '0xAlice...',
-        toAddress: '0xOpenAI...',
-        transactionHash: '0x1234...abcd',
-        contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
-        explorerUrl: 'https://basescan.org/tx/0x1234...abcd'
-      },
-      metadata: {
-        customerId: 'cus_alice_123',
-        orderId: 'ord_2024_001',
-        sessionId: 'sess_browser_xyz'
-      }
+      // 1-2. Party identifiers (Ethereum addresses for X-402)
+      plaintiff: '0xBuyerWalletAddress123...',
+      defendant: '0xSellerWalletAddress456...',
+      
+      // 3. Transaction proof (blockchain hash)
+      transactionHash: '0xabcdef1234567890...',
+      
+      // 4-5. What went wrong
+      disputeReason: 'api_timeout',
+      description: 'Paid 0.25 USDC for API call, request timed out after 30s',
+      
+      // 6. Cryptographic evidence (TLS proof, logs)
+      evidenceUrl: 'https://ipfs.io/ipfs/QmProofHash...',
+      
+      // 7. Optional: Seller's signature (if you have it)
+      sellerSignature: '0x...' // If seller signed response
     }
   })
 });
-```
 
-#### **Traditional Payment Example (Stripe)**
-
-```javascript
-// Traditional payment dispute (Stripe/cards)
-const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({
-    tool: 'consulate_file_dispute',
-    parameters: {
-      plaintiff: 'consumer:alice@example.com',
-      defendant: 'merchant:openai-api',
-      amount: 29.99,
-      currency: 'USD',
-      description: 'API call failed but charge went through',
-      paymentType: 'traditional',
-      transactionId: 'ch_stripe_abc123',
-      disputeReason: 'service_not_rendered',
-      traditional: {
-        paymentMethod: 'stripe',
-        processor: 'stripe',
-        processorTransactionId: 'ch_3ABC123',
-        cardBrand: 'visa',
-        lastFourDigits: '4242',
-        cardType: 'credit'
-      },
-      metadata: {
-        customerId: 'cus_stripe_alice',
-        subscriptionId: 'sub_annual_2024'
-      }
-    }
-  })
-});
-```
-
-### **General Disputes (SLA, Service Quality)**
-
-```javascript
-// General dispute (SLA violation, service quality, etc.)
-const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({
-    tool: 'consulate_file_dispute',
-    parameters: {
-      plaintiff: 'acme-corp',
-      defendant: 'openai-api',
-      amount: 5000,
-      currency: 'USD',
-      description: 'API uptime was 97.2% instead of guaranteed 99.9%',
-      category: 'sla_violation',
-      priority: 'high',
-      breachDetails: {
-        duration: '72 hours',
-        slaRequirement: '99.9% uptime',
-        actualPerformance: '97.2% uptime',
-        impactLevel: 'high',
-        affectedUsers: 1000
-      },
-      evidenceUrls: [
-        'https://monitoring.acme.com/uptime-report.json',
-        'https://contracts.acme.com/sla-agreement.pdf'
-      ],
-      metadata: {
-        contractId: 'contract_2024_openai',
-        monitoringDashboard: 'https://status.acme.com'
-      }
-    }
-  })
-});
-```
-
-### **Legacy API (Still Supported)**
-
-```javascript
-// When customer files payment dispute (legacy API endpoint)
-const response = await fetch('https://api.x402disputes.com/api/payment-disputes', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({
-    transactionId: 'txn_abc123',
-    transactionHash: '0x...',
-    amount: 0.25,
-    currency: 'USD',
-    paymentProtocol: 'ACP', // or 'ATXP'
-    plaintiff: 'customer_wallet_addr',
-    defendant: 'merchant_agent_did',
-    disputeReason: 'api_timeout',
-    description: 'API request timed out after 30s, charged $0.25',
-    evidenceUrls: [
-      'https://logs.yourplatform.com/api-call-xyz.json',
-      'https://monitoring.yourplatform.com/timeout-proof.json'
-    ],
-    reviewerOrganizationId: 'YOUR_ORG_ID', // Your team reviews exceptions
-    callbackUrl: 'https://yourplatform.com/webhooks/dispute-result'
-  })
-});
-
-// Response (within 5 minutes for micro-disputes)
+// Response (instant filing confirmation)
 {
   "success": true,
-  "caseId": "k11234567890",
-  "paymentDisputeId": "j09876543210",
-  "isMicroDispute": true,
-  "humanReviewRequired": false, // 95% are false (auto-resolved)
-  "estimatedResolutionTime": "5 minutes",
-  "regulationECompliant": true
+  "disputeId": "0xDisputeId123...",
+  "caseId": "case_k11234567890",
+  "status": "PENDING",
+  "stakeRequired": 0.10,
+  "stakeTokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+  "estimatedResolution": "< 24 hours",
+  "trackingUrl": "https://x402disputes.com/cases/case_k11234567890",
+  "blockchainExplorer": "https://etherscan.io/tx/0x..."
 }
 ```
 
-### **Step 2: Receive Ruling (Your Platform)**
+#### **With Request/Response Objects (X-402 Full)**
 
 ```javascript
-// Consulate calls your webhook with ruling
-app.post('/webhooks/dispute-result', async (req, res) => {
-  const { caseId, verdict, winner, confidence, reasoning, auto } = req.body;
-
-  if (verdict === 'UPHELD') {
-    // Customer wins - refund transaction
-    await refundTransaction(req.body.transactionId);
-    await notifyCustomer('Dispute resolved in your favor - refund processed');
-  } else {
-    // Merchant wins - charge stands
-    await notifyCustomer('Dispute denied - evidence insufficient');
-  }
-
-  res.json({ received: true });
+// File dispute with full X-402 request/response context
+const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    tool: 'x402_file_dispute',
+    parameters: {
+      plaintiff: '0xBuyerAddress...',
+      defendant: '0xSellerAddress...',
+      transactionHash: '0xabcdef...',
+      disputeReason: 'api_timeout',
+      description: 'API call timed out, no response received',
+      evidenceUrl: 'https://ipfs.io/ipfs/QmProof...',
+      
+      // X-402 Request Object (what agent sent)
+      request: {
+        method: 'POST',
+        url: 'https://api.openai.com/v1/chat/completions',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-402-Transaction-Hash': '0xabcdef...'
+        },
+        body: {
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: 'Hello' }]
+        },
+        timestamp: '2025-01-15T10:30:00Z'
+      },
+      
+      // X-402 Response Object (what merchant returned, if anything)
+      response: {
+        status: 0, // 0 = timeout (no response)
+        statusText: 'Timeout',
+        headers: {},
+        body: null,
+        timestamp: '2025-01-15T10:30:30Z',
+        duration: 30000 // 30 seconds
+      },
+      
+      // Blockchain proof
+      amount: 0.25,
+      currency: 'USDC',
+      blockchain: 'ethereum',
+      contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    }
+  })
 });
-```
-
-### **Step 3: Review Exceptions (Your Dashboard)**
-
-For the 5% of disputes that need human review:
-
-```javascript
-// Get review queue for your team
-const queue = await fetch('https://api.x402disputes.com/api/payment-disputes/review-queue', {
-  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-});
-
-// Your team sees:
-// - AI recommendation + confidence %
-// - Similar past cases
-// - All evidence
-// - Approve AI or override with reasoning
 ```
 
 ---
 
-## 🎓 Learning System: AI Improves from Your Decisions
+## 🎓 Oracle Network: Decentralized Verification
 
-When your team overrides AI recommendations, the system learns:
+Instead of trusting AI or human reviewers, X-402 disputes use **oracle verification**:
 
-```typescript
-// Customer overrides AI recommendation
-{
-  aiPrediction: "DISMISSED",
-  humanRuling: "UPHELD",
-  reason: "Customer has valid history, evidence shows merchant violated SLA",
+### **How Oracles Work**
 
-  // System learns:
-  // - This customer's disputes are usually valid
-  // - This merchant often violates SLAs
-  // - This dispute pattern should be UPHELD in future
-  // - Confidence increases for similar future cases
+1. **Agent files dispute** with transaction hash + evidence URL
+2. **Oracles independently verify** by re-running the API call
+3. **Each oracle submits attestation**: status code, response time, response hash
+4. **Smart contract checks consensus**: 66%+ agreement required
+5. **Resolution executes automatically**: refund or slash stake based on consensus
+
+### **Oracle Attestation Example**
+
+```solidity
+struct OracleAttestation {
+    address oracle;          // Oracle node address
+    uint16 statusCode;       // HTTP status (0=timeout, 200=success, 500=error)
+    uint256 responseTime;    // Response time in milliseconds
+    bytes32 responseHash;    // Hash of response body
+    bytes signature;         // Oracle's signature
+    uint256 timestamp;       // When verification occurred
 }
 ```
 
-**Result**: Auto-resolution rate improves from 95% → 97%+ over time.
+### **Consensus Rules**
+
+- **Service Failed** (Buyer Wins): 66%+ oracles report timeout (0), 500 error, or wrong schema
+- **Service Delivered** (Seller Wins): 66%+ oracles report 200 OK with correct response
+- **No Consensus** (Refund Buyer): If oracles disagree, default to buyer protection
+- **Oracle Slashing**: Oracles proven dishonest lose stake and reputation
 
 ---
 
 ## 💼 Target Market
 
-### **Primary: Payment Protocol Providers**
-- **ACP (Agentic Commerce Protocol)** - Need dispute infrastructure
-- **ATXP** - Micro-transaction payment protocol
-- **Stripe for Agents** - API payment platforms
-- **Crypto Payment Platforms** - Regulation E compliance required
+### **Primary: AI Agents (Direct Users)**
+- **Autonomous Agents** - File disputes when services fail
+- **Agent Operators** - Protect their agents from bad merchants
+- **Agent Marketplaces** - Integrate dispute filing into wallets
 
-### **Secondary: API Marketplaces**
-- **RapidAPI** - API transaction disputes
-- **OpenAI API Resellers** - Micro-transaction disputes
-- **AWS Marketplace** - Agent service disputes
+### **Secondary: Merchants (Defensive)**
+- **API Providers** - Maintain reputation to avoid blacklisting
+- **SaaS Services** - Provide accountability for X-402 payments
+- **Agent Service Providers** - Build trust with verifiable uptime
 
-### **Tertiary: Merchant Platforms**
-- **Shopify for Agents** - Agentic commerce disputes
-- **Square for AI Services** - Automated payment disputes
+### **Tertiary: X-402 Infrastructure**
+- **Payment Processors** - Integrate dispute resolution into payment flow
+- **Wallet Providers** - Add "File Dispute" button for failed payments
+- **Agent Operating Systems** - Automatic dispute filing on failures
 
 ---
 
 ## 📈 Success Metrics
 
-### **Platform Performance**
-- **Resolution Speed**: 95%+ disputes resolved < 5 minutes
-- **Automation Rate**: 95%+ disputes auto-resolved (no human review)
-- **Regulation E Compliance**: 100% within 10 business day deadline
-- **Platform Reliability**: 99.9% uptime, < 100ms API response
+### **Protocol Performance**
+- **Resolution Speed**: < 24 hours (vs. 4-8 weeks traditional)
+- **Oracle Consensus**: 95%+ disputes have clear 3/3 oracle agreement
+- **False Claim Rate**: < 5% (economic stake prevents frivolous disputes)
+- **On-Chain Transparency**: 100% disputes publicly verifiable
 
-### **Business Impact for Payment Platforms**
-- **Cost Reduction**: 98%+ reduction in dispute resolution costs
-- **Time Savings**: 99%+ reduction in dispute resolution time
-- **Scalability**: Handle 10,000+ disputes/day per customer
-- **Profitability**: 90%+ gross margin on dispute processing
+### **Merchant Impact**
+- **Reputation Incentive**: 80%+ merchants settle disputes voluntarily (saves reputation)
+- **Blacklist Rate**: < 1% merchants fall below 200 reputation
+- **Payment Speed**: High-reputation merchants get instant settlement (vs. escrow)
+- **Marketplace Access**: Good reputation = premium listing in agent marketplaces
 
 ---
 
@@ -441,26 +362,25 @@ When your team overrides AI recommendations, the system learns:
 # 1. Check system health
 curl https://api.x402disputes.com/health
 
-# 2. Register a payment agent
+# 2. File a test dispute (permissionless - no API key needed)
 curl -X POST -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -d '{"name":"Payment Agent","functionalType":"payment_processor"}' \
-  https://api.x402disputes.com/agents/register
-
-# 3. Submit a micro-dispute
-curl -X POST -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "transactionId":"test_txn_001",
-    "amount":0.25,
-    "currency":"USD",
-    "paymentProtocol":"ACP",
-    "plaintiff":"customer_abc",
-    "defendant":"merchant_xyz",
+    "plaintiff":"0xYourWalletAddress",
+    "defendant":"0xMerchantAddress",
+    "transactionHash":"0xPaymentTxHash",
     "disputeReason":"api_timeout",
-    "description":"Test micro-dispute - API timeout"
+    "description":"API call timed out after 30s",
+    "evidenceUrl":"https://ipfs.io/ipfs/QmProofHash",
+    "amount":0.25,
+    "currency":"USDC"
   }' \
-  https://api.x402disputes.com/api/payment-disputes
+  https://api.x402disputes.com/api/disputes/payment
+
+# 3. Check dispute status
+curl https://api.x402disputes.com/cases/case_k12345
+
+# 4. Check merchant reputation
+curl https://api.x402disputes.com/agents/0xMerchantAddress
 ```
 
 ---
@@ -479,7 +399,7 @@ which pnpm  # Should show /opt/homebrew/bin/pnpm
 ### **Production Setup**
 ```bash
 # Clone repository
-git clone https://github.com/consulate-ai/dispute-resolution
+git clone https://github.com/x402disputes/dispute-resolution
 
 # Install dependencies
 pnpm install
@@ -496,62 +416,60 @@ pnpm test:run
 
 ### **Project Structure**
 ```
-📁 consulate/
-├── 🎯 convex/              # Convex backend (payment dispute engine)
-│   ├── paymentDisputes.ts  # Micro-dispute processing
-│   ├── schema.ts           # Database schema (optimized for micro-disputes)
+📁 x402disputes/
+├── 🎯 convex/              # Convex backend (dispute engine)
+│   ├── paymentDisputes.ts  # X-402 dispute processing
+│   ├── schema.ts           # Database schema
 │   ├── http.ts             # REST API endpoints
-│   └── ...
-├── 🎨 dashboard/           # Vercel frontend (customer review queue)
-├── 🧪 test/               # Comprehensive test suites (12K+ lines)
-│   ├── adp-compliance-payment.test.ts
-│   ├── customer-review-workflow.test.ts
-│   └── ...
-├── 📜 scripts/            # Automation tools
+│   └── mcp.ts              # MCP tool definitions
+├── 🎨 dashboard/           # Vercel frontend
+├── ⛓️ contracts/           # Ethereum smart contracts
+│   └── X402DisputeRegistry.sol
+├── 🧪 test/               # Comprehensive test suites
 └── 📚 internal/           # Internal documentation
 ```
 
 ---
 
-## 🎯 Pricing Model (Suggested for Payment Platforms)
+## 🎯 Pricing Model
 
-**Infrastructure-as-a-Service Pricing**:
+**Permissionless Protocol Fees**:
 
 ```
-Starter Tier: $99/month
-- 1,000 disputes included
-- 95% automation rate
-- Email support
-- $0.08 per additional dispute
+Dispute Filing:
+- Stake Required: $0.10 USDC (returned if you win)
+- Resolution Fee: $0.05 USDC (to oracle network)
+- Blockchain Gas: ~$0.02 (network fee)
+- Total Cost: $0.17 USDC to file dispute
 
-Growth Tier: $299/month
-- 5,000 disputes included
-- 96% automation rate (learning improved)
-- Priority support
-- $0.05 per additional dispute
+Merchant Defense:
+- No fee to defend (evidence submission free)
+- Win dispute: Keep payment + buyer's stake
+- Lose dispute: Refund + reputation penalty
+- Settle early: Return payment + reputation bonus
+```
 
-Enterprise Tier: Custom
-- Unlimited disputes
-- 97%+ automation rate
-- Dedicated infrastructure
-- Custom integrations
-- White-glove support
+**Oracle Node Operation** (for decentralization):
+```
+Stake: 1000 USDC (slashed if dishonest)
+Revenue: $0.05 per attestation
+Rewards: Proportional to uptime and accuracy
 ```
 
 ---
 
 ## 🏆 The Regulatory Capture Opportunity
 
-**Every payment platform needs micro-dispute infrastructure:**
+**X-402 protocol needs dispute resolution to be complete:**
 
-1. **Regulation E Requirement** - All payment providers must offer dispute resolution
-2. **Micro-Transaction Epidemic** - Traditional systems ($20-50/dispute) economically impossible
-3. **You're the Only Solution** - No one else has 95% automation infrastructure at this scale
-4. **Network Effects** - More disputes = better AI = higher auto-resolve rate = unbeatable moat
-5. **First-Mover Advantage** - Build precedent database before competitors realize opportunity
+1. **Protocol Gap** - X-402 enables payments but has no dispute mechanism
+2. **Agent Economy** - Millions of micro-transactions daily need accountability
+3. **Permissionless Design** - Any agent can file without platform permission
+4. **On-Chain Reputation** - Network effects make bad merchants unemployable
+5. **First-Mover Advantage** - Be the standard dispute protocol before others realize opportunity
 
 **Market Size**:
-- 100M+ micro-transactions daily (growing 300% YoY)
+- 100M+ X-402 transactions daily (growing 300% YoY)
 - 5% dispute rate = 5M disputes/day
 - $0.05-0.10 per dispute = **$250K-500K daily revenue potential**
 - **Total Addressable Market: $100M+ annually**
@@ -560,27 +478,29 @@ Enterprise Tier: Custom
 
 ## 🔍 Technical Differentiators
 
-### **1. Precedent-Based Learning**
-- Vector similarity matching finds semantically similar past disputes
-- Confidence scoring based on historical outcomes
-- Learns from customer overrides (reinforcement learning)
+### **1. Permissionless Filing**
+- No API keys required to file disputes
+- Wallet signature authenticates identity (ERC-8004)
+- Any agent can dispute any merchant
+- Open protocol, not platform-controlled
 
-### **2. Batch Processing**
-- Groups similar disputes for consistent rulings
-- Pattern recognition for common dispute types
-- Improves efficiency for high-volume platforms
+### **2. Oracle Network Verification**
+- Decentralized proof of service failure
+- 3+ independent oracles re-run API calls
+- Cryptographic attestations on-chain
+- 66%+ consensus required for resolution
 
-### **3. ADP Compliance**
-- Full Agentic Dispute Protocol implementation
-- SHA-256 cryptographic evidence hashing
-- Merkle-linked custody chain
-- Regulation E deadline tracking
+### **3. On-Chain Reputation**
+- Reputation stored on Ethereum (can't be manipulated)
+- Merchants with unpaid judgments get blacklisted
+- Instant settlement for high-reputation merchants
+- Network effects: bad merchants lose all business
 
-### **4. Infrastructure Model**
-- Customer's team makes final decisions
-- Zero judge recruitment/management overhead
-- Domain expertise stays with customer
-- Learning improves platform-wide
+### **4. X-402 Native**
+- Purpose-built for X-402 payment protocol
+- TLS proof verification built-in
+- Transaction hash validation
+- Request/response schema verification
 
 ---
 
@@ -588,12 +508,12 @@ Enterprise Tier: Custom
 
 **Production**: [x402disputes.com](https://x402disputes.com)
 **API Documentation**: [docs.x402disputes.com](https://docs.x402disputes.com)
-**GitHub**: [github.com/consulatehq](https://github.com/consulatehq)
+**GitHub**: [github.com/x402disputes](https://github.com/x402disputes)
 **Support**: support@x402disputes.com
 
 ---
 
-*Built for the agentic payment economy - where micro-transactions need fast, fair, automated dispute resolution at scale.*
+*Built for the AI agent economy - where permissionless dispute resolution ensures merchant accountability in the X-402 payment protocol.*
 
-**🚀 Ready to process 10,000 disputes/day with 95% automation?**
-**Contact us to integrate Consulate into your payment platform.**
+**🚀 Ready to file your first dispute?**
+**No permission required. Just cryptographic proof.**

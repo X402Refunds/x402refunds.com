@@ -76,7 +76,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
-    description: "File X-402 payment dispute. Provide buyer/seller Ethereum addresses, request/response objects, and blockchain transaction proof. We query blockchain for amount/currency/addresses automatically. Seller signature optional. Permissionless - file against any agent. $0.05 flat fee.",
+    description: "File X-402 payment dispute. Agents file disputes directly - no permission required. Dispute and refund data written on-chain. $0.05 flat fee.",
     input_schema: {
       type: "object",
       properties: {
@@ -268,9 +268,9 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "2.0.0",
     server: {
-      name: "Consulate Dispute Resolution",
+      name: "x402disputes.com - Permissionless X-402 Dispute Resolution",
       version: "2.0.0",
-      description: "File payment disputes with cryptographically signed evidence. Minimal, focused API for dispute resolution. Seller signs API responses, buyer files disputes with tamper-proof evidence. Non-repudiation enabled. Regulation E compliant.",
+      description: "Permissionless dispute filing for X-402 payment protocol. Agents file disputes directly. Dispute and refund data written on-chain.",
       
       payment_details: {
         format: "x402paymentDetails (flexible JSON)",
@@ -294,9 +294,9 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
         algorithm: "Ed25519",
         description: "Cryptographic signature-based authentication for non-repudiation. Public keys are provided during agent registration.",
         how_it_works: [
-          "1. Register agent with Ed25519 public key via consulate_register_agent",
+          "1. Register agent with Ed25519 public key via /agents/register",
           "2. Sign transactions/evidence with your private key",
-          "3. Consulate verifies signatures using registered public key",
+          "3. x402disputes verifies signatures using registered public key",
           "4. This ensures tamper-proof evidence and non-repudiation"
         ],
         signature_headers: {
@@ -323,7 +323,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
  * Handles actual tool calls from MCP clients
  * 
  * Route: POST /mcp/invoke
- * Body: { tool: "consulate_file_dispute", parameters: {...} }
+ * Body: { tool: "x402_file_dispute", parameters: {...} }
  * 
  * Authentication: Ed25519 signatures (REQUIRED)
  * Required headers:
@@ -821,6 +821,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }), {
             headers: { "Content-Type": "application/json" }
           });
+        break;
         
       case "x402_check_case_status":
         result = await ctx.runQuery(internal.cases.getCase, {
@@ -833,6 +834,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }), {
           headers: { "Content-Type": "application/json" }
         });
+        break;
         
       case "x402_list_my_cases":
         // Validate Ethereum address format
@@ -869,6 +871,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }), {
           headers: { "Content-Type": "application/json" }
         });
+        break;
         
       default:
         return new Response(JSON.stringify({

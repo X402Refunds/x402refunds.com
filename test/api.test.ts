@@ -23,7 +23,7 @@ describe('Consulate HTTP API - Core System', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toBe("Consulate - Agentic Dispute Resolution Platform");
+      expect(data.service).toBe("x402disputes.com - Permissionless X-402 Dispute Resolution");
       expect(data.version).toBeDefined();
       expect(data.status).toBe("operational");
       expect(data.endpoints).toBeDefined();
@@ -36,7 +36,7 @@ describe('Consulate HTTP API - Core System', () => {
       
       const data = await response.json();
       expect(data.status).toBe("healthy");
-      expect(data.service).toBe("consulate-inc");
+      expect(data.service).toBe("x402disputes");
       expect(data.timestamp).toBeDefined();
     });
 

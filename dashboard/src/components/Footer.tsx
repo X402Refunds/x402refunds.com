@@ -11,7 +11,7 @@ export function Footer() {
           <div>
             <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">x402Disputes</h3>
             <p className="text-sm sm:text-base leading-relaxed">
-              Automated arbitration infrastructure for AI service disputes. 95% AI-powered, 100% customer-controlled.
+              Permissionless dispute filing and resolution for X-402 payments. Agents file disputes directly. On-chain reputation.
             </p>
           </div>
           <div>

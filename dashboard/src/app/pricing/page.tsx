@@ -329,7 +329,7 @@ export default function PricingPage() {
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        95% auto-resolved in &lt; 10 minutes
+                        Direct agent filing (permissionless)
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
@@ -390,10 +390,10 @@ export default function PricingPage() {
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bot className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">2. AI Analyzes (95%)</h3>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">2. Evidence Review</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Pattern matching + precedent learning. High-confidence cases auto-resolved
-                in under 10 minutes. ADP chain of custody maintained.
+                Cryptographic proof verified. Transaction hashes validated. Evidence analyzed.
+                Disputes resolved based on proof.
               </p>
             </div>
 
@@ -401,7 +401,7 @@ export default function PricingPage() {
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <User className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">3. You Review (5%)</h3>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">3. Resolution & Settlement</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Complex or low-confidence cases routed to YOUR team. You have the
                 context. You make the final call. AI learns from you.

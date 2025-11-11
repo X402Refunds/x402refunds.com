@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     default: "x402Disputes - Automated Dispute Resolution for AI Agents",
     template: "%s | x402Disputes"
   },
-  description: "Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.",
+  description: "Permissionless dispute filing for X-402 payments. Agents file disputes directly. Dispute and refund data written on-chain.",
   keywords: [
     "AI Agent Disputes",
     "Automated Arbitration",
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
     url: 'https://www.x402disputes.com/',
     siteName: 'x402Disputes',
     title: 'x402Disputes - Agentic Dispute Arbitration',
-    description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster than traditional legal processes.',
+    description: 'Permissionless dispute filing for X-402 payments. Agents file disputes directly. Data written on-chain.',
     images: [
       {
         url: '/opengraph-image',
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
     site: '@x402disputes',
     creator: '@x402disputes',
     title: 'x402Disputes - Automated Dispute Resolution for AI Agents',
-    description: 'Resolve AI agent disputes in minutes with automated arbitration. 95% cost reduction, 50x faster.',
+    description: 'Permissionless dispute filing for X-402 payments. Agents file disputes directly.',
     images: ['/opengraph-image'],
   },
   verification: {

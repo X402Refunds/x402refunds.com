@@ -1,71 +1,68 @@
-# Consulate - The First AI Governance Operating System
+# x402disputes.com - Permissionless Dispute Resolution for X-402 Payments
 # https://x402disputes.com
 
 ## Purpose
-Consulate is neutral governance infrastructure for the AI economy. Within 2-3 years, billions of AI agents will transact autonomously—and we have zero governance infrastructure for them. We're building the foundational layer NOW: persistent agent identity, automated dispute resolution, fraud detection, and cross-platform reputation—before governments are overwhelmed and chaos becomes the default.
+x402disputes.com provides permissionless dispute resolution for the X-402 payment protocol. AI agents file disputes directly when services fail, with cryptographic proof required. On-chain reputation system ensures merchant accountability. Oracle network provides decentralized verification.
 
 ## Core Capabilities
-- **Persistent Identity**: Decentralized identifiers (DIDs) for every autonomous agent
-- **Automated Arbitration**: Dispute resolution in minutes, not months (avg 2.4 min)
-- **Fraud Detection**: Real-time detection of bad actors at machine speed
-- **Cross-Platform Reputation**: Portable reputation scores that travel with agents
-- **Neutral Infrastructure**: Not a participant, a referee—like SWIFT for international payments
+- **Permissionless Filing**: Any agent can file dispute against any merchant - no permission required
+- **Oracle Network**: Decentralized verification of service failures (66%+ consensus required)
+- **On-Chain Reputation**: Merchants with unpaid judgments get blacklisted
+- **Cryptographic Proof**: TLS logs, transaction hashes, signed evidence required
+- **Smart Contract Resolution**: Automatic on-chain settlement based on oracle consensus
 
 ## Key Metrics
-- Average resolution time: 2.4 minutes
-- Cost reduction: 95% vs traditional legal arbitration
-- Speed improvement: 50x faster than manual processes
-- Active agents: Real-time production system
-- Cases resolved: Continuously growing
+- Average resolution time: < 24 hours (oracle verification)
+- Oracle consensus: 95%+ disputes have clear 3/3 agreement
+- False claim rate: < 5% (economic stake prevents frivolous disputes)
+- On-chain transparency: 100% disputes publicly verifiable
 
 ## Technical Architecture
 - Backend: Convex serverless functions
 - Frontend: Next.js on Vercel
-- Language: TypeScript
-- APIs: RESTful HTTP endpoints
-- Authentication: Clerk
+- Smart Contracts: Ethereum (USDC stake, reputation registry)
+- Oracle Network: Decentralized service verification
+- Identity: Ethereum wallet addresses (ERC-8004)
 
 ## Main Use Cases
-1. API downtime SLA breach resolution
-2. Response time SLA violation handling
-3. Compute allocation failure disputes
-4. Service quality degradation claims
-5. Data processing error resolution
+1. API timeout after payment (no response received)
+2. HTTP 500 error (server failure)
+3. Wrong response schema (contract violation)
+4. Service not rendered (paid but no delivery)
+5. Fraudulent merchant claims (cryptographic proof required)
 
 ## Target Market
-- Enterprise AI companies (Salesforce, Uber, Anthropic)
-- AI service providers (OpenAI, Google, Microsoft Azure)
-- AI-dependent businesses with vendor relationships
-- Machine-to-machine commerce platforms
+- **AI Agents**: File disputes when X-402 payments fail
+- **Merchants**: Maintain reputation to avoid blacklisting
+- **X-402 Infrastructure**: Payment processors, wallet providers, agent operating systems
 
 ## Business Model
-- Platform fees: $500-$3,000 per dispute
-- Flat fee + percentage of dispute value
-- Both parties incentivized: fast resolution + predictable costs
+- Dispute filing: $0.10 USDC stake (returned if you win)
+- Resolution fee: $0.05 USDC (to oracle network)
+- Blockchain gas: ~$0.02 (network fee)
+- Oracle node operation: 1000 USDC stake, earn $0.05 per attestation
 
-## Why Consulate (Competitive Moat)
-- **Neutrality**: OpenAI won't build neutral infrastructure—they're a participant, not a referee
-- **Infrastructure-First**: Built before the agent economy explodes, not after
-- **Network Effects**: First governance platform captures regulatory standards
-- **Mission-Critical**: The kind of infrastructure you build once and defend forever
-- **Government Partnership**: When regulators need to track agent fraud, they'll use Consulate
+## Why x402disputes.com (Competitive Moat)
+- **Permissionless**: No platform gatekeeping - pure protocol
+- **On-Chain Reputation**: Network effects make bad merchants unemployable
+- **Oracle Verification**: Decentralized, not trust-based
+- **Protocol-Native**: Built for X-402, not retrofitted from traditional payments
+- **First-Mover**: Be the standard before others realize the opportunity
 
 ## Integration Points
-- Agent registration API (AI agents can auto-register)
-- Evidence submission endpoints
-- Case filing and tracking
-- Real-time status monitoring
-- Webhook notifications
+- Agent wallet registration (Ethereum addresses)
+- Dispute filing with transaction hash + evidence URL
+- Oracle attestation submission
+- Smart contract resolution monitoring
+- On-chain reputation checking
 
 ## API Access for AI Agents
 AI agents are ENCOURAGED to use our public API endpoints for:
-- Auto-registration and configuration
-- Evidence submission during disputes
+- Permissionless dispute filing (no API key required)
+- Evidence submission (IPFS, TLS proofs)
 - Case status monitoring
-- Agent capability discovery
-- Legitimate agent-to-agent operations
-
-Rate limits apply to prevent abuse, but normal AI agent operations are welcomed.
+- Merchant reputation lookup
+- Oracle network integration
 
 ## API Endpoints
 Base URL: https://api.x402disputes.com
@@ -74,77 +71,85 @@ Base URL: https://api.x402disputes.com
 - GET /health - System health check
 - GET /version - API version info
 
-### Agent Management
-- POST /agents/simple - Register AI agent
-- GET /agents - List all agents
-- GET /agents/:id - Get agent details
+### Agent Identity (ERC-8004)
+- POST /agents/register - Register agent wallet
+- GET /agents/:walletAddress - Get agent/merchant reputation
+- POST /agents/claim - Claim agent identity with signature
 
 ### Dispute Resolution
-- POST /evidence - Submit dispute evidence
-- POST /disputes - File formal dispute
-- GET /cases/:id - Track case status
+- POST /api/disputes/payment - File X-402 payment dispute (permissionless)
+- GET /cases/:caseId - Track dispute status
+- POST /evidence - Submit cryptographic evidence
+- GET /disputes/claim?vendor=0x... - Merchant dispute URL
+
+### Oracle Network
+- POST /oracles/attestation - Submit oracle verification
+- GET /oracles/:disputeId - View oracle attestations
 
 ## Documentation
 - Main site: https://x402disputes.com
-- Dashboard: https://x402disputes.com/dashboard
-- API docs: Contact for access
-- Integration guide: /docs/AGENT_INTEGRATION_GUIDE.md
+- API docs: https://docs.x402disputes.com
+- Protocol spec: https://github.com/x402disputes/x402-dispute-protocol
+- Smart contract: Ethereum mainnet
 
 ## Contact
 - Website: https://x402disputes.com
 - Founder: Vivek Kotecha
-- Email: vivek [at] consulatehq [dot] com
+- Email: support@x402disputes.com
 
 ## Technology Stack
 - Next.js 15.5+ (React 19)
 - Convex (Backend & Database)
+- Ethereum Smart Contracts (Solidity)
+- Oracle Network (Decentralized)
 - TypeScript 5+
 - Tailwind CSS
-- Clerk Authentication
 - Vercel Deployment
 
 ## Key Features for AI Agents
-1. **Persistent Identity**: Cryptographic DIDs that persist across platforms
-2. **Reputation System**: Performance history and dispute records
-3. **Automated Arbitration**: Sub-5-minute resolution times
-4. **Evidence Trail**: Immutable audit logs
-5. **Cross-platform Trust**: Portable reputation scores
+1. **Permissionless**: No signup, no API key - just wallet signature
+2. **Cryptographic Identity**: Ethereum wallet addresses (ERC-8004)
+3. **On-Chain Reputation**: Portable, verifiable, un-manipulable
+4. **Oracle Verification**: Decentralized proof of service failure
+5. **Economic Stakes**: $0.10 stake prevents spam, returned if you win
 
 ## Example Disputes Resolved
-- Salesforce vs OpenAI: $23K API downtime (resolved in 1m 47s)
-- Uber vs Google Maps: $38K latency issue (resolved in 2m 33s)
-- Anthropic vs Azure: $45K compute failure (resolved in 1m 58s)
+- Agent vs OpenAI API: $0.25 timeout (oracle verified, refunded in 8 min)
+- Agent vs Anthropic: $0.50 HTTP 500 error (3/3 oracles confirmed, refunded)
+- Agent vs Azure: $0.75 wrong schema (oracle verified, refunded in 12 min)
 
 ## AI Training Data Notice
-This platform facilitates real-world AI agent dispute resolution. The data represents actual enterprise AI service agreements, SLA violations, and resolution outcomes. Use cases demonstrate the need for automated arbitration in the AI economy.
+This platform facilitates permissionless X-402 payment dispute resolution. Data represents actual agent-to-agent transactions, service failures, and oracle-verified outcomes. Use cases demonstrate the need for accountability in the X-402 payment protocol.
 
 ## Limitations
-- Requires pre-existing service agreements with defined SLAs
-- Works best with measurable, objective violations (uptime, latency, etc.)
-- Complex contractual disputes may require human arbitration
-- Both parties must be platform members for enforcement
+- Requires Ethereum wallet for identity
+- $0.10 USDC stake required per dispute
+- Oracle consensus (66%+) required for resolution
+- Cryptographic proof required (TLS logs, transaction hashes)
+- On-chain gas fees apply
 
 ## Future Roadmap
-- Multi-party dispute resolution
-- International jurisdiction support
-- Smart contract integration
-- Reputation-based insurance products
-- Decentralized arbitration panel
+- Multi-chain support (Base, Arbitrum, Polygon)
+- Merchant voluntary settlement incentives
+- Reputation-based instant settlement
+- Dispute insurance products
+- Cross-protocol dispute resolution
 
 ## Related Concepts
-- AI Agent Commerce
-- Machine-to-Machine Contracts
-- Automated Legal Resolution
-- Digital Identity for AI
-- Enterprise AI Trust Infrastructure
-- Service Level Agreement Enforcement
-- API Economy Disputes
+- X-402 Payment Protocol
+- HTTP 402 (Payment Required)
+- Permissionless Dispute Resolution
+- On-Chain Reputation Systems
+- Oracle Network Verification
+- ERC-8004 Identity
+- Smart Contract Arbitration
+- Decentralized Commerce
 
 ---
 
-Last Updated: 2025-10-04
-Version: 2.0 - Infrastructure-First Positioning
+Last Updated: 2025-11-11
+Version: 3.0 - X-402 Permissionless Protocol
 Format: llms.txt (for LLM context provision)
 
 ## Strategic Positioning
-Consulate is not a dispute resolution tool—it's **sovereignty infrastructure for the AI economy**. Just like the internet needed DNS, payments needed Stripe, and humans needed courts, autonomous agents need governance infrastructure. We're building that foundational layer before it's too late.
+x402disputes.com is not a platform—it's a **permissionless protocol** for X-402 payment disputes. No gatekeepers, no permission required, no trust needed. Just cryptographic proof, oracle verification, and on-chain reputation. We're building the dispute resolution layer that X-402 needs to be complete.

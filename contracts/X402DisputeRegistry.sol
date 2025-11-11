@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
  * @dev Extends X402 protocol with cryptographically-verified dispute resolution
  * 
  * Protocol Extension: X402-DR (X402 Dispute Resolution)
- * Specification: https://consulatehq.com/specs/x402-dr
+ * Specification: https://x402disputes.com/specs/x402-dr
  */
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";

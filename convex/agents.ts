@@ -13,7 +13,7 @@ export const joinAgent = mutation({
     name: v.string(),
     publicKey: v.string(),  // Ed25519 public key (base64 encoded)
     organizationName: v.string(),
-    walletAddress: v.string(), // Ethereum address (required for dispute URLs)
+    walletAddress: v.optional(v.string()), // Ethereum address (optional, for X-402 identity)
     openApiSpec: v.optional(v.any()), // Optional OpenAPI 3.0 specification
     specVersion: v.optional(v.string()), // e.g., "3.0.0"
     mock: v.optional(v.boolean()), // Mark as mock/test data (defaults to false)
@@ -49,10 +49,13 @@ export const joinAgent = mutation({
         throw new Error("Public key is required for agent registration");
       }
 
-      // Validate Ethereum address format
-      const normalizedWalletAddress = args.walletAddress.trim();
-      if (!isValidEthereumAddress(normalizedWalletAddress)) {
-        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      // Validate Ethereum address format (if provided)
+      let normalizedWalletAddress: string | undefined = undefined;
+      if (args.walletAddress) {
+        normalizedWalletAddress = args.walletAddress.trim();
+        if (!isValidEthereumAddress(normalizedWalletAddress)) {
+          throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+        }
       }
 
       console.info(`Processing agent registration for ${args.name}`);
@@ -72,7 +75,7 @@ export const joinAgent = mutation({
         name: args.name,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
-        walletAddress: normalizedWalletAddress.toLowerCase(), // Store normalized Ethereum address
+        walletAddress: normalizedWalletAddress?.toLowerCase(), // Store normalized Ethereum address (optional)
         openApiSpec: args.openApiSpec,
         specVersion: args.specVersion,
         mock: args.mock ?? false,
@@ -119,8 +122,8 @@ export const joinAgent = mutation({
       return { 
         agentId, 
         did: agentDid,
-        walletAddress: normalizedWalletAddress.toLowerCase(),
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}`,
+        walletAddress: normalizedWalletAddress?.toLowerCase(),
+        disputeUrl: normalizedWalletAddress ? `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}` : undefined,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,

@@ -28,7 +28,7 @@ describe('System - Health & Info', () => {
       const data = await response.json();
       expect(data.status).toBe('healthy');
       expect(data.timestamp).toBeGreaterThan(0);
-      expect(data.service).toBe('consulate-inc');
+      expect(data.service).toBe('x402disputes');
     });
 
     it('should respond quickly', async () => {
@@ -63,7 +63,7 @@ describe('System - Health & Info', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toContain('Consulate');
+      expect(data.service).toContain('x402disputes');
       expect(data.version).toBeDefined();
       expect(data.status).toBe('operational');
       expect(data.endpoints).toBeDefined();

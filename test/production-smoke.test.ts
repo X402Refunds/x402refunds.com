@@ -25,7 +25,7 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toContain('Consulate');
+      expect(data.service).toContain('x402disputes');
       expect(data.version).toBeDefined();
       expect(data.endpoints).toBeDefined();
       

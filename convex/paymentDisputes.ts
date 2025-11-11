@@ -1,13 +1,13 @@
 /**
- * Payment Dispute Resolution for Crypto/Agentic Commerce
+ * X-402 Payment Dispute Resolution
  * 
- * Optimized for MICRO-DISPUTES (under $1)
- * - High automation (95%+ auto-resolved)
- * - Batch processing for similar disputes
- * - Vector similarity for precedent matching
- * - Exception-based human review
+ * Permissionless dispute filing for X-402 payment protocol
+ * - Agents file disputes directly with cryptographic proof
+ * - Transaction hash verification
+ * - On-chain reputation tracking
+ * - Automated resolution with refund data written on-chain
  * 
- * Integration: ACP, ATXP, and other agent payment protocols
+ * Integration: X-402 protocol, Ethereum wallet identity
  */
 
 import { mutation, query, action } from "./_generated/server";
@@ -20,57 +20,50 @@ import {
 } from "./disputePricing";
 
 /**
- * Receive dispute from payment protocol (ACP/ATXP webhook endpoint)
+ * File X-402 payment dispute (permissionless)
  *
- * THREE-PARTY INFRASTRUCTURE MODEL:
+ * X-402 PERMISSIONLESS MODEL:
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * 1. **Payment Provider (YOU - e.g., Stripe, ACP platform)**
- *    - The actual Consulate customer who integrates our API
- *    - Files disputes on behalf of YOUR end-users (consumers)
- *    - Makes final decisions via your review queue dashboard
- *    - Pays Consulate fees
- *    - YOUR API key auto-detects your organizationId
+ * 1. **Buyer (Agent/Consumer)** - The plaintiff filing the dispute
+ *    - Ethereum wallet address (ERC-8004 identity)
+ *    - Paid merchant via X-402 payment protocol
+ *    - Service failed (timeout, 500 error, wrong response)
+ *    - Files dispute directly with transaction proof
  *
- * 2. **Consumer (Your Customer - e.g., Alice)**
- *    - The PLAINTIFF who disputes a charge
- *    - YOUR end-user who made a payment and now disputes it
- *    - Example: "consumer:alice@stripe.com" (YOUR customer)
- *    - Identified via plaintiffMetadata.customerId in YOUR system
- *
- * 3. **Merchant (Service Provider - e.g., OpenAI)**
- *    - The DEFENDANT who charged the consumer
- *    - The vendor/service provider who received payment
- *    - Example: "merchant:openai-api@stripe.com" (service provider in YOUR platform)
- *    - Identified via defendantMetadata.merchantId in YOUR system
+ * 2. **Seller (Merchant/Service Provider)** - The defendant
+ *    - Ethereum wallet address (ERC-8004 identity)
+ *    - Received payment for service
+ *    - Can respond with counter-evidence
+ *    - Reputation tracked on-chain
  *
  * REAL-WORLD EXAMPLE:
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Scenario: Alice paid $50 to OpenAI via Stripe for API credits
+ * Scenario: Agent paid 0.25 USDC to OpenAI API, request timed out
  *
- * 1. Alice (consumer) disputes the charge in Stripe dashboard: "Service not rendered"
- * 2. Stripe (YOU) receives dispute from Alice
- * 3. Stripe calls Consulate API:
- *    - plaintiff: "consumer:alice@stripe.com" (Alice - YOUR customer)
- *    - defendant: "merchant:openai-acct@stripe.com" (OpenAI - merchant in YOUR system)
- *    - plaintiffMetadata.customerId: "cus_stripe_abc123" (Alice's ID in YOUR DB)
- *    - defendantMetadata.merchantId: "acct_stripe_xyz789" (OpenAI's merchant ID in YOUR DB)
- *    - reviewerOrganizationId: Auto-detected from YOUR API key → Stripe's org
- * 4. Consulate AI analyzes: 95% confidence → "CONSUMER_WINS"
- * 5. Stripe's review queue shows: "Alice vs OpenAI - AI recommends refund"
- * 6. Stripe team (YOU) reviews and makes final decision
- * 7. Stripe executes decision: Refund Alice, notify OpenAI
+ * 1. Agent calls OpenAI API, pays 0.25 USDC via X-402
+ * 2. Request times out after 30s (no response)
+ * 3. Agent files dispute on x402disputes.com:
+ *    - plaintiff: 0xAgentWalletAddress (buyer)
+ *    - defendant: 0xOpenAIWalletAddress (merchant)
+ *    - transactionHash: 0x... (blockchain proof)
+ *    - evidenceUrl: ipfs://QmProofHash (TLS logs showing timeout)
+ * 4. Dispute analyzed with cryptographic verification
+ * 5. Resolution determined and refund data written on-chain
+ * 6. Reputation updated on-chain
  *
- * WHO IS WHO:
+ * PERMISSIONLESS:
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * ✅ YOU = Payment Provider (Stripe) - Consulate customer, makes final decisions
- * ✅ YOUR CUSTOMER = Consumer (Alice) - Plaintiff disputing charge
- * ✅ SERVICE PROVIDER = Merchant (OpenAI) - Defendant who charged consumer
+ * ✅ No permission required - any agent can file against any merchant
+ * ✅ Direct filing - agents file disputes directly
+ * ✅ On-chain data - dispute and refund data written on-chain
+ * ✅ On-chain reputation - merchant track record visible to all
+ * ✅ Transparent - all dispute records publicly visible
  *
- * Called by: ACP/ATXP infrastructure when dispute is filed by YOUR customer
- * Returns: Initial AI ruling + human review requirement flag for YOUR team
+ * Called by: AI agents directly when X-402 payments fail
+ * Returns: Dispute ID, case status, estimated resolution time
  */
 export const receivePaymentDispute = mutation({
   args: {

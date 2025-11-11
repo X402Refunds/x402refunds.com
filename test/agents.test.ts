@@ -52,7 +52,9 @@ describe('Agent Registration & Reputation - MVP', () => {
       expect(result.agentId).toBeDefined();
       expect(result.did).toBeDefined();
       expect(result.did).toMatch(/^did:agent:test-organization-\d+$/);
-      expect(result.disputeUrl).toContain('/disputes/claim?vendor=');
+      if (result.disputeUrl) {
+        expect(result.disputeUrl).toContain('/disputes/claim?vendor=');
+      }
       expect(result.publicKey).toBe(testPublicKey);
 
       // Verify agent was created correctly

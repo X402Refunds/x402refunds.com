@@ -1538,7 +1538,7 @@ describe('E2E: Production API Smoke Tests', () => {
     expect(response.status).toBe(200);
     
     const data = await response.json();
-    expect(data.service).toBe('Consulate - Agentic Dispute Resolution Platform');
+    expect(data.service).toBe('x402disputes.com - Permissionless X-402 Dispute Resolution');
     expect(data.endpoints).toBeDefined();
   });
 

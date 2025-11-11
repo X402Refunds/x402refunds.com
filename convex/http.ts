@@ -53,7 +53,7 @@ http.route({
   method: "GET",
   handler: httpAction(async () => {
     return new Response(JSON.stringify({
-      service: "Consulate - Agentic Dispute Resolution Platform",
+      service: "x402disputes.com - Permissionless X-402 Dispute Resolution",
       version: "1.0.0",
       status: "operational",
       endpoints: {
@@ -90,14 +90,14 @@ http.route({
       },
       documentation: "https://docs.x402disputes.com",
       protocol: {
-        name: "Agentic Dispute Protocol (ADP)",
-        repository: "https://github.com/consulatehq/agentic-dispute-protocol",
-        ietf_draft: "draft-kotecha-agentic-dispute-protocol"
+        name: "X-402 Dispute Protocol",
+        repository: "https://github.com/x402disputes/x402-dispute-protocol",
+        ietf_draft: "draft-kotecha-x402-dispute-protocol"
       },
       integration: {
-        mcp: "Add Consulate MCP server to your agent for zero-friction dispute filing",
-        sdk: "https://github.com/consulate-ai/agent-sdk",
-        examples: "https://github.com/consulate-ai/integration-examples"
+        mcp: "Add x402disputes MCP server to your agent - file disputes directly",
+        sdk: "https://github.com/x402disputes/agent-sdk",
+        examples: "https://github.com/x402disputes/integration-examples"
       },
       timestamp: Date.now()
     }), {
@@ -114,7 +114,7 @@ http.route({
     return new Response(JSON.stringify({ 
       status: "healthy", 
       timestamp: Date.now(),
-      service: "consulate-inc" 
+      service: "x402disputes" 
     }), {
       headers: corsHeaders,
     });

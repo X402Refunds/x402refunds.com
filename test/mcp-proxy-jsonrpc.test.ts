@@ -114,7 +114,7 @@ describe('MCP Proxy - JSON-RPC 2.0 Compliance', () => {
         result: expect.objectContaining({
           tools: expect.arrayContaining([
             expect.objectContaining({
-              name: expect.stringMatching(/^consulate_/),
+              name: expect.stringMatching(/^x402_/),
               description: expect.any(String)
             })
           ])

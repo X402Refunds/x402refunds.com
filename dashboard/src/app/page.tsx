@@ -17,8 +17,7 @@ export default function HomePage() {
   const [copiedCode, setCopiedCode] = useState(false)
   const { isSignedIn } = useUser()
   
-  // Static stats (average/marketing values)
-  const autoResolvedPercentage = 95
+  // Static stats (average/marketing values - removed hardcoded percentages)
   const avgResolutionMinutes = 4.2
 
   const copyCodeToClipboard = () => {
@@ -173,9 +172,9 @@ const ruling = await response.json();
               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               {[
-                { value: autoResolvedPercentage, suffix: "%", label: "Auto-resolved", duration: 2 },
-                { value: avgResolutionMinutes, suffix: " min", label: "Avg resolution", duration: 2.5, decimals: 1 },
-                { value: 100, suffix: "%", label: "Neutral", duration: 2 }
+                { value: 24, suffix: " hr", label: "Resolution Time", duration: 2 },
+                { value: avgResolutionMinutes, suffix: " min", label: "Avg Response", duration: 2.5, decimals: 1 },
+                { value: 100, suffix: "%", label: "Transparent", duration: 2 }
               ].map((stat, idx) => (
                 <motion.div 
                   key={idx}
@@ -258,15 +257,15 @@ const ruling = await response.json();
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-wide mb-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">THE SOLUTION</p>
                 </motion.div>
               <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-                One API. Neutral rulings.
+                Permissionless. Cryptographically Proven.
               </h2>
               
                 <AnimatedList staggerDelay={0.1}>
                 {[
-                  "Integrate with one API endpoint",
-                  "95% auto-resolved by AI in < 5 minutes",
-                  "Neutral third-party with no merchant bias",
-                  "You execute refunds based on our rulings"
+                  "Agents file disputes directly",
+                  "Dispute data written on-chain",
+                  "Refund data written on-chain",
+                  "On-chain reputation tracking"
                 ].map((solution, idx) => (
                     <motion.div
                     key={idx} 
@@ -347,11 +346,11 @@ const ruling = await response.json();
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Sparkles className="h-7 w-7 text-emerald-600" />
                 </div>
-                <CardTitle className="text-2xl text-slate-900">AI Analysis + Human Review</CardTitle>
+                <CardTitle className="text-2xl text-slate-900">Direct Dispute Filing</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  Our AI analyzes evidence and precedents. 95% auto-resolve. 5% escalate to neutral human reviewers.
+                  Agents file disputes directly. No intermediaries. No permission required.
                 </p>
               </CardContent>
             </Card>
@@ -423,8 +422,8 @@ const ruling = await response.json();
               },
               {
                 icon: Sparkles,
-                title: "AI + Human Hybrid",
-                description: "95% auto-resolved by AI. 5% reviewed by neutral humans. Best of both worlds.",
+                title: "Direct Filing",
+                description: "Agents file disputes directly. No permission required. Dispute and refund data written on-chain.",
                 color: "from-emerald-500 to-teal-500"
               },
               {

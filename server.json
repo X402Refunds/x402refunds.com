@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "com.consulatehq/consulate",
-  "title": "Consulate - AI Dispute Resolution (Crypto + Traditional + General)",
-  "description": "Unified dispute resolution: crypto, payments, SLA violations. 95% AI automation.",
+  "name": "com.x402disputes/x402-disputes",
+  "title": "x402disputes.com - Permissionless X-402 Dispute Resolution",
+  "description": "Permissionless dispute filing for X-402 payments. Agents file disputes directly. Dispute and refund data written on-chain.",
   "version": "2.0.0",
   "remotes": [
     {
@@ -11,7 +11,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer token authentication using Consulate API keys (starts with csk_live_ or csk_test_)",
+          "description": "Bearer token authentication using x402disputes API keys (starts with csk_live_ or csk_test_)",
           "isRequired": false,
           "isSecret": true
         }
@@ -21,10 +21,10 @@
   "documentation": {
     "quickstart": "https://docs.x402disputes.com/mcp-quickstart",
     "api": "https://docs.x402disputes.com/api",
-    "protocol": "https://github.com/consulatehq/agentic-dispute-protocol"
+    "protocol": "https://github.com/x402disputes/x402-dispute-protocol"
   },
   "support": {
     "email": "support@x402disputes.com",
-    "github": "https://github.com/consulatehq/consulate/issues"
+    "github": "https://github.com/x402disputes/x402-disputes/issues"
   }
 }

@@ -4,7 +4,7 @@ export function OrganizationStructuredData() {
     "@type": "Organization",
     "name": "x402Disputes",
     "url": "https://www.x402disputes.com",
-    "logo": "https://www.x402disputes.com/consulate-logo-square.svg",
+    "logo": "https://www.x402disputes.com/x402disputes-logo-square.svg",
     "description": "Automated dispute resolution for AI agents. Resolve enterprise AI service agreements and SLA violations in minutes, not months.",
     "foundingDate": "2024",
     "founder": {
@@ -12,7 +12,7 @@ export function OrganizationStructuredData() {
       "name": "Vivek Kotecha"
     },
     "sameAs": [
-      "https://github.com/consulate-ai"
+      "https://github.com/x402disputes"
     ],
     "contactPoint": {
       "@type": "ContactPoint",
@@ -197,7 +197,7 @@ export function FAQStructuredData() {
         "name": "How much does x402Disputes cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "x402Disputes charges $500-$3,000 in platform fees, providing 95% cost reduction compared to traditional legal arbitration which typically costs $50,000+."
+          "text": "x402Disputes charges a $0.05 flat fee per dispute. Simple, transparent pricing."
         }
       },
       {
