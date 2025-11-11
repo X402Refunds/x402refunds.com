@@ -1,6 +1,6 @@
 # 🚀 x402disputes.com - Permissionless Dispute Resolution for X-402 Payments
 
-**Agents file payment disputes directly with cryptographic proof. Refund and reputation data written on-chain.**
+**Agents file payment disputes directly with optional cryptographic proof. Refund and reputation data written on-chain.**
 
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://modelcontextprotocol.io) [![Status](https://img.shields.io/badge/Status-Active-success)](https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes)
 
@@ -41,7 +41,7 @@ x402disputes.com is available as an **MCP (Model Context Protocol) server** in t
 
 ## 🎯 Our Solution: Permissionless Dispute Filing
 
-**Any AI agent can file a dispute against any merchant with cryptographic proof. No permission required.**
+**Any AI agent can file a dispute against any merchant with optional cryptographic proof. No permission required.**
 
 ### **The X-402 Dispute Flow**
 
@@ -50,15 +50,15 @@ x402disputes.com is available as an **MCP (Model Context Protocol) server** in t
 │  AI Agent (Buyer)                                       │
 │  • Pays merchant via X-402                             │
 │  • Service fails (timeout, error, wrong response)      │
-│  • Collects cryptographic proof (TLS logs, hashes)    │
+│  • Optionally collects cryptographic proof (TLS logs, hashes)    │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
 │  x402disputes.com (Permissionless)                      │
-│  • Agent files dispute directly with proof             │
-│  • Evidence verified (transaction hash, TLS proofs)    │
-│  • Dispute analyzed and resolved                       │
+│  • Agent files dispute directly (proof optional)       │
+│  • Evidence verified if provided (transaction hash, TLS proofs)    │
+│  • AI analyzes dispute, merchant makes final decision │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
@@ -81,31 +81,54 @@ x402disputes.com is available as an **MCP (Model Context Protocol) server** in t
 
 ---
 
+## 🏛️ Dual-Sided Platform: Registry + Resolution Service
+
+x402disputes.com operates as **BOTH** a public dispute registry and a resolution platform:
+
+### **1. Public Dispute Registry (Permissionless)**
+- **ANY agent can file disputes** against ANY merchant (no permission needed)
+- All disputes publicly recorded in the registry
+- Refund data written on-chain
+- Reputation scores tracked on-chain
+- Transparent, public dispute records
+
+### **2. Dispute Resolution Platform (For Merchant Customers)**
+- **Merchants become customers** to manage disputes efficiently
+- Platform provides dispute management dashboard
+- AI analyzes disputes and makes recommendations
+- Merchants resolve by refunding users automatically through platform
+- Platform handles refund execution and on-chain recording
+
+**Your customers = Merchants/agents who have disputes filed against them**
+They use your platform to view, manage, and resolve disputes efficiently.
+
+---
+
 ## 📊 X-402 Dispute Examples
 
 ### **Case #1: API Timeout (Buyer Wins)**
 - **Payment**: 0.25 USDC to OpenAI API
 - **Issue**: Request timed out after 30s, payment processed
-- **Evidence**: TLS proof of timeout, X-402 transaction hash
-- **Oracle Verification**: 3/3 oracles confirm timeout (status code 0)
-- **Resolution**: Buyer refund + stake returned, merchant reputation -100
-- **Time**: 8 minutes from filing to resolution
+- **Evidence**: TLS proof of timeout, X-402 transaction hash (optional)
+- **AI Analysis**: High confidence recommendation for buyer refund
+- **Resolution**: Merchant reviews and approves refund, buyer refunded, merchant reputation -100
+- **Time**: 24 hours from filing to resolution
 
 ### **Case #2: HTTP 500 Error (Buyer Wins)**
 - **Payment**: 0.50 USDC for AI inference
 - **Issue**: Server returned 500 error, no service delivered
-- **Evidence**: HTTP response logs, blockchain transaction proof
-- **Oracle Verification**: 3/3 oracles confirm 500 error
-- **Resolution**: Buyer refund + stake returned, merchant reputation -100
-- **Time**: 6 minutes from filing to resolution
+- **Evidence**: HTTP response logs, blockchain transaction proof (optional)
+- **AI Analysis**: High confidence recommendation for buyer refund
+- **Resolution**: Merchant reviews and approves refund, buyer refunded, merchant reputation -100
+- **Time**: 24 hours from filing to resolution
 
 ### **Case #3: Fraudulent Claim (Seller Wins)**
 - **Payment**: 0.75 USDC for API call
 - **Issue**: Buyer claims no response, but merchant has proof
 - **Evidence**: Buyer's TLS proof incomplete, merchant's proof valid
-- **Oracle Verification**: 3/3 oracles confirm service delivered (200 OK)
-- **Resolution**: Merchant keeps payment + buyer's stake, buyer reputation -100
-- **Time**: 12 minutes from filing to resolution
+- **AI Analysis**: Low confidence, recommends merchant review
+- **Resolution**: Merchant reviews evidence, denies refund, merchant keeps payment, buyer reputation -100
+- **Time**: 24 hours from filing to resolution
 
 ---
 
@@ -126,7 +149,7 @@ High Reputation (700+):
 ✅ Instant settlement (payment received immediately)
 ✅ Lower dispute filing threshold against you
 ✅ Better visibility in agent marketplaces
-✅ Faster dispute resolution (oracles trust your evidence)
+✅ Faster dispute resolution (AI trusts your evidence)
 
 Low Reputation (< 200):
 ❌ Blacklisted from instant settlement
@@ -163,20 +186,11 @@ GET  /version                           # Version info
 GET  /.well-known/mcp.json              # MCP tool discovery
 ```
 
-### **Smart Contract (Ethereum)**
-- **Contract**: `X402DisputeRegistry.sol` on Ethereum mainnet
-- **Stake Token**: USDC (ERC-20)
-- **Minimum Stake**: $0.10 USDC
-- **Resolution Fee**: $0.05 USDC (to oracle network)
-- **Oracle Consensus**: 66%+ agreement required
-- **Dispute Expiry**: 10 business days (Regulation E)
-
 ### **Production Infrastructure**
 - **Backend**: Convex (Serverless database and functions)
 - **Frontend**: Vercel (Next.js dashboard at x402disputes.com)
-- **Smart Contracts**: Ethereum (USDC payments, reputation registry)
-- **Oracle Network**: Decentralized service verification nodes
-- **Authentication**: Wallet signatures (ERC-8004 identity)
+- **AI Analysis**: OpenRouter LLM for dispute analysis and recommendations
+- **Authentication**: Wallet signatures (ERC-8004 identity), API keys for merchants
 - **Compliance**: Regulation E, X-402 protocol, on-chain transparency
 
 ---
@@ -201,15 +215,15 @@ const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
       plaintiff: '0xBuyerWalletAddress123...',
       defendant: '0xSellerWalletAddress456...',
       
-      // 3. Transaction proof (blockchain hash)
-      transactionHash: '0xabcdef1234567890...',
+      // 3. Transaction proof (optional blockchain hash)
+      transactionHash: '0xabcdef1234567890...',  // Optional
       
       // 4-5. What went wrong
       disputeReason: 'api_timeout',
       description: 'Paid 0.25 USDC for API call, request timed out after 30s',
       
-      // 6. Cryptographic evidence (TLS proof, logs)
-      evidenceUrl: 'https://ipfs.io/ipfs/QmProofHash...',
+      // 6. Cryptographic evidence (optional TLS proof, logs)
+      evidenceUrl: 'https://ipfs.io/ipfs/QmProofHash...',  // Optional
       
       // 7. Optional: Seller's signature (if you have it)
       sellerSignature: '0x...' // If seller signed response
@@ -220,14 +234,13 @@ const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
 // Response (instant filing confirmation)
 {
   "success": true,
-  "disputeId": "0xDisputeId123...",
   "caseId": "case_k11234567890",
-  "status": "PENDING",
-  "stakeRequired": 0.10,
-  "stakeTokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-  "estimatedResolution": "< 24 hours",
-  "trackingUrl": "https://x402disputes.com/cases/case_k11234567890",
-  "blockchainExplorer": "https://etherscan.io/tx/0x..."
+  "paymentDisputeId": "case_k11234567890",
+  "status": "received",
+  "disputeFee": 0.05,
+  "estimatedResolutionTime": "24 hours",
+  "humanReviewRequired": true,
+  "trackingUrl": "https://x402disputes.com/cases/case_k11234567890"
 }
 ```
 
@@ -252,12 +265,12 @@ const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
       
       // X-402 Request Object (what agent sent)
       request: {
-        method: 'POST',
+  method: 'POST',
         url: 'https://api.openai.com/v1/chat/completions',
-        headers: {
-          'Content-Type': 'application/json',
+  headers: {
+    'Content-Type': 'application/json',
           'X-402-Transaction-Hash': '0xabcdef...'
-        },
+  },
         body: {
           model: 'gpt-4',
           messages: [{ role: 'user', content: 'Hello' }]
@@ -287,37 +300,25 @@ const response = await fetch('https://api.x402disputes.com/mcp/invoke', {
 
 ---
 
-## 🎓 Oracle Network: Decentralized Verification
+## 🎓 Dispute Resolution Process
 
-Instead of trusting AI or human reviewers, X-402 disputes use **oracle verification**:
+x402disputes.com uses **AI-powered analysis with merchant final decision**:
 
-### **How Oracles Work**
+### **How Disputes Are Resolved**
 
-1. **Agent files dispute** with transaction hash + evidence URL
-2. **Oracles independently verify** by re-running the API call
-3. **Each oracle submits attestation**: status code, response time, response hash
-4. **Smart contract checks consensus**: 66%+ agreement required
-5. **Resolution executes automatically**: refund or slash stake based on consensus
+1. **Agent files dispute** with transaction details and optional evidence
+2. **AI analyzes dispute** using LLM to understand context and evidence
+3. **AI provides recommendation** with confidence score (CONSUMER_WINS, MERCHANT_WINS, PARTIAL_REFUND, NEED_REVIEW)
+4. **Merchant reviews** in dashboard and makes final decision
+5. **Platform executes resolution** - refunds processed automatically if approved
+6. **Results recorded** - Dispute and resolution data written on-chain
 
-### **Oracle Attestation Example**
+### **Resolution Flow**
 
-```solidity
-struct OracleAttestation {
-    address oracle;          // Oracle node address
-    uint16 statusCode;       // HTTP status (0=timeout, 200=success, 500=error)
-    uint256 responseTime;    // Response time in milliseconds
-    bytes32 responseHash;    // Hash of response body
-    bytes signature;         // Oracle's signature
-    uint256 timestamp;       // When verification occurred
-}
-```
-
-### **Consensus Rules**
-
-- **Service Failed** (Buyer Wins): 66%+ oracles report timeout (0), 500 error, or wrong schema
-- **Service Delivered** (Seller Wins): 66%+ oracles report 200 OK with correct response
-- **No Consensus** (Refund Buyer): If oracles disagree, default to buyer protection
-- **Oracle Slashing**: Oracles proven dishonest lose stake and reputation
+- **High Confidence (>95%)**: AI recommendation provided, merchant can auto-approve
+- **Low Confidence (<95%)**: Flagged for merchant review, merchant makes final call
+- **All Disputes**: Merchant has final decision authority
+- **Regulation E Compliance**: Resolution within 10 business days
 
 ---
 
@@ -344,8 +345,8 @@ struct OracleAttestation {
 
 ### **Protocol Performance**
 - **Resolution Speed**: < 24 hours (vs. 4-8 weeks traditional)
-- **Oracle Consensus**: 95%+ disputes have clear 3/3 oracle agreement
-- **False Claim Rate**: < 5% (economic stake prevents frivolous disputes)
+- **AI Accuracy**: 95%+ disputes have high-confidence AI recommendations
+- **False Claim Rate**: < 5% (merchant review prevents frivolous disputes)
 - **On-Chain Transparency**: 100% disputes publicly verifiable
 
 ### **Merchant Impact**
@@ -405,7 +406,7 @@ git clone https://github.com/x402disputes/dispute-resolution
 pnpm install
 
 # Deploy backend to Convex
-pnpm deploy:prod
+pnpm deploy:dev
 
 # Deploy frontend to Vercel
 vercel deploy --prod
@@ -423,8 +424,6 @@ pnpm test:run
 │   ├── http.ts             # REST API endpoints
 │   └── mcp.ts              # MCP tool definitions
 ├── 🎨 dashboard/           # Vercel frontend
-├── ⛓️ contracts/           # Ethereum smart contracts
-│   └── X402DisputeRegistry.sol
 ├── 🧪 test/               # Comprehensive test suites
 └── 📚 internal/           # Internal documentation
 ```
@@ -437,23 +436,16 @@ pnpm test:run
 
 ```
 Dispute Filing:
-- Stake Required: $0.10 USDC (returned if you win)
-- Resolution Fee: $0.05 USDC (to oracle network)
-- Blockchain Gas: ~$0.02 (network fee)
-- Total Cost: $0.17 USDC to file dispute
+- Flat Fee: $0.05 USDC per dispute
+- No stake required
+- No blockchain gas fees (handled by platform)
+- Total Cost: $0.05 USDC to file dispute
 
 Merchant Defense:
 - No fee to defend (evidence submission free)
-- Win dispute: Keep payment + buyer's stake
+- Win dispute: Keep payment
 - Lose dispute: Refund + reputation penalty
 - Settle early: Return payment + reputation bonus
-```
-
-**Oracle Node Operation** (for decentralization):
-```
-Stake: 1000 USDC (slashed if dishonest)
-Revenue: $0.05 per attestation
-Rewards: Proportional to uptime and accuracy
 ```
 
 ---
@@ -484,11 +476,11 @@ Rewards: Proportional to uptime and accuracy
 - Any agent can dispute any merchant
 - Open protocol, not platform-controlled
 
-### **2. Oracle Network Verification**
-- Decentralized proof of service failure
-- 3+ independent oracles re-run API calls
-- Cryptographic attestations on-chain
-- 66%+ consensus required for resolution
+### **2. AI-Powered Analysis**
+- LLM analyzes dispute context and evidence
+- Provides recommendations with confidence scores
+- Learns from merchant decisions over time
+- Merchant makes final decision on all disputes
 
 ### **3. On-Chain Reputation**
 - Reputation stored on Ethereum (can't be manipulated)
@@ -516,4 +508,4 @@ Rewards: Proportional to uptime and accuracy
 *Built for the AI agent economy - where permissionless dispute resolution ensures merchant accountability in the X-402 payment protocol.*
 
 **🚀 Ready to file your first dispute?**
-**No permission required. Just cryptographic proof.**
+**No permission required. Optional cryptographic proof.**

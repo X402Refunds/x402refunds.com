@@ -124,7 +124,6 @@ export function AgentList({ agents }: AgentListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Organization</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Dispute URL</TableHead>
@@ -137,9 +136,6 @@ export function AgentList({ agents }: AgentListProps) {
               <TableRow key={agent._id}>
                 <TableCell className="font-medium">
                   {agent.name || "Unnamed Agent"}
-                </TableCell>
-                <TableCell>
-                  {agent.organizationName || "—"}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="bg-muted">
@@ -237,7 +233,7 @@ export function AgentList({ agents }: AgentListProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSuspendConfirm}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"

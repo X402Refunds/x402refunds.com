@@ -23,7 +23,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">x402 Dispute Registry</h1>
+              <h1 className="text-3xl font-bold mb-2">Dispute Registry</h1>
               <p className="text-slate-300">Real-time dispute resolution for X-402 payments</p>
                   </div>
             <div className="hidden md:flex gap-3">

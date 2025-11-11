@@ -1,15 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { useMutation, useQuery } from "convex/react"
+import { useMutation } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Key, Download, Loader2, AlertCircle, CheckCircle2, Copy } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Key, Loader2, AlertCircle, CheckCircle2, Copy } from "lucide-react"
 
 interface CreateAgentDialogProps {
   open: boolean
@@ -35,18 +33,13 @@ export function CreateAgentDialog({
   open,
   onOpenChange,
 }: CreateAgentDialogProps) {
-  const router = useRouter()
-  
   // Registration state
   const [agentName, setAgentName] = useState("")
-  const [publicKey, setPublicKey] = useState("")
   const [walletAddress, setWalletAddress] = useState("")
   const [functionalType, setFunctionalType] = useState("general")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [generatedKeyPair, setGeneratedKeyPair] = useState<{publicKey: string, privateKey: string} | null>(null)
-  const [isGeneratingKey, setIsGeneratingKey] = useState(false)
-  const [successData, setSuccessData] = useState<{disputeUrl: string, agentName: string} | null>(null)
+  const [successData, setSuccessData] = useState<{walletAddress: string, agentName: string, claimMessage: string} | null>(null)
   const [copied, setCopied] = useState(false)
   
   // Validate Ethereum address format (client-side)
@@ -54,89 +47,9 @@ export function CreateAgentDialog({
     return /^0x[a-fA-F0-9]{40}$/.test(address.trim())
   }
   
-  // Get current user for manual registration
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    {} // Auth verified server-side via ctx.auth
-  )
+  const createUnclaimedAgent = useMutation(api.agents.createUnclaimedAgent)
   
-  const registerAgentManual = useMutation(api.agents.registerAgentManual)
-  
-  const generateKeyPair = async () => {
-    setIsGeneratingKey(true)
-    setError(null)
-    
-    try {
-      // Generate Ed25519 keypair using Web Crypto API
-      const keyPair = await crypto.subtle.generateKey(
-        {
-          name: "Ed25519",
-        } as EcKeyGenParams,
-        true,
-        ["sign", "verify"]
-      )
-      
-      // Export public key
-      const publicKeyBuffer = await crypto.subtle.exportKey("spki", keyPair.publicKey)
-      const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKeyBuffer)))
-      const publicKeyPem = `-----BEGIN PUBLIC KEY-----\n${publicKeyBase64.match(/.{1,64}/g)?.join('\n')}\n-----END PUBLIC KEY-----`
-      
-      // Export private key
-      const privateKeyBuffer = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
-      const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)))
-      const privateKeyPem = `-----BEGIN PRIVATE KEY-----\n${privateKeyBase64.match(/.{1,64}/g)?.join('\n')}\n-----END PRIVATE KEY-----`
-      
-      setGeneratedKeyPair({
-        publicKey: publicKeyPem,
-        privateKey: privateKeyPem
-      })
-      setPublicKey(publicKeyPem)
-    } catch (err) {
-      setError("Failed to generate key pair. Your browser may not support Ed25519.")
-      console.error("Key generation error:", err)
-    } finally {
-      setIsGeneratingKey(false)
-    }
-  }
-  
-  const downloadPrivateKey = () => {
-    if (!generatedKeyPair) return
-    
-    const blob = new Blob([generatedKeyPair.privateKey], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `agent-private-key-${Date.now()}.pem`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-  
-  // Convert PEM format to base64 if needed
-  const extractBase64FromPem = (pem: string): string => {
-    // If it's already base64 (no PEM headers), return as-is
-    if (!pem.includes('-----BEGIN')) {
-      return pem.trim()
-    }
-    
-    // Extract base64 content from PEM format
-    const base64Match = pem.match(/-----BEGIN.*-----\s*([\s\S]*?)\s*-----END/i)
-    if (base64Match && base64Match[1]) {
-      // Remove whitespace and return base64 content
-      return base64Match[1].replace(/\s/g, '')
-    }
-    
-    // If no PEM format detected, return trimmed
-    return pem.trim()
-  }
-
   const handleManualRegister = async () => {
-    if (!currentUser || !publicKey.trim()) {
-      setError("Please provide a public key")
-      return
-    }
-    
     if (!walletAddress.trim()) {
       setError("Please provide an Ethereum wallet address")
       return
@@ -152,44 +65,41 @@ export function CreateAgentDialog({
     setError(null)
     
     try {
-      // Convert PEM to base64 if needed
-      const publicKeyBase64 = extractBase64FromPem(publicKey)
+      const normalizedWallet = walletAddress.trim().toLowerCase()
       
-      const result = await registerAgentManual({
-        userId: currentUser._id,
-        name: agentName.trim() || "Unnamed Agent",
-        publicKey: publicKeyBase64,
-        walletAddress: walletAddress.trim(),
-        functionalType: functionalType as "general" | "voice" | "chat" | "coding" | "data" | "api" | "research" | "financial" | "transaction" | "legal" | "healthcare" | "workflow",
+      // Create unclaimed agent (will be claimed later with wallet signature)
+      await createUnclaimedAgent({
+        walletAddress: normalizedWallet,
+        name: agentName.trim() || undefined,
+        endpoint: undefined,
       })
       
-      // Show success state with dispute URL
+      // Show success state with claim instructions
+      const claimMessage = `I claim agent ${normalizedWallet} on x402disputes.com`
       setSuccessData({
-        disputeUrl: result.disputeUrl,
-        agentName: agentName.trim() || "Unnamed Agent"
+        walletAddress: normalizedWallet,
+        agentName: agentName.trim() || "Unnamed Agent",
+        claimMessage: claimMessage
       })
-      
-      // Refresh the page to show new agent
-      router.refresh()
     } catch (err: unknown) {
       const error = err as Error
-      setError(error.message || "Failed to register agent")
+      setError(error.message || "Failed to create agent")
     } finally {
       setIsSubmitting(false)
     }
   }
   
-  const handleCopyDisputeUrl = async () => {
+  const handleCopyClaimMessage = async () => {
     if (!successData) return
     
     try {
-      await navigator.clipboard.writeText(successData.disputeUrl)
+      await navigator.clipboard.writeText(successData.claimMessage)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea')
-      textArea.value = successData.disputeUrl
+      textArea.value = successData.claimMessage
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
@@ -202,10 +112,8 @@ export function CreateAgentDialog({
   const handleSuccessClose = () => {
     // Reset everything and close
     setAgentName("")
-    setPublicKey("")
     setWalletAddress("")
     setFunctionalType("general")
-    setGeneratedKeyPair(null)
     setSuccessData(null)
     setError(null)
     setCopied(false)
@@ -221,10 +129,8 @@ export function CreateAgentDialog({
     
     // Otherwise just reset and close
     setAgentName("")
-    setPublicKey("")
     setWalletAddress("")
     setFunctionalType("general")
-    setGeneratedKeyPair(null)
     setError(null)
     setSuccessData(null)
     setCopied(false)
@@ -236,12 +142,12 @@ export function CreateAgentDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {successData ? "Agent Registered Successfully!" : "Register Agent"}
+            {successData ? "Agent Created - Claim with Wallet Signature" : "Create Agent"}
           </DialogTitle>
           <DialogDescription>
             {successData 
-              ? `Your agent "${successData.agentName}" has been registered.`
-              : "Manually register an agent with a public key"
+              ? `Your agent "${successData.agentName}" has been created as unclaimed. Claim it with your wallet signature.`
+              : "Create an unclaimed agent that you can claim later with wallet signature"
             }
           </DialogDescription>
         </DialogHeader>
@@ -253,20 +159,34 @@ export function CreateAgentDialog({
                 <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-foreground mb-2">
-                    Dispute URL
+                    Wallet Address
+                  </p>
+                  <code className="text-xs font-mono bg-background border border-border rounded px-3 py-2 block mb-3 break-all">
+                    {successData.walletAddress}
+                  </code>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Key className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground mb-2">
+                    Claim Message
                   </p>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Share this URL with buyers so they can file disputes against your agent:
+                    Sign this message with your wallet to claim ownership:
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs font-mono break-all">
-                      {successData.disputeUrl}
+                      {successData.claimMessage}
                     </code>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={handleCopyDisputeUrl}
+                      onClick={handleCopyClaimMessage}
                       className="flex-shrink-0"
                     >
                       {copied ? (
@@ -282,6 +202,23 @@ export function CreateAgentDialog({
                       )}
                     </Button>
                   </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground mb-2">
+                    Next Steps
+                  </p>
+                  <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>Connect your wallet (must match the wallet address above)</li>
+                    <li>Sign the claim message using your wallet</li>
+                    <li>Submit the signature to claim the agent</li>
+                    <li>Visit the Unclaimed Agents page to complete the claim process</li>
+                  </ol>
                 </div>
               </div>
             </div>
@@ -336,71 +273,6 @@ export function CreateAgentDialog({
               )}
             </div>
             
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="publicKey">
-                  Public Key (Ed25519) <span className="text-destructive">*</span>
-                </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={generateKeyPair}
-                  disabled={isGeneratingKey || isSubmitting}
-                >
-                  {isGeneratingKey ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Key className="h-3 w-3 mr-1" />
-                      Generate Key Pair
-                    </>
-                  )}
-                </Button>
-              </div>
-              <Textarea
-                id="publicKey"
-                placeholder="Enter your agent's Ed25519 public key or generate one"
-                value={publicKey}
-                onChange={(e) => setPublicKey(e.target.value)}
-                disabled={isSubmitting}
-                rows={4}
-                className="font-mono text-xs"
-              />
-              {generatedKeyPair && (
-                <div className="bg-accent border border-border rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-foreground">
-                        Save Your Private Key!
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Download and store your private key securely. You&apos;ll need it for agent authentication.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={downloadPrivateKey}
-                        className="mt-2"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download Private Key
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {!generatedKeyPair && (
-                <p className="text-xs text-muted-foreground">
-                  Paste your agent&apos;s public key or generate a new key pair above
-                </p>
-              )}
-            </div>
               
             <div className="space-y-2">
               <Label htmlFor="functionalType">
@@ -431,11 +303,11 @@ export function CreateAgentDialog({
           <div className="flex gap-3 pt-2">
             <Button 
               onClick={handleManualRegister}
-              disabled={isSubmitting || !publicKey.trim() || !walletAddress.trim() || !isValidEthereumAddress(walletAddress)}
+              disabled={isSubmitting || !walletAddress.trim() || !isValidEthereumAddress(walletAddress)}
               className="flex-1"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Register Agent
+              Create Agent
             </Button>
             <Button 
               variant="outline"

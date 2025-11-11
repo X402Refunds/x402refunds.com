@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { convexTest } from 'convex-test';
 import { api } from '../convex/_generated/api';
 import schema from '../convex/schema';
+import { privateKeyToAccount } from 'viem/accounts';
 
 describe('X-402 Agent Functions', () => {
   let t: ReturnType<typeof convexTest>;
@@ -111,7 +112,10 @@ describe('X-402 Agent Functions', () => {
   });
 
   it('should claim agent with valid signature (mock)', async () => {
-    const walletAddress = '0xfedcbafedcbafedcbafedcbafedcbafedcbafed';
+    // Use a test private key to generate a valid signature
+    const testPrivateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+    const testAccount = privateKeyToAccount(testPrivateKey as `0x${string}`);
+    const walletAddress = testAccount.address;
     
     // Create unclaimed agent
     await t.mutation(api.agents.createUnclaimedAgent, {
@@ -136,11 +140,15 @@ describe('X-402 Agent Functions', () => {
       });
     });
 
-    // Claim agent (signature verification is TODO)
+    // Generate valid signature
+    const message = `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`;
+    const signature = await testAccount.signMessage({ message });
+
+    // Claim agent with valid signature
     const result = await t.mutation(api.agents.claimAgent, {
       walletAddress,
-      signature: '0xmock-signature',
-      message: `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`,
+      signature,
+      message,
       organizationId: orgId,
       userId,
     });
@@ -157,7 +165,10 @@ describe('X-402 Agent Functions', () => {
   });
 
   it('should reject claiming already claimed agent', async () => {
-    const walletAddress = '0x1111111111111111111111111111111111111111';
+    // Use a test private key to generate a valid signature
+    const testPrivateKey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
+    const testAccount = privateKeyToAccount(testPrivateKey as `0x${string}`);
+    const walletAddress = testAccount.address;
     
     // Create and claim agent
     await t.mutation(api.agents.createUnclaimedAgent, { walletAddress });
@@ -179,10 +190,15 @@ describe('X-402 Agent Functions', () => {
       });
     });
 
+    // Generate valid signature for first claim
+    const message = `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`;
+    const signature = await testAccount.signMessage({ message });
+
+    // First claim should succeed
     await t.mutation(api.agents.claimAgent, {
       walletAddress,
-      signature: '0xmock',
-      message: `I claim agent ${walletAddress} on x402disputes.com`,
+      signature,
+      message,
       organizationId: orgId,
       userId,
     });

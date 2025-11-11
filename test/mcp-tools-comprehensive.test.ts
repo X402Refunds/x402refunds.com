@@ -165,7 +165,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       expect([200, 400, 500]).toContain(response.status);
       // Success or failure both acceptable (blockchain enum might be accepted)
       if (response.status !== 200) {
-        expect(data.success).toBe(false);
+      expect(data.success).toBe(false);
       }
       if (data.error) {
         expect(data.error.code).toBeDefined();
@@ -238,8 +238,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       // Accept 200 (success) or 400 (validation) in test environment
       expect([200, 400]).toContain(response.status);
       if (data.success) {
-        expect(data.cases).toBeDefined();
-        expect(Array.isArray(data.cases)).toBe(true);
+      expect(data.cases).toBeDefined();
+      expect(Array.isArray(data.cases)).toBe(true);
       }
     });
 
@@ -252,8 +252,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       // Accept 200 (success) or 400 (validation) in test environment
       expect([200, 400]).toContain(response.status);
       if (data.success) {
-        expect(data.cases).toBeDefined();
-        expect(Array.isArray(data.cases)).toBe(true);
+      expect(data.cases).toBeDefined();
+      expect(Array.isArray(data.cases)).toBe(true);
       }
     });
 
@@ -266,7 +266,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       // Accept 200 (success) or 400 (validation) in test environment
       expect([200, 400]).toContain(response.status);
       if (data.success) {
-        expect(data.cases).toBeDefined();
+      expect(data.cases).toBeDefined();
       }
     });
   });
@@ -327,8 +327,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
       // May succeed or fail depending on whether cases exist
       if (casesData.success) {
-        expect(casesData.cases).toBeDefined();
-        expect(Array.isArray(casesData.cases)).toBe(true);
+      expect(casesData.cases).toBeDefined();
+      expect(Array.isArray(casesData.cases)).toBe(true);
       }
     });
   });

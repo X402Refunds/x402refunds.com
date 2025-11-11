@@ -1,253 +1,49 @@
 ---
-title: "Add Dispute Resolution to Your Agent (30 seconds)"
-description: "Enable cryptographic dispute filing for agents already transacting"
+title: "x402Disputes API"
+description: "Dispute resolution for AI agent transactions"
 ---
 
-<Note>
-**For agents already configured** - Add signed evidence and automatic dispute filing to your existing A2A transactions
-</Note>
+## Getting Started
 
-## You Have: Agent Making Transactions
-## You Get: Automatic Dispute Resolution
-
----
-
-## Step 1: Register Your Agent (10 seconds)
-
-**Call once per agent:**
+### Step 1: Register Your Agent (One Time)
 
 ```bash
 curl -X POST https://api.x402disputes.com/agents/register \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Your Agent Name",
-    "publicKey": "YOUR_ED25519_PUBLIC_KEY_BASE64",
-    "organizationName": "Your Company",
-    "functionalType": "api",
-    "openApiSpec": { YOUR_API_SPEC }
+    "name": "My Agent",
+    "organizationName": "My Company"
   }'
 ```
 
-**Save the response**:
+### Step 2: File Disputes
+
+```bash
+curl -X POST https://api.x402disputes.com/api/disputes/payment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "transactionId": "txn_123",
+    "amount": 0.25,
+    "currency": "USD",
+    "plaintiff": "consumer:alice@example.com",
+    "defendant": "merchant:api-provider.com",
+    "disputeReason": "api_timeout",
+    "description": "API request timed out after 30s"
+  }'
+```
+
+**Response:**
 ```json
 {
-  "did": "did:agent:your-company-123",
-  "disputeUrl": "https://api.x402disputes.com/disputes/claim?vendor=did:agent:your-company-123"
+  "success": true,
+  "caseId": "k123...",
+  "status": "received",
+  "estimatedResolutionTime": "24 hours"
 }
 ```
 
----
+## That's It
 
-## Step 2: What Sellers Need to Do (Signed Evidence)
-
-### The Technical Implementation
-
-**It's actually quite simple** - sellers sign ONE thing and send TWO headers:
-
-```javascript
-// STEP 1: Build the canonical payload (EXACT format)
-const payload = JSON.stringify({
-  request: {
-    method: "POST",
-    path: "/v1/chat/completions",
-    headers: {...},
-    body: {...}
-  },
-  response: {
-    status: 500,  // Or 200, whatever they returned
-    body: "Internal Server Error"  // Their actual response
-  },
-  amountUsd: 0.05,
-  x402paymentDetails: {
-    currency: "USDC",
-    blockchain: "base",
-    transactionHash: "0x123...",
-    fromAddress: "0xBuyer...",
-    toAddress: "0xSeller...",
-    timestamp: "2025-11-07T15:30:00Z"  // Optional
-  }
-});
-
-// STEP 2: Sign it with Ed25519 (standard crypto library)
-const signature = ed25519.sign(payload, privateKey);
-
-// STEP 3: Return BOTH payload and signature in headers
-response.headers.set('X-Payload', base64Encode(payload));      // ← The exact string that was signed
-response.headers.set('X-Signature', base64Encode(signature));  // ← The signature proving it
-response.headers.set('X-Dispute-URL', disputeUrl);
-```
-
-**Why send the payload?** Prevents JSON formatting mismatches. Buyer forwards the EXACT string seller signed - no reconstruction needed, tamper-proof.
-
----
-
-## Step 3: Canonical Payload Format
-
-**Sellers must use this EXACT format** when building the payload to sign:
-
-```javascript
-const payload = JSON.stringify({
-  request: {
-    method: string,        // "POST", "GET", etc.
-    path: string,          // "/v1/chat/completions"
-    headers: object,       // Request headers (optional)
-    body: object           // Request body (optional)
-  },
-  response: {
-    status: number,        // 200, 500, 503, etc.
-    body: string           // Response body as string
-  },
-  amountUsd: number,       // Transaction amount in USD
-  x402paymentDetails: {
-    // REQUIRED FIELDS:
-    currency: string,           // "USDC", "ETH", "SOL", etc.
-    blockchain: string,         // "base", "ethereum", "solana", etc.
-    transactionHash: string,    // Blockchain tx hash (proof of payment)
-    fromAddress: string,        // Buyer's wallet address
-    toAddress: string,          // Seller's wallet address
-    
-    // OPTIONAL FIELDS:
-    timestamp: string,          // ISO 8601 format
-    blockNumber: number,        // Block number
-    contractAddress: string,    // Token contract address
-    layer: string,              // "L1" or "L2"
-    explorerUrl: string         // Blockchain explorer URL
-  }
-});
-
-// Use JSON.stringify with NO formatting (compact, no spaces)
-// Field order MUST match above for deterministic signatures
-```
-
-**Why this matters:** Buyer will forward your EXACT payload string to Consulate. Any formatting differences will break signature verification.
-
----
-
-## Step 4: Buyer Agent Auto-Files Disputes
-
-**Buyer agent code** (ONE tool call):
-
-```javascript
-// After receiving seller's response
-const response = await fetch(sellerApiUrl, {...});
-
-// If bad output detected
-if (response.status >= 400 || detectBadOutput(response.body)) {
-  
-  // File dispute - Copy 3 headers from seller, that's it!
-  await consulate_file_dispute({
-    plaintiff: "wallet:0xBuyer123...",  // Buyer's wallet address
-    disputeUrl: response.headers.get('X-Dispute-URL'),
-    description: "API returned 500 error but charged me",
-    evidencePayload: response.headers.get('X-Payload'),      // ← Exact signed string
-    signature: response.headers.get('X-Signature')           // ← Signature proving it
-  });
-}
-```
-
-**That's it!** Buyer just copies 3 header values. No reconstruction, no tampering possible.
-
----
-
-## Multi-Chain Examples
-
-<AccordionGroup>
-  <Accordion title="USDC on Base (Ethereum L2)" icon="ethereum">
-```json
-"crypto": {
-  "currency": "USDC",
-  "blockchain": "base",
-  "layer": "L2",
-  "transactionHash": "0x1234567890abcdef...",
-  "contractAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  "explorerUrl": "https://basescan.org/tx/0x1234..."
-}
-```
-  </Accordion>
-
-  <Accordion title="USDC on Solana" icon="coins">
-```json
-"crypto": {
-  "currency": "USDC",
-  "blockchain": "solana",
-  "layer": "L1",
-  "transactionHash": "5J4KR9pqYbZ2zVz8jKmXt...",
-  "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-  "explorerUrl": "https://solscan.io/tx/5J4KR9pq..."
-}
-```
-  </Accordion>
-
-  <Accordion title="Stripe/Traditional Payment" icon="credit-card">
-```json
-"traditional": {
-  "paymentMethod": "stripe",
-  "processor": "stripe",
-  "processorTransactionId": "ch_1234567890abcdef",
-  "cardBrand": "visa",
-  "lastFourDigits": "4242"
-}
-```
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Pricing
-
-**Flat fee: $0.05 per dispute** (all disputes, no tiers)
-
-Oracle network verification. < 24 hours resolution. On-chain reputation.
-
----
-
-## Why This Works (Non-Repudiation)
-
-<CardGroup cols={2}>
-  <Card title="Seller Signs Bad Output" icon="pen-nib">
-    Can't deny delivering 500 error - they signed it!
-  </Card>
-  
-  <Card title="Dispute URL in Signature" icon="link">
-    Seller commits to providing recourse mechanism
-  </Card>
-  
-  <Card title="Request + Response Signed" icon="file-signature">
-    Clear record of what was asked vs delivered
-  </Card>
-  
-  <Card title="OpenAPI Contract" icon="file-contract">
-    AI validates response against seller's spec
-  </Card>
-</CardGroup>
-
----
-
-## MCP Discovery (Auto-Updated Schemas)
-
-**Your agent discovers tools via**:
-```bash
-GET https://api.x402disputes.com/.well-known/mcp.json
-```
-
-**Available tools**:
-- `consulate_file_dispute` - File with signed evidence or disputeUrl
-- `consulate_check_case_status` - Track resolution
-- `consulate_register_agent` - One-time registration
-- `consulate_submit_evidence` - Add evidence after filing
-
-**Schemas auto-update** - When we add features, your agent gets them automatically.
-
----
-
-## Support
-
-<Card title="Questions?" icon="question">
-  **Email**: support@x402disputes.com  
-  **Dashboard**: [x402disputes.com](https://x402disputes.com)  
-  **Response time**: < 1 hour during business hours
-</Card>
-
----
-
-**That's it!** Register once, add 3 lines to responses, buyer agents auto-file disputes.
+**Pricing**: $0.05 per dispute  
+**Support**: support@x402disputes.com  
+**Dashboard**: [x402disputes.com](https://x402disputes.com)

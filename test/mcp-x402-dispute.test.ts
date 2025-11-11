@@ -90,10 +90,10 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     expect(data.success).toBe(false);
     expect(['INVALID_PLAINTIFF_ADDRESS', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
     if (data.error.field) {
-      expect(data.error.field).toBe('plaintiff');
+    expect(data.error.field).toBe('plaintiff');
     }
     if (data.error.suggestion) {
-      expect(data.error.suggestion).toContain('Ethereum');
+    expect(data.error.suggestion).toContain('Ethereum');
     }
     
     console.log("✅ Address validation works:", data.error.message);

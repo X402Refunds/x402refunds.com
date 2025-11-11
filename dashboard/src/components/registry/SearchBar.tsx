@@ -19,6 +19,11 @@ export function SearchBar({ onSearchChange, onFilterChange, currentFilter }: Sea
     onSearchChange(value)
   }
 
+  const clearSearch = () => {
+    setSearchValue("")
+    onSearchChange("")
+  }
+
   return (
     <div className="space-y-4 mb-6">
       {/* Search Input */}
@@ -29,8 +34,16 @@ export function SearchBar({ onSearchChange, onFilterChange, currentFilter }: Sea
           placeholder="Search case ID, wallet address, or merchant..."
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10 h-12 text-base border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
+          className="pl-10 pr-10 h-12 text-base border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
         />
+        {searchValue && (
+          <button
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Filter Tabs */}

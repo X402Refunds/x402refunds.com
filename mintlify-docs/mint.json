@@ -1,21 +1,16 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "x402Disputes",
-  "description": "Fast, automated dispute resolution when AI services break their promises",
   "logo": {
-    "light": "/consulate-logo-square.svg",
-    "dark": "/consulate-logo-square.svg",
+    "light": "/consulate-icon-simple.svg",
+    "dark": "/consulate-icon-simple.svg",
     "href": "https://x402disputes.com"
   },
   "favicon": "/consulate-icon-simple.png",
   "colors": {
-    "primary": "#3B82F6",
+    "primary": "#10b981",
     "light": "#F8FAFC",
-    "dark": "#0F172A",
-    "anchors": {
-      "from": "#3B82F6",
-      "to": "#1D4ED8"
-    }
+    "dark": "#0F172A"
   },
   "topbarLinks": [
     {
@@ -29,23 +24,16 @@
   },
   "navigation": [
     {
-      "group": "Getting Started",
+      "group": "API",
       "pages": [
         "index"
       ]
     }
   ],
   "footerSocials": {
-    "github": "https://github.com/vbkotecha/consulate",
-    "linkedin": "https://www.linkedin.com/company/consulatehq",
-    "x": "https://x.com/consulatehq"
+    "github": "https://github.com/vbkotecha/consulate"
   },
-  "theme": "quill",
   "api": {
     "baseUrl": "https://api.x402disputes.com"
-  },
-  "ignore": [
-    "**/*.xml"
-  ]
+  }
 }
-

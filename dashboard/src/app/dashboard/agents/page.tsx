@@ -8,8 +8,7 @@ import { useMutation, useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Users, Shield } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog"
 import { AgentList } from "@/components/dashboard/agent-list"
 import { motion } from "framer-motion"
@@ -76,7 +75,6 @@ export default function AgentsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Agents</h1>
             <p className="text-slate-600 mt-1">
               Manage your organization&apos;s AI agents
-              {organization && ` (${organization.name})`}
             </p>
           </div>
           <motion.div
@@ -95,109 +93,44 @@ export default function AgentsPage() {
           </motion.div>
         </motion.div>
         
-        {/* Info Card */}
+        {/* Agents List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="border-emerald-200 bg-emerald-50">
-            <CardHeader>
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-emerald-600 mt-0.5" />
-                <div>
-                  <CardTitle className="text-base text-emerald-900">Agent Management</CardTitle>
-                  <CardDescription className="text-emerald-700">
-                    Deploy and manage AI agents for your organization. Each agent can file disputes,
-                    respond to claims, and participate in arbitration proceedings.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
+          {orgAgents === undefined ? (
+            <motion.div 
+              className="text-center py-8 text-slate-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              Loading agents...
+            </motion.div>
+          ) : orgAgents.length === 0 ? (
+            <motion.div 
+              className="text-center py-12"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-600 mb-4">No agents yet</p>
+              <Button
+                onClick={() => setShowCreateDialog(true)}
+                className="bg-emerald-500 hover:bg-emerald-400 text-white"
+                disabled={!currentUser || !organization}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Agent
+              </Button>
+            </motion.div>
+          ) : (
+            <AgentList agents={orgAgents} />
+          )}
         </motion.div>
         
-        {/* Agents List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Agents</CardTitle>
-              <CardDescription>
-                {orgAgents === undefined
-                  ? "Loading..."
-                  : orgAgents.length === 0
-                  ? "No agents deployed yet. Create one to get started."
-                  : `You have ${orgAgents.length} agent${orgAgents.length !== 1 ? 's' : ''} deployed.`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {orgAgents === undefined ? (
-                <motion.div 
-                  className="text-center py-8 text-slate-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  Loading agents...
-                </motion.div>
-              ) : orgAgents.length === 0 ? (
-                <motion.div 
-                  className="text-center py-12"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-600 mb-4">No agents yet</p>
-                  <Button
-                    onClick={() => setShowCreateDialog(true)}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-white"
-                    disabled={!currentUser || !organization}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Agent
-                  </Button>
-                </motion.div>
-              ) : (
-                <AgentList agents={orgAgents} />
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        {/* Documentation Link */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Agent Integration</CardTitle>
-              <CardDescription>
-                Learn how to integrate your agents with x402Disputes&apos;s platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Button variant="outline" asChild>
-                  <a href="https://docs.x402disputes.com/agent-integration-guide" target="_blank" rel="noopener noreferrer">
-                    Integration Guide
-                  </a>
-                </Button>
-                <Button variant="outline" asChild>
-                  <a href="https://docs.x402disputes.com/api-overview" target="_blank" rel="noopener noreferrer">
-                    API Documentation
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
       </motion.div>
       
       {/* Create Agent Dialog */}

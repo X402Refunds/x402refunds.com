@@ -90,25 +90,59 @@ export function DisputeRow({
 
         {/* Parties */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              copyToClipboard(plaintiff || 'Unknown', 'plaintiff')
-            }}
-            className="text-sm font-mono text-slate-600 hover:text-slate-900 transition-colors truncate"
-          >
-            {formatAddress(plaintiff)}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/party/${encodeURIComponent(plaintiff || 'Unknown')}`)
+              }}
+              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              title="View all cases for this address"
+            >
+              {formatAddress(plaintiff)}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                copyToClipboard(plaintiff || 'Unknown', 'plaintiff')
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
+              title="Copy address"
+            >
+              {copiedField === 'plaintiff' ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
           <span className="text-slate-400">→</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              copyToClipboard(defendant || 'Unknown', 'defendant')
-            }}
-            className="text-sm font-mono text-slate-600 hover:text-slate-900 transition-colors truncate"
-          >
-            {formatAddress(defendant)}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/party/${encodeURIComponent(defendant || 'Unknown')}`)
+              }}
+              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              title="View all cases for this address"
+            >
+              {formatAddress(defendant)}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                copyToClipboard(defendant || 'Unknown', 'defendant')
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
+              title="Copy address"
+            >
+              {copiedField === 'defendant' ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Amount */}

@@ -57,13 +57,20 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
   if (filteredCases.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-500">No disputes found</p>
+        <p className="text-slate-500">
+          {searchQuery ? `No disputes found matching "${searchQuery}"` : 'No disputes found'}
+        </p>
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
+      {searchQuery && (
+        <div className="text-sm text-slate-600 mb-2">
+          Found {filteredCases.length} dispute{filteredCases.length === 1 ? '' : 's'} matching &ldquo;{searchQuery}&rdquo;
+        </div>
+      )}
       {filteredCases.map((case_: typeof cases[number]) => {
         try {
           return (
