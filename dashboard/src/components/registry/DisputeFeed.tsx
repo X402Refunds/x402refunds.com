@@ -27,22 +27,31 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
     )
   }
 
+  if (!cases || !Array.isArray(cases)) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Unable to load disputes. Please try again.</p>
+      </div>
+    )
+  }
+
   // Filter cases based on status
   let filteredCases = cases
   if (filter === 'pending') {
-    filteredCases = cases.filter((c: typeof cases[number]) => ['FILED', 'ANALYZED', 'IN_REVIEW'].includes(c.status))
+    filteredCases = cases.filter((c: typeof cases[number]) => c.status && ['FILED', 'ANALYZED', 'IN_REVIEW'].includes(c.status))
   } else if (filter === 'resolved') {
-    filteredCases = cases.filter((c: typeof cases[number]) => ['DECIDED', 'CLOSED'].includes(c.status))
+    filteredCases = cases.filter((c: typeof cases[number]) => c.status && ['DECIDED', 'CLOSED'].includes(c.status))
   }
 
   // Filter by search query if provided
   if (searchQuery) {
     const query = searchQuery.toLowerCase()
-    filteredCases = filteredCases.filter((c: typeof cases[number]) => 
-      c._id.toLowerCase().includes(query) ||
-      c.plaintiff?.toLowerCase().includes(query) ||
-      c.defendant?.toLowerCase().includes(query)
-    )
+    filteredCases = filteredCases.filter((c: typeof cases[number]) => {
+      const caseId = c._id?.toLowerCase() || ''
+      const plaintiff = c.plaintiff?.toLowerCase() || ''
+      const defendant = c.defendant?.toLowerCase() || ''
+      return caseId.includes(query) || plaintiff.includes(query) || defendant.includes(query)
+    })
   }
 
   if (filteredCases.length === 0) {
@@ -55,18 +64,25 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
 
   return (
     <div className="space-y-2">
-      {filteredCases.map((case_: typeof cases[number]) => (
-        <DisputeRow
-          key={case_._id}
-          caseId={case_._id}
-          plaintiff={case_.plaintiff ?? 'Unknown'}
-          defendant={case_.defendant ?? 'Unknown'}
-          amount={case_.amount}
-          currency={case_.currency}
-          status={case_.status ?? 'FILED'}
-          filedAt={case_.filedAt ?? Date.now()}
-        />
-      ))}
+      {filteredCases.map((case_: typeof cases[number]) => {
+        try {
+          return (
+            <DisputeRow
+              key={case_._id || `case-${Math.random()}`}
+              caseId={case_._id || 'unknown'}
+              plaintiff={case_.plaintiff ?? 'Unknown'}
+              defendant={case_.defendant ?? 'Unknown'}
+              amount={case_.amount}
+              currency={case_.currency}
+              status={case_.status ?? 'FILED'}
+              filedAt={case_.filedAt ?? Date.now()}
+            />
+          )
+        } catch (error) {
+          console.error('Error rendering dispute row:', error, case_)
+          return null
+        }
+      })}
       
       {filteredCases.length >= displayLimit && (
         <div className="flex justify-center pt-4">

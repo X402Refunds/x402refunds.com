@@ -29,6 +29,24 @@ export function ReputationSidebar() {
     )
   }
 
+  if (!topAgents || !Array.isArray(topAgents)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-600" />
+            Top Merchants
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-slate-500 py-4">
+            Unable to load reputation data
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="sticky top-4">
       <CardHeader>
