@@ -23,11 +23,19 @@ export const syncUser = mutation({
   },
   handler: async (ctx, args) => {
     // Get authentication - prefer verified identity, fall back to args for tests
-    const identity = await ctx.auth.getUserIdentity();
+    let identity;
+    try {
+      identity = await ctx.auth.getUserIdentity();
+    } catch (error) {
+      console.error("[syncUser] Auth error:", error);
+      // Fall back to args for test compatibility
+    }
+    
     const clerkUserId = identity?.subject || args.clerkUserId;
     
     if (!clerkUserId) {
-      throw new Error("Unauthenticated - must be signed in or provide clerkUserId");
+      console.error("[syncUser] No Clerk user ID found. Identity:", identity, "Args:", args);
+      throw new Error("Unauthenticated - must be signed in or provide clerkUserId. Check Convex auth.config.ts matches your Clerk domain.");
     }
     
     try {
