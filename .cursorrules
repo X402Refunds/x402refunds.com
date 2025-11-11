@@ -1,8 +1,8 @@
-# Claude Code Configuration for Consulate
+# Claude Code Configuration for x402disputes.com
 
-**Last Updated**: 2025-10-26
+**Last Updated**: 2025-11-11
 
-This document contains ALL rules, patterns, and operational procedures for working on the Consulate codebase with Claude Code.
+This document contains ALL rules, patterns, and operational procedures for working on the x402disputes.com codebase with Claude Code.
 
 ---
 
@@ -13,11 +13,11 @@ You are a senior full-stack software engineer with deep expertise in AI systems,
 ## 🏗️ Tech Stack
 
 ### Frontend
-- Next.js 14 with App Router (React Server Components)
-- React 18+ with TypeScript
+- Next.js 15 with App Router (React Server Components)
+- React 19 with TypeScript
 - Tailwind CSS for styling
 - shadcn/ui component library
-- Clerk authentication
+- Clerk authentication (for dashboard user management)
 - Vercel deployment and edge functions
 
 ### Backend
@@ -40,37 +40,55 @@ You are a senior full-stack software engineer with deep expertise in AI systems,
 - Serverless-first backend (Convex)
 - Type-safe API layer with Convex client
 - Real-time data synchronization
-- Multi-agent coordination systems
+- AI-powered dispute analysis with human review
 
-## Project: Consulate
+## Project: x402disputes.com
 
-Consulate is an automated AI vendor dispute resolution platform that provides binding arbitration for SLA breaches in AI services. You're working on a production system deployed at consulatehq.com with:
+x402disputes.com is a permissionless dispute registry and resolution platform for X-402 payments. You're working on a production system deployed at x402disputes.com with:
+
+**Dual-Sided Platform:**
+
+1. **Public Dispute Registry (Permissionless)**
+   - ANY agent can file disputes against ANY merchant (no permission needed)
+   - All disputes publicly recorded in the registry
+   - Refund data written on-chain
+   - Reputation scores tracked on-chain
+   - Transparent, public dispute records
+
+2. **Dispute Resolution Platform (For Merchant Customers)**
+   - Merchants become customers to manage disputes efficiently
+   - Platform provides dispute management dashboard
+   - AI analyzes disputes and makes recommendations  
+   - Merchants resolve by refunding users automatically through platform
+   - Platform handles refund execution and on-chain recording
+
+**Your customers = Merchants/agents who have disputes filed against them**
 
 **Core Features:**
-- Automated SLA breach detection and case filing
+- Permissionless dispute filing for X-402 payments
 - Evidence collection and validation systems
-- Multi-agent dispute resolution
-- AI-powered judge panel voting system
+- AI-powered dispute analysis with human review
+- Automated refund execution
+- On-chain reputation tracking
 - Real-time case status tracking
-- Enterprise API integration
 
 **Key Backend Files:**
 - `convex/agents.ts` - Agent registration and reputation
 - `convex/cases.ts` - Dispute case management
 - `convex/evidence.ts` - Evidence submission and validation
-- `convex/judges.ts` - Judge panel and voting logic
-- `convex/courtEngine.ts` - Automated arbitration workflow
+- `convex/paymentDisputes.ts` - Payment dispute handling (X-402)
 - `convex/http.ts` - HTTP API endpoints
+- `convex/llmEngine.ts` - AI analysis engine
 
 **Frontend Structure:**
-- `dashboard/src/app/` - Next.js 14 App Router pages
-- `dashboard/src/components/` - React components (31+ components)
+- `dashboard/src/app/` - Next.js 15 App Router pages
+- `dashboard/src/components/` - React components (65+ components)
 - Protected routes with Clerk authentication
 - Real-time updates via Convex subscriptions
 
 ## Your Objective
 
-Build reliable, type-safe, well-tested features that solve real enterprise problems with AI vendor accountability. Write production-quality code that passes all quality checks (lint, type-check, build) and follows established patterns.
+Build reliable, type-safe, well-tested features that solve real problems with payment dispute resolution for AI agents. Write production-quality code that passes all quality checks (lint, type-check, build) and follows established patterns.
 
 ## When to Reference Specific Rules
 
@@ -91,8 +109,8 @@ The `.cursor/rules/` directory contains detailed patterns for specific work type
 **Adding packages or restructuring** (package.json, monorepo)?
 → Read `package-architecture.mdc` for radical simplification patterns
 
-**Legal/compliance features** (SLA enforcement, rulings)?
-→ Read `compliance.mdc` for constitutional authority structures
+**Legal/compliance features** (dispute resolution, rulings)?
+→ Read `compliance.mdc` for authority structures
 
 **Need project structure info**?
 → `codebase-context.mdc` is auto-generated, always current (already loaded for you)
@@ -140,15 +158,14 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 - `agents.ts` - Agent registration and reputation
 - `cases.ts` - Dispute case management
 - `evidence.ts` - Evidence submission and validation
-- `judges.ts` - Judge panel and voting logic
-- `courtEngine.ts` - Automated arbitration workflow
-- `paymentDisputes.ts` - Payment dispute handling (ACP/ATXP)
+- `paymentDisputes.ts` - Payment dispute handling (X-402)
+- `llmEngine.ts` - AI analysis engine
 - `http.ts` - HTTP API endpoints
 - `schema.ts` - Database schema definitions
 
 **Frontend (`dashboard/src/`)**
-- `app/` - Next.js 14 App Router pages
-- `components/` - React components (31+ components)
+- `app/` - Next.js 15 App Router pages
+- `components/` - React components (65+ components)
 - Protected routes with Clerk authentication
 - Real-time updates via Convex subscriptions
 
@@ -166,10 +183,10 @@ Don't load all rules upfront. Load contextually when the work type demands it.
 **NEVER auto-deploy** unless user explicitly requests.
 
 - ❌ Don't run deployment commands automatically
-- ✅ Always deploy to **preview first**, then production after validation
+- ✅ Always deploy to **dev first**, then production after validation
 - ❌ Never run `pnpm exec convex deploy --yes` without user confirmation
 - ✅ After fixes: Run quality checks, commit to git, then STOP (don't deploy)
-- ✅ User says "deploy" → Ask "preview or production?"
+- ✅ User says "deploy" → Ask "dev or production?"
 
 ### 2. Testing Requirements (MANDATORY)
 **ALWAYS run tests BEFORE committing**. No exceptions.
@@ -231,7 +248,7 @@ The codebase context graph (`.cursor/rules/codebase-context.mdc`) is accurate.
 ### Essential Commands
 ```bash
 # Development
-pnpm dev                    # Start dev server (connects to preview by default)
+pnpm dev                    # Start dev server
 
 # Quality Checks (MANDATORY before commit)
 pnpm lint                   # Lint all code
@@ -241,9 +258,10 @@ pnpm test:run              # Run full test suite (400+ tests)
 pnpm update-context        # Update codebase context
 
 # Deployment
-pnpm exec convex deploy --yes                # Deploy to Convex (production)
-pnpm deploy:dev            # One-time dev build
-pnpm exec convex dev       # Watch mode with hot reload
+# NOTE: pnpm deploy currently fails due to .env.local having CONVEX_DEPLOYMENT=dev:youthful-orca-358
+# Use these instead:
+pnpm deploy:dev            # Deploy to dev (convex dev --once)
+pnpm exec convex deploy --yes  # Deploy to production (if properly configured)
 
 # Testing (uses .env.test.* files for environment config)
 pnpm test:run              # Full test suite (~400 tests) - uses default (PREVIEW)
@@ -257,27 +275,22 @@ pnpm check-logs            # View Convex deployment logs
 pnpm exec convex deployments  # Show current deployment info
 ```
 
-### Deployment Environments
+### Deployment Environment
 
-**Production Deployment: perceptive-lyrebird-89**
-- **Name**: `perceptive-lyrebird-89`
-- **Type**: Production (live traffic)
-- **Convex API**: `https://perceptive-lyrebird-89.convex.cloud` (for SDK)
-- **HTTP Routes**: `https://perceptive-lyrebird-89.convex.site` (for REST API)
-- **Production Domain**: `https://api.consulatehq.com` (CNAME to convex.site)
-- **Use For**: Real payment disputes, customer integrations, production data
-
-**Preview/Development Deployment: youthful-orca-358**
+**Current Deployment: youthful-orca-358**
 - **Name**: `youthful-orca-358`
-- **Type**: Development/Preview
+- **Type**: Development/Production (single deployment for both)
 - **Convex API**: `https://youthful-orca-358.convex.cloud` (for SDK)
 - **HTTP Routes**: `https://youthful-orca-358.convex.site` (for REST API)
-- **Use For**: Testing, development, CI/CD, smoke tests
+- **Production Domain**: `https://api.x402disputes.com` (CNAME to convex.site)
+- **Use For**: All traffic (development, testing, production)
 
 **Critical URL Distinction:**
 - `.convex.cloud` = Convex SDK connections (queries, mutations)
 - `.convex.site` = Public HTTP REST API endpoints
-- Custom domain (`api.consulatehq.com`) = CNAME to production `.convex.site`
+- Custom domain (`api.x402disputes.com`) = CNAME to production `.convex.site`
+
+**Note:** Currently using a single deployment for all environments. `.env.local` has `CONVEX_DEPLOYMENT=dev:youthful-orca-358` which causes `pnpm deploy` to fail. Use `pnpm deploy:dev` instead.
 
 ### Test Environment Configuration (Industry Standard)
 
@@ -297,7 +310,7 @@ pnpm exec convex deployments  # Show current deployment info
 - ✅ Clear separation of environments
 - ✅ Easy to understand which environment you're testing
 - ✅ Follows industry standard `.env.{environment}` pattern
-- ✅ No deployment-specific names in scripts (avoid "youthful-orca" confusion)
+- ✅ No deployment-specific names in scripts
 
 ---
 
@@ -397,9 +410,9 @@ test:     # Adding/updating tests
 - Safe for tests that modify data (write operations)
 
 **Production Testing (Explicit):**
-- `pnpm test:smoke:prod` → Tests against **PRODUCTION** (api.consulatehq.com)
+- `pnpm test:smoke:prod` → Tests against **PRODUCTION** (api.x402disputes.com)
 - **READ-ONLY tests only!** (health, version, discovery endpoints)
-- Uses dedicated script: `scripts/run-smoke-tests-prod.sh`
+- Uses dedicated script: `scripts/test-production.sh`
 
 **Custom Testing:**
 ```bash
@@ -407,7 +420,7 @@ test:     # Adding/updating tests
 API_BASE_URL=https://custom-url.convex.site pnpm test:run
 
 # Test against production (use with caution!)
-API_BASE_URL=https://api.consulatehq.com pnpm test:run
+API_BASE_URL=https://api.x402disputes.com pnpm test:run
 ```
 
 ### Test Type Categories
@@ -438,18 +451,18 @@ API_BASE_URL=https://api.consulatehq.com pnpm test:run
 # 1. Quality checks (ALWAYS run on PREVIEW by default)
 pnpm lint && pnpm type-check && pnpm build && pnpm test:run
 
-# 2. Backend changes - deploy to PREVIEW first
+# 2. Backend changes - deploy to DEV first
 pnpm deploy:dev
 pnpm test:smoke
 
 # 3. Update codebase context (MANDATORY before push)
 pnpm update-context
 
-# 4. If preview tests pass and context updated, then commit and push
+# 4. If dev tests pass and context updated, then commit and push
 git add . && git commit -m "..." && git push
 
-# 5. Deploy to production only after preview validation
-pnpm deploy
+# 5. Deploy to production only after dev validation
+pnpm exec convex deploy --yes  # Only if properly configured
 pnpm test:smoke:prod
 ```
 
@@ -477,7 +490,7 @@ pnpm test:smoke:prod
 - ✅ CI/CD pipelines
 - ✅ Before every commit
 
-**Use PRODUCTION (api.consulatehq.com) for:**
+**Use PRODUCTION (api.x402disputes.com) for:**
 - ✅ Final validation after deployment
 - ✅ Read-only smoke tests (health, version, discovery)
 - ✅ Verifying production configuration
@@ -508,35 +521,28 @@ pnpm test:smoke:prod
 
 ### For Deployment
 
-**IMPORTANT**: Always deploy to preview FIRST, validate, then deploy to production.
+**IMPORTANT**: Always deploy to dev FIRST, validate, then deploy to production.
 
-1. **Deploy to Preview/Dev (youthful-orca-358)** - ALWAYS DEPLOY HERE FIRST:
+1. **Deploy to Dev (youthful-orca-358)** - ALWAYS DEPLOY HERE FIRST:
    ```bash
-   # Deploy to preview/dev environment (uses CONVEX_DEPLOYMENT from .env.local)
-   pnpm exec convex dev --once --yes
-   # OR use the npm script:
+   # Deploy to dev environment (uses CONVEX_DEPLOYMENT from .env.local)
    pnpm deploy:dev
 
-   # Test preview deployment
+   # Test dev deployment
    pnpm test:smoke
-   # OR explicitly:
-   API_BASE_URL=https://youthful-orca-358.convex.site pnpm test:smoke:prod
    ```
 
-2. **Deploy to Production (perceptive-lyrebird-89)** - ONLY AFTER preview validation:
+2. **Deploy to Production** - ONLY AFTER dev validation:
    ```bash
-   # Deploy to production environment (default for convex deploy)
+   # Deploy to production environment
+   # NOTE: May require unsetting CONVEX_DEPLOYMENT first
    pnpm exec convex deploy --yes
-   # OR use the npm script:
-   pnpm deploy
 
    # Test production deployment
    pnpm test:smoke:prod
-   # OR explicitly:
-   API_BASE_URL=https://api.consulatehq.com pnpm test:smoke:prod
    ```
 
-   **CRITICAL**: `convex dev` deploys to dev/preview, `convex deploy` deploys to production!
+   **CRITICAL**: `convex dev` deploys to dev, `convex deploy` deploys to production!
 
 3. **Verify Deployment**:
    ```bash
@@ -547,39 +553,51 @@ pnpm test:smoke:prod
    pnpm check-logs
 
    # Test endpoints manually
-   curl https://api.consulatehq.com/.well-known/mcp.json
+   curl https://api.x402disputes.com/.well-known/mcp.json
    ```
 
 ---
 
-## 🏛️ Core Product: AI Vendor Dispute Resolution
+## 🏛️ Core Product: Dispute Registry & Resolution Service
 
-### Business Model: Infrastructure-as-a-Service
+### Business Model: Dual-Sided Platform
 
-**CRITICAL**: Consulate operates as INFRASTRUCTURE, not full-service arbitration.
+**CRITICAL**: x402disputes.com is BOTH a dispute registry AND resolution service.
 
-**What This Means:**
-- ✅ **Customer teams make all final decisions** on disputes
-- ✅ **Consulate provides 95% AI automation** + review queue UI
-- ✅ **Customer stays in control** - their domain expertise, their rules
-- ✅ **Zero judge costs for customers** - no Consulate judges involved
-- ✅ **Better margins** - pure software infrastructure model
-- ✅ **Full ADP compliance** - per https://github.com/consulatehq/agentic-dispute-protocol
+**Dual-Sided Platform:**
+
+1. **Public Dispute Registry (Permissionless)**
+   - ANY agent can file disputes against ANY merchant (no permission needed)
+   - All disputes publicly recorded in the registry
+   - Refund data written on-chain
+   - Reputation scores tracked on-chain
+   - Transparent, public dispute records
+
+2. **Dispute Resolution Platform (For Merchant Customers)**
+   - Merchants become customers to manage disputes efficiently
+   - Platform provides dispute management dashboard
+   - AI analyzes disputes and makes recommendations  
+   - Merchants resolve by refunding users automatically through platform
+   - Platform handles refund execution and on-chain recording
+
+**Your customers = Merchants/agents who have disputes filed against them**
+They use your platform to view, manage, and resolve disputes efficiently.
 
 ### What This System Does
-1. **Automated SLA breach detection** - Monitor agent performance
-2. **Evidence collection & validation** - Cryptographic proof chains
-3. **Case filing & arbitration** - 95% AI automation
-4. **Resolution enforcement** - Integration with payment protocols
-5. **Review Queue Management** - UI for customer teams to review edge cases
+1. **Permissionless dispute filing** - ANY agent can file against ANY merchant
+2. **Evidence collection & validation** - Transaction proofs, TLS logs (optional)
+3. **AI-powered analysis** - Analyzes disputes, provides recommendations
+4. **Human review interface** - Merchants review and make final decisions
+5. **Automated refund execution** - Platform handles refunds automatically
+6. **On-chain recording** - Disputes and resolutions written on-chain
 
 ### Payment Dispute Features
-- **Micro-disputes**: Transactions < $1 (auto-resolve in < 5 min)
-- **Tiered Pricing**: $0.10 (micro) to $25 (enterprise)
-- **Token-based**: 20k tokens included, $0.01/1k overage
+- **X-402 Protocol**: Native support for X-402 payment disputes
+- **Micro-disputes**: Transactions < $1 (fast resolution)
+- **Flat Pricing**: Simple, transparent fee structure
 - **Regulation E Compliant**: 10 business day resolution
-- **ACP/ATXP Integration**: Native payment protocol support
-- **95% Automation Rate**: AI handles most cases, 5% go to human review
+- **AI Analysis**: Provides recommendations to merchants
+- **Human Final Decision**: Merchants make ultimate call
 - **Learning System**: Improves from human judgments and precedents
 
 ### Verdict Types
@@ -593,7 +611,7 @@ pnpm test:smoke:prod
 - `PLAINTIFF_WINS` - Plaintiff's claim upheld
 - `DEFENDANT_WINS` - Defendant wins case
 - `SPLIT` - Partial award to plaintiff
-- `NEED_PANEL` - Escalate to judge panel
+- `NEED_PANEL` - Escalate to review panel
 
 ---
 
@@ -601,8 +619,8 @@ pnpm test:smoke:prod
 
 ### API Key Format
 ```
-csk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Production (perceptive-lyrebird-89)
-csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing (youthful-orca-358)
+csk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Production
+csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing
 ```
 
 ### Current Authentication Status
@@ -614,23 +632,22 @@ csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing (youthful-orca-358)
 
 **Public Endpoints (23 total):**
 - Discovery & Health: `/`, `/health`, `/version`, `/.well-known/*`
-- **Payment Disputes**: `POST /api/payment-disputes` (❌ PUBLIC - security concern)
+- **Payment Disputes**: `POST /api/disputes/payment` (❌ PUBLIC - security concern)
 - Evidence: `POST /evidence` (❌ PUBLIC - security concern)
 - Cases: `GET /cases/:caseId`, `POST /disputes`
 - Agents: `GET /agents/*`, `POST /agents/discover`, `POST /agents/capabilities`
-- Monitoring: `POST /sla/report`, `GET /sla/status/:agentDid` (deprecated)
 - MCP: `POST /mcp/invoke`
 - Webhooks: `POST /webhooks/register`, `GET /notifications/:agentDid`
 - Live: `GET /live/feed`
 
 **Recommended Security Improvements:**
-1. Add authentication to `POST /api/payment-disputes`
+1. Add authentication to `POST /api/disputes/payment`
 2. Add authentication to `POST /evidence`
 3. Verify party authorization before allowing actions
 4. Add rate limiting to all public endpoints
 
 ### How to Get API Key
-1. Create organization in Consulate dashboard
+1. Create organization in x402disputes.com dashboard
 2. Navigate to Settings → API Keys
 3. Generate new API key (starts with `csk_live_` for production)
 
@@ -638,6 +655,11 @@ csk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Testing (youthful-orca-358)
 ```bash
 Authorization: Bearer csk_live_your_key_here
 ```
+
+### Authentication Methods
+- **API Keys**: For merchant customers managing disputes
+- **Wallet Signatures**: For agents filing disputes (ERC-8004 identity, optional)
+- **Clerk Auth**: For dashboard user management
 
 ### Error Handling Order
 1. **Validate request body first** (returns 400)
@@ -648,70 +670,63 @@ This order provides better developer experience - users see validation errors be
 
 ---
 
-## 🔌 ACP/ATXP Payment Protocol Integration
+## 🔌 X-402 Payment Protocol Integration
 
-### What are ACP & ATXP?
-- **ACP** (Autonomous Commerce Protocol) - Payment protocol for AI agent transactions
-- **ATXP** (Autonomous Transaction Protocol) - Alternative payment protocol
-- Both require **Regulation E compliance** (dispute mechanisms for transactions)
+### What is X-402?
+- **X-402** - Payment protocol for AI agent transactions
+- Enables machine-to-machine payments
+- Requires dispute resolution mechanism (us!)
 
 ### Integration Pattern
-Payment platforms (ACP/ATXP) POST disputes to Consulate's unified dispute endpoint:
+AI agents or platforms POST disputes to x402disputes.com's unified dispute endpoint:
 
 ```javascript
-// Payment platform integration example
-const response = await fetch('https://api.consulatehq.com/api/disputes/payment', {
+// X-402 payment dispute filing example
+const response = await fetch('https://api.x402disputes.com/api/disputes/payment', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer csk_live_...'  // Customer's API key (org auto-detected)
+    'Authorization': 'Bearer csk_live_...'  // Optional: Merchant's API key
   },
   body: JSON.stringify({
     transactionId: 'txn_abc123',
-    transactionHash: '0x...',
-    amount: 0.25,  // Micro-transaction
+    transactionHash: '0x...',  // Optional: blockchain proof
+    amount: 0.25,
     currency: 'USD',
-    paymentProtocol: 'ACP',  // or 'ATXP'
-    plaintiff: 'consumer:alice@demo.com',  // Customer wallet
-    defendant: 'merchant:api-provider@demo.com',  // Service provider
-    disputeReason: 'api_timeout',  // One of: api_timeout, quality_issue, service_not_rendered, amount_incorrect, fraud
+    plaintiff: 'consumer:alice@demo.com',
+    defendant: 'merchant:api-provider@demo.com',
+    disputeReason: 'api_timeout',
     description: 'API request timed out after 30s',
-    evidenceUrls: [
+    evidenceUrls: [  // Optional
       'https://logs.platform.com/timeout.json'
     ],
-    callbackUrl: 'https://acp-protocol.com/webhooks/dispute-result'  // Optional
-    // NOTE: reviewerOrganizationId is AUTO-DETECTED from API key - no need to send!
+    callbackUrl: 'https://platform.com/webhooks/dispute-result'  // Optional
   })
 });
 
-// Response (within 5 minutes for micro-disputes):
+// Response (instant):
 {
   "success": true,
   "caseId": "k123...",
   "paymentDisputeId": "j098...",
-  "isMicroDispute": true,
-  "aiRecommendation": "CONSUMER_WINS",
-  "confidence": 0.97,
-  "needsHumanReview": false,
-  "estimatedResolutionTime": "< 5 minutes",
-  "fee": 0.10,
-  "pricingTier": "micro"
+  "status": "received",
+  "estimatedResolutionTime": "24 hours",
+  "fee": 0.10
 }
 ```
 
 ### Dispute Resolution Flow
 1. **Dispute Received** → Create case, validate evidence
-2. **AI Analysis** (< 1 min) → Constitutional AI reasoning, precedent matching
-3. **High Confidence?** (>95%) → Auto-resolve, notify parties
-4. **Low Confidence?** (<95%) → Add to review queue for customer team
-5. **Human Review** → Customer team makes final decision
-6. **Resolution** → Callback to payment protocol with verdict
+2. **AI Analysis** (< 1 min) → Analyze dispute, provide recommendation
+3. **Human Review** → Merchant reviews AI recommendation, makes final decision
+4. **Resolution** → Platform executes refund if approved, records on-chain
+5. **Callback** → Notify parties of resolution via callback URL
 
 ### Regulation E Compliance
-- **Initial Response**: < 5 minutes for micro-disputes
+- **Initial Response**: < 5 minutes (acknowledgment)
 - **Final Resolution**: Within 10 business days (Regulation E requirement)
-- **Evidence Submission**: Parties can submit evidence up to 7 days
-- **Appeal Process**: Not supported (binding arbitration)
+- **Evidence Submission**: Parties can submit evidence during review
+- **Human Review**: Required for all disputes (merchants make final call)
 
 ---
 
@@ -719,7 +734,7 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
 
 ### ❌ DON'T
 - Never commit without running tests
-- Never deploy without preview validation
+- Never deploy without dev validation
 - Never create .md files without explicit request
 - Never skip quality checks
 - Never assume tests are passing
@@ -729,11 +744,11 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
 
 ### ✅ DO
 - Always run tests before committing
-- Always validate on preview before production
+- Always validate on dev before production
 - Always use semantic commit messages
 - Always run quality checks
 - Always verify test results
-- Always deploy to preview first
+- Always deploy to dev first
 - Always use pnpm
 - Always use .env.example for templates
 
@@ -760,7 +775,7 @@ const response = await fetch('https://api.consulatehq.com/api/disputes/payment',
 - Database queries optimized with indexes
 - Real-time subscriptions for live updates
 - Efficient data pagination
-- Token usage monitoring
+- AI token usage monitoring
 
 ---
 
@@ -784,8 +799,21 @@ curl https://youthful-orca-358.convex.cloud/api/endpoint
 curl https://youthful-orca-358.convex.site/api/endpoint
 ```
 
+### "pnpm deploy fails"
+```bash
+# ISSUE: .env.local has CONVEX_DEPLOYMENT=dev:youthful-orca-358
+# This causes pnpm deploy (convex deploy) to fail
+
+# ✅ SOLUTION 1: Use deploy:dev instead
+pnpm deploy:dev
+
+# ✅ SOLUTION 2: Unset CONVEX_DEPLOYMENT then deploy
+unset CONVEX_DEPLOYMENT
+pnpm exec convex deploy --yes
+```
+
 ### "Tests failing but working locally"
-1. Check if deployed: `pnpm exec convex deploy --yes`
+1. Check if deployed: `pnpm deploy:dev`
 2. Verify correct URL: `.convex.site` for HTTP tests
 3. Check environment variables
 4. View logs: `pnpm check-logs`
@@ -812,8 +840,8 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 4. Run tests AFTER changes
 5. Fix ALL failures (not just the ones you caused)
 6. Commit only when everything passes
-7. Deploy to preview first
-8. Validate on preview
+7. Deploy to dev first
+8. Validate on dev
 9. Then deploy to production
 
 ---
@@ -839,7 +867,7 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 1. **Test first, always** - No exceptions
 2. **Own the entire codebase** - Fix what you find
 3. **Verify before assuming** - Investigate properly
-4. **Preview before production** - Always validate first
+4. **Dev before production** - Always validate first
 5. **Respect the workflow** - Rules exist for good reasons
 
 **When in doubt:**
@@ -851,7 +879,7 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 **Success metrics:**
 - All quality checks pass
 - All tests pass (or known failures documented)
-- Changes deployed to preview successfully
+- Changes deployed to dev successfully
 - Production deployment validated
 - User is happy with the result
 
@@ -863,12 +891,13 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 
 ## 📋 Quick Reference Tables
 
+**(Quick reference only - see detailed sections above for full context and explanations)**
+
 ### Deployment URLs Quick Reference
 
 | Environment | Purpose | Convex API | HTTP Routes | Custom Domain |
 |------------|---------|------------|-------------|---------------|
-| **Production** | Live traffic | `perceptive-lyrebird-89.convex.cloud` | `perceptive-lyrebird-89.convex.site` | `api.consulatehq.com` |
-| **Preview/Dev** | Testing | `youthful-orca-358.convex.cloud` | `youthful-orca-358.convex.site` | - |
+| **Production** | Live traffic | `youthful-orca-358.convex.cloud` | `youthful-orca-358.convex.site` | `api.x402disputes.com` |
 
 ### Command Quick Reference
 
@@ -878,22 +907,20 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 | Type check | `pnpm type-check` | Must pass before commit |
 | Lint | `pnpm lint` | Must pass before commit |
 | Build | `pnpm build` | Must pass before commit |
-| **Deploy preview** | `pnpm deploy:dev` or `pnpm exec convex dev --once --yes` | **ALWAYS FIRST** |
-| **Deploy production** | `pnpm deploy` or `pnpm exec convex deploy --yes` | **ONLY after preview** |
-| Test preview | `pnpm test:smoke` | Before production |
+| **Deploy dev** | `pnpm deploy:dev` | **ALWAYS FIRST** |
+| **Deploy production** | `pnpm exec convex deploy --yes` | **ONLY after dev** |
+| Test dev | `pnpm test:smoke` | Before production |
 | Test production | `pnpm test:smoke:prod` | After deployment |
 | View logs | `pnpm check-logs` | Monitor deployment |
 
 ### API Endpoints Quick Reference
 
-**New Unified Dispute Endpoints:**
+**X-402 Dispute Endpoints:**
 
 | Endpoint | Method | Auth Required | Purpose |
 |----------|--------|---------------|---------|
-| `/api/disputes/payment` | POST | ✅ Yes | File payment dispute (ACP/ATXP) |
-| `/api/disputes/agent` | POST | ✅ Yes | File agent dispute (SLA/contract) |
-| `/api/disputes/payment/stats` | GET | No | Get payment dispute statistics |
-| `/api/disputes/payment/review-queue` | GET | No | Get disputes needing review |
+| `/api/disputes/payment` | POST | No (but recommended) | File X-402 payment dispute |
+| `/cases/:caseId` | GET | No | Get dispute status |
 
 **Other Core Endpoints:**
 
@@ -902,24 +929,8 @@ curl https://youthful-orca-358.convex.site/api/endpoint
 | `/.well-known/mcp.json` | GET | No | MCP tool discovery |
 | `/.well-known/adp` | GET | No | ADP service discovery |
 | `/agents/register` | POST | ✅ Yes | Register agent |
-| `/evidence` | POST | ✅ Yes | Submit evidence |
+| `/evidence` | POST | No (security concern) | Submit evidence |
 | `/health` | GET | No | Health check |
-| `/cases/:caseId` | GET | No | Get case status |
-
-**Future Dispute Types (Coming Soon):**
-- `/api/disputes/contract` - Contract breach disputes
-- `/api/disputes/ip` - Intellectual property disputes
-- `/api/disputes/employment` - Employment disputes
-
-### Pricing Tiers Quick Reference
-
-| Tier | Transaction Amount | Fee | Token Limit | Overage Cost |
-|------|-------------------|-----|-------------|--------------|
-| Micro | < $1 | $0.10 | 20k | $0.01/1k |
-| Small | $1 - $10 | $0.25 | 20k | $0.01/1k |
-| Medium | $10 - $100 | $1.00 | 20k | $0.01/1k |
-| Large | $100 - $1k | $5.00 | 20k | $0.01/1k |
-| Enterprise | > $1k | $25.00 | 20k | $0.01/1k |
 
 ### Verdict Types Quick Reference
 
@@ -957,56 +968,17 @@ Before committing ANY code, verify:
 - [ ] `pnpm lint` passes
 - [ ] `pnpm type-check` passes
 - [ ] `pnpm build` passes
-- [ ] `pnpm test:run` passes, even if the failing tests are unrelated to your changes.
+- [ ] `pnpm test:run` passes, even if the failing tests are unrelated to your changes
 - [ ] `pnpm update-context` has been run (MANDATORY before push)
 - [ ] Changes are committed with semantic commit message
-- [ ] Commit message includes: description
+- [ ] Commit message includes description
 
 Before deploying to production, verify:
-- [ ] Deployed to preview first
-- [ ] Preview tests passing
-- [ ] Preview endpoints manually tested
-- [ ] No errors in preview logs
+- [ ] Deployed to dev first
+- [ ] Dev tests passing
+- [ ] Dev endpoints manually tested
+- [ ] No errors in dev logs
 - [ ] User approved production deployment
-
----
-
-# Consulate Development Rules
-
-## 🍺 PNPM Setup
-**macOS**: Use Homebrew-installed pnpm (`brew install pnpm`)
-- Verify: `which pnpm` → `/opt/homebrew/bin/pnpm`
-- Use `pnpm dlx` instead of `npx`
-
----
-
-## 🏗️ Architecture (Current)
-
-### File Locations
-- **Backend**: `convex/` - Serverless functions (Convex)
-- **Frontend**: `dashboard/src/` - Next.js App Router (Vercel)
-- **Tests**: `test/` - Vitest test files
-- **Scripts**: `scripts/` - Automation utilities
-- **Config**: Root - `package.json`, `tsconfig.json`, `vitest.config.ts`
-
-### Commands
-- **Dev**: `pnpm dev` - Start development server (connects to preview by default)
-- **Build**: `pnpm build` - Build all packages
-- **Test**: `pnpm test:run` - Run full test suite
-- **Smoke Test**: `pnpm test:smoke` - Run quick smoke tests
-- **Quality**: `pnpm lint && pnpm type-check && pnpm build && pnpm test:run && pnpm update-context`
-
-### Deployment Commands
-- **Preview**: `pnpm deploy:preview` - Deploy to preview environment (safe for testing)
-- **Production**: `pnpm deploy:prod` - Deploy to production (requires explicit approval)
-- **Logs (Preview)**: `pnpm check-logs:preview` - View preview deployment logs
-- **Logs (Production)**: `pnpm check-logs` - View production deployment logs
-
-**Environments**:
-- **Preview** (`youthful-orca-358.convex.cloud`) - For development/testing, runs smoke tests in CI
-- **Production** (`api.consulatehq.com`) - Live production, runs full test suite before deploy
-
-See `internal/operations/convex-deployment-environments.md` for complete deployment guide.
 
 ---
 
@@ -1042,12 +1014,12 @@ Before implementing ANY solution:
 
 ### Timestamp Storage
 - **Location**: `docs/standards/.timestamps/`
-- **Format**: RFC 3161 .tsr files named `consulate-arbitration-rules-v{version}.tsr`
+- **Format**: RFC 3161 .tsr files named `x402disputes-arbitration-rules-v{version}.tsr`
 - **Purpose**: Cryptographic proof of document existence at specific time
 - **Auto-generated**: Pre-commit hook creates hash + timestamp before every commit
 
 ### Version Management
-- **Filename pattern**: `consulate-arbitration-rules-v{major}.{minor}.md`
+- **Filename pattern**: `x402disputes-arbitration-rules-v{major}.{minor}.md`
 - **Create new version**: Run `pnpm version-rules` (prompts for version type)
   - Major (v2.0) - Breaking changes
   - Minor (v1.1) - New features, backward compatible
@@ -1078,4 +1050,4 @@ Before implementing ANY solution:
 
 **End of Configuration**
 
-This document is the single source of truth for Claude Code when working on Consulate. Refer back to it frequently. Update it when you discover new patterns or rules.
+This document is the single source of truth for Claude Code when working on x402disputes.com. Refer back to it frequently. Update it when you discover new patterns or rules.
