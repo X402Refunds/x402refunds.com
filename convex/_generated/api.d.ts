@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as agents from "../agents.js";
 import type * as agents_damageAgent from "../agents/damageAgent.js";
 import type * as agents_evidenceAgent from "../agents/evidenceAgent.js";
 import type * as agents_index from "../agents/index.js";
@@ -16,7 +17,6 @@ import type * as agents_researchAgent from "../agents/researchAgent.js";
 import type * as agents_signatureAgent from "../agents/signatureAgent.js";
 import type * as agents_specValidatorAgent from "../agents/specValidatorAgent.js";
 import type * as agents_supportAgent from "../agents/supportAgent.js";
-import type * as agents from "../agents.js";
 import type * as auth from "../auth.js";
 import type * as cases from "../cases.js";
 import type * as cleanup from "../cleanup.js";
@@ -26,9 +26,9 @@ import type * as custody from "../custody.js";
 import type * as disputeEngine from "../disputeEngine.js";
 import type * as disputePricing from "../disputePricing.js";
 import type * as events from "../events.js";
+import type * as evidence from "../evidence.js";
 import type * as evidence_cleanup from "../evidence/cleanup.js";
 import type * as evidence_webFetcher from "../evidence/webFetcher.js";
-import type * as evidence from "../evidence.js";
 import type * as http from "../http.js";
 import type * as judges from "../judges.js";
 import type * as lib_blockchain from "../lib/blockchain.js";
@@ -50,15 +50,8 @@ import type {
   FunctionReference,
 } from "convex/server";
 
-/**
- * A utility for referencing Convex functions in your app's API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 declare const fullApi: ApiFromModules<{
+  agents: typeof agents;
   "agents/damageAgent": typeof agents_damageAgent;
   "agents/evidenceAgent": typeof agents_evidenceAgent;
   "agents/index": typeof agents_index;
@@ -67,7 +60,6 @@ declare const fullApi: ApiFromModules<{
   "agents/signatureAgent": typeof agents_signatureAgent;
   "agents/specValidatorAgent": typeof agents_specValidatorAgent;
   "agents/supportAgent": typeof agents_supportAgent;
-  agents: typeof agents;
   auth: typeof auth;
   cases: typeof cases;
   cleanup: typeof cleanup;
@@ -77,9 +69,9 @@ declare const fullApi: ApiFromModules<{
   disputeEngine: typeof disputeEngine;
   disputePricing: typeof disputePricing;
   events: typeof events;
+  evidence: typeof evidence;
   "evidence/cleanup": typeof evidence_cleanup;
   "evidence/webFetcher": typeof evidence_webFetcher;
-  evidence: typeof evidence;
   http: typeof http;
   judges: typeof judges;
   "lib/blockchain": typeof lib_blockchain;
@@ -95,14 +87,30 @@ declare const fullApi: ApiFromModules<{
   workflows: typeof workflows;
   workpools: typeof workpools;
 }>;
-declare const fullApiWithMounts: typeof fullApi;
 
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 export declare const api: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "internal">
 >;
 
@@ -857,12 +865,6 @@ export declare const components: {
         },
         null
       >;
-      getMessageSearchFields: FunctionReference<
-        "query",
-        "internal",
-        { messageId: string },
-        { embedding?: Array<number>; embeddingModel?: string; text?: string }
-      >;
       getMessagesByIds: FunctionReference<
         "query",
         "internal",
@@ -1129,6 +1131,12 @@ export declare const components: {
             | { message: string; type: "other" }
           >;
         }>
+      >;
+      getMessageSearchFields: FunctionReference<
+        "query",
+        "internal",
+        { messageId: string },
+        { embedding?: Array<number>; embeddingModel?: string; text?: string }
       >;
       listMessagesByThreadId: FunctionReference<
         "query",
