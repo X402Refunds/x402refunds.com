@@ -21,7 +21,16 @@ export default function ConvexClientProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const auth = useAuth();
+  // Create a custom useAuth that ensures token is fetched with template
+  const clerkAuth = useAuth();
+  
+  const auth = {
+    ...clerkAuth,
+    getToken: async () => {
+      if (!clerkAuth.isSignedIn) return null;
+      return await clerkAuth.getToken({ template: "convex" });
+    },
+  };
   
   // Debug: Log token retrieval for troubleshooting
   useEffect(() => {
@@ -48,8 +57,14 @@ export default function ConvexClientProvider({
     return <div>Loading...</div>;
   }
 
+  // Return a custom useAuth function that ensures template is used
+  const useAuthWithTemplate = () => auth;
+
   return (
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+    <ConvexProviderWithClerk 
+      client={convex} 
+      useAuth={useAuthWithTemplate}
+    >
       {children}
     </ConvexProviderWithClerk>
   );
