@@ -317,13 +317,13 @@ export const getCasesByStatus = query({
 });
 
 export const getCasesByParty = query({
-  args: { agentDid: v.string() },
+  args: { party: v.string() },
   handler: async (ctx, args) => {
     // Check plaintiff/defendant fields
     const allCases = await ctx.db.query("cases").collect();
     return allCases.filter(case_ =>
-      case_.plaintiff === args.agentDid ||
-      case_.defendant === args.agentDid
+      case_.plaintiff === args.party ||
+      case_.defendant === args.party
     );
   },
 });
