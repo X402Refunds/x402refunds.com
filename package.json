@@ -33,6 +33,7 @@
     "ai": "^5.0.87",
     "convex": "^1.28.2",
     "convex-test": "^0.0.38",
+    "viem": "~2.38.6",
     "zod": "^4.1.11"
   },
   "devDependencies": {

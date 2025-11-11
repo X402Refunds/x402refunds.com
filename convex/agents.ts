@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { recoverMessageAddress } from "viem";
 
 // Validate Ethereum address format (0x followed by 40 hex characters)
 function isValidEthereumAddress(address: string): boolean {
@@ -53,8 +54,8 @@ export const joinAgent = mutation({
       let normalizedWalletAddress: string | undefined = undefined;
       if (args.walletAddress) {
         normalizedWalletAddress = args.walletAddress.trim();
-        if (!isValidEthereumAddress(normalizedWalletAddress)) {
-          throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      if (!isValidEthereumAddress(normalizedWalletAddress)) {
+        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
         }
       }
 
@@ -913,11 +914,24 @@ export const claimAgent = mutation({
       throw new Error("Invalid claim message format. Expected: 'I claim agent 0x... on x402disputes.com'");
     }
     
-    // TODO: Verify signature using ecrecover or @noble/secp256k1
-    // For now, we trust the signature is valid (will implement crypto verification)
-    console.log(`🔐 Verifying signature for wallet ${walletAddress}...`);
-    console.log(`   Message: ${message}`);
-    console.log(`   Signature: ${signature.substring(0, 20)}...`);
+    // Verify Ethereum signature using viem's ecrecover
+    let recoveredAddress: string;
+    try {
+      recoveredAddress = await recoverMessageAddress({
+        message,
+        signature: signature as `0x${string}`,
+      });
+    } catch (error) {
+      throw new Error(`Signature verification failed: ${error instanceof Error ? error.message : 'Invalid signature format'}`);
+    }
+
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      throw new Error(
+        `Signature verification failed: Signature was signed by ${recoveredAddress}, but agent wallet is ${walletAddress}`
+      );
+    }
+
+    console.log(`✅ Signature verified: ${walletAddress} owns this wallet`);
     
     // Update agent to claimed/active
     await ctx.db.patch(agent._id, {

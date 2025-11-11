@@ -105,7 +105,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: https://www.google-analytics.com https://img.clerk.com",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://*.clerk.accounts.dev https://clerk.x402disputes.com wss://*.convex.cloud https://*.convex.cloud https://analytics.ahrefs.com https://pulse.walletconnect.org https://api.web3modal.org",
+              "connect-src 'self' https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://*.clerk.accounts.dev https://clerk.x402disputes.com wss://*.convex.cloud https://*.convex.cloud https://analytics.ahrefs.com https://pulse.walletconnect.org https://api.web3modal.org https://*.walletconnect.com https://*.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://*.coinbase.com https://rpc.walletconnect.org",
               "worker-src 'self' blob:",
               "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.x402disputes.com",
               "object-src 'none'",
