@@ -319,12 +319,20 @@ export const getCasesByStatus = query({
 export const getCasesByParty = query({
   args: { party: v.string() },
   handler: async (ctx, args) => {
-    // Check plaintiff/defendant fields
-    const allCases = await ctx.db.query("cases").collect();
-    return allCases.filter(case_ =>
-      case_.plaintiff === args.party ||
-      case_.defendant === args.party
-    );
+    // Query using indexes for performance (instead of loading all cases)
+    const asPlaintiff = await ctx.db
+      .query("cases")
+      .withIndex("by_plaintiff", (q) => q.eq("plaintiff", args.party))
+      .collect();
+    
+    const asDefendant = await ctx.db
+      .query("cases")
+      .withIndex("by_defendant", (q) => q.eq("defendant", args.party))
+      .collect();
+    
+    // Combine results and sort by filed date (newest first)
+    const allCases = [...asPlaintiff, ...asDefendant];
+    return allCases.sort((a, b) => b.filedAt - a.filedAt);
   },
 });
 
