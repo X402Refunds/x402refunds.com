@@ -28,11 +28,11 @@ describe('MCP - Tool Definitions', () => {
     for (const tool of MCP_TOOLS) {
       expect(tool).toHaveProperty('name');
       expect(tool).toHaveProperty('description');
-      expect(tool).toHaveProperty('input_schema');
-      expect(tool.input_schema).toHaveProperty('type', 'object');
-      expect(tool.input_schema).toHaveProperty('properties');
-      expect(tool.input_schema).toHaveProperty('required');
-      expect(Array.isArray(tool.input_schema.required)).toBe(true);
+      expect(tool).toHaveProperty('inputSchema');
+      expect(tool.inputSchema).toHaveProperty('type', 'object');
+      expect(tool.inputSchema).toHaveProperty('properties');
+      expect(tool.inputSchema).toHaveProperty('required');
+      expect(Array.isArray(tool.inputSchema.required)).toBe(true);
     }
   });
 
@@ -44,29 +44,29 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.description).toContain('payment dispute');
     
     // Check for X-402 ultra-minimal schema (7 required fields)
-    expect(tool?.input_schema.required).toContain('plaintiff');  // Ethereum address
-    expect(tool?.input_schema.required).toContain('defendant');  // Ethereum address
-    expect(tool?.input_schema.required).toContain('description');
-    expect(tool?.input_schema.required).toContain('request');  // Object
-    expect(tool?.input_schema.required).toContain('response');  // Object
-    expect(tool?.input_schema.required).toContain('transactionHash');
-    expect(tool?.input_schema.required).toContain('blockchain');
+    expect(tool?.inputSchema.required).toContain('plaintiff');  // Ethereum address
+    expect(tool?.inputSchema.required).toContain('defendant');  // Ethereum address
+    expect(tool?.inputSchema.required).toContain('description');
+    expect(tool?.inputSchema.required).toContain('request');  // Object
+    expect(tool?.inputSchema.required).toContain('response');  // Object
+    expect(tool?.inputSchema.required).toContain('transactionHash');
+    expect(tool?.inputSchema.required).toContain('blockchain');
     
     // disputeUrl is optional (can be auto-constructed from defendant address)
-    expect(tool?.input_schema.required).not.toContain('disputeUrl');
+    expect(tool?.inputSchema.required).not.toContain('disputeUrl');
     
     // These are now derived from blockchain or optional
-    expect(tool?.input_schema.required).not.toContain('amountUsd');
-    expect(tool?.input_schema.required).not.toContain('currency');
-    expect(tool?.input_schema.required).not.toContain('fromAddress');
-    expect(tool?.input_schema.required).not.toContain('toAddress');
+    expect(tool?.inputSchema.required).not.toContain('amountUsd');
+    expect(tool?.inputSchema.required).not.toContain('currency');
+    expect(tool?.inputSchema.required).not.toContain('fromAddress');
+    expect(tool?.inputSchema.required).not.toContain('toAddress');
     
     // Check for Ethereum address validation
-    expect(tool?.input_schema.properties.plaintiff.pattern).toContain('0x');
-    expect(tool?.input_schema.properties.defendant.pattern).toContain('0x');
-    expect(tool?.input_schema.properties.blockchain.enum).toBeDefined(); // Enum validation
-    expect(tool?.input_schema.properties.dryRun).toBeDefined();
-    expect(tool?.returns).toBeDefined();
+    expect(tool?.inputSchema.properties.plaintiff.pattern).toContain('0x');
+    expect(tool?.inputSchema.properties.defendant.pattern).toContain('0x');
+    expect(tool?.inputSchema.properties.blockchain.enum).toBeDefined(); // Enum validation
+    expect(tool?.inputSchema.properties.dryRun).toBeDefined();
+    // Note: returns field removed (not part of MCP standard)
   });
 
   it('should include x402_check_case_status tool', async () => {
@@ -74,7 +74,7 @@ describe('MCP - Tool Definitions', () => {
     
     const tool = MCP_TOOLS.find(t => t.name === 'x402_check_case_status');
     expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('caseId');
+    expect(tool?.inputSchema.required).toContain('caseId');
   });
 
   it('should include x402_list_my_cases tool', async () => {
@@ -82,7 +82,7 @@ describe('MCP - Tool Definitions', () => {
     
     const tool = MCP_TOOLS.find(t => t.name === 'x402_list_my_cases');
     expect(tool).toBeDefined();
-    expect(tool?.input_schema.required).toContain('walletAddress');
+    expect(tool?.inputSchema.required).toContain('walletAddress');
   });
 });
 
@@ -91,8 +91,8 @@ describe('MCP - Schema Improvements', () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
-    const plaintiff = fileDisputeTool?.input_schema.properties.plaintiff;
-    const defendant = fileDisputeTool?.input_schema.properties.defendant;
+    const plaintiff = fileDisputeTool?.inputSchema.properties.plaintiff;
+    const defendant = fileDisputeTool?.inputSchema.properties.defendant;
 
     expect(plaintiff).toBeDefined();
     expect(defendant).toBeDefined();
@@ -106,21 +106,21 @@ describe('MCP - Schema Improvements', () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
-    const sellerXSignature = fileDisputeTool?.input_schema.properties.sellerXSignature;
+    const sellerXSignature = fileDisputeTool?.inputSchema.properties.sellerXSignature;
     
     expect(sellerXSignature).toBeDefined();
     expect(sellerXSignature?.contentEncoding).toBe('base64');
     expect(sellerXSignature?.examples).toBeDefined();
     
     // sellerXSignature is optional (not required)
-    expect(fileDisputeTool?.input_schema.required).not.toContain('sellerXSignature');
+    expect(fileDisputeTool?.inputSchema.required).not.toContain('sellerXSignature');
   });
 
   it('should have dryRun parameter for testing', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
-    const dryRun = fileDisputeTool?.input_schema.properties.dryRun;
+    const dryRun = fileDisputeTool?.inputSchema.properties.dryRun;
     
     expect(dryRun).toBeDefined();
     expect(dryRun?.type).toBe('boolean');
@@ -363,7 +363,7 @@ describe('MCP - Tool Workflows', () => {
     
     // List cases (simulating MCP tool)
     const cases = await t.query(api.cases.getCasesByParty, {
-      agentDid: agent.did,
+      party: agent.did,
     });
     
     expect(Array.isArray(cases)).toBe(true);

@@ -68,7 +68,7 @@ describe('Full Dispute Lifecycle', () => {
     
     expect(case2).toBeDefined();
     
-    const cases = await t.query(api.cases.getCasesByParty, { agentDid: plaintiff });
+    const cases = await t.query(api.cases.getCasesByParty, { party: plaintiff });
     expect(cases.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -210,7 +210,7 @@ describe('Multi-Party Disputes', () => {
     expect(case2).toBeDefined();
     
     // Agent 1 is involved in both cases
-    const agent1Cases = await t.query(api.cases.getCasesByParty, { agentDid: agents[1] });
+    const agent1Cases = await t.query(api.cases.getCasesByParty, { party: agents[1] });
     expect(agent1Cases.length).toBe(2);
   });
 

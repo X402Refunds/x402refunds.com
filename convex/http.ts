@@ -27,6 +27,7 @@ http.route({ path: "/health", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/version", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/mcp.json", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/mcp", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp/neutrals", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/agents/register", method: "OPTIONS", handler: optionsHandler });
@@ -151,6 +152,270 @@ http.route({
   path: "/mcp/invoke",
   method: "POST",
   handler: mcpInvoke
+});
+
+// Standard MCP endpoint (JSON-RPC 2.0 protocol)
+// This is the standard MCP endpoint that Cursor and other MCP clients expect
+http.route({
+  path: "/mcp",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const { jsonrpc, id, method, params } = body;
+
+      // Validate JSON-RPC 2.0 format
+      if (jsonrpc !== "2.0") {
+        return new Response(JSON.stringify({
+          jsonrpc: "2.0",
+          id: id || null,
+          error: {
+            code: -32600,
+            message: "Invalid Request: jsonrpc must be '2.0'"
+          }
+        }), {
+          status: 400,
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      }
+
+      // Handle standard MCP methods
+      switch (method) {
+        case "initialize": {
+          // MCP initialization handshake
+          const { protocolVersion, capabilities, clientInfo } = params || {};
+          
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            id,
+            result: {
+              protocolVersion: "2024-11-05",
+              capabilities: {
+                tools: {
+                  listChanged: false
+                }
+              },
+              serverInfo: {
+                name: "x402disputes.com",
+                version: "2.0.0"
+              }
+            }
+          }), {
+            headers: { 
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+        }
+
+        case "notifications/initialized": {
+          // Client indicates it's ready - just acknowledge
+          return new Response("", {
+            status: 204,
+            headers: { 
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+        }
+
+        case "tools/list": {
+          // Return list of available tools
+          const { MCP_TOOLS } = await import("./mcp");
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            id,
+            result: {
+              tools: MCP_TOOLS
+            }
+          }), {
+            headers: { 
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+        }
+
+        case "tools/call": {
+          // Invoke a tool
+          const { name: toolName, arguments: toolArgs } = params || {};
+          
+          if (!toolName) {
+            return new Response(JSON.stringify({
+              jsonrpc: "2.0",
+              id,
+              error: {
+                code: -32602,
+                message: "Invalid params: 'name' is required"
+              }
+            }), {
+              status: 400,
+              headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+          }
+
+          // Call the /mcp/invoke endpoint via internal fetch
+          // Construct the full URL for the internal request
+          const url = new URL(request.url);
+          const invokeUrl = `${url.protocol}//${url.host}/mcp/invoke`;
+          
+          try {
+            const invokeResponse = await fetch(invokeUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                tool: toolName,
+                parameters: toolArgs || {}
+              })
+            });
+            
+            const invokeData = await invokeResponse.json();
+            
+            // Format response according to MCP protocol
+            // MCP requires tool results in content blocks format
+            let formattedResult;
+            
+            if (invokeData.success === false) {
+              // Error response - format as MCP error
+              formattedResult = {
+                content: [
+                  {
+                    type: "text",
+                    text: `❌ Error: ${invokeData.error?.message || 'Unknown error'}\n\n${JSON.stringify(invokeData.error, null, 2)}`
+                  }
+                ],
+                isError: true
+              };
+            } else {
+              // Success response - format as readable text + structured data
+              let textOutput = "";
+              
+              // Format based on tool type
+              if (toolName === "x402_file_dispute") {
+                textOutput = `✅ Dispute Filed Successfully!\n\n` +
+                  `📋 Case ID: ${invokeData.caseId}\n` +
+                  `💰 Fee: $${invokeData.disputeFee}\n` +
+                  `⏱️  Status: ${invokeData.status}\n` +
+                  `🔗 Track: ${invokeData.trackingUrl}\n\n` +
+                  `Next Steps:\n${invokeData.nextSteps?.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n') || 'N/A'}`;
+              } else if (toolName === "x402_list_my_cases") {
+                const cases = invokeData.cases || [];
+                textOutput = `📊 Cases for ${invokeData.walletAddress}\n\n` +
+                  `Total: ${invokeData.totalCases} cases\n\n` +
+                  cases.slice(0, 10).map((c: any, i: number) => 
+                    `${i + 1}. ${c._id || c.caseId || 'Unknown'}\n` +
+                    `   Status: ${c.status}\n` +
+                    `   Type: ${c.type}\n` +
+                    `   Plaintiff: ${c.plaintiff?.substring(0, 10)}...\n` +
+                    `   Defendant: ${c.defendant?.substring(0, 10)}...`
+                  ).join('\n\n') +
+                  (cases.length > 10 ? `\n\n... and ${cases.length - 10} more` : '');
+              } else if (toolName === "x402_check_case_status") {
+                const caseData = invokeData.case;
+                textOutput = `📋 Case Status\n\n` +
+                  `Case ID: ${caseData?._id || caseData?.caseId || 'N/A'}\n` +
+                  `Status: ${caseData?.status || 'N/A'}\n` +
+                  `Type: ${caseData?.type || 'N/A'}\n` +
+                  `Plaintiff: ${caseData?.plaintiff || 'N/A'}\n` +
+                  `Defendant: ${caseData?.defendant || 'N/A'}\n` +
+                  `Created: ${caseData?._creationTime ? new Date(caseData._creationTime).toLocaleString() : 'N/A'}`;
+              } else {
+                // Generic format
+                textOutput = JSON.stringify(invokeData, null, 2);
+              }
+              
+              formattedResult = {
+                content: [
+                  {
+                    type: "text",
+                    text: textOutput
+                  }
+                ],
+                isError: false
+              };
+            }
+            
+            // Return in JSON-RPC format with MCP content structure
+            return new Response(JSON.stringify({
+              jsonrpc: "2.0",
+              id,
+              result: formattedResult
+            }), {
+              headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+          } catch (error: any) {
+            // Format errors in MCP content structure
+            return new Response(JSON.stringify({
+              jsonrpc: "2.0",
+              id,
+              result: {
+                content: [
+                  {
+                    type: "text",
+                    text: `❌ Internal Error: ${error.message}`
+                  }
+                ],
+                isError: true
+              }
+            }), {
+              status: 500,
+              headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+          }
+        }
+
+        default:
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            id,
+            error: {
+              code: -32601,
+              message: `Method not found: ${method}`,
+              data: {
+                hint: "Supported methods: tools/list, tools/call"
+              }
+            }
+          }), {
+            status: 404,
+            headers: { 
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+      }
+    } catch (error: any) {
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        id: null,
+        error: {
+          code: -32700,
+          message: "Parse error",
+          data: {
+            details: error.message
+          }
+        }
+      }), {
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+  })
 });
 
 // === END MCP ENDPOINTS ===

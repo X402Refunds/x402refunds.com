@@ -17,16 +17,16 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeTool).toBeDefined();
 
       // X-402 ultra-minimal schema
-      expect(disputeTool?.input_schema.properties.blockchain.enum).toBeDefined();
-      expect(disputeTool?.input_schema.properties.plaintiff.pattern).toContain('0x');
-      expect(disputeTool?.input_schema.properties.defendant.pattern).toContain('0x');
+      expect(disputeTool?.inputSchema.properties.blockchain.enum).toBeDefined();
+      expect(disputeTool?.inputSchema.properties.plaintiff.pattern).toContain('0x');
+      expect(disputeTool?.inputSchema.properties.defendant.pattern).toContain('0x');
     });
 
     it("should have required fields matching X-402 ultra-minimal schema", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      const required = disputeTool?.input_schema.required;
+      const required = disputeTool?.inputSchema.required;
       // X-402 ultra-minimal (7 required fields - disputeUrl is now optional)
       expect(required).toContain("plaintiff");  // Ethereum address
       expect(required).toContain("defendant");  // Ethereum address
@@ -54,7 +54,7 @@ describe("MCP Tool Schema Validation", () => {
       const statusTool = MCP_TOOLS.find(t => t.name === "x402_check_case_status");
       expect(statusTool).toBeDefined();
 
-      const required = statusTool?.input_schema.required;
+      const required = statusTool?.inputSchema.required;
       expect(required).toContain("caseId");
     });
   });
@@ -64,7 +64,7 @@ describe("MCP Tool Schema Validation", () => {
       const listTool = MCP_TOOLS.find(t => t.name === "x402_list_my_cases");
       expect(listTool).toBeDefined();
 
-      const statusEnum = listTool?.input_schema.properties.status.enum;
+      const statusEnum = listTool?.inputSchema.properties.status.enum;
       expect(statusEnum).toBeDefined();
 
       // Valid case statuses
@@ -92,9 +92,9 @@ describe("MCP Tool Schema Validation", () => {
 
     it("should have valid input schemas", () => {
       for (const tool of MCP_TOOLS) {
-        expect(tool.input_schema).toBeDefined();
-        expect(tool.input_schema.type).toBe("object");
-        expect(tool.input_schema.properties).toBeDefined();
+        expect(tool.inputSchema).toBeDefined();
+        expect(tool.inputSchema.type).toBe("object");
+        expect(tool.inputSchema.properties).toBeDefined();
       }
     });
 

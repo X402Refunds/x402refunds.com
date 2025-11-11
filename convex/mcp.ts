@@ -77,7 +77,7 @@ export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
     description: "File X-402 payment dispute. Agents file disputes directly - no permission required. Dispute and refund data written on-chain. $0.05 flat fee.",
-    input_schema: {
+    inputSchema: {
       type: "object",
       properties: {
         plaintiff: {
@@ -167,59 +167,12 @@ export const MCP_TOOLS = [
         }
       },
       required: ["plaintiff", "defendant", "description", "request", "response", "transactionHash", "blockchain"]
-    },
-    returns: {
-      oneOf: [
-        {
-      type: "object",
-          description: "Success response when dispute is filed",
-      properties: {
-            success: { type: "boolean", const: true },
-            disputeType: { type: "string", enum: ["PAYMENT"] },
-            caseId: { type: "string", description: "Unique case identifier for tracking" },
-            paymentDisputeId: { type: "string", description: "Payment dispute record ID" },
-            status: { type: "string", description: "Current case status" },
-            isMicroDispute: { type: "boolean", description: "Whether this is a micro-dispute (<$1)" },
-            disputeFee: { type: "number", description: "Fee charged in USD (always $0.05)" },
-            humanReviewRequired: { type: "boolean", description: "Whether human review is needed" },
-            estimatedResolutionTime: { type: "string", description: "Expected resolution timeframe" },
-            message: { type: "string" },
-            trackingUrl: { type: "string", description: "URL to track case status" },
-            nextSteps: { 
-              type: "array", 
-              items: { type: "string" },
-              description: "What happens next in the process"
-            }
-          },
-          required: ["success", "caseId", "trackingUrl", "disputeFee"]
-        },
-        {
-      type: "object",
-          description: "Error response with actionable guidance",
-      properties: {
-            success: { type: "boolean", const: false },
-            error: {
-          type: "object",
-              properties: {
-                code: { type: "string", description: "Error code (e.g., INVALID_PLAINTIFF_FORMAT)" },
-                message: { type: "string", description: "Human-readable error message" },
-                field: { type: "string", description: "Which parameter caused the error" },
-                received: { type: "string", description: "What value was received" },
-                expected: { type: "string", description: "What format was expected" },
-                suggestion: { type: "string", description: "How to fix the error" }
-              },
-              required: ["code", "message"]
-        }
-      },
-          required: ["success", "error"]
-        }
-      ]
     }
   },
   {
     name: "x402_list_my_cases",
     description: "List all X-402 payment dispute cases where you are a party (plaintiff or defendant). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
-    input_schema: {
+    inputSchema: {
       type: "object",
       properties: {
         walletAddress: {
@@ -243,7 +196,7 @@ export const MCP_TOOLS = [
   {
     name: "x402_check_case_status",
     description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
-    input_schema: {
+    inputSchema: {
       type: "object",
       properties: {
         caseId: {
@@ -856,7 +809,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
         result = await ctx.runQuery(api.cases.getCasesByParty, {
-          agentDid: parameters.walletAddress  // Maps to existing function (works with string matching)
+          party: parameters.walletAddress
         });
         
         const filteredCases = parameters.status && parameters.status !== "all"

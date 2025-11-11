@@ -10,14 +10,15 @@
  * Integration: X-402 protocol, Ethereum wallet identity
  */
 
-import { mutation, query, action } from "./_generated/server";
+import { mutation, query, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
 import {
   calculateDisputeFee,
   type PaymentVerdict,
 } from "./disputePricing";
+import { workflowManager } from "./workflows";
 
 /**
  * File X-402 payment dispute (permissionless)
@@ -217,8 +218,19 @@ export const receivePaymentDispute = mutation({
       },
     });
 
-    // 5. REMOVED: No longer auto-trigger AI analysis
-    // Cron job will trigger AI analysis based on org's configured delay
+    // 5. Trigger AI workflow immediately
+    const org = args.reviewerOrganizationId 
+      ? await ctx.db.get(args.reviewerOrganizationId) 
+      : null;
+
+    // Trigger workflow if AI is enabled (or no org specified)
+    if (!org || org.aiEnabled !== false) {
+      await ctx.scheduler.runAfter(
+        0, // Immediate execution
+        internal.paymentDisputes.triggerPaymentWorkflow,
+        { caseId }
+      );
+    }
 
     // Determine if human review will be required
     // ALL disputes now require human review (Option 3)
@@ -238,6 +250,78 @@ export const receivePaymentDispute = mutation({
       fee: feeBreakdown.fee,
     };
   },
+});
+
+/**
+ * Trigger payment workflow immediately after dispute is filed
+ * Called via scheduler for async, non-blocking execution
+ */
+export const triggerPaymentWorkflow = internalMutation({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const caseData = await ctx.db.get(args.caseId);
+    if (!caseData) {
+      console.error(`Case ${args.caseId} not found for workflow trigger`);
+      return;
+    }
+
+    // Idempotency: Skip if already analyzed
+    if (caseData.aiRecommendation) {
+      console.log(`Case ${args.caseId} already analyzed, skipping`);
+      return;
+    }
+
+    // Skip if workflow already started
+    const existingWorkflow = await ctx.db
+      .query("workflowSteps")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .first();
+    
+    if (existingWorkflow) {
+      console.log(`Workflow already started for case ${args.caseId}`);
+      return;
+    }
+
+    // Check org AI enabled
+    const org = caseData.reviewerOrganizationId 
+      ? await ctx.db.get(caseData.reviewerOrganizationId)
+      : null;
+    
+    if (org && org.aiEnabled === false) {
+      console.log(`AI disabled for org ${org._id}, skipping`);
+      return;
+    }
+
+    // Determine workflow type
+    const amount = caseData.amount || 0;
+    const evidenceCount = caseData.evidenceIds?.length || 0;
+    
+    try {
+      let workflowId: string | undefined;
+      
+      if (amount < 1 && evidenceCount <= 2) {
+        workflowId = await workflowManager.start(
+          ctx, 
+          internal.workflows.microDisputeWorkflow, 
+          { caseId: args.caseId }
+        );
+        console.log(`Micro dispute workflow started: ${workflowId}`);
+      } else {
+        workflowId = await workflowManager.start(
+          ctx, 
+          internal.workflows.paymentDisputeWorkflow, 
+          { caseId: args.caseId }
+        );
+        console.log(`Payment dispute workflow started: ${workflowId}`);
+      }
+      
+      return { success: true, workflowId };
+      
+    } catch (error: any) {
+      console.error(`Failed to start workflow for case ${args.caseId}:`, error.message);
+      throw error;
+    }
+  }
 });
 
 /**

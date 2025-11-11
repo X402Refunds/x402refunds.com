@@ -1,6 +1,5 @@
 import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
-import { workflowManager } from "./workflows";
 
 const crons = cronJobs();
 
@@ -21,14 +20,6 @@ crons.interval(
   "update stats cache",
   { minutes: 10 },
   internal.crons.updateSystemStatsCache,
-  {}
-);
-
-// Process filed cases every 10 minutes
-crons.interval(
-  "process filed cases",
-  { minutes: 10 },
-  internal.crons.processFiledCases,
   {}
 );
 
@@ -250,134 +241,6 @@ export const triggerDisputeGeneration = mutation({
     return await ctx.runMutation(internal.crons.generatePaymentDisputeDemo, {});
   }
 });
-
-// =================================================================
-// PROCESS FILED CASES (AUTO-RESOLVE STUCK CASES)
-// =================================================================
-
-/**
- * Process cases stuck in FILED status
- *
- * This cron job runs every 2 minutes and automatically processes cases that are:
- * - In FILED status for > 5 minutes (enough time for parties to submit evidence)
- * - Have not been processed by the court engine yet
- *
- * Why this is needed:
- * - Cases can get stuck in FILED status if no one manually triggers court workflow
- * - Payment disputes should auto-resolve within minutes
- * - Agent disputes should move to panel review automatically
- */
-export const processFiledCases = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    try {
-      const startTime = Date.now();
-      console.log("⚖️  Processing filed cases with AI analysis...");
-
-      // Get all cases in FILED status
-      const filedCases = await ctx.db
-        .query("cases")
-        .filter((q) => q.eq(q.field("status"), "FILED"))
-        .collect();
-
-      if (filedCases.length === 0) {
-        console.log("✅ No filed cases found");
-        return { processed: 0, message: "No cases to process" };
-      }
-
-      console.log(`📋 Found ${filedCases.length} cases in FILED status`);
-
-      let processed = 0;
-      let errors = 0;
-      let skipped = 0;
-
-      for (const caseData of filedCases) {
-        try {
-          // Check if already analyzed
-          const alreadyAnalyzed = await hasAIRecommendation(ctx, caseData._id);
-
-          if (alreadyAnalyzed) {
-            skipped++;
-            console.log(`  ⏭️  Skipped case ${caseData._id} (already analyzed)`);
-            continue;
-          }
-
-          // Check if organization has AI enabled
-          const org = await getOrgForCase(ctx, caseData);
-          if (org && org.aiEnabled === false) {
-            skipped++;
-            console.log(`  ⏭️  Skipped case ${caseData._id} (AI disabled for organization ${org._id})`);
-            continue;
-          }
-
-          // Trigger workflow based on case type
-          const amount = caseData.amount || 0;
-          const evidenceCount = caseData.evidenceIds?.length || 0;
-          
-          let workflowId: string | undefined;
-          if (caseData.type === "PAYMENT") {
-            // Payment disputes use payment workflow
-            if (amount < 1 && evidenceCount <= 2) {
-              workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId: caseData._id });
-            } else {
-              workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId: caseData._id });
-            }
-          } else {
-            // General disputes use general workflow
-            workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId: caseData._id });
-          }
-          
-          processed++;
-          console.log(`  ✅ Triggered ${caseData.type} workflow for case ${caseData._id} (workflowId: ${workflowId})`);
-        } catch (error: any) {
-          errors++;
-          console.error(`  ❌ Failed to process case ${caseData._id}:`, error.message);
-        }
-      }
-
-      const duration = Date.now() - startTime;
-      console.log(`⚖️  Processed ${processed}/${filedCases.length} cases in ${duration}ms (${errors} errors, ${skipped} skipped)`);
-
-      return {
-        processed,
-        errors,
-        skipped,
-        total: filedCases.length,
-        duration,
-      };
-
-    } catch (error: any) {
-      console.error("❌ Filed case processing failed:", error.message);
-      return { success: false, reason: error.message };
-    }
-  }
-});
-
-// =================================================================
-// HELPER FUNCTIONS
-// =================================================================
-
-/**
- * Get organization for a case
- */
-async function getOrgForCase(ctx: any, caseData: any) {
-  // Cases now have reviewerOrganizationId directly
-  if (caseData?.reviewerOrganizationId) {
-    return await ctx.db.get(caseData.reviewerOrganizationId);
-  }
-
-  // Fallback: return null (use default settings)
-  return null;
-}
-
-/**
- * Check if case already has AI recommendation
- */
-async function hasAIRecommendation(ctx: any, caseId: any) {
-  // Check case table for AI recommendation (single source of truth)
-  const caseData = await ctx.db.get(caseId);
-  return !!caseData?.aiRecommendation;
-}
 
 /**
  * Auto-approve disputes that exceed Regulation E deadline (10 business days)

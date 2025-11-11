@@ -83,10 +83,16 @@ describe('MCP Protocol - Tool Discovery', () => {
       const manifest = await response.json();
       
       const allHaveSchemas = manifest.tools.every(
-        (tool: any) => tool.input_schema && 
-          (tool.input_schema.type || tool.input_schema.properties)
+        (tool: any) => tool.inputSchema && 
+          (tool.inputSchema.type || tool.inputSchema.properties)
       );
       expect(allHaveSchemas).toBe(true);
+      
+      // Verify MCP standard field naming (inputSchema not input_schema)
+      manifest.tools.forEach((tool: any) => {
+        expect(tool.inputSchema).toBeDefined();
+        expect(tool.input_schema).toBeUndefined(); // Old field should not exist
+      });
     });
 
     it('should specify authentication requirements', async () => {
@@ -103,6 +109,147 @@ describe('MCP Protocol - Tool Discovery', () => {
 
     it('should include CORS headers', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
+      expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    });
+  });
+});
+
+describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
+  describe('POST /mcp', () => {
+    it('should support initialize handshake', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: {
+              name: 'test-client',
+              version: '1.0.0'
+            }
+          }
+        })
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.jsonrpc).toBe('2.0');
+      expect(data.id).toBe(1);
+      expect(data.result).toBeDefined();
+      expect(data.result.protocolVersion).toBe('2024-11-05');
+      expect(data.result.serverInfo).toBeDefined();
+      expect(data.result.serverInfo.name).toBe('x402disputes.com');
+      expect(data.result.capabilities).toBeDefined();
+      expect(data.result.capabilities.tools).toBeDefined();
+    });
+
+    it('should support tools/list method', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/list'
+        })
+      });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.jsonrpc).toBe('2.0');
+      expect(data.id).toBe(2);
+      expect(data.result).toBeDefined();
+      expect(data.result.tools).toBeDefined();
+      expect(Array.isArray(data.result.tools)).toBe(true);
+      expect(data.result.tools.length).toBe(3);
+      
+      // Verify tools use inputSchema (MCP standard)
+      data.result.tools.forEach((tool: any) => {
+        expect(tool.inputSchema).toBeDefined();
+        expect(tool.input_schema).toBeUndefined();
+      });
+    });
+
+    it('should format tool responses with content blocks', async () => {
+      // This tests the MCP content block format
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'x402_check_case_status',
+            arguments: {
+              caseId: 'invalid-case-id-for-format-test'
+            }
+          }
+        })
+      });
+
+      const data = await response.json();
+      expect(data.jsonrpc).toBe('2.0');
+      expect(data.id).toBe(3);
+      expect(data.result).toBeDefined();
+      expect(data.result.content).toBeDefined();
+      expect(Array.isArray(data.result.content)).toBe(true);
+      expect(data.result.content[0]).toBeDefined();
+      expect(data.result.content[0].type).toBe('text');
+      expect(data.result.content[0].text).toBeDefined();
+      expect(data.result.isError).toBeDefined();
+    });
+
+    it('should reject invalid JSON-RPC version', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '1.0', // Invalid version
+          id: 1,
+          method: 'tools/list'
+        })
+      });
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBeDefined();
+      expect(data.error.code).toBe(-32600);
+    });
+
+    it('should reject unknown methods', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'unknown/method'
+        })
+      });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.error).toBeDefined();
+      expect(data.error.code).toBe(-32601);
+      expect(data.error.message).toContain('not found');
+    });
+
+    it('should include CORS headers', async () => {
+      const response = await fetch(`${API_BASE_URL}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/list'
+        })
+      });
+
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
     });
   });
