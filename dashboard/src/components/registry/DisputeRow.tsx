@@ -9,12 +9,12 @@ import { formatDistanceToNow } from "date-fns"
 
 interface DisputeRowProps {
   caseId: string
-  plaintiff: string
-  defendant: string
-  amount?: number
+  plaintiff: string | null | undefined
+  defendant: string | null | undefined
+  amount?: number | null
   currency?: string
-  status: string
-  filedAt: number
+  status: string | null | undefined
+  filedAt: number | null | undefined
 }
 
 export function DisputeRow({
@@ -35,7 +35,8 @@ export function DisputeRow({
     setTimeout(() => setCopiedField(null), 2000)
   }
 
-  const formatAddress = (address: string) => {
+  const formatAddress = (address: string | null | undefined) => {
+    if (!address) return 'Unknown'
     if (address.startsWith('0x')) {
       return `${address.slice(0, 6)}...${address.slice(-4)}`
     }
@@ -46,7 +47,8 @@ export function DisputeRow({
     return address.length > 20 ? `${address.slice(0, 20)}...` : address
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null | undefined) => {
+    if (!status) return 'bg-slate-100 text-slate-800 border-slate-200'
     switch (status) {
       case 'FILED': return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'ANALYZED': return 'bg-purple-100 text-purple-800 border-purple-200'
@@ -61,27 +63,29 @@ export function DisputeRow({
   return (
     <Card 
       className="p-4 hover:bg-slate-50 transition-colors cursor-pointer border-slate-200"
-      onClick={() => router.push(`/cases/${caseId}`)}
+      onClick={() => caseId && router.push(`/cases/${caseId}`)}
     >
       <div className="flex items-center justify-between gap-4">
         {/* Case ID */}
         <div className="flex items-center gap-2 min-w-[120px]">
           <span className="text-sm font-mono text-slate-900 font-medium">
-            #{caseId.slice(0, 8)}
+            #{caseId ? caseId.slice(0, 8) : 'Unknown'}
           </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              copyToClipboard(caseId, 'caseId')
-            }}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            {copiedField === 'caseId' ? (
-              <Check className="h-3 w-3 text-emerald-600" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
-          </button>
+          {caseId && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                copyToClipboard(caseId, 'caseId')
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              {copiedField === 'caseId' ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Parties */}
@@ -89,7 +93,7 @@ export function DisputeRow({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              copyToClipboard(plaintiff, 'plaintiff')
+              copyToClipboard(plaintiff || 'Unknown', 'plaintiff')
             }}
             className="text-sm font-mono text-slate-600 hover:text-slate-900 transition-colors truncate"
           >
@@ -99,7 +103,7 @@ export function DisputeRow({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              copyToClipboard(defendant, 'defendant')
+              copyToClipboard(defendant || 'Unknown', 'defendant')
             }}
             className="text-sm font-mono text-slate-600 hover:text-slate-900 transition-colors truncate"
           >
@@ -108,7 +112,7 @@ export function DisputeRow({
         </div>
 
         {/* Amount */}
-        {amount !== undefined && (
+        {amount !== undefined && amount !== null && (
           <div className="text-sm font-medium text-slate-900 min-w-[80px] text-right">
             ${amount.toFixed(2)} {currency}
           </div>
@@ -116,12 +120,12 @@ export function DisputeRow({
 
         {/* Status */}
         <Badge className={`${getStatusColor(status)} min-w-[100px] justify-center`}>
-          {status.replace('_', ' ')}
+          {status ? status.replace('_', ' ') : 'Unknown'}
         </Badge>
 
         {/* Timestamp */}
         <div className="text-xs text-slate-500 min-w-[80px] text-right">
-          {formatDistanceToNow(filedAt, { addSuffix: true })}
+          {filedAt ? formatDistanceToNow(filedAt, { addSuffix: true }) : 'Unknown'}
         </div>
 
         {/* Link icon */}

@@ -59,12 +59,12 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
         <DisputeRow
           key={case_._id}
           caseId={case_._id}
-          plaintiff={case_.plaintiff || 'Unknown'}
-          defendant={case_.defendant || 'Unknown'}
+          plaintiff={case_.plaintiff ?? 'Unknown'}
+          defendant={case_.defendant ?? 'Unknown'}
           amount={case_.amount}
           currency={case_.currency}
-          status={case_.status}
-          filedAt={case_.filedAt}
+          status={case_.status ?? 'FILED'}
+          filedAt={case_.filedAt ?? Date.now()}
         />
       ))}
       
