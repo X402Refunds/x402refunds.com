@@ -3,29 +3,24 @@ import { AuthConfig } from "convex/server";
 /**
  * Clerk Authentication Configuration
  * 
- * IMPORTANT: Set CLERK_FRONTEND_API_URL in Convex Dashboard → Settings → Environment Variables
- * Format: https://your-app.clerk.accounts.dev (no trailing slash)
+ * IMPORTANT: Set CLERK_JWT_ISSUER_DOMAIN in Convex Dashboard → Settings → Environment Variables
+ * This should match the "Issuer" field in your Clerk JWT template
  * 
- * To find your Clerk domain:
- * 1. Go to Clerk Dashboard → API Keys
- * 2. Look for "Frontend API" URL
- * 3. Copy the full URL (e.g., https://national-treefrog-88.clerk.accounts.dev)
- * 4. Set it as CLERK_FRONTEND_API_URL in Convex Dashboard
+ * Format: https://clerk.yourdomain.com (no trailing slash)
  * 
  * Also ensure:
  * - JWT Template named "convex" exists in Clerk Dashboard → JWT Templates
- * - Template can be empty, but must exist
+ * - Template has "aud": "convex" in the claims
  */
-const clerkDomain = process.env.CLERK_FRONTEND_API_URL || "https://national-treefrog-88.clerk.accounts.dev";
+const clerkDomain = process.env.CLERK_JWT_ISSUER_DOMAIN || "https://clerk.x402disputes.com";
 
 // Ensure the domain doesn't have a trailing slash
 const normalizedDomain = clerkDomain.replace(/\/$/, "");
 
 // Log the domain being used (for debugging)
-console.log(`[Auth Config] Clerk domain configured: ${normalizedDomain}`);
-if (!process.env.CLERK_FRONTEND_API_URL) {
-  console.warn(`[Auth Config] ⚠️ Using fallback Clerk domain. Set CLERK_FRONTEND_API_URL in Convex Dashboard → Settings → Environment Variables`);
-  console.warn(`[Auth Config] Expected value: https://national-treefrog-88.clerk.accounts.dev`);
+console.log(`[Auth Config] Clerk JWT issuer domain: ${normalizedDomain}`);
+if (!process.env.CLERK_JWT_ISSUER_DOMAIN) {
+  console.warn(`[Auth Config] ⚠️ Using fallback domain. Set CLERK_JWT_ISSUER_DOMAIN in Convex Dashboard`);
 }
 
 export default {
