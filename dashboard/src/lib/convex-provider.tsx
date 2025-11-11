@@ -43,6 +43,11 @@ export default function ConvexClientProvider({
     }
   }, [auth]);
 
+  // Gate ConvexProvider on isLoaded to prevent auth issues
+  if (!auth.isLoaded) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       {children}
