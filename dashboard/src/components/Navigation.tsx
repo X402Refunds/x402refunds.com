@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 
 interface NavigationProps {
-  currentPage?: 'home' | 'pricing' | 'about'
+  currentPage?: 'home' | 'pricing' | 'about' | 'registry'
 }
 
 export function Navigation({ currentPage }: NavigationProps) {
@@ -49,6 +49,17 @@ export function Navigation({ currentPage }: NavigationProps) {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
+              <button
+                onClick={() => handleNavigation('/registry')}
+                className={cn(
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  currentPage === 'registry' 
+                    ? 'text-primary bg-accent' 
+                    : 'text-foreground hover:text-foreground hover:bg-accent'
+                )}
+              >
+                Registry
+              </button>
               <button
                 onClick={() => handleNavigation('/pricing')}
                 className={cn(
@@ -150,6 +161,16 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <div className="border-t border-border pt-4 space-y-3">
                     {/* Main Navigation */}
                     <div className="space-y-1">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleNavigation('/registry')}
+                        className={cn(
+                          "w-full justify-start",
+                          currentPage === 'registry' && 'bg-accent text-primary'
+                        )}
+                      >
+                        Registry
+                      </Button>
                       <Button
                         variant="ghost"
                         onClick={() => handleNavigation('/pricing')}
