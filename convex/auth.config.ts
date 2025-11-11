@@ -21,9 +21,11 @@ const clerkDomain = process.env.CLERK_FRONTEND_API_URL || "https://national-tree
 // Ensure the domain doesn't have a trailing slash
 const normalizedDomain = clerkDomain.replace(/\/$/, "");
 
-// Log the domain being used (for debugging - remove in production if needed)
+// Log the domain being used (for debugging)
+console.log(`[Auth Config] Clerk domain configured: ${normalizedDomain}`);
 if (!process.env.CLERK_FRONTEND_API_URL) {
-  console.warn(`[Auth Config] Using fallback Clerk domain: ${normalizedDomain}. Set CLERK_FRONTEND_API_URL in Convex Dashboard for production.`);
+  console.warn(`[Auth Config] ⚠️ Using fallback Clerk domain. Set CLERK_FRONTEND_API_URL in Convex Dashboard → Settings → Environment Variables`);
+  console.warn(`[Auth Config] Expected value: https://national-treefrog-88.clerk.accounts.dev`);
 }
 
 export default {
