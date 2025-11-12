@@ -154,7 +154,7 @@ const ruling = await response.json();
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="hidden lg:flex bg-slate-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 max-h-[600px] flex-col"
+              className="flex bg-slate-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 max-h-[600px] lg:max-h-[600px] flex-col"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">

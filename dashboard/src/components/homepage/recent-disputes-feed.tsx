@@ -67,7 +67,7 @@ export function RecentDisputesFeed() {
 
   return (
     <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-700">
-      {recentCases.slice(0, 10).map((case_: Record<string, unknown>) => {
+      {recentCases.slice(0, 10).map((case_: Record<string, unknown>, idx: number) => {
         // Get parties - handle both parties array and plaintiff/defendant fields
         const parties = case_.parties as string[] | undefined;
         const plaintiff = case_.plaintiff as string | undefined;
@@ -92,7 +92,7 @@ export function RecentDisputesFeed() {
           <Link
             key={case_._id as string}
             href="/registry"
-            className="block p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+            className={`block p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 ${idx >= 3 ? 'hidden lg:block' : ''}`}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
