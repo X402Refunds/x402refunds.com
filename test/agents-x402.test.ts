@@ -50,7 +50,7 @@ describe('X-402 Agent Functions', () => {
     console.log('✅ Agent queried by wallet address:', foundAgent?.did);
   });
 
-  it('should create unclaimed agent', async () => {
+  it.skip('should create unclaimed agent (FEATURE REMOVED)', async () => {
     const walletAddress = '0x9876543210987654321098765432109876543210';
     
     const agentId = await t.mutation(api.agents.createUnclaimedAgent, {
@@ -73,7 +73,7 @@ describe('X-402 Agent Functions', () => {
     console.log('✅ Unclaimed agent created:', agent?.did);
   });
 
-  it('should not create duplicate unclaimed agents', async () => {
+  it.skip('should not create duplicate unclaimed agents (FEATURE REMOVED)', async () => {
     const walletAddress = '0x1234567890123456789012345678901234567890';
     
     // Create first time
@@ -92,7 +92,7 @@ describe('X-402 Agent Functions', () => {
     console.log('✅ Duplicate prevention works');
   });
 
-  it('should list unclaimed agents with dispute counts', async () => {
+  it.skip('should list unclaimed agents with dispute counts (FEATURE REMOVED)', async () => {
     // Create unclaimed agent
     await t.mutation(api.agents.createUnclaimedAgent, {
       walletAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
@@ -111,7 +111,7 @@ describe('X-402 Agent Functions', () => {
     console.log('✅ Unclaimed agents listed:', agents.length);
   });
 
-  it('should claim agent with valid signature (mock)', async () => {
+  it.skip('should claim agent with valid signature (mock) (FEATURE REMOVED)', async () => {
     // Use a test private key to generate a valid signature
     const testPrivateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
     const testAccount = privateKeyToAccount(testPrivateKey as `0x${string}`);
@@ -164,7 +164,7 @@ describe('X-402 Agent Functions', () => {
     console.log('✅ Agent claimed successfully');
   });
 
-  it('should reject claiming already claimed agent', async () => {
+  it.skip('should reject claiming already claimed agent (FEATURE REMOVED)', async () => {
     // Use a test private key to generate a valid signature
     const testPrivateKey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
     const testAccount = privateKeyToAccount(testPrivateKey as `0x${string}`);

@@ -257,10 +257,10 @@ describe('Agent Discovery', () => {
       const agents = await response.json();
       
       if (agents.length > 1) {
-        // Check descending order
+        // Check descending order (reputationScore is now at top level)
         for (let i = 1; i < agents.length; i++) {
-          expect(agents[i - 1].reputation.overallScore).toBeGreaterThanOrEqual(
-            agents[i].reputation.overallScore
+          expect(agents[i - 1].reputationScore).toBeGreaterThanOrEqual(
+            agents[i].reputationScore
           );
         }
       }
@@ -273,10 +273,10 @@ describe('Agent Discovery', () => {
       const agents = await response.json();
       
       if (agents.length > 1) {
-        // Check descending order by win rate
+        // Check descending order by win rate (winRate is now at top level)
         for (let i = 1; i < agents.length; i++) {
-          expect(agents[i - 1].reputation.winRate).toBeGreaterThanOrEqual(
-            agents[i].reputation.winRate
+          expect(agents[i - 1].winRate).toBeGreaterThanOrEqual(
+            agents[i].winRate
           );
         }
       }
@@ -288,13 +288,11 @@ describe('Agent Discovery', () => {
       
       if (agents.length > 0) {
         const agent = agents[0];
-        expect(agent.did).toBeDefined();
-        expect(agent.reputation).toBeDefined();
-        expect(agent.reputation.overallScore).toBeGreaterThanOrEqual(0);
-        // totalCases may not always be present depending on response format
-        if (agent.reputation.totalCases !== undefined) {
-          expect(agent.reputation.totalCases).toBeGreaterThanOrEqual(0);
-        }
+        expect(agent.agentDid).toBeDefined();
+        expect(agent.reputationScore).toBeDefined();
+        expect(agent.reputationScore).toBeGreaterThanOrEqual(0);
+        expect(agent.casesAsDefendant).toBeDefined();
+        expect(agent.casesAsDefendant).toBeGreaterThanOrEqual(0);
       }
     });
   });
