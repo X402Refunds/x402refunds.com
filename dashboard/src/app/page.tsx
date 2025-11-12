@@ -105,14 +105,14 @@ const ruling = await response.json();
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight leading-tight">
                 <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
                   X-402 Dispute Registry & Resolution
                 </span>
               </h1>
               
-              <p className="text-xl text-emerald-100 leading-relaxed">
-                Fair rulings. On-chain reputation. No bias.
+              <p className="text-lg sm:text-xl text-emerald-100 leading-relaxed">
+                Public. Fast. Fair.
               </p>
 
               {!isSignedIn && (
@@ -131,7 +131,7 @@ const ruling = await response.json();
                     className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
                     onClick={() => window.location.href = '/registry'}
                   >
-                    View Registry →
+                    View Dispute Registry →
                   </Button>
                 </div>
               )}
@@ -143,7 +143,7 @@ const ruling = await response.json();
                     className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
                     onClick={() => window.location.href = '/registry'}
                   >
-                    View Registry →
+                    View Dispute Registry →
                   </Button>
                 </div>
               )}
@@ -154,17 +154,17 @@ const ruling = await response.json();
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="flex bg-slate-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 max-h-[600px] lg:max-h-[600px] flex-col"
+              className="flex bg-slate-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-4 lg:p-6 max-h-[400px] lg:max-h-[600px] flex-col"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3 lg:mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium text-white">Live Disputes</span>
+                  <span className="text-xs lg:text-sm font-medium text-white">Live Disputes</span>
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-emerald-400 hover:text-emerald-300 hover:bg-white/5 text-sm"
+                  className="text-emerald-400 hover:text-emerald-300 hover:bg-white/5 text-xs lg:text-sm px-2 lg:px-3"
                   onClick={() => window.location.href = '/registry'}
                 >
                   View All →

@@ -37,6 +37,12 @@ export function RecentDisputesFeed() {
       const nameWithoutId = fullName.substring(0, fullName.lastIndexOf('-'));
       return nameWithoutId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
+    
+    // Truncate long addresses (Ethereum addresses): 0xabcd...1234
+    if (did.startsWith('0x') && did.length > 15) {
+      return `${did.slice(0, 6)}...${did.slice(-4)}`;
+    }
+    
     return did.substring(0, 20);
   };
 
@@ -92,27 +98,27 @@ export function RecentDisputesFeed() {
           <Link
             key={case_._id as string}
             href="/registry"
-            className={`block p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 ${idx >= 3 ? 'hidden lg:block' : ''}`}
+            className={`block p-2 lg:p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 ${idx >= 3 ? 'hidden lg:block' : ''}`}
           >
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start justify-between gap-2 mb-1.5">
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-white font-medium truncate">
+                <div className="text-xs lg:text-sm text-white font-medium truncate">
                   {formatName(party1)}
                   <span className="text-slate-500 mx-1">vs</span>
                   {formatName(party2)}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs flex-shrink-0">
-                <Clock className="h-3 w-3 text-slate-500" />
+              <div className="flex items-center gap-1.5 text-[10px] lg:text-xs flex-shrink-0">
+                <Clock className="h-2.5 w-2.5 lg:h-3 lg:w-3 text-slate-500" />
                 <span className="text-slate-400">{timeAgo(case_.filedAt as number)}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium ${getStatusColor(case_.status as string)}`}>
+              <span className={`text-[10px] lg:text-xs font-medium ${getStatusColor(case_.status as string)}`}>
                 {case_.status as string}
               </span>
               {case_.type && (
-                <span className="text-xs text-slate-500">
+                <span className="text-[10px] lg:text-xs text-slate-500 truncate">
                   {(case_.type as string).replace(/_/g, ' ')}
                 </span>
               )}
