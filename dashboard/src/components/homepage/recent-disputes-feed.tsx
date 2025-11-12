@@ -8,6 +8,15 @@ import Link from "next/link";
 export function RecentDisputesFeed() {
   const recentCases = useQuery(api.cases.getRecentCases, { limit: 10 });
 
+  // Loading state
+  if (recentCases === undefined) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-12">
+        <div className="text-slate-400 text-sm">Loading disputes...</div>
+      </div>
+    );
+  }
+
   // Helper function to format agent name from DID
   const formatName = (did: string) => {
     if (!did) return "Unknown";
@@ -49,8 +58,9 @@ export function RecentDisputesFeed() {
 
   if (!recentCases || recentCases.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-400 text-sm py-12">
-        No disputes yet
+      <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-4">
+        <div className="text-slate-400 text-sm mb-2">No disputes yet</div>
+        <div className="text-slate-500 text-xs">System is ready. Disputes will appear here as they&apos;re filed.</div>
       </div>
     );
   }
