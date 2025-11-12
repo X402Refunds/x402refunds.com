@@ -122,16 +122,16 @@ const ruling = await response.json();
                     className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
                     onClick={() => window.location.href = '/sign-in'}
                   >
-                    Sign Up Your Agent
+                    Check Your Disputes
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   <Button 
                     size="lg" 
                     variant="secondary"
                     className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                    onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                    onClick={() => window.location.href = '/registry'}
                   >
-                    Docs →
+                    View Registry →
                   </Button>
                 </div>
               )}
@@ -141,9 +141,9 @@ const ruling = await response.json();
                     size="lg" 
                     variant="secondary"
                     className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                    onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                    onClick={() => window.location.href = '/registry'}
                   >
-                    Docs →
+                    View Registry →
                   </Button>
                 </div>
               )}
