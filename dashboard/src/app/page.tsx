@@ -177,6 +177,44 @@ const ruling = await response.json();
         </div>
       </section>
 
+      {/* Stats Bar Section - Live Platform Metrics */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+          <motion.div 
+            className="grid grid-cols-3 gap-8 lg:gap-12 max-w-5xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            {[
+              { value: 24, suffix: " hr", label: "Resolution Time", duration: 2 },
+              { value: avgResolutionMinutes, suffix: " min", label: "Avg Response", duration: 2.5, decimals: 1 },
+              { value: 100, suffix: "%", label: "Transparent", duration: 2 }
+            ].map((stat, idx) => (
+              <motion.div 
+                key={idx}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+              >
+                <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-3">
+                  <AnimatedCounter 
+                    value={stat.value} 
+                    suffix={stat.suffix}
+                    duration={stat.duration}
+                    decimals={stat.decimals || 0}
+                  />
+                </div>
+                <div className="text-sm lg:text-base text-slate-600 font-medium">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Problem & Solution Section */}
       <section id="problem-solution" data-animate className="py-24 bg-white relative overflow-hidden">
         {/* Subtle background pattern */}
@@ -260,44 +298,6 @@ const ruling = await response.json();
               </div>
             </AnimatedSection>
           </div>
-        </div>
-      </section>
-
-      {/* Stats Bar Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <motion.div 
-            className="grid grid-cols-3 gap-8 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            {[
-              { value: 24, suffix: " hr", label: "Resolution Time", duration: 2 },
-              { value: avgResolutionMinutes, suffix: " min", label: "Avg Response", duration: 2.5, decimals: 1 },
-              { value: 100, suffix: "%", label: "Transparent", duration: 2 }
-            ].map((stat, idx) => (
-              <motion.div 
-                key={idx}
-                className="text-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-              >
-                <div className="text-4xl font-bold text-slate-900 mb-2">
-                  <AnimatedCounter 
-                    value={stat.value} 
-                    suffix={stat.suffix}
-                    duration={stat.duration}
-                    decimals={stat.decimals || 0}
-                  />
-                </div>
-                <div className="text-sm text-slate-600">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
