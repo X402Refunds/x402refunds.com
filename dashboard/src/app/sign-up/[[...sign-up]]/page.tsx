@@ -6,7 +6,7 @@ export default function SignUpPage() {
       <SignUp 
         routing="path"
         path="/sign-up"
-        redirectUrl="/dashboard"
+        forceRedirectUrl="/dashboard"
         signInUrl="/sign-in"
         appearance={{
           elements: {
