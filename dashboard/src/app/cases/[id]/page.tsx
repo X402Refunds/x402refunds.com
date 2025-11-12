@@ -8,11 +8,78 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { Clock, FileText, Scale, DollarSign, Calendar, Shield, ExternalLink } from "lucide-react"
+import { Clock, FileText, DollarSign, Calendar, Shield, ExternalLink, Sparkles } from "lucide-react"
 import { motion } from "framer-motion";
 import { CopyableField } from "@/components/case-detail/CopyableField";
 import { EthereumAddressLink } from "@/components/ethereum/ethereum-address-link";
 import { getTransactionExplorerUrl, getExplorerName } from "@/lib/ethereum";
+
+// AI Reasoning Parser
+interface ParsedSection {
+  type: 'header' | 'paragraph' | 'list';
+  content: string;
+  level?: number;
+  items?: string[];
+}
+
+function parseAIReasoning(text: string): ParsedSection[] {
+  const sections: ParsedSection[] = [];
+  const lines = text.split('\n');
+  
+  let currentParagraph = '';
+  let currentList: string[] = [];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    // Header (### or numbered sections like "1. **Title**")
+    if (trimmed.startsWith('###')) {
+      if (currentParagraph) sections.push({ type: 'paragraph', content: currentParagraph.trim() });
+      if (currentList.length) sections.push({ type: 'list', content: '', items: currentList });
+      currentParagraph = '';
+      currentList = [];
+      sections.push({ type: 'header', content: trimmed.replace(/^###\s*/, ''), level: 1 });
+    }
+    // Numbered list (1., 2., 3.)
+    else if (/^\d+\.\s+\*\*/.test(trimmed)) {
+      if (currentParagraph) sections.push({ type: 'paragraph', content: currentParagraph.trim() });
+      currentParagraph = '';
+      sections.push({ type: 'header', content: trimmed, level: 2 });
+    }
+    // Bullet point (-, *)
+    else if (trimmed.match(/^[-*]\s+/)) {
+      if (currentParagraph) {
+        sections.push({ type: 'paragraph', content: currentParagraph.trim() });
+        currentParagraph = '';
+      }
+      currentList.push(trimmed.replace(/^[-*]\s+/, ''));
+    }
+    // Regular paragraph
+    else if (trimmed) {
+      if (currentList.length) {
+        sections.push({ type: 'list', content: '', items: currentList });
+        currentList = [];
+      }
+      currentParagraph += (currentParagraph ? ' ' : '') + trimmed;
+    }
+    // Empty line - paragraph break
+    else if (!trimmed && currentParagraph) {
+      sections.push({ type: 'paragraph', content: currentParagraph.trim() });
+      currentParagraph = '';
+    }
+  }
+  
+  if (currentParagraph) sections.push({ type: 'paragraph', content: currentParagraph.trim() });
+  if (currentList.length) sections.push({ type: 'list', content: '', items: currentList });
+  
+  return sections;
+}
+
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold markers
+    .trim();
+}
 
 export default function PublicCaseTrackingPage() {
   const params = useParams();
@@ -143,6 +210,7 @@ export default function PublicCaseTrackingPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Financial Information */}
           {(paymentDispute || caseDetails.amount) && (
@@ -165,12 +233,9 @@ export default function PublicCaseTrackingPage() {
                       {paymentDispute ? "Disputed Amount" : "Claim Amount"}
                     </p>
                     {paymentDispute ? (
-                      <>
-                        <p className="text-2xl font-bold text-slate-900 mt-1">
-                          ${paymentDispute.amount?.toFixed(2) || "0.00"}
-                        </p>
-                        <p className="text-xs text-slate-500">{paymentDispute.currency || "USD"}</p>
-                      </>
+                      <p className="text-2xl font-bold text-slate-900 mt-1">
+                        ${paymentDispute.amount?.toFixed(2) || "0.00"} <span className="text-lg font-normal text-slate-600">{paymentDispute.currency || "USD"}</span>
+                      </p>
                     ) : (
                       <p className="text-2xl font-bold text-slate-900 mt-1">
                         ${caseDetails.amount?.toLocaleString() || "N/A"}
@@ -183,7 +248,6 @@ export default function PublicCaseTrackingPage() {
                       <p className="text-2xl font-bold text-slate-900 mt-1">
                         ${paymentDispute.paymentDetails.disputeFee.toFixed(2)}
                       </p>
-                      <p className="text-xs text-slate-500 capitalize">{paymentDispute.paymentDetails.pricingTier} tier</p>
                     </div>
                   )}
                 </div>
@@ -354,12 +418,12 @@ export default function PublicCaseTrackingPage() {
                   </div>
                 )}
 
-                {/* Transaction ID */}
+                {/* Transaction Hash */}
                 <div>
-                  <p className="text-sm font-semibold text-slate-600 mb-1">Transaction ID</p>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">Transaction Hash</p>
                   <CopyableField 
                     value={caseDetails.paymentDetails.transactionId} 
-                    label="Transaction ID copied"
+                    label="Transaction hash copied"
                     truncate
                     truncateLength={40}
                   />
@@ -458,8 +522,8 @@ export default function PublicCaseTrackingPage() {
                         <div className="h-3 w-3 rounded-full bg-slate-400" />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-500">Final Decision</p>
-                        <p className="text-sm text-slate-400">Pending review completion</p>
+                        <p className="font-semibold text-slate-500">Merchant Decision</p>
+                        <p className="text-sm text-slate-400">Awaiting merchant review</p>
                       </div>
                     </div>
                   </>
@@ -476,12 +540,15 @@ export default function PublicCaseTrackingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.8 }}
             >
-              <Card className="border-2 border-blue-200 bg-blue-50/50">
+              <Card className="border-2 border-purple-200 bg-purple-50/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Scale className="h-5 w-5 text-blue-700" />
-                  Final Decision
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  AI Recommendation
                 </CardTitle>
+                <CardDescription className="mt-1">
+                  Pending merchant review
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -501,13 +568,53 @@ export default function PublicCaseTrackingPage() {
                   )}
                 </div>
                 {(caseDetails.aiRecommendation?.reasoning || caseDetails.humanOverrideReason) && (
-                  <div>
-                    <p className="text-sm font-semibold text-slate-600 mb-2">Explanation</p>
-                    <div className="prose prose-sm max-w-none">
-                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                        {caseDetails.humanOverrideReason || caseDetails.aiRecommendation?.reasoning || "Decision rendered"}
-                      </p>
-                    </div>
+                  <div className="space-y-4">
+                    <p className="text-sm font-semibold text-slate-600 mb-3">Analysis Details</p>
+                    
+                    {(() => {
+                      const reasoning = caseDetails.humanOverrideReason || caseDetails.aiRecommendation?.reasoning || "";
+                      const sections = parseAIReasoning(reasoning);
+                      
+                      return sections.map((section, idx) => {
+                        if (section.type === 'header') {
+                          return (
+                            <div key={idx} className={`${section.level === 2 ? 'mt-4' : 'mt-6'}`}>
+                              <h4 className={`font-semibold text-slate-800 ${section.level === 2 ? 'text-base' : 'text-lg'} flex items-center gap-2`}>
+                                {section.level === 2 && <span className="text-purple-600">→</span>}
+                                {cleanMarkdown(section.content)}
+                              </h4>
+                            </div>
+                          );
+                        }
+                        
+                        if (section.type === 'paragraph') {
+                          return (
+                            <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                              <p className="text-sm text-slate-700 leading-relaxed">
+                                {cleanMarkdown(section.content)}
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        if (section.type === 'list' && section.items) {
+                          return (
+                            <ul key={idx} className="space-y-2 ml-4">
+                              {section.items.map((item, itemIdx) => (
+                                <li key={itemIdx} className="flex items-start gap-2">
+                                  <span className="text-purple-600 mt-1 text-sm">•</span>
+                                  <span className="text-sm text-slate-700 flex-1">
+                                    {cleanMarkdown(item)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        }
+                        
+                        return null;
+                      });
+                    })()}
                   </div>
                 )}
               </CardContent>
@@ -535,22 +642,6 @@ export default function PublicCaseTrackingPage() {
               <p className="text-sm text-slate-600 mt-1">
                 {caseEvidence?.length === 1 ? "item" : "items"} submitted for review
               </p>
-            </CardContent>
-          </Card>
-          </motion.div>
-
-          {/* Footer */}
-          <Card className="bg-slate-50 border-slate-200">
-            <CardContent className="py-6">
-              <div className="text-center space-y-2">
-                <p className="text-sm font-semibold text-slate-900">Need assistance?</p>
-                <p className="text-xs text-slate-600">
-                  Contact your payment provider for questions about this dispute.
-                </p>
-                <p className="text-xs text-slate-500 mt-4">
-                  Case disputes are resolved in accordance with applicable regulations.
-                </p>
-              </div>
             </CardContent>
           </Card>
           </motion.div>
