@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { AnimatedGrid } from "@/components/AnimatedGrid"
 import { AnimatedSection, AnimatedList } from "@/components/ui/animated-section"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
+import { RecentDisputesFeed } from "@/components/homepage/recent-disputes-feed"
 import { useUser } from "@clerk/nextjs"
 import { motion } from "framer-motion"
 import { 
@@ -87,132 +88,92 @@ const ruling = await response.json();
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50">
       <Navigation currentPage="home" />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-20 sm:py-32 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950">
-        {/* Professional animated grid background */}
+      {/* Hero Section - Split Layout */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center py-20 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950">
         <AnimatedGrid color="#10b981" />
         
-        {/* Subtle corner accents */}
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-green-500/5 to-transparent pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full text-center relative z-10">
-          <motion.div 
-            className="max-w-4xl mx-auto space-y-8"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <motion.h1 
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                Dispute Resolution for Agentic Payments
-              </span>
-            </motion.h1>
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             
-            <motion.p 
-              className="text-xl sm:text-2xl text-emerald-100 max-w-3xl mx-auto leading-relaxed drop-shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Fair rulings. No bias.
-            </motion.p>
-
-            {!isSignedIn && (
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
-                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
-                >
-                  Sign Up Your Agent
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                  onClick={() => window.location.href = 'https://docs.x402disputes.com'}
-                >
-                  View Documentation →
-                </Button>
-                </motion.div>
-              </motion.div>
-            )}
-            {isSignedIn && (
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
-                  onClick={() => window.location.href = 'https://docs.x402disputes.com'}
-                >
-                  View Documentation →
-                </Button>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Stats bar */}
+            {/* LEFT: Hero Content */}
             <motion.div 
-              className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-8"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              {[
-                { value: 24, suffix: " hr", label: "Resolution Time", duration: 2 },
-                { value: avgResolutionMinutes, suffix: " min", label: "Avg Response", duration: 2.5, decimals: 1 },
-                { value: 100, suffix: "%", label: "Transparent", duration: 2 }
-              ].map((stat, idx) => (
-                <motion.div 
-                  key={idx}
-                  className="text-center"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.5 + idx * 0.1 }}
-                >
-                  <div className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
-                    <AnimatedCounter 
-                      value={stat.value} 
-                      suffix={stat.suffix}
-                      duration={stat.duration}
-                      decimals={stat.decimals || 0}
-                    />
-                  </div>
-                  <div className="text-sm text-emerald-200/70 mt-1">{stat.label}</div>
-                </motion.div>
-              ))}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+                <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                  Dispute Resolution for Agentic Payments
+                </span>
+              </h1>
+              
+              <p className="text-xl text-emerald-100 leading-relaxed">
+                Fair rulings. No bias.
+              </p>
+
+              {!isSignedIn && (
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-400 hover:to-green-500 text-lg px-8 h-14 font-semibold shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60 transition-all duration-200 group"
+                    onClick={() => window.location.href = '/sign-in'}
+                  >
+                    Sign Up Your Agent
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                    onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                  >
+                    Docs →
+                  </Button>
+                </div>
+              )}
+              {isSignedIn && (
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30 text-lg px-8 h-14 font-semibold shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200"
+                    onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                  >
+                    Docs →
+                  </Button>
+                </div>
+              )}
             </motion.div>
-          </motion.div>
+
+            {/* RIGHT: Live Disputes Feed */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="hidden lg:flex bg-slate-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 max-h-[600px] flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-white">Live Disputes</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-emerald-400 hover:text-emerald-300 hover:bg-white/5 text-sm"
+                  onClick={() => window.location.href = '/registry'}
+                >
+                  View All →
+                </Button>
+              </div>
+
+              <RecentDisputesFeed />
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -299,6 +260,44 @@ const ruling = await response.json();
               </div>
             </AnimatedSection>
           </div>
+        </div>
+      </section>
+
+      {/* Stats Bar Section */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+          <motion.div 
+            className="grid grid-cols-3 gap-8 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            {[
+              { value: 24, suffix: " hr", label: "Resolution Time", duration: 2 },
+              { value: avgResolutionMinutes, suffix: " min", label: "Avg Response", duration: 2.5, decimals: 1 },
+              { value: 100, suffix: "%", label: "Transparent", duration: 2 }
+            ].map((stat, idx) => (
+              <motion.div 
+                key={idx}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+              >
+                <div className="text-4xl font-bold text-slate-900 mb-2">
+                  <AnimatedCounter 
+                    value={stat.value} 
+                    suffix={stat.suffix}
+                    duration={stat.duration}
+                    decimals={stat.decimals || 0}
+                  />
+                </div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
