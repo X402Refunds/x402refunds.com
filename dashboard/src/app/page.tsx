@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { AnimatedGrid } from "@/components/AnimatedGrid"
 import { AnimatedSection, AnimatedList } from "@/components/ui/animated-section"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
-import { RecentDisputesHero } from "@/components/homepage/recent-disputes-hero"
 import { useUser } from "@clerk/nextjs"
 import { motion } from "framer-motion"
 import { 
@@ -216,9 +215,6 @@ const ruling = await response.json();
           </motion.div>
         </div>
       </section>
-
-      {/* Recent Disputes Section */}
-      <RecentDisputesHero />
 
       {/* Problem & Solution Section */}
       <section id="problem-solution" data-animate className="py-24 bg-white relative overflow-hidden">
