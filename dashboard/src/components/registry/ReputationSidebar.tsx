@@ -58,16 +58,33 @@ export function ReputationSidebar() {
       <CardContent>
         <div className="space-y-3">
           {topAgents.map((agent: typeof topAgents[number], index: number) => {
-            const formatAddress = (address: string | null | undefined) => {
-              if (!address) return 'Unknown'
-              if (address.startsWith('0x')) {
-                return `${address.slice(0, 6)}...${address.slice(-4)}`
+            const formatAddress = (agentDid: string | null | undefined, walletAddress: string | null | undefined) => {
+              // Prefer wallet address if available
+              if (walletAddress?.startsWith('0x')) {
+                return `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
               }
-              if (address.includes(':')) {
-                const parts = address.split(':')
-                return parts[parts.length - 1]
+              
+              // Fall back to formatting DID
+              if (!agentDid) return 'Unknown'
+              
+              // Extract meaningful part from DID
+              // Format: did:agent:consulatehq-com-1762761761424 -> consulatehq.com
+              if (agentDid.includes(':')) {
+                const parts = agentDid.split(':')
+                const lastPart = parts[parts.length - 1]
+                
+                // If it looks like a domain with timestamp, extract just domain
+                if (lastPart.includes('-') && /\d{13}/.test(lastPart)) {
+                  const domainPart = lastPart.split('-').slice(0, -1).join('-')
+                  // Convert consulatehq-com to consulatehq.com
+                  return domainPart.replace(/-/g, '.').substring(0, 20)
+                }
+                
+                // Otherwise show shortened last part
+                return lastPart.length > 20 ? `${lastPart.substring(0, 17)}...` : lastPart
               }
-              return address.length > 20 ? `${address.slice(0, 20)}...` : address
+              
+              return agentDid.length > 20 ? `${agentDid.substring(0, 17)}...` : agentDid
             }
 
             const getScoreColor = (score: number) => {
@@ -97,7 +114,7 @@ export function ReputationSidebar() {
                   </div>
                   <div>
                     <div className="text-sm font-mono font-medium text-slate-900">
-                      {formatAddress(agent.walletAddress || agent.agentDid)}
+                      {formatAddress(agent.agentDid, agent.walletAddress)}
                     </div>
                     <div className="text-xs text-slate-500 flex items-center gap-1">
                       Score: <span className={`font-bold ${getScoreColor(agent.reputationScore ?? 0)}`}>

@@ -5,7 +5,6 @@ import { Footer } from "@/components/Footer"
 import { StatsBar } from "@/components/registry/StatsBar"
 import { SearchBar } from "@/components/registry/SearchBar"
 import { DisputeFeed } from "@/components/registry/DisputeFeed"
-import { ReputationSidebar } from "@/components/registry/ReputationSidebar"
 import { Button } from "@/components/ui/button"
 import { BookOpen, FileText } from "lucide-react"
 import { useState } from "react"
@@ -52,24 +51,16 @@ export default function RegistryPage() {
 
       {/* Main Content: Live Feed */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Feed - Takes up most space */}
-          <div className="lg:col-span-8 space-y-4">
-            <SearchBar 
-              onSearchChange={setSearchQuery}
-              onFilterChange={setFilter}
-              currentFilter={filter}
-            />
-            <DisputeFeed 
-              filter={filter}
-              searchQuery={searchQuery}
-            />
-        </div>
-
-          {/* Sidebar - Reputation Rankings */}
-          <div className="lg:col-span-4">
-            <ReputationSidebar />
-          </div>
+        <div className="space-y-4">
+          <SearchBar 
+            onSearchChange={setSearchQuery}
+            onFilterChange={setFilter}
+            currentFilter={filter}
+          />
+          <DisputeFeed 
+            filter={filter}
+            searchQuery={searchQuery}
+          />
         </div>
       </main>
 
