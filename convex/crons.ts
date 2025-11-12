@@ -189,41 +189,67 @@ export const updateSystemStatsCache = internalMutation({
       const startTime = Date.now();
       console.log("📊 Updating cached system statistics...");
 
-      // Get payment disputes (type=PAYMENT cases)
-      const allPaymentDisputes = await ctx.db
-        .query("cases")
-        .filter((q) => q.eq(q.field("type"), "PAYMENT"))
-        .collect();
-
-      // Calculate stats
-      const totalDisputes = allPaymentDisputes.length;
-      const microDisputes = allPaymentDisputes.filter(d => (d.amount || 0) < 1).length;
-      const autoResolved = allPaymentDisputes.filter(d => !d.humanReviewRequired).length;
-
-      // Calculate total fees
-      const totalFees = allPaymentDisputes.reduce((sum, d) => {
-        const fee = d.paymentDetails?.disputeFee || 0;
-        return sum + fee;
-      }, 0);
-
-      // Group by verdict
-      const verdictCounts = allPaymentDisputes.reduce((acc: any, d) => {
-        const verdict = d.aiRecommendation?.verdict || d.finalVerdict || "PENDING";
-        acc[verdict] = (acc[verdict] || 0) + 1;
-        return acc;
-      }, {});
-
+      // Get all cases
+      const allCases = await ctx.db.query("cases").collect();
+      
+      // Get all agents
+      const allAgents = await ctx.db.query("agents").collect();
+      const activeAgents = allAgents.filter(a => a.status === "active");
+      
+      // Count resolved and pending cases
+      const resolvedCases = allCases.filter(c => 
+        c.status === "DECIDED" || c.status === "CLOSED"
+      );
+      const pendingCases = allCases.filter(c => 
+        c.status === "FILED" || c.status === "ANALYZED" || c.status === "IN_REVIEW"
+      );
+      
+      // Calculate average resolution time
+      const resolvedWithTime = resolvedCases.filter(c => c.decidedAt && c.filedAt);
+      const avgResolutionTimeMs = resolvedWithTime.length > 0
+        ? resolvedWithTime.reduce((sum, c) => sum + (c.decidedAt! - c.filedAt), 0) / resolvedWithTime.length
+        : 0;
+      
+      // Calculate 24h metrics
+      const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
+      const agentRegistrationsLast24h = allAgents.filter(a => a.createdAt > cutoffTime).length;
+      const casesFiledLast24h = allCases.filter(c => c.filedAt > cutoffTime).length;
+      const casesResolvedLast24h = resolvedCases.filter(c => c.decidedAt && c.decidedAt > cutoffTime).length;
+      
+      const calculationTimeMs = Date.now() - startTime;
+      
       const stats = {
-        totalDisputes,
-        microDisputes,
-        autoResolved,
-        totalFees,
-        verdictCounts,
-        updatedAt: Date.now(),
+        key: "current",
+        totalAgents: allAgents.length,
+        activeAgents: activeAgents.length,
+        totalCases: allCases.length,
+        resolvedCases: resolvedCases.length,
+        pendingCases: pendingCases.length,
+        avgResolutionTimeMs,
+        avgResolutionTimeMinutes: avgResolutionTimeMs / (60 * 1000),
+        agentRegistrationsLast24h,
+        casesFiledLast24h,
+        casesResolvedLast24h,
+        lastUpdated: Date.now(),
+        calculationTimeMs,
       };
 
-      console.log(`✅ Stats updated: ${totalDisputes} disputes, $${totalFees.toFixed(2)} in fees`);
-      console.log(`   Micro: ${microDisputes}, Auto-resolved: ${autoResolved}`);
+      // Upsert to systemStats table
+      const existing = await ctx.db
+        .query("systemStats")
+        .withIndex("by_key", (q) => q.eq("key", "current"))
+        .first();
+      
+      if (existing) {
+        await ctx.db.patch(existing._id, stats);
+      } else {
+        await ctx.db.insert("systemStats", stats);
+      }
+
+      console.log(`✅ Stats updated in ${calculationTimeMs}ms:`);
+      console.log(`   Total cases: ${stats.totalCases}, Resolved: ${stats.resolvedCases}, Pending: ${stats.pendingCases}`);
+      console.log(`   Total agents: ${stats.totalAgents}, Active: ${stats.activeAgents}`);
+      console.log(`   Avg resolution time: ${stats.avgResolutionTimeMinutes.toFixed(1)} minutes`);
 
       return stats;
 
@@ -239,6 +265,14 @@ export const triggerDisputeGeneration = mutation({
   args: {},
   handler: async (ctx): Promise<any> => {
     return await ctx.runMutation(internal.crons.generatePaymentDisputeDemo, {});
+  }
+});
+
+// Manual trigger for stats cache update (can be called from frontend)
+export const triggerStatsUpdate = mutation({
+  args: {},
+  handler: async (ctx): Promise<any> => {
+    return await ctx.runMutation(internal.crons.updateSystemStatsCache, {});
   }
 });
 

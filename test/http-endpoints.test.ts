@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { API_BASE_URL, USE_LIVE_API } from './fixtures';
+import { cleanupTestDataDirect } from './fixtures/test-cleanup-helper';
 
 /**
  * HTTP Endpoint Tests - Pure HTTP Testing (No Hybrid Approach)
@@ -282,6 +283,14 @@ describe('HTTP API - Agent Capabilities', () => {
       // Should return 400 or 500 depending on how error is handled
       expect([400, 500]).toContain(response.status);
     });
+  });
+  
+  afterAll(async () => {
+    // Clean up any test data created (though these are mostly error tests)
+    if (!USE_LIVE_API) {
+      const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
+      await cleanupTestDataDirect(convexUrl);
+    }
   });
 });
 

@@ -616,26 +616,16 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         };
         
-        // 6. Check if defendant agent exists, create if unclaimed
+        // 6. Check if defendant agent exists (permissionless dispute filing)
         let defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
           walletAddress: defendant 
         });
         
-        if (!defendantAgent) {
-          // Create unclaimed agent - permissionless dispute filing!
-          console.log(`✨ Creating unclaimed agent for wallet: ${defendant}`);
-          const agentId = await ctx.runMutation(api.agents.createUnclaimedAgent, {
-            walletAddress: defendant,
-            name: undefined, // Will extract from request.url or agent card later
-            endpoint: parameters.request?.url,
-          });
-          
-          defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
-            walletAddress: defendant 
-          });
+        if (defendantAgent) {
+          console.log(`✅ Defendant agent found: ${defendantAgent.did} (status: ${defendantAgent.status})`);
+        } else {
+          console.log(`ℹ️  Defendant agent not found for ${defendant} - disputes can still be filed`);
         }
-        
-        console.log(`✅ Defendant agent: ${defendantAgent?.did} (status: ${defendantAgent?.status})`);
         
         // 7. Verify seller X-Signature if provided (optional)
         if (parameters.sellerXSignature && defendantAgent?.publicKey) {
@@ -736,7 +726,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           if (defendantAgent?.organizationId) {
             reviewerOrgId = defendantAgent.organizationId;
           }
-          // If defendant has no org, they can claim later (unclaimed agent flow)
+          // If defendant has no org or agent record, dispute remains unassigned
         }
         
         if (reviewerOrgId) {

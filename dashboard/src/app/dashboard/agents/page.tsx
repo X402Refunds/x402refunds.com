@@ -2,31 +2,24 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Plus, Users } from "lucide-react"
-import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog"
 import { AgentList } from "@/components/dashboard/agent-list"
 import { motion } from "framer-motion"
 
 export default function AgentsPage() {
   const { user, isLoaded } = useUser()
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
   
   // Sync user on page load
   const syncUser = useMutation(api.users.syncUser)
   const currentUser = useQuery(
     api.users.getCurrentUser,
     {} // Auth verified server-side via ctx.auth
-  )
-  
-  const organization = useQuery(
-    api.users.getUserOrganization,
-    currentUser ? { userId: currentUser._id } : "skip"
   )
   
   const orgAgents = useQuery(
@@ -83,9 +76,9 @@ export default function AgentsPage() {
             transition={{ duration: 0.4, delay: 0.2 }}
           >
             <Button
-              onClick={() => setShowCreateDialog(true)}
-              disabled={!currentUser || !organization}
-              className="bg-emerald-500 hover:bg-emerald-400 text-white"
+              disabled
+              className="bg-slate-300 text-slate-500 cursor-not-allowed"
+              title="Agent creation temporarily disabled"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Agent
@@ -117,14 +110,7 @@ export default function AgentsPage() {
             >
               <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-600 mb-4">No agents yet</p>
-              <Button
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-emerald-500 hover:bg-emerald-400 text-white"
-                disabled={!currentUser || !organization}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Agent
-              </Button>
+              <p className="text-slate-500 text-sm">Agent creation temporarily disabled</p>
             </motion.div>
           ) : (
             <AgentList agents={orgAgents} />
@@ -132,12 +118,6 @@ export default function AgentsPage() {
         </motion.div>
         
       </motion.div>
-      
-      {/* Create Agent Dialog */}
-      <CreateAgentDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
     </DashboardLayout>
   )
 }

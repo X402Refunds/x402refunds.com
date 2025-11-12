@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, LayoutDashboard, AlertCircle, Bot, UserPlus } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, LayoutDashboard, AlertCircle, Bot } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -25,11 +25,6 @@ const orgNavigationItems: NavigationItem[] = [
     title: "Agents",
     href: "/dashboard/agents",
     icon: Bot,
-  },
-  {
-    title: "Unclaimed Agents",
-    href: "/dashboard/unclaimed-agents",
-    icon: UserPlus,
   },
   {
     title: "Review Queue",

@@ -807,7 +807,7 @@ http.route({
       if (vendor.organizationId) {
         reviewerOrganizationId = vendor.organizationId;
       }
-      // If defendant has no org, they can claim later (unclaimed agent flow)
+      // If defendant has no org or agent record, dispute remains unassigned
 
       // 3. Create dispute case with signed evidence
       const caseId = await ctx.runMutation(api.cases.fileDispute, {
@@ -886,7 +886,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     if (defendantAgent?.organizationId) {
       reviewerOrgId = defendantAgent.organizationId;
     }
-    // If defendant has no org, they can claim later (unclaimed agent flow)
+    // If defendant has no org or agent record, dispute remains unassigned
   }
 
   // Create payment dispute (organizationId auto-injected)

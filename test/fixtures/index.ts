@@ -12,6 +12,8 @@ export const createTestAgent = (ownerDid: string, suffix = Date.now()) => ({
   organizationName: `Test Org ${suffix}`,
   mock: false,
   functionalType: 'general' as const,
+  isTestData: true,
+  testRunId: suffix,
 });
 
 export const createTestEvidence = (agentDid: string, suffix = Date.now()) => ({
@@ -34,6 +36,8 @@ export const createTestCase = (plaintiff: string, defendant: string, evidenceIds
   evidenceIds,
   description: 'Test case for SLA violation',
   claimedDamages: 10000,
+  isTestData: true,
+  testRunId: Date.now(),
 });
 
 // MICRO-DISPUTE fixtures (under $1)
@@ -58,6 +62,8 @@ export const createMicroDispute = (plaintiff: string, defendant: string, suffix 
     disputeReason: disputeReasons[Math.floor(Math.random() * disputeReasons.length)],
     description: 'Micro-transaction dispute for agentic commerce',
     evidenceUrls: [`https://logs.example.com/${suffix}.json`],
+    isTestData: true,
+    testRunId: suffix,
   };
 };
 

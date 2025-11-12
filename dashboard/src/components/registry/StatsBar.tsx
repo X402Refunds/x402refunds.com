@@ -6,14 +6,23 @@ import { TrendingUp, Clock, CheckCircle, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 export function StatsBar() {
-  const stats = useQuery(api.events.getSystemStats)
+  const stats = useQuery(api.cases.getCachedSystemStats)
+
+  // Calculate average resolution time in human-readable format
+  const formatResolutionTime = (ms: number) => {
+    if (ms === 0) return "N/A"
+    const hours = Math.round(ms / (1000 * 60 * 60))
+    if (hours < 24) return `${hours} hrs`
+    const days = Math.round(hours / 24)
+    return `${days} days`
+  }
 
   // Default values while loading or on error
   const displayStats = {
     totalDisputes: stats?.totalCases ?? 0,
-    resolved24h: stats?.casesLast24h ?? 0,
-    avgResolutionTime: "18 hrs", // TODO: Calculate from actual data
-    activeMerchants: stats?.totalAgents ?? 0
+    resolved24h: stats?.casesResolvedLast24h ?? 0,
+    avgResolutionTime: stats ? formatResolutionTime(stats.avgResolutionTimeMs) : "N/A",
+    activeMerchants: stats?.activeAgents ?? 0
   }
 
   // Return placeholder if data isn't loaded yet

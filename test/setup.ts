@@ -34,6 +34,29 @@ beforeAll(async () => {
 
 afterAll(async () => {
   console.log('🧹 Cleaning up test environment...');
+  
+  // Clean up test data from live environments (dev/preview)
+  // Don't clean production to avoid accidents
+  const API_BASE_URL = process.env.API_BASE_URL || 'https://youthful-orca-358.convex.site';
+  const IS_PRODUCTION = API_BASE_URL.includes('x402disputes.com') || API_BASE_URL.includes('perceptive-lyrebird-89');
+  
+  if (!IS_PRODUCTION) {
+    try {
+      const { ConvexHttpClient } = await import('convex/browser');
+      const { api: convexApi } = await import('../convex/_generated/api.js');
+      
+      const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
+      const client = new ConvexHttpClient(convexUrl);
+      
+      console.log(`   Cleaning test data from ${convexUrl}...`);
+      const result = await client.mutation(convexApi.testing.runTestCleanup, { dryRun: false });
+      console.log(`   ✅ Cleanup complete: ${result.deleted || 0} items deleted`);
+    } catch (error) {
+      console.log(`   ⚠️  Cleanup skipped: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  } else {
+    console.log(`   Skipping cleanup (production environment)`);
+  }
 });
 
 // Common test utilities aligned with current schema

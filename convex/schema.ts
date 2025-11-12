@@ -77,8 +77,7 @@ export default defineSchema({
       v.literal("active"), 
       v.literal("suspended"), 
       v.literal("banned"), 
-      v.literal("deactivated"),
-      v.literal("unclaimed")  // NEW: Agent created from dispute, not yet claimed by owner
+      v.literal("deactivated")
     ),
     deactivatedAt: v.optional(v.number()),
     deactivatedBy: v.optional(v.id("users")),
@@ -92,6 +91,11 @@ export default defineSchema({
     x402MetadataUrl: v.optional(v.string()), // .well-known/x402.json location
     claimedAt: v.optional(v.number()), // When agent was claimed by owner
     claimedByUserId: v.optional(v.id("users")), // Who claimed it
+    
+    // Test data markers (for automatic cleanup)
+    isTestData: v.optional(v.boolean()), // Mark as test data
+    testRunId: v.optional(v.number()), // Test run identifier for batch cleanup
+    testSourceFile: v.optional(v.string()), // Source test file
   })
     .index("by_did", ["did"])
     .index("by_owner", ["ownerDid"])
@@ -99,7 +103,8 @@ export default defineSchema({
     .index("by_functional_type", ["functionalType"])
     .index("by_organization", ["organizationId"])
     .index("by_public_key", ["publicKey"])
-    .index("by_wallet", ["walletAddress"]), // NEW: Query by Ethereum address
+    .index("by_wallet", ["walletAddress"]) // NEW: Query by Ethereum address
+    .index("by_test", ["isTestData"]), // NEW: Query test data for cleanup
 
   // ========================================
   // CASES TABLE - SINGLE SOURCE OF TRUTH
@@ -305,6 +310,11 @@ export default defineSchema({
     parties: v.optional(v.array(v.string())),
     ruling: v.optional(v.any()),
     breachDetails: v.optional(v.any()),
+    
+    // Test data markers (for automatic cleanup)
+    isTestData: v.optional(v.boolean()), // Mark as test data
+    testRunId: v.optional(v.number()), // Test run identifier for batch cleanup
+    testSourceFile: v.optional(v.string()), // Source test file
   })
     .index("by_status", ["status"])
     .index("by_type", ["type"])
@@ -314,7 +324,8 @@ export default defineSchema({
     .index("by_reviewer_org", ["reviewerOrganizationId"])
     .index("by_needs_review", ["reviewerOrganizationId", "humanReviewRequired"])
     .index("by_status_and_type", ["status", "type"])
-    .index("by_category", ["category"]),  // For GENERAL disputes
+    .index("by_category", ["category"]) // For GENERAL disputes
+    .index("by_test", ["isTestData"]), // Query test data for cleanup
 
   // Evidence manifests (ADP-compliant)
   evidenceManifests: defineTable({

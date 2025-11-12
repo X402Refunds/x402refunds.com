@@ -39,6 +39,7 @@ import type * as mcp from "../mcp.js";
 import type * as notifications from "../notifications.js";
 import type * as paymentDisputes from "../paymentDisputes.js";
 import type * as rulings from "../rulings.js";
+import type * as testing from "../testing.js";
 import type * as types from "../types.js";
 import type * as users from "../users.js";
 import type * as workflows from "../workflows.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   paymentDisputes: typeof paymentDisputes;
   rulings: typeof rulings;
+  testing: typeof testing;
   types: typeof types;
   users: typeof users;
   workflows: typeof workflows;

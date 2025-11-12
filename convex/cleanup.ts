@@ -59,7 +59,6 @@ export const analyzeDatabase = query({
         if (tableName === "agents") {
           const byStatus: Record<string, number> = {};
           const mockCount = allRecords.filter((r: any) => r.mock === true).length;
-          const unclaimedCount = allRecords.filter((r: any) => r.status === "unclaimed").length;
           
           for (const agent of allRecords) {
             const status = (agent as any).status || "unknown";
@@ -70,7 +69,6 @@ export const analyzeDatabase = query({
             ...details,
             byStatus,
             mockCount,
-            unclaimedCount,
             agents: allRecords.map((a: any) => ({
               _id: a._id,
               did: a.did,

@@ -129,10 +129,31 @@ API tests use native `fetch` to test real HTTP endpoints:
 - ✅ Request/response format validation
 
 ### Test Data Management
-Each test creates its own isolated data:
+
+#### In-Memory Tests (convex-test)
+Unit tests using `convex-test` have automatic cleanup:
 - Unique DIDs with timestamps
 - Independent owners and agents per test
-- Automatic cleanup via `convex-test`
+- Automatic cleanup via `convex-test` isolated databases
+
+#### HTTP Tests (Live Environment)
+HTTP tests hit live Convex deployments and require explicit cleanup:
+- **Test data markers**: All test fixtures include `isTestData: true`, `testRunId: <timestamp>`
+- **Global cleanup**: `test/setup.ts` runs cleanup after ALL tests complete
+- **Manual cleanup**: Run `node scripts/cleanup-all-test-data.js <convex-url>` if needed
+
+#### Test Data Markers
+Test data is identified by:
+- `isTestData: true` field (preferred)
+- Wallet addresses: `0x00000000...`, `0x98765432...`
+- DIDs/names containing "test", "mock"
+- Jurisdiction tags: `TEST`
+
+#### Cleanup Utilities
+- **Automatic**: Global `afterAll` in `test/setup.ts` cleans after test run
+- **Manual Dev**: `node scripts/cleanup-dev.js` 
+- **Manual Production**: `node scripts/cleanup-production.js` (with confirmation)
+- **Batch**: `node scripts/cleanup-all-test-data.js <url>` (runs until clean)
 
 ## Quality Checks
 
@@ -150,11 +171,12 @@ Tests run automatically on:
 
 ## Adding New Tests
 
-### Backend Function Test
+### Backend Function Test (In-Memory)
 1. Create test in appropriate file (`agents.test.ts`, `cases.test.ts`)
 2. Use `convexTest` for test isolation
 3. Create test data with unique identifiers
 4. Assert expected behavior
+5. **No cleanup needed** - convex-test handles it automatically
 
 Example:
 ```typescript
@@ -166,21 +188,36 @@ it('should do something', async () => {
 });
 ```
 
-### API Endpoint Test
-1. Add test to `api.test.ts` in appropriate describe block
+### HTTP Test (Live Environment)
+1. Add test to appropriate file (`api.test.ts`, `mcp-*.test.ts`)
 2. Use native `fetch` for HTTP calls
-3. Test both success and error cases
-4. Validate response structure
+3. **Add test markers** to any created data: `isTestData: true`, `testRunId: Date.now()`
+4. Test both success and error cases
+5. Validate response structure
+6. **Cleanup is automatic** via global `afterAll` hook in `test/setup.ts`
 
 Example:
 ```typescript
-it('should return expected data', async () => {
-  const response = await fetch(`${API_BASE_URL}/endpoint`);
+it('should create agent with test markers', async () => {
+  const response = await fetch(`${API_BASE_URL}/agents/register`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'Test Agent',
+      publicKey: 'test-key',
+      isTestData: true,  // IMPORTANT: Mark as test data
+      testRunId: Date.now(),
+    }),
+  });
   expect(response.status).toBe(200);
-  const data = await response.json();
-  expect(data.field).toBeDefined();
 });
 ```
+
+### IMPORTANT: Test Data Cleanup Rules
+- ✅ **DO** add `isTestData: true` to all test data
+- ✅ **DO** use `testRunId: Date.now()` for batch tracking
+- ✅ **DO** rely on global cleanup in `test/setup.ts`
+- ❌ **DON'T** test against production (`perceptive-lyrebird-89` or `api.x402disputes.com`)
+- ❌ **DON'T** leave test data behind (check with `node scripts/cleanup-all-test-data.js --dry-run`)
 
 ## Test Debugging
 
