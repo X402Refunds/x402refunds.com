@@ -107,12 +107,12 @@ const ruling = await response.json();
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
                 <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                  Dispute Resolution for Agentic Payments
+                  X-402 Dispute Registry & Resolution
                 </span>
               </h1>
               
               <p className="text-xl text-emerald-100 leading-relaxed">
-                Fair rulings. No bias.
+                Fair rulings. On-chain reputation. No bias.
               </p>
 
               {!isSignedIn && (
