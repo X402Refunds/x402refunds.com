@@ -68,8 +68,25 @@ export function RecentDisputesFeed() {
   return (
     <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-700">
       {recentCases.slice(0, 10).map((case_: Record<string, unknown>) => {
+        // Get parties - handle both parties array and plaintiff/defendant fields
         const parties = case_.parties as string[] | undefined;
-        if (!parties || parties.length < 2) return null;
+        const plaintiff = case_.plaintiff as string | undefined;
+        const defendant = case_.defendant as string | undefined;
+        
+        // Use parties array if available, otherwise construct from plaintiff/defendant
+        let party1: string | undefined;
+        let party2: string | undefined;
+        
+        if (parties && parties.length >= 2) {
+          party1 = parties[0];
+          party2 = parties[1];
+        } else if (plaintiff && defendant) {
+          party1 = plaintiff;
+          party2 = defendant;
+        } else {
+          // Skip this case if we can't determine parties
+          return null;
+        }
 
         return (
           <Link
@@ -80,9 +97,9 @@ export function RecentDisputesFeed() {
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
                 <div className="text-sm text-white font-medium truncate">
-                  {formatName(parties[0])}
+                  {formatName(party1)}
                   <span className="text-slate-500 mx-1">vs</span>
-                  {formatName(parties[1])}
+                  {formatName(party2)}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs flex-shrink-0">
@@ -94,9 +111,11 @@ export function RecentDisputesFeed() {
               <span className={`text-xs font-medium ${getStatusColor(case_.status as string)}`}>
                 {case_.status as string}
               </span>
-              <span className="text-xs text-slate-500">
-                {(case_.type as string).replace(/_/g, ' ')}
-              </span>
+              {case_.type && (
+                <span className="text-xs text-slate-500">
+                  {(case_.type as string).replace(/_/g, ' ')}
+                </span>
+              )}
             </div>
           </Link>
         );
