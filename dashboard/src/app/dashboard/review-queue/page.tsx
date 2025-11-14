@@ -109,7 +109,7 @@ export default function ReviewQueuePage() {
                   }}
                 >
                   <AnimatePresence>
-                    {displayQueue.map((dispute) => {
+                    {displayQueue.map((dispute: { _id: string; amount?: number; currency?: string; paymentDetails?: { disputeReason?: string }; aiRecommendation?: { confidence: number; verdict: string; reasoning?: string } }) => {
                       const isApproving = successDisputeId === dispute._id
                       return (
                         <motion.div

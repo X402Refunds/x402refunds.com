@@ -427,6 +427,43 @@ export default defineSchema({
     .index("by_overall_score", ["overallScore"])
     .index("by_win_rate", ["winRate"]),
 
+  // Agent reputation alias (for backward compatibility)
+  reputation: defineTable({
+    agentDid: v.string(),
+    casesFiled: v.number(),
+    casesDefended: v.number(),
+    casesWon: v.number(),
+    casesLost: v.number(),
+    slaViolations: v.number(),
+    violationsAgainstThem: v.number(),
+    winRate: v.number(),
+    reliabilityScore: v.number(),
+    overallScore: v.number(),
+    lastUpdated: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_agent", ["agentDid"])
+    .index("by_overall_score", ["overallScore"])
+    .index("by_win_rate", ["winRate"]),
+
+  // API Keys for organization access
+  apiKeys: defineTable({
+    key: v.string(),              // csk_live_xxxxx or csk_test_xxxxx
+    organizationId: v.id("organizations"),
+    name: v.string(),             // "Production", "Development", etc.
+    createdBy: v.id("users"),
+    status: v.union(
+      v.literal("active"),
+      v.literal("revoked")
+    ),
+    createdAt: v.number(),
+    revokedAt: v.optional(v.number()),
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_key", ["key"])
+    .index("by_organization", ["organizationId"])
+    .index("by_status", ["status"]),
+
   // Agent sponsorships
   sponsorships: defineTable({
     sponsorDid: v.string(),

@@ -78,16 +78,16 @@ export default function DashboardPage() {
 
   // Calculate metrics from all org cases
   const totalDisputes = allOrgCases?.length || 0
-  const resolvedDisputes = allOrgCases?.filter(c => c.status === "DECIDED" || c.status === "CLOSED").length || 0
+  const resolvedDisputes = allOrgCases?.filter((c: { status: string }) => c.status === "DECIDED" || c.status === "CLOSED").length || 0
   const reviewQueueCount = reviewQueue?.length || 0
 
   // Calculate financial impact
-  const totalFees = allOrgCases?.reduce((sum, c) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
+  const totalFees = allOrgCases?.reduce((sum: number, c: { paymentDetails?: { disputeFee?: number } }) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
 
   // Calculate win rates (from resolved disputes)
-  const resolvedCases = allOrgCases?.filter(c => c.finalVerdict) || []
-  const consumerWins = resolvedCases.filter(c => c.finalVerdict === "CONSUMER_WINS").length
-  const merchantWins = resolvedCases.filter(c => c.finalVerdict === "MERCHANT_WINS").length
+  const resolvedCases = allOrgCases?.filter((c: { finalVerdict?: string }) => c.finalVerdict) || []
+  const consumerWins = resolvedCases.filter((c: { finalVerdict?: string }) => c.finalVerdict === "CONSUMER_WINS").length
+  const merchantWins = resolvedCases.filter((c: { finalVerdict?: string }) => c.finalVerdict === "MERCHANT_WINS").length
 
   // Helper functions for activity feed
   const formatAgentName = (did: string) => {
@@ -208,7 +208,7 @@ export default function DashboardPage() {
   }
   
   // Filter events to show only dispute-related activity
-  const disputeEvents = recentEvents?.filter(evt =>
+  const disputeEvents = recentEvents?.filter((evt: { type: string }) =>
     ["DISPUTE_FILED", "CASE_STATUS_UPDATED", "EVIDENCE_SUBMITTED", "CASE_DECIDED"].includes(evt.type)
   ) || []
 
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                     In Disputes Now
                   </p>
                   <div className="text-3xl font-bold text-amber-600 font-mono">
-                    ${(reviewQueue?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0).toFixed(2)}
+                    ${(reviewQueue?.reduce((sum: number, d: { amount?: number }) => sum + (d.amount || 0), 0) || 0).toFixed(2)}
                   </div>
                   <p className="text-xs text-slate-600 mt-1">
                     {reviewQueueCount} dispute{reviewQueueCount !== 1 ? 's' : ''} awaiting review
@@ -350,7 +350,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <AnimatePresence mode="popLayout">
-                {disputeEvents.slice(0, 10).map((evt, index) => {
+                {disputeEvents.slice(0, 10).map((evt: unknown, index: number) => {
                   const event = evt as Event
                   const isDisputeFiled = event.type === "DISPUTE_FILED"
                   const caseData = event.caseData

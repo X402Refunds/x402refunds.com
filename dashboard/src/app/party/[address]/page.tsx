@@ -30,8 +30,8 @@ export default function PartyPage() {
     )
   }
 
-  const asPlaintiff = cases.filter(c => c.plaintiff === address)
-  const asDefendant = cases.filter(c => c.defendant === address)
+  const asPlaintiff = cases.filter((c: { plaintiff?: string | null }) => c.plaintiff === address)
+  const asDefendant = cases.filter((c: { defendant?: string | null }) => c.defendant === address)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -99,7 +99,7 @@ export default function PartyPage() {
               <Badge variant="secondary">{asPlaintiff.length}</Badge>
             </div>
             <div className="space-y-2">
-              {asPlaintiff.map((case_) => (
+              {asPlaintiff.map((case_: { _id: string; plaintiff?: string | null; defendant?: string | null; amount?: number | null; currency?: string; status?: string | null; filedAt?: number | null }) => (
                 <DisputeRow
                   key={case_._id}
                   caseId={case_._id}
@@ -123,7 +123,7 @@ export default function PartyPage() {
               <Badge variant="secondary">{asDefendant.length}</Badge>
             </div>
             <div className="space-y-2">
-              {asDefendant.map((case_) => (
+              {asDefendant.map((case_: { _id: string; plaintiff?: string | null; defendant?: string | null; amount?: number | null; currency?: string; status?: string | null; filedAt?: number | null }) => (
                 <DisputeRow
                   key={case_._id}
                   caseId={case_._id}

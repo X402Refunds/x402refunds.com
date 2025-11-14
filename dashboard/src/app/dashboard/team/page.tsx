@@ -93,7 +93,7 @@ export default function TeamPage() {
               </motion.div>
             ) : (
               <div className="space-y-3">
-                {teamMembers.map((member, index) => (
+                {teamMembers.map((member: { _id: string; name?: string; email: string; role: string }, index: number) => (
                   <motion.div
                     key={member._id}
                     initial={{ opacity: 0, x: -20 }}

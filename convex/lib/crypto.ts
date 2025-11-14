@@ -90,9 +90,11 @@ export const verifyEd25519Signature = action({
       // Use Web Crypto API to verify Ed25519 signature
       try {
         console.log("🔑 Importing public key...");
+        // Ensure we have proper ArrayBuffer (not SharedArrayBuffer)
+        const publicKeyBuffer = new Uint8Array(publicKeyBytes).buffer as ArrayBuffer;
         const cryptoKey = await crypto.subtle.importKey(
           "raw",
-          publicKeyBytes,
+          publicKeyBuffer,
           {
             name: "Ed25519",
             namedCurve: "Ed25519",
@@ -104,11 +106,14 @@ export const verifyEd25519Signature = action({
         console.log("✅ Public key imported successfully");
         console.log("🔍 Verifying signature...");
         
+        // Ensure we have proper ArrayBuffers (not SharedArrayBuffer)
+        const signatureBuffer = new Uint8Array(signatureBytes).buffer as ArrayBuffer;
+        const messageBuffer = new Uint8Array(messageBytes).buffer as ArrayBuffer;
         const isValid = await crypto.subtle.verify(
           "Ed25519",
           cryptoKey,
-          signatureBytes,
-          messageBytes
+          signatureBuffer,
+          messageBuffer
         );
 
         console.log(isValid ? "✅ Signature VALID!" : "❌ Signature INVALID!");
