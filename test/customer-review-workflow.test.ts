@@ -47,6 +47,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         key: `csk_test_${Date.now()}`,
         organizationId: testOrgId,
         name: "Test API Key",
+        createdBy: testUserId,
         status: "active",
         createdAt: Date.now(),
       });
