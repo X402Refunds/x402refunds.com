@@ -65,7 +65,107 @@ export function DisputeRow({
       className="p-4 hover:bg-slate-50 transition-colors cursor-pointer border-slate-200"
       onClick={() => caseId && router.push(`/cases/${caseId}`)}
     >
-      <div className="flex items-center justify-between gap-4">
+      {/* Mobile Layout (< md) - Stacked vertically */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {/* Row 1: Case ID + Status */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-mono text-slate-900 font-medium">
+              #{caseId ? caseId.slice(0, 8) : 'Unknown'}
+            </span>
+            {caseId && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyToClipboard(caseId, 'caseId')
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                {copiedField === 'caseId' ? (
+                  <Check className="h-3 w-3 text-emerald-600" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+              </button>
+            )}
+          </div>
+          <Badge className={`${getStatusColor(status)} text-xs`}>
+            {status ? status.replace('_', ' ') : 'Unknown'}
+          </Badge>
+        </div>
+
+        {/* Row 2: Amount + Timestamp */}
+        <div className="flex items-center justify-between gap-2">
+          {amount !== undefined && amount !== null && (
+            <div className="text-sm font-medium text-slate-900">
+              ${amount.toFixed(2)} {currency}
+            </div>
+          )}
+          <div className="text-xs text-slate-500">
+            {filedAt ? formatDistanceToNow(filedAt, { addSuffix: true }) : 'Unknown'}
+          </div>
+        </div>
+
+        {/* Row 3: Parties */}
+        <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-1 min-w-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/party/${encodeURIComponent(plaintiff || 'Unknown')}`)
+              }}
+              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              title="View all cases for this address"
+            >
+              {formatAddress(plaintiff)}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                copyToClipboard(plaintiff || 'Unknown', 'plaintiff')
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
+              title="Copy address"
+            >
+              {copiedField === 'plaintiff' ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
+          <span className="text-slate-400 flex-shrink-0">→</span>
+          <div className="flex items-center gap-1 min-w-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/party/${encodeURIComponent(defendant || 'Unknown')}`)
+              }}
+              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              title="View all cases for this address"
+            >
+              {formatAddress(defendant)}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                copyToClipboard(defendant || 'Unknown', 'defendant')
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
+              title="Copy address"
+            >
+              {copiedField === 'defendant' ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout (md+) - Horizontal */}
+      <div className="hidden md:flex items-center justify-between gap-4">
         {/* Case ID */}
         <div className="flex items-center gap-2 min-w-[120px]">
           <span className="text-sm font-mono text-slate-900 font-medium">
