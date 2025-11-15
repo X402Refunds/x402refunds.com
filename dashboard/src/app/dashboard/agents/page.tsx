@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
@@ -10,10 +10,12 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Plus, Users } from "lucide-react"
 import { AgentList } from "@/components/dashboard/agent-list"
+import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog"
 import { motion } from "framer-motion"
 
 export default function AgentsPage() {
   const { user, isLoaded } = useUser()
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   
   // Sync user on page load
   const syncUser = useMutation(api.users.syncUser)
@@ -75,11 +77,7 @@ export default function AgentsPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
-            <Button
-              disabled
-              className="bg-slate-300 text-slate-500 cursor-not-allowed"
-              title="Agent creation temporarily disabled"
-            >
+            <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Agent
             </Button>
@@ -110,13 +108,17 @@ export default function AgentsPage() {
             >
               <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-600 mb-4">No agents yet</p>
-              <p className="text-slate-500 text-sm">Agent creation temporarily disabled</p>
+              <p className="text-slate-500 text-sm">Create your first agent to get started</p>
             </motion.div>
           ) : (
             <AgentList agents={orgAgents} />
           )}
         </motion.div>
         
+        <CreateAgentDialog 
+          open={createDialogOpen} 
+          onOpenChange={setCreateDialogOpen} 
+        />
       </motion.div>
     </DashboardLayout>
   )

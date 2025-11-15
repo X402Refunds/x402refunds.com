@@ -45,7 +45,9 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
     });
 
     it('GET /version - Version info', async () => {
-      const response = await fetch(`${API_BASE_URL}/version`);
+      const response = await fetch(`${API_BASE_URL}/version`, {
+        signal: AbortSignal.timeout(8000) // 8s timeout (longer for production)
+      });
       expect(response.status).toBe(200);
       
       const data = await response.json();
@@ -53,7 +55,7 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       
       // Verify CORS headers
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    });
+    }, 15000); // 15s test timeout
   });
 
   describe('MCP Endpoints', () => {
