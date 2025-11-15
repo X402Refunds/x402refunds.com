@@ -117,9 +117,9 @@ export function RecentDisputesFeed() {
               <span className={`text-[10px] lg:text-xs font-medium ${getStatusColor(case_.status as string)}`}>
                 {case_.status as string}
               </span>
-              {case_.type && (
+              {case_.type != null && (
                 <span className="text-[10px] lg:text-xs text-slate-500 truncate">
-                  {(case_.type as string).replace(/_/g, ' ')}
+                  {String(case_.type).replace(/_/g, ' ')}
                 </span>
               )}
             </div>

@@ -237,7 +237,7 @@ export function AgentWorkflowTimeline({
                                 </div>
                               )}
 
-                              {step.output && (
+                              {step.output != null && (
                                 <div className="space-y-3">
                                   <p className="text-sm font-medium text-slate-700 mb-2">Agent Output:</p>
                                   
@@ -270,7 +270,16 @@ export function AgentWorkflowTimeline({
                                     let agentSteps: AgentOutput['steps'] | null = null;
                                     
                                     if (typeof output === 'string') {
-                                      reasoning = output;
+                                      try {
+                                        const parsed = JSON.parse(output) as AgentOutput;
+                                        reasoning = parsed.reasoning || parsed.research || parsed.calculation || parsed.analysis || parsed.text || output;
+                                        analysis = parsed.analysis || parsed.research || parsed.calculation || parsed.reasoning || parsed.text || output;
+                                        agentSteps = parsed.steps || null;
+                                      } catch {
+                                        // Not JSON, treat as plain text
+                                        reasoning = output;
+                                        analysis = output;
+                                      }
                                     } else if (output && typeof output === 'object') {
                                       // Extract text content from any of these fields
                                       const textContent = output.reasoning || output.research || output.calculation || output.analysis || output.text || null;
@@ -285,12 +294,12 @@ export function AgentWorkflowTimeline({
                                         {(reasoning || analysis) && reasoning !== '' && analysis !== '' && (
                                           <div className="bg-blue-50 border border-blue-200 rounded p-3">
                                             <p className="text-sm font-medium text-blue-900 mb-2">
-                                              {output && typeof output === 'object' && output.calculation !== undefined ? 'Calculation:' : 
-                                               output && typeof output === 'object' && output.research !== undefined ? 'Research:' : 
+                                              {output && typeof output === 'object' && 'calculation' in output ? 'Calculation:' : 
+                                               output && typeof output === 'object' && 'research' in output ? 'Research:' : 
                                                'Agent Reasoning:'}
                                             </p>
                                             <p className="text-sm text-blue-800 whitespace-pre-wrap">
-                                              {reasoning || analysis}
+                                              {String(reasoning || analysis || '')}
                                             </p>
                                           </div>
                                         )}
@@ -325,11 +334,11 @@ export function AgentWorkflowTimeline({
                                                       {agentStep.text}
                                                     </p>
                                                   )}
-                                                  {agentStep.result && (
+                                                  {agentStep.result != null && (
                                                     <pre className="text-xs bg-slate-50 p-2 rounded mt-1 overflow-auto">
                                                       {typeof agentStep.result === 'string' 
                                                         ? agentStep.result 
-                                                        : JSON.stringify(agentStep.result, null, 2)}
+                                                        : String(JSON.stringify(agentStep.result ?? null, null, 2))}
                                                     </pre>
                                                   )}
                                                 </div>
@@ -397,7 +406,7 @@ export function AgentWorkflowTimeline({
                                             View raw output (JSON)
                                           </summary>
                                           <pre className="text-xs bg-white p-3 rounded border border-slate-200 overflow-auto max-h-64 mt-2">
-                                            {JSON.stringify(step.output, null, 2)}
+                                            {String(JSON.stringify(step.output ?? null, null, 2))}
                                           </pre>
                                         </details>
                                       </>
@@ -406,11 +415,11 @@ export function AgentWorkflowTimeline({
                                 </div>
                               )}
 
-                              {step.input && (
+                              {step.input != null && (
                                 <div>
                                   <p className="text-sm font-medium text-slate-700 mb-2">Input:</p>
                                   <pre className="text-xs bg-white p-3 rounded border border-slate-200 overflow-auto max-h-32">
-                                    {typeof step.input === 'string' ? step.input : JSON.stringify(step.input, null, 2)}
+                                    {typeof step.input === 'string' ? step.input : String(JSON.stringify(step.input ?? null, null, 2))}
                                   </pre>
                                 </div>
                               )}

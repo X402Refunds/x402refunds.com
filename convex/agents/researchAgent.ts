@@ -21,7 +21,7 @@ const findSimilarCases = createTool({
     amountRange: z.string().optional().describe("Amount range filter (e.g., '0-100')"),
     limit: z.number().optional().describe("Maximum number of cases to return"),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     const { internal } = await import("../_generated/api");
     
     // Query cases with similar characteristics via internal query
@@ -29,38 +29,53 @@ const findSimilarCases = createTool({
       type: args.caseType,
     });
     
-    const cases = allCases || [];
+    type CaseData = {
+      _id?: string;
+      category?: string;
+      amount?: number;
+      filedAt?: number;
+      type?: string;
+      finalVerdict?: string;
+      aiRecommendation?: {
+        verdict?: string;
+        confidence?: number;
+        reasoning?: string;
+      };
+      [key: string]: unknown;
+    };
+    
+    const cases = (allCases || []) as CaseData[];
 
     // Filter by category if provided
     let filtered = cases;
     if (args.category) {
-      filtered = filtered.filter((c) => c.category === args.category);
+      filtered = filtered.filter((c: CaseData) => c.category === args.category);
     }
 
     // Filter by amount range if provided
     if (args.amountRange) {
       const [min, max] = args.amountRange.split("-").map(Number);
-      filtered = filtered.filter((c) => {
-        const amount = c.amount || 0;
+      filtered = filtered.filter((c: CaseData) => {
+        const amount = (c.amount as number | undefined) || 0;
         return amount >= min && amount <= max;
       });
     }
 
     // Sort by recency and take limit
     const sorted = filtered
-      .sort((a, b) => (b.filedAt || 0) - (a.filedAt || 0))
+      .sort((a: CaseData, b: CaseData) => ((b.filedAt as number | undefined) || 0) - ((a.filedAt as number | undefined) || 0))
       .slice(0, args.limit || 10);
 
     return {
       success: true,
-      cases: sorted.map((c) => ({
+      cases: sorted.map((c: CaseData) => ({
         caseId: c._id,
         type: c.type,
         category: c.category,
         amount: c.amount,
-        verdict: c.finalVerdict || c.aiRecommendation?.verdict,
-        confidence: c.aiRecommendation?.confidence,
-        reasoning: c.aiRecommendation?.reasoning,
+        verdict: c.finalVerdict || (c.aiRecommendation?.verdict as string | undefined),
+        confidence: c.aiRecommendation?.confidence as number | undefined,
+        reasoning: c.aiRecommendation?.reasoning as string | undefined,
         filedAt: c.filedAt,
       })),
       count: sorted.length,
@@ -75,12 +90,25 @@ const researchLegalPatterns = createTool({
     topic: z.string().describe("Topic to research"),
     jurisdiction: z.string().optional().describe("Jurisdiction filter"),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     const { internal } = await import("../_generated/api");
+    
+    type CaseData = {
+      _id?: string;
+      description?: string;
+      category?: string;
+      finalVerdict?: string;
+      aiRecommendation?: {
+        verdict?: string;
+        confidence?: number;
+        reasoning?: string;
+      };
+      [key: string]: unknown;
+    };
     
     // Query all cases via internal query
     const allCasesData = await ctx.runQuery(internal.cases.getAllCases, {});
-    const allCases = allCasesData || [];
+    const allCases = (allCasesData || []) as CaseData[];
 
     // Filter by topic keywords in description or category
     const keyword = args.topic.toLowerCase();
@@ -99,8 +127,8 @@ const researchLegalPatterns = createTool({
     };
 
     let totalConfidence = 0;
-    relevant.forEach((c) => {
-      const verdict = c.finalVerdict || c.aiRecommendation?.verdict || "PENDING";
+    relevant.forEach((c: { finalVerdict?: string; aiRecommendation?: { verdict?: string; confidence?: number }; category?: string }) => {
+      const verdict = c.finalVerdict || (c.aiRecommendation?.verdict as string | undefined) || "PENDING";
       patterns.verdicts[verdict] = (patterns.verdicts[verdict] || 0) + 1;
 
       if (c.aiRecommendation?.confidence) {
@@ -120,9 +148,9 @@ const researchLegalPatterns = createTool({
       success: true,
       topic: args.topic,
       patterns,
-      sampleCases: relevant.slice(0, 5).map((c) => ({
+      sampleCases: relevant.slice(0, 5).map((c: CaseData) => ({
         caseId: c._id,
-        verdict: c.finalVerdict || c.aiRecommendation?.verdict,
+        verdict: c.finalVerdict || (c.aiRecommendation?.verdict as string | undefined),
         reasoning: c.aiRecommendation?.reasoning?.substring(0, 200),
       })),
     };
@@ -164,7 +192,7 @@ export const lawClerkResearch = internalAction({
     category: v.optional(v.string()),
     amountRange: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     const result = await legalResearchAgent.generateText(
       ctx,
       { userId: args.caseId },

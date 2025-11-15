@@ -26,7 +26,7 @@ export const quickDecision = internalAction({
   args: {
     caseId: v.id("cases"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     // Get case (actions can call internal queries)
     const { internal } = await import("../_generated/api");
     const caseData = await ctx.runQuery(internal.cases.getCase, {

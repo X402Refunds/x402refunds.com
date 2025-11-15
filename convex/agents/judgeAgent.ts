@@ -18,7 +18,7 @@ const getCaseDetails = createTool({
   args: z.object({
     caseId: z.string().describe("Case ID to retrieve"),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     const { internal } = await import("../_generated/api");
     
     // Get case via query
@@ -151,7 +151,7 @@ export const judgeDecision = internalAction({
     quick: v.optional(v.boolean()),
     modelId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<unknown> => {
     // Use dynamic model if provided, otherwise use default judge agent
     let agent = judgeAgent;
     if (args.modelId) {

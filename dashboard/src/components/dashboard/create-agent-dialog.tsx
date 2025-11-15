@@ -48,6 +48,40 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
   const currentUser = useQuery(api.users.getCurrentUser, {})
   const registerAgent = useMutation(api.agents.registerAgentManual)
 
+  // Validate and normalize hex public key: convert hex to base64 for backend
+  const normalizePublicKey = (input: string): string | null => {
+    const trimmed = input.trim()
+    
+    // Remove 0x prefix if present
+    const withoutPrefix = trimmed.startsWith('0x') || trimmed.startsWith('0X') 
+      ? trimmed.slice(2) 
+      : trimmed
+    
+    // Validate hex format: exactly 64 hex characters (32 bytes)
+    const hexPattern = /^[0-9a-fA-F]{64}$/
+    if (!hexPattern.test(withoutPrefix)) {
+      return null // Invalid hex format
+    }
+    
+    // Convert hex to bytes, then to base64
+    try {
+      const bytes = new Uint8Array(
+        withoutPrefix.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
+      )
+      
+      // Validate we got exactly 32 bytes
+      if (bytes.length !== 32) {
+        return null
+      }
+      
+      // Convert to base64 for backend storage
+      return btoa(String.fromCharCode(...bytes))
+    } catch (error) {
+      console.error("Failed to convert hex to base64:", error)
+      return null
+    }
+  }
+
   const generateKeyPair = async () => {
     try {
       setGenerating(true)
@@ -62,16 +96,21 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
         ["sign", "verify"]
       )
 
-      // Export public key as raw bytes
+      // Export public key as raw bytes (32 bytes for Ed25519)
       const publicKeyBytes = await crypto.subtle.exportKey("raw", keyPair.publicKey)
-      const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKeyBytes)))
+      const publicKeyArray = new Uint8Array(publicKeyBytes)
+      
+      // Convert to hex format for display (64 hex chars)
+      const publicKeyHex = Array.from(publicKeyArray)
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('')
 
-      // Export private key as PKCS8
+      // Export private key as PKCS8 (for display, users should save this)
       const privateKeyBytes = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
       const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKeyBytes)))
 
-      setPublicKey(publicKeyBase64)
-      setPrivateKey(privateKeyBase64)
+      setPublicKey(publicKeyHex) // Display as hex
+      setPrivateKey(privateKeyBase64) // Private key stays as base64 (PKCS8 format)
       
       toast.success("Key pair generated successfully")
     } catch (error) {
@@ -95,11 +134,18 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       return
     }
 
+    // Validate and normalize hex public key (convert to base64 for backend)
+    const normalizedKey = normalizePublicKey(publicKey)
+    if (!normalizedKey) {
+      toast.error("Invalid public key. Must be 64 hex characters (32 bytes). Example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+      return
+    }
+
     try {
       const result = await registerAgent({
         userId: currentUser._id,
         name,
-        publicKey,
+        publicKey: normalizedKey, // Always send base64 to backend
         walletAddress,
         functionalType: functionalType as "api" | "financial" | "general",
       })
@@ -156,8 +202,8 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
           <div className="space-y-2">
             <Label htmlFor="functionalType">Functional Type</Label>
             <Select value={functionalType} onValueChange={setFunctionalType}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
+              <SelectTrigger className="w-full [&>span]:w-full">
+                <SelectValue placeholder="Select functional type" />
               </SelectTrigger>
               <SelectContent>
                 {FUNCTIONAL_TYPES.map((type) => (
@@ -197,7 +243,7 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
                 id="publicKey"
                 value={publicKey}
                 onChange={(e) => setPublicKey(e.target.value)}
-                placeholder="Base64-encoded public key"
+                placeholder="Enter 64 hex characters (0x optional)"
                 required
                 className="font-mono text-xs"
               />
@@ -212,6 +258,9 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
                 </Button>
               )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Ed25519 public key: 64 hex characters (32 bytes). Example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            </p>
           </div>
 
           {privateKey && (
