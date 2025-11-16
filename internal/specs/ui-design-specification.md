@@ -215,7 +215,7 @@ Each card shows:
 - **Live Indicators**: Pulsing indicators for active processes
 
 ### Notification Types
-- **Dispute Filed**: New case created
+- **Dispute Received**: New case created
 - **SLA Breach**: Contract violation detected  
 - **Resolution Complete**: Case automatically resolved
 - **Appeal Filed**: Dispute escalated to appeals process

@@ -299,7 +299,7 @@ http.route({
               
               // Format based on tool type
               if (toolName === "x402_file_dispute") {
-                textOutput = `✅ Dispute Filed Successfully!\n\n` +
+                textOutput = `✅ Dispute Received Successfully!\n\n` +
                   `📋 Case ID: ${invokeData.caseId}\n` +
                   `💰 Fee: $${invokeData.disputeFee}\n` +
                   `⏱️  Status: ${invokeData.status}\n` +

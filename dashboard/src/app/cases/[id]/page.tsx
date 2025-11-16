@@ -208,6 +208,26 @@ export default function PublicCaseTrackingPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Dashboard Link - for merchants to resolve disputes */}
+              {paymentDispute && !["DECIDED", "CLOSED"].includes(caseDetails.status) && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-emerald-900 mb-2">
+                      Are you the merchant?
+                    </p>
+                    <p className="text-sm text-emerald-700 mb-3">
+                      Review AI analysis and resolve this dispute in your dashboard.
+                    </p>
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => window.location.href = `/dashboard/disputes/${caseId}`}
+                    >
+                      Go to Dashboard to Resolve
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
           </motion.div>
@@ -343,6 +363,7 @@ export default function PublicCaseTrackingPage() {
                               variant="default"
                               className="bg-purple-600 hover:bg-purple-700 whitespace-nowrap h-8"
                               onClick={() => {
+                                if (!caseDetails.paymentDetails?.crypto) return;
                                 const url = caseDetails.paymentDetails.crypto.explorerUrl || 
                                            getTransactionExplorerUrl(
                                              caseDetails.paymentDetails.crypto.blockchain, 
@@ -352,7 +373,7 @@ export default function PublicCaseTrackingPage() {
                               }}
                             >
                               <ExternalLink className="h-3 w-3 mr-1.5" />
-                              View on {getExplorerName(caseDetails.paymentDetails.crypto.blockchain)}
+                              View on {getExplorerName(caseDetails.paymentDetails?.crypto.blockchain || 'ethereum')}
                             </Button>
                           </div>
                         </div>
@@ -477,7 +498,7 @@ export default function PublicCaseTrackingPage() {
                     <div className="h-3 w-3 rounded-full bg-emerald-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">Dispute Filed</p>
+                    <p className="font-semibold text-slate-900">Dispute Received</p>
                     <p className="text-sm text-slate-600">{formatTimestamp(caseDetails.filedAt)}</p>
                   </div>
                 </div>
