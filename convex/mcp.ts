@@ -554,7 +554,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               received: parameters.transactionHash,
               expected: "Valid confirmed transaction on specified blockchain",
               suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
-              details: txDetails?.error || "Unknown error"
+              details: (txDetails && 'error' in txDetails) ? txDetails.error : "Unknown error"
             }
           }), {
             status: 400,
@@ -562,8 +562,18 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         }
         
+        // Type narrowing: Extract transaction details safely
+        // Use type assertion after success check to access properties
+        const txData = txDetails as any;
+        const fromAddress = txData.fromAddress || "";
+        const toAddress = txData.toAddress || "";
+        const txValue = txData.value || "0";
+        const txCurrency = txData.currency || "USD";
+        const txBlockNumber = txData.blockNumber || 0;
+        const txAmountUsd = txData.amountUsd || parseFloat(txValue);
+        
         // 4. Validate addresses match blockchain transaction
-        if (txDetails.fromAddress.toLowerCase() !== parameters.plaintiff.toLowerCase()) {
+        if (fromAddress.toLowerCase() !== parameters.plaintiff.toLowerCase()) {
           return new Response(JSON.stringify({
             success: false,
             error: {
@@ -571,8 +581,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               message: "Plaintiff address doesn't match transaction sender",
               field: "plaintiff",
               received: parameters.plaintiff,
-              expected: txDetails.fromAddress,
-              suggestion: `Transaction was sent from ${txDetails.fromAddress}, not ${parameters.plaintiff}. Verify you're using the correct wallet address.`
+              expected: fromAddress,
+              suggestion: `Transaction was sent from ${fromAddress}, not ${parameters.plaintiff}. Verify you're using the correct wallet address.`
             }
           }), {
             status: 400,
@@ -580,7 +590,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
 
-        if (txDetails.toAddress.toLowerCase() !== defendant.toLowerCase()) {
+        if (toAddress.toLowerCase() !== defendant.toLowerCase()) {
           return new Response(JSON.stringify({
             success: false,
             error: {
@@ -588,8 +598,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               message: "Defendant address doesn't match transaction recipient",
               field: "defendant",
               received: defendant,
-              expected: txDetails.toAddress,
-              suggestion: `Transaction was sent to ${txDetails.toAddress}, not ${defendant}. Verify you're disputing the correct seller.`
+              expected: toAddress,
+              suggestion: `Transaction was sent to ${toAddress}, not ${defendant}. Verify you're disputing the correct seller.`
             }
           }), {
             status: 400,
@@ -598,20 +608,20 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
         console.log(`✅ Addresses validated: ${parameters.plaintiff} → ${defendant}`);
-        console.log(`✅ Payment verified: ${txDetails.value} ${txDetails.currency} on ${parameters.blockchain}`);
+        console.log(`✅ Payment verified: ${txValue} ${txCurrency} on ${parameters.blockchain}`);
         
         // 5. Build evidence object from request/response
         const evidence: any = {
           request: parameters.request,
           response: parameters.response,
-          amountUsd: txDetails.amountUsd || parseFloat(txDetails.value),
+          amountUsd: txAmountUsd,
           x402paymentDetails: {
-            currency: txDetails.currency,
+            currency: txCurrency,
             blockchain: parameters.blockchain,
             transactionHash: parameters.transactionHash,
             fromAddress: parameters.plaintiff,
             toAddress: defendant,
-            blockNumber: txDetails.blockNumber
+            blockNumber: txBlockNumber
             // Note: 'value' not included - schema doesn't support it
           }
         };
@@ -657,8 +667,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               action: "file_x402_payment_dispute",
               plaintiff: parameters.plaintiff,
               defendant: defendant,
-              amount: txDetails.amountUsd || parseFloat(txDetails.value),
-              currency: txDetails.currency,
+              amount: txAmountUsd,
+              currency: txCurrency,
               blockchain: parameters.blockchain,
               transactionHash: parameters.transactionHash,
               estimatedFee: 0.05
@@ -673,11 +683,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               response: "✓ Response object provided"
             },
             blockchainDetails: {
-              from: txDetails.fromAddress,
-              to: txDetails.toAddress,
-              amount: txDetails.value,
-              currency: txDetails.currency,
-              blockNumber: txDetails.blockNumber
+              from: fromAddress,
+              to: toAddress,
+              amount: txValue,
+              currency: txCurrency,
+              blockNumber: txBlockNumber
             },
             nextSteps: [
               "Remove 'dryRun: true' to file the dispute",
@@ -693,8 +703,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         // 8. File payment dispute with blockchain-verified details
         const paymentDisputeArgs: any = {
           transactionId: parameters.transactionHash,
-          amount: txDetails.amountUsd || parseFloat(txDetails.value),
-          currency: txDetails.currency,
+          amount: txAmountUsd,
+          currency: txCurrency,
           plaintiff: parameters.plaintiff,
           defendant: defendant,
           disputeReason: "quality_issue",

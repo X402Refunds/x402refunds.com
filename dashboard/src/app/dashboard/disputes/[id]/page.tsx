@@ -121,7 +121,7 @@ export default function DisputeDetailPage() {
     )
   }
 
-  const isResolved = dispute.humanReviewedAt || dispute.finalVerdict
+  const isResolved = !!dispute.humanReviewedAt
   
   // Extract party information
   const consumerInfo = {
