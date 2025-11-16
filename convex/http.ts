@@ -259,24 +259,163 @@ http.route({
             });
           }
 
-          // Call the /mcp/invoke endpoint via internal fetch
-          // Construct the full URL for the internal request
-          const url = new URL(request.url);
-          const invokeUrl = `${url.protocol}//${url.host}/mcp/invoke`;
+          // Call tool handlers directly (no internal HTTP fetch)
+          // This is more reliable than fetch() for Convex HTTP actions
+          let invokeData: any;
           
           try {
-            const invokeResponse = await fetch(invokeUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                tool: toolName,
-                parameters: toolArgs || {}
-              })
-            });
-            
-            const invokeData = await invokeResponse.json();
+            // Route to appropriate handler based on tool name
+            switch (toolName) {
+              case "x402_file_dispute": {
+                // Call payment dispute handler directly
+                const parameters = toolArgs || {};
+                
+                // Extract defendant from disputeUrl if provided
+                let defendant = parameters.defendant;
+                if (parameters.disputeUrl) {
+                  try {
+                    const disputeUrl = new URL(parameters.disputeUrl);
+                    const vendorFromUrl = disputeUrl.searchParams.get('vendor');
+                    if (vendorFromUrl) {
+                      defendant = vendorFromUrl;
+                    }
+                  } catch (e) {
+                    // Invalid URL, use defendant parameter
+                  }
+                }
+                
+                // Validate required fields (basic validation only - full validation in mutation)
+                if (!parameters.plaintiff || !defendant || !parameters.description || 
+                    !parameters.request || !parameters.response || 
+                    !parameters.transactionHash || !parameters.blockchain) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "MISSING_REQUIRED_FIELDS",
+                      message: "Missing required fields for dispute filing",
+                      required: ["plaintiff", "defendant", "description", "request", "response", "transactionHash", "blockchain"]
+                    }
+                  };
+                  break;
+                }
+                
+                // Query blockchain for transaction details
+                const txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
+                  blockchain: parameters.blockchain,
+                  transactionHash: parameters.transactionHash,
+                  expectedFromAddress: parameters.plaintiff,
+                  expectedToAddress: defendant
+                });
+                
+                if (!txDetails || !txDetails.success) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "TRANSACTION_NOT_FOUND",
+                      message: `Transaction not found on ${parameters.blockchain}`,
+                      details: (txDetails && 'error' in txDetails) ? txDetails.error : "Unknown error"
+                    }
+                  };
+                  break;
+                }
+                
+                // Build payment dispute args
+                const txData = txDetails as any;
+                const paymentDisputeArgs: any = {
+                  transactionId: parameters.transactionHash,
+                  amount: txData.amountUsd || 0,
+                  currency: txData.currency || "USD",
+                  plaintiff: parameters.plaintiff,
+                  defendant: defendant,
+                  disputeReason: "quality_issue",
+                  description: parameters.description,
+                  evidenceUrls: [],
+                  callbackUrl: parameters.callbackUrl,
+                  plaintiffMetadata: { 
+                    walletAddress: parameters.plaintiff,
+                    requestJson: JSON.stringify(parameters.request)
+                  },
+                  defendantMetadata: { 
+                    walletAddress: defendant,
+                    responseJson: JSON.stringify(parameters.response)
+                  }
+                };
+                
+                // Check for defendant's organization
+                const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet as any, {
+                  walletAddress: defendant
+                });
+                
+                if (defendantAgent?.organizationId) {
+                  paymentDisputeArgs.reviewerOrganizationId = defendantAgent.organizationId;
+                }
+                
+                // File the dispute
+                const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
+                
+                invokeData = {
+                  success: true,
+                  disputeType: "PAYMENT",
+                  caseId: result.caseId,
+                  paymentDisputeId: result.paymentDisputeId,
+                  status: result.status,
+                  isMicroDispute: result.isMicroDispute,
+                  disputeFee: result.fee,
+                  humanReviewRequired: result.humanReviewRequired,
+                  estimatedResolutionTime: result.estimatedResolutionTime,
+                  message: `X-402 payment dispute filed successfully. Case ID: ${result.caseId}`,
+                  trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
+                  nextSteps: [
+                    "Submit additional evidence (optional)",
+                    "AI analyzes dispute + provides recommendation",
+                    "Your team reviews exceptions in dashboard",
+                    "Resolution within 10 business days (Regulation E)"
+                  ]
+                };
+                break;
+              }
+              
+              case "x402_list_my_cases": {
+                const parameters = toolArgs || {};
+                const cases = await ctx.runQuery(api.cases.getCasesByParty, {
+                  party: parameters.walletAddress
+                });
+                
+                const filteredCases = parameters.status && parameters.status !== "all"
+                  ? cases.filter((c: any) => c.status === parameters.status)
+                  : cases;
+                
+                invokeData = {
+                  success: true,
+                  walletAddress: parameters.walletAddress,
+                  totalCases: filteredCases.length,
+                  cases: filteredCases
+                };
+                break;
+              }
+              
+              case "x402_check_case_status": {
+                const parameters = toolArgs || {};
+                const caseData = await ctx.runQuery(internal.cases.getCase, {
+                  caseId: parameters.caseId as any
+                });
+                
+                invokeData = {
+                  success: true,
+                  case: caseData
+                };
+                break;
+              }
+              
+              default:
+                invokeData = {
+                  success: false,
+                  error: {
+                    code: "TOOL_NOT_FOUND",
+                    message: `Unknown tool: ${toolName}`
+                  }
+                };
+            }
             
             // Format response according to MCP protocol
             // MCP requires tool results in content blocks format
