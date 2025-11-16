@@ -14,13 +14,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Loader2, KeyRound, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 
@@ -29,18 +22,11 @@ interface CreateAgentDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-const FUNCTIONAL_TYPES = [
-  { value: "api", label: "API" },
-  { value: "financial", label: "Financial" },
-  { value: "general", label: "General" },
-]
-
 export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps) {
   const [name, setName] = useState("")
   const [publicKey, setPublicKey] = useState("")
   const [privateKey, setPrivateKey] = useState("")
   const [walletAddress, setWalletAddress] = useState("")
-  const [functionalType, setFunctionalType] = useState("api")
   const [generating, setGenerating] = useState(false)
   const [copiedPublic, setCopiedPublic] = useState(false)
   const [copiedPrivate, setCopiedPrivate] = useState(false)
@@ -48,38 +34,68 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
   const currentUser = useQuery(api.users.getCurrentUser, {})
   const registerAgent = useMutation(api.agents.registerAgentManual)
 
-  // Validate and normalize hex public key: convert hex to base64 for backend
+  // Validate and normalize base64 public key: accept base64 or SSH .pub format
   const normalizePublicKey = (input: string): string | null => {
     const trimmed = input.trim()
     
-    // Remove 0x prefix if present
-    const withoutPrefix = trimmed.startsWith('0x') || trimmed.startsWith('0X') 
-      ? trimmed.slice(2) 
-      : trimmed
-    
-    // Validate hex format: exactly 64 hex characters (32 bytes)
-    const hexPattern = /^[0-9a-fA-F]{64}$/
-    if (!hexPattern.test(withoutPrefix)) {
-      return null // Invalid hex format
-    }
-    
-    // Convert hex to bytes, then to base64
-    try {
-      const bytes = new Uint8Array(
-        withoutPrefix.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
-      )
-      
-      // Validate we got exactly 32 bytes
-      if (bytes.length !== 32) {
-        return null
+    // Handle SSH .pub format: ssh-ed25519 <base64> <comment>
+    if (trimmed.startsWith('ssh-ed25519')) {
+      const parts = trimmed.split(/\s+/)
+      if (parts.length >= 2) {
+        const sshBase64 = parts[1]
+        try {
+          // Decode SSH format to extract raw Ed25519 key
+          const decoded = atob(sshBase64)
+          const bytes = new Uint8Array(decoded.length)
+          for (let i = 0; i < decoded.length; i++) {
+            bytes[i] = decoded.charCodeAt(i)
+          }
+          
+          // SSH format: [4 bytes: key type len][key type][4 bytes: pubkey len][32 bytes: pubkey]
+          // The last 32 bytes are the actual Ed25519 public key
+          if (bytes.length >= 32) {
+            const pubkeyBytes = bytes.slice(-32) // Last 32 bytes are the Ed25519 key
+            return btoa(String.fromCharCode(...pubkeyBytes))
+          }
+        } catch (error) {
+          console.error("Failed to parse SSH format:", error)
+          return null
+        }
       }
-      
-      // Convert to base64 for backend storage
-      return btoa(String.fromCharCode(...bytes))
-    } catch (error) {
-      console.error("Failed to convert hex to base64:", error)
       return null
     }
+    
+    // Handle raw base64 (could be 32-byte key, SPKI format, or SSH format without prefix)
+    // Try to decode and extract 32-byte Ed25519 key
+    const base64Pattern = /^[A-Za-z0-9+/=]+$/
+    if (base64Pattern.test(trimmed)) {
+      try {
+        const decoded = atob(trimmed)
+        const bytes = new Uint8Array(decoded.length)
+        for (let i = 0; i < decoded.length; i++) {
+          bytes[i] = decoded.charCodeAt(i)
+        }
+        
+        // If it's exactly 32 bytes, it's the raw key
+        if (bytes.length === 32) {
+          return trimmed // Already valid 32-byte base64
+        }
+        
+        // If it's longer (SPKI format ~44 bytes, or SSH format ~51 bytes), extract last 32 bytes
+        if (bytes.length >= 32) {
+          const pubkeyBytes = bytes.slice(-32)
+          return btoa(String.fromCharCode(...pubkeyBytes))
+        }
+        
+        // Too short
+        return null
+      } catch (error) {
+        console.error("Failed to decode base64:", error)
+        return null
+      }
+    }
+    
+    return null // Invalid format
   }
 
   const generateKeyPair = async () => {
@@ -100,16 +116,14 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       const publicKeyBytes = await crypto.subtle.exportKey("raw", keyPair.publicKey)
       const publicKeyArray = new Uint8Array(publicKeyBytes)
       
-      // Convert to hex format for display (64 hex chars)
-      const publicKeyHex = Array.from(publicKeyArray)
-        .map(byte => byte.toString(16).padStart(2, '0'))
-        .join('')
+      // Convert to base64 for display and storage
+      const publicKeyBase64 = btoa(String.fromCharCode(...publicKeyArray))
 
       // Export private key as PKCS8 (for display, users should save this)
       const privateKeyBytes = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
       const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKeyBytes)))
 
-      setPublicKey(publicKeyHex) // Display as hex
+      setPublicKey(publicKeyBase64) // Display as base64
       setPrivateKey(privateKeyBase64) // Private key stays as base64 (PKCS8 format)
       
       toast.success("Key pair generated successfully")
@@ -134,10 +148,10 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       return
     }
 
-    // Validate and normalize hex public key (convert to base64 for backend)
+    // Validate and normalize base64 public key
     const normalizedKey = normalizePublicKey(publicKey)
     if (!normalizedKey) {
-      toast.error("Invalid public key. Must be 64 hex characters (32 bytes). Example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+      toast.error("Invalid public key. Must be base64 or SSH .pub format (ssh-ed25519 ...)")
       return
     }
 
@@ -145,9 +159,9 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       const result = await registerAgent({
         userId: currentUser._id,
         name,
-        publicKey: normalizedKey, // Always send base64 to backend
+        publicKey: normalizedKey, // Base64 format (32 bytes)
         walletAddress,
-        functionalType: functionalType as "api" | "financial" | "general",
+        functionalType: "general", // Default to general
       })
 
       toast.success(`Agent registered: ${result.did}`)
@@ -157,7 +171,6 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       setPublicKey("")
       setPrivateKey("")
       setWalletAddress("")
-      setFunctionalType("api")
       onOpenChange(false)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -200,22 +213,6 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="functionalType">Functional Type</Label>
-            <Select value={functionalType} onValueChange={setFunctionalType}>
-              <SelectTrigger className="w-full [&>span]:w-full">
-                <SelectValue placeholder="Select functional type" />
-              </SelectTrigger>
-              <SelectContent>
-                {FUNCTIONAL_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="publicKey">Public Key (Ed25519)</Label>
               <Button
@@ -243,7 +240,7 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
                 id="publicKey"
                 value={publicKey}
                 onChange={(e) => setPublicKey(e.target.value)}
-                placeholder="Enter 64 hex characters (0x optional)"
+                placeholder="Paste base64 or SSH .pub file content"
                 required
                 className="font-mono text-xs"
               />
@@ -259,7 +256,7 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Ed25519 public key: 64 hex characters (32 bytes). Example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+              Paste from ~/.ssh/id_ed25519.pub or enter base64 (43-44 characters)
             </p>
           </div>
 
