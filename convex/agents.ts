@@ -54,8 +54,18 @@ export const joinAgent = mutation({
       let normalizedWalletAddress: string | undefined = undefined;
       if (args.walletAddress) {
         normalizedWalletAddress = args.walletAddress.trim();
-      if (!isValidEthereumAddress(normalizedWalletAddress)) {
-        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+        if (!isValidEthereumAddress(normalizedWalletAddress)) {
+          throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+        }
+        
+        // Check if wallet address is already in use
+        const existingAgent = await ctx.db
+          .query("agents")
+          .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress!.toLowerCase()))
+          .first();
+        
+        if (existingAgent) {
+          throw new Error(`Wallet address ${normalizedWalletAddress} is already registered to agent ${existingAgent.did} (${existingAgent.name || 'unnamed'}). Each Ethereum address can only be associated with one agent.`);
         }
       }
 
@@ -666,6 +676,16 @@ export const registerAgentManual = mutation({
       const normalizedWalletAddress = args.walletAddress.trim();
       if (!isValidEthereumAddress(normalizedWalletAddress)) {
         throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      }
+
+      // Check if wallet address is already in use
+      const existingAgent = await ctx.db
+        .query("agents")
+        .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress.toLowerCase()))
+        .first();
+      
+      if (existingAgent) {
+        throw new Error(`Wallet address ${normalizedWalletAddress} is already registered to agent ${existingAgent.did} (${existingAgent.name || 'unnamed'}). Each Ethereum address can only be associated with one agent.`);
       }
 
       // 1. Get user and organization

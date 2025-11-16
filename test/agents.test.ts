@@ -106,6 +106,33 @@ describe('Agent Registration & Reputation - MVP', () => {
         t.mutation(api.agents.joinAgent, agentData)
       ).rejects.toThrow();
     });
+
+    it('should prevent duplicate wallet address registration', async () => {
+      const walletAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0';
+      
+      // Register first agent with wallet address
+      const firstAgent = await t.mutation(api.agents.joinAgent, {
+        name: 'First Agent',
+        publicKey: testPublicKey,
+        organizationName: 'Test Organization',
+        walletAddress: walletAddress,
+        functionalType: 'general' as const,
+      });
+      
+      expect(firstAgent.agentId).toBeDefined();
+      expect(firstAgent.walletAddress).toBe(walletAddress.toLowerCase());
+
+      // Try to register second agent with same wallet address
+      await expect(
+        t.mutation(api.agents.joinAgent, {
+          name: 'Second Agent',
+          publicKey: 'different-public-key-base64',
+          organizationName: 'Different Organization',
+          walletAddress: walletAddress, // Same wallet address
+          functionalType: 'general' as const,
+        })
+      ).rejects.toThrow(/already registered/);
+    });
   });
 
   describe('Reputation Updates', () => {
