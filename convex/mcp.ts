@@ -76,7 +76,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
-    description: "File X-402 payment dispute. Agents file disputes directly - no permission required. Dispute and refund data written on-chain. $0.05 flat fee.",
+    description: "File X-402 payment dispute for API service failures. Permissionless filing with blockchain transaction verification.",
     inputSchema: {
       type: "object",
       properties: {
