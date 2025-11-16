@@ -448,17 +448,24 @@ export default defineSchema({
 
   // API Keys for organization access
   apiKeys: defineTable({
-    key: v.string(),              // csk_live_xxxxx or csk_test_xxxxx
+    key: v.optional(v.string()),              // csk_live_xxxxx or csk_test_xxxxx
     organizationId: v.id("organizations"),
     name: v.string(),             // "Production", "Development", etc.
-    createdBy: v.id("users"),
+    createdBy: v.optional(v.id("users")),
     status: v.union(
       v.literal("active"),
       v.literal("revoked")
     ),
     createdAt: v.number(),
     revokedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.id("users")),
     lastUsedAt: v.optional(v.number()),
+    // Legacy fields (backward compatibility)
+    token: v.optional(v.string()),            // Old field name for key
+    createdByUserId: v.optional(v.id("users")), // Old field name for createdBy
+    active: v.optional(v.boolean()),          // Old status field
+    permissions: v.optional(v.array(v.string())),
+    expiresAt: v.optional(v.number()),
   })
     .index("by_key", ["key"])
     .index("by_organization", ["organizationId"])
