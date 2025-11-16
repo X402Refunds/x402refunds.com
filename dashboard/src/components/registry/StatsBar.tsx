@@ -11,10 +11,21 @@ export function StatsBar() {
   // Calculate average resolution time in human-readable format
   const formatResolutionTime = (ms: number) => {
     if (ms === 0) return "N/A"
-    const hours = Math.round(ms / (1000 * 60 * 60))
-    if (hours < 24) return `${hours} hrs`
-    const days = Math.round(hours / 24)
-    return `${days} days`
+    
+    const minutes = ms / (1000 * 60)
+    const hours = ms / (1000 * 60 * 60)
+    const days = hours / 24
+    
+    // Show minutes if less than 1 hour
+    if (hours < 1) {
+      return `${Math.round(minutes)} min`
+    }
+    // Show hours if less than 24 hours
+    if (hours < 24) {
+      return `${Math.round(hours)} hrs`
+    }
+    // Show days for longer resolutions
+    return `${Math.round(days)} days`
   }
 
   // Default values while loading or on error
