@@ -506,6 +506,43 @@ export const updateCaseStatus = internalMutation({
   },
 });
 
+// Public mutation for migrations and admin operations
+export const updateCaseStatusPublic = mutation({
+  args: {
+    caseId: v.id("cases"),
+    status: v.union(
+      v.literal("FILED"),
+      v.literal("ANALYZED"),
+      v.literal("AUTORULED"),
+      v.literal("IN_REVIEW"),
+      v.literal("PANELED"),
+      v.literal("DECIDED"),
+      v.literal("CLOSED")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const case_ = await ctx.db.get(args.caseId);
+    if (!case_) {
+      throw new Error("Case not found");
+    }
+
+    await ctx.db.patch(args.caseId, { status: args.status });
+
+    // Log custody event
+    await createCustodyEvent(ctx, {
+      type: "CASE_STATUS_UPDATED",
+      caseId: args.caseId,
+      agentDid: undefined, // system action
+      payload: {
+        oldStatus: case_.status,
+        newStatus: args.status,
+      },
+    });
+
+    return args.caseId;
+  },
+});
+
 // Update case ruling - for autoRule integration
 export const updateCaseRuling = mutation({
   args: {

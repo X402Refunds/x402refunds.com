@@ -42,7 +42,9 @@ export const finalizeRuling = internalMutation({
       },
     });
 
-    // Update case with AI recommendation
+    // Update case with AI recommendation only
+    // NOTE: Do NOT set finalVerdict or decidedAt here - those should only be set
+    // when a human makes a final decision (humanReview, customerReview, autoApproveAIRecommendation)
     await ctx.db.patch(args.caseId, {
       aiRecommendation: {
         verdict: args.verdict,
@@ -51,8 +53,6 @@ export const finalizeRuling = internalMutation({
         analyzedAt: Date.now(),
         similarCases: [],
       },
-      finalVerdict: args.verdict,
-      decidedAt: Date.now(),
     });
 
     return rulingId;
