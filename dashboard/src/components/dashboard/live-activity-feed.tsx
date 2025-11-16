@@ -71,8 +71,12 @@ export default function LiveActivityFeed() {
     return colors[type] || "bg-muted text-muted-foreground border-border";
   };
 
-  // Helper function to get the badge label - just format the event type
+  // Helper function to get the badge label - format the event type with custom labels
   const getEventBadge = (eventType: string) => {
+    // Custom labels for specific event types
+    if (eventType === "DISPUTE_FILED") {
+      return "Dispute Received";
+    }
     return eventType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
