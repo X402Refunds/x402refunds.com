@@ -154,6 +154,37 @@ http.route({
   handler: mcpInvoke
 });
 
+// MCP SSE endpoint (GET) - for Claude Desktop connection initialization
+http.route({
+  path: "/mcp",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    // Claude Desktop initiates SSE connection with GET request
+    // Return SSE stream that stays open for server-to-client messages
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          // Send initial connection confirmation
+          const encoder = new TextEncoder();
+          controller.enqueue(encoder.encode(`event: endpoint\ndata: /mcp\n\n`));
+          
+          // Keep connection alive
+          // Note: Convex HTTP actions have a timeout, so this will eventually close
+          // Claude Desktop will reconnect as needed
+        }
+      }),
+      {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Origin": "*"
+        }
+      }
+    );
+  })
+});
+
 // Standard MCP endpoint (JSON-RPC 2.0 protocol)
 // This is the standard MCP endpoint that Cursor and other MCP clients expect
 http.route({
