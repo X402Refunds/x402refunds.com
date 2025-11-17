@@ -69,23 +69,29 @@ export default function DisputeDetailPage() {
 
   const handleOverride = async () => {
     if (!currentUser || !dispute) return
+    const aiNeedsReview = dispute.aiRecommendation?.verdict === "NEED_REVIEW"
     if (!notes.trim()) {
-      alert("Please provide notes explaining your decision")
+      const message = aiNeedsReview 
+        ? "Please explain your decision (helps AI learn)"
+        : "Please provide notes explaining your decision"
+      alert(message)
       return
     }
     setSubmitting(true)
     try {
+      // If AI said NEED_REVIEW, this is a manual decision (not an override)
+      const decision = aiNeedsReview ? "AI_UNABLE" : "OVERRIDE"
       await customerReview({
         paymentDisputeId: dispute._id,
         reviewerUserId: currentUser._id,
-        decision: "OVERRIDE",
+        decision: decision as "APPROVE_AI" | "OVERRIDE" | "AI_UNABLE",
         finalVerdict: selectedVerdict,
         notes,
       })
       router.push("/dashboard/review-queue")
     } catch (error) {
-      console.error("Failed to override:", error)
-      alert("Failed to submit override. Please try again.")
+      console.error("Failed to submit decision:", error)
+      alert("Failed to submit decision. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -325,27 +331,41 @@ export default function DisputeDetailPage() {
               <CardContent>
                 {!showOverride ? (
                   <div className="flex gap-4">
-                    <Button
-                      onClick={handleApprove}
-                      disabled={submitting}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
-                    >
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      Approve AI Recommendation
-                    </Button>
+                    {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
+                    {dispute.aiRecommendation?.verdict !== "NEED_REVIEW" && (
+                      <Button
+                        onClick={handleApprove}
+                        disabled={submitting}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
+                      >
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        Approve AI Recommendation
+                      </Button>
+                    )}
                     <Button
                       onClick={() => setShowOverride(true)}
                       disabled={submitting}
-                      variant="outline"
-                      className="flex-1 h-12"
+                      variant={dispute.aiRecommendation?.verdict === "NEED_REVIEW" ? "default" : "outline"}
+                      className={dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
+                        ? "flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white"
+                        : "flex-1 h-12"
+                      }
                     >
-                      Override AI Decision
+                      {dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
+                        ? "Make Your Decision"
+                        : "Override AI Decision"
+                      }
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium text-slate-700 mb-3">Select Your Verdict</p>
+                      <p className="text-sm font-medium text-slate-700 mb-3">
+                        {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
+                          ? "Select Your Verdict"
+                          : "Select Your Verdict (Override AI)"
+                        }
+                      </p>
                       <div className="grid grid-cols-2 gap-3">
                         {(["CONSUMER_WINS", "MERCHANT_WINS", "PARTIAL_REFUND", "NEED_REVIEW"] as const).map((verdict) => (
                           <label
@@ -372,12 +392,18 @@ export default function DisputeDetailPage() {
 
                     <div>
                       <label className="text-sm font-medium text-slate-700 mb-2 block">
-                        Explain Your Decision (required)
+                        {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
+                          ? "Explain Your Decision (required, helps AI learn)"
+                          : "Why Are You Overriding? (required, helps AI learn)"
+                        }
                       </label>
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Provide context that helps the AI learn from your decision..."
+                        placeholder={dispute.aiRecommendation?.verdict === "NEED_REVIEW"
+                          ? "Example: Based on transaction history and evidence, this appears to be a legitimate service failure..."
+                          : "Example: Customer has history of fraud claims, evidence shows service was actually delivered..."
+                        }
                         className="w-full border-2 border-slate-200 rounded-lg p-3 text-sm min-h-[100px] focus:border-blue-600 focus:outline-none"
                         rows={4}
                       />
@@ -389,15 +415,20 @@ export default function DisputeDetailPage() {
                         disabled={submitting || !notes.trim()}
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
-                        Submit Override: {getVerdictDisplay(selectedVerdict)}
+                        {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
+                          ? `Submit Decision: ${getVerdictDisplay(selectedVerdict)}`
+                          : `Submit Override: ${getVerdictDisplay(selectedVerdict)}`
+                        }
                       </Button>
-                      <Button
-                        onClick={() => setShowOverride(false)}
-                        disabled={submitting}
-                        variant="ghost"
-                      >
-                        Cancel
-                      </Button>
+                      {dispute.aiRecommendation?.verdict !== "NEED_REVIEW" && (
+                        <Button
+                          onClick={() => setShowOverride(false)}
+                          disabled={submitting}
+                          variant="ghost"
+                        >
+                          Cancel
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}

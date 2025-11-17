@@ -187,35 +187,43 @@ export default function ReviewQueuePage() {
                       )}
                       
                       <div className="flex gap-2 pt-1">
+                        {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
+                        {dispute.aiRecommendation && dispute.aiRecommendation.verdict !== "NEED_REVIEW" && (
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-shadow"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!currentUser || !dispute.aiRecommendation) return
+                              await customerReview({
+                                paymentDisputeId: dispute._id,
+                                reviewerUserId: currentUser._id,
+                                decision: "APPROVE_AI",
+                                finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
+                              })
+                              setSuccessDisputeId(dispute._id)
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve AI
+                          </Button>
+                        )}
                         <Button
                           size="sm"
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow transition-shadow"
-                          disabled={!dispute.aiRecommendation}
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (!currentUser || !dispute.aiRecommendation) return
-                            await customerReview({
-                              paymentDisputeId: dispute._id,
-                              reviewerUserId: currentUser._id,
-                              decision: "APPROVE_AI",
-                              finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
-                            })
-                            setSuccessDisputeId(dispute._id)
-                          }}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          {dispute.aiRecommendation ? 'Approve AI' : 'Waiting for AI...'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 border-slate-300 hover:bg-slate-50 hover:border-slate-400 text-slate-700"
+                          variant={dispute.aiRecommendation?.verdict === "NEED_REVIEW" ? "default" : "outline"}
+                          className={dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
+                            ? "flex-1 bg-orange-600 hover:bg-orange-700 text-white" 
+                            : "flex-1 border-slate-300 hover:bg-slate-50 hover:border-slate-400 text-slate-700"
+                          }
                           onClick={(e) => {
                             e.stopPropagation()
                             router.push(`/dashboard/disputes/${dispute._id}`)
                           }}
                         >
-                          Review Details
+                          {dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
+                            ? "Make Your Decision" 
+                            : "Review Details"
+                          }
                         </Button>
                       </div>
                     </motion.div>

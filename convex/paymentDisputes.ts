@@ -838,7 +838,11 @@ export const customerReview = mutation({
   args: {
     paymentDisputeId: v.id("cases"), // Changed: payment disputes are now in cases table
     reviewerUserId: v.id("users"), // Customer's team member
-    decision: v.union(v.literal("APPROVE_AI"), v.literal("OVERRIDE")),
+    decision: v.union(
+      v.literal("APPROVE_AI"),    // AI made recommendation, human agrees
+      v.literal("OVERRIDE"),       // AI made recommendation, human disagrees
+      v.literal("AI_UNABLE")       // AI said NEED_REVIEW, human makes primary decision
+    ),
     finalVerdict: v.union(
       v.literal("CONSUMER_WINS"),
       v.literal("MERCHANT_WINS"),
@@ -871,7 +875,7 @@ export const customerReview = mutation({
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
       humanReviewedBy: reviewer.email,
-      humanAgreesWithAI: args.decision === "APPROVE_AI",
+      humanAgreesWithAI: args.decision === "APPROVE_AI", // undefined/false if AI_UNABLE or OVERRIDE
       finalVerdict: args.finalVerdict, // Changed: use finalVerdict field from schema
       humanOverrideReason: args.notes, // Changed: use humanOverrideReason field from schema
       decidedAt: now,
@@ -879,13 +883,23 @@ export const customerReview = mutation({
     });
 
     // Create ADP-compliant ruling (Award Message format)
+    const rulingCode = 
+      args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" :
+      args.decision === "OVERRIDE" ? "CUSTOMER_OVERRIDE" :
+      "CUSTOMER_MANUAL_DECISION"; // AI was unable, human made primary decision
+
+    const rulingReasons = 
+      args.decision === "APPROVE_AI"
+        ? `Customer approved AI recommendation: ${dispute.aiRecommendation?.reasoning || "See analysis"}`
+        : args.decision === "OVERRIDE"
+        ? `Customer override: ${args.notes || "Manual review decision"}`
+        : `AI unable to recommend, customer made manual decision: ${args.notes || "See review notes"}`;
+
     const rulingId = await ctx.db.insert("rulings", {
       caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId (cases table)
       verdict: agentVerdict,
-      code: args.decision === "APPROVE_AI" ? "CUSTOMER_APPROVED_AI" : "CUSTOMER_OVERRIDE",
-      reasons: args.decision === "APPROVE_AI"
-        ? `Customer approved AI recommendation: ${dispute.aiRecommendation?.reasoning || "See analysis"}`
-        : `Customer override: ${args.notes || "Manual review decision"}`,
+      code: rulingCode,
+      reasons: rulingReasons,
       auto: false, // Human reviewed
       decidedAt: now,
       proof: {
@@ -911,14 +925,14 @@ export const customerReview = mutation({
       },
     });
 
-    // Record feedback signal for RL (both approval and override)
+    // Record feedback signal for RL (approval, override, or AI unable)
     await ctx.db.insert("feedbackSignals", {
       caseId: args.paymentDisputeId, // Changed: paymentDisputeId IS the caseId
       aiVerdict: dispute.aiRecommendation?.verdict || "",
       aiConfidence: dispute.aiRecommendation?.confidence || 0,
       aiReasoning: dispute.aiRecommendation?.reasoning || "",
       humanVerdict: args.finalVerdict,
-      agreedWithAI: args.decision === "APPROVE_AI",
+      agreedWithAI: args.decision === "APPROVE_AI", // false for OVERRIDE and AI_UNABLE
       overrideReason: args.notes,
       disputeType: dispute.paymentDetails?.disputeReason || "other",
       amountRange: getAmountRange(dispute.amount || 0),
@@ -933,6 +947,8 @@ export const customerReview = mutation({
       console.info(`📚 High-confidence approval: dispute ${args.paymentDisputeId} (confidence: ${(aiConfidence * 100).toFixed(1)}%)`);
     } else if (args.decision === "OVERRIDE") {
       console.info(`📚 Learning: Customer overrode AI for dispute ${args.paymentDisputeId} - Reason: ${args.notes || 'Not specified'}`);
+    } else if (args.decision === "AI_UNABLE") {
+      console.info(`📚 Learning: AI unable to recommend for dispute ${args.paymentDisputeId}, customer made manual decision: ${args.finalVerdict}`);
     }
 
     return { success: true, ruling: args.finalVerdict, rulingId };

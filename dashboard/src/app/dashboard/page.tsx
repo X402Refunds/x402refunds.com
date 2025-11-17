@@ -354,7 +354,8 @@ export default function DashboardPage() {
                   const event = evt as Event
                   const isDisputeFiled = event.type === "DISPUTE_FILED"
                   const caseData = event.caseData
-                  const needsReview = caseData?.aiRecommendation && caseData.aiRecommendation.confidence < 0.95
+                  const needsReview = caseData?.aiRecommendation && 
+                    (caseData.aiRecommendation.confidence < 0.95 || caseData.aiRecommendation.verdict === "NEED_REVIEW")
                   
                   return (
                     <motion.div

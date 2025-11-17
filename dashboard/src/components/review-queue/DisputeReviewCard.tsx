@@ -33,10 +33,13 @@ interface DisputeReviewCardProps {
   dispute: Dispute
   onApprove: (verdict: string, notes?: string) => void
   onOverride: (verdict: string, notes: string) => void
+  onManualDecision?: (verdict: string, notes: string) => void // AI unable, human makes primary decision
 }
 
-export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeReviewCardProps) {
-  const [showOverride, setShowOverride] = useState(false)
+export function DisputeReviewCard({ dispute, onApprove, onOverride, onManualDecision }: DisputeReviewCardProps) {
+  // If AI says NEED_REVIEW, skip straight to manual decision (no AI recommendation to approve)
+  const aiNeedsReview = dispute.aiRecommendation === "NEED_REVIEW"
+  const [showOverride, setShowOverride] = useState(aiNeedsReview)
   const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -68,12 +71,21 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
   
   const handleOverride = async () => {
     if (!notes.trim()) {
-      alert("Please provide notes explaining why you're overriding the AI recommendation")
+      const message = aiNeedsReview 
+        ? "Please explain your decision (helps AI learn)"
+        : "Please provide notes explaining why you're overriding the AI recommendation"
+      alert(message)
       return
     }
     setSubmitting(true)
     try {
-      await onOverride(selectedVerdict, notes)
+      // If AI said NEED_REVIEW, this is a manual decision (not an override)
+      if (aiNeedsReview && onManualDecision) {
+        await onManualDecision(selectedVerdict, notes)
+      } else {
+        // AI made a recommendation, human is overriding it
+        await onOverride(selectedVerdict, notes)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -115,31 +127,43 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* AI Recommendation */}
-        <div className="bg-accent border-2 border-border p-4 rounded-lg">
+        {/* AI Analysis */}
+        <div className={`border-2 p-4 rounded-lg ${
+          aiNeedsReview 
+            ? "bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800" 
+            : "bg-accent border-border"
+        }`}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🤖</span>
+            <span className="text-2xl">{aiNeedsReview ? "⚠️" : "🤖"}</span>
             <h4 className="font-semibold text-foreground">
-              AI Recommendation: {getVerdictDisplay(dispute.aiRecommendation)}
+              {aiNeedsReview 
+                ? "AI Analysis: Unable to Make Recommendation" 
+                : `AI Recommendation: ${getVerdictDisplay(dispute.aiRecommendation)}`
+              }
             </h4>
           </div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm text-foreground">
-              Confidence: <strong>{((dispute.aiRulingConfidence || 0) * 100).toFixed(1)}%</strong>
-            </span>
-            {dispute.similarPastCases && dispute.similarPastCases.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                • Based on {dispute.similarPastCases.length} similar cases
+          {!aiNeedsReview && (
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm text-foreground">
+                Confidence: <strong>{((dispute.aiRulingConfidence || 0) * 100).toFixed(1)}%</strong>
               </span>
-            )}
-          </div>
+              {dispute.similarPastCases && dispute.similarPastCases.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  • Based on {dispute.similarPastCases.length} similar cases
+                </span>
+              )}
+            </div>
+          )}
           {dispute.disputeFee && (
             <div className="text-xs text-muted-foreground mt-2">
               Resolution Fee: ${dispute.disputeFee.toFixed(2)} ({dispute.pricingTier} tier)
             </div>
           )}
           <p className="text-sm text-foreground mt-2">
-            {dispute.aiReasoning || "AI analysis pending..."}
+            {aiNeedsReview 
+              ? dispute.aiReasoning || "This case requires manual review. The AI was unable to make a confident recommendation based on available evidence and precedents."
+              : (dispute.aiReasoning || "AI analysis pending...")
+            }
           </p>
         </div>
         
@@ -182,27 +206,32 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
         {/* Action Buttons */}
         {!showOverride ? (
           <div className="flex gap-3 pt-2">
-            <Button
-              onClick={handleApprove}
-              disabled={submitting}
-              className="flex-1"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve AI Decision
-            </Button>
+            {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
+            {!aiNeedsReview && (
+              <Button
+                onClick={handleApprove}
+                disabled={submitting}
+                className="flex-1"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Approve AI Decision
+              </Button>
+            )}
             <Button
               onClick={() => setShowOverride(true)}
               disabled={submitting}
-              variant="outline"
+              variant={aiNeedsReview ? "default" : "outline"}
               className="flex-1"
             >
               <XCircle className="h-4 w-4 mr-2" />
-              Override AI
+              {aiNeedsReview ? "Make Your Decision" : "Override AI"}
             </Button>
           </div>
         ) : (
           <div className="space-y-3 pt-2 border-t">
-            <h4 className="text-sm font-semibold">Override AI Recommendation:</h4>
+            <h4 className="text-sm font-semibold">
+              {aiNeedsReview ? "Make Your Decision:" : "Override AI Recommendation:"}
+            </h4>
             
             {/* Verdict Selection */}
             <div className="grid grid-cols-2 gap-3">
@@ -255,12 +284,18 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
             {/* Notes */}
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Why are you overriding? (helps AI learn)
+                {aiNeedsReview 
+                  ? "Explain your decision (helps AI learn):" 
+                  : "Why are you overriding? (helps AI learn)"
+                }
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Example: Customer has history of fraud claims, evidence shows service was actually delivered..."
+                placeholder={aiNeedsReview
+                  ? "Example: Based on transaction history and evidence, this appears to be a legitimate service failure..."
+                  : "Example: Customer has history of fraud claims, evidence shows service was actually delivered..."
+                }
                 className="w-full border rounded-md p-2 text-sm min-h-[80px] bg-background"
                 rows={3}
               />
@@ -273,15 +308,20 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride }: DisputeRev
                 disabled={submitting || !notes.trim()}
                 className="flex-1"
               >
-                Submit Override: {selectedVerdict}
+                {aiNeedsReview 
+                  ? `Submit Decision: ${getVerdictDisplay(selectedVerdict)}` 
+                  : `Submit Override: ${getVerdictDisplay(selectedVerdict)}`
+                }
               </Button>
-              <Button
-                onClick={() => setShowOverride(false)}
-                disabled={submitting}
-                variant="ghost"
-              >
-                Cancel
-              </Button>
+              {!aiNeedsReview && (
+                <Button
+                  onClick={() => setShowOverride(false)}
+                  disabled={submitting}
+                  variant="ghost"
+                >
+                  Cancel
+                </Button>
+              )}
             </div>
           </div>
         )}
