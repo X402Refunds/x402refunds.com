@@ -42,12 +42,9 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
   }
 
   describe('1. x402_file_dispute (X-402 Ultra-Minimal)', () => {
-    it('should file X-402 payment dispute with Ethereum addresses', async () => {
+    it('should file X-402 payment dispute with blockchain extraction', async () => {
       const timestamp = Date.now();
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
-        plaintiff: testBuyerAddress,
-        defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
         description: 'API returned 500 error after payment was confirmed on-chain',
         request: {
           method: 'POST',

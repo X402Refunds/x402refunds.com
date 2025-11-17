@@ -31,16 +31,10 @@ async function invokeMcpTool(toolName: string, parameters: any) {
 }
 
 describe('X-402 Ultra-Minimal Dispute Schema', () => {
-  it('should file dispute with Ethereum addresses and blockchain verification', async () => {
+  it('should file dispute with blockchain extraction (no plaintiff/defendant needed)', async () => {
     const timestamp = Date.now();
-    // Use addresses that match mock blockchain query
-    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";  // Must match mock fromAddress (40 hex chars)
-    const defendant = "0x9876543210987654321098765432109876543210"; // Must match mock toAddress
     
     const { response, data } = await invokeMcpTool('x402_file_dispute', {
-      plaintiff,
-      defendant,
-      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${defendant}`,
       description: "API returned 500 error after payment was confirmed on-chain",
       request: {
         method: "POST",
@@ -75,55 +69,46 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     }
   });
 
-  it('should validate Ethereum address format', async () => {
-    const { data } = await invokeMcpTool('consulate_file_dispute', {
-      plaintiff: "not-an-ethereum-address",  // ❌ Invalid
-      defendant: "0x9876543210987654321098765432109876543210",
-      disputeUrl: "https://api.x402disputes.com/disputes/claim?vendor=0x9876543210987654321098765432109876543210",
-      description: "Testing address validation",
+  it('should validate blockchain enum (only ethereum, base, solana)', async () => {
+    const { data } = await invokeMcpTool('x402_file_dispute', {
+      description: "Testing blockchain validation",
       request: { method: "POST", url: "https://api.seller.com" },
-      response: { status: 500 },
+      response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123",
-      blockchain: "base"
+      blockchain: "polygon" // ❌ Invalid - not supported
     });
     
     expect(data.success).toBe(false);
-    expect(['INVALID_PLAINTIFF_ADDRESS', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    expect(['UNSUPPORTED_BLOCKCHAIN', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
     if (data.error.field) {
-    expect(data.error.field).toBe('plaintiff');
+      expect(data.error.field).toBe('blockchain');
     }
     if (data.error.suggestion) {
-    expect(data.error.suggestion).toContain('Ethereum');
+      expect(data.error.suggestion).toContain('Ethereum');
     }
     
     console.log("✅ Address validation works:", data.error.message);
   });
 
   it('should validate required fields', async () => {
-    const { data } = await invokeMcpTool('consulate_file_dispute', {
+    const { data } = await invokeMcpTool('x402_file_dispute', {
       // Missing all required fields
     });
     
     expect(data.success).toBe(false);
     expect(data.error).toBeDefined();
     
-    // Should fail (either validation error or tool not found in test env)
-    expect(['MISSING_PLAINTIFF', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    // Should fail with missing required field error
+    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
     
     console.log("✅ Required field validation works:", data.error.code);
   });
 
   it('should support dryRun mode', async () => {
-    const plaintiff = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
-    const defendant = "0x9876543210987654321098765432109876543210";
-    
-    const { data } = await invokeMcpTool('consulate_file_dispute', {
-      plaintiff,
-      defendant,
-      disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${defendant}`,
+    const { data } = await invokeMcpTool('x402_file_dispute', {
       description: "Testing dryRun validation mode",
       request: { method: "POST", url: "https://api.seller.com" },
-      response: { status: 500 },
+      response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123def456",
       blockchain: "base",
       dryRun: true  // ← Validation only

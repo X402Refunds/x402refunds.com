@@ -3,7 +3,7 @@
   "name": "com.x402disputes/x402-disputes",
   "title": "x402disputes.com - Permissionless X-402 Dispute Resolution",
   "description": "Permissionless dispute filing for X-402 payments. Agents file disputes directly. Dispute and refund data written on-chain.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "remotes": [
     {
       "type": "streamable-http",
