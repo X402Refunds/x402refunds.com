@@ -10,13 +10,11 @@ import { v } from "convex/values";
 
 /**
  * Blockchain Explorer API Endpoints
+ * Only Ethereum, Base, and Solana are supported
  */
 const EXPLORER_APIS = {
-  base: "https://api.basescan.org/api",
   ethereum: "https://api.etherscan.io/api",
-  polygon: "https://api.polygonscan.com/api",
-  arbitrum: "https://api.arbiscan.io/api",
-  optimism: "https://api-optimistic.etherscan.io/api",
+  base: "https://api.basescan.org/api",
   solana: "https://api.solscan.io" // Different API structure
 } as const;
 
@@ -39,12 +37,10 @@ export const queryTransaction = action({
   handler: async (ctx, { blockchain, transactionHash, expectedFromAddress, expectedToAddress }) => {
     try {
       // Get API key from environment (if needed)
+      // Only Ethereum and Base require API keys (Solana uses public RPC)
       const apiKeys = {
-        base: process.env.BASESCAN_API_KEY,
         ethereum: process.env.ETHERSCAN_API_KEY,
-        polygon: process.env.POLYGONSCAN_API_KEY,
-        arbitrum: process.env.ARBISCAN_API_KEY,
-        optimism: process.env.OPTIMISM_ETHERSCAN_API_KEY,
+        base: process.env.BASESCAN_API_KEY,
       };
 
       const apiKey = apiKeys[blockchain as keyof typeof apiKeys];

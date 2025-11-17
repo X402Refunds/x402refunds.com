@@ -43,28 +43,27 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
     
-    // Check for X-402 ultra-minimal schema (7 required fields)
-    expect(tool?.inputSchema.required).toContain('plaintiff');  // Ethereum address
-    expect(tool?.inputSchema.required).toContain('defendant');  // Ethereum address
+    // Check for X-402 simplified schema (5 required fields - plaintiff/defendant extracted from blockchain)
     expect(tool?.inputSchema.required).toContain('description');
     expect(tool?.inputSchema.required).toContain('request');  // Object
     expect(tool?.inputSchema.required).toContain('response');  // Object
     expect(tool?.inputSchema.required).toContain('transactionHash');
     expect(tool?.inputSchema.required).toContain('blockchain');
     
-    // disputeUrl is optional (can be auto-constructed from defendant address)
+    // Plaintiff/defendant now extracted from blockchain (not required from agent)
+    expect(tool?.inputSchema.required).not.toContain('plaintiff');
+    expect(tool?.inputSchema.required).not.toContain('defendant');
     expect(tool?.inputSchema.required).not.toContain('disputeUrl');
     
-    // These are now derived from blockchain or optional
+    // These are extracted from blockchain
     expect(tool?.inputSchema.required).not.toContain('amountUsd');
     expect(tool?.inputSchema.required).not.toContain('currency');
     expect(tool?.inputSchema.required).not.toContain('fromAddress');
     expect(tool?.inputSchema.required).not.toContain('toAddress');
     
-    // Check for Ethereum address validation
-    expect(tool?.inputSchema.properties.plaintiff.pattern).toContain('0x');
-    expect(tool?.inputSchema.properties.defendant.pattern).toContain('0x');
-    expect(tool?.inputSchema.properties.blockchain.enum).toBeDefined(); // Enum validation
+    // Check for blockchain enum (only ethereum, base, solana)
+    expect(tool?.inputSchema.properties.blockchain.enum).toBeDefined();
+    expect(tool?.inputSchema.properties.blockchain.enum).toEqual(['ethereum', 'base', 'solana']);
     expect(tool?.inputSchema.properties.dryRun).toBeDefined();
     // Note: returns field removed (not part of MCP standard)
   });
@@ -87,19 +86,19 @@ describe('MCP - Tool Definitions', () => {
 });
 
 describe('MCP - Schema Improvements', () => {
-  it('should have Ethereum address validation for plaintiff/defendant fields', async () => {
+  it('should have blockchain enum validation (ethereum, base, solana only)', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
     const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
-    const plaintiff = fileDisputeTool?.inputSchema.properties.plaintiff;
-    const defendant = fileDisputeTool?.inputSchema.properties.defendant;
+    const blockchain = fileDisputeTool?.inputSchema.properties.blockchain;
 
-    expect(plaintiff).toBeDefined();
-    expect(defendant).toBeDefined();
-    expect(plaintiff?.pattern).toContain('0x[a-fA-F0-9]{40}');
-    expect(defendant?.pattern).toContain('0x[a-fA-F0-9]{40}');
-    expect(plaintiff?.examples).toBeDefined();
-    expect(plaintiff?.examples?.length).toBeGreaterThan(0);
+    expect(blockchain).toBeDefined();
+    expect(blockchain?.enum).toEqual(['ethereum', 'base', 'solana']);
+    expect(blockchain?.description).toContain('Ethereum');
+    expect(blockchain?.description).toContain('Base');
+    expect(blockchain?.description).toContain('Solana');
+    expect(blockchain?.examples).toBeDefined();
+    expect(blockchain?.examples?.length).toBeGreaterThan(0);
   });
 
   it('should have contentEncoding for optional sellerXSignature field', async () => {

@@ -76,36 +76,10 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
-    description: "File X-402 payment dispute for API service failures. Permissionless filing with blockchain transaction verification.",
+    description: "File X-402 payment dispute for API service failures. Permissionless filing with blockchain transaction verification. All transaction details (plaintiff, defendant, amount, currency) are extracted directly from the blockchain.",
     inputSchema: {
       type: "object",
       properties: {
-        plaintiff: {
-          type: "string",
-          pattern: "^0x[a-fA-F0-9]{40}$",
-          description: "REQUIRED. Buyer's Ethereum wallet address. Must be valid 0x-prefixed address.",
-          examples: [
-            "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            "0x1234567890123456789012345678901234567890"
-          ]
-        },
-        defendant: {
-          type: "string",
-          pattern: "^0x[a-fA-F0-9]{40}$",
-          description: "REQUIRED. Seller's Ethereum wallet address (who received payment). Must be valid 0x-prefixed address.",
-          examples: [
-            "0x9876543210987654321098765432109876543210",
-            "0xSellerWalletAddress0123456789abcdef"
-          ]
-        },
-        disputeUrl: {
-          type: "string",
-          pattern: "^https://api\\.x402disputes\\.com/disputes/claim\\?vendor=0x[a-fA-F0-9]{40}$",
-          description: "OPTIONAL. Dispute URL (can be auto-constructed from defendant address). Format: 'https://api.x402disputes.com/disputes/claim?vendor=0x[sellerAddress]'. If provided, vendor parameter will override defendant field.",
-          examples: [
-            "https://api.x402disputes.com/disputes/claim?vendor=0x9876543210987654321098765432109876543210"
-          ]
-        },
         description: {
           type: "string",
           minLength: 10,
@@ -128,7 +102,7 @@ export const MCP_TOOLS = [
           }]
         },
         response: {
-      type: "object",
+          type: "object",
           description: "REQUIRED. The error response buyer received. Include status, headers, body.",
           examples: [{
             status: 500,
@@ -138,19 +112,19 @@ export const MCP_TOOLS = [
         },
         transactionHash: {
           type: "string",
-          description: "REQUIRED. Blockchain transaction hash proving payment. We query blockchain to verify amount/currency/addresses. Format: 0x... for EVM chains, base58 for Solana.",
+          description: "REQUIRED. Blockchain transaction hash proving payment. We query the blockchain to extract all transaction details (from address, to address, amount, currency). Format: 0x... for EVM chains, base58 for Solana.",
           examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."]
         },
         blockchain: {
           type: "string",
-          enum: ["base", "ethereum", "solana", "polygon", "arbitrum", "optimism"],
-          description: "REQUIRED. Blockchain network where payment transaction occurred.",
+          enum: ["ethereum", "base", "solana"],
+          description: "REQUIRED. Blockchain network where payment transaction occurred. Only Ethereum, Base, and Solana are supported.",
           examples: ["base", "ethereum", "solana"]
         },
         sellerXSignature: {
           type: "string",
           contentEncoding: "base64",
-          description: "OPTIONAL. X-Signature from seller's response header (if provided). Strengthens evidence but not required.",
+          description: "RECOMMENDED. X-Signature from seller's response header (base64-encoded Ed25519 signature). Provides cryptographic proof of response authenticity. If NOT provided, evidence strength is reduced and may require additional verification.",
           examples: ["uHCzxGW7/ufryqrv9r3zMXt01rNjlpTDHjSUnZetODQ="]
         },
         callbackUrl: {
@@ -166,7 +140,7 @@ export const MCP_TOOLS = [
           description: "Optional. If true, validates parameters without filing."
         }
       },
-      required: ["plaintiff", "defendant", "description", "request", "response", "transactionHash", "blockchain"]
+      required: ["description", "request", "response", "transactionHash", "blockchain"]
     }
   },
   {
@@ -226,12 +200,37 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       description: "Permissionless dispute filing for X-402 payment protocol. Agents file disputes directly. Dispute and refund data written on-chain.",
       
       payment_details: {
-        format: "x402paymentDetails (flexible JSON)",
-        common_fields: "transactionHash, blockchain, currency, fromAddress, toAddress, etc.",
-        note: "Seller includes whatever payment fields are relevant. Buyer just forwards what seller signed."
+        format: "All transaction details extracted from blockchain",
+        note: "Agent only provides transaction hash. We query blockchain to extract plaintiff, defendant, amount, and currency."
       },
       
-      dispute_types: "Payment disputes only (crypto transactions with signed evidence)",
+      dispute_types: "Payment disputes only (crypto transactions)",
+      
+      evidence_requirements: {
+        required_from_agent: [
+          "transactionHash - Blockchain transaction hash proving payment",
+          "blockchain - Network (ethereum, base, or solana only)",
+          "description - What went wrong (10-500 chars)",
+          "request - API request object that was sent",
+          "response - Error response that was received"
+        ],
+        extracted_from_blockchain: [
+          "plaintiff - Buyer's wallet address (tx.from)",
+          "defendant - Seller's wallet address (tx.to)",
+          "amount - Payment amount in USD",
+          "currency - Token/currency used (ETH, USDC, SOL, etc.)"
+        ],
+        optional_but_recommended: {
+          sellerXSignature: {
+            importance: "HIGH",
+            description: "Ed25519 signature from seller's X-Signature response header",
+            impact_if_missing: "Evidence strength reduced to MEDIUM. May require additional verification.",
+            impact_if_provided: "Evidence strength STRONG. Higher confidence in verdict.",
+            how_to_obtain: "Extract X-Signature header from seller's HTTP response"
+          }
+        }
+      },
+      
       pricing: {
         flat_fee: "$0.05 per dispute"
       },
@@ -313,127 +312,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     switch (tool) {
       case "x402_file_dispute":
         // X-402 PAYMENT DISPUTE HANDLER
-        // Uses Ethereum addresses as canonical identities
-        // Queries blockchain for payment verification
+        // Extracts all transaction details (plaintiff, defendant, amount, currency) from blockchain
+        // Blockchain is the single source of truth
         
-        // 1. Extract defendant (seller wallet address) from disputeUrl (if provided)
-        let defendant = parameters.defendant;
-        
-        if (parameters.disputeUrl) {
-          try {
-            const url = new URL(parameters.disputeUrl);
-            const vendorFromUrl = url.searchParams.get('vendor');
-            if (vendorFromUrl) {
-              defendant = vendorFromUrl;
-              console.log(`✅ Extracted vendor address from dispute URL: ${vendorFromUrl}`);
-            } else {
-              return new Response(JSON.stringify({
-                success: false,
-                error: {
-                  code: "INVALID_DISPUTE_URL",
-                  message: "Invalid dispute URL: missing 'vendor' query parameter",
-                  field: "disputeUrl",
-                  received: parameters.disputeUrl,
-                  expected: "https://api.x402disputes.com/disputes/claim?vendor=0x...",
-                  suggestion: "Dispute URL must contain '?vendor=0x...' with seller's Ethereum address"
-                }
-              }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" }
-              });
-            }
-          } catch (error: any) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: {
-                code: "INVALID_DISPUTE_URL",
-                message: "Invalid dispute URL format",
-                field: "disputeUrl",
-                received: parameters.disputeUrl,
-                  expected: "https://api.x402disputes.com/disputes/claim?vendor=0x...",
-                suggestion: "Provide a valid URL. Copy the exact X-Dispute-URL header value from seller's response.",
-                details: error.message
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-        } else {
-          // disputeUrl is optional - use defendant parameter directly
-          console.log(`ℹ️  No disputeUrl provided, using defendant parameter: ${defendant}`);
-        }
-        
-        // 2. Validate Ethereum addresses (X-402 identity)
-        if (!parameters.plaintiff) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_PLAINTIFF",
-              message: "plaintiff is required",
-              field: "plaintiff",
-              expected: "Ethereum address (0x...)",
-              suggestion: "Provide buyer's Ethereum wallet address, e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // Validate plaintiff is Ethereum address
-        if (!/^0x[a-fA-F0-9]{40}$/.test(parameters.plaintiff)) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_PLAINTIFF_ADDRESS",
-              message: "Plaintiff must be a valid Ethereum address",
-              field: "plaintiff",
-              received: parameters.plaintiff,
-              expected: "0x-prefixed 40-character hex string",
-              suggestion: "Provide buyer's Ethereum wallet address. Format: 0x followed by 40 hexadecimal characters"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        if (!defendant) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_DEFENDANT",
-              message: "defendant is required",
-              field: "defendant",
-              expected: "Ethereum address (0x...)",
-              suggestion: "Provide seller's Ethereum wallet address"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // Validate defendant is Ethereum address
-        if (!/^0x[a-fA-F0-9]{40}$/.test(defendant)) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_DEFENDANT_ADDRESS",
-              message: "Defendant must be a valid Ethereum address",
-              field: "defendant",
-              received: defendant,
-              expected: "0x-prefixed 40-character hex string",
-              suggestion: "Provide seller's Ethereum wallet address from disputeUrl vendor parameter"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // Validate required fields
+        // 1. Validate required fields
         if (!parameters.request) {
           return new Response(JSON.stringify({
             success: false,
@@ -489,8 +371,27 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               code: "MISSING_BLOCKCHAIN",
               message: "blockchain is required",
               field: "blockchain",
-              expected: "base, ethereum, solana, polygon, arbitrum, or optimism",
-              suggestion: "Specify which blockchain network the payment transaction occurred on"
+              expected: "ethereum, base, or solana",
+              suggestion: "Specify which blockchain network the payment transaction occurred on. Only Ethereum, Base, and Solana are supported."
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Validate blockchain is one of the supported chains
+        const supportedChains = ["ethereum", "base", "solana"];
+        if (!supportedChains.includes(parameters.blockchain)) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "UNSUPPORTED_BLOCKCHAIN",
+              message: `Blockchain '${parameters.blockchain}' is not supported`,
+              field: "blockchain",
+              received: parameters.blockchain,
+              expected: "ethereum, base, or solana",
+              suggestion: "Only Ethereum, Base, and Solana blockchains are currently supported."
             }
           }), {
             status: 400,
@@ -514,16 +415,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         }
         
-        // 3. Query blockchain to verify payment and get details
+        // 2. Query blockchain to extract all transaction details
+        // Blockchain is the source of truth for plaintiff, defendant, amount, currency
         console.log(`🔍 Querying blockchain ${parameters.blockchain} for tx: ${parameters.transactionHash}`);
         let txDetails;
         try {
           txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
             blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash,
-            // Pass expected addresses for mock mode compatibility
-            expectedFromAddress: parameters.plaintiff,
-            expectedToAddress: defendant
+            transactionHash: parameters.transactionHash
           });
         } catch (error: any) {
           // Handle action execution errors
@@ -562,55 +461,23 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         }
         
-        // Type narrowing: Extract transaction details safely
-        // Use type assertion after success check to access properties
+        // 3. Extract transaction details from blockchain
+        // Blockchain is the single source of truth - no validation needed
         const txData = txDetails as any;
-        const fromAddress = txData.fromAddress || "";
-        const toAddress = txData.toAddress || "";
+        const plaintiff = txData.fromAddress || "";  // Extracted from blockchain tx.from
+        const defendant = txData.toAddress || "";    // Extracted from blockchain tx.to
         const txValue = txData.value || "0";
         const txCurrency = txData.currency || "USD";
         const txBlockNumber = txData.blockNumber || 0;
         const txAmountUsd = txData.amountUsd || parseFloat(txValue);
         
-        // 4. Validate addresses match blockchain transaction
-        if (fromAddress.toLowerCase() !== parameters.plaintiff.toLowerCase()) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "ADDRESS_MISMATCH",
-              message: "Plaintiff address doesn't match transaction sender",
-              field: "plaintiff",
-              received: parameters.plaintiff,
-              expected: fromAddress,
-              suggestion: `Transaction was sent from ${fromAddress}, not ${parameters.plaintiff}. Verify you're using the correct wallet address.`
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        if (toAddress.toLowerCase() !== defendant.toLowerCase()) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "ADDRESS_MISMATCH",
-              message: "Defendant address doesn't match transaction recipient",
-              field: "defendant",
-              received: defendant,
-              expected: toAddress,
-              suggestion: `Transaction was sent to ${toAddress}, not ${defendant}. Verify you're disputing the correct seller.`
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
+        console.log(`✅ Transaction details extracted from blockchain:`);
+        console.log(`   Plaintiff (buyer): ${plaintiff}`);
+        console.log(`   Defendant (seller): ${defendant}`);
+        console.log(`   Amount: ${txAmountUsd} ${txCurrency}`);
+        console.log(`   Block: ${txBlockNumber}`);
         
-        console.log(`✅ Addresses validated: ${parameters.plaintiff} → ${defendant}`);
-        console.log(`✅ Payment verified: ${txValue} ${txCurrency} on ${parameters.blockchain}`);
-        
-        // 5. Build evidence object from request/response
+        // 4. Build evidence object from request/response
         const evidence: any = {
           request: parameters.request,
           response: parameters.response,
@@ -619,14 +486,14 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             currency: txCurrency,
             blockchain: parameters.blockchain,
             transactionHash: parameters.transactionHash,
-            fromAddress: parameters.plaintiff,
-            toAddress: defendant,
+            fromAddress: plaintiff,  // From blockchain
+            toAddress: defendant,    // From blockchain
             blockNumber: txBlockNumber
             // Note: 'value' not included - schema doesn't support it
           }
         };
         
-        // 6. Check if defendant agent exists (permissionless dispute filing)
+        // 5. Check if defendant agent exists (permissionless dispute filing)
         let defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
           walletAddress: defendant 
         });
@@ -637,7 +504,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           console.log(`ℹ️  Defendant agent not found for ${defendant} - disputes can still be filed`);
         }
         
-        // 7. Verify seller X-Signature if provided (optional)
+        // 6. Verify seller X-Signature if provided (recommended for strong evidence)
+        let signatureProvided = !!parameters.sellerXSignature;
+        let signatureVerified = false;
+        
         if (parameters.sellerXSignature && defendantAgent?.publicKey) {
           console.log("🔐 Verifying seller X-Signature...");
           const payloadString = JSON.stringify(evidence);
@@ -645,28 +515,37 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             publicKey: defendantAgent.publicKey,
             signature: parameters.sellerXSignature,
             payload: payloadString
-        });
+          });
         
           if (!verificationResult.valid) {
-            console.warn("⚠️  Seller signature verification failed, but continuing (signature is optional)");
+            console.warn("⚠️  Seller signature verification failed");
             console.warn("   Reason:", verificationResult.error);
+            console.warn("   Evidence strength: MEDIUM (signature invalid)");
           } else {
             console.log("✅ Seller X-Signature verified!");
             evidence.sellerXSignatureVerified = true;
+            signatureVerified = true;
+            console.log("   Evidence strength: STRONG");
           }
+        } else if (!parameters.sellerXSignature) {
+          console.warn("⚠️  No X-Signature provided");
+          console.warn("   Evidence strength: MEDIUM (no signature)");
+        } else if (!defendantAgent?.publicKey) {
+          console.warn("⚠️  Cannot verify signature - defendant has no registered public key");
+          console.warn("   Evidence strength: MEDIUM (cannot verify)");
         }
         
         const transactionId = parameters.transactionHash;
         
         // If dry run, return validation results without filing
         if (parameters.dryRun) {
-        return new Response(JSON.stringify({
-          success: true,
+          return new Response(JSON.stringify({
+            success: true,
             dryRun: true,
             wouldExecute: {
               action: "file_x402_payment_dispute",
-              plaintiff: parameters.plaintiff,
-              defendant: defendant,
+              plaintiff: `${plaintiff} (extracted from blockchain)`,
+              defendant: `${defendant} (extracted from blockchain)`,
               amount: txAmountUsd,
               currency: txCurrency,
               blockchain: parameters.blockchain,
@@ -674,46 +553,51 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               estimatedFee: 0.05
             },
             validations: {
-              plaintiffAddress: `✓ Valid Ethereum address: ${parameters.plaintiff}`,
-              defendantAddress: `✓ Valid Ethereum address: ${defendant}`,
               transactionFound: `✓ Transaction found on ${parameters.blockchain}`,
-              addressesMatch: "✓ Addresses match blockchain transaction",
-              agentStatus: `✓ Defendant agent ${defendantAgent?.status || 'will be created'}`,
+              transactionDetails: "✓ All details extracted from blockchain",
+              signatureStatus: signatureProvided 
+                ? (signatureVerified ? "✓ X-Signature verified (STRONG evidence)" : "⚠ X-Signature invalid (MEDIUM evidence)")
+                : "⚠ X-Signature NOT provided (MEDIUM evidence - consider including for stronger case)",
               request: "✓ Request object provided",
               response: "✓ Response object provided"
             },
-            blockchainDetails: {
-              from: fromAddress,
-              to: toAddress,
-              amount: txValue,
+            blockchainExtraction: {
+              source: "Verified blockchain data",
+              blockchain: parameters.blockchain,
+              transactionHash: parameters.transactionHash,
+              plaintiff: plaintiff,
+              defendant: defendant,
+              amount: txAmountUsd,
               currency: txCurrency,
               blockNumber: txBlockNumber
             },
+            evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
             nextSteps: [
               "Remove 'dryRun: true' to file the dispute",
+              signatureProvided ? null : "Consider including sellerXSignature for stronger evidence",
               "Dispute will be filed immediately",
-              `Fee: $0.05`,
+              "Fee: $0.05",
               "Resolution within 5-10 minutes for micro-disputes"
-            ]
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
+            ].filter(Boolean)
+          }), {
+            headers: { "Content-Type": "application/json" }
+          });
         }
         
-        // 8. File payment dispute with blockchain-verified details
+        // 7. File payment dispute with blockchain-extracted details
         const paymentDisputeArgs: any = {
           transactionId: parameters.transactionHash,
           amount: txAmountUsd,
           currency: txCurrency,
-          plaintiff: parameters.plaintiff,
-          defendant: defendant,
+          plaintiff: plaintiff,  // Extracted from blockchain
+          defendant: defendant,  // Extracted from blockchain
           disputeReason: "quality_issue",
           description: parameters.description,
           evidenceUrls: [],
           callbackUrl: parameters.callbackUrl,
           // Store request/response as JSON strings in metadata (X-402 evidence)
           plaintiffMetadata: { 
-            walletAddress: parameters.plaintiff,
+            walletAddress: plaintiff,
             requestJson: JSON.stringify(parameters.request)
           },
           defendantMetadata: { 
@@ -745,24 +629,55 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
 
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
           success: true,
-            disputeType: "PAYMENT",
+          disputeType: "PAYMENT",
           caseId: result.caseId,
           paymentDisputeId: result.paymentDisputeId,
           status: result.status,
           isMicroDispute: result.isMicroDispute,
           disputeFee: result.fee,
+          
+          // Signature verification status
+          signatureVerification: {
+            provided: signatureProvided,
+            verified: signatureVerified,
+            message: !signatureProvided 
+              ? "No X-Signature provided. Response authenticity cannot be confirmed. Evidence strength reduced."
+              : signatureVerified
+                ? "X-Signature verified. Response authenticity confirmed."
+                : "X-Signature verification failed. Response authenticity questionable.",
+            impact: !signatureProvided || !signatureVerified
+              ? "May require additional evidence for resolution"
+              : "Strong evidence - higher confidence in verdict"
+          },
+          
+          // Transaction verification - extracted from blockchain
+          transactionVerification: {
+            source: "blockchain",
+            blockchain: parameters.blockchain,
+            transactionHash: parameters.transactionHash,
+            verified: true,
+            extractedDetails: {
+              plaintiff: `${plaintiff} (extracted from blockchain)`,
+              defendant: `${defendant} (extracted from blockchain)`,
+              amount: txAmountUsd,
+              currency: txCurrency,
+              blockNumber: txBlockNumber
+            }
+          },
+          
+          evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
           humanReviewRequired: result.humanReviewRequired,
           estimatedResolutionTime: result.estimatedResolutionTime,
-          message: `X-402 payment dispute filed successfully. Case ID: ${result.caseId}`,
+          message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
           trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
-            nextSteps: [
-              "Submit additional evidence (optional)",
-              "AI analyzes dispute + provides recommendation",
-              "Your team reviews exceptions in dashboard",
-              "Resolution within 10 business days (Regulation E)"
-          ],
+          nextSteps: [
+            signatureProvided ? null : "Consider submitting X-Signature for stronger evidence",
+            "AI analyzes dispute + provides recommendation",
+            "Merchant reviews in dashboard",
+            "Resolution within 10 business days (Regulation E)"
+          ].filter(Boolean),
           _links: {
             self: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
             evidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}/evidence`,
@@ -772,8 +687,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`
           }
         }), {
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         break;
         
       case "x402_check_case_status":

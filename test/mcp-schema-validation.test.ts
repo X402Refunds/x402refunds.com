@@ -12,34 +12,37 @@ describe("MCP Tool Schema Validation", () => {
   // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint
 
   describe("x402_file_dispute", () => {
-    it("should have blockchain enum and Ethereum address patterns", () => {
+    it("should have blockchain enum (ethereum, base, solana only)", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      // X-402 ultra-minimal schema
+      // X-402 simplified schema - blockchain enum restricted
       expect(disputeTool?.inputSchema.properties.blockchain.enum).toBeDefined();
-      expect(disputeTool?.inputSchema.properties.plaintiff.pattern).toContain('0x');
-      expect(disputeTool?.inputSchema.properties.defendant.pattern).toContain('0x');
+      expect(disputeTool?.inputSchema.properties.blockchain.enum).toEqual(['ethereum', 'base', 'solana']);
+      
+      // Plaintiff/defendant no longer in schema (extracted from blockchain)
+      expect(disputeTool?.inputSchema.properties.plaintiff).toBeUndefined();
+      expect(disputeTool?.inputSchema.properties.defendant).toBeUndefined();
     });
 
-    it("should have required fields matching X-402 ultra-minimal schema", () => {
+    it("should have required fields matching X-402 simplified schema", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.inputSchema.required;
-      // X-402 ultra-minimal (7 required fields - disputeUrl is now optional)
-      expect(required).toContain("plaintiff");  // Ethereum address
-      expect(required).toContain("defendant");  // Ethereum address
+      // X-402 simplified (5 required fields - plaintiff/defendant extracted from blockchain)
       expect(required).toContain("description");
       expect(required).toContain("request");  // Object
       expect(required).toContain("response");  // Object
       expect(required).toContain("transactionHash");
       expect(required).toContain("blockchain");
       
-      // disputeUrl is now optional (can be derived from defendant)
+      // Plaintiff/defendant now extracted from blockchain (not required from agent)
+      expect(required).not.toContain("plaintiff");
+      expect(required).not.toContain("defendant");
       expect(required).not.toContain("disputeUrl");
       
-      // These are derived from blockchain or optional
+      // These are extracted from blockchain
       expect(required).not.toContain("amountUsd");
       expect(required).not.toContain("currency");
       expect(required).not.toContain("fromAddress");
