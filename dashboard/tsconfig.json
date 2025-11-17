@@ -39,9 +39,6 @@
   ],
   "exclude": [
     "node_modules",
-    ".next",
-    "../convex/agents/**/*",
-    "../convex/workflows.ts",
-    "../convex/workpools.ts"
+    ".next"
   ]
 }

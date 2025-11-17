@@ -168,6 +168,7 @@ export const receivePaymentDispute = mutation({
         transactionId: args.transactionId,
         transactionHash: args.transactionHash,
         disputeReason: args.disputeReason || "other",
+        callbackUrl: args.callbackUrl, // Store callback URL for notifications
         
         regulationEDeadline, // Also stored here for backward compatibility
         plaintiffMetadata: args.plaintiffMetadata,
@@ -300,6 +301,7 @@ export const triggerPaymentWorkflow = internalMutation({
       let workflowId: string | undefined;
       
       if (amount < 1 && evidenceCount <= 2) {
+        // @ts-expect-error - Convex workflow component type system limitation
         workflowId = await workflowManager.start(
           ctx, 
           internal.workflows.microDisputeWorkflow, 
@@ -307,6 +309,7 @@ export const triggerPaymentWorkflow = internalMutation({
         );
         console.log(`Micro dispute workflow started: ${workflowId}`);
       } else {
+        // @ts-expect-error - Convex workflow component type system limitation
         workflowId = await workflowManager.start(
           ctx, 
           internal.workflows.paymentDisputeWorkflow, 

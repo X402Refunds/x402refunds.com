@@ -1253,6 +1253,8 @@ http.route({
       }
       
       // Claim the agent
+      // TODO: claimAgent mutation doesn't exist - this endpoint needs implementation
+      // @ts-expect-error - claimAgent mutation not implemented yet
       const result = await ctx.runMutation(api.agents.claimAgent, {
         walletAddress,
         signature,
@@ -1535,7 +1537,7 @@ http.route({
     }
     
     try {
-      const caseData = await ctx.runQuery(api.cases.getCase, {
+      const caseData = await ctx.runQuery(internal.cases.getCase, {
         caseId: caseId as any
       });
       

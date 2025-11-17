@@ -289,6 +289,8 @@ export default defineSchema({
         walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
         responseJson: v.optional(v.string()), // X-402 response object as JSON string
       })),
+      // Webhook notification URL
+      callbackUrl: v.optional(v.string()),
     })),
 
     // Metadata

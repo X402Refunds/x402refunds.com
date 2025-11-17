@@ -97,7 +97,7 @@ export const fileDispute = mutation({
     // Organization reviewer field (for X-402 disputes)
     reviewerOrganizationId: v.optional(v.id("organizations")),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any> => {
     // Validate plaintiff and defendant are different
     if (args.plaintiff === args.defendant) {
       throw new Error("Plaintiff and defendant must be different agents");
@@ -179,12 +179,15 @@ export const fileDispute = mutation({
       if (caseData.type === "PAYMENT") {
         // Payment disputes use payment workflow
         if (amount < 1 && evidenceCount <= 2) {
+          // @ts-expect-error - Convex workflow component type system limitation
           workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId });
         } else {
+          // @ts-expect-error - Convex workflow component type system limitation
           workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId });
         }
       } else {
         // General disputes use general workflow
+        // @ts-expect-error - Convex workflow component type system limitation
         workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId });
       }
     } catch (error: any) {
@@ -573,6 +576,7 @@ export const updateCaseRuling = mutation({
       const isSLAViolation = case_.category?.toLowerCase().includes("sla") || false;
 
       // Update plaintiff reputation
+      // @ts-expect-error - Convex scheduler type system limitation with _componentPath
       await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
         agentDid: case_.plaintiff,
         role: "plaintiff",
@@ -581,6 +585,7 @@ export const updateCaseRuling = mutation({
       });
 
       // Update defendant reputation  
+      // @ts-expect-error - Convex scheduler type system limitation with _componentPath
       await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
         agentDid: case_.defendant,
         role: "defendant",

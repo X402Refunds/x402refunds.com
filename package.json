@@ -31,7 +31,7 @@
     "@convex-dev/workflow": "^0.2.7",
     "@convex-dev/workpool": "^0.2.19",
     "ai": "^5.0.87",
-    "convex": "^1.28.2",
+    "convex": "^1.29.1",
     "convex-test": "^0.0.38",
     "viem": "~2.38.6",
     "zod": "^4.1.11"
