@@ -66,11 +66,11 @@ export function DashboardHeader({ sidebarOpen = false, onToggleSidebar }: Dashbo
 
         {/* Right Section: User Account */}
         <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-          {/* Auto-Approve AI Toggle */}
+          {/* Automatic Refunds Toggle */}
           {organization && (
-            <div className="flex items-center gap-2 border-r pr-4 border-slate-200">
-              <Label htmlFor="auto-approve" className="text-xs sm:text-sm text-slate-700 cursor-pointer">
-                Auto-approve AI
+            <div className="flex items-center gap-2 border-r pr-4 border-slate-200 bg-slate-50 px-3 py-1 rounded-md">
+              <Label htmlFor="auto-approve" className="text-xs sm:text-sm text-slate-900 font-medium cursor-pointer">
+                Automatic Refunds
               </Label>
               <Switch
                 id="auto-approve"

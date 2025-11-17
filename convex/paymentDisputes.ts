@@ -965,8 +965,8 @@ export const getCustomerReviewQueue = query({
       // Already reviewed by human? Skip it
       if (d.humanReviewedAt) return false;
       
-      // Must be in FILED status (not yet decided)
-      if (d.status !== "FILED") return false;
+      // Must be in FILED or IN_REVIEW status (not yet decided)
+      if (d.status !== "FILED" && d.status !== "IN_REVIEW") return false;
       
       // Has AI recommendation? Show it for review (ALL disputes, regardless of confidence)
       if (d.aiRecommendation) return true;
