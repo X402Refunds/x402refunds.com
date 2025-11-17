@@ -49,17 +49,17 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.inputSchema.properties).toBeDefined();
     expect(fileDisputeTool.inputSchema.required).toBeDefined();
     
-    // Verify required fields (X-402 ultra-minimal)
-    expect(fileDisputeTool.inputSchema.required).toContain('plaintiff');
-    expect(fileDisputeTool.inputSchema.required).toContain('defendant');
-    // disputeUrl is optional in X-402 (can be constructed from defendant address)
+    // Verify required fields (X-402 simplified - plaintiff/defendant extracted from blockchain)
     expect(fileDisputeTool.inputSchema.required).toContain('description');
     expect(fileDisputeTool.inputSchema.required).toContain('request');
     expect(fileDisputeTool.inputSchema.required).toContain('response');
     expect(fileDisputeTool.inputSchema.required).toContain('transactionHash');
     expect(fileDisputeTool.inputSchema.required).toContain('blockchain');
     
-    // These are now derived from blockchain query
+    // These are now extracted from blockchain (not required from agent)
+    expect(fileDisputeTool.inputSchema.required).not.toContain('plaintiff');
+    expect(fileDisputeTool.inputSchema.required).not.toContain('defendant');
+    expect(fileDisputeTool.inputSchema.required).not.toContain('disputeUrl');
     expect(fileDisputeTool.inputSchema.required).not.toContain('amountUsd');
     expect(fileDisputeTool.inputSchema.required).not.toContain('currency');
     expect(fileDisputeTool.inputSchema.required).not.toContain('fromAddress');
@@ -99,14 +99,16 @@ describe('MCP Customer Proxy Pattern', () => {
     const fileDispute = customerSchema.tools.find((t: any) => t.name === 'file_dispute' || t.name === 'x402_file_dispute');
     // Skip if tool doesn't exist (schema filtering changed)
     if (!fileDispute) return;
-    // X-402 ultra-minimal schema
-    expect(fileDispute.inputSchema.required).toContain('plaintiff');  // Ethereum address
-    expect(fileDispute.inputSchema.required).toContain('defendant');  // Ethereum address
-    // disputeUrl is optional
+    // X-402 simplified schema (plaintiff/defendant extracted from blockchain)
     expect(fileDispute.inputSchema.required).toContain('request');
     expect(fileDispute.inputSchema.required).toContain('response');
     expect(fileDispute.inputSchema.required).toContain('transactionHash');
     expect(fileDispute.inputSchema.required).toContain('blockchain');
+    expect(fileDispute.inputSchema.required).toContain('description');
+    
+    // Plaintiff/defendant now extracted from blockchain (not required from agent)
+    expect(fileDispute.inputSchema.required).not.toContain('plaintiff');
+    expect(fileDispute.inputSchema.required).not.toContain('defendant');
   }, 30000);
 
   it('should preserve all schema properties when renaming', async () => {
@@ -128,13 +130,16 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(renamedTool.name).toBe('file_dispute');
     expect(renamedTool.description).toBe(originalTool.description);
     expect(renamedTool.inputSchema).toEqual(originalTool.inputSchema);
-    expect(renamedTool.inputSchema.properties.plaintiff).toBeDefined();
-    expect(renamedTool.inputSchema.properties.defendant).toBeDefined();
-    expect(renamedTool.inputSchema.properties.disputeUrl).toBeDefined();
+    // Verify core properties (plaintiff/defendant removed - extracted from blockchain)
     expect(renamedTool.inputSchema.properties.request).toBeDefined();
     expect(renamedTool.inputSchema.properties.response).toBeDefined();
     expect(renamedTool.inputSchema.properties.transactionHash).toBeDefined();
     expect(renamedTool.inputSchema.properties.blockchain).toBeDefined();
+    expect(renamedTool.inputSchema.properties.description).toBeDefined();
+    
+    // Plaintiff/defendant no longer in properties (extracted from blockchain)
+    expect(renamedTool.inputSchema.properties.plaintiff).toBeUndefined();
+    expect(renamedTool.inputSchema.properties.defendant).toBeUndefined();
   }, 30000);
 
   it('should include pricing information in schema', async () => {
@@ -158,23 +163,27 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(schema.authentication.optional_auth.algorithm).toBe('Ed25519');
   }, 30000);
 
-  it('should document dispute reasons in file_dispute tool', async () => {
+  it('should document blockchain enum and transaction hash in file_dispute tool', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const schema = await response.json();
     
     const fileDisputeTool = schema.tools.find((t: any) => t.name === 'x402_file_dispute');
-    // X-402 ultra-minimal uses Ethereum addresses and blockchain verification
+    // X-402 simplified - blockchain is source of truth
     if (!fileDisputeTool) return; // Skip if tool not found
-    const plaintiffProperty = fileDisputeTool.inputSchema.properties.plaintiff;
-    const defendantProperty = fileDisputeTool.inputSchema.properties.defendant;
     const blockchainProperty = fileDisputeTool.inputSchema.properties.blockchain;
+    const transactionHashProperty = fileDisputeTool.inputSchema.properties.transactionHash;
     
-    expect(plaintiffProperty).toBeDefined();
-    expect(defendantProperty).toBeDefined();
+    // Plaintiff/defendant no longer in schema (extracted from blockchain)
+    expect(fileDisputeTool.inputSchema.properties.plaintiff).toBeUndefined();
+    expect(fileDisputeTool.inputSchema.properties.defendant).toBeUndefined();
+    
+    // Blockchain enum restricted to ethereum, base, solana
     expect(blockchainProperty).toBeDefined();
-    expect(plaintiffProperty.pattern).toContain('0x');
-    expect(defendantProperty.pattern).toContain('0x');
-    expect(blockchainProperty.enum).toBeDefined();
+    expect(blockchainProperty.enum).toEqual(['ethereum', 'base', 'solana']);
+    
+    // Transaction hash is required (used to extract all details)
+    expect(transactionHashProperty).toBeDefined();
+    expect(transactionHashProperty.description).toContain('blockchain');
   }, 30000);
 });
 

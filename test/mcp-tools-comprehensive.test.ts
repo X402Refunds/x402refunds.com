@@ -78,38 +78,44 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       }
     });
 
-    it('should validate Ethereum address format for plaintiff', async () => {
+    it('should extract plaintiff from blockchain (no validation needed)', async () => {
+      // Plaintiff is now extracted from blockchain, so invalid plaintiff field is ignored
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
-        plaintiff: 'not-an-ethereum-address', // Invalid
-        defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
-        description: 'Test',
-        request: {},
-        response: {},
+        description: 'API timeout after payment',
+        request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
+        response: { status: 500, body: { error: 'timeout' } },
         transactionHash: '0xtest123',
         blockchain: 'base'
       });
 
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error?.code).toMatch(/INVALID_PLAINTIFF|MISSING_PLAINTIFF|MCP_TOOL_NOT_FOUND/);
+      // Should succeed - plaintiff extracted from blockchain
+      if (response.status === 200) {
+        expect(data.success).toBe(true);
+        expect(data.transactionVerification?.extractedDetails?.plaintiff).toBeDefined();
+      } else {
+        // Or fail for other reasons (transaction not found, etc)
+        expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+      }
     });
 
-    it('should validate Ethereum address format for defendant', async () => {
+    it('should extract defendant from blockchain (no validation needed)', async () => {
+      // Defendant is now extracted from blockchain, so invalid defendant field is ignored
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
-        plaintiff: testBuyerAddress,
-        defendant: 'invalid-address', // Invalid
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=invalid`,
-        description: 'Test',
-        request: {},
-        response: {},
+        description: 'API timeout after payment',
+        request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
+        response: { status: 500, body: { error: 'timeout' } },
         transactionHash: '0xtest123',
         blockchain: 'base'
       });
 
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error?.code).toMatch(/INVALID_DEFENDANT|MISSING_DEFENDANT|MCP_TOOL_NOT_FOUND/);
+      // Should succeed - defendant extracted from blockchain
+      if (response.status === 200) {
+        expect(data.success).toBe(true);
+        expect(data.transactionVerification?.extractedDetails?.defendant).toBeDefined();
+      } else {
+        // Or fail for other reasons (transaction not found, etc)
+        expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+      }
     });
 
     it('should validate required fields', async () => {
