@@ -204,20 +204,26 @@ export const getUserOrganization = query({
 export const getCurrentUserOrganization = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const clerkUserId = identity?.subject;
-    
-    if (!clerkUserId) {
-      return null; // Not signed in
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      const clerkUserId = identity?.subject;
+      
+      if (!clerkUserId) {
+        return null; // Not signed in
+      }
+      
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
+        .first();
+      
+      if (!user?.organizationId) return null;
+      return await ctx.db.get(user.organizationId);
+    } catch (error) {
+      // Auth error or user not found - return null gracefully
+      console.error("[getCurrentUserOrganization] Error:", error);
+      return null;
     }
-    
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
-      .first();
-    
-    if (!user?.organizationId) return null;
-    return await ctx.db.get(user.organizationId);
   },
 });
 
