@@ -190,11 +190,32 @@ export const getUser = query({
   },
 });
 
-// Get user's organization
+// Get user's organization by user ID
 export const getUserOrganization = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
+    if (!user?.organizationId) return null;
+    return await ctx.db.get(user.organizationId);
+  },
+});
+
+// Get organization for current authenticated user (no args needed)
+export const getCurrentUserOrganization = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = identity?.subject;
+    
+    if (!clerkUserId) {
+      return null; // Not signed in
+    }
+    
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
+      .first();
+    
     if (!user?.organizationId) return null;
     return await ctx.db.get(user.organizationId);
   },

@@ -24,7 +24,7 @@ export function DashboardHeader({ sidebarOpen = false, onToggleSidebar }: Dashbo
     user = null
   }
 
-  const organization = useQuery(api.users.getUserOrganization, {})
+  const organization = useQuery(api.users.getCurrentUserOrganization, {})
   const updateAutoApprove = useMutation(api.users.updateAutoApproveAI)
 
   const handleToggleAutoApprove = async (enabled: boolean) => {
