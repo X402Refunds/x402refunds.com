@@ -179,15 +179,12 @@ export const fileDispute = mutation({
       if (caseData.type === "PAYMENT") {
         // Payment disputes use payment workflow
         if (amount < 1 && evidenceCount <= 2) {
-          // @ts-expect-error - Convex workflow component type system limitation
           workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId });
         } else {
-          // @ts-expect-error - Convex workflow component type system limitation
           workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId });
         }
       } else {
         // General disputes use general workflow
-        // @ts-expect-error - Convex workflow component type system limitation
         workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId });
       }
     } catch (error: any) {

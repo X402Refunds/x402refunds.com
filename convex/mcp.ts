@@ -494,7 +494,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         };
         
         // 5. Check if defendant agent exists (permissionless dispute filing)
-        // @ts-expect-error - Convex type system issue with _componentPath
         let defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
           walletAddress: defendant 
         });
@@ -614,7 +613,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         if (!reviewerOrgId) {
           // Check defendant's organization ONLY
-          // @ts-expect-error - Convex type system issue with _componentPath
           const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
             walletAddress: defendant
           });

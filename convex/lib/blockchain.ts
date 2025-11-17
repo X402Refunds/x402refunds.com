@@ -11,11 +11,18 @@ import { v } from "convex/values";
 /**
  * Blockchain Explorer API Endpoints
  * Only Ethereum, Base, and Solana are supported
+ * 
+ * Etherscan V2 API supports multiple chains with chainid parameter
  */
 const EXPLORER_APIS = {
-  ethereum: "https://api.etherscan.io/api",
-  base: "https://api.basescan.org/api",
+  ethereum: "https://api.etherscan.io/v2/api",
+  base: "https://api.etherscan.io/v2/api", // V2 supports Base with chainid=8453
   solana: "https://api.solscan.io" // Different API structure
+} as const;
+
+const CHAIN_IDS = {
+  ethereum: 1,
+  base: 8453,
 } as const;
 
 /**
@@ -38,9 +45,13 @@ export const queryTransaction = action({
     try {
       // Get API key from environment (if needed)
       // Only Ethereum and Base require API keys (Solana uses public RPC)
+      // Etherscan API key can be used for both Ethereum and Base
+      const etherscanKey = process.env.ETHERSCAN_API_KEY;
+      const basescanKey = process.env.BASESCAN_API_KEY;
+      
       const apiKeys = {
-        ethereum: process.env.ETHERSCAN_API_KEY,
-        base: process.env.BASESCAN_API_KEY,
+        ethereum: etherscanKey,
+        base: basescanKey || etherscanKey, // Fallback to Etherscan key if Basescan key not set
       };
 
       const apiKey = apiKeys[blockchain as keyof typeof apiKeys];
@@ -68,13 +79,20 @@ export const queryTransaction = action({
         return await querySolanaTransaction(transactionHash);
       }
 
-      // Query EVM chain explorer
+      // Query EVM chain explorer using Etherscan V2 API
       const explorerUrl = EXPLORER_APIS[blockchain as keyof typeof EXPLORER_APIS];
       if (!explorerUrl) {
         throw new Error(`Unsupported blockchain: ${blockchain}`);
       }
 
-      const url = `${explorerUrl}?module=proxy&action=eth_getTransactionByHash&txhash=${transactionHash}&apikey=${apiKey}`;
+      // Get chainid for V2 API
+      const chainId = CHAIN_IDS[blockchain as keyof typeof CHAIN_IDS];
+      if (!chainId) {
+        throw new Error(`Chain ID not configured for: ${blockchain}`);
+      }
+
+      // Etherscan V2 API format: includes chainid parameter
+      const url = `${explorerUrl}?chainid=${chainId}&module=proxy&action=eth_getTransactionByHash&txhash=${transactionHash}&apikey=${apiKey}`;
 
       console.log(`🔍 Querying ${blockchain} blockchain for tx: ${transactionHash}`);
       
