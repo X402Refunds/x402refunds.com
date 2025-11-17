@@ -525,6 +525,8 @@ http.route({
             });
           } catch (error: any) {
             // Format errors in MCP content structure
+            // IMPORTANT: Tool-level errors should return HTTP 200 with isError: true
+            // Only protocol-level errors should use error status codes
             return new Response(JSON.stringify({
               jsonrpc: "2.0",
               id,
@@ -532,13 +534,13 @@ http.route({
                 content: [
                   {
                     type: "text",
-                    text: `❌ Internal Error: ${error.message}`
+                    text: `❌ Internal Error: ${error.message}\n\nStack: ${error.stack || 'No stack trace'}`
                   }
                 ],
                 isError: true
               }
             }), {
-              status: 500,
+              status: 200,  // HTTP 200 for tool-level errors per MCP spec
               headers: { 
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
