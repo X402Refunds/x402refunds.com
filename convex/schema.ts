@@ -30,6 +30,7 @@ export default defineSchema({
     aiEnabled: v.optional(v.boolean()), // Global toggle to enable/disable AI analysis
     aiAnalysisDelayMinutes: v.optional(v.number()),
     autoApprovalDeadlineDays: v.optional(v.number()),
+    autoApproveAI: v.optional(v.boolean()), // Default false - require manual approval
   })
     .index("by_clerk_org_id", ["clerkOrgId"])
     .index("by_domain", ["domain"]),

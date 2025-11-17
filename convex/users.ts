@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 // Helper to generate API key string
@@ -208,6 +208,14 @@ export const getOrganization = query({
   },
 });
 
+// Internal version for workflows
+export const getOrganizationInternal = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.organizationId);
+  },
+});
+
 // List all users in an organization
 export const listOrganizationUsers = query({
   args: { organizationId: v.id("organizations") },
@@ -237,6 +245,23 @@ export const updateOrganization = mutation({
     
     console.info(`Updated organization: ${organizationId}`, updates);
     return true;
+  },
+});
+
+// Update organization auto-approve AI setting
+export const updateAutoApproveAI = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.organizationId, {
+      autoApproveAI: args.enabled,
+      updatedAt: Date.now(),
+    });
+    
+    console.info(`Updated autoApproveAI for org ${args.organizationId}: ${args.enabled}`);
+    return { success: true };
   },
 });
 

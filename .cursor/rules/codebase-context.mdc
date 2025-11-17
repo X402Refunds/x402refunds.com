@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-16T09:50:32.895Z
+**Auto-generated on**: 2025-11-17T08:12:18.334Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -112,7 +112,7 @@ consulate/
 - **schema.ts** - Core logic
 - **testing.ts** - cleanupTestData, deleteTestAgentsBatch, deleteTestCasesBatch, runTestCleanup
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
-- **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, listOrganizationUsers, updateOrganization, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
+- **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getOrganization, getOrganizationInternal, listOrganizationUsers, updateOrganization, updateAutoApproveAI, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
 - **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow, storeWorkflowStep, cleanupOldWorkflowSteps, getWorkflowSteps, getWorkflowStatus, getAgentStepOutput, getWorkflowStepsPublic, getWorkflowStatusPublic
 - **workpools.ts** - evidencePool, judgePool, researchPool
 
@@ -167,12 +167,13 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (36 test files)
+### Test Suites (37 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
 - test/agents.test.ts
 - test/api.test.ts
+- test/auto-approve-ai.test.ts
 - test/base64-public-key.test.ts
 - test/cases.test.ts
 - test/customer-review-workflow.test.ts
@@ -323,7 +324,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 36 test files using Vitest
+- 37 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -356,5 +357,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/16/2025, 1:50:32 AM
-Files scanned: 333
+Generated: 11/17/2025, 12:12:18 AM
+Files scanned: 334

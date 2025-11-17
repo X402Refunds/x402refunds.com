@@ -533,8 +533,16 @@ export const microDisputeWorkflow = workflow.define({
       error: quickDecision?.error,
     });
 
-    // Auto-approve high confidence micro disputes
-    if (quickDecision.confidence >= 0.90) {
+    // Check org setting before auto-approving
+    // Query organization to check autoApproveAI setting
+    const org = caseData?.reviewerOrganizationId 
+      ? await step.runQuery(s.users.getOrganizationInternal, { organizationId: caseData.reviewerOrganizationId })
+      : null;
+
+    const autoApproveEnabled = org?.autoApproveAI ?? false; // Default false
+
+    // Only auto-approve if setting is enabled AND confidence >= 0.90
+    if (autoApproveEnabled && quickDecision.confidence >= 0.90) {
       await step.runMutation(s.rulings.finalizeRuling, {
         caseId,
         verdict: quickDecision.verdict,
@@ -548,7 +556,7 @@ export const microDisputeWorkflow = workflow.define({
         status: "AUTORULED",
       });
     } else {
-      // Low confidence = escalate to full workflow
+      // Keep in review queue (either low confidence OR auto-approve disabled)
       await step.runMutation(s.cases.updateCaseStatus, {
         caseId,
         status: "IN_REVIEW",

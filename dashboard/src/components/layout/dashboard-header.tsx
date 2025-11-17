@@ -3,6 +3,10 @@
 import { Menu, X } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@convex/_generated/api"
 
 interface DashboardHeaderProps {
   sidebarOpen?: boolean
@@ -18,6 +22,23 @@ export function DashboardHeader({ sidebarOpen = false, onToggleSidebar }: Dashbo
   } catch {
     // Clerk not initialized - show generic user during build
     user = null
+  }
+
+  const organization = useQuery(api.users.getUserOrganization, {})
+  const updateAutoApprove = useMutation(api.users.updateAutoApproveAI)
+
+  const handleToggleAutoApprove = async (enabled: boolean) => {
+    if (!organization?._id) return
+    
+    try {
+      await updateAutoApprove({
+        organizationId: organization._id,
+        enabled,
+      })
+    } catch (error) {
+      console.error("Failed to update auto-approve setting:", error)
+      // Optionally add toast notification here
+    }
   }
 
   return (
@@ -45,6 +66,21 @@ export function DashboardHeader({ sidebarOpen = false, onToggleSidebar }: Dashbo
 
         {/* Right Section: User Account */}
         <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+          {/* Auto-Approve AI Toggle */}
+          {organization && (
+            <div className="flex items-center gap-2 border-r pr-4 border-slate-200">
+              <Label htmlFor="auto-approve" className="text-xs sm:text-sm text-slate-700 cursor-pointer">
+                Auto-approve AI
+              </Label>
+              <Switch
+                id="auto-approve"
+                checked={organization.autoApproveAI ?? false}
+                onCheckedChange={handleToggleAutoApprove}
+                className="data-[state=checked]:bg-emerald-500"
+              />
+            </div>
+          )}
+
           {/* User Display Name - Hidden on mobile */}
           {user && (
             <div className="text-left hidden sm:block">
