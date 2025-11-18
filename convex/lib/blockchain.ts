@@ -9,20 +9,15 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
- * Blockchain Explorer API Endpoints
+ * Blockchain RPC Endpoints
  * Only Ethereum, Base, and Solana are supported
  * 
- * Etherscan V2 API supports multiple chains with chainid parameter
+ * Using Alchemy for reliable, high-rate-limit RPC access
  */
-const EXPLORER_APIS = {
-  ethereum: "https://api.etherscan.io/v2/api",
-  base: "https://api.etherscan.io/v2/api", // V2 supports Base with chainid=8453
-  solana: "https://api.solscan.io" // Different API structure
-} as const;
-
-const CHAIN_IDS = {
-  ethereum: 1,
-  base: 8453,
+const RPC_ENDPOINTS = {
+  ethereum: "https://eth-mainnet.g.alchemy.com/v2",
+  base: "https://base-mainnet.g.alchemy.com/v2",
+  solana: "https://api.mainnet-beta.solana.com" // Public RPC
 } as const;
 
 /**
@@ -43,21 +38,12 @@ export const queryTransaction = action({
   },
   handler: async (ctx, { blockchain, transactionHash, expectedFromAddress, expectedToAddress }) => {
     try {
-      // Get API key from environment (if needed)
-      // Only Ethereum and Base require API keys (Solana uses public RPC)
-      // Etherscan API key can be used for both Ethereum and Base
-      const etherscanKey = process.env.ETHERSCAN_API_KEY;
-      const basescanKey = process.env.BASESCAN_API_KEY;
-      
-      const apiKeys = {
-        ethereum: etherscanKey,
-        base: basescanKey || etherscanKey, // Fallback to Etherscan key if Basescan key not set
-      };
-
-      const apiKey = apiKeys[blockchain as keyof typeof apiKeys];
+      // Get Alchemy API key from environment
+      // Single key works for both Ethereum and Base
+      const alchemyKey = process.env.ALCHEMY_API_KEY;
       
       // MOCK MODE: If no API key or test environment, return mock data
-      if (!apiKey || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+      if (!alchemyKey || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
         console.log(`🧪 MOCK MODE: Returning mock blockchain data for ${blockchain}:${transactionHash}`);
         // Use expected addresses if provided (for MCP integration), otherwise use defaults
         return {
@@ -79,24 +65,31 @@ export const queryTransaction = action({
         return await querySolanaTransaction(transactionHash);
       }
 
-      // Query EVM chain explorer using Etherscan V2 API
-      const explorerUrl = EXPLORER_APIS[blockchain as keyof typeof EXPLORER_APIS];
-      if (!explorerUrl) {
+      // Query EVM chain using Alchemy JSON-RPC
+      const rpcEndpoint = RPC_ENDPOINTS[blockchain as keyof typeof RPC_ENDPOINTS];
+      if (!rpcEndpoint) {
         throw new Error(`Unsupported blockchain: ${blockchain}`);
       }
 
-      // Get chainid for V2 API
-      const chainId = CHAIN_IDS[blockchain as keyof typeof CHAIN_IDS];
-      if (!chainId) {
-        throw new Error(`Chain ID not configured for: ${blockchain}`);
-      }
-
-      // Etherscan V2 API format: includes chainid parameter
-      const url = `${explorerUrl}?chainid=${chainId}&module=proxy&action=eth_getTransactionByHash&txhash=${transactionHash}&apikey=${apiKey}`;
+      const rpcUrl = `${rpcEndpoint}/${alchemyKey}`;
 
       console.log(`🔍 Querying ${blockchain} blockchain for tx: ${transactionHash}`);
       
-      const response = await fetch(url);
+      // Use JSON-RPC format
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: '2.0',
+          method: 'eth_getTransactionByHash',
+          params: [transactionHash]
+        })
+      });
+
       const data = await response.json();
 
       if (data.error || !data.result) {
