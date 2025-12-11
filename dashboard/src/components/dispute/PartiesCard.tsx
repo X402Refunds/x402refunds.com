@@ -147,3 +147,4 @@ export function PartiesCard({ consumer, merchant }: PartiesCardProps) {
 
 
 
+

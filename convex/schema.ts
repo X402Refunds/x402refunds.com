@@ -87,7 +87,7 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
     
     // NEW: X-402 identity fields
-    walletAddress: v.optional(v.string()), // Ethereum address (canonical ERC-8004 identity)
+    walletAddress: v.optional(v.string()), // CAIP-10 format (e.g., "solana:5eykt:..." or legacy "0x...")
     endpoint: v.optional(v.string()), // API endpoint URL
     x402MetadataUrl: v.optional(v.string()), // .well-known/x402.json location
     claimedAt: v.optional(v.number()), // When agent was claimed by owner
@@ -565,4 +565,62 @@ export default defineSchema({
     .index("by_workflow", ["workflowId"])
     .index("by_case_step", ["caseId", "stepNumber"])
     .index("by_status", ["status"]),
+
+  // ========================================
+  // REFUND SYSTEM TABLES (3) - Automated refunds
+  // ========================================
+
+  // Merchant balance management
+  merchantBalances: defineTable({
+    walletAddress: v.string(),  // CAIP-10 format: "solana:5eykt:..."
+    currency: v.string(),        // "USDC", "SOL"
+    availableBalance: v.number(),
+    lockedBalance: v.number(),   // Locked for pending disputes
+    totalDeposited: v.number(),
+    totalRefunded: v.number(),
+    lastDepositAt: v.optional(v.number()),
+    lastRefundAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wallet", ["walletAddress"])
+    .index("by_wallet_currency", ["walletAddress", "currency"]),
+
+  // Merchant settings
+  merchantSettings: defineTable({
+    walletAddress: v.string(),  // CAIP-10 format
+    organizationId: v.optional(v.id("organizations")),
+    autoRefundEnabled: v.boolean(),  // Toggle for automatic refunds
+    autoRefundThreshold: v.optional(v.number()),  // Max amount for auto-refund
+    requireApprovalOver: v.optional(v.number()),  // Require manual approval if amount > X
+    notificationEmail: v.optional(v.string()),
+    webhookUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wallet", ["walletAddress"])
+    .index("by_organization", ["organizationId"]),
+
+  // Refund transaction records
+  refundTransactions: defineTable({
+    caseId: v.id("cases"),
+    fromWallet: v.string(),  // CAIP-10 format (merchant)
+    toWallet: v.string(),    // CAIP-10 format (consumer)
+    amount: v.number(),
+    currency: v.string(),
+    blockchain: v.string(),  // "solana"
+    txSignature: v.optional(v.string()),  // Solana transaction signature
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("EXECUTED"),
+      v.literal("FAILED")
+    ),
+    errorMessage: v.optional(v.string()),
+    executedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_status", ["status"])
+    .index("by_from_wallet", ["fromWallet"])
+    .index("by_tx_signature", ["txSignature"]),
 });

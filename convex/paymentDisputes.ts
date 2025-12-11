@@ -952,6 +952,15 @@ export const customerReview = mutation({
       console.info(`📚 Learning: AI unable to recommend for dispute ${args.paymentDisputeId}, customer made manual decision: ${args.finalVerdict}`);
     }
 
+    // Trigger automated refund if consumer wins
+    if (args.finalVerdict === "CONSUMER_WINS") {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.refunds.executeAutomatedRefund,
+        { caseId: args.paymentDisputeId }
+      );
+    }
+
     return { success: true, ruling: args.finalVerdict, rulingId };
   },
 });

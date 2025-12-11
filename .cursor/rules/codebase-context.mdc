@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-11-17T10:03:34.241Z
+**Auto-generated on**: 2025-12-08T23:27:05.027Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (39 files)
+### Convex Files (42 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -102,12 +102,15 @@ consulate/
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **blockchain.ts** - queryTransaction, mockQueryTransaction
+- **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
+- **solana.ts** - executeSolanaRefund, checkSolanaBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
+- **refunds.ts** - executeAutomatedRefund, executeOnChain, getRefundStatus, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
 - **schema.ts** - Core logic
 - **testing.ts** - cleanupTestData, deleteTestAgentsBatch, deleteTestCasesBatch, runTestCleanup
@@ -167,7 +170,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (37 test files)
+### Test Suites (38 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -195,6 +198,7 @@ Common HTTP routes exposed:
 - test/payment-dispute-party-model.test.ts
 - test/performance.test.ts
 - test/production-smoke.test.ts
+- test/refunds.test.ts
 - test/signature-verification.test.ts
 - test/signed-evidence-workflow.test.ts
 - test/system-endpoints.test.ts
@@ -291,7 +295,7 @@ Common HTTP routes exposed:
 - @convex-dev/workflow@^0.2.7
 - @convex-dev/workpool@^0.2.19
 - ai@^5.0.87
-- convex@^1.28.2
+- convex@^1.29.1
 - convex-test@^0.0.38
 - viem@~2.38.6
 - zod@^4.1.11
@@ -318,13 +322,13 @@ Common HTTP routes exposed:
 - 71 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 39 TypeScript files with serverless functions
+- 42 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 37 test files using Vitest
+- 38 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -357,5 +361,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 11/17/2025, 2:03:34 AM
-Files scanned: 334
+Generated: 12/9/2025, 4:57:05 AM
+Files scanned: 339
