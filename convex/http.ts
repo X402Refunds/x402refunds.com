@@ -301,22 +301,8 @@ http.route({
                 // Call payment dispute handler directly
                 const parameters = toolArgs || {};
                 
-                // Extract defendant from disputeUrl if provided
-                let defendant = parameters.defendant;
-                if (parameters.disputeUrl) {
-                  try {
-                    const disputeUrl = new URL(parameters.disputeUrl);
-                    const vendorFromUrl = disputeUrl.searchParams.get('vendor');
-                    if (vendorFromUrl) {
-                      defendant = vendorFromUrl;
-                    }
-                  } catch (e) {
-                    // Invalid URL, use defendant parameter
-                  }
-                }
-                
-                // Validate required fields (basic validation only - full validation in mutation)
-                if (!parameters.plaintiff || !defendant || !parameters.description || 
+                // Validate required fields - plaintiff/defendant are extracted from blockchain
+                if (!parameters.description || 
                     !parameters.request || !parameters.response || 
                     !parameters.transactionHash || !parameters.blockchain) {
                   invokeData = {
@@ -324,18 +310,18 @@ http.route({
                     error: {
                       code: "MISSING_REQUIRED_FIELDS",
                       message: "Missing required fields for dispute filing",
-                      required: ["plaintiff", "defendant", "description", "request", "response", "transactionHash", "blockchain"]
+                      required: ["description", "request", "response", "transactionHash", "blockchain"]
                     }
                   };
                   break;
                 }
                 
-                // Query blockchain for transaction details
+                // Query blockchain to extract transaction details (plaintiff, defendant, amount, currency)
+                // Blockchain is the source of truth - no need for agent to provide these
+                console.log(`🔍 Querying blockchain ${parameters.blockchain} for tx: ${parameters.transactionHash}`);
                 const txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
                   blockchain: parameters.blockchain,
-                  transactionHash: parameters.transactionHash,
-                  expectedFromAddress: parameters.plaintiff,
-                  expectedToAddress: defendant
+                  transactionHash: parameters.transactionHash
                 });
                 
                 if (!txDetails || !txDetails.success) {
@@ -350,20 +336,30 @@ http.route({
                   break;
                 }
                 
-                // Build payment dispute args
+                // Extract plaintiff and defendant from blockchain transaction
                 const txData = txDetails as any;
+                const plaintiff = txData.fromAddress || "";  // Extracted from blockchain tx.from
+                const defendant = txData.toAddress || "";    // Extracted from blockchain tx.to
+                const txAmountUsd = txData.amountUsd || parseFloat(txData.value || "0");
+                
+                console.log(`✅ Transaction details extracted from blockchain:`);
+                console.log(`   Plaintiff (buyer): ${plaintiff}`);
+                console.log(`   Defendant (seller): ${defendant}`);
+                console.log(`   Amount: ${txAmountUsd} ${txData.currency || "USD"}`);
+                
+                // Build payment dispute args
                 const paymentDisputeArgs: any = {
                   transactionId: parameters.transactionHash,
-                  amount: txData.amountUsd || 0,
+                  amount: txAmountUsd,
                   currency: txData.currency || "USD",
-                  plaintiff: parameters.plaintiff,
-                  defendant: defendant,
+                  plaintiff: plaintiff,  // From blockchain
+                  defendant: defendant,  // From blockchain
                   disputeReason: "quality_issue",
                   description: parameters.description,
                   evidenceUrls: [],
                   callbackUrl: parameters.callbackUrl,
                   plaintiffMetadata: { 
-                    walletAddress: parameters.plaintiff,
+                    walletAddress: plaintiff,
                     requestJson: JSON.stringify(parameters.request)
                   },
                   defendantMetadata: { 
@@ -392,14 +388,29 @@ http.route({
                   status: result.status,
                   isMicroDispute: result.isMicroDispute,
                   disputeFee: result.fee,
+                  
+                  // Transaction verification - extracted from blockchain
+                  transactionVerification: {
+                    source: "blockchain",
+                    blockchain: parameters.blockchain,
+                    transactionHash: parameters.transactionHash,
+                    verified: true,
+                    extractedDetails: {
+                      plaintiff: `${plaintiff} (extracted from blockchain)`,
+                      defendant: `${defendant} (extracted from blockchain)`,
+                      amount: txAmountUsd,
+                      currency: txData.currency || "USD",
+                      blockNumber: txData.blockNumber
+                    }
+                  },
+                  
                   humanReviewRequired: result.humanReviewRequired,
                   estimatedResolutionTime: result.estimatedResolutionTime,
-                  message: `X-402 payment dispute filed successfully. Case ID: ${result.caseId}`,
+                  message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
                   trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
                   nextSteps: [
-                    "Submit additional evidence (optional)",
                     "AI analyzes dispute + provides recommendation",
-                    "Your team reviews exceptions in dashboard",
+                    "Merchant reviews in dashboard",
                     "Resolution within 10 business days (Regulation E)"
                   ]
                 };

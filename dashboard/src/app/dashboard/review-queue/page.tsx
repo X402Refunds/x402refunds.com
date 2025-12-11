@@ -13,11 +13,12 @@ import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/ui/animated-section"
 import { SuccessCheckmark } from "@/components/ui/success-checkmark"
 import { useState } from "react"
+import { Id } from "@convex/_generated/dataModel"
 
 export default function ReviewQueuePage() {
   const { isLoaded } = useUser()
   const router = useRouter()
-  const [successDisputeId, setSuccessDisputeId] = useState<string | null>(null)
+  const [successDisputeId, setSuccessDisputeId] = useState<Id<"cases"> | null>(null)
   
   // Sync and get user
   const currentUser = useQuery(
