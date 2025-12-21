@@ -61,9 +61,9 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.inputSchema.required).not.toContain('fromAddress');
     expect(tool?.inputSchema.required).not.toContain('toAddress');
     
-    // Check for blockchain enum (only ethereum, base, solana)
+    // Check for blockchain enum (only base, solana - USDC chains)
     expect(tool?.inputSchema.properties.blockchain.enum).toBeDefined();
-    expect(tool?.inputSchema.properties.blockchain.enum).toEqual(['ethereum', 'base', 'solana']);
+    expect(tool?.inputSchema.properties.blockchain.enum).toEqual(['base', 'solana']);
     expect(tool?.inputSchema.properties.dryRun).toBeDefined();
     // Note: returns field removed (not part of MCP standard)
   });
@@ -93,10 +93,10 @@ describe('MCP - Schema Improvements', () => {
     const blockchain = fileDisputeTool?.inputSchema.properties.blockchain;
 
     expect(blockchain).toBeDefined();
-    expect(blockchain?.enum).toEqual(['ethereum', 'base', 'solana']);
-    expect(blockchain?.description).toContain('Ethereum');
+    expect(blockchain?.enum).toEqual(['base', 'solana']);
     expect(blockchain?.description).toContain('Base');
     expect(blockchain?.description).toContain('Solana');
+    expect(blockchain?.description).not.toContain('Ethereum');
     expect(blockchain?.examples).toBeDefined();
     expect(blockchain?.examples?.length).toBeGreaterThan(0);
   });

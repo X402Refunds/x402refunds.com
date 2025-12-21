@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "com.x402disputes/x402-disputes",
   "title": "x402disputes.com - Permissionless X-402 Dispute Resolution",
-  "description": "Permissionless dispute filing for X-402 payments. Agents file disputes directly. Dispute and refund data written on-chain.",
+  "description": "Permissionless dispute filing for X-402 USDC payments on Base and Solana. Agents file disputes directly. Dispute and refund data written on-chain.",
   "version": "3.0.0",
   "remotes": [
     {

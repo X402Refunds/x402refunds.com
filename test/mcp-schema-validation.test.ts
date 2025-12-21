@@ -12,13 +12,13 @@ describe("MCP Tool Schema Validation", () => {
   // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint
 
   describe("x402_file_dispute", () => {
-    it("should have blockchain enum (ethereum, base, solana only)", () => {
+    it("should have blockchain enum (base, solana only - USDC chains)", () => {
       const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
       expect(disputeTool).toBeDefined();
 
-      // X-402 simplified schema - blockchain enum restricted
+      // X-402 simplified schema - blockchain enum restricted to USDC-supported chains
       expect(disputeTool?.inputSchema.properties.blockchain.enum).toBeDefined();
-      expect(disputeTool?.inputSchema.properties.blockchain.enum).toEqual(['ethereum', 'base', 'solana']);
+      expect(disputeTool?.inputSchema.properties.blockchain.enum).toEqual(['base', 'solana']);
       
       // Plaintiff/defendant no longer in schema (extracted from blockchain)
       expect(disputeTool?.inputSchema.properties.plaintiff).toBeUndefined();

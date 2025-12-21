@@ -316,9 +316,26 @@ http.route({
                   break;
                 }
                 
-                // Query blockchain to extract transaction details (plaintiff, defendant, amount, currency)
-                // Blockchain is the source of truth - no need for agent to provide these
-                console.log(`🔍 Querying blockchain ${parameters.blockchain} for tx: ${parameters.transactionHash}`);
+                // Validate blockchain is supported (Base or Solana only)
+                const supportedChains = ["base", "solana"];
+                if (!supportedChains.includes(parameters.blockchain)) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "UNSUPPORTED_BLOCKCHAIN",
+                      message: `Only Base and Solana chains are supported for USDC payments`,
+                      field: "blockchain",
+                      received: parameters.blockchain,
+                      expected: "base or solana",
+                      suggestion: "X-402 disputes only accept USDC payments on Base and Solana chains."
+                    }
+                  };
+                  break;
+                }
+                
+                // Query blockchain to extract USDC transaction details (plaintiff, defendant, amount)
+                // Blockchain is the source of truth - validates USDC transfer
+                console.log(`🔍 Querying ${parameters.blockchain} blockchain for USDC transfer: ${parameters.transactionHash}`);
                 const txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
                   blockchain: parameters.blockchain,
                   transactionHash: parameters.transactionHash

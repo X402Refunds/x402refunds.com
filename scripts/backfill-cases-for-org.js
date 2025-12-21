@@ -6,10 +6,12 @@ const CONVEX_URL = process.env.CONVEX_URL || "https://perceptive-lyrebird-89.con
 
 async function main() {
   const caseIds = [
-    "jd7eyxspgysxsdydzg43gj08897v5skn",
-    "jd78dx8ywxkx2qpgc9qx11jvjx7v5rc1"
+    "jd760vpbwrkxrganmktdn9emfd7x2zyy",
+    "jd76fqg2f008gvfz1evwvaypm17x2s30",
+    "jd7308efwnjq8qy7a617dv900h7x2qt9",
+    "jd7ffnm4sngzk9g0tphvp9sr2x7x3j5g"
   ];
-  const orgId = "mx70w8hshm2xrqmw00wk3qhfsh7sfvt9";
+  const orgId = "mx70w8hshm2xrqmw00wk3qhfsh7sfvt9"; // consulatehq.com org
   
   const client = new ConvexHttpClient(CONVEX_URL);
 

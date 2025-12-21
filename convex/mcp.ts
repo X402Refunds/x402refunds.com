@@ -76,7 +76,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
-    description: "File X-402 payment dispute for API service failures. Permissionless filing with blockchain transaction verification. All transaction details (plaintiff, defendant, amount, currency) are extracted directly from the blockchain.",
+    description: "File X-402 payment dispute for API service failures. USDC payments on Base and Solana only. Permissionless filing with blockchain transaction verification. All transaction details (plaintiff, defendant, amount) are extracted directly from the blockchain.",
     inputSchema: {
       type: "object",
       properties: {
@@ -112,14 +112,14 @@ export const MCP_TOOLS = [
         },
         transactionHash: {
           type: "string",
-          description: "REQUIRED. Blockchain transaction hash proving payment. We query the blockchain to extract all transaction details (from address, to address, amount, currency). Format: 0x... for EVM chains, base58 for Solana.",
+          description: "REQUIRED. USDC token transfer transaction hash. We query the blockchain to extract all transaction details (from address, to address, amount). Format: 0x... for Base, base58 for Solana.",
           examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."]
         },
         blockchain: {
           type: "string",
-          enum: ["ethereum", "base", "solana"],
-          description: "REQUIRED. Blockchain network where payment transaction occurred. Only Ethereum, Base, and Solana are supported.",
-          examples: ["base", "ethereum", "solana"]
+          enum: ["base", "solana"],
+          description: "REQUIRED. Blockchain network where USDC payment occurred. Only Base and Solana are supported.",
+          examples: ["base", "solana"]
         },
         sellerXSignature: {
           type: "string",
@@ -197,28 +197,28 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     server: {
       name: "x402disputes.com - Permissionless X-402 Dispute Resolution",
       version: "2.0.0",
-      description: "Permissionless dispute filing for X-402 payment protocol. Agents file disputes directly. Dispute and refund data written on-chain.",
+      description: "Permissionless dispute filing for X-402 USDC payment protocol. Base and Solana only. Agents file disputes directly. Dispute and refund data written on-chain.",
       
       payment_details: {
         format: "All transaction details extracted from blockchain",
-        note: "Agent only provides transaction hash. We query blockchain to extract plaintiff, defendant, amount, and currency."
+        note: "Agent only provides USDC transaction hash. We query blockchain to extract plaintiff, defendant, and amount. Only USDC on Base and Solana supported."
       },
       
-      dispute_types: "Payment disputes only (crypto transactions)",
+      dispute_types: "USDC payment disputes only (Base and Solana chains)",
       
       evidence_requirements: {
         required_from_agent: [
-          "transactionHash - Blockchain transaction hash proving payment",
-          "blockchain - Network (ethereum, base, or solana only)",
+          "transactionHash - USDC token transfer transaction hash",
+          "blockchain - Network (base or solana only)",
           "description - What went wrong (10-500 chars)",
           "request - API request object that was sent",
           "response - Error response that was received"
         ],
         extracted_from_blockchain: [
-          "plaintiff - Buyer's wallet address (tx.from)",
-          "defendant - Seller's wallet address (tx.to)",
-          "amount - Payment amount in USD",
-          "currency - Token/currency used (ETH, USDC, SOL, etc.)"
+          "plaintiff - Buyer's wallet address (USDC sender)",
+          "defendant - Seller's wallet address (USDC recipient)",
+          "amount - USDC payment amount (1 USDC = $1.00 USD)",
+          "currency - Always USDC (only supported currency)"
         ],
         optional_but_recommended: {
           sellerXSignature: {
@@ -380,18 +380,18 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // Validate blockchain is one of the supported chains
-        const supportedChains = ["ethereum", "base", "solana"];
+        // Validate blockchain is one of the supported chains (Base or Solana only)
+        const supportedChains = ["base", "solana"];
         if (!supportedChains.includes(parameters.blockchain)) {
           return new Response(JSON.stringify({
             success: false,
             error: {
               code: "UNSUPPORTED_BLOCKCHAIN",
-              message: `Blockchain '${parameters.blockchain}' is not supported`,
+              message: `Only Base and Solana chains are supported for USDC payments`,
               field: "blockchain",
               received: parameters.blockchain,
-              expected: "ethereum, base, or solana",
-              suggestion: "Only Ethereum, Base, and Solana blockchains are currently supported."
+              expected: "base or solana",
+              suggestion: "X-402 disputes only accept USDC payments on Base and Solana chains."
             }
           }), {
             status: 400,

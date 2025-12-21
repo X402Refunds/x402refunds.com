@@ -300,3 +300,29 @@ export const runTestCleanup = mutation({
   },
 });
 
+/**
+ * Delete specific cases by ID
+ * Used for manual cleanup of specific test disputes
+ */
+export const deleteSpecificCases = internalMutation({
+  args: {
+    caseIds: v.array(v.id("cases"))
+  },
+  handler: async (ctx, args) => {
+    let deleted = 0;
+    let failed = 0;
+    
+    for (const caseId of args.caseIds) {
+      try {
+        await ctx.db.delete(caseId);
+        deleted++;
+      } catch (error) {
+        console.error(`Failed to delete case ${caseId}:`, error);
+        failed++;
+      }
+    }
+    
+    return { deleted, failed };
+  }
+});
+
