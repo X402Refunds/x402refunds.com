@@ -180,6 +180,37 @@ export const MCP_TOOLS = [
       },
       required: ["caseId"]
     }
+  },
+  {
+    name: "demo_image_generator_500",
+    description: "Demo image generation API that ALWAYS returns 500 error after payment. Perfect for testing X-402 dispute filing. Accepts 0.01 USDC on BASE via X-402 protocol (Coinbase Payments MCP handles payment automatically).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          minLength: 3,
+          maxLength: 1000,
+          description: "REQUIRED. Text prompt describing the image to generate (e.g., 'a dog playing in the park')",
+          examples: [
+            "a dog playing in the park",
+            "a cat sleeping on a couch",
+            "a mountain landscape at sunset"
+          ]
+        },
+        size: {
+          type: "string",
+          description: "Optional. Image size (e.g., '1024x1024', '512x512')",
+          examples: ["1024x1024", "512x512", "1024x768"]
+        },
+        model: {
+          type: "string",
+          description: "Optional. AI model to use (e.g., 'stable-diffusion-xl', 'dall-e-3')",
+          examples: ["stable-diffusion-xl", "dall-e-3", "midjourney-v6"]
+        }
+      },
+      required: ["prompt"]
+    }
   }
 ];
 
@@ -699,6 +730,72 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         return new Response(JSON.stringify({
           success: true,
           case: result
+        }), {
+          headers: { "Content-Type": "application/json" }
+        });
+        break;
+        
+      case "demo_image_generator_500":
+        // Demo agent - calls ImageGenerator500 endpoint internally
+        // This allows Claude to test the full X-402 payment + dispute flow
+        
+        // Validate prompt
+        if (!parameters.prompt || typeof parameters.prompt !== 'string') {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "MISSING_PROMPT",
+              message: "prompt is required",
+              field: "prompt",
+              expected: "String between 3-1000 characters",
+              suggestion: "Provide a text prompt like 'a dog playing in the park'"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        if (parameters.prompt.length < 3 || parameters.prompt.length > 1000) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "INVALID_PROMPT_LENGTH",
+              message: `Prompt must be between 3-1000 characters (got ${parameters.prompt.length})`,
+              field: "prompt"
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // Make internal HTTP call to the demo agent endpoint
+        // In production, this would be an actual external API call
+        // For now, we'll return a simulated response showing the X-402 flow
+        
+        return new Response(JSON.stringify({
+          success: true,
+          note: "This is a demo agent that requires X-402 payment",
+          payment_required: {
+            amount: "0.01",
+            currency: "USDC",
+            network: "base",
+            recipient: "0x49AF4074577EA313C5053cbB7560AC39e34b05E8",
+            protocol: "X-402"
+          },
+          instructions: {
+            step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
+            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator-500",
+            step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
+            coinbase_mcp: "Install: npx @coinbase/payments-mcp"
+          },
+          endpoint: "https://api.x402disputes.com/demo-agents/image-generator-500",
+          prompt: parameters.prompt,
+          size: parameters.size || "1024x1024",
+          model: parameters.model || "stable-diffusion-xl",
+          expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
+          use_case: "Perfect for testing X-402 dispute filing workflow"
         }), {
           headers: { "Content-Type": "application/json" }
         });

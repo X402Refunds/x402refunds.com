@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { mcpDiscovery, mcpInvoke } from "./mcp";
+import { imageGenerator500Handler, imageGenerator500GetHandler } from "./demoAgents";
 
 const http = httpRouter();
 
@@ -9,7 +10,8 @@ const http = httpRouter();
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Agent-DID, X-Agent-Signature, X-SLA-Report",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Agent-DID, X-Agent-Signature, X-SLA-Report, X-PAYMENT, X-Payment-Proof, X-402-Transaction-Hash, PAYMENT-SIGNATURE",
+  "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, X-402-PAYMENT-RESPONSE",
   "Content-Type": "application/json"
 };
 
@@ -47,6 +49,8 @@ http.route({ path: "/disputes/claim", method: "OPTIONS", handler: optionsHandler
 http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
+// Demo agents for dispute testing
+http.route({ path: "/demo-agents/image-generator-500", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -466,6 +470,60 @@ http.route({
                 break;
               }
               
+              case "demo_image_generator_500": {
+                // Demo agent - returns information about the demo endpoint
+                const parameters = toolArgs || {};
+                
+                if (!parameters.prompt || typeof parameters.prompt !== 'string') {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "MISSING_PROMPT",
+                      message: "prompt is required",
+                      field: "prompt",
+                      expected: "String between 3-1000 characters"
+                    }
+                  };
+                  break;
+                }
+                
+                if (parameters.prompt.length < 3 || parameters.prompt.length > 1000) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "INVALID_PROMPT_LENGTH",
+                      message: `Prompt must be between 3-1000 characters (got ${parameters.prompt.length})`
+                    }
+                  };
+                  break;
+                }
+                
+                invokeData = {
+                  success: true,
+                  note: "This is a demo agent that requires X-402 payment",
+                  payment_required: {
+                    amount: "0.01",
+                    currency: "USDC",
+                    network: "base",
+                    recipient: "0x49AF4074577EA313C5053cbB7560AC39e34b05E8",
+                    protocol: "X-402"
+                  },
+                  instructions: {
+                    step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
+                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator-500",
+                    step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
+                    coinbase_mcp: "Install: npx @coinbase/payments-mcp"
+                  },
+                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator-500",
+                  prompt: parameters.prompt,
+                  size: parameters.size || "1024x1024",
+                  model: parameters.model || "stable-diffusion-xl",
+                  expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
+                  use_case: "Perfect for testing X-402 dispute filing workflow"
+                };
+                break;
+              }
+              
               default:
                 invokeData = {
                   success: false,
@@ -515,6 +573,22 @@ http.route({
                     `   Defendant: ${c.defendant?.substring(0, 10)}...`
                   ).join('\n\n') +
                   (cases.length > 10 ? `\n\n... and ${cases.length - 10} more` : '');
+              } else if (toolName === "demo_image_generator_500") {
+                textOutput = `🎨 ImageGenerator500 Demo Agent\n\n` +
+                  `📝 Prompt: "${invokeData.prompt}"\n` +
+                  `📐 Size: ${invokeData.size}\n` +
+                  `🤖 Model: ${invokeData.model}\n\n` +
+                  `💰 Payment Required:\n` +
+                  `   Amount: ${invokeData.payment_required.amount} ${invokeData.payment_required.currency}\n` +
+                  `   Network: ${invokeData.payment_required.network}\n` +
+                  `   Wallet: ${invokeData.payment_required.recipient}\n\n` +
+                  `🔗 Endpoint: ${invokeData.endpoint}\n\n` +
+                  `⚠️  Expected Behavior: ${invokeData.expected_behavior}\n\n` +
+                  `📋 Next Steps:\n` +
+                  `1. ${invokeData.instructions.step_1}\n` +
+                  `2. ${invokeData.instructions.step_2}\n` +
+                  `3. ${invokeData.instructions.step_3}\n\n` +
+                  `💡 ${invokeData.use_case}`;
               } else if (toolName === "x402_check_case_status") {
                 const caseData = invokeData.case;
                 textOutput = `📋 Case Status\n\n` +
@@ -2223,6 +2297,31 @@ http.route({
       });
     }
   })
+});
+
+// === DEMO AGENTS FOR DISPUTE TESTING ===
+
+/**
+ * ImageGenerator500 - Demo agent that always returns 500 error
+ * 
+ * Purpose: Generate realistic dispute test cases
+ * Payment: 0.01 USDC on BASE via X-402 protocol
+ * Wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
+ * Behavior: Validates payment, then returns 500 "model_overloaded" error
+ */
+
+// GET route - Shows API documentation
+http.route({
+  path: "/demo-agents/image-generator-500",
+  method: "GET",
+  handler: imageGenerator500GetHandler
+});
+
+// POST route - Actual API endpoint
+http.route({
+  path: "/demo-agents/image-generator-500",
+  method: "POST",
+  handler: imageGenerator500Handler
 });
 
 export default http;
