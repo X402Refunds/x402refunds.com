@@ -10,6 +10,9 @@ import { parseCaip10, extractAddress, isSolana } from "./lib/caip10";
 /**
  * Execute automated refund after dispute is decided
  * Called by payment dispute workflow when verdict is CONSUMER_WINS
+ * 
+ * UPDATED: Uses x402r escrow contracts if available
+ * GitHub: https://github.com/BackTrackCo/x402r-contracts
  */
 export const executeAutomatedRefund = internalMutation({
   args: {
@@ -25,6 +28,23 @@ export const executeAutomatedRefund = internalMutation({
     if (dispute.finalVerdict !== "CONSUMER_WINS") {
       console.log(`⏭️  Skipping refund: verdict is ${dispute.finalVerdict}`);
       return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
+    }
+    
+    // NEW: Check if this dispute uses x402r escrow
+    if (dispute.x402rEscrow) {
+      console.log(`🔗 Using x402r escrow for refund: ${dispute.x402rEscrow.escrowAddress}`);
+      
+      // Schedule x402r escrow release
+      await ctx.scheduler.runAfter(
+        0,
+        internal.refunds.executeX402rRelease,
+        { caseId: args.caseId }
+      );
+      
+      return { 
+        status: "SCHEDULED_X402R", 
+        escrowAddress: dispute.x402rEscrow.escrowAddress 
+      };
     }
     
     // Check if already refunded
@@ -201,6 +221,36 @@ export const getRefundStatus = query({
       .first();
     
     return refund || null;
+  },
+});
+
+/**
+ * Execute x402r escrow release
+ * Calls smart contract to release funds to winner
+ * 
+ * NOTE: This now delegates to the new x402r/resolver module
+ * for better separation of concerns and safety features
+ */
+export const executeX402rRelease = internalMutation({
+  args: {
+    caseId: v.id("cases"),
+  },
+  handler: async (ctx, args) => {
+    console.log(`🔗 Delegating x402r release for case ${args.caseId} to resolver module`);
+    
+    // Delegate to x402r resolver module
+    // This provides:
+    // - Gas price checks
+    // - Amount limits
+    // - Retry logic
+    // - Graceful error handling
+    const result = await ctx.runMutation(internal.x402r.resolver.resolveEscrowDispute, {
+      caseId: args.caseId,
+    });
+    
+    console.log(`x402r release status: ${result.status}`);
+    
+    return result;
   },
 });
 
