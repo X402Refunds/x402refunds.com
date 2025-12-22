@@ -182,7 +182,7 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "demo_image_generator_500",
+    name: "demo_image_generator",
     description: "Demo image generation API that ALWAYS returns 500 error after payment. Perfect for testing X-402 dispute filing. Accepts 0.01 USDC on BASE via X-402 protocol (Coinbase Payments MCP handles payment automatically).",
     inputSchema: {
       type: "object",
@@ -735,7 +735,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         break;
         
-      case "demo_image_generator_500":
+      case "demo_image_generator":
         // Demo agent - calls ImageGenerator500 endpoint internally
         // This allows Claude to test the full X-402 payment + dispute flow
         
@@ -786,11 +786,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           },
           instructions: {
             step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator-500",
+            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
             step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
             coinbase_mcp: "Install: npx @coinbase/payments-mcp"
           },
-          endpoint: "https://api.x402disputes.com/demo-agents/image-generator-500",
+          endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
           prompt: parameters.prompt,
           size: parameters.size || "1024x1024",
           model: parameters.model || "stable-diffusion-xl",

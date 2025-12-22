@@ -2,7 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { mcpDiscovery, mcpInvoke } from "./mcp";
-import { imageGenerator500Handler, imageGenerator500GetHandler } from "./demoAgents";
+import { imageGeneratorHandler, imageGeneratorGetHandler } from "./demoAgents";
 
 const http = httpRouter();
 
@@ -50,7 +50,7 @@ http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: op
 http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
 // Demo agents for dispute testing
-http.route({ path: "/demo-agents/image-generator-500", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/demo-agents/image-generator", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -470,7 +470,7 @@ http.route({
                 break;
               }
               
-              case "demo_image_generator_500": {
+              case "demo_image_generator": {
                 // Demo agent - returns information about the demo endpoint
                 const parameters = toolArgs || {};
                 
@@ -510,16 +510,16 @@ http.route({
                   },
                   instructions: {
                     step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator-500",
-                    step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
+                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
+                    step_3: "Receive 200 OK with generated image URL",
                     coinbase_mcp: "Install: npx @coinbase/payments-mcp"
                   },
-                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator-500",
+                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
                   prompt: parameters.prompt,
                   size: parameters.size || "1024x1024",
                   model: parameters.model || "stable-diffusion-xl",
-                  expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
-                  use_case: "Perfect for testing X-402 dispute filing workflow"
+                  expected_behavior: "Returns 200 OK with image URL after payment verification",
+                  use_case: "Working X-402 payment demo"
                 };
                 break;
               }
@@ -573,7 +573,7 @@ http.route({
                     `   Defendant: ${c.defendant?.substring(0, 10)}...`
                   ).join('\n\n') +
                   (cases.length > 10 ? `\n\n... and ${cases.length - 10} more` : '');
-              } else if (toolName === "demo_image_generator_500") {
+              } else if (toolName === "demo_image_generator") {
                 textOutput = `🎨 ImageGenerator500 Demo Agent\n\n` +
                   `📝 Prompt: "${invokeData.prompt}"\n` +
                   `📐 Size: ${invokeData.size}\n` +
@@ -2299,29 +2299,29 @@ http.route({
   })
 });
 
-// === DEMO AGENTS FOR DISPUTE TESTING ===
+// === DEMO AGENTS ===
 
 /**
- * ImageGenerator500 - Demo agent that always returns 500 error
+ * ImageGenerator - Working X-402 demo agent
  * 
- * Purpose: Generate realistic dispute test cases
- * Payment: 0.01 USDC on BASE via X-402 protocol
+ * Purpose: Demonstrate working X-402 payment flow
+ * Payment: 0.1 USDC on BASE via X-402 protocol
  * Wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
- * Behavior: Validates payment, then returns 500 "model_overloaded" error
+ * Behavior: Validates payment, generates image, returns 200 OK with image URL
  */
 
 // GET route - Shows API documentation
 http.route({
-  path: "/demo-agents/image-generator-500",
+  path: "/demo-agents/image-generator",
   method: "GET",
-  handler: imageGenerator500GetHandler
+  handler: imageGeneratorGetHandler
 });
 
 // POST route - Actual API endpoint
 http.route({
-  path: "/demo-agents/image-generator-500",
+  path: "/demo-agents/image-generator",
   method: "POST",
-  handler: imageGenerator500Handler
+  handler: imageGeneratorHandler
 });
 
 export default http;

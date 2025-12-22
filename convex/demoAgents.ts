@@ -1,33 +1,20 @@
 /**
- * Demo Agents for X-402 Dispute Testing
+ * Demo Image Generator Agent (Happy Path)
  * 
- * Intentionally bad agents that accept payments and deliver corrupted/bad data
- * to generate realistic dispute test cases.
+ * A working X-402 demo agent that accepts 0.1 USDC payments on Base
+ * and returns valid image generation responses.
  * 
  * Shared wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
- * 
- * Supports TWO payment flows:
- * 
- * FLOW 1: Transaction Hash (Coinbase Payments MCP)
- * 1. Returns 402 with payment requirements
- * 2. Accepts X-402-Transaction-Hash (payment already on-chain)
- * 3. Verifies payment on blockchain
- * 4. Returns 500 error (payment already settled, can fail freely)
- * 
- * FLOW 2: Payment Signature (Traditional X-402)
- * 1. Returns 402 with payment requirements
- * 2. Accepts X-PAYMENT header with signed payment intent
- * 3. Calls x402.org facilitator POST /verify (CDP auth)
- * 4. Performs work
- * 5. Calls x402.org facilitator POST /settle to execute payment
- * 6. Returns 200 OK with CORRUPTED DATA + X-PAYMENT-RESPONSE
- *    (X-402 protocol requires 200 after settlement, but data is intentionally bad)
- * 
+ * Price: 0.1 USDC (100000 wei, 6 decimals)
  * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
- * Facilitator: https://x402.org/facilitator (CDP authenticated)
+ * Facilitator: https://facilitator.mcpay.tech (no auth required)
+ * 
+ * Supports X-402 Transaction Hash flow (Coinbase Payments MCP):
+ * 1. GET - Returns service info and pricing
+ * 2. POST without payment - Returns 402 with payment requirements
+ * 3. POST with X-402-Transaction-Hash - Verifies payment, returns image
  * 
  * NOTE: HTTP actions run in Cloudflare Workers-like runtime (no Node.js APIs)
- * Payment verification is handled by calling a Node.js action internally.
  */
 
 import { httpAction, action } from "./_generated/server";
@@ -39,10 +26,6 @@ const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x49AF4074577EA313
 
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-
-// CDP API credentials (from environment)
-const CDP_API_KEY_ID = process.env.CDP_API_KEY_ID;
-const CDP_API_KEY_SECRET = process.env.CDP_API_KEY_SECRET;
 
 /**
  * Image generation request format
@@ -83,28 +66,28 @@ function validateImageGenRequest(body: any): { valid: boolean; error?: string } 
 
 
 /**
- * ImageGenerator500 GET handler - Returns service info (like x402-starter-kit /health)
+ * ImageGenerator GET handler - Returns service info
  * 
- * Matches dabit3's pattern: GET returns 200 OK with service metadata
- * POST handles the actual payment flow (402 → process)
+ * GET returns 200 OK with service metadata and pricing
+ * POST handles the actual payment flow (402 → process → deliver)
  */
-export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
+export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
   console.log(`📨 GET request received - returning service info`);
   
   const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
   
   return new Response(JSON.stringify({
     status: "available",
-    service: "image-generator-500",
-    description: "Demo image generation API that always returns 500 error after payment",
+    service: "image-generator",
+    description: "AI image generation API powered by Stable Diffusion XL",
     version: "1.0.0",
     x402Version: 1,
     payment: {
       address: DEMO_AGENTS_WALLET,
       network: "base",
       currency: "USDC",
-      price: "$0.01",
-      priceWei: "10000", // 0.01 USDC (6 decimals)
+      price: "$0.10",
+      priceWei: "100000", // 0.1 USDC (6 decimals)
       asset: USDC_BASE_MAINNET
     },
     usage: {
@@ -119,8 +102,11 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
         model: "string (e.g., 'stable-diffusion-xl')"
       }
     },
-    expectedBehavior: "Returns 500 'model_overloaded' error after payment verification",
-    useCase: "Perfect for testing X-402 dispute filing workflow"
+    capabilities: [
+      "Text-to-image generation",
+      "Multiple sizes supported",
+      "High-quality outputs"
+    ]
   }), {
     status: 200,
     headers: {
@@ -131,17 +117,13 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
 });
 
 /**
- * ImageGenerator500 POST handler - Always returns 500 error after payment
+ * ImageGenerator POST handler - Working implementation
  * 
- * Implements proper x402 v1 protocol flow:
- * 1. Returns 402 with payment requirements in body
- * 2. Accepts X-PAYMENT header with signed payment
- * 3. Verifies payment via facilitator
- * 4. Performs work (returns 500 error - demo behavior)
- * 5. Settles payment via facilitator
- * 6. Returns X-PAYMENT-RESPONSE header (v1)
+ * X-402 payment flow:
+ * 1. No payment header → Returns 402 with payment requirements
+ * 2. X-402-Transaction-Hash present → Verifies on-chain, generates image
  */
-export const imageGenerator500Handler = httpAction(async (ctx, request) => {
+export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   console.log(`📨 POST request received`);
   
   // Parse request body first (needed for validation later)
@@ -155,49 +137,41 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     console.log(`   Empty or invalid body - treating as discovery request`);
   }
   
-  // Step 1: Check for payment header (v1 uses X-PAYMENT)
-  const xPayment = request.headers.get("X-PAYMENT"); // v1 standard header
-  const xPaymentProof = request.headers.get("X-Payment-Proof"); // Alternative
-  const txHash = request.headers.get("X-402-Transaction-Hash"); // Alternative
-  const authorization = request.headers.get("Authorization"); // Alternative
+  // Step 1: Check for payment (transaction hash only)
+  const txHash = request.headers.get("X-402-Transaction-Hash");
   
-  const hasPaymentProof = xPayment || xPaymentProof || txHash || authorization;
-  
-  console.log(`   X-PAYMENT (v1): ${xPayment ? 'present' : 'missing'}`);
-  console.log(`   X-Payment-Proof: ${xPaymentProof ? 'present' : 'missing'}`);
   console.log(`   X-402-Transaction-Hash: ${txHash ? 'present' : 'missing'}`);
-  console.log(`   Authorization: ${authorization ? 'present' : 'missing'}`);
   
-  if (!hasPaymentProof) {
+  if (!txHash) {
     // Step 2: Discovery request - return 402 WITHOUT validating body
-    console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
+    console.log(`💰 No payment - returning 402 Payment Required (discovery)`);
     
-    // v1 schema format (Coinbase Payments MCP doesn't support v2)
+    // X-402 v1 payment requirements
     const paymentRequired = {
       scheme: "exact",
-      network: "base", // v1 uses simple network name
-      maxAmountRequired: "10000", // v1 uses maxAmountRequired
+      network: "base",
+      maxAmountRequired: "100000", // 0.1 USDC (6 decimals)
       asset: USDC_BASE_MAINNET,
       payTo: DEMO_AGENTS_WALLET,
-      resource: request.url, // v1 has these at top level
-      description: "Image generation API (demo - always returns 500 error)",
+      resource: request.url,
+      description: "AI Image Generation - Stable Diffusion XL",
       mimeType: "application/json",
       maxTimeoutSeconds: 60,
       outputSchema: {
         type: "object",
         properties: {
-          error: {
+          success: { type: "boolean" },
+          data: {
             type: "object",
             properties: {
-              code: { type: "string" },
-              message: { type: "string" },
-              type: { type: "string" },
-              timestamp: { type: "string" }
-            },
-            required: ["code", "message", "type", "timestamp"]
+              image_url: { type: "string" },
+              format: { type: "string" },
+              size: { type: "string" },
+              prompt: { type: "string" }
+            }
           }
         },
-        required: ["error"]
+        required: ["success", "data"]
       },
       extra: {
         name: "USDC",
@@ -221,123 +195,23 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     });
   }
   
-  // Step 3: Payment proof provided - handle based on type
-  console.log(`✅ Payment proof present`);
-  console.log(`   Payment header type: ${txHash ? 'X-402-Transaction-Hash (on-chain)' : xPayment ? 'X-PAYMENT (v1 signature)' : xPaymentProof ? 'X-Payment-Proof' : 'Authorization'}`);
+  // Step 3: Transaction hash provided - verify payment on-chain
+  console.log(`✅ Payment transaction hash provided`);
+  console.log(`   Transaction: ${txHash.substring(0, 20)}...`);
   
-  // FLOW 1: Transaction Hash (Coinbase Payments MCP) - Payment ALREADY on-chain
-  if (txHash) {
-    console.log(`🔗 Transaction hash provided - verifying on-chain payment`);
-    console.log(`   Transaction: ${txHash.substring(0, 20)}...`);
-    
-    // Query blockchain directly to verify payment
-    const txResult = await ctx.runAction(api.lib.blockchain.queryTransaction, {
-      blockchain: "base", // Assume Base for demoAgents wallet
-      transactionHash: txHash,
-      expectedToAddress: DEMO_AGENTS_WALLET
-    });
-    
-    if (!txResult.success) {
-      const errorDetails = 'error' in txResult ? txResult.error : 'Unknown error';
-      console.error(`❌ Transaction verification failed: ${errorDetails}`);
-      return new Response(JSON.stringify({
-        error: "Payment verification failed",
-        details: errorDetails
-      }), {
-        status: 402,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    // Type guard: txResult.success is true, so we can access success-specific properties
-    if (!('fromAddress' in txResult)) {
-      return new Response(JSON.stringify({
-        error: "Invalid transaction result"
-      }), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    console.log(`✅ Payment verified on-chain!`);
-    console.log(`   From: ${txResult.fromAddress}`);
-    console.log(`   To: ${txResult.toAddress}`);
-    console.log(`   Amount: ${txResult.value} USDC`);
-    
-    // Validate payment meets requirements (0.01 USDC)
-    const paidAmount = parseFloat(txResult.value);
-    const requiredAmount = 0.01;
-    
-    if (paidAmount < requiredAmount) {
-      return new Response(JSON.stringify({
-        error: `Insufficient payment: ${paidAmount} USDC (required: ${requiredAmount} USDC)`
-      }), {
-        status: 402,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    // Validate request body
-    const validation = validateImageGenRequest(body);
-    if (!validation.valid) {
-      return new Response(JSON.stringify({
-        error: validation.error
-      }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    // Payment verified! Return 500 error (demo behavior)
-    // Flow 1 can return 500 freely since payment is already settled on-chain
-    console.log(`✅ Returning 500 error after verified on-chain payment (demo behavior)`);
-    
+  // Query blockchain directly to verify payment
+  const txResult = await ctx.runAction(api.lib.blockchain.queryTransaction, {
+    blockchain: "base", // Assume Base for demoAgents wallet
+    transactionHash: txHash,
+    expectedToAddress: DEMO_AGENTS_WALLET
+  });
+  
+  if (!txResult.success) {
+    const errorDetails = 'error' in txResult ? txResult.error : 'Unknown error';
+    console.error(`❌ Transaction verification failed: ${errorDetails}`);
     return new Response(JSON.stringify({
-      success: false,
-      error: {
-        code: "model_overloaded",
-        message: "Image generation model is currently overloaded. Please try again later.",
-        type: "server_error",
-        timestamp: new Date().toISOString()
-      },
-      payment: {
-        verified: true,
-        transactionHash: txHash,
-        amount: `${txResult.value} USDC`,
-        from: txResult.fromAddress,
-        to: txResult.toAddress
-      }
-    }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
-      }
-    });
-  }
-  
-  // FLOW 2: Payment Signature (Traditional X-402) - Use facilitator verify/settle
-  console.log(`🔐 Payment signature provided - using facilitator verify/settle flow`);
-  const paymentHeader = xPayment || xPaymentProof || authorization;
-  
-  if (!paymentHeader) {
-    console.error(`❌ No valid payment proof found`);
-    return new Response(JSON.stringify({
-      error: "No valid payment proof provided"
+      error: "Payment verification failed",
+      details: errorDetails
     }), {
       status: 402,
       headers: {
@@ -347,21 +221,10 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     });
   }
   
-  // Check if CDP credentials are configured
-  if (!CDP_API_KEY_ID || !CDP_API_KEY_SECRET) {
-    console.error(`❌ CDP API credentials not configured`);
-    console.error(`   Please set CDP_API_KEY_ID and CDP_API_KEY_SECRET in Convex environment`);
-    console.error(`   Get credentials from: https://portal.cdp.coinbase.com/`);
-    
-    // For now, return 500 error (demo behavior) without settlement
+  // Type guard: txResult.success is true, so we can access success-specific properties
+  if (!('fromAddress' in txResult)) {
     return new Response(JSON.stringify({
-      success: false,
-      error: {
-        code: "configuration_error",
-        message: "Payment settlement not configured. Please contact support.",
-        type: "server_error",
-        timestamp: new Date().toISOString()
-      }
+      error: "Invalid transaction result"
     }), {
       status: 500,
       headers: {
@@ -371,187 +234,73 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     });
   }
   
-  try {
-    // Payment requirements for v1 protocol
-    const paymentRequirements = {
-      scheme: "exact",
-      network: "base",
-      maxAmountRequired: "10000",
-      asset: USDC_BASE_MAINNET,
-      payTo: DEMO_AGENTS_WALLET,
-      resource: request.url,
-      description: "Image generation API (demo - always returns 500 error)",
-      mimeType: "application/json",
-      maxTimeoutSeconds: 60
-    };
-    
-    console.log(`🔍 Step 1: Verifying payment with x402.org facilitator`);
-    console.log(`   Using CDP API Key: ${CDP_API_KEY_ID?.substring(0, 20)}...`);
-    console.log(`   Using CDP JWT authentication (via Node.js action + @coinbase/x402)`);
-    
-    // STEP 1: Verify the payment signature BEFORE doing work
-    // Pass RAW payment header string to CDP (it will decode and validate it)
-    const verifyResult = await ctx.runAction(api.demoAgents.cdpAuth.verifyPayment, {
-      paymentHeader: paymentHeader as string,
-      paymentRequirements: paymentRequirements,
-      apiKeyId: CDP_API_KEY_ID,
-      apiKeySecret: CDP_API_KEY_SECRET
-    });
-    
-    console.log(`   Verification HTTP status: ${verifyResult.status}`);
-    
-    const verifyText = verifyResult.body;
-    console.log(`   Verification response: ${verifyText.substring(0, 300)}`);
-    
-    let verifyData;
-    try {
-      verifyData = JSON.parse(verifyText);
-    } catch (e) {
-      console.error(`   Failed to parse verification response as JSON`);
-      return new Response(JSON.stringify({
-        error: "Failed to verify payment",
-        details: verifyText
-      }), {
-        status: 402,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    // Check if payment is valid
-    if (!verifyData.isValid) {
-      console.error(`❌ Payment verification failed: ${verifyData.invalidReason}`);
-      return new Response(JSON.stringify({
-        error: `Invalid payment: ${verifyData.invalidReason}`,
-        payer: verifyData.payer
-      }), {
-        status: 402,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    console.log(`✅ Payment verified! Payer: ${verifyData.payer?.substring(0, 10)}...`);
-    
-    // STEP 2: Do work - validate request body
-    console.log(`🔧 Step 2: Performing work (validating request)`);
-    const validation = validateImageGenRequest(body);
-    if (!validation.valid) {
-      return new Response(JSON.stringify({
-        error: validation.error
-      }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
-      });
-    }
-    
-    // STEP 3: Settle the payment on-chain
-    console.log(`💰 Step 3: Settling payment on-chain via x402.org facilitator`);
-    
-    // Call Node.js action to handle CDP authentication
-    const settleResult = await ctx.runAction(api.demoAgents.cdpAuth.settlePayment, {
-      paymentHeader: paymentHeader as string,
-      paymentRequirements: paymentRequirements,
-      apiKeyId: CDP_API_KEY_ID,
-      apiKeySecret: CDP_API_KEY_SECRET
-    });
-    
-    console.log(`   Settlement HTTP status: ${settleResult.status}`);
-    
-    // Parse response
-    const responseText = settleResult.body;
-    console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
-    
-    let settleData;
-    try {
-      settleData = JSON.parse(responseText);
-    } catch (e) {
-      console.error(`   Failed to parse settlement response as JSON`);
-      settleData = {
-        success: false,
-        errorReason: "unexpected_settle_error",
-        transaction: "",
-        network: "base"
-      };
-    }
-    
-    if (!settleData.success) {
-      console.error(`❌ Settlement failed:`, settleData);
-    } else {
-      console.log(`✅ Settlement succeeded! Transaction: ${settleData.transaction}`);
-    }
-    
-    // STEP 4: Return 200 OK with intentionally corrupted data (demo behavior)
-    // This satisfies X-402 protocol (payment settled, 200 returned) but delivers bad/corrupt data
-    console.log(`✅ Step 4: Returning 200 OK with intentionally corrupted data (demo behavior)`);
-    
-    // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
-    const paymentResponseB64 = btoa(JSON.stringify(settleData));
-    
-    // Return "successful" response but with intentionally corrupted/wrong data
+  console.log(`✅ Payment verified on-chain!`);
+  console.log(`   From: ${txResult.fromAddress}`);
+  console.log(`   To: ${txResult.toAddress}`);
+  console.log(`   Amount: ${txResult.value} USDC`);
+  
+  // Validate payment meets requirements (0.1 USDC)
+  const paidAmount = parseFloat(txResult.value);
+  const requiredAmount = 0.1;
+  
+  if (paidAmount < requiredAmount) {
     return new Response(JSON.stringify({
-      success: true,
-      data: {
-        // Intentionally corrupted image data - not a valid image!
-        image_url: "data:image/png;base64,CORRUPTED_DATA_NOT_A_REAL_IMAGE",
-        format: "png",
-        size: "1024x1024",
-        prompt: body.prompt,
-        // The image data is intentionally broken/invalid
-        note: "This image data is intentionally corrupted for dispute testing purposes"
-      },
-      metadata: {
-        model: "stable-diffusion-xl",
-        generated_at: new Date().toISOString(),
-        settlement: settleData // Include settlement info
-      }
+      error: `Insufficient payment: ${paidAmount} USDC (required: ${requiredAmount} USDC)`
     }), {
-      status: 200, // X-402 protocol requirement: return 200 OK after settlement
+      status: 402,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
-        "X-PAYMENT-RESPONSE": paymentResponseB64 // v1 protocol uses X- prefix
-      }
-    });
-    
-  } catch (error: any) {
-    console.error(`❌ Error calling facilitator:`, error);
-    
-    // Return 200 OK with corrupted data even if facilitator had issues
-    // This satisfies X-402 protocol expectations
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        // Intentionally corrupted/empty data due to processing error
-        image_url: "data:image/png;base64,ERROR_DURING_PROCESSING",
-        format: "png",
-        size: "1024x1024",
-        prompt: body.prompt,
-        note: "Processing error occurred, data is corrupted"
-      },
-      error_details: {
-        code: "settlement_error",
-        message: `Failed to settle payment: ${error.message}`,
-        timestamp: new Date().toISOString()
-      }
-    }), {
-      status: 200, // Still return 200 for X-402 protocol compatibility
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+        "Access-Control-Allow-Origin": "*"
       }
     });
   }
+  
+  // Validate request body
+  const validation = validateImageGenRequest(body);
+  if (!validation.valid) {
+    return new Response(JSON.stringify({
+      error: validation.error
+    }), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+  
+  // Payment verified! Generate and return image
+  console.log(`✅ Payment verified! Generating image for prompt: "${body.prompt}"`);
+  
+  // Generate a demo image URL (in production, this would call Stable Diffusion)
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
+  
+  return new Response(JSON.stringify({
+    success: true,
+    data: {
+      image_url: imageUrl,
+      format: "png",
+      size: body.size || "1024x1024",
+      prompt: body.prompt,
+      model: body.model || "stable-diffusion-xl"
+    },
+    metadata: {
+      generated_at: new Date().toISOString(),
+      payment: {
+        verified: true,
+        transactionHash: txHash,
+        amount: `${txResult.value} USDC`,
+        from: txResult.fromAddress,
+        to: txResult.toAddress
+      }
+    }
+  }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "X-402-Transaction-Hash, Content-Type"
+    }
+  });
 });
 
