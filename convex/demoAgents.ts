@@ -1,18 +1,27 @@
 /**
  * Demo Agents for X-402 Dispute Testing
  * 
- * Intentionally bad agents that accept Coinbase Payments MCP (BASE USDC)
- * and fail in predictable ways to generate realistic dispute test cases.
+ * Intentionally bad agents that accept payments and deliver corrupted/bad data
+ * to generate realistic dispute test cases.
  * 
  * Shared wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
  * 
- * Implements COMPLETE x402 v1 protocol flow:
- * 1. Returns 402 with payment requirements in response body
- * 2. Accepts X-PAYMENT header with signed payment (v1 standard)
- * 3. Calls x402.org facilitator POST /verify to validate payment signature (CDP auth)
- * 4. Performs work (validates request body)
- * 5. Calls x402.org facilitator POST /settle to execute payment on-chain (CDP auth)
- * 6. Returns intentional error (500) with X-PAYMENT-RESPONSE header (v1)
+ * Supports TWO payment flows:
+ * 
+ * FLOW 1: Transaction Hash (Coinbase Payments MCP)
+ * 1. Returns 402 with payment requirements
+ * 2. Accepts X-402-Transaction-Hash (payment already on-chain)
+ * 3. Verifies payment on blockchain
+ * 4. Returns 500 error (payment already settled, can fail freely)
+ * 
+ * FLOW 2: Payment Signature (Traditional X-402)
+ * 1. Returns 402 with payment requirements
+ * 2. Accepts X-PAYMENT header with signed payment intent
+ * 3. Calls x402.org facilitator POST /verify (CDP auth)
+ * 4. Performs work
+ * 5. Calls x402.org facilitator POST /settle to execute payment
+ * 6. Returns 200 OK with CORRUPTED DATA + X-PAYMENT-RESPONSE
+ *    (X-402 protocol requires 200 after settlement, but data is intentionally bad)
  * 
  * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
  * Facilitator: https://x402.org/facilitator (CDP authenticated)
@@ -292,6 +301,7 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     }
     
     // Payment verified! Return 500 error (demo behavior)
+    // Flow 1 can return 500 freely since payment is already settled on-chain
     console.log(`✅ Returning 500 error after verified on-chain payment (demo behavior)`);
     
     return new Response(JSON.stringify({
@@ -478,23 +488,32 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       console.log(`✅ Settlement succeeded! Transaction: ${settleData.transaction}`);
     }
     
-    // STEP 4: Return 500 error (demo behavior) with settlement confirmation
-    console.log(`✅ Step 4: Returning 500 error after successful settlement (demo behavior)`);
+    // STEP 4: Return 200 OK with intentionally corrupted data (demo behavior)
+    // This satisfies X-402 protocol (payment settled, 200 returned) but delivers bad/corrupt data
+    console.log(`✅ Step 4: Returning 200 OK with intentionally corrupted data (demo behavior)`);
     
     // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
     const paymentResponseB64 = btoa(JSON.stringify(settleData));
     
+    // Return "successful" response but with intentionally corrupted/wrong data
     return new Response(JSON.stringify({
-      success: false,
-      error: {
-        code: "model_overloaded",
-        message: "Image generation model is currently overloaded. Please try again later.",
-        type: "server_error",
-        timestamp: new Date().toISOString()
+      success: true,
+      data: {
+        // Intentionally corrupted image data - not a valid image!
+        image_url: "data:image/png;base64,CORRUPTED_DATA_NOT_A_REAL_IMAGE",
+        format: "png",
+        size: "1024x1024",
+        prompt: body.prompt,
+        // The image data is intentionally broken/invalid
+        note: "This image data is intentionally corrupted for dispute testing purposes"
       },
-      settlement: settleData // Include settlement info for debugging
+      metadata: {
+        model: "stable-diffusion-xl",
+        generated_at: new Date().toISOString(),
+        settlement: settleData // Include settlement info
+      }
     }), {
-      status: 200,
+      status: 200, // X-402 protocol requirement: return 200 OK after settlement
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -507,17 +526,25 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
   } catch (error: any) {
     console.error(`❌ Error calling facilitator:`, error);
     
-    // Return 500 error even if settlement failed (demo always returns 500)
+    // Return 200 OK with corrupted data even if facilitator had issues
+    // This satisfies X-402 protocol expectations
     return new Response(JSON.stringify({
-      success: false,
-      error: {
+      success: true,
+      data: {
+        // Intentionally corrupted/empty data due to processing error
+        image_url: "data:image/png;base64,ERROR_DURING_PROCESSING",
+        format: "png",
+        size: "1024x1024",
+        prompt: body.prompt,
+        note: "Processing error occurred, data is corrupted"
+      },
+      error_details: {
         code: "settlement_error",
         message: `Failed to settle payment: ${error.message}`,
-        type: "server_error",
         timestamp: new Date().toISOString()
       }
     }), {
-      status: 500,
+      status: 200, // Still return 200 for X-402 protocol compatibility
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
