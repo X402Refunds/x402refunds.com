@@ -212,12 +212,130 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     });
   }
   
-  // Step 3: Payment proof provided - VERIFY then SETTLE via facilitator  
-  console.log(`✅ Payment proof present - verifying with facilitator`);
-  console.log(`   Payment header type: ${xPayment ? 'X-PAYMENT (v1)' : xPaymentProof ? 'X-Payment-Proof' : txHash ? 'X-402-Transaction-Hash' : 'Authorization'}`);
+  // Step 3: Payment proof provided - handle based on type
+  console.log(`✅ Payment proof present`);
+  console.log(`   Payment header type: ${txHash ? 'X-402-Transaction-Hash (on-chain)' : xPayment ? 'X-PAYMENT (v1 signature)' : xPaymentProof ? 'X-Payment-Proof' : 'Authorization'}`);
   
-  // Use whichever payment header was provided (prioritize v1 standard)
-  const paymentHeader = xPayment || xPaymentProof || txHash || authorization;
+  // FLOW 1: Transaction Hash (Coinbase Payments MCP) - Payment ALREADY on-chain
+  if (txHash) {
+    console.log(`🔗 Transaction hash provided - verifying on-chain payment`);
+    console.log(`   Transaction: ${txHash.substring(0, 20)}...`);
+    
+    // Query blockchain directly to verify payment
+    const txResult = await ctx.runAction(api.lib.blockchain.queryTransaction, {
+      blockchain: "base", // Assume Base for demoAgents wallet
+      transactionHash: txHash,
+      expectedToAddress: DEMO_AGENTS_WALLET
+    });
+    
+    if (!txResult.success) {
+      const errorDetails = 'error' in txResult ? txResult.error : 'Unknown error';
+      console.error(`❌ Transaction verification failed: ${errorDetails}`);
+      return new Response(JSON.stringify({
+        error: "Payment verification failed",
+        details: errorDetails
+      }), {
+        status: 402,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+    
+    // Type guard: txResult.success is true, so we can access success-specific properties
+    if (!('fromAddress' in txResult)) {
+      return new Response(JSON.stringify({
+        error: "Invalid transaction result"
+      }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+    
+    console.log(`✅ Payment verified on-chain!`);
+    console.log(`   From: ${txResult.fromAddress}`);
+    console.log(`   To: ${txResult.toAddress}`);
+    console.log(`   Amount: ${txResult.value} USDC`);
+    
+    // Validate payment meets requirements (0.01 USDC)
+    const paidAmount = parseFloat(txResult.value);
+    const requiredAmount = 0.01;
+    
+    if (paidAmount < requiredAmount) {
+      return new Response(JSON.stringify({
+        error: `Insufficient payment: ${paidAmount} USDC (required: ${requiredAmount} USDC)`
+      }), {
+        status: 402,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+    
+    // Validate request body
+    const validation = validateImageGenRequest(body);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({
+        error: validation.error
+      }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+    
+    // Payment verified! Return 500 error (demo behavior)
+    console.log(`✅ Returning 500 error after verified on-chain payment (demo behavior)`);
+    
+    return new Response(JSON.stringify({
+      success: false,
+      error: {
+        code: "model_overloaded",
+        message: "Image generation model is currently overloaded. Please try again later.",
+        type: "server_error",
+        timestamp: new Date().toISOString()
+      },
+      payment: {
+        verified: true,
+        transactionHash: txHash,
+        amount: `${txResult.value} USDC`,
+        from: txResult.fromAddress,
+        to: txResult.toAddress
+      }
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+      }
+    });
+  }
+  
+  // FLOW 2: Payment Signature (Traditional X-402) - Use facilitator verify/settle
+  console.log(`🔐 Payment signature provided - using facilitator verify/settle flow`);
+  const paymentHeader = xPayment || xPaymentProof || authorization;
+  
+  if (!paymentHeader) {
+    console.error(`❌ No valid payment proof found`);
+    return new Response(JSON.stringify({
+      error: "No valid payment proof provided"
+    }), {
+      status: 402,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
   
   // Check if CDP credentials are configured
   if (!CDP_API_KEY_ID || !CDP_API_KEY_SECRET) {
@@ -376,11 +494,11 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       },
       settlement: settleData // Include settlement info for debugging
     }), {
-      status: 500,
+      status: 200,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type",
+        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
         "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
         "X-PAYMENT-RESPONSE": paymentResponseB64 // v1 protocol uses X- prefix
       }
@@ -403,7 +521,7 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type",
+        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
         "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
       }
     });
