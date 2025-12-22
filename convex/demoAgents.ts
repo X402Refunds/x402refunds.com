@@ -9,13 +9,13 @@
  * Implements COMPLETE x402 v1 protocol flow:
  * 1. Returns 402 with payment requirements in response body
  * 2. Accepts X-PAYMENT header with signed payment (v1 standard)
- * 3. Calls facilitator POST /verify to validate payment signature
+ * 3. Calls x402.org facilitator POST /verify to validate payment signature (CDP auth)
  * 4. Performs work (validates request body)
- * 5. Calls facilitator POST /settle to execute payment on-chain
+ * 5. Calls x402.org facilitator POST /settle to execute payment on-chain (CDP auth)
  * 6. Returns intentional error (500) with X-PAYMENT-RESPONSE header (v1)
  * 
  * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
- * Facilitator: https://facilitator.mcpay.tech (high-availability proxy)
+ * Facilitator: https://x402.org/facilitator (CDP authenticated)
  * 
  * NOTE: HTTP actions run in Cloudflare Workers-like runtime (no Node.js APIs)
  * Payment verification is handled by calling a Node.js action internally.
@@ -34,10 +34,6 @@ const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 // CDP API credentials (from environment)
 const CDP_API_KEY_ID = process.env.CDP_API_KEY_ID;
 const CDP_API_KEY_SECRET = process.env.CDP_API_KEY_SECRET;
-
-// CDP Facilitator endpoints
-const FACILITATOR_BASE_URL = "https://api.cdp.coinbase.com";
-const FACILITATOR_ROUTE = "/platform/v2/x402";
 
 /**
  * Image generation request format
@@ -261,9 +257,9 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       maxTimeoutSeconds: 60
     };
     
-    console.log(`🔍 Step 1: Verifying payment with CDP facilitator`);
+    console.log(`🔍 Step 1: Verifying payment with x402.org facilitator`);
     console.log(`   Using CDP API Key: ${CDP_API_KEY_ID?.substring(0, 20)}...`);
-    console.log(`   Using JWT authentication (via Node.js action + @coinbase/x402)`);
+    console.log(`   Using CDP JWT authentication (via Node.js action + @coinbase/x402)`);
     
     // STEP 1: Verify the payment signature BEFORE doing work
     // Pass RAW payment header string to CDP (it will decode and validate it)
@@ -329,7 +325,7 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     }
     
     // STEP 3: Settle the payment on-chain
-    console.log(`💰 Step 3: Settling payment on-chain via CDP facilitator`);
+    console.log(`💰 Step 3: Settling payment on-chain via x402.org facilitator`);
     
     // Call Node.js action to handle CDP authentication
     const settleResult = await ctx.runAction(api.demoAgents.cdpAuth.settlePayment, {
