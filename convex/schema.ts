@@ -157,6 +157,24 @@ export default defineSchema({
     // Evidence
     evidenceIds: v.array(v.id("evidenceManifests")),
 
+    // x402r Escrow Integration (using deployed contracts on Base Sepolia)
+    // GitHub: https://github.com/BackTrackCo/x402r-contracts
+    x402rEscrow: v.optional(v.object({
+      escrowAddress: v.string(),        // Smart contract address holding funds
+      escrowState: v.union(
+        v.literal("PENDING"),           // Payment initiated, funds not yet deposited
+        v.literal("HELD"),              // Funds locked in escrow, service in progress
+        v.literal("DISPUTED"),          // Dispute filed, awaiting arbiter decision
+        v.literal("RELEASED_TO_BUYER"), // Refund executed
+        v.literal("RELEASED_TO_MERCHANT") // Payment released to merchant
+      ),
+      depositTxHash: v.optional(v.string()),   // Transaction hash of deposit
+      releaseTxHash: v.optional(v.string()),   // Transaction hash of release
+      blockchain: v.string(),                   // "base-sepolia", "base-mainnet"
+      createdAt: v.number(),
+      resolvedAt: v.optional(v.number()),
+    })),
+
     // NEW: Signed evidence from seller (cryptographically verified)
     signedEvidence: v.optional(v.object({
       request: v.object({
