@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-21T10:52:50.475Z
+**Auto-generated on**: 2025-12-22T10:43:56.749Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (42 files)
+### Convex Files (43 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -93,6 +93,7 @@ consulate/
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, triggerStatsUpdate, autoApproveOverdueDisputes
 - **custody.ts** - computeEventHash, verifyCustodyChain
+- **demoAgents.ts** - imageGenerator500GetHandler, imageGenerator500Handler
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **disputePricing.ts** - calculateDisputeFee, getFeeExplanation
 - **events.ts** - getDisputeActivityEvents, getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getOrganizationEvents, getOrganizationStats, getApiKeyEvents
@@ -289,13 +290,14 @@ Common HTTP routes exposed:
 
 ## 📦 Dependencies
 
-### Production Dependencies (9)
+### Production Dependencies (10)
 - @ai-sdk/openai@^2.0.62
+- @coinbase/coinbase-sdk@^0.25.0
 - @convex-dev/agent@^0.2.12
 - @convex-dev/workflow@^0.2.7
 - @convex-dev/workpool@^0.2.19
 - ai@^5.0.87
-- convex@^1.29.1
+- convex@^1.31.2
 - convex-test@^0.0.38
 - viem@~2.38.6
 - zod@^4.1.11
@@ -322,7 +324,7 @@ Common HTTP routes exposed:
 - 71 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 42 TypeScript files with serverless functions
+- 43 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -361,5 +363,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/21/2025, 4:22:50 PM
-Files scanned: 340
+Generated: 12/22/2025, 4:13:56 PM
+Files scanned: 344

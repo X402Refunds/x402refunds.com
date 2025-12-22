@@ -1,6 +1,6 @@
 # Demo Agents for X-402 Dispute Testing
 
-Intentionally bad API agents that accept X-402 payments via PayAI facilitator (BASE USDC) and fail in predictable ways to generate realistic dispute test cases.
+Intentionally bad API agents that accept Coinbase Payments MCP (BASE USDC) and fail in predictable ways to generate realistic dispute test cases.
 
 ## Shared Wallet
 
@@ -34,31 +34,28 @@ This simplifies management and allows you to track all test payments in one plac
 
 **Payment Flow:**
 1. Initial request without payment → 402 Payment Required
-2. PayAI facilitator handles payment (0.01 USDC on BASE)
-3. Retry with payment proof headers
-4. Agent verifies payment with PayAI
+2. Coinbase Payments MCP automatically pays 0.01 USDC on BASE
+3. Retry with X-402-Transaction-Hash header
+4. Agent verifies payment on BASE blockchain
 5. **Returns 500 error** (intentional failure)
 
-## Testing with PayAI Facilitator
+## Testing with Coinbase Payments MCP
 
 ### Prerequisites
 
-1. **Install PayAI x402 client:**
+1. **Install Coinbase Payments MCP:**
    ```bash
-   npm install @payai/x402-axios
-   # or
-   npm install @payai/x402-fetch
+   npx @coinbase/payments-mcp
    ```
 
-2. **Configure your wallet:**
-   - Have a BASE wallet with USDC
-   - Ensure wallet has gas for transactions
-   - Add at least $1 USDC on BASE network
+2. **Configure with Claude Desktop or Claude Code:**
+   - Follow the installation prompts
+   - Select your MCP client
+   - Authenticate with email + OTP
 
-3. **PayAI handles everything:**
-   - No API keys required
-   - Gasless for buyers & merchants
-   - Multi-network support (BASE, Solana, Polygon, etc.)
+3. **Fund your wallet with BASE USDC:**
+   - Use Coinbase Onramp feature
+   - Add at least $1 USDC on BASE network
 
 ### Manual Testing
 
@@ -74,31 +71,18 @@ curl -X POST https://api.x402disputes.com/demo-agents/image-generator-500 \
 
 **Expected response:** 402 Payment Required with X-402 headers
 
-**Step 2: Let PayAI handle payment**
+**Step 2: Let Coinbase Payments MCP handle payment**
 
-When using PayAI x402 client:
-```javascript
-import { createX402Axios } from '@payai/x402-axios';
+When using an AI agent with Coinbase Payments MCP installed:
+```
+You: "Call the ImageGenerator500 API to generate an image of a dog"
 
-const axios = createX402Axios({
-  facilitatorUrl: 'https://facilitator.payai.network',
-  wallet: yourWallet,  // Your BASE wallet with USDC
-  network: 'base'
-});
+[Coinbase Payments MCP automatically:]
+1. Sees the 402 response
+2. Creates 0.01 USDC payment on BASE to 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
+3. Retries the request with X-402-Transaction-Hash header
 
-const response = await axios.post(
-  'https://api.x402disputes.com/demo-agents/image-generator-500',
-  {
-    prompt: 'a dog playing in the park',
-    size: '1024x1024'
-  }
-);
-
-// PayAI automatically:
-// 1. Sees the 402 response
-// 2. Creates 0.01 USDC payment on BASE to 0x49AF...
-// 3. Retries the request with payment proof
-// 4. Returns 500 Internal Server Error (demo behavior)
+Agent receives: 500 Internal Server Error
 ```
 
 **Step 3: File a dispute**
@@ -115,18 +99,7 @@ You: "File a dispute - I paid 0.01 USDC but got a 500 error"
 
 ### Automated Testing
 
-**Test with PayAI (recommended):**
-```bash
-node scripts/test-with-payai.js
-```
-
-This demonstrates:
-- ✅ Service discovery (GET endpoint)
-- ✅ 402 Payment Required response
-- ✅ PayAI client integration instructions
-- ✅ Complete payment flow walkthrough
-
-**Test without payment:**
+Run the test script:
 ```bash
 node scripts/test-image-generator-500.js
 ```
@@ -144,10 +117,7 @@ This tests:
 ### Request Headers
 ```
 Content-Type: application/json
-X-PAYMENT: <payment-proof>  (optional, added by PayAI client)
-PAYMENT-SIGNATURE: <signature>  (optional, alternative payment proof)
-X-Payment-Proof: <proof>  (optional, alternative payment proof)
-X-402-Transaction-Hash: <hash>  (optional, direct transaction hash)
+X-402-Transaction-Hash: <transaction-hash>  (optional, added by Coinbase Payments MCP)
 ```
 
 ### Request Body
@@ -211,17 +181,16 @@ Content-Type: application/json
 
 ## Example: Complete Flow
 
-### Using PayAI x402 Client
+### Using AI Agent with Coinbase Payments MCP
 
 ```
 User: "Generate an image of a dog using ImageGenerator500"
 
 Agent: [Calls API without payment]
 API: 402 Payment Required (0.01 USDC on BASE to 0x49AF...)
-     Facilitator: https://facilitator.payai.network
 
-PayAI Client: [Automatically pays 0.01 USDC on BASE]
-PayAI Client: [Retries with payment proof headers]
+Coinbase Payments MCP: [Automatically pays 0.01 USDC on BASE]
+Coinbase Payments MCP: [Retries with X-402-Transaction-Hash]
 
 Agent: [Receives 500 error]
 API: 500 Internal Server Error - model_overloaded
@@ -236,17 +205,6 @@ x402disputes: Returns case ID and tracking URL
 User: "Check the dispute status"
 Agent: [Queries x402disputes for case status]
 ```
-
-### Why PayAI?
-
-✅ **Drop-in setup** - Just set `FACILITATOR_URL` and you're done  
-✅ **No API keys** - No authentication required  
-✅ **Gasless** - Network fees covered for buyers & merchants  
-✅ **Multi-network** - Supports BASE, Solana, Polygon, Avalanche, etc.  
-✅ **Auto-discovery** - Automatically listed in x402 Bazaar  
-✅ **Compliance** - Built-in OFAC sanctions screening
-
-**Learn more:** https://facilitator.payai.network
 
 ## Wallet Management
 
@@ -299,5 +257,4 @@ For issues or questions:
 ## License
 
 MIT License - See LICENSE file for details
-
 

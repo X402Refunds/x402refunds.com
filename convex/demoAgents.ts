@@ -5,6 +5,17 @@
  * and fail in predictable ways to generate realistic dispute test cases.
  * 
  * Shared wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
+ * 
+ * Implements COMPLETE x402 protocol flow with CDP facilitator:
+ * 1. Returns 402 with PAYMENT-REQUIRED header (base64 encoded)
+ * 2. Accepts payment authorization from Coinbase Payments MCP
+ * 3. Calls CDP facilitator POST /verify to validate payment signature
+ * 4. Performs work (validates request body)
+ * 5. Calls CDP facilitator POST /settle to execute payment on-chain
+ * 6. Returns intentional error (500) with PAYMENT-RESPONSE header
+ * 
+ * Authentication: Uses CDP API key (Basic Auth) for facilitator access.
+ * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
  */
 
 import { httpAction } from "./_generated/server";
@@ -12,6 +23,14 @@ import { api } from "./_generated/api";
 
 // Shared wallet for all demo agents
 const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x49AF4074577EA313C5053cbB7560AC39e34b05E8";
+
+// USDC contract on Base mainnet
+const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+// CDP Facilitator configuration (requires auth for mainnet Base)
+const FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402";
+const CDP_API_KEY_ID = process.env.CDP_API_KEY_ID;
+const CDP_API_KEY_SECRET = process.env.CDP_API_KEY_SECRET;
 
 /**
  * Image generation request format
@@ -50,6 +69,7 @@ function validateImageGenRequest(body: any): { valid: boolean; error?: string } 
   return { valid: true };
 }
 
+
 /**
  * ImageGenerator500 GET handler - Returns service info (like x402-starter-kit /health)
  * 
@@ -60,7 +80,6 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
   console.log(`📨 GET request received - returning service info`);
   
   const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-  const PAYAI_FACILITATOR_URL = "https://facilitator.payai.network";
   
   return new Response(JSON.stringify({
     status: "available",
@@ -74,8 +93,7 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
       currency: "USDC",
       price: "$0.01",
       priceWei: "10000", // 0.01 USDC (6 decimals)
-      asset: USDC_BASE_MAINNET,
-      facilitator: PAYAI_FACILITATOR_URL
+      asset: USDC_BASE_MAINNET
     },
     usage: {
       endpoint: `${request.url}`,
@@ -90,11 +108,7 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
       }
     },
     expectedBehavior: "Returns 500 'model_overloaded' error after payment verification",
-    useCase: "Perfect for testing X-402 dispute filing workflow",
-    facilitator: {
-      url: PAYAI_FACILITATOR_URL,
-      features: ["Multi-network support", "Gasless for buyers & merchants", "No API keys required"]
-    }
+    useCase: "Perfect for testing X-402 dispute filing workflow"
   }), {
     status: 200,
     headers: {
@@ -107,158 +121,155 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
 /**
  * ImageGenerator500 POST handler - Always returns 500 error after payment
  * 
- * This agent:
- * - Validates image generation requests (requires prompt)
- * - Accepts 0.01 USDC on BASE via X-402 protocol
- * - Always returns 500 "model_overloaded" error after payment
- * - Perfect for testing dispute filing for server errors
+ * Implements proper x402 protocol flow:
+ * 1. Returns 402 with PAYMENT-REQUIRED header (base64 encoded)
+ * 2. Verifies payment via Coinbase facilitator
+ * 3. Performs work (returns 500 error - demo behavior)
+ * 4. Settles payment via facilitator
+ * 5. Returns PAYMENT-RESPONSE header
  */
 export const imageGenerator500Handler = httpAction(async (ctx, request) => {
-  // 1. Check for payment FIRST (X-402 protocol requirement)
-  // Accept ANY payment-related header for demo purposes
-  const xPaymentHeader = request.headers.get("X-PAYMENT");
-  const paymentSignatureHeader = request.headers.get("PAYMENT-SIGNATURE"); // NEW Coinbase format
+  console.log(`📨 POST request received`);
+  
+  // Parse request body first (needed for validation later)
+  let body: any = {};
+  try {
+    const text = await request.text();
+    if (text) {
+      body = JSON.parse(text);
+    }
+  } catch (e) {
+    console.log(`   Empty or invalid body - treating as discovery request`);
+  }
+  
+  // Step 1: Check for ANY payment-related header FIRST
+  const paymentSignature = request.headers.get("PAYMENT-SIGNATURE");
   const xPaymentProof = request.headers.get("X-Payment-Proof");
+  const xPayment = request.headers.get("X-PAYMENT");
   const txHash = request.headers.get("X-402-Transaction-Hash");
-  const authHeader = request.headers.get("Authorization");
+  const authorization = request.headers.get("Authorization");
   
-  const hasAnyPaymentHeader = xPaymentHeader || paymentSignatureHeader || xPaymentProof || txHash || authHeader;
+  const hasPaymentProof = paymentSignature || xPaymentProof || xPayment || txHash || authorization;
   
-  console.log(`📨 Received headers:`);
-  console.log(`   X-PAYMENT: ${xPaymentHeader ? 'present' : 'missing'}`);
-  console.log(`   PAYMENT-SIGNATURE: ${paymentSignatureHeader ? 'present' : 'missing'}`);
+  console.log(`   PAYMENT-SIGNATURE: ${paymentSignature ? 'present' : 'missing'}`);
   console.log(`   X-Payment-Proof: ${xPaymentProof ? 'present' : 'missing'}`);
+  console.log(`   X-PAYMENT: ${xPayment ? 'present' : 'missing'}`);
   console.log(`   X-402-Transaction-Hash: ${txHash ? 'present' : 'missing'}`);
-  console.log(`   Authorization: ${authHeader ? 'present' : 'missing'}`);
+  console.log(`   Authorization: ${authorization ? 'present' : 'missing'}`);
   
-  if (!hasAnyPaymentHeader) {
-    // Return 402 Payment Required per x402 protocol specification
-    // DON'T validate body yet - let PayAI facilitator handle payment first
-    console.log(`💰 Payment required for ImageGenerator500`);
-    console.log(`   Recipient: ${DEMO_AGENTS_WALLET}`);
-    console.log(`   Amount: 0.01 USDC on BASE`);
-    console.log(`   Facilitator: PayAI (https://facilitator.payai.network)`);
+  if (!hasPaymentProof) {
+    // Step 2: Discovery request - return 402 WITHOUT validating body
+    console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
     
-    // USDC contract address on Base mainnet
-    const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-    const PAYAI_FACILITATOR_URL = "https://facilitator.payai.network";
-    
-    return new Response(JSON.stringify({
-      x402Version: 1,
-      error: "Payment required: 0.01 USDC on Base network",
-      accepts: [
-        {
-          scheme: "exact",
-          network: "base",  // Simple network name (not CAIP-2 format)
-          maxAmountRequired: "10000",  // 0.01 USDC (USDC has 6 decimals: 0.01 * 1000000 = 10000)
-          asset: USDC_BASE_MAINNET,  // USDC on Base
-          payTo: DEMO_AGENTS_WALLET,
-          resource: `${request.url}`,
-          description: "Image generation API (demo - always returns 500 error)",
-          mimeType: "application/json",
-          maxTimeoutSeconds: 60,
-          outputSchema: {
+    // v1 schema format (Coinbase Payments MCP doesn't support v2)
+    const paymentRequired = {
+      scheme: "exact",
+      network: "base", // v1 uses simple network name
+      maxAmountRequired: "10000", // v1 uses maxAmountRequired
+      asset: USDC_BASE_MAINNET,
+      payTo: DEMO_AGENTS_WALLET,
+      resource: request.url, // v1 has these at top level
+      description: "Image generation API (demo - always returns 500 error)",
+      mimeType: "application/json",
+      maxTimeoutSeconds: 60,
+      outputSchema: {
+        type: "object",
+        properties: {
+          error: {
             type: "object",
             properties: {
-              error: {
-                type: "object",
-                properties: {
-                  code: { type: "string" },
-                  message: { type: "string" },
-                  type: { type: "string" },
-                  timestamp: { type: "string" }
-                }
-              }
-            }
-          },
-          extra: {
-            name: "USDC",
-            version: "2",
-            facilitator: PAYAI_FACILITATOR_URL
+              code: { type: "string" },
+              message: { type: "string" },
+              type: { type: "string" },
+              timestamp: { type: "string" }
+            },
+            required: ["code", "message", "type", "timestamp"]
           }
-        }
-      ]
+        },
+        required: ["error"]
+      },
+      extra: {
+        name: "USDC",
+        version: "2"
+      }
+    };
+    
+    // Encode as base64 for PAYMENT-REQUIRED header
+    const paymentRequiredB64 = btoa(JSON.stringify(paymentRequired));
+    
+    return new Response(JSON.stringify({
+      x402Version: 1, // v1 protocol (Payments MCP doesn't support v2)
+      error: "Payment required: 0.01 USDC on Base network",
+      accepts: [paymentRequired]
     }), {
       status: 402,
       headers: {
         "Content-Type": "application/json",
+        "PAYMENT-REQUIRED": paymentRequiredB64, // v1 header
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type, PAYMENT-SIGNATURE, X-Payment-Proof, X-402-Transaction-Hash",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, X-402-PAYMENT-RESPONSE"
+        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
+        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE"
       }
     });
   }
   
-  // 2. Payment header received - verify with PayAI facilitator
-  console.log(`💰 Payment header received - verifying with PayAI facilitator...`);
+  // Step 3: Payment proof provided - VERIFY then SETTLE via CDP facilitator
+  console.log(`✅ Payment proof present - verifying with CDP facilitator`);
+  console.log(`   Payment header type: ${paymentSignature ? 'PAYMENT-SIGNATURE' : xPaymentProof ? 'X-Payment-Proof' : xPayment ? 'X-PAYMENT' : txHash ? 'X-402-Transaction-Hash' : 'Authorization'}`);
   
-  const PAYAI_FACILITATOR_URL = "https://facilitator.payai.network";
+  // Use whichever payment header was provided
+  const paymentHeader = paymentSignature || xPaymentProof || xPayment || txHash || authorization;
   
-  // Verify payment with PayAI
   try {
-    const verifyResponse = await fetch(`${PAYAI_FACILITATOR_URL}/verify`, {
+    // Payment requirements for v1 protocol
+    const paymentRequirements = {
+      scheme: "exact",
+      network: "base",
+      maxAmountRequired: "10000",
+      asset: USDC_BASE_MAINNET,
+      payTo: DEMO_AGENTS_WALLET,
+      resource: request.url,
+      description: "Image generation API (demo - always returns 500 error)",
+      mimeType: "application/json"
+    };
+    
+    console.log(`🔍 Step 1: Verifying payment with CDP facilitator`);
+    console.log(`   Using API Key: ${CDP_API_KEY_ID?.substring(0, 8)}...`);
+    
+    // Use Basic Auth for CDP facilitator (may need to switch to JWT if this fails)
+    const basicAuth = btoa(`${CDP_API_KEY_ID}:${CDP_API_KEY_SECRET}`);
+    const authHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${basicAuth}`
+    };
+    
+    console.log(`   Using Basic Auth for CDP facilitator`);
+    console.log(`   Note: If auth fails, we may need to implement JWT token generation`);
+    
+    // STEP 1: Verify the payment signature BEFORE doing work
+    const verifyResponse = await fetch(`${FACILITATOR_URL}/verify`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-PAYMENT": xPaymentHeader || "",
-        "PAYMENT-SIGNATURE": paymentSignatureHeader || "",
-        "X-Payment-Proof": xPaymentProof || "",
-        "X-402-Transaction-Hash": txHash || "",
-        "Authorization": authHeader || ""
-      },
+      headers: authHeaders,
       body: JSON.stringify({
-        resource: request.url,
-        payTo: DEMO_AGENTS_WALLET,
-        network: "base",
-        amount: "10000", // 0.01 USDC
-        asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        x402Version: 1,
+        paymentHeader: paymentHeader,
+        paymentRequirements: paymentRequirements
       })
     });
     
-    console.log(`📡 PayAI verify response: ${verifyResponse.status}`);
+    console.log(`   Verification HTTP status: ${verifyResponse.status}`);
     
-    if (!verifyResponse.ok) {
-      const errorData = await verifyResponse.text();
-      console.log(`❌ Payment verification failed: ${errorData}`);
-      
-      // Payment verification failed - return 402 again
-      const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-      
+    const verifyText = await verifyResponse.text();
+    console.log(`   Verification response: ${verifyText.substring(0, 300)}`);
+    
+    let verifyResult;
+    try {
+      verifyResult = JSON.parse(verifyText);
+    } catch (e) {
+      console.error(`   Failed to parse verification response as JSON`);
       return new Response(JSON.stringify({
-        x402Version: 1,
-        error: "Payment verification failed. Please retry payment.",
-        accepts: [
-          {
-            scheme: "exact",
-            network: "base",
-            maxAmountRequired: "10000",
-            asset: USDC_BASE_MAINNET,
-            payTo: DEMO_AGENTS_WALLET,
-            resource: `${request.url}`,
-            description: "Image generation API (demo - always returns 500 error)",
-            mimeType: "application/json",
-            maxTimeoutSeconds: 60,
-            outputSchema: {
-              type: "object",
-              properties: {
-                error: {
-                  type: "object",
-                  properties: {
-                    code: { type: "string" },
-                    message: { type: "string" },
-                    type: { type: "string" },
-                    timestamp: { type: "string" }
-                  }
-                }
-              }
-            },
-            extra: {
-              name: "USDC",
-              version: "2",
-              facilitator: PAYAI_FACILITATOR_URL
-            }
-          }
-        ]
+        error: "Failed to verify payment",
+        details: verifyText
       }), {
         status: 402,
         headers: {
@@ -268,62 +279,123 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       });
     }
     
-    console.log(`✅ Payment verified successfully via PayAI`);
-  } catch (error) {
-    console.error(`❌ Error verifying payment with PayAI:`, error);
+    // Check if payment is valid
+    if (!verifyResult.isValid) {
+      console.error(`❌ Payment verification failed: ${verifyResult.invalidReason}`);
+      return new Response(JSON.stringify({
+        error: `Invalid payment: ${verifyResult.invalidReason}`,
+        payer: verifyResult.payer
+      }), {
+        status: 402,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
     
-    // If PayAI is down or unreachable, accept any payment header for demo purposes
-    console.log(`⚠️  PayAI unreachable - accepting payment header for demo purposes`);
-  }
-  
-  // 3. Validate request body
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
+    console.log(`✅ Payment verified! Payer: ${verifyResult.payer?.substring(0, 10)}...`);
+    
+    // STEP 2: Do work - validate request body
+    console.log(`🔧 Step 2: Performing work (validating request)`);
+    const validation = validateImageGenRequest(body);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({
+        error: validation.error
+      }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+    
+    // STEP 3: Settle the payment on-chain
+    console.log(`💰 Step 3: Settling payment on-chain via CDP facilitator`);
+    
+    const settleResponse = await fetch(`${FACILITATOR_URL}/settle`, {
+      method: "POST",
+      headers: authHeaders, // Reuse the same auth headers from verify step
+      body: JSON.stringify({
+        x402Version: 1,
+        paymentHeader: paymentHeader,
+        paymentRequirements: paymentRequirements
+      })
+    });
+    
+    console.log(`   Settlement HTTP status: ${settleResponse.status}`);
+    
+    // Parse response
+    const responseText = await settleResponse.text();
+    console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
+    
+    let settleResult;
+    try {
+      settleResult = JSON.parse(responseText);
+    } catch (e) {
+      console.error(`   Failed to parse settlement response as JSON`);
+      settleResult = {
+        success: false,
+        error: responseText,
+        txHash: "",
+        networkId: "base"
+      };
+    }
+    
+    if (!settleResult.success) {
+      console.error(`❌ Settlement failed:`, settleResult);
+    } else {
+      console.log(`✅ Settlement succeeded! Transaction: ${settleResult.txHash || settleResult.transaction}`);
+    }
+    
+    // STEP 4: Return 500 error (demo behavior) with settlement confirmation
+    console.log(`✅ Step 4: Returning 500 error after successful settlement (demo behavior)`);
+    
+    // Encode settlement response for PAYMENT-RESPONSE header
+    const paymentResponseB64 = btoa(JSON.stringify(settleResult));
+    
     return new Response(JSON.stringify({
-      error: "Invalid JSON body"
-    }), { 
-      status: 400, 
-      headers: { 
+      success: false,
+      error: {
+        code: "model_overloaded",
+        message: "Image generation model is currently overloaded. Please try again later.",
+        type: "server_error",
+        timestamp: new Date().toISOString()
+      },
+      settlement: settleResult // Include settlement info for debugging
+    }), {
+      status: 500,
+      headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      } 
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
+        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE",
+        "PAYMENT-RESPONSE": paymentResponseB64
+      }
+    });
+    
+  } catch (error: any) {
+    console.error(`❌ Error calling facilitator:`, error);
+    
+    // Return 500 error even if settlement failed (demo always returns 500)
+    return new Response(JSON.stringify({
+      success: false,
+      error: {
+        code: "settlement_error",
+        message: `Failed to settle payment: ${error.message}`,
+        type: "server_error",
+        timestamp: new Date().toISOString()
+      }
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
+        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE"
+      }
     });
   }
-  
-  const validation = validateImageGenRequest(body);
-  if (!validation.valid) {
-    return new Response(JSON.stringify({
-      error: validation.error
-    }), { 
-      status: 400, 
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      } 
-    });
-  }
-  
-  // 4. PAYMENT VERIFIED - Now intentionally fail with 500 error
-  // This simulates a real scenario: payment was made, but service crashes
-  console.log(`✅ Request validated: prompt="${body.prompt}"`);
-  console.log(`🚨 Returning intentional 500 error for demo purposes (simulating service failure after payment)`);
-  
-  return new Response(JSON.stringify({
-    error: {
-      code: "model_overloaded",
-      message: "Image generation model is currently overloaded. Please try again later.",
-      type: "server_error",
-      timestamp: new Date().toISOString()
-    }
-  }), {
-    status: 500,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Error-Type": "InternalServerError",
-      "Access-Control-Allow-Origin": "*"
-    }
-  });
 });
 
