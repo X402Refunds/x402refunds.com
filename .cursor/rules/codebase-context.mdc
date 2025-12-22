@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-22T10:43:56.749Z
+**Auto-generated on**: 2025-12-22T16:56:05.707Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (43 files)
+### Convex Files (48 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -107,11 +107,12 @@ consulate/
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
+- **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
-- **refunds.ts** - executeAutomatedRefund, executeOnChain, getRefundStatus, manualApproveRefund
+- **refunds.ts** - executeAutomatedRefund, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
 - **schema.ts** - Core logic
 - **testing.ts** - cleanupTestData, deleteTestAgentsBatch, deleteTestCasesBatch, runTestCleanup, deleteSpecificCases
@@ -119,6 +120,10 @@ consulate/
 - **users.ts** - syncUser, getCurrentUser, getUser, getUserOrganization, getCurrentUserOrganization, getOrganization, getOrganizationInternal, listOrganizationUsers, updateOrganization, updateAutoApproveAI, promoteToAdmin, getOrganizationStats, getOrganizationOwnerDid, getOrganizations
 - **workflows.ts** - workflowManager, paymentDisputeWorkflow, generalDisputeWorkflow, microDisputeWorkflow, storeWorkflowStep, cleanupOldWorkflowSteps, getWorkflowSteps, getWorkflowStatus, getAgentStepOutput, getWorkflowStepsPublic, getWorkflowStatusPublic
 - **workpools.ts** - evidencePool, judgePool, researchPool
+- **adapter.ts** - convertX402rDisputeToCase, getEscrowDetailsFromCase, updateEscrowState
+- **config.ts** - X402R_CONFIG, isX402rEnabled, requireX402rEnabled, validateConfig, isWhitelisted, getChainId, isGasPriceAcceptable, requiresManualReview
+- **listener.ts** - storeEscrowDispute
+- **resolver.ts** - resolveEscrowDispute, executeRelease, markReleased, markFailed, retryFailedRelease
 
 ### Key Backend Functions
 - **agents.ts** - Agent registration & management (joinAgent, listAgents, etc.)
@@ -139,7 +144,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (71 components)
+### React Components (72 components)
 - AnimatedGrid
 - Footer
 - MatrixRain
@@ -157,11 +162,11 @@ Common HTTP routes exposed:
 - PartiesCard
 - PaymentProofCard
 - SignedEvidenceCard
+- X402rEscrowBadge
 - doc-layout
 - doc-sidebar
-- ethereum-address-link
 
-... and 51 more
+... and 52 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -171,7 +176,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (38 test files)
+### Test Suites (39 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -210,6 +215,7 @@ Common HTTP routes exposed:
 - test/users.test.ts
 - test/workflow-agent-outputs.test.ts
 - test/workflow-integration.test.ts
+- test/x402r-integration.test.ts
 
 ## 📦 Package Scripts
 
@@ -262,19 +268,19 @@ Common HTTP routes exposed:
 - docs/mcp-publishing-guide.md
 
 
-### Internal Documentation (31 files)
+### Internal Documentation (34 files)
 - internal/README.md
 - internal/analysis/AI-RULING-TERMINOLOGY-ANALYSIS.md
 - internal/analysis/DISPUTE-PRICING-MODEL.md
 - internal/architecture/project-structure.md
 - internal/compliance/enterprise-compliance-framework.md
 - internal/design/digital-courthouse-design-system.md
+- internal/operations/x402r-arbiter-operations.md
+- internal/operations/x402r-integration-using-existing-contracts.md
+- internal/operations/x402r-pivot-summary.md
 - internal/product/branding-strategy.md
-- internal/product/competitive-analysis.md
-- internal/product/dispute-type-categorization.md
-- internal/product/market-opportunity-strategy.md
 
-... and 21 more in internal/
+... and 24 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -321,16 +327,16 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 71 components organized by feature
+- 72 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 43 TypeScript files with serverless functions
+- 48 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 38 test files using Vitest
+- 39 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -363,5 +369,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/22/2025, 4:13:56 PM
-Files scanned: 344
+Generated: 12/22/2025, 10:26:05 PM
+Files scanned: 354
