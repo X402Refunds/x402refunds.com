@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-22T16:56:05.707Z
+**Auto-generated on**: 2025-12-22T20:36:08.433Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (48 files)
+### Convex Files (50 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -93,6 +93,8 @@ consulate/
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
 - **crons.ts** - generatePaymentDisputeDemo, updateSystemStatsCache, triggerDisputeGeneration, triggerStatsUpdate, autoApproveOverdueDisputes
 - **custody.ts** - computeEventHash, verifyCustodyChain
+- **cdpAuth.ts** - verifyPayment, settlePayment
+- **testCdp.ts** - testCdpAuth
 - **demoAgents.ts** - imageGenerator500GetHandler, imageGenerator500Handler
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **disputePricing.ts** - calculateDisputeFee, getFeeExplanation
@@ -268,7 +270,7 @@ Common HTTP routes exposed:
 - docs/mcp-publishing-guide.md
 
 
-### Internal Documentation (34 files)
+### Internal Documentation (36 files)
 - internal/README.md
 - internal/analysis/AI-RULING-TERMINOLOGY-ANALYSIS.md
 - internal/analysis/DISPUTE-PRICING-MODEL.md
@@ -280,7 +282,7 @@ Common HTTP routes exposed:
 - internal/operations/x402r-pivot-summary.md
 - internal/product/branding-strategy.md
 
-... and 24 more in internal/
+... and 26 more in internal/
 
 ## 🔧 Configuration Files
 
@@ -296,17 +298,17 @@ Common HTTP routes exposed:
 
 ## 📦 Dependencies
 
-### Production Dependencies (10)
+### Production Dependencies (12)
 - @ai-sdk/openai@^2.0.62
 - @coinbase/coinbase-sdk@^0.25.0
+- @coinbase/x402@^0.6.6
 - @convex-dev/agent@^0.2.12
 - @convex-dev/workflow@^0.2.7
 - @convex-dev/workpool@^0.2.19
+- @x402sdk/sdk@^1.1.0
 - ai@^5.0.87
 - convex@^1.31.2
 - convex-test@^0.0.38
-- viem@~2.38.6
-- zod@^4.1.11
 
 ### Dev Dependencies (9)
 - @semantic-release/changelog@^6.0.0
@@ -330,7 +332,7 @@ Common HTTP routes exposed:
 - 72 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 48 TypeScript files with serverless functions
+- 50 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -369,5 +371,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/22/2025, 10:26:05 PM
-Files scanned: 354
+Generated: 12/23/2025, 2:06:08 AM
+Files scanned: 358

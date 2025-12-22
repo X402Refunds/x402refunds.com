@@ -6,20 +6,24 @@
  * 
  * Shared wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
  * 
- * Implements COMPLETE x402 protocol flow with CDP facilitator:
- * 1. Returns 402 with PAYMENT-REQUIRED header (base64 encoded)
- * 2. Accepts payment authorization from Coinbase Payments MCP
- * 3. Calls CDP facilitator POST /verify to validate payment signature
+ * Implements COMPLETE x402 v1 protocol flow:
+ * 1. Returns 402 with payment requirements in response body
+ * 2. Accepts X-PAYMENT header with signed payment (v1 standard)
+ * 3. Calls facilitator POST /verify to validate payment signature
  * 4. Performs work (validates request body)
- * 5. Calls CDP facilitator POST /settle to execute payment on-chain
- * 6. Returns intentional error (500) with PAYMENT-RESPONSE header
+ * 5. Calls facilitator POST /settle to execute payment on-chain
+ * 6. Returns intentional error (500) with X-PAYMENT-RESPONSE header (v1)
  * 
- * Authentication: Uses CDP API key (Basic Auth) for facilitator access.
  * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+ * Facilitator: https://facilitator.mcpay.tech (high-availability proxy)
+ * 
+ * NOTE: HTTP actions run in Cloudflare Workers-like runtime (no Node.js APIs)
+ * Payment verification is handled by calling a Node.js action internally.
  */
 
-import { httpAction } from "./_generated/server";
+import { httpAction, action } from "./_generated/server";
 import { api } from "./_generated/api";
+import { v } from "convex/values";
 
 // Shared wallet for all demo agents
 const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x49AF4074577EA313C5053cbB7560AC39e34b05E8";
@@ -27,10 +31,13 @@ const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x49AF4074577EA313
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-// CDP Facilitator configuration (requires auth for mainnet Base)
-const FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402";
+// CDP API credentials (from environment)
 const CDP_API_KEY_ID = process.env.CDP_API_KEY_ID;
 const CDP_API_KEY_SECRET = process.env.CDP_API_KEY_SECRET;
+
+// CDP Facilitator endpoints
+const FACILITATOR_BASE_URL = "https://api.cdp.coinbase.com";
+const FACILITATOR_ROUTE = "/platform/v2/x402";
 
 /**
  * Image generation request format
@@ -121,12 +128,13 @@ export const imageGenerator500GetHandler = httpAction(async (ctx, request) => {
 /**
  * ImageGenerator500 POST handler - Always returns 500 error after payment
  * 
- * Implements proper x402 protocol flow:
- * 1. Returns 402 with PAYMENT-REQUIRED header (base64 encoded)
- * 2. Verifies payment via Coinbase facilitator
- * 3. Performs work (returns 500 error - demo behavior)
- * 4. Settles payment via facilitator
- * 5. Returns PAYMENT-RESPONSE header
+ * Implements proper x402 v1 protocol flow:
+ * 1. Returns 402 with payment requirements in body
+ * 2. Accepts X-PAYMENT header with signed payment
+ * 3. Verifies payment via facilitator
+ * 4. Performs work (returns 500 error - demo behavior)
+ * 5. Settles payment via facilitator
+ * 6. Returns X-PAYMENT-RESPONSE header (v1)
  */
 export const imageGenerator500Handler = httpAction(async (ctx, request) => {
   console.log(`📨 POST request received`);
@@ -142,18 +150,16 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     console.log(`   Empty or invalid body - treating as discovery request`);
   }
   
-  // Step 1: Check for ANY payment-related header FIRST
-  const paymentSignature = request.headers.get("PAYMENT-SIGNATURE");
-  const xPaymentProof = request.headers.get("X-Payment-Proof");
-  const xPayment = request.headers.get("X-PAYMENT");
-  const txHash = request.headers.get("X-402-Transaction-Hash");
-  const authorization = request.headers.get("Authorization");
+  // Step 1: Check for payment header (v1 uses X-PAYMENT)
+  const xPayment = request.headers.get("X-PAYMENT"); // v1 standard header
+  const xPaymentProof = request.headers.get("X-Payment-Proof"); // Alternative
+  const txHash = request.headers.get("X-402-Transaction-Hash"); // Alternative
+  const authorization = request.headers.get("Authorization"); // Alternative
   
-  const hasPaymentProof = paymentSignature || xPaymentProof || xPayment || txHash || authorization;
+  const hasPaymentProof = xPayment || xPaymentProof || txHash || authorization;
   
-  console.log(`   PAYMENT-SIGNATURE: ${paymentSignature ? 'present' : 'missing'}`);
+  console.log(`   X-PAYMENT (v1): ${xPayment ? 'present' : 'missing'}`);
   console.log(`   X-Payment-Proof: ${xPaymentProof ? 'present' : 'missing'}`);
-  console.log(`   X-PAYMENT: ${xPayment ? 'present' : 'missing'}`);
   console.log(`   X-402-Transaction-Hash: ${txHash ? 'present' : 'missing'}`);
   console.log(`   Authorization: ${authorization ? 'present' : 'missing'}`);
   
@@ -190,13 +196,11 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       },
       extra: {
         name: "USDC",
-        version: "2"
+        version: "1"
       }
     };
     
-    // Encode as base64 for PAYMENT-REQUIRED header
-    const paymentRequiredB64 = btoa(JSON.stringify(paymentRequired));
-    
+    // v1 protocol: Payment requirements go in BODY only (no header)
     return new Response(JSON.stringify({
       x402Version: 1, // v1 protocol (Payments MCP doesn't support v2)
       error: "Payment required: 0.01 USDC on Base network",
@@ -205,20 +209,43 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       status: 402,
       headers: {
         "Content-Type": "application/json",
-        "PAYMENT-REQUIRED": paymentRequiredB64, // v1 header
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
-        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE"
+        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
       }
     });
   }
   
-  // Step 3: Payment proof provided - VERIFY then SETTLE via CDP facilitator
-  console.log(`✅ Payment proof present - verifying with CDP facilitator`);
-  console.log(`   Payment header type: ${paymentSignature ? 'PAYMENT-SIGNATURE' : xPaymentProof ? 'X-Payment-Proof' : xPayment ? 'X-PAYMENT' : txHash ? 'X-402-Transaction-Hash' : 'Authorization'}`);
+  // Step 3: Payment proof provided - VERIFY then SETTLE via facilitator  
+  console.log(`✅ Payment proof present - verifying with facilitator`);
+  console.log(`   Payment header type: ${xPayment ? 'X-PAYMENT (v1)' : xPaymentProof ? 'X-Payment-Proof' : txHash ? 'X-402-Transaction-Hash' : 'Authorization'}`);
   
-  // Use whichever payment header was provided
-  const paymentHeader = paymentSignature || xPaymentProof || xPayment || txHash || authorization;
+  // Use whichever payment header was provided (prioritize v1 standard)
+  const paymentHeader = xPayment || xPaymentProof || txHash || authorization;
+  
+  // Check if CDP credentials are configured
+  if (!CDP_API_KEY_ID || !CDP_API_KEY_SECRET) {
+    console.error(`❌ CDP API credentials not configured`);
+    console.error(`   Please set CDP_API_KEY_ID and CDP_API_KEY_SECRET in Convex environment`);
+    console.error(`   Get credentials from: https://portal.cdp.coinbase.com/`);
+    
+    // For now, return 500 error (demo behavior) without settlement
+    return new Response(JSON.stringify({
+      success: false,
+      error: {
+        code: "configuration_error",
+        message: "Payment settlement not configured. Please contact support.",
+        type: "server_error",
+        timestamp: new Date().toISOString()
+      }
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
   
   try {
     // Payment requirements for v1 protocol
@@ -230,41 +257,31 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       payTo: DEMO_AGENTS_WALLET,
       resource: request.url,
       description: "Image generation API (demo - always returns 500 error)",
-      mimeType: "application/json"
+      mimeType: "application/json",
+      maxTimeoutSeconds: 60
     };
     
     console.log(`🔍 Step 1: Verifying payment with CDP facilitator`);
-    console.log(`   Using API Key: ${CDP_API_KEY_ID?.substring(0, 8)}...`);
-    
-    // Use Basic Auth for CDP facilitator (may need to switch to JWT if this fails)
-    const basicAuth = btoa(`${CDP_API_KEY_ID}:${CDP_API_KEY_SECRET}`);
-    const authHeaders = {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${basicAuth}`
-    };
-    
-    console.log(`   Using Basic Auth for CDP facilitator`);
-    console.log(`   Note: If auth fails, we may need to implement JWT token generation`);
+    console.log(`   Using CDP API Key: ${CDP_API_KEY_ID?.substring(0, 20)}...`);
+    console.log(`   Using JWT authentication (via Node.js action + @coinbase/x402)`);
     
     // STEP 1: Verify the payment signature BEFORE doing work
-    const verifyResponse = await fetch(`${FACILITATOR_URL}/verify`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify({
-        x402Version: 1,
-        paymentHeader: paymentHeader,
-        paymentRequirements: paymentRequirements
-      })
+    // Pass RAW payment header string to CDP (it will decode and validate it)
+    const verifyResult = await ctx.runAction(api.demoAgents.cdpAuth.verifyPayment, {
+      paymentHeader: paymentHeader as string,
+      paymentRequirements: paymentRequirements,
+      apiKeyId: CDP_API_KEY_ID,
+      apiKeySecret: CDP_API_KEY_SECRET
     });
     
-    console.log(`   Verification HTTP status: ${verifyResponse.status}`);
+    console.log(`   Verification HTTP status: ${verifyResult.status}`);
     
-    const verifyText = await verifyResponse.text();
+    const verifyText = verifyResult.body;
     console.log(`   Verification response: ${verifyText.substring(0, 300)}`);
     
-    let verifyResult;
+    let verifyData;
     try {
-      verifyResult = JSON.parse(verifyText);
+      verifyData = JSON.parse(verifyText);
     } catch (e) {
       console.error(`   Failed to parse verification response as JSON`);
       return new Response(JSON.stringify({
@@ -280,11 +297,11 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     }
     
     // Check if payment is valid
-    if (!verifyResult.isValid) {
-      console.error(`❌ Payment verification failed: ${verifyResult.invalidReason}`);
+    if (!verifyData.isValid) {
+      console.error(`❌ Payment verification failed: ${verifyData.invalidReason}`);
       return new Response(JSON.stringify({
-        error: `Invalid payment: ${verifyResult.invalidReason}`,
-        payer: verifyResult.payer
+        error: `Invalid payment: ${verifyData.invalidReason}`,
+        payer: verifyData.payer
       }), {
         status: 402,
         headers: {
@@ -294,7 +311,7 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       });
     }
     
-    console.log(`✅ Payment verified! Payer: ${verifyResult.payer?.substring(0, 10)}...`);
+    console.log(`✅ Payment verified! Payer: ${verifyData.payer?.substring(0, 10)}...`);
     
     // STEP 2: Do work - validate request body
     console.log(`🔧 Step 2: Performing work (validating request)`);
@@ -314,46 +331,44 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
     // STEP 3: Settle the payment on-chain
     console.log(`💰 Step 3: Settling payment on-chain via CDP facilitator`);
     
-    const settleResponse = await fetch(`${FACILITATOR_URL}/settle`, {
-      method: "POST",
-      headers: authHeaders, // Reuse the same auth headers from verify step
-      body: JSON.stringify({
-        x402Version: 1,
-        paymentHeader: paymentHeader,
-        paymentRequirements: paymentRequirements
-      })
+    // Call Node.js action to handle CDP authentication
+    const settleResult = await ctx.runAction(api.demoAgents.cdpAuth.settlePayment, {
+      paymentHeader: paymentHeader as string,
+      paymentRequirements: paymentRequirements,
+      apiKeyId: CDP_API_KEY_ID,
+      apiKeySecret: CDP_API_KEY_SECRET
     });
     
-    console.log(`   Settlement HTTP status: ${settleResponse.status}`);
+    console.log(`   Settlement HTTP status: ${settleResult.status}`);
     
     // Parse response
-    const responseText = await settleResponse.text();
+    const responseText = settleResult.body;
     console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
     
-    let settleResult;
+    let settleData;
     try {
-      settleResult = JSON.parse(responseText);
+      settleData = JSON.parse(responseText);
     } catch (e) {
       console.error(`   Failed to parse settlement response as JSON`);
-      settleResult = {
+      settleData = {
         success: false,
-        error: responseText,
-        txHash: "",
-        networkId: "base"
+        errorReason: "unexpected_settle_error",
+        transaction: "",
+        network: "base"
       };
     }
     
-    if (!settleResult.success) {
-      console.error(`❌ Settlement failed:`, settleResult);
+    if (!settleData.success) {
+      console.error(`❌ Settlement failed:`, settleData);
     } else {
-      console.log(`✅ Settlement succeeded! Transaction: ${settleResult.txHash || settleResult.transaction}`);
+      console.log(`✅ Settlement succeeded! Transaction: ${settleData.transaction}`);
     }
     
     // STEP 4: Return 500 error (demo behavior) with settlement confirmation
     console.log(`✅ Step 4: Returning 500 error after successful settlement (demo behavior)`);
     
-    // Encode settlement response for PAYMENT-RESPONSE header
-    const paymentResponseB64 = btoa(JSON.stringify(settleResult));
+    // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
+    const paymentResponseB64 = btoa(JSON.stringify(settleData));
     
     return new Response(JSON.stringify({
       success: false,
@@ -363,15 +378,15 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
         type: "server_error",
         timestamp: new Date().toISOString()
       },
-      settlement: settleResult // Include settlement info for debugging
+      settlement: settleData // Include settlement info for debugging
     }), {
       status: 500,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
-        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE",
-        "PAYMENT-RESPONSE": paymentResponseB64
+        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
+        "X-PAYMENT-RESPONSE": paymentResponseB64 // v1 protocol uses X- prefix
       }
     });
     
@@ -392,8 +407,8 @@ export const imageGenerator500Handler = httpAction(async (ctx, request) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "PAYMENT-SIGNATURE, X-Payment-Proof, X-PAYMENT, X-402-Transaction-Hash, Authorization, Content-Type",
-        "Access-Control-Expose-Headers": "PAYMENT-REQUIRED, PAYMENT-RESPONSE"
+        "Access-Control-Allow-Headers": "X-PAYMENT, Content-Type",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
       }
     });
   }
