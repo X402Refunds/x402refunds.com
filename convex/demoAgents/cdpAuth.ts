@@ -44,7 +44,7 @@ export const verifyPayment = action({
       },
       body: JSON.stringify({
         x402Version: 1,
-        paymentHeader: args.paymentHeader, // v1 schema: raw base64 string
+        paymentPayload: args.paymentHeader, // x402.org expects "paymentPayload"
         paymentRequirements: args.paymentRequirements
       })
     });
@@ -91,7 +91,7 @@ export const settlePayment = action({
       },
       body: JSON.stringify({
         x402Version: 1,
-        paymentHeader: args.paymentHeader, // v1 schema: raw base64 string
+        paymentPayload: args.paymentHeader, // x402.org expects "paymentPayload"
         paymentRequirements: args.paymentRequirements
       })
     });
