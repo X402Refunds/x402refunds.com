@@ -43,8 +43,8 @@ export const verifyPayment = action({
         "Authorization": authHeader
       },
       body: JSON.stringify({
-        x402Version: 1,
-        paymentPayload: args.paymentHeader, // x402.org expects "paymentPayload"
+        version: "1", // x402.org facilitator expects "version" field as string
+        paymentPayload: args.paymentHeader,
         paymentRequirements: args.paymentRequirements
       })
     });
@@ -90,8 +90,8 @@ export const settlePayment = action({
         "Authorization": authHeader
       },
       body: JSON.stringify({
-        x402Version: 1,
-        paymentPayload: args.paymentHeader, // x402.org expects "paymentPayload"
+        version: "1", // x402.org facilitator expects "version" field as string
+        paymentPayload: args.paymentHeader,
         paymentRequirements: args.paymentRequirements
       })
     });
