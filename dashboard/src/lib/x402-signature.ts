@@ -22,20 +22,22 @@ export interface PaymentRequirements {
   maxTimeoutSeconds?: number;
 }
 
+// X402 "exact" EVM payload shape (EIP-3009 TransferWithAuthorization)
+// See Coinbase x402 spec + PayAI echo-merchant implementation.
 export interface X402PaymentPayload {
   x402Version: number;
   scheme: string;
   network: string;
-  signature: string;
-  authorization: {
-    from: string;
-    to: string;
-    value: string;
-    asset: string;
-    resource: string;
-    nonce: string;
-    validAfter: string;
-    validBefore: string;
+  payload: {
+    signature: string;
+    authorization: {
+      from: string;
+      to: string;
+      value: string;
+      validAfter: string;
+      validBefore: string;
+      nonce: string; // bytes32 hex string
+    };
   };
 }
 
@@ -50,74 +52,79 @@ export async function createX402PaymentSignature(
   requirements: PaymentRequirements,
   userAddress: string
 ): Promise<string> {
-  // EIP-712 domain for X-402 payments on Base
+  // x402 exact scheme on EVM uses EIP-3009 transferWithAuthorization.
+  // That means the signature is over the USDC contract's EIP-712 domain,
+  // and the message shape is TransferWithAuthorization with a bytes32 nonce.
+  const chainId = requirements.network === 'base' ? 8453 : 8453;
+
+  // USDC EIP-712 domain (EIP-3009)
   const domain = {
-    name: 'X-402 Payment',
-    version: '1',
-    chainId: 8453, // Base mainnet
+    name: 'USD Coin',
+    version: '2',
+    chainId,
+    verifyingContract: requirements.asset as `0x${string}`,
   } as const;
 
-  // EIP-712 typed data structure for payment authorization
   const types = {
-    Payment: [
+    TransferWithAuthorization: [
       { name: 'from', type: 'address' },
       { name: 'to', type: 'address' },
       { name: 'value', type: 'uint256' },
-      { name: 'asset', type: 'address' },
-      { name: 'resource', type: 'string' },
-      { name: 'nonce', type: 'uint256' },
       { name: 'validAfter', type: 'uint256' },
       { name: 'validBefore', type: 'uint256' },
+      { name: 'nonce', type: 'bytes32' },
     ],
   } as const;
 
-  // Current timestamp for validity window
   const now = Math.floor(Date.now() / 1000);
 
-  // Payment authorization message
+  // bytes32 nonce
+  const nonceBytes = new Uint8Array(32);
+  crypto.getRandomValues(nonceBytes);
+  const nonceHex = `0x${Array.from(nonceBytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')}` as `0x${string}`;
+
   const message = {
     from: userAddress as `0x${string}`,
     to: requirements.payTo as `0x${string}`,
     value: BigInt(requirements.maxAmountRequired),
-    asset: requirements.asset as `0x${string}`,
-    resource: requirements.resource,
-    nonce: BigInt(Date.now()), // Unique nonce per payment
     validAfter: BigInt(now),
-    validBefore: BigInt(now + 300), // Valid for 5 minutes
-  };
+    validBefore: BigInt(now + 300),
+    nonce: nonceHex,
+  } as const;
 
-  console.log('Creating X-402 payment signature...');
-  console.log('  User:', userAddress);
+  console.log('Creating X-402 EIP-3009 signature...');
+  console.log('  From:', userAddress);
   console.log('  To:', requirements.payTo);
   console.log('  Amount:', requirements.maxAmountRequired);
   console.log('  Asset:', requirements.asset);
 
-  // User signs the message (Brave Wallet popup - NO GAS!)
   const signature = await walletClient.signTypedData({
     account: userAddress as `0x${string}`,
     domain,
     types,
-    primaryType: 'Payment',
+    primaryType: 'TransferWithAuthorization',
     message,
   });
 
   console.log('✅ Signature created:', signature.substring(0, 20) + '...');
 
-  // Create X-PAYMENT payload
+  // Create X-PAYMENT payload (base64 JSON)
   const payload: X402PaymentPayload = {
     x402Version: 1,
     scheme: requirements.scheme,
     network: requirements.network,
-    signature,
-    authorization: {
-      from: userAddress,
-      to: requirements.payTo,
-      value: requirements.maxAmountRequired,
-      asset: requirements.asset,
-      resource: requirements.resource,
-      nonce: message.nonce.toString(),
-      validAfter: message.validAfter.toString(),
-      validBefore: message.validBefore.toString(),
+    payload: {
+      signature,
+      authorization: {
+        from: userAddress,
+        to: requirements.payTo,
+        value: requirements.maxAmountRequired,
+        validAfter: message.validAfter.toString(),
+        validBefore: message.validBefore.toString(),
+        nonce: message.nonce,
+      },
     },
   };
 
