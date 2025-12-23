@@ -424,6 +424,22 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
             }
           : null;
 
+      // Log safe decoded payload + requirements for debugging payments-mcp clients.
+      // (No full signature, no secrets.)
+      console.log("🔎 X402 verify debug:", {
+        invalidReason,
+        facilitatorStatus: verifyResult.status,
+        safeDecoded,
+        paymentRequirements: {
+          scheme: paymentRequirements.scheme,
+          network: paymentRequirements.network,
+          asset: paymentRequirements.asset,
+          payTo: paymentRequirements.payTo,
+          maxAmountRequired: paymentRequirements.maxAmountRequired,
+          resource: paymentRequirements.resource,
+        },
+      });
+
       return new Response(
         JSON.stringify({
           error: `Invalid payment: ${invalidReason}`,
