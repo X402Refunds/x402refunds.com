@@ -183,7 +183,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "demo_image_generator",
-    description: "Demo image generation API that ALWAYS returns 500 error after payment. Perfect for testing X-402 dispute filing. Accepts 0.01 USDC on BASE via X-402 protocol (Coinbase Payments MCP handles payment automatically).",
+    description: "Working X-402 demo image generation API powered by Pollinations AI. Returns 200 OK with real image URLs. Accepts 0.01 USDC on BASE via X-402 signature-based payment. Use to test the complete X-402 payment flow with facilitator verification and settlement.",
     inputSchema: {
       type: "object",
       properties: {

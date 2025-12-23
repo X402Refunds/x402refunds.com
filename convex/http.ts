@@ -509,17 +509,17 @@ http.route({
                     protocol: "X-402"
                   },
                   instructions: {
-                    step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
-                    step_3: "Receive 200 OK with generated image URL",
-                    coinbase_mcp: "Install: npx @coinbase/payments-mcp"
+                    step_1: "This endpoint uses X-402 signature-based payment with facilitator",
+                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator with X-PAYMENT header",
+                    step_3: "Receive 200 OK with generated image URL from Pollinations AI",
+                    note: "Payment signature will be verified and settled via mcpay.tech facilitator"
                   },
                   endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
                   prompt: parameters.prompt,
                   size: parameters.size || "1024x1024",
                   model: parameters.model || "stable-diffusion-xl",
-                  expected_behavior: "Returns 200 OK with image URL after payment verification",
-                  use_case: "Working X-402 payment demo"
+                  expected_behavior: "Returns 200 OK with real image URL after payment settlement",
+                  use_case: "X-402 signature-based payment demo"
                 };
                 break;
               }
@@ -2304,10 +2304,11 @@ http.route({
 /**
  * ImageGenerator - Working X-402 demo agent
  * 
- * Purpose: Demonstrate working X-402 payment flow
- * Payment: 0.1 USDC on BASE via X-402 protocol
+ * Purpose: Demonstrate X-402 signature-based payment flow
+ * Payment: 0.01 USDC on BASE via X-402 protocol
  * Wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
- * Behavior: Validates payment, generates image, returns 200 OK with image URL
+ * Facilitator: mcpay.tech (no auth required)
+ * Behavior: Verifies payment signature, generates image, returns 200 OK with image URL
  */
 
 // GET route - Shows API documentation
