@@ -374,17 +374,35 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     
     // Check if payment is valid
     if (!verifyData.isValid) {
-      console.error(`❌ Payment verification failed: ${verifyData.invalidReason}`);
-      return new Response(JSON.stringify({
-        error: `Invalid payment: ${verifyData.invalidReason}`,
-        payer: verifyData.payer
-      }), {
-        status: 402,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+      const invalidReason =
+        verifyData.invalidReason ??
+        verifyData.error ??
+        verifyData.reason ??
+        verifyData.message ??
+        "unknown";
+
+      console.error(`❌ Payment verification failed: ${invalidReason}`);
+
+      // Provide debugging context (truncated) so clients can diagnose mismatched payload formats
+      // without having to tail server logs.
+      const facilitatorResponseSnippet =
+        typeof verifyText === "string" ? verifyText.substring(0, 500) : "";
+
+      return new Response(
+        JSON.stringify({
+          error: `Invalid payment: ${invalidReason}`,
+          payer: verifyData.payer,
+          facilitatorStatus: verifyResult.status,
+          facilitatorResponse: facilitatorResponseSnippet,
+        }),
+        {
+          status: 402,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         }
-      });
+      );
     }
     
     console.log(`✅ Payment verified! Payer: ${verifyData.payer?.substring(0, 10)}...`);
