@@ -24,6 +24,8 @@ import type * as courtEngine from "../courtEngine.js";
 import type * as crons from "../crons.js";
 import type * as custody from "../custody.js";
 import type * as demoAgents from "../demoAgents.js";
+import type * as demoAgents_cdpAuth from "../demoAgents/cdpAuth.js";
+import type * as demoAgents_testCdp from "../demoAgents/testCdp.js";
 import type * as disputeEngine from "../disputeEngine.js";
 import type * as disputePricing from "../disputePricing.js";
 import type * as events from "../events.js";
@@ -37,6 +39,7 @@ import type * as lib_caip10 from "../lib/caip10.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_openrouter from "../lib/openrouter.js";
 import type * as lib_solana from "../lib/solana.js";
+import type * as lib_x402r from "../lib/x402r.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
 import type * as notifications from "../notifications.js";
@@ -48,6 +51,10 @@ import type * as types from "../types.js";
 import type * as users from "../users.js";
 import type * as workflows from "../workflows.js";
 import type * as workpools from "../workpools.js";
+import type * as x402r_adapter from "../x402r/adapter.js";
+import type * as x402r_config from "../x402r/config.js";
+import type * as x402r_listener from "../x402r/listener.js";
+import type * as x402r_resolver from "../x402r/resolver.js";
 
 import type {
   ApiFromModules,
@@ -72,6 +79,8 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   custody: typeof custody;
   demoAgents: typeof demoAgents;
+  "demoAgents/cdpAuth": typeof demoAgents_cdpAuth;
+  "demoAgents/testCdp": typeof demoAgents_testCdp;
   disputeEngine: typeof disputeEngine;
   disputePricing: typeof disputePricing;
   events: typeof events;
@@ -85,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "lib/crypto": typeof lib_crypto;
   "lib/openrouter": typeof lib_openrouter;
   "lib/solana": typeof lib_solana;
+  "lib/x402r": typeof lib_x402r;
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;
   notifications: typeof notifications;
@@ -96,6 +106,10 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   workflows: typeof workflows;
   workpools: typeof workpools;
+  "x402r/adapter": typeof x402r_adapter;
+  "x402r/config": typeof x402r_config;
+  "x402r/listener": typeof x402r_listener;
+  "x402r/resolver": typeof x402r_resolver;
 }>;
 
 /**

@@ -66,14 +66,18 @@ function validateImageGenRequest(body: any): { valid: boolean; error?: string } 
 
 
 /**
- * Health/Discovery endpoint - Returns service info and payment requirements
- * This is what X-402 clients call for discovery (like dabit3/x402-starter-kit)
+ * ImageGenerator GET handler - Returns service info
+ * 
+ * GET returns 200 OK with service metadata and pricing
+ * POST handles the actual payment flow (402 → process → deliver)
  */
-export const imageGeneratorHealth = httpAction(async (ctx, request) => {
-  console.log(`📨 Health check / Discovery request received`);
+export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
+  console.log(`📨 GET request received - returning service info`);
+  
+  const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
   
   return new Response(JSON.stringify({
-    status: "healthy",
+    status: "available",
     service: "image-generator",
     description: "AI image generation API powered by Stable Diffusion XL",
     version: "1.0.0",
@@ -87,7 +91,7 @@ export const imageGeneratorHealth = httpAction(async (ctx, request) => {
       asset: USDC_BASE_MAINNET
     },
     usage: {
-      endpoint: "/demo-agents/image-generator/process",
+      endpoint: `${request.url}`,
       method: "POST",
       contentType: "application/json",
       requiredFields: {

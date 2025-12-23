@@ -28,9 +28,11 @@
   "dependencies": {
     "@ai-sdk/openai": "^2.0.62",
     "@coinbase/coinbase-sdk": "^0.25.0",
+    "@coinbase/x402": "^0.6.6",
     "@convex-dev/agent": "^0.2.12",
     "@convex-dev/workflow": "^0.2.7",
     "@convex-dev/workpool": "^0.2.19",
+    "@x402sdk/sdk": "^1.1.0",
     "ai": "^5.0.87",
     "convex": "^1.31.2",
     "convex-test": "^0.0.38",

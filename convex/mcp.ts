@@ -786,11 +786,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           },
           instructions: {
             step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator/process",
+            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
             step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
             coinbase_mcp: "Install: npx @coinbase/payments-mcp"
           },
-          endpoint: "https://api.x402disputes.com/demo-agents/image-generator/process",
+          endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
           prompt: parameters.prompt,
           size: parameters.size || "1024x1024",
           model: parameters.model || "stable-diffusion-xl",

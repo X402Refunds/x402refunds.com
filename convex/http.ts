@@ -2,7 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { mcpDiscovery, mcpInvoke } from "./mcp";
-import { imageGeneratorHandler, imageGeneratorHealth } from "./demoAgents";
+import { imageGeneratorHandler, imageGeneratorGetHandler } from "./demoAgents";
 
 const http = httpRouter();
 
@@ -50,8 +50,7 @@ http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: op
 http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
 // Demo agents for dispute testing
-http.route({ path: "/demo-agents/image-generator/health", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/demo-agents/image-generator/process", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/demo-agents/image-generator", method: "OPTIONS", handler: optionsHandler });
 
 // Root endpoint - API info
 http.route({
@@ -511,11 +510,11 @@ http.route({
                   },
                   instructions: {
                     step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator/process",
+                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
                     step_3: "Receive 200 OK with generated image URL",
                     coinbase_mcp: "Install: npx @coinbase/payments-mcp"
                   },
-                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator/process",
+                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
                   prompt: parameters.prompt,
                   size: parameters.size || "1024x1024",
                   model: parameters.model || "stable-diffusion-xl",
@@ -2305,26 +2304,22 @@ http.route({
 /**
  * ImageGenerator - Working X-402 demo agent
  * 
- * Purpose: Demonstrate working X-402 payment flow (like dabit3/x402-starter-kit)
+ * Purpose: Demonstrate working X-402 payment flow
  * Payment: 0.1 USDC on BASE via X-402 protocol
  * Wallet: 0x49AF4074577EA313C5053cbB7560AC39e34b05E8
  * Behavior: Validates payment, generates image, returns 200 OK with image URL
- * 
- * Routes:
- * - GET /demo-agents/image-generator/health - Discovery/health check
- * - POST /demo-agents/image-generator/process - Generate image (requires payment)
  */
 
-// Health/Discovery route
+// GET route - Shows API documentation
 http.route({
-  path: "/demo-agents/image-generator/health",
+  path: "/demo-agents/image-generator",
   method: "GET",
-  handler: imageGeneratorHealth
+  handler: imageGeneratorGetHandler
 });
 
-// Process route - Main API endpoint
+// POST route - Actual API endpoint
 http.route({
-  path: "/demo-agents/image-generator/process",
+  path: "/demo-agents/image-generator",
   method: "POST",
   handler: imageGeneratorHandler
 });
