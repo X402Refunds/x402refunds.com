@@ -327,6 +327,14 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   
   // FLOW 2: Signature (Traditional X-402) - Use facilitator verify/settle
   console.log(`🔐 X-PAYMENT signature provided - using facilitator flow`);
+
+  // Decode X-PAYMENT (base64 JSON) for debugging. We NEVER return the full signature.
+  let decodedPaymentPayload: any = null;
+  try {
+    decodedPaymentPayload = JSON.parse(atob(xPayment as string));
+  } catch {
+    decodedPaymentPayload = null;
+  }
   
   try {
     // Payment requirements for v1 protocol
@@ -342,7 +350,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       maxTimeoutSeconds: 60
     };
     
-    console.log(`🔍 Step 1: Verifying payment with mcpay.tech facilitator`);
+    console.log(`🔍 Step 1: Verifying payment with facilitator`);
     
     // STEP 1: Verify the payment signature BEFORE doing work
     const verifyResult = await ctx.runAction(api.demoAgents.cdpAuth.verifyPayment, {
@@ -388,12 +396,50 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       const facilitatorResponseSnippet =
         typeof verifyText === "string" ? verifyText.substring(0, 500) : "";
 
+      const safeDecoded =
+        decodedPaymentPayload && typeof decodedPaymentPayload === "object"
+          ? {
+              x402Version: decodedPaymentPayload.x402Version ?? decodedPaymentPayload.version,
+              scheme: decodedPaymentPayload.scheme,
+              network: decodedPaymentPayload.network,
+              // expected shape for x402 exact evm: payload.signature + payload.authorization
+              hasPayload: !!decodedPaymentPayload.payload,
+              signaturePrefix:
+                typeof decodedPaymentPayload.payload?.signature === "string"
+                  ? `${decodedPaymentPayload.payload.signature.substring(0, 12)}…`
+                  : undefined,
+              authorization: decodedPaymentPayload.payload?.authorization
+                ? {
+                    from: decodedPaymentPayload.payload.authorization.from,
+                    to: decodedPaymentPayload.payload.authorization.to,
+                    value: decodedPaymentPayload.payload.authorization.value,
+                    validAfter: decodedPaymentPayload.payload.authorization.validAfter,
+                    validBefore: decodedPaymentPayload.payload.authorization.validBefore,
+                    noncePrefix:
+                      typeof decodedPaymentPayload.payload.authorization.nonce === "string"
+                        ? `${decodedPaymentPayload.payload.authorization.nonce.substring(0, 12)}…`
+                        : undefined,
+                  }
+                : undefined,
+            }
+          : null;
+
       return new Response(
         JSON.stringify({
           error: `Invalid payment: ${invalidReason}`,
           payer: verifyData.payer,
           facilitatorStatus: verifyResult.status,
           facilitatorResponse: facilitatorResponseSnippet,
+          debug: {
+            paymentRequirements: {
+              scheme: paymentRequirements.scheme,
+              network: paymentRequirements.network,
+              asset: paymentRequirements.asset,
+              payTo: paymentRequirements.payTo,
+              maxAmountRequired: paymentRequirements.maxAmountRequired,
+            },
+            decodedPaymentPayload: safeDecoded,
+          },
         }),
         {
           status: 402,
