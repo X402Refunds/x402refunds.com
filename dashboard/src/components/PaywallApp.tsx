@@ -10,7 +10,9 @@
  */
 
 import { useState } from 'react';
-import { useWalletClient, useAccount, useConnect, useDisconnect } from 'wagmi';
+import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { getWagmiConfig } from '@/lib/wagmi';
 import { createX402PaymentSignature, parsePaymentRequirements } from '@/lib/x402-signature';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +31,7 @@ type PaymentDetails = {
   amount?: string | number;
 };
 
-export function PaywallApp({ apiUrl, prompt, size = '1024x1024', model = 'stable-diffusion-xl' }: PaywallAppProps) {
+function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-diffusion-xl' }: PaywallAppProps) {
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -257,6 +259,29 @@ export function PaywallApp({ apiUrl, prompt, size = '1024x1024', model = 'stable
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+export function PaywallApp(props: PaywallAppProps) {
+  // Defensive: ensure wagmi hooks are ALWAYS rendered under a WagmiProvider.
+  // We still keep providers in layouts, but this eliminates “WagmiProviderNotFoundError”
+  // even if the page renders in a different provider boundary.
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 60 * 1000 },
+        },
+      })
+  );
+  const config = getWagmiConfig();
+
+  return (
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <PaywallAppInner {...props} />
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 
