@@ -27,6 +27,16 @@ export const verifyPayment = action({
     const FACILITATOR_BASE_URL =
       process.env.X402_FACILITATOR_URL || "https://facilitator.daydreams.systems";
     
+    // Facilitators often expect `paymentPayload` as a decoded JSON object, not a base64 string.
+    // Our client sends `X-PAYMENT` as base64(JSON(payload)), so we decode here.
+    let decodedPayload: unknown = null;
+    try {
+      const json = Buffer.from(args.paymentHeader, "base64").toString("utf8");
+      decodedPayload = JSON.parse(json);
+    } catch {
+      decodedPayload = null;
+    }
+
     const verifyResponse = await fetch(`${FACILITATOR_BASE_URL}/verify`, {
       method: "POST",
       headers: {
@@ -34,7 +44,7 @@ export const verifyPayment = action({
       },
       body: JSON.stringify({
         // Facilitator schema: { paymentPayload, paymentRequirements }
-        paymentPayload: args.paymentHeader,
+        paymentPayload: decodedPayload ?? args.paymentHeader,
         paymentRequirements: args.paymentRequirements,
       })
     });
@@ -60,13 +70,21 @@ export const settlePayment = action({
     const FACILITATOR_BASE_URL =
       process.env.X402_FACILITATOR_URL || "https://facilitator.daydreams.systems";
  
+    let decodedPayload: unknown = null;
+    try {
+      const json = Buffer.from(args.paymentHeader, "base64").toString("utf8");
+      decodedPayload = JSON.parse(json);
+    } catch {
+      decodedPayload = null;
+    }
+
     const settleResponse = await fetch(`${FACILITATOR_BASE_URL}/settle`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        paymentPayload: args.paymentHeader,
+        paymentPayload: decodedPayload ?? args.paymentHeader,
         paymentRequirements: args.paymentRequirements,
       })
     });
