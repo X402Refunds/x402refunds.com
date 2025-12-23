@@ -3,7 +3,12 @@
 /**
  * Facilitator Helper - Node.js Action
  * 
- * Handles payment verification and settlement via mcpay.tech facilitator.
+ * Handles payment verification and settlement via a facilitator.
+ *
+ * We currently default to `facilitator.daydreams.systems` because
+ * `facilitator.mcpay.tech` / `facilitator.payai.network` has been returning 500s
+ * for POST /verify and POST /settle in production.
+ *
  * No authentication required.
  */
 
@@ -19,19 +24,18 @@ export const verifyPayment = action({
     paymentRequirements: v.any(),
   },
   handler: async (_ctx, args) => {
-    const FACILITATOR_BASE_URL = "https://facilitator.mcpay.tech";
+    const FACILITATOR_BASE_URL =
+      process.env.X402_FACILITATOR_URL || "https://facilitator.daydreams.systems";
     
-    // mcpay.tech is a high-availability proxy (no auth required)
-    // Proxies to facilitator.x402.rs and facilitator.payai.network
     const verifyResponse = await fetch(`${FACILITATOR_BASE_URL}/verify`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        version: "1",
+        // Facilitator schema: { paymentPayload, paymentRequirements }
         paymentPayload: args.paymentHeader,
-        paymentRequirements: args.paymentRequirements
+        paymentRequirements: args.paymentRequirements,
       })
     });
     
@@ -53,18 +57,17 @@ export const settlePayment = action({
     paymentRequirements: v.any(),
   },
   handler: async (_ctx, args) => {
-    const FACILITATOR_BASE_URL = "https://facilitator.mcpay.tech";
-    
-    // mcpay.tech is a high-availability proxy (no auth required)
+    const FACILITATOR_BASE_URL =
+      process.env.X402_FACILITATOR_URL || "https://facilitator.daydreams.systems";
+ 
     const settleResponse = await fetch(`${FACILITATOR_BASE_URL}/settle`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        version: "1",
         paymentPayload: args.paymentHeader,
-        paymentRequirements: args.paymentRequirements
+        paymentRequirements: args.paymentRequirements,
       })
     });
     
