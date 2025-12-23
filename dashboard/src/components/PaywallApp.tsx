@@ -23,12 +23,18 @@ interface PaywallAppProps {
   model?: string;
 }
 
+type PaymentDetails = {
+  transactionHash?: string;
+  transaction?: string;
+  amount?: string | number;
+};
+
 export function PaywallApp({ apiUrl, prompt, size = '1024x1024', model = 'stable-diffusion-xl' }: PaywallAppProps) {
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState<Record<string, unknown> | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -92,7 +98,20 @@ export function PaywallApp({ apiUrl, prompt, size = '1024x1024', model = 'stable
       if (response2.status === 200 && result.success) {
         setStatus('✅ Payment successful! Image generated.');
         setImageUrl(result.data.image_url);
-        setPaymentDetails(result.metadata?.payment || result.metadata?.settlement);
+        const rawPayment = result.metadata?.payment ?? result.metadata?.settlement;
+        if (rawPayment && typeof rawPayment === 'object') {
+          const p = rawPayment as Record<string, unknown>;
+          setPaymentDetails({
+            transactionHash: typeof p.transactionHash === 'string' ? p.transactionHash : undefined,
+            transaction: typeof p.transaction === 'string' ? p.transaction : undefined,
+            amount:
+              typeof p.amount === 'string' || typeof p.amount === 'number'
+                ? (p.amount as string | number)
+                : undefined,
+          });
+        } else {
+          setPaymentDetails(null);
+        }
       } else {
         throw new Error(result.error?.message || `Payment failed: ${response2.status}`);
       }
@@ -183,13 +202,13 @@ export function PaywallApp({ apiUrl, prompt, size = '1024x1024', model = 'stable
               <div className="p-4 bg-muted rounded-lg text-sm space-y-2">
                 <p className="font-medium">Payment Details:</p>
                 <div className="space-y-1 text-xs font-mono">
-                  {paymentDetails.transactionHash && (
+                  {paymentDetails.transactionHash ? (
                     <p>TX: {paymentDetails.transactionHash.substring(0, 20)}...</p>
-                  )}
-                  {paymentDetails.transaction && (
+                  ) : null}
+                  {paymentDetails.transaction ? (
                     <p>TX: {paymentDetails.transaction.substring(0, 20)}...</p>
-                  )}
-                  <p>Amount: {paymentDetails.amount || '0.01 USDC'}</p>
+                  ) : null}
+                  <p>Amount: {paymentDetails.amount ?? '0.01 USDC'}</p>
                   <p>Network: Base (facilitator paid gas)</p>
                 </div>
                 {(paymentDetails.transactionHash || paymentDetails.transaction) && (
