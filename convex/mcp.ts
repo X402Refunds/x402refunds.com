@@ -781,7 +781,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             amount: "0.01",
             currency: "USDC",
             network: "base",
-            recipient: "0x49AF4074577EA313C5053cbB7560AC39e34b05E8",
+            recipient: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
             protocol: "X-402"
           },
           instructions: {
