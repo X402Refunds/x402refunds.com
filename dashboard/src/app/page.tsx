@@ -39,46 +39,25 @@ export default function HomePage() {
   const avgResolutionMinutes = 4.2
 
   const copyCodeToClipboard = () => {
-    const code = `// Submit payment dispute via REST API
-const response = await fetch('https://api.x402disputes.com/api/disputes/payment', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
+    const code = `// File a dispute via MCP (simple + copy/paste)
+const res = await fetch("https://api.x402disputes.com/mcp/invoke", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    // Transaction details
-    transactionId: "x402_abc123",
-    transactionHash: "0x1a2b3c4d...",  // On-chain proof
-    amount: 29.99,
-    currency: "USDC",
-    paymentProtocol: "ACP",
-    
-    // Party information
-    plaintiff: "consumer:alice@example.com",
-    defendant: "merchant:api-provider.com",
-    disputeReason: "service_not_rendered",
-    description: "Service not rendered after payment",
-    
-    // Evidence
-    evidenceUrls: [
-      "https://logs.alice.com/timeout-proof.json",
-      "https://merchant.com/delivery-logs.json"
-    ]
+    tool: "x402_file_dispute",
+    parameters: {
+      description: "API timed out after payment",
+      request: { method: "POST", url: "https://merchant.com/v1/premium" },
+      response: { status: 504, body: { error: "timeout" } },
+      transactionHash: "0x...",
+      blockchain: "base"
+    }
   })
 });
 
-// Response (within 5 minutes):
-const ruling = await response.json();
-// {
-//   success: true,
-//   caseId: "case_k123abc",
-//   ruling: "CONSUMER_WINS",      // or MERCHANT_WINS, PARTIAL_REFUND
-//   confidence: 0.96,
-//   refundAmount: 29.99,          // Amount you should refund
-//   reasoning: "Evidence shows API timeout before service delivery.",
-//   timeline: "2025-01-15T10:30:00Z",
-//   appealable: false             // Binding arbitration
-// }`
+const out = await res.json();
+// out.caseId -> track status:
+// GET https://api.x402disputes.com/cases/:caseId`
     navigator.clipboard.writeText(code)
     setCopiedCode(true)
     setTimeout(() => setCopiedCode(false), 2000)
@@ -234,21 +213,22 @@ const ruling = await response.json();
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
                     <pre className="text-sm leading-loose text-slate-800 overflow-x-auto">
-{`POST /api/disputes/payment
+{`POST /mcp/invoke
 
 {
-  transactionId: "tx_abc123",
-  amount: 29.99,
-  currency: "USDC",
-  plaintiff: "consumer:alice@example.com",
-  defendant: "merchant:api.com",
-  disputeReason: "service_not_rendered",
-  description: "API timeout after payment"
+  tool: "x402_file_dispute",
+  parameters: {
+    description: "API timed out after payment",
+    request: { method: "POST", url: "https://merchant.com/v1/premium" },
+    response: { status: 504, body: { error: "timeout" } },
+    transactionHash: "0x...",
+    blockchain: "base"
+  }
 }
 
 → {
   success: true,
-  caseId: "k17a2b3c...",
+  caseId: "k17a2b3c..."
   status: "received"
 }`}
                     </pre>
@@ -264,20 +244,11 @@ const ruling = await response.json();
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
                     <pre className="text-sm leading-loose text-slate-800 overflow-x-auto">
-{`GET /cases/k17a2b3c...
+{`GET /cases/:caseId
 
 → {
   _id: "k17a2b3c...",
-  plaintiff: "consumer:alice@example.com",
-  defendant: "merchant:api.com",
-  amount: 29.99,
-  currency: "USDC",
-  status: "DECIDED",
-  ruling: {
-    verdict: "CONSUMER_WINS",
-    refundAmount: 29.99,
-    reasoning: "Service not delivered"
-  }
+  status: "IN_REVIEW" // (or DECIDED)
 }`}
                     </pre>
                   </CardContent>

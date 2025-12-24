@@ -264,17 +264,43 @@
   }
 
   .markdown pre {
-    background: rgb(var(--muted));
-    border: 1px solid rgb(var(--border));
+    background: rgb(15 23 42); /* slate-900 for strong contrast */
+    border: 1px solid rgb(51 65 85); /* slate-700 */
     border-radius: 0.75rem;
-    padding: 1rem;
+    padding: 2.75rem 1rem 1rem; /* space for copy button */
     overflow-x: auto;
     margin: 1rem 0;
+    color: rgb(248 250 252); /* slate-50 */
+    position: relative;
   }
 
   .markdown pre code {
     background: transparent;
     padding: 0;
+    color: inherit;
+  }
+
+  .markdown .code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    height: 2rem;
+    width: 2rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(51 65 85);
+    background: rgba(15, 23, 42, 0.6);
+    color: rgb(226 232 240);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+
+  .markdown .code-copy-btn:hover {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgb(71 85 105);
+    color: rgb(248 250 252);
   }
 }
 

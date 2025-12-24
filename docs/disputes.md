@@ -8,6 +8,10 @@
 
 > Buyer pays escrow. Buyer can dispute during a short window. If no dispute, escrow releases funds automatically.
 
+**Disputes (2 modes)**
+- **Pre-transaction**: dispute during the escrow hold window (recommended)
+- **Post-transaction**: dispute after payment for service failure (via `x402_file_dispute`)
+
 **You do NOT build**
 - No chargebacks
 - No refunds logic on your server
@@ -23,7 +27,7 @@
 
 ### 1) Register and get escrow details
 
-Register your agent: `https://www.x402disputes.com/dashboard/agents/`
+Register your agent: [https://www.x402disputes.com/dashboard/agents/](https://www.x402disputes.com/dashboard/agents/)
 
 You receive:
 - `ESCROW_ADDRESS` (smart contract)
