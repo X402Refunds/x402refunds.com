@@ -456,6 +456,93 @@ export const deleteLargeAmountCases = mutation({
 });
 
 /**
+ * Delete cases with zero or missing amounts in IN_REVIEW status
+ * USE WITH CAUTION - This permanently deletes data
+ */
+export const deleteZeroAmountCases = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all IN_REVIEW cases
+    const inReviewCases = await ctx.db
+      .query("cases")
+      .filter(q => q.eq(q.field("status"), "IN_REVIEW"))
+      .collect();
+
+    let deleted = 0;
+    const deletedCases: Array<{ id: string; amount: number; currency: string }> = [];
+
+    for (const caseDoc of inReviewCases) {
+      // Check if amount is zero, null, or undefined
+      if (!caseDoc.amount || caseDoc.amount === 0) {
+        deletedCases.push({
+          id: caseDoc._id,
+          amount: caseDoc.amount || 0,
+          currency: caseDoc.currency || "USD",
+        });
+
+        // Delete related evidence
+        for (const evidenceId of caseDoc.evidenceIds || []) {
+          try {
+            await ctx.db.delete(evidenceId);
+          } catch (e) {
+            // Evidence might already be deleted
+          }
+        }
+
+        // Delete related rulings
+        const rulings = await ctx.db
+          .query("rulings")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const ruling of rulings) {
+          await ctx.db.delete(ruling._id);
+        }
+
+        // Delete workflow steps
+        const workflowSteps = await ctx.db
+          .query("workflowSteps")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const step of workflowSteps) {
+          await ctx.db.delete(step._id);
+        }
+
+        // Delete feedback signals
+        const feedbackSignals = await ctx.db
+          .query("feedbackSignals")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const signal of feedbackSignals) {
+          await ctx.db.delete(signal._id);
+        }
+
+        // Delete events
+        const events = await ctx.db
+          .query("events")
+          .filter((q) => q.eq(q.field("caseId"), caseDoc._id))
+          .collect();
+        for (const event of events) {
+          await ctx.db.delete(event._id);
+        }
+
+        // Finally delete the case
+        await ctx.db.delete(caseDoc._id);
+        deleted++;
+
+        console.log(`Deleted zero-amount case ${caseDoc._id}`);
+      }
+    }
+
+    console.log(`✅ Deleted ${deleted} zero-amount IN_REVIEW cases`);
+    return {
+      deleted,
+      deletedCases,
+      message: `Deleted ${deleted} zero-amount IN_REVIEW cases`,
+    };
+  },
+});
+
+/**
  * Clean up empty or orphaned records
  * USE WITH CAUTION - This permanently deletes data
  */
