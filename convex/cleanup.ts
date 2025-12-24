@@ -359,6 +359,103 @@ export const deleteMockData = mutation({
 });
 
 /**
+ * Delete cases with absurdly large amounts (likely test/invalid data)
+ * USE WITH CAUTION - This permanently deletes data
+ */
+export const deleteLargeAmountCases = mutation({
+  args: {
+    maxAmountUSD: v.optional(v.number()), // Default: 1,000,000
+    maxAmountETH: v.optional(v.number()), // Default: 1000
+  },
+  handler: async (ctx, args) => {
+    const maxUSD = args.maxAmountUSD ?? 1_000_000;
+    const maxETH = args.maxAmountETH ?? 1000;
+
+    const allCases = await ctx.db.query("cases").collect();
+    let deleted = 0;
+    const deletedCases: Array<{ id: string; amount: number; currency: string }> = [];
+
+    for (const caseDoc of allCases) {
+      if (!caseDoc.amount) continue;
+
+      const amount = caseDoc.amount;
+      const currency = caseDoc.currency || "USD";
+
+      // Check for absurdly large amounts
+      const shouldDelete = 
+        (currency === "USD" && amount > maxUSD) ||
+        (currency === "ETH" && amount > maxETH);
+
+      if (shouldDelete) {
+        deletedCases.push({
+          id: caseDoc._id,
+          amount: amount,
+          currency: currency,
+        });
+
+        // Delete related evidence
+        for (const evidenceId of caseDoc.evidenceIds || []) {
+          try {
+            await ctx.db.delete(evidenceId);
+          } catch (e) {
+            // Evidence might already be deleted
+          }
+        }
+
+        // Delete related rulings
+        const rulings = await ctx.db
+          .query("rulings")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const ruling of rulings) {
+          await ctx.db.delete(ruling._id);
+        }
+
+        // Delete workflow steps
+        const workflowSteps = await ctx.db
+          .query("workflowSteps")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const step of workflowSteps) {
+          await ctx.db.delete(step._id);
+        }
+
+        // Delete feedback signals
+        const feedbackSignals = await ctx.db
+          .query("feedbackSignals")
+          .withIndex("by_case", (q) => q.eq("caseId", caseDoc._id))
+          .collect();
+        for (const signal of feedbackSignals) {
+          await ctx.db.delete(signal._id);
+        }
+
+        // Delete events
+        const events = await ctx.db
+          .query("events")
+          .filter((q) => q.eq(q.field("caseId"), caseDoc._id))
+          .collect();
+        for (const event of events) {
+          await ctx.db.delete(event._id);
+        }
+
+        // Finally delete the case
+        await ctx.db.delete(caseDoc._id);
+        deleted++;
+
+        console.log(`Deleted case ${caseDoc._id} with amount ${amount} ${currency}`);
+      }
+    }
+
+    console.log(`✅ Deleted ${deleted} cases with large amounts`);
+    return {
+      deleted,
+      deletedCases,
+      message: `Deleted ${deleted} cases with amounts > $${maxUSD} USD or > ${maxETH} ETH`,
+    };
+  },
+});
+
+/**
  * Clean up empty or orphaned records
  * USE WITH CAUTION - This permanently deletes data
  */

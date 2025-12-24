@@ -81,8 +81,13 @@ export default function DashboardPage() {
   const resolvedDisputes = allOrgCases?.filter((c: { status: string }) => c.status === "DECIDED" || c.status === "CLOSED").length || 0
   const reviewQueueCount = reviewQueue?.length || 0
 
-  // Calculate financial impact
-  const totalFees = allOrgCases?.reduce((sum: number, c: { paymentDetails?: { disputeFee?: number } }) => sum + (c.paymentDetails?.disputeFee || 0), 0) || 0
+  // Calculate financial impact - sum of amounts from resolved disputes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedAmount = allOrgCases?.reduce((sum: number, c: any) => {
+    const isResolved = c.status === "DECIDED" || c.status === "CLOSED";
+    if (isResolved) return sum + (c.amount || 0);
+    return sum;
+  }, 0) || 0;
 
   // Calculate win rates (from resolved disputes)
   const resolvedCases = allOrgCases?.filter((c: { finalVerdict?: string }) => c.finalVerdict) || []
@@ -292,7 +297,7 @@ export default function DashboardPage() {
                     Resolved (All Time)
                   </p>
                   <div className="text-3xl font-bold text-emerald-600 font-mono">
-                    ${totalFees.toFixed(2)}
+                    ${resolvedAmount.toFixed(2)}
                   </div>
                   <p className="text-xs text-slate-600 mt-1">
                     {resolvedDisputes} dispute{resolvedDisputes !== 1 ? 's' : ''} decided
