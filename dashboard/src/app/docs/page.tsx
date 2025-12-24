@@ -45,25 +45,44 @@ async function getDocsSections() {
 
   const { title, overview, merchants, buyers } = splitDocsMarkdown(md);
 
+  const stripSuffix = (s: string) => s.replace(/\s*\(Developer Docs\)\s*$/i, "").trim();
+
+  const splitBuyerPanels = (buyersMd: string) => {
+    const httpIdx = buyersMd.search(/^###\s+HTTP\s+\(default\)\s*$/m);
+    const mcpIdx = buyersMd.search(/^###\s+MCP\s+\(for LLMs\)\s*$/m);
+    const safeSlice = (start: number, end: number) =>
+      start >= 0 ? buyersMd.slice(start, end >= 0 ? end : buyersMd.length).trim() : "";
+    return {
+      httpMd: safeSlice(httpIdx, mcpIdx),
+      mcpMd: safeSlice(mcpIdx, -1),
+    };
+  };
+
+  const buyerPanels = splitBuyerPanels(buyers);
+
   return {
-    title,
+    title: stripSuffix(title),
     sections: {
       overview: await mdToHtml(overview),
       merchants: await mdToHtml(merchants),
       buyers: await mdToHtml(buyers),
     },
+    buyerPanels: {
+      http: buyerPanels.httpMd ? await mdToHtml(buyerPanels.httpMd) : "",
+      mcp: buyerPanels.mcpMd ? await mdToHtml(buyerPanels.mcpMd) : "",
+    },
   };
 }
 
 export default async function DocsPage() {
-  const { title, sections } = await getDocsSections();
+  const { title, sections, buyerPanels } = await getDocsSections();
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navigation />
       <main className="flex-1 bg-background">
         <div className="max-w-4xl mx-auto px-6 py-10">
-          <DocsClient title={title} sections={sections} />
+          <DocsClient title={title} sections={sections} buyerPanels={buyerPanels} />
         </div>
       </main>
       <Footer />

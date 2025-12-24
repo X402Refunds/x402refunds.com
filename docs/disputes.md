@@ -1,4 +1,4 @@
-# x402 Escrow & Disputes (Developer Docs)
+# x402 Escrow & Disputes
 
 ## Overview
 
@@ -39,20 +39,13 @@ sequenceDiagram
 
 **Disputes (2 modes)**
 - **Pre-transaction**: dispute during the escrow hold window (recommended)
-- **Post-transaction**: dispute after payment for service failure (via `x402_file_dispute`)
+- **Post-transaction**: dispute after payment for service failure (via HTTP or MCP)
 
 **You do NOT build**
 - No chargebacks
 - No refunds logic on your server
 - No settlement jobs
 - No custody
-
-**MCP connection (LLMs)**
-
-- Remote MCP server URL: `https://api.x402disputes.com/mcp`
-- Claude Desktop: Settings → Connectors → Add Custom Connector
-  - Name: `x402Disputes`
-  - Remote MCP server URL: `https://api.x402disputes.com/mcp`
 
 ## Integration Guide for Merchants
 
@@ -95,11 +88,11 @@ Rules:
 - Expired or reused intents are rejected
 
 Rules (recommended)
-- **Intent binding**: bind `paymentIntentId` to `{method,path,paramsHash,amount,asset,payTo}` and reject mismatches.
-- **Anti-replay**: reject reused payment proofs (`txHash` / payload hash).
+- **Bind intent**: only accept the intent on the same route + same amount + same `payTo` you issued it for.
+- **No replay**: reject an already-used `paymentIntentId` (and any reused payment proof).
 - **Idempotency**: if intent already fulfilled, return the same response (or `409 Already Fulfilled`).
-- **Auto-release**: escrow releases via permissionless `release()` after timeout (keepers optional).
-- **Verify**: `PAYMENT-SIGNATURE` is the client’s payment proof; server validates via facilitator `/verify`.
+- **Auto-release**: escrow releases after timeout (`release()` is permissionless; keepers optional).
+- **Verify**: `PAYMENT-SIGNATURE` is client payment proof; validate via facilitator `/verify`.
 
 ### 3) Return `402 PAYMENT-REQUIRED` (v2, escrow-enabled)
 
@@ -175,6 +168,12 @@ holdSeconds = 1800          // digital goods (30 mins)
 holdSeconds = 172800        // services (48 hours)
 ```
 
+### Timing (merchant-side)
+- **First request**: you return `402 PAYMENT-REQUIRED`
+- **Retry window**: intent TTL (recommended 5 minutes)
+- **Dispute window**: `holdSeconds` (buyer can dispute before release)
+- **Payout**: after `holdSeconds` if no dispute is filed
+
 ## File Disputes as a Buyer Agent
 
 If you paid an x402-protected resource, you can file a dispute here.
@@ -182,18 +181,13 @@ If you paid an x402-protected resource, you can file a dispute here.
 **Connect your LLM via MCP**
 - URL: `https://api.x402disputes.com/mcp`
 
-### File a dispute (copy/paste prompt)
+### Timing (typical)
+- **Hold window**: `holdSeconds` (you must dispute before release)
+- **Resolution**: minutes for most micro disputes; up to 10 business days max (Reg E)
 
-```txt
-Use the x402Disputes MCP server to file an X-402 payment dispute:
-- description: API timed out after payment
-- request: POST https://merchant.com/v1/resource
-- response: 504 { "error": "timeout" }
-- transactionHash: 0x...
-- blockchain: base
-```
+### HTTP (default)
 
-### File a dispute (HTTP)
+File a dispute:
 
 ```bash
 curl -sS https://api.x402disputes.com/mcp/invoke \
@@ -210,13 +204,7 @@ curl -sS https://api.x402disputes.com/mcp/invoke \
   }'
 ```
 
-### Check case status (copy/paste prompt)
-
-```txt
-Use the x402Disputes MCP server to check dispute status for caseId: ...
-```
-
-### Check case status (HTTP)
+Check case status:
 
 ```bash
 curl -sS https://api.x402disputes.com/mcp/invoke \
@@ -225,6 +213,25 @@ curl -sS https://api.x402disputes.com/mcp/invoke \
     "tool": "x402_check_case_status",
     "parameters": { "caseId": "..." }
   }'
+```
+
+### MCP (for LLMs)
+
+File a dispute (copy/paste prompt):
+
+```txt
+Use x402Disputes MCP to file an X-402 payment dispute:
+- description: API timed out after payment
+- request: POST https://merchant.com/v1/resource
+- response: 504 {"error":"timeout"}
+- transactionHash: 0x...
+- blockchain: base
+```
+
+Check status (copy/paste prompt):
+
+```txt
+Use x402Disputes MCP to check dispute status for caseId: ...
 ```
 
 

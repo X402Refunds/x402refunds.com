@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -10,9 +11,12 @@ type Mermaid = (typeof import("mermaid"))["default"];
 export function DocsClient(props: {
   title: string;
   sections: Record<DocsSectionKey, string>;
+  buyerPanels?: { http?: string; mcp?: string };
 }) {
   const [active, setActive] = useState<DocsSectionKey>("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const buyerHttpRef = useRef<HTMLDivElement | null>(null);
+  const buyerMcpRef = useRef<HTMLDivElement | null>(null);
 
   const items = useMemo(
     () =>
@@ -24,8 +28,7 @@ export function DocsClient(props: {
     [],
   );
 
-  useEffect(() => {
-    const root = contentRef.current;
+  const enhanceRenderedHtml = (root: HTMLDivElement | null) => {
     if (!root) return;
 
     // 1) Render Mermaid blocks (```mermaid) into SVGs (client-side).
@@ -49,7 +52,6 @@ export function DocsClient(props: {
             const chart = (code?.textContent ?? "").trim();
             if (!chart) continue;
 
-            // Replace <pre> with <div class="mermaid">...</div> so Mermaid can render it.
             const holder = document.createElement("div");
             holder.className = "mermaid-diagram";
             const mermaidEl = document.createElement("div");
@@ -61,7 +63,6 @@ export function DocsClient(props: {
 
           await mermaid.run({ querySelector: ".mermaid" });
 
-          // Make rendered SVGs responsive.
           const svgs = Array.from(root.querySelectorAll(".mermaid-diagram svg")) as SVGElement[];
           for (const svg of svgs) {
             svg.removeAttribute("width");
@@ -78,7 +79,7 @@ export function DocsClient(props: {
     // 2) Add copy buttons to remaining code blocks (skip Mermaid).
     const pres = Array.from(root.querySelectorAll("pre")) as HTMLPreElement[];
     for (const pre of pres) {
-      if (pre.querySelector("code.language-mermaid, code[class*=\"language-mermaid\"]")) continue;
+      if (pre.querySelector('code.language-mermaid, code[class*="language-mermaid"]')) continue;
       if (pre.querySelector("button.code-copy-btn")) continue;
       const value = extractCode(pre);
       if (!value) continue;
@@ -91,13 +92,24 @@ export function DocsClient(props: {
             btn.style.borderColor = "";
           }, 900);
         } catch {
-          // no-op (clipboard can fail in some contexts)
+          // no-op
         }
       });
 
       pre.appendChild(btn);
     }
-  }, [active, props.sections]);
+  };
+
+  useEffect(() => {
+    if (active !== "buyers") {
+      enhanceRenderedHtml(contentRef.current);
+      return;
+    }
+    enhanceRenderedHtml(buyerHttpRef.current);
+    enhanceRenderedHtml(buyerMcpRef.current);
+  }, [active, props.sections, props.buyerPanels]);
+
+  const buyerHasPanels = !!props.buyerPanels?.http || !!props.buyerPanels?.mcp;
 
   return (
     <div className="flex flex-col gap-6 md:flex-row">
@@ -123,12 +135,41 @@ export function DocsClient(props: {
       <div className="min-w-0 flex-1">
         <div className="rounded-lg border border-border bg-card">
           <div className="p-6">
-            <div ref={contentRef}>
-              <article
-                className="markdown"
-                dangerouslySetInnerHTML={{ __html: props.sections[active] }}
-              />
-            </div>
+            {active === "buyers" && buyerHasPanels ? (
+              <div>
+                <Accordion type="single" collapsible defaultValue="http" className="w-full">
+                  <AccordionItem value="http">
+                    <AccordionTrigger>HTTP (default)</AccordionTrigger>
+                    <AccordionContent>
+                      <div ref={buyerHttpRef}>
+                        <article
+                          className="markdown"
+                          dangerouslySetInnerHTML={{ __html: props.buyerPanels?.http || "" }}
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="mcp">
+                    <AccordionTrigger>MCP</AccordionTrigger>
+                    <AccordionContent>
+                      <div ref={buyerMcpRef}>
+                        <article
+                          className="markdown"
+                          dangerouslySetInnerHTML={{ __html: props.buyerPanels?.mcp || "" }}
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            ) : (
+              <div ref={contentRef}>
+                <article
+                  className="markdown"
+                  dangerouslySetInnerHTML={{ __html: props.sections[active] }}
+                />
+              </div>
+            )}
           </div>
           <Separator />
           <div className="p-4 text-xs text-muted-foreground">
