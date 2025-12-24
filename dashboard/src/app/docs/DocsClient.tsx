@@ -82,7 +82,18 @@ export function DocsClient(props: {
           </div>
           <Separator />
           <div className="p-4 text-xs text-muted-foreground">
-            Tip: open `/.well-known/mcp.json` to see the exact live tool schema.
+            Tip: connect your LLM to{" "}
+            <a className="underline underline-offset-2" href="https://api.x402disputes.com/mcp">
+              https://api.x402disputes.com/mcp
+            </a>{" "}
+            (schema:{" "}
+            <a
+              className="underline underline-offset-2"
+              href="https://api.x402disputes.com/.well-known/mcp.json"
+            >
+              /.well-known/mcp.json
+            </a>
+            )
           </div>
         </div>
       </div>

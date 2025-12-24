@@ -18,6 +18,13 @@
 - No settlement jobs
 - No custody
 
+**MCP connection (LLMs)**
+
+- Remote MCP server URL: `https://api.x402disputes.com/mcp`
+- Claude Desktop: Settings → Connectors → Add Custom Connector
+  - Name: `x402Disputes`
+  - Remote MCP server URL: `https://api.x402disputes.com/mcp`
+
 ## Integration Guide for Merchants
 
 ### Prerequisites
@@ -58,6 +65,13 @@ Rules:
 - One intent = one successful response
 - Expired or reused intents are rejected
 
+Rules (recommended)
+- **Intent binding**: bind `paymentIntentId` to `{method,path,paramsHash,amount,asset,payTo}` and reject mismatches.
+- **Anti-replay**: reject reused payment proofs (`txHash` / payload hash).
+- **Idempotency**: if intent already fulfilled, return the same response (or `409 Already Fulfilled`).
+- **Auto-release**: escrow releases via permissionless `release()` after timeout (keepers optional).
+- **Verify**: `PAYMENT-SIGNATURE` is the client’s payment proof; server validates via facilitator `/verify`.
+
 ### 3) Return `402 PAYMENT-REQUIRED` (v2, escrow-enabled)
 
 **All payment requirements live in the header.**
@@ -80,8 +94,8 @@ const paymentRequired = {
       paymentIntentId: intent.id,
       policy: {
         mode: "escrow",
-        holdSeconds: 60,
-        disputeUrl: "https://www.x402disputes.com/api/disputes",
+        holdSeconds: 300,
+        disputeUrl: "https://api.x402disputes.com/disputes/claim?vendor=0x49af4074577ea313c5053cbb7560ac39e34b05e8",
       },
     },
   ],
@@ -127,8 +141,8 @@ function verifyPayment({ txHash, paymentIntentId }: { txHash: string; paymentInt
 
 ```txt
 paymentIntent TTL = 300 seconds
-holdSeconds = 60            // APIs
-holdSeconds = 900           // digital goods
+holdSeconds = 180-600       // APIs (3-10 mins)
+holdSeconds = 1800          // digital goods (30 mins)
 holdSeconds = 172800        // services (48 hours)
 ```
 
@@ -136,10 +150,21 @@ holdSeconds = 172800        // services (48 hours)
 
 If you paid an x402-protected resource, you can file a dispute here.
 
-**MCP schema** (copy/paste):
-- `https://api.x402disputes.com/.well-known/mcp.json`
+**Connect your LLM via MCP**
+- URL: `https://api.x402disputes.com/mcp`
 
-### File a dispute (MCP invoke)
+### File a dispute (copy/paste prompt)
+
+```txt
+Use the x402Disputes MCP server to file an X-402 payment dispute:
+- description: API timed out after payment
+- request: POST https://merchant.com/v1/resource
+- response: 504 { "error": "timeout" }
+- transactionHash: 0x...
+- blockchain: base
+```
+
+### File a dispute (HTTP)
 
 ```bash
 curl -sS https://api.x402disputes.com/mcp/invoke \
@@ -156,7 +181,13 @@ curl -sS https://api.x402disputes.com/mcp/invoke \
   }'
 ```
 
-### Check case status (MCP invoke)
+### Check case status (copy/paste prompt)
+
+```txt
+Use the x402Disputes MCP server to check dispute status for caseId: ...
+```
+
+### Check case status (HTTP)
 
 ```bash
 curl -sS https://api.x402disputes.com/mcp/invoke \
