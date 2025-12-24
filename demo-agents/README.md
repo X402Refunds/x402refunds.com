@@ -251,7 +251,7 @@ All will use the same wallet: `0x49AF4074577EA313C5053cbB7560AC39e34b05E8`
 
 For issues or questions:
 - GitHub: https://github.com/consulatehq/consulate
-- Documentation: https://docs.x402disputes.com
+- Docs: https://www.x402disputes.com/docs
 - Email: support@x402disputes.com
 
 ## License

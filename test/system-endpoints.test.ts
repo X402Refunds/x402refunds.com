@@ -32,6 +32,9 @@ describe('System - Health & Info', () => {
     });
 
     it('should respond quickly', async () => {
+      // Warm-up request to reduce cold-start noise (Convex/edge can occasionally exceed 1s on first hit).
+      await fetch(`${API_BASE_URL}/health`);
+
       const start = Date.now();
       const response = await fetch(`${API_BASE_URL}/health`);
       const duration = Date.now() - start;

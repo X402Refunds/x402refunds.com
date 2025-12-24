@@ -29,7 +29,7 @@ export default function RegistryPage() {
               <Button 
                 variant="outline"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                onClick={() => window.location.href = '/docs'}
               >
                 <BookOpen className="mr-2 h-4 w-4" />
                 API Docs
@@ -77,7 +77,7 @@ export default function RegistryPage() {
               <Button 
                 size="lg" 
               className="bg-emerald-600 hover:bg-emerald-500"
-              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+              onClick={() => window.location.href = '/docs'}
             >
               View Documentation
             </Button>

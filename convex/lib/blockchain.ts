@@ -176,57 +176,98 @@ async function queryBaseUsdcTransaction(
     };
   }
 
-  const input = tx.input;
-  // Parse USDC transfer from transaction input data
-  // ERC-20 transfer function signature: transfer(address,uint256) => 0xa9059cbb
-  if (!input || typeof input !== "string" || !input.startsWith("0xa9059cbb")) {
+  // Instead of relying on tx.input decoding (which differs across token methods),
+  // parse the transaction receipt logs for the ERC-20 Transfer event. This works for:
+  // - transfer(address,uint256)
+  // - EIP-3009 transferWithAuthorization(...)
+  // - other token flows that emit Transfer.
+  const receiptResp = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      id: 2,
+      jsonrpc: "2.0",
+      method: "eth_getTransactionReceipt",
+      params: [transactionHash],
+    }),
+  });
+
+  const receiptData = await receiptResp.json();
+  if (receiptData.error || !receiptData.result) {
     return {
       success: false,
-      error: `Transaction is not a direct USDC transfer(address,uint256) call`,
-      transactionHash,
-      blockchain: "base",
-      hint: "X-402 tx-hash flow expects a standard ERC-20 transfer to the USDC contract"
-    };
-  }
-  
-  // Decode transfer amount from input data
-  // Format: 0xa9059cbb (transfer sig) + 32 bytes (to address) + 32 bytes (amount)
-  let usdcAmount = 0;
-  let recipientAddress = "0x0";
-  
-  if (input.length < 138) {
-    return {
-      success: false,
-      error: "USDC transfer input is too short to decode recipient/amount",
+      error: receiptData.error?.message || "Transaction receipt not found",
       transactionHash,
       blockchain: "base",
     };
   }
 
-  // Extract recipient address (bytes 4-35, but take last 20 bytes)
-  recipientAddress = "0x" + input.slice(34, 74);
-  
-  // Extract amount (bytes 36-67)
-  const amountHex = input.slice(74, 138);
-  const amountRaw = BigInt("0x" + amountHex);
-  
+  const receipt = receiptData.result;
+  const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
+
+  // keccak256("Transfer(address,address,uint256)")
+  const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+  const usdcLogs = logs.filter((log) => {
+    const addr = (log?.address || "").toLowerCase();
+    const topics = Array.isArray(log?.topics) ? log.topics : [];
+    return addr === expectedUsdcAddress && topics.length >= 3 && (topics[0] || "").toLowerCase() === TRANSFER_TOPIC0;
+  });
+
+  if (usdcLogs.length === 0) {
+    return {
+      success: false,
+      error: "No USDC Transfer event found in transaction receipt",
+      transactionHash,
+      blockchain: "base",
+      hint: "Expected the USDC contract to emit a Transfer event",
+    };
+  }
+
+  // If we know the expected recipient, prefer the transfer that matches it.
+  const preferredLog =
+    opts?.expectedToAddress
+      ? usdcLogs.find((log) => {
+          const toTopic = String(log.topics?.[2] || "");
+          const to = ("0x" + toTopic.slice(-40)).toLowerCase();
+          return to === opts.expectedToAddress!.toLowerCase();
+        })
+      : usdcLogs[0];
+
+  if (!preferredLog) {
+    return {
+      success: false,
+      error: `No USDC Transfer event matched expected recipient ${opts?.expectedToAddress}`,
+      transactionHash,
+      blockchain: "base",
+    };
+  }
+
+  const fromTopic = String(preferredLog.topics?.[1] || "");
+  const toTopic = String(preferredLog.topics?.[2] || "");
+  const transferFrom = "0x" + fromTopic.slice(-40);
+  const recipientAddress = "0x" + toTopic.slice(-40);
+  const dataHex = String(preferredLog.data || "0x0");
+  const amountRaw = BigInt(dataHex);
+
   // USDC has 6 decimals (1 USDC = 1,000,000 raw units)
-  usdcAmount = Number(amountRaw) / 1e6;
-
-  // 1 USDC = $1.00 USD (no price oracle needed for stablecoins)
-  const amountUsd = usdcAmount;
+  const usdcAmount = Number(amountRaw) / 1e6;
+  const amountUsd = usdcAmount; // 1 USDC = $1.00 USD
 
   // Optional: enforce expected addresses
   if (opts?.expectedFromAddress && typeof opts.expectedFromAddress === "string") {
-    const actualFrom = (tx.from || "").toLowerCase();
+    const actualFrom = (transferFrom || "").toLowerCase();
     if (actualFrom && actualFrom !== opts.expectedFromAddress.toLowerCase()) {
       return {
         success: false,
-        error: `Transaction payer mismatch. Expected from ${opts.expectedFromAddress}, got ${tx.from}`,
+        error: `Transaction payer mismatch. Expected from ${opts.expectedFromAddress}, got ${transferFrom}`,
         transactionHash,
         blockchain: "base",
         expectedFromAddress: opts.expectedFromAddress,
-        actualFromAddress: tx.from,
+        actualFromAddress: transferFrom,
       };
     }
   }
@@ -249,7 +290,8 @@ async function queryBaseUsdcTransaction(
     success: true,
     transactionHash,
     blockchain: "base",
-    fromAddress: tx.from,
+    // Prefer the Transfer event "from" address (payer) over tx.from (sender might be a relayer/facilitator).
+    fromAddress: transferFrom,
     toAddress: recipientAddress, // The actual recipient of USDC
     value: usdcAmount.toString(),
     blockNumber: parseInt(tx.blockNumber, 16),

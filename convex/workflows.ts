@@ -97,21 +97,21 @@ export const paymentDisputeWorkflow = workflow.define({
     // STEP 1: Validate against OpenAPI spec if available
     let specValidation = null;
     if (caseData.signedEvidence && caseData.defendant) {
-      const vendor = await step.runQuery(s.agents.getAgent, {
+      const vendor = await step.runQuery(api.agents.getAgent as any, {
         did: caseData.defendant,
       });
       
       if (vendor && vendor.openApiSpec) {
         console.log(`Validating API contract for case: ${caseId}`);
         const stepStartTime = Date.now();
-        specValidation = await step.runAction(s.agents.validateApiContract, {
+        specValidation = (await step.runAction(s.agents.validateApiContract, {
           caseId,
           openApiSpec: vendor.openApiSpec,
           requestPath: caseData.signedEvidence.request.path,
           requestMethod: caseData.signedEvidence.request.method,
           responseStatus: caseData.signedEvidence.response.status,
           responseBody: caseData.signedEvidence.response.body,
-        });
+        })) as any;
         
         // Store spec validation step
         await step.runMutation(s.workflows.storeWorkflowStep, {
@@ -169,7 +169,7 @@ export const paymentDisputeWorkflow = workflow.define({
     // Micro dispute fast path (<$1, <=2 evidence items)
     if (amount < 1 && evidenceCount <= 2 && !caseData.signedEvidence) {
       console.log(`Fast-track micro dispute: ${caseId}`);
-      return await step.runAction(s.agents.quickDecision, { caseId });
+      return (await step.runAction(s.agents.quickDecision as any, { caseId })) as any;
     }
 
     // Full workflow for larger disputes
@@ -180,10 +180,10 @@ export const paymentDisputeWorkflow = workflow.define({
     if (caseData.evidenceIds && caseData.evidenceIds.length > 0) {
       const evidenceReviewPromises = (caseData.evidenceIds || []).map(async (evidenceId: any, index: number) => {
       const stepStartTime = Date.now();
-      const reviewResult = await step.runAction(s.agents.reviewEvidence, {
+      const reviewResult = (await step.runAction(s.agents.reviewEvidence, {
         caseId,
         evidenceId,
-      });
+      })) as any;
       
       // Store each evidence review step
       await step.runMutation(s.workflows.storeWorkflowStep, {
@@ -225,12 +225,12 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // STEP 3: Research legal precedents
     const researchStartTime = Date.now();
-    const research = await step.runAction(s.agents.lawClerkResearch, {
+    const research = (await step.runAction(s.agents.lawClerkResearch, {
       caseId,
       caseType: caseData.type || "PAYMENT",
       category: caseData.category,
       amountRange: amount < 1 ? "0-1" : amount < 10 ? "1-10" : "10+",
-    });
+    })) as any;
 
     // Store research step
     await step.runMutation(s.workflows.storeWorkflowStep, {
@@ -257,11 +257,11 @@ export const paymentDisputeWorkflow = workflow.define({
 
     // STEP 4: Calculate damages (if applicable)
     const damageStartTime = Date.now();
-    const damageCalculation = await step.runAction(s.agents.calculateRefund, {
+    const damageCalculation = (await step.runAction(s.agents.calculateRefund, {
       caseId,
       transactionAmount: amount,
       disputeType: caseData.paymentDetails?.disputeReason || "other",
-    });
+    })) as any;
 
     // Store damage calculation step
     await step.runMutation(s.workflows.storeWorkflowStep, {
@@ -290,7 +290,7 @@ export const paymentDisputeWorkflow = workflow.define({
     const modelId = selectModel(amount, complexity);
     const judgeStartTime = Date.now();
 
-    const judgeResult = await step.runAction(s.agents.judgeDecision, {
+    const judgeResult = (await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews,
       research,
@@ -298,7 +298,7 @@ export const paymentDisputeWorkflow = workflow.define({
       signatureVerified: signatureResult?.signatureValid || false,
       contractBreach: specValidation?.contractBreach || false,
       modelId,
-    });
+    })) as any;
     
     // Store judge decision step
     await step.runMutation(s.workflows.storeWorkflowStep, {
@@ -401,26 +401,26 @@ export const generalDisputeWorkflow = workflow.define({
     });
 
     // Step 3: Calculate damages (if applicable)
-    let damageCalculation = null;
+    let damageCalculation: any = null;
     if (amount > 0) {
-      damageCalculation = await step.runAction(s.agents.calculateRefund, {
+      damageCalculation = (await step.runAction(s.agents.calculateRefund, {
         caseId,
         transactionAmount: amount,
         disputeType: caseData.category || "other",
-      });
+      })) as any;
     }
 
     // Step 4: Judge decision
     const complexity = Math.min(1, (amount / 10000) + (evidenceCount / 5));
     const modelId = selectModel(amount, complexity);
 
-    const judgeResult = await step.runAction(s.agents.judgeDecision, {
+    const judgeResult = (await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews,
       research,
       damageCalculation,
       modelId,
-    });
+    })) as any;
 
     // Step 5: Store ruling
     await step.runMutation(s.rulings.finalizeRuling, {
@@ -476,11 +476,11 @@ export const microDisputeWorkflow = workflow.define({
     // Quick evidence check (single pass)
     const evidenceId = caseData.evidenceIds?.[0];
     const evidenceStartTime = Date.now();
-    const evidenceCheck = await step.runAction(s.agents.reviewEvidence, {
+    const evidenceCheck = (await step.runAction(s.agents.reviewEvidence, {
       caseId,
       evidenceId,
       quick: true,
-    });
+    })) as any;
     
     // Store evidence review step
     if (evidenceId) {
@@ -504,12 +504,12 @@ export const microDisputeWorkflow = workflow.define({
 
     // Quick decision using default model
     const judgeStartTime = Date.now();
-    const quickDecision = await step.runAction(s.agents.judgeDecision, {
+    const quickDecision = (await step.runAction(s.agents.judgeDecision, {
       caseId,
       evidenceReviews: [evidenceCheck],
       quick: true,
       modelId: DEFAULT_MODEL,
-    });
+    })) as any;
     
     // Store judge decision step
     await step.runMutation(s.workflows.storeWorkflowStep, {

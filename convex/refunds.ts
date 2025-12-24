@@ -5,7 +5,9 @@
 import { mutation, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { parseCaip10, extractAddress, isSolana } from "./lib/caip10";
+import { extractAddress, isSolana } from "./lib/caip10";
+import { executeSolanaRefundImpl } from "./lib/solana";
+import type { Id } from "./_generated/dataModel";
 
 /**
  * Execute automated refund after dispute is decided
@@ -14,108 +16,119 @@ import { parseCaip10, extractAddress, isSolana } from "./lib/caip10";
  * UPDATED: Uses x402r escrow contracts if available
  * GitHub: https://github.com/BackTrackCo/x402r-contracts
  */
+async function executeAutomatedRefundImpl(
+  ctx: { db: any; scheduler: any },
+  caseId: Id<"cases">,
+): Promise<any> {
+  const dispute = await ctx.db.get(caseId);
+  if (!dispute) {
+    throw new Error("Dispute not found");
+  }
+  
+  // Only refund if consumer wins
+  if (dispute.finalVerdict !== "CONSUMER_WINS") {
+    console.log(`⏭️  Skipping refund: verdict is ${dispute.finalVerdict}`);
+    return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
+  }
+  
+  // NEW: Check if this dispute uses x402r escrow
+  if (dispute.x402rEscrow) {
+    console.log(`🔗 Using x402r escrow for refund: ${dispute.x402rEscrow.escrowAddress}`);
+    
+    // Schedule x402r escrow release
+    await ctx.scheduler.runAfter(
+      0,
+      internal.refunds.executeX402rRelease as any,
+      { caseId }
+    );
+    
+    return { 
+      status: "SCHEDULED_X402R", 
+      escrowAddress: dispute.x402rEscrow.escrowAddress 
+    };
+  }
+  
+  // Check if already refunded
+  const existingRefund = await ctx.db
+    .query("refundTransactions")
+    .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+    .first();
+  
+  if (existingRefund) {
+    console.log(`⏭️  Refund already exists for case ${caseId}`);
+    return { status: "ALREADY_REFUNDED", refundId: existingRefund._id };
+  }
+  
+  // Get merchant settings
+  const merchantSettings = await ctx.db
+    .query("merchantSettings")
+    .withIndex("by_wallet", (q: any) => q.eq("walletAddress", dispute.defendant))
+    .first();
+  
+  // Check if auto-refund is enabled
+  if (!merchantSettings || !merchantSettings.autoRefundEnabled) {
+    console.log(`⏸️  Auto-refund disabled for ${dispute.defendant}`);
+    return { status: "AWAITING_APPROVAL", reason: "Auto-refund not enabled" };
+  }
+  
+  // Check threshold
+  if (
+    merchantSettings.requireApprovalOver &&
+    dispute.amount &&
+    dispute.amount > merchantSettings.requireApprovalOver
+  ) {
+    console.log(`⏸️  Amount $${dispute.amount} exceeds threshold $${merchantSettings.requireApprovalOver}`);
+    return { status: "AWAITING_APPROVAL", reason: "Amount exceeds threshold" };
+  }
+  
+  // Check merchant balance
+  const balance = await ctx.db
+    .query("merchantBalances")
+    .withIndex("by_wallet_currency", (q: any) =>
+      q.eq("walletAddress", dispute.defendant).eq("currency", dispute.currency || "USDC")
+    )
+    .first();
+  
+  if (!balance || balance.availableBalance < (dispute.amount || 0)) {
+    console.error(`❌ Insufficient balance for ${dispute.defendant}`);
+    return { 
+      status: "INSUFFICIENT_BALANCE", 
+      available: balance?.availableBalance || 0,
+      required: dispute.amount || 0
+    };
+  }
+  
+  // Create pending refund transaction
+  const refundId = await ctx.db.insert("refundTransactions", {
+    caseId,
+    fromWallet: dispute.defendant,
+    toWallet: dispute.plaintiff,
+    amount: dispute.amount || 0,
+    currency: dispute.currency || "USDC",
+    blockchain: "solana",
+    status: "PENDING",
+    createdAt: Date.now(),
+  });
+  
+  // Schedule refund execution (async to avoid blocking)
+  await ctx.scheduler.runAfter(
+    0,
+    internal.refunds.executeOnChain as any,
+    {
+      refundId,
+      caseId,
+    }
+  );
+  
+  return { status: "SCHEDULED", refundId };
+}
+
 export const executeAutomatedRefund = internalMutation({
   args: {
     caseId: v.id("cases"),
   },
   handler: async (ctx, args) => {
-    const dispute = await ctx.db.get(args.caseId);
-    if (!dispute) {
-      throw new Error("Dispute not found");
-    }
-    
-    // Only refund if consumer wins
-    if (dispute.finalVerdict !== "CONSUMER_WINS") {
-      console.log(`⏭️  Skipping refund: verdict is ${dispute.finalVerdict}`);
-      return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
-    }
-    
-    // NEW: Check if this dispute uses x402r escrow
-    if (dispute.x402rEscrow) {
-      console.log(`🔗 Using x402r escrow for refund: ${dispute.x402rEscrow.escrowAddress}`);
-      
-      // Schedule x402r escrow release
-      await ctx.scheduler.runAfter(
-        0,
-        internal.refunds.executeX402rRelease,
-        { caseId: args.caseId }
-      );
-      
-      return { 
-        status: "SCHEDULED_X402R", 
-        escrowAddress: dispute.x402rEscrow.escrowAddress 
-      };
-    }
-    
-    // Check if already refunded
-    const existingRefund = await ctx.db
-      .query("refundTransactions")
-      .withIndex("by_case", q => q.eq("caseId", args.caseId))
-      .first();
-    
-    if (existingRefund) {
-      console.log(`⏭️  Refund already exists for case ${args.caseId}`);
-      return { status: "ALREADY_REFUNDED", refundId: existingRefund._id };
-    }
-    
-    // Get merchant settings
-    const merchantSettings = await ctx.db
-      .query("merchantSettings")
-      .withIndex("by_wallet", q => q.eq("walletAddress", dispute.defendant))
-      .first();
-    
-    // Check if auto-refund is enabled
-    if (!merchantSettings || !merchantSettings.autoRefundEnabled) {
-      console.log(`⏸️  Auto-refund disabled for ${dispute.defendant}`);
-      return { status: "AWAITING_APPROVAL", reason: "Auto-refund not enabled" };
-    }
-    
-    // Check threshold
-    if (merchantSettings.requireApprovalOver && dispute.amount && dispute.amount > merchantSettings.requireApprovalOver) {
-      console.log(`⏸️  Amount $${dispute.amount} exceeds threshold $${merchantSettings.requireApprovalOver}`);
-      return { status: "AWAITING_APPROVAL", reason: "Amount exceeds threshold" };
-    }
-    
-    // Check merchant balance
-    const balance = await ctx.db
-      .query("merchantBalances")
-      .withIndex("by_wallet_currency", q => 
-        q.eq("walletAddress", dispute.defendant).eq("currency", dispute.currency || "USDC")
-      )
-      .first();
-    
-    if (!balance || balance.availableBalance < (dispute.amount || 0)) {
-      console.error(`❌ Insufficient balance for ${dispute.defendant}`);
-      return { 
-        status: "INSUFFICIENT_BALANCE", 
-        available: balance?.availableBalance || 0,
-        required: dispute.amount || 0
-      };
-    }
-    
-    // Create pending refund transaction
-    const refundId = await ctx.db.insert("refundTransactions", {
-      caseId: args.caseId,
-      fromWallet: dispute.defendant,
-      toWallet: dispute.plaintiff,
-      amount: dispute.amount || 0,
-      currency: dispute.currency || "USDC",
-      blockchain: "solana",
-      status: "PENDING",
-      createdAt: Date.now(),
-    });
-    
-    // Schedule refund execution (async to avoid blocking)
-    await ctx.scheduler.runAfter(
-      0,
-      internal.refunds.executeOnChain,
-      {
-        refundId,
-        caseId: args.caseId,
-      }
-    );
-    
-    return { status: "SCHEDULED", refundId };
+    return await executeAutomatedRefundImpl(ctx, args.caseId);
   },
 });
 
@@ -144,8 +157,8 @@ export const executeOnChain = internalMutation({
         throw new Error(`Unsupported blockchain for ${refund.fromWallet}`);
       }
       
-      // Execute transfer via Solana action
-      const result = await ctx.runAction(internal.lib.solana.executeSolanaRefund, {
+      // Execute transfer (placeholder implementation lives in convex/lib/solana.ts)
+      const result = await executeSolanaRefundImpl({
         fromWallet: fromAddress,
         toWallet: toAddress,
         amount: refund.amount,
@@ -244,13 +257,11 @@ export const executeX402rRelease = internalMutation({
     // - Amount limits
     // - Retry logic
     // - Graceful error handling
-    const result = await ctx.runMutation(internal.x402r.resolver.resolveEscrowDispute, {
+    await ctx.scheduler.runAfter(0, internal.x402r.resolver.resolveEscrowDispute as any, {
       caseId: args.caseId,
     });
-    
-    console.log(`x402r release status: ${result.status}`);
-    
-    return result;
+
+    return { status: "SCHEDULED" };
   },
 });
 
@@ -270,10 +281,9 @@ export const manualApproveRefund = mutation({
       throw new Error("User not found");
     }
     
-    // Execute refund
-    return await ctx.runMutation(internal.refunds.executeAutomatedRefund, {
-      caseId: args.caseId,
-    });
+    // Manual approval still respects merchant settings (see tests). This uses the same logic
+    // as the internal automated refund path but executes it in this mutation context.
+    return await executeAutomatedRefundImpl(ctx, args.caseId);
   },
 });
 

@@ -291,7 +291,7 @@ const ruling = await response.json();
               size="lg" 
               variant="outline"
               className="border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white text-lg px-8 h-14 transition-all"
-              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+              onClick={() => window.location.href = '/docs'}
             >
               View Documentation →
             </Button>
@@ -619,7 +619,7 @@ const ruling = await response.json();
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 text-base px-8 h-12 shadow-lg hover:shadow-xl transition-all group"
-                onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+                onClick={() => window.location.href = '/docs'}
               >
                 <BookOpen className="mr-2 h-5 w-5" />
                 View Documentation
@@ -747,7 +747,7 @@ const response = await fetch('https://api.x402disputes.com/api/disputes/payment'
             <Button 
               size="lg" 
               className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
-              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+              onClick={() => window.location.href = '/docs'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
               View Documentation

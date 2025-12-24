@@ -179,13 +179,13 @@ export const fileDispute = mutation({
       if (caseData.type === "PAYMENT") {
         // Payment disputes use payment workflow
         if (amount < 1 && evidenceCount <= 2) {
-          workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow, { caseId });
+          workflowId = await workflowManager.start(ctx, internal.workflows.microDisputeWorkflow as any, { caseId });
         } else {
-          workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow, { caseId });
+          workflowId = await workflowManager.start(ctx, internal.workflows.paymentDisputeWorkflow as any, { caseId });
         }
       } else {
         // General disputes use general workflow
-        workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow, { caseId });
+        workflowId = await workflowManager.start(ctx, internal.workflows.generalDisputeWorkflow as any, { caseId });
       }
     } catch (error: any) {
       // In test mode, workflows may not be registered
@@ -573,8 +573,7 @@ export const updateCaseRuling = mutation({
       const isSLAViolation = case_.category?.toLowerCase().includes("sla") || false;
 
       // Update plaintiff reputation
-      // @ts-expect-error - Convex scheduler type system limitation with _componentPath
-      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
+      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation as any, {
         agentDid: case_.plaintiff,
         role: "plaintiff",
         outcome: args.ruling.winner === case_.plaintiff ? "won" : "lost",
@@ -582,8 +581,7 @@ export const updateCaseRuling = mutation({
       });
 
       // Update defendant reputation  
-      // @ts-expect-error - Convex scheduler type system limitation with _componentPath
-      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation, {
+      await ctx.scheduler.runAfter(0, api.agents.updateAgentReputation as any, {
         agentDid: case_.defendant,
         role: "defendant",
         outcome: args.ruling.winner === case_.defendant ? "won" : "lost",

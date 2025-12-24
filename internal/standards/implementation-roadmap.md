@@ -138,7 +138,7 @@ Prove the protocol works in practice through reference implementations and pilot
 - Publish SDKs:
   - **JavaScript/TypeScript**: `npm install @consulate/arbitration-sdk`
   - **Python**: `pip install consulate-arbitration`
-- Document API at: https://docs.x402disputes.com
+- Docs live at: https://www.x402disputes.com/docs
 
 #### Month 6-7: Test Suite
 - Build protocol compliance test suite
@@ -423,7 +423,7 @@ Ensure long-term protocol governance and continuous improvement.
 3. **Create IETF Datatracker account**
 4. **Recruit 4 W3C Community Group co-founders**
 5. **Draft academic paper outline** (20-30 pages)
-6. **Set up docs subdomain**: https://docs.x402disputes.com
+6. **Keep docs simple**: serve a single Markdown page at https://www.x402disputes.com/docs
 7. **Announce standards initiative** on Twitter/X and LinkedIn
 
 ---

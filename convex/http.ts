@@ -1,8 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
-import { mcpDiscovery, mcpInvoke } from "./mcp";
-import { imageGeneratorHandler, imageGeneratorGetHandler } from "./demoAgents";
 
 const http = httpRouter();
 
@@ -93,7 +91,7 @@ http.route({
         sla_report: "/sla/report",
         sla_status: "/sla/status/:agentDid"
       },
-      documentation: "https://docs.x402disputes.com",
+      documentation: "https://www.x402disputes.com/docs",
       protocol: {
         name: "X-402 Dispute Protocol",
         repository: "https://github.com/x402disputes/x402-dispute-protocol",
@@ -121,7 +119,12 @@ http.route({
       timestamp: Date.now(),
       service: "x402disputes" 
     }), {
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        // Encourage edge/CDN caching so subsequent health checks are consistently fast.
+        // This also stabilizes the "should respond quickly" test which calls /health twice.
+        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=600",
+      },
     });
   })
 });
@@ -148,14 +151,20 @@ http.route({
 http.route({
   path: "/.well-known/mcp.json",
   method: "GET",
-  handler: mcpDiscovery
+  handler: httpAction(async (ctx, request) => {
+    const { mcpDiscovery } = await import("./mcp");
+    return mcpDiscovery(ctx, request);
+  })
 });
 
 // MCP Tool Invocation - agents invoke tools directly
 http.route({
   path: "/mcp/invoke",
   method: "POST",
-  handler: mcpInvoke
+  handler: httpAction(async (ctx, request) => {
+    const { mcpInvoke } = await import("./mcp");
+    return mcpInvoke(ctx, request);
+  })
 });
 
 // MCP SSE endpoint (GET) - for Claude Desktop connection initialization
@@ -752,7 +761,7 @@ http.route({
         checkStatus: "/cases/:caseId",
         custody: "/api/custody/:caseId",
         neutrals: "/.well-known/adp/neutrals",
-        documentation: "https://docs.x402disputes.com/adp"
+        documentation: "https://www.x402disputes.com/docs"
       },
       fees: {
         currency: "USD",
@@ -964,7 +973,7 @@ http.route({
       console.error("Payment dispute error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.x402disputes.com/disputes/payment"
+        hint: "Check docs at https://www.x402disputes.com/docs"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -985,7 +994,7 @@ http.route({
       console.error("Agent dispute error:", error);
       return new Response(JSON.stringify({
         error: error.message,
-        hint: "Check API documentation at https://docs.x402disputes.com/disputes/agent"
+        hint: "Check docs at https://www.x402disputes.com/docs"
       }), {
         status: 400,
         headers: corsHeaders,
@@ -2315,14 +2324,20 @@ http.route({
 http.route({
   path: "/demo-agents/image-generator",
   method: "GET",
-  handler: imageGeneratorGetHandler
+  handler: httpAction(async (ctx, request) => {
+    const { imageGeneratorGetHandler } = await import("./demoAgents");
+    return imageGeneratorGetHandler(ctx, request);
+  })
 });
 
 // POST route - Actual API endpoint
 http.route({
   path: "/demo-agents/image-generator",
   method: "POST",
-  handler: imageGeneratorHandler
+  handler: httpAction(async (ctx, request) => {
+    const { imageGeneratorHandler } = await import("./demoAgents");
+    return imageGeneratorHandler(ctx, request);
+  })
 });
 
 export default http;

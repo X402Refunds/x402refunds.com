@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs"
 import { useQuery, useMutation } from "convex/react"
 import { useRouter } from "next/navigation"
 import { api } from "@convex/_generated/api"
+import type { Id } from "@convex/_generated/dataModel"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,7 +19,7 @@ export default function ReviewQueuePage() {
   const { isLoaded } = useUser()
   const router = useRouter()
   // This page operates on payment disputes; track the selected/success item by its id.
-  const [successDisputeId, setSuccessDisputeId] = useState<string | null>(null)
+  const [successDisputeId, setSuccessDisputeId] = useState<Id<"cases"> | null>(null)
   
   // Sync and get user
   const currentUser = useQuery(

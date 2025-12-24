@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { api, internal } from '../../../../../../convex/_generated/api';
+import { api } from '../../../../../../convex/_generated/api';
 import { fetchQuery } from 'convex/nextjs';
 import { Id } from '../../../../../../convex/_generated/dataModel';
 
@@ -15,7 +15,7 @@ export async function GET(
     const { caseId } = params;
 
     // Get case data
-    const caseData = await fetchQuery(internal.cases.getCase, { caseId: caseId as Id<'cases'> });
+    const caseData = await fetchQuery(api.cases.getCasePublic, { caseId: caseId as Id<'cases'> });
 
     if (!caseData) {
       return NextResponse.json(

@@ -228,7 +228,7 @@ export const receivePaymentDispute = mutation({
     if (!org || org.aiEnabled !== false) {
       await ctx.scheduler.runAfter(
         0, // Immediate execution
-        internal.paymentDisputes.triggerPaymentWorkflow,
+        internal.paymentDisputes.triggerPaymentWorkflow as any,
         { caseId }
       );
     }
@@ -259,17 +259,17 @@ export const receivePaymentDispute = mutation({
  */
 export const triggerPaymentWorkflow = internalMutation({
   args: { caseId: v.id("cases") },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ success: boolean; workflowId?: string }> => {
     const caseData = await ctx.db.get(args.caseId);
     if (!caseData) {
       console.error(`Case ${args.caseId} not found for workflow trigger`);
-      return;
+      return { success: false };
     }
 
     // Idempotency: Skip if already analyzed
     if (caseData.aiRecommendation) {
       console.log(`Case ${args.caseId} already analyzed, skipping`);
-      return;
+      return { success: true };
     }
 
     // Skip if workflow already started
@@ -280,7 +280,7 @@ export const triggerPaymentWorkflow = internalMutation({
     
     if (existingWorkflow) {
       console.log(`Workflow already started for case ${args.caseId}`);
-      return;
+      return { success: true };
     }
 
     // Check org AI enabled
@@ -290,7 +290,7 @@ export const triggerPaymentWorkflow = internalMutation({
     
     if (org && org.aiEnabled === false) {
       console.log(`AI disabled for org ${org._id}, skipping`);
-      return;
+      return { success: true };
     }
 
     // Determine workflow type

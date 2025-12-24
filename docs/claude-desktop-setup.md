@@ -520,8 +520,7 @@ Use test keys for development and learning. Use production keys only for real di
 ## Support
 
 ### Documentation
-- MCP Quickstart: [https://docs.x402disputes.com/mcp-quickstart](https://docs.x402disputes.com/mcp-quickstart)
-- API Reference: [https://docs.x402disputes.com/api](https://docs.x402disputes.com/api)
+- Docs: [https://www.x402disputes.com/docs](https://www.x402disputes.com/docs)
 - Agentic Dispute Protocol: [https://github.com/consulatehq/agentic-dispute-protocol](https://github.com/consulatehq/agentic-dispute-protocol)
 
 ### Help & Support

@@ -315,7 +315,7 @@ Refer to your `server.json` endpoints:
 - **MCP Directory**: https://modelcontextprotocol.info/directory
 - **Publishing Guide**: https://modelcontextprotocol.info/tools/registry/publishing
 - **MCP Specification**: https://modelcontextprotocol.info/specification
-- **Consulate Docs**: https://docs.x402disputes.com/mcp-quickstart
+- **Docs**: https://www.x402disputes.com/docs
 - **GitHub Registry Repo**: https://github.com/modelcontextprotocol/registry
 
 ---

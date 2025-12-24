@@ -15,7 +15,7 @@
 
 import { internalMutation, internalAction } from "../_generated/server";
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
+import { internal, api } from "../_generated/api";
 import { requiresManualReview } from "./config";
 
 /**
@@ -122,7 +122,7 @@ export const executeRelease = internalAction({
     
     try {
       // Call the smart contract via lib/x402r.ts
-      const result = await ctx.runAction(internal.lib.x402r.resolveDispute, {
+      const result = await ctx.runAction(api.lib.x402r.resolveDispute, {
         escrowAddress: args.escrowAddress,
         winner: args.winner,
         buyerAddress: args.buyerAddress,

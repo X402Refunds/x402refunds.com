@@ -83,7 +83,7 @@ Consulate is available as an MCP server in the official directory:
 
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
 - **Server Name**: `com.consulatehq/consulate`
-- **Quick Start**: https://docs.x402disputes.com/mcp-quickstart
+- **Docs**: https://www.x402disputes.com/docs
 ```
 
 ### 4. Product Pages
@@ -136,7 +136,7 @@ Make sure your server description and title are optimized:
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=consulate
 - **Server**: `com.consulatehq/consulate`
 - **Discovery**: https://api.x402disputes.com/.well-known/mcp.json
-- **Docs**: https://docs.x402disputes.com/mcp-quickstart
+- **Docs**: https://www.x402disputes.com/docs
 - **GitHub**: https://github.com/consulatehq/consulate
 
 ## 📝 Press Release Template

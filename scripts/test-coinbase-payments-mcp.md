@@ -337,10 +337,10 @@ Once this works:
 ## Resources
 
 - **Coinbase Payments MCP:** https://www.coinbase.com/developer-platform/discover/launches/payments-mcp
-- **X-402 Protocol:** https://docs.x402disputes.com/x402-protocol
+- **Docs:** https://www.x402disputes.com/docs
 - **BASE Network:** https://base.org
 - **Demo Agent Docs:** /demo-agents/README.md
-- **x402disputes API:** https://docs.x402disputes.com
+- **API:** https://api.x402disputes.com
 
 ## Support
 

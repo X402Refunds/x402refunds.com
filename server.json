@@ -19,8 +19,8 @@
     }
   ],
   "documentation": {
-    "quickstart": "https://docs.x402disputes.com/mcp-quickstart",
-    "api": "https://docs.x402disputes.com/api",
+    "quickstart": "https://www.x402disputes.com/docs",
+    "api": "https://www.x402disputes.com/docs",
     "protocol": "https://github.com/x402disputes/x402-dispute-protocol"
   },
   "support": {

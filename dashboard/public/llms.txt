@@ -88,7 +88,7 @@ Base URL: https://api.x402disputes.com
 
 ## Documentation
 - Main site: https://x402disputes.com
-- API docs: https://docs.x402disputes.com
+- Docs: https://www.x402disputes.com/docs
 - Protocol spec: https://github.com/x402disputes/x402-dispute-protocol
 - Smart contract: Ethereum mainnet
 

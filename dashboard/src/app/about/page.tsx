@@ -291,7 +291,7 @@ export default function AboutPage() {
             <Button 
               size="lg" 
               className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
-              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+              onClick={() => window.location.href = '/docs'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
               Read the Docs

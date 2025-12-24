@@ -19,7 +19,11 @@ const getCaseDetails = createTool({
     caseId: z.string().describe("Case ID to retrieve"),
   }),
   handler: async (ctx, args): Promise<unknown> => {
-    const { internal } = await import("../_generated/api");
+    // Avoid TS instantiation blowups from importing the full generated API types here.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const generated: any = require("../_generated/api");
+    const api = generated.api;
+    const internal = generated.internal;
     
     // Get case via query
     const caseData = await ctx.runQuery(internal.cases.getCase, {
@@ -31,7 +35,7 @@ const getCaseDetails = createTool({
     }
 
     // Get evidence via query
-    const evidence = await ctx.runQuery(internal.evidence.getEvidenceByCaseId, {
+    const evidence = await ctx.runQuery(api.evidence.getEvidenceByCaseId, {
       caseId: args.caseId as any,
     });
 

@@ -21,7 +21,7 @@ x402disputes.com is available as an **MCP (Model Context Protocol) server** in t
 
 - **Server Name**: `com.x402disputes/x402-disputes`
 - **Registry API**: https://registry.modelcontextprotocol.io/v0/servers?search=x402disputes
-- **Quick Start**: https://docs.x402disputes.com/mcp-quickstart
+- **Docs**: https://www.x402disputes.com/docs
 - **8 Tools Available**: Agent registration, dispute filing, evidence submission, case tracking, and more
 
 ---
@@ -499,7 +499,7 @@ Merchant Defense:
 ## 📞 Contact & Support
 
 **Production**: [x402disputes.com](https://x402disputes.com)
-**API Documentation**: [docs.x402disputes.com](https://docs.x402disputes.com)
+**Docs**: [x402disputes.com/docs](https://www.x402disputes.com/docs)
 **GitHub**: [github.com/x402disputes](https://github.com/x402disputes)
 **Support**: support@x402disputes.com
 

@@ -45,6 +45,40 @@ function getUsdcMint(): string {
   return USDC_MINT_ADDRESSES[network];
 }
 
+export async function executeSolanaRefundImpl(args: {
+  fromWallet: string;
+  toWallet: string;
+  amount: number;
+  currency: string;
+}): Promise<{ success: true; txSignature: string; network: string; explorerUrl: string }> {
+  console.log(
+    `🔄 Executing Solana refund: ${args.amount} ${args.currency} from ${args.fromWallet} to ${args.toWallet}`
+  );
+
+  const network = getSolanaNetwork();
+  const rpcUrl = getRpcEndpoint();
+
+  // Keep rpcUrl referenced for future implementation (prevents unused churn).
+  void rpcUrl;
+
+  // TODO: Implement actual Solana transaction (see file notes above).
+  if (process.env.NODE_ENV === "test" || process.env.VITEST === "true") {
+    console.log(`🧪 MOCK: Would transfer ${args.amount} USDC on ${network}`);
+    return {
+      success: true,
+      txSignature: `MOCK_TX_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      network,
+      explorerUrl: `https://explorer.solana.com/tx/MOCK_TX?cluster=${network}`,
+    };
+  }
+
+  throw new Error(
+    "Solana refund execution not yet implemented. " +
+      "Need to integrate @solana/web3.js and @solana/spl-token. " +
+      "See convex/lib/solana.ts for implementation notes."
+  );
+}
+
 /**
  * Execute USDC refund on Solana
  * 
@@ -62,35 +96,8 @@ export const executeSolanaRefund = action({
     currency: v.string(),    // "USDC"
   },
   handler: async (ctx, args) => {
-    console.log(`🔄 Executing Solana refund: ${args.amount} ${args.currency} from ${args.fromWallet} to ${args.toWallet}`);
-    
-    const network = getSolanaNetwork();
-    const rpcUrl = getRpcEndpoint();
-    
-    // TODO: Implement actual Solana transaction
-    // This requires:
-    // 1. Building transfer instruction using @solana/spl-token
-    // 2. Signing with merchant's keypair (from secure storage)
-    // 3. Sending transaction to Solana network
-    // 4. Waiting for confirmation
-    
-    // For now, return mock transaction for testing
-    if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
-      console.log(`🧪 MOCK: Would transfer ${args.amount} USDC on ${network}`);
-      return {
-        success: true,
-        txSignature: `MOCK_TX_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        network,
-        explorerUrl: `https://explorer.solana.com/tx/MOCK_TX?cluster=${network}`,
-      };
-    }
-    
-    // Production: throw error until properly implemented
-    throw new Error(
-      "Solana refund execution not yet implemented. " +
-      "Need to integrate @solana/web3.js and @solana/spl-token. " +
-      "See convex/lib/solana.ts for implementation notes."
-    );
+    void ctx;
+    return executeSolanaRefundImpl(args);
   },
 });
 

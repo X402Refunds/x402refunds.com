@@ -156,9 +156,33 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   // Step 1: Check for payment headers (supports both flows)
   const xPayment = request.headers.get("X-PAYMENT");
   const txHash = request.headers.get("X-402-Transaction-Hash");
+  const xPaymentResponseHeader =
+    request.headers.get("X-PAYMENT-RESPONSE") ?? request.headers.get("X-402-PAYMENT-RESPONSE");
   
   console.log(`   X-PAYMENT: ${xPayment ? 'present' : 'missing'}`);
   console.log(`   X-402-Transaction-Hash: ${txHash ? 'present' : 'missing'}`);
+  console.log(`   X-PAYMENT-RESPONSE: ${xPaymentResponseHeader ? 'present' : 'missing'}`);
+
+  // Helper: decode base64(JSON(...)) payment response and extract a tx hash/tx id if present.
+  function tryExtractTxHashFromPaymentResponse(headerValue: string | null): string | null {
+    if (!headerValue) return null;
+    try {
+      const decoded = JSON.parse(atob(headerValue));
+      const candidate =
+        decoded?.transactionHash ??
+        decoded?.transaction ??
+        decoded?.txHash ??
+        decoded?.txid ??
+        null;
+      return typeof candidate === "string" && candidate.length > 0 ? candidate : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Some clients/facilitators may forward a payment response instead of a raw tx hash.
+  const txHashFromPaymentResponse = tryExtractTxHashFromPaymentResponse(xPaymentResponseHeader);
+  const effectiveTxHash = txHash ?? txHashFromPaymentResponse;
 
   // Avoid TS instantiation depth issues on Convex's generated api types by calling runAction via `any`.
   const runAction: any = ctx.runAction;
@@ -191,12 +215,16 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         required: ["error"]
       },
       extra: {
-        name: "USDC",
-        version: "1"
+        // EIP-712 domain name for Circle USDC (EIP-3009) on EVM chains.
+        // Many facilitators/clients derive signatures using the token's on-chain name ("USD Coin").
+        name: "USD Coin",
+        // EIP-3009 USDC uses EIP-712 domain version "2" on EVM networks.
+        // Facilitators may reject payments without this metadata.
+        version: "2"
       }
   };
 
-  if (!xPayment && !txHash) {
+  if (!xPayment && !effectiveTxHash) {
     // Step 2: Discovery request - return 402 WITHOUT validating body
     console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
     
@@ -218,17 +246,25 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   
   // Step 3: Payment proof provided - determine which flow
   console.log(`✅ Payment proof provided`);
-  console.log(`   Flow: ${txHash ? 'Transaction Hash (blockchain)' : 'Signature (facilitator)'}`);
+  console.log(
+    `   Flow: ${effectiveTxHash ? 'Transaction Hash (blockchain / already settled)' : 'Signature (facilitator)'}`,
+  );
   
   // FLOW 1: Transaction Hash (Brave Wallet, Coinbase Payments MCP)
-  if (txHash) {
+  // This is the preferred path for payments-mcp clients: they settle via their own facilitator
+  // and send us the final on-chain transaction hash.
+  if (effectiveTxHash) {
     console.log(`🔗 Transaction hash provided - verifying on blockchain`);
-    console.log(`   Transaction: ${txHash.substring(0, 20)}...`);
+    console.log(`   Transaction: ${effectiveTxHash.substring(0, 20)}...`);
+    if (txHashFromPaymentResponse && !txHash) {
+      console.log(`   Source: decoded payment response header`);
+    }
     
     // Query blockchain directly to verify payment
-    const txResult = await runAction((api as any).lib.blockchain.queryTransaction, {
+    // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
+    const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
       blockchain: "base",
-      transactionHash: txHash,
+      transactionHash: effectiveTxHash,
       expectedToAddress: DEMO_AGENTS_WALLET
     });
     
@@ -328,7 +364,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         generated_at: new Date().toISOString(),
         payment: {
           verified: true,
-          transactionHash: txHash,
+          transactionHash: effectiveTxHash,
           amount: `${txResult.value} USDC`,
           from: txResult.fromAddress,
           to: txResult.toAddress
@@ -382,7 +418,13 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       resource: request.url,
       description: "Image generation API (demo - always returns 500 error)",
       mimeType: "application/json",
-      maxTimeoutSeconds: 60
+      maxTimeoutSeconds: 60,
+      // For EVM `exact` payments, facilitators commonly require EIP-712 domain metadata
+      // for the EIP-3009 token contract (USDC).
+      extra: {
+        name: "USD Coin",
+        version: "2",
+      },
     };
     
     console.log(`🔍 Step 1: Verifying payment with facilitator`);
@@ -504,6 +546,15 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     
     console.log(`✅ Payment verified! Payer: ${verifyData.payer?.substring(0, 10)}...`);
     
+    // If the facilitator reports an already-settled transaction, prefer verifying on-chain and
+    // delivering without calling /settle again.
+    const alreadySettledTxHash: string | null =
+      typeof verifyData.transactionHash === "string"
+        ? verifyData.transactionHash
+        : typeof verifyData.transaction === "string"
+          ? verifyData.transaction
+          : null;
+
     // STEP 2: Do work - validate request body
     console.log(`🔧 Step 2: Performing work (validating request)`);
     const validation = validateImageGenRequest(body);
@@ -519,72 +570,201 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       });
     }
     
-    // STEP 3: Settle the payment on-chain
-    console.log(`💰 Step 3: Settling payment on-chain via mcpay.tech facilitator`);
-    
-    // Call facilitator to settle payment
-    const settleResult = (await runAction((api as any).demoAgents.cdpAuth.settlePayment, {
-      paymentHeader: xPaymentHeader,
-      paymentRequirements: paymentRequirements
-    })) as any;
-    
-    console.log(`   Settlement HTTP status: ${settleResult.status}`);
-    
-    // Parse response
-    const responseText = settleResult.body;
-    console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
-    
-    let settleData;
-    try {
-      settleData = JSON.parse(responseText);
-    } catch (e) {
-      console.error(`   Failed to parse settlement response as JSON`);
-      settleData = {
-        success: false,
-        errorReason: "unexpected_settle_error",
-        transaction: "",
-        network: "base"
-      };
-    }
-    
-    if (!settleData.success) {
-      console.error(`❌ Settlement failed:`, settleData);
+    // STEP 3: Ensure payment is settled on-chain BEFORE delivering output.
+    // - If already settled, verify by tx hash.
+    // - Else, call /settle then verify by the returned tx hash.
+    console.log(
+      `💰 Step 3: Ensuring payment is settled on-chain via facilitator${alreadySettledTxHash ? " (already settled)" : ""}`,
+    );
+
+    if (alreadySettledTxHash) {
+      // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
+      const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
+        blockchain: "base",
+        transactionHash: alreadySettledTxHash,
+        expectedToAddress: DEMO_AGENTS_WALLET,
+      });
+
+      if (!txResult.success) {
+        const errorDetails = "error" in txResult ? txResult.error : "Unknown error";
+        return new Response(
+          JSON.stringify({
+            error: "Payment was reported settled, but could not be verified on-chain",
+            details: errorDetails,
+            transactionHash: alreadySettledTxHash,
+          }),
+          {
+            status: 402,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      // Settled + verified; deliver below.
     } else {
-      console.log(`✅ Settlement succeeded! Transaction: ${settleData.transaction}`);
+    
+      // Call facilitator to settle payment
+      const settleResult = (await runAction((api as any).demoAgents.cdpAuth.settlePayment, {
+        paymentHeader: xPaymentHeader,
+        paymentRequirements: paymentRequirements
+      })) as any;
+    
+      console.log(`   Settlement HTTP status: ${settleResult.status}`);
+    
+      // Parse response
+      const responseText = settleResult.body;
+      console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
+    
+      let settleData;
+      try {
+        settleData = JSON.parse(responseText);
+      } catch (e) {
+        console.error(`   Failed to parse settlement response as JSON`);
+        settleData = {
+          success: false,
+          errorReason: "unexpected_settle_error",
+          transaction: "",
+          network: "base"
+        };
+      }
+    
+      if (!settleData.success) {
+        console.error(`❌ Settlement failed:`, settleData);
+        return new Response(
+          JSON.stringify({
+            error: "Payment settlement failed",
+            details: settleData,
+          }),
+          {
+            status: 402,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      const settledTxHash: string | null =
+        typeof settleData.transaction === "string"
+          ? settleData.transaction
+          : typeof settleData.transactionHash === "string"
+            ? settleData.transactionHash
+            : null;
+
+      if (!settledTxHash) {
+        return new Response(
+          JSON.stringify({
+            error: "Settlement succeeded but did not include a transaction hash",
+            details: settleData,
+          }),
+          {
+            status: 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      console.log(`✅ Settlement succeeded! Transaction: ${settledTxHash}`);
+
+      // Verify settlement on-chain before delivering.
+      // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
+      const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
+        blockchain: "base",
+        transactionHash: settledTxHash,
+        expectedToAddress: DEMO_AGENTS_WALLET,
+      });
+
+      if (!txResult.success) {
+        const errorDetails = "error" in txResult ? txResult.error : "Unknown error";
+        return new Response(
+          JSON.stringify({
+            error: "Settlement transaction could not be verified on-chain",
+            details: errorDetails,
+            transactionHash: settledTxHash,
+          }),
+          {
+            status: 402,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+      
+      // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
+      const paymentResponseB64 = btoa(JSON.stringify(settleData));
+      // Generate real image URL using Pollinations AI
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
+      
+      // Deliver after settlement verification.
+      return new Response(JSON.stringify({
+        success: true,
+        data: {
+          image_url: imageUrl,
+          format: "png",
+          size: body.size || "1024x1024",
+          prompt: body.prompt,
+          model: body.model || "stable-diffusion-xl"
+        },
+        metadata: {
+          generated_at: new Date().toISOString(),
+          settlement: settleData
+        }
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
+          "X-PAYMENT-RESPONSE": paymentResponseB64
+        }
+      });
     }
     
-    // STEP 4: Return 200 OK with real image URL (happy path)
-    console.log(`✅ Step 4: Generating image and returning 200 OK`);
-    
-    // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
-    const paymentResponseB64 = btoa(JSON.stringify(settleData));
-    
-    // Generate real image URL using Pollinations AI
+    // If we reached here, the payment was already settled and verified on-chain.
+    console.log(`✅ Step 4: Generating image and returning 200 OK (already settled)`);
+
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
-    
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        image_url: imageUrl,
-        format: "png",
-        size: body.size || "1024x1024",
-        prompt: body.prompt,
-        model: body.model || "stable-diffusion-xl"
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          image_url: imageUrl,
+          format: "png",
+          size: body.size || "1024x1024",
+          prompt: body.prompt,
+          model: body.model || "stable-diffusion-xl",
+        },
+        metadata: {
+          generated_at: new Date().toISOString(),
+          settlement: {
+            success: true,
+            transaction: alreadySettledTxHash,
+            network: "base",
+            source: "verify_reported_already_settled",
+          },
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
+        },
       },
-      metadata: {
-        generated_at: new Date().toISOString(),
-        settlement: settleData
-      }
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
-        "X-PAYMENT-RESPONSE": paymentResponseB64
-      }
-    });
+    );
     
   } catch (error: any) {
     console.error(`❌ Error calling facilitator:`, error);
