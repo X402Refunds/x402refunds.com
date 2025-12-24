@@ -237,13 +237,20 @@ const ruling = await response.json();
 {`POST /api/disputes/payment
 
 {
-  plaintiff: "alice@example.com",
-  defendant: "api-provider.com",
+  transactionId: "tx_abc123",
   amount: 29.99,
-  description: "API timeout"
+  currency: "USDC",
+  plaintiff: "consumer:alice@example.com",
+  defendant: "merchant:api.com",
+  disputeReason: "service_not_rendered",
+  description: "API timeout after payment"
 }
 
-→ { caseId: "case_123" }`}
+→ {
+  success: true,
+  caseId: "k17a2b3c...",
+  status: "received"
+}`}
                     </pre>
                   </CardContent>
                 </Card>
@@ -257,12 +264,20 @@ const ruling = await response.json();
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
                     <pre className="text-sm leading-loose text-slate-800 overflow-x-auto">
-{`GET /cases/case_123
+{`GET /cases/k17a2b3c...
 
 → {
-  status: "decided",
-  verdict: "CONSUMER_WINS",
-  refundAmount: 29.99
+  _id: "k17a2b3c...",
+  plaintiff: "consumer:alice@example.com",
+  defendant: "merchant:api.com",
+  amount: 29.99,
+  currency: "USDC",
+  status: "DECIDED",
+  ruling: {
+    verdict: "CONSUMER_WINS",
+    refundAmount: 29.99,
+    reasoning: "Service not delivered"
+  }
 }`}
                     </pre>
                   </CardContent>
