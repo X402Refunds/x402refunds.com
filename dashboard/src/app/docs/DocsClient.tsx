@@ -22,8 +22,8 @@ export function DocsClient(props: {
     () =>
       [
         { key: "overview" as const, label: "Overview" },
-        { key: "merchants" as const, label: "Integration guide for Merchants" },
-        { key: "buyers" as const, label: "File Disputes as a Buyer Agent" },
+        { key: "merchants" as const, label: "Integration guide for Merchants (~2 min)" },
+        { key: "buyers" as const, label: "File Disputes as a Buyer Agent (~1 min)" },
       ] as const,
     [],
   );
@@ -105,9 +105,12 @@ export function DocsClient(props: {
       enhanceRenderedHtml(contentRef.current);
       return;
     }
-    enhanceRenderedHtml(buyerHttpRef.current);
+    if (buyerMode === "http") {
+      enhanceRenderedHtml(buyerHttpRef.current);
+      return;
+    }
     enhanceRenderedHtml(buyerMcpRef.current);
-  }, [active, props.sections, props.buyerPanels]);
+  }, [active, buyerMode, props.sections, props.buyerPanels]);
 
   const buyerHasPanels = !!props.buyerPanels?.http || !!props.buyerPanels?.mcp;
 

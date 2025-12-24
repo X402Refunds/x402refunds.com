@@ -10,13 +10,17 @@
 
 **Disputes (2 modes)**
 - **Pre-transaction**: dispute during the escrow hold window (recommended)
-- **Post-transaction**: dispute after payment for service failure (via HTTP or MCP)
+- **Post-transaction**: dispute after payment for service failure
 
 **You do NOT build**
 - No chargebacks
 - No refunds logic on your server
 - No settlement jobs
 - No custody
+
+### Escrow + dispute flow
+
+High-level: 402 → pay escrow → verify → deliver → dispute window → release/refund.
 
 ```mermaid
 sequenceDiagram

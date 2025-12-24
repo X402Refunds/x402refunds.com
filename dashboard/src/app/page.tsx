@@ -213,21 +213,33 @@ const out = await res.json();
                 <h3 className="text-2xl font-bold text-slate-900 mb-6">Simple API to file disputes</h3>
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
-                    <pre className="rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-900 overflow-x-auto">
-{`// HTTP
-curl -sS https://api.x402disputes.com/mcp/invoke \\
+                    <div className="rounded-xl border border-slate-200 bg-slate-950 text-slate-50 overflow-hidden shadow-inner">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                        </div>
+                        <div className="text-xs text-slate-300 font-medium">POST /api/disputes/payment</div>
+                      </div>
+                      <pre className="p-4 font-mono text-sm leading-relaxed overflow-x-auto">
+{`# File a payment dispute (plain HTTP)
+curl -sS https://api.x402disputes.com/api/disputes/payment \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "x402_file_dispute",
-    "parameters": {
-      "description": "API timed out after payment",
-      "request": { "method": "POST", "url": "https://merchant.com/v1/premium" },
-      "response": { "status": 504, "body": { "error": "timeout" } },
-      "transactionHash": "0x...",
-      "blockchain": "base"
-    }
-  }'`}
-                    </pre>
+    "transactionId": "txn_123",
+    "amount": 0.25,
+    "currency": "USD",
+    "plaintiff": "consumer:alice",
+    "defendant": "0xMerchantWallet",
+    "disputeReason": "api_timeout",
+    "description": "Timed out after payment",
+    "transactionHash": "0x..."
+  }'
+
+# → { "success": true, "caseId": "k...", "status": "received" }`}
+                      </pre>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -239,15 +251,22 @@ curl -sS https://api.x402disputes.com/mcp/invoke \\
                 <h3 className="text-2xl font-bold text-slate-900 mb-6">Check Status</h3>
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
-                    <pre className="rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-900 overflow-x-auto">
-{`// HTTP
-curl -sS https://api.x402disputes.com/mcp/invoke \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "tool": "x402_check_case_status",
-    "parameters": { "caseId": "..." }
-  }'`}
-                    </pre>
+                    <div className="rounded-xl border border-slate-200 bg-slate-950 text-slate-50 overflow-hidden shadow-inner">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                        </div>
+                        <div className="text-xs text-slate-300 font-medium">GET /cases/:caseId</div>
+                      </div>
+                      <pre className="p-4 font-mono text-sm leading-relaxed overflow-x-auto">
+{`# Check case status (plain HTTP)
+curl -sS https://api.x402disputes.com/cases/k... 
+
+# → { "_id": "k...", "status": "IN_REVIEW" }`}
+                      </pre>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
