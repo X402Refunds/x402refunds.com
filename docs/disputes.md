@@ -8,6 +8,35 @@
 
 > Buyer pays escrow. Buyer can dispute during a short window. If no dispute, escrow releases funds automatically.
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Facilitator
+    participant Escrow
+    participant Blockchain
+
+    Client->>Server: GET /api
+    Server-->>Client: 402 PAYMENT-REQUIRED { payTo: Escrow }
+
+    Client->>Client: Create payment payload
+    Client->>Server: GET /api + PAYMENT-SIGNATURE
+
+    Server->>Facilitator: POST /verify
+    Facilitator-->>Server: 200 Verification
+
+    Server->>Server: Do work
+    Server-->>Client: 200 OK + PAYMENT-RESPONSE
+
+    Note over Escrow: Funds held
+
+    Client->>Escrow: dispute (arbiter decides)
+
+    Escrow->>Client: refund (if dispute ruled in favor)
+
+    Escrow->>Blockchain: release funds (after timeout)
+```
+
 **Disputes (2 modes)**
 - **Pre-transaction**: dispute during the escrow hold window (recommended)
 - **Post-transaction**: dispute after payment for service failure (via `x402_file_dispute`)

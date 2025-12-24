@@ -302,5 +302,19 @@
     border-color: rgb(71 85 105);
     color: rgb(248 250 252);
   }
+
+  .markdown .mermaid-diagram {
+    overflow-x: auto;
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid rgb(var(--border));
+    border-radius: 0.75rem;
+    background: rgb(var(--card));
+  }
+
+  .markdown .mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+  }
 }
 

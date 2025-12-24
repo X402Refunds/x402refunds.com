@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export type DocsSectionKey = "overview" | "merchants" | "buyers";
+type Mermaid = (typeof import("mermaid"))["default"];
 
 export function DocsClient(props: {
   title: string;
@@ -27,8 +28,57 @@ export function DocsClient(props: {
     const root = contentRef.current;
     if (!root) return;
 
+    // 1) Render Mermaid blocks (```mermaid) into SVGs (client-side).
+    // remark-html renders fenced code as: <pre><code class="language-mermaid">...</code></pre>
+    const mermaidPres = Array.from(
+      root.querySelectorAll('pre > code.language-mermaid, pre > code[class*="language-mermaid"]'),
+    ).map((c) => c.parentElement as HTMLPreElement);
+
+    if (mermaidPres.length > 0) {
+      (async () => {
+        try {
+          const mermaid: Mermaid = (await import("mermaid")).default;
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: "neutral",
+            securityLevel: "strict",
+          });
+
+          for (const pre of mermaidPres) {
+            const code = pre.querySelector("code");
+            const chart = (code?.textContent ?? "").trim();
+            if (!chart) continue;
+
+            // Replace <pre> with <div class="mermaid">...</div> so Mermaid can render it.
+            const holder = document.createElement("div");
+            holder.className = "mermaid-diagram";
+            const mermaidEl = document.createElement("div");
+            mermaidEl.className = "mermaid";
+            mermaidEl.textContent = chart;
+            holder.appendChild(mermaidEl);
+            pre.replaceWith(holder);
+          }
+
+          await mermaid.run({ querySelector: ".mermaid" });
+
+          // Make rendered SVGs responsive.
+          const svgs = Array.from(root.querySelectorAll(".mermaid-diagram svg")) as SVGElement[];
+          for (const svg of svgs) {
+            svg.removeAttribute("width");
+            svg.removeAttribute("height");
+            svg.style.maxWidth = "100%";
+            svg.style.height = "auto";
+          }
+        } catch {
+          // If Mermaid fails, keep the plaintext blocks (already replaced) as-is.
+        }
+      })();
+    }
+
+    // 2) Add copy buttons to remaining code blocks (skip Mermaid).
     const pres = Array.from(root.querySelectorAll("pre")) as HTMLPreElement[];
     for (const pre of pres) {
+      if (pre.querySelector("code.language-mermaid, code[class*=\"language-mermaid\"]")) continue;
       if (pre.querySelector("button.code-copy-btn")) continue;
       const value = extractCode(pre);
       if (!value) continue;

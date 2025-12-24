@@ -30,6 +30,7 @@ import {
   Key 
 } from "lucide-react"
 import { useState } from "react"
+import { MermaidDiagram } from "@/components/MermaidDiagram"
 
 export default function HomePage() {
   const [copiedCode, setCopiedCode] = useState(false)
@@ -267,6 +268,52 @@ const out = await res.json();
               View Documentation →
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* Escrow / Dispute Flow Diagram */}
+      <section className="py-20 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Escrow + dispute flow</h2>
+            <p className="mt-3 text-slate-600">
+              How x402 escrow, verification, disputes, and release fit together.
+            </p>
+          </div>
+
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6">
+              <MermaidDiagram
+                className="w-full"
+                chart={`sequenceDiagram
+    participant Client
+    participant Server
+    participant Facilitator
+    participant Escrow
+    participant Blockchain
+
+    Client->>Server: GET /api
+    Server-->>Client: 402 PAYMENT-REQUIRED { payTo: Escrow }
+
+    Client->>Client: Create payment payload
+    Client->>Server: GET /api + PAYMENT-SIGNATURE
+
+    Server->>Facilitator: POST /verify
+    Facilitator-->>Server: 200 Verification
+
+    Server->>Server: Do work
+    Server-->>Client: 200 OK + PAYMENT-RESPONSE
+
+    Note over Escrow: Funds held
+
+    Client->>Escrow: dispute (arbiter decides)
+
+    Escrow->>Client: refund (if dispute ruled in favor)
+
+    Escrow->>Blockchain: release funds (after timeout)`}
+              />
+            </CardContent>
+          </Card>
         </div>
       </section>
 
