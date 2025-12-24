@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -14,6 +13,7 @@ export function DocsClient(props: {
   buyerPanels?: { http?: string; mcp?: string };
 }) {
   const [active, setActive] = useState<DocsSectionKey>("overview");
+  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("http");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
@@ -115,8 +115,7 @@ export function DocsClient(props: {
     <div className="flex flex-col gap-6 md:flex-row">
       <aside className="md:w-72 md:flex-shrink-0">
         <div className="rounded-lg border border-border bg-card p-3">
-          <div className="text-sm font-semibold text-foreground">{props.title}</div>
-          <div className="mt-2 flex gap-2 md:flex-col md:gap-1">
+          <div className="flex gap-2 md:flex-col md:gap-1">
             {items.map((item) => (
               <Button
                 key={item.key}
@@ -137,30 +136,35 @@ export function DocsClient(props: {
           <div className="p-6">
             {active === "buyers" && buyerHasPanels ? (
               <div>
-                <Accordion type="single" collapsible defaultValue="http" className="w-full">
-                  <AccordionItem value="http">
-                    <AccordionTrigger>HTTP (default)</AccordionTrigger>
-                    <AccordionContent>
-                      <div ref={buyerHttpRef}>
-                        <article
-                          className="markdown"
-                          dangerouslySetInnerHTML={{ __html: props.buyerPanels?.http || "" }}
-                        />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="mcp">
-                    <AccordionTrigger>MCP</AccordionTrigger>
-                    <AccordionContent>
-                      <div ref={buyerMcpRef}>
-                        <article
-                          className="markdown"
-                          dangerouslySetInnerHTML={{ __html: props.buyerPanels?.mcp || "" }}
-                        />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant={buyerMode === "http" ? "secondary" : "ghost"}
+                    onClick={() => setBuyerMode("http")}
+                  >
+                    HTTP (default)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={buyerMode === "mcp" ? "secondary" : "ghost"}
+                    onClick={() => setBuyerMode("mcp")}
+                  >
+                    MCP
+                  </Button>
+                </div>
+
+                <div style={{ display: buyerMode === "http" ? "block" : "none" }} ref={buyerHttpRef}>
+                  <article
+                    className="markdown"
+                    dangerouslySetInnerHTML={{ __html: props.buyerPanels?.http || "" }}
+                  />
+                </div>
+                <div style={{ display: buyerMode === "mcp" ? "block" : "none" }} ref={buyerMcpRef}>
+                  <article
+                    className="markdown"
+                    dangerouslySetInnerHTML={{ __html: props.buyerPanels?.mcp || "" }}
+                  />
+                </div>
               </div>
             ) : (
               <div ref={contentRef}>
@@ -173,18 +177,13 @@ export function DocsClient(props: {
           </div>
           <Separator />
           <div className="p-4 text-xs text-muted-foreground">
-            Tip: connect your LLM to{" "}
-            <a className="underline underline-offset-2" href="https://api.x402disputes.com/mcp">
-              https://api.x402disputes.com/mcp
-            </a>{" "}
-            (schema:{" "}
+            Schema:{" "}
             <a
               className="underline underline-offset-2"
               href="https://api.x402disputes.com/.well-known/mcp.json"
             >
               /.well-known/mcp.json
             </a>
-            )
           </div>
         </div>
       </div>

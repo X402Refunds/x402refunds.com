@@ -8,6 +8,16 @@
 
 > Buyer pays escrow. Buyer can dispute during a short window. If no dispute, escrow releases funds automatically.
 
+**Disputes (2 modes)**
+- **Pre-transaction**: dispute during the escrow hold window (recommended)
+- **Post-transaction**: dispute after payment for service failure (via HTTP or MCP)
+
+**You do NOT build**
+- No chargebacks
+- No refunds logic on your server
+- No settlement jobs
+- No custody
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -37,16 +47,6 @@ sequenceDiagram
     Escrow->>Blockchain: release funds (after timeout)
 ```
 
-**Disputes (2 modes)**
-- **Pre-transaction**: dispute during the escrow hold window (recommended)
-- **Post-transaction**: dispute after payment for service failure (via HTTP or MCP)
-
-**You do NOT build**
-- No chargebacks
-- No refunds logic on your server
-- No settlement jobs
-- No custody
-
 ## Integration Guide for Merchants
 
 ### Prerequisites
@@ -70,14 +70,40 @@ const MERCHANT_ADDRESS = "0xYourWallet";
 ### 2) Create a payment intent (server-side only)
 
 Payment intents are **anti-replay** + **idempotency** guards (off-chain).
+Create **one payment intent per 402** you issue (i.e. per request/response).
 
 ```ts
 import { randomUUID } from "crypto";
 
-const paymentIntents = new Map<string, { id: string; expiresAt: number; used: boolean }>();
+type PaymentIntent = {
+  id: string;
+  expiresAt: number;
+  used: boolean;
+  // bind to what you promised in the 402
+  method: string;
+  path: string;
+  paramsHash: string;
+  amount: string;
+  asset: string;
+  payTo: string;
+  // optional: return the same payload if retried after fulfillment
+  fulfilledResponse?: unknown;
+};
+
+const paymentIntents = new Map<string, PaymentIntent>();
 
 function createPaymentIntent() {
-  const intent = { id: randomUUID(), expiresAt: Date.now() + 5 * 60 * 1000, used: false };
+  const intent: PaymentIntent = {
+    id: randomUUID(),
+    expiresAt: Date.now() + 5 * 60 * 1000,
+    used: false,
+    method: "GET",
+    path: "/api",
+    paramsHash: "sha256(params)",
+    amount: "10000",
+    asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    payTo: "0xEscrowContractAddress",
+  };
   paymentIntents.set(intent.id, intent);
   return intent;
 }
@@ -88,10 +114,10 @@ Rules:
 - Expired or reused intents are rejected
 
 Rules (recommended)
-- **Bind intent**: only accept the intent on the same route + same amount + same `payTo` you issued it for.
-- **No replay**: reject an already-used `paymentIntentId` (and any reused payment proof).
+- **Bind intent**: store `{method,path,paramsHash,amount,asset,payTo}` with the intent; on retry, recompute and reject mismatches.
+- **No replay**: once an intent is used, reject it (and reject a reused payment proof).
 - **Idempotency**: if intent already fulfilled, return the same response (or `409 Already Fulfilled`).
-- **Auto-release**: escrow releases after timeout (`release()` is permissionless; keepers optional).
+- **Auto-release**: escrow releases funds to the merchant after `disputeWindowSeconds` if no dispute is filed.
 - **Verify**: `PAYMENT-SIGNATURE` is client payment proof; validate via facilitator `/verify`.
 
 ### 3) Return `402 PAYMENT-REQUIRED` (v2, escrow-enabled)
@@ -99,7 +125,7 @@ Rules (recommended)
 **All payment requirements live in the header.**
 
 - Header: `PAYMENT-REQUIRED`
-- Value: `base64(JSON)`
+- Value: `base64(paymentRequired)`
 
 ```ts
 const intent = createPaymentIntent();
@@ -116,17 +142,15 @@ const paymentRequired = {
       paymentIntentId: intent.id,
       policy: {
         mode: "escrow",
-        holdSeconds: 300,
+        disputeWindowSeconds: 300,
         disputeUrl: "https://api.x402disputes.com/disputes/claim?vendor=0x49af4074577ea313c5053cbb7560ac39e34b05e8",
       },
     },
   ],
 };
 
-res.status(402).setHeader(
-  "PAYMENT-REQUIRED",
-  Buffer.from(JSON.stringify(paymentRequired)).toString("base64")
-);
+const paymentRequiredB64 = Buffer.from(JSON.stringify(paymentRequired)).toString("base64");
+res.status(402).setHeader("PAYMENT-REQUIRED", paymentRequiredB64);
 res.end();
 ```
 
@@ -136,12 +160,20 @@ On retry, client sends:
 - `PAYMENT-SIGNATURE`
 - `paymentIntentId`
 
+What this means (client-side):
+- The client (x402 tooling) retries the same request with `PAYMENT-SIGNATURE`.
+- The client must also include the `paymentIntentId` you issued in the original 402 (header or query param).
+
 ```ts
 function verifyPayment({ txHash, paymentIntentId }: { txHash: string; paymentIntentId: string }) {
   const intent = paymentIntents.get(paymentIntentId);
   if (!intent) throw new Error("Invalid payment intent");
   if (intent.used) throw new Error("Payment intent already used");
   if (Date.now() > intent.expiresAt) throw new Error("Payment intent expired");
+
+  // Bind intent: reject if request doesn't match what you issued the intent for.
+  // (You compute these from the retry request.)
+  // if (intent.method !== method || intent.path !== path || intent.payTo !== ESCROW_ADDRESS) throw new Error("Intent mismatch");
 
   // Call facilitator /verify:
   // - tx exists
@@ -163,16 +195,16 @@ function verifyPayment({ txHash, paymentIntentId }: { txHash: string; paymentInt
 
 ```txt
 paymentIntent TTL = 300 seconds
-holdSeconds = 180-600       // APIs (3-10 mins)
-holdSeconds = 1800          // digital goods (30 mins)
-holdSeconds = 172800        // services (48 hours)
+disputeWindowSeconds = 180-600       // APIs (3-10 mins)
+disputeWindowSeconds = 1800          // digital goods (30 mins)
+disputeWindowSeconds = 172800        // services (48 hours)
 ```
 
 ### Timing (merchant-side)
 - **First request**: you return `402 PAYMENT-REQUIRED`
 - **Retry window**: intent TTL (recommended 5 minutes)
-- **Dispute window**: `holdSeconds` (buyer can dispute before release)
-- **Payout**: after `holdSeconds` if no dispute is filed
+- **Dispute window**: `disputeWindowSeconds` (buyer can dispute before release)
+- **Payout**: after `disputeWindowSeconds` if no dispute is filed
 
 ## File Disputes as a Buyer Agent
 
@@ -182,7 +214,7 @@ If you paid an x402-protected resource, you can file a dispute here.
 - URL: `https://api.x402disputes.com/mcp`
 
 ### Timing (typical)
-- **Hold window**: `holdSeconds` (you must dispute before release)
+- **Hold window**: `disputeWindowSeconds` (you must dispute before release)
 - **Resolution**: minutes for most micro disputes; up to 10 business days max (Reg E)
 
 ### HTTP (default)

@@ -49,7 +49,7 @@ async function getDocsSections() {
 
   const splitBuyerPanels = (buyersMd: string) => {
     const httpIdx = buyersMd.search(/^###\s+HTTP\s+\(default\)\s*$/m);
-    const mcpIdx = buyersMd.search(/^###\s+MCP\s+\(for LLMs\)\s*$/m);
+    const mcpIdx = buyersMd.search(/^###\s+MCP\s*(?:\(.+\))?\s*$/m);
     const safeSlice = (start: number, end: number) =>
       start >= 0 ? buyersMd.slice(start, end >= 0 ? end : buyersMd.length).trim() : "";
     return {

@@ -210,28 +210,23 @@ const out = await res.json();
             {/* File Dispute Example */}
             <AnimatedSection direction="right" delay={0.2}>
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">File Dispute</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-6">Simple API to file disputes</h3>
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
-                    <pre className="text-sm leading-loose text-slate-800 overflow-x-auto">
-{`POST /mcp/invoke
-
-{
-  tool: "x402_file_dispute",
-  parameters: {
-    description: "API timed out after payment",
-    request: { method: "POST", url: "https://merchant.com/v1/premium" },
-    response: { status: 504, body: { error: "timeout" } },
-    transactionHash: "0x...",
-    blockchain: "base"
-  }
-}
-
-→ {
-  success: true,
-  caseId: "k17a2b3c..."
-  status: "received"
-}`}
+                    <pre className="rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-900 overflow-x-auto">
+{`// HTTP
+curl -sS https://api.x402disputes.com/mcp/invoke \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "tool": "x402_file_dispute",
+    "parameters": {
+      "description": "API timed out after payment",
+      "request": { "method": "POST", "url": "https://merchant.com/v1/premium" },
+      "response": { "status": 504, "body": { "error": "timeout" } },
+      "transactionHash": "0x...",
+      "blockchain": "base"
+    }
+  }'`}
                     </pre>
                   </CardContent>
                 </Card>
@@ -244,13 +239,14 @@ const out = await res.json();
                 <h3 className="text-2xl font-bold text-slate-900 mb-6">Check Status</h3>
                 <Card className="border border-slate-200 bg-white shadow-sm">
                   <CardContent className="p-8">
-                    <pre className="text-sm leading-loose text-slate-800 overflow-x-auto">
-{`GET /cases/:caseId
-
-→ {
-  _id: "k17a2b3c...",
-  status: "IN_REVIEW" // (or DECIDED)
-}`}
+                    <pre className="rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-900 overflow-x-auto">
+{`// HTTP
+curl -sS https://api.x402disputes.com/mcp/invoke \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "tool": "x402_check_case_status",
+    "parameters": { "caseId": "..." }
+  }'`}
                     </pre>
                   </CardContent>
                 </Card>
