@@ -22,8 +22,8 @@ export function DocsClient(props: {
     () =>
       [
         { key: "overview" as const, label: "Overview" },
-        { key: "merchants" as const, label: "Integration guide for Merchants (~2 min)" },
-        { key: "buyers" as const, label: "File Disputes as a Buyer Agent (~1 min)" },
+        { key: "merchants" as const, label: "Integration guide for Merchants" },
+        { key: "buyers" as const, label: "File Disputes as a Buyer Agent" },
       ] as const,
     [],
   );
