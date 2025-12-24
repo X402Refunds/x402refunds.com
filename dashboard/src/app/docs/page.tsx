@@ -27,12 +27,7 @@ export default async function DocsPage() {
       <main className="flex-1 bg-background">
         <div className="max-w-4xl mx-auto px-6 py-10">
           <article
-            className="prose max-w-none
-              prose-headings:text-foreground prose-headings:font-semibold
-              prose-p:text-muted-foreground
-              prose-li:text-muted-foreground
-              prose-strong:text-foreground
-              prose-a:text-primary"
+            className="markdown"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>
