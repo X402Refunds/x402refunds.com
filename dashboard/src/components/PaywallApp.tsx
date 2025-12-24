@@ -74,6 +74,18 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
       const paymentData = await response1.json();
       const requirements = parsePaymentRequirements(paymentData);
 
+      // IMPORTANT: The demo agent uses a fixed receiving wallet (`payTo`).
+      // If the user connects the SAME wallet as the payer, the facilitator will
+      // attempt a no-op/self-transfer which can fail (and often surfaces as a 500
+      // from the facilitator). Make this failure mode explicit.
+      if (address.toLowerCase() === requirements.payTo.toLowerCase()) {
+        throw new Error(
+          `You are connected to the demo agent's receiving wallet (${requirements.payTo}). ` +
+            `Please switch Brave Wallet to a different account/address (the payer) that holds USDC, ` +
+            `then try again.`
+        );
+      }
+
       setStatus('Creating payment signature (no gas needed)...');
 
       // Step 2: Create X-PAYMENT signature (USER SIGNS MESSAGE - NO GAS!)

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface DisputeHeaderProps {
   disputeReason: string;
@@ -27,6 +28,7 @@ export function DisputeHeader({
   isResolved,
 }: DisputeHeaderProps) {
   const router = useRouter();
+  const [now] = useState(() => Date.now());
 
   const formatReason = (reason: string) => {
     return reason.split("_").map(word =>
@@ -34,9 +36,8 @@ export function DisputeHeader({
     ).join(" ");
   };
 
-  const getRelativeTime = (timestamp: number) => {
-    const now = Date.now();
-    const diffMs = now - timestamp;
+  const getRelativeTime = (timestamp: number, currentTime: number) => {
+    const diffMs = currentTime - timestamp;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -47,9 +48,8 @@ export function DisputeHeader({
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   };
 
-  const getDeadlineInfo = (deadline: number) => {
-    const now = Date.now();
-    const diffMs = deadline - now;
+  const getDeadlineInfo = (deadline: number, currentTime: number) => {
+    const diffMs = deadline - currentTime;
     const diffDays = Math.floor(diffMs / 86400000);
     const diffHours = Math.floor((diffMs % 86400000) / 3600000);
 
@@ -73,7 +73,7 @@ export function DisputeHeader({
     return { text: `${diffDays} days remaining`, color: "text-slate-600", icon: Clock, urgent: false };
   };
 
-  const deadlineInfo = deadline ? getDeadlineInfo(deadline) : null;
+  const deadlineInfo = deadline ? getDeadlineInfo(deadline, now) : null;
   const DeadlineIcon = deadlineInfo?.icon;
 
   return (
@@ -98,7 +98,7 @@ export function DisputeHeader({
             {plaintiff} vs {defendant}
           </p>
           <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-500">
-            <span>Filed {getRelativeTime(filedAt)}</span>
+            <span>Filed {getRelativeTime(filedAt, now)}</span>
             {deadlineInfo && !isResolved && (
               <>
                 <span>•</span>

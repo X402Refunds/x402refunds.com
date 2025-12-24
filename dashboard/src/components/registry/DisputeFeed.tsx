@@ -71,18 +71,18 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
           Found {filteredCases.length} dispute{filteredCases.length === 1 ? '' : 's'} matching &ldquo;{searchQuery}&rdquo;
         </div>
       )}
-      {filteredCases.map((case_: typeof cases[number]) => {
+      {filteredCases.map((case_: typeof cases[number], index: number) => {
         try {
           return (
             <DisputeRow
-              key={case_._id || `case-${Math.random()}`}
+              key={case_._id || `case-${index}`}
               caseId={case_._id || 'unknown'}
               plaintiff={case_.plaintiff ?? 'Unknown'}
               defendant={case_.defendant ?? 'Unknown'}
               amount={case_.amount}
               currency={case_.currency}
               status={case_.status ?? 'FILED'}
-              filedAt={case_.filedAt ?? Date.now()}
+              filedAt={case_.filedAt ?? 0}
             />
           )
         } catch (error) {

@@ -108,7 +108,7 @@ export default function PartyPage() {
                   amount={case_.amount}
                   currency={case_.currency}
                   status={case_.status ?? 'FILED'}
-                  filedAt={case_.filedAt ?? Date.now()}
+                  filedAt={case_.filedAt ?? 0}
                 />
               ))}
             </div>
@@ -132,7 +132,7 @@ export default function PartyPage() {
                   amount={case_.amount}
                   currency={case_.currency}
                   status={case_.status ?? 'FILED'}
-                  filedAt={case_.filedAt ?? Date.now()}
+                  filedAt={case_.filedAt ?? 0}
                 />
               ))}
             </div>

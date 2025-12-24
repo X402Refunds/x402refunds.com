@@ -43,7 +43,7 @@ export const queryTransaction = action({
     blockchain: v.string(),
     transactionHash: v.string(),
     expectedFromAddress: v.optional(v.string()), // For mock mode: use this as fromAddress
-    expectedToAddress: v.optional(v.string()), // For mock mode: use this as toAddress
+    expectedToAddress: v.optional(v.string()), // Optional: enforce recipient address
   },
   handler: async (ctx, { blockchain, transactionHash, expectedFromAddress, expectedToAddress }) => {
     try {
@@ -58,11 +58,16 @@ export const queryTransaction = action({
         };
       }
 
-      // Get Alchemy API key from environment
+      // Get Alchemy API key from environment (Base only)
       const alchemyKey = process.env.ALCHEMY_API_KEY;
-      
-      // MOCK MODE: If no API key or test environment, return mock USDC data
-      if (!alchemyKey || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+
+      // MOCK MODE: only in explicit test contexts
+      const mockMode =
+        process.env.NODE_ENV === "test" ||
+        process.env.VITEST === "true" ||
+        process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+
+      if (mockMode) {
         console.log(`🧪 MOCK MODE: Returning mock USDC data for ${blockchain}:${transactionHash}`);
         const mockValueUsdc = 2500000; // 2.50 USDC (6 decimals)
         const mockValueUsd = 2.50; // 1 USDC = $1.00
@@ -84,11 +89,25 @@ export const queryTransaction = action({
       }
 
       if (blockchain === "solana") {
-        return await querySolanaUsdcTransaction(transactionHash);
+        return await querySolanaUsdcTransaction(transactionHash, {
+          expectedFromAddress,
+          expectedToAddress,
+        });
       }
 
       // Base uses Alchemy JSON-RPC (EVM-compatible)
-      return await queryBaseUsdcTransaction(transactionHash, alchemyKey);
+      if (!alchemyKey) {
+        return {
+          success: false,
+          error: "ALCHEMY_API_KEY is not configured (required to verify Base tx hashes)",
+          transactionHash,
+          blockchain: "base",
+        };
+      }
+      return await queryBaseUsdcTransaction(transactionHash, alchemyKey, {
+        expectedFromAddress,
+        expectedToAddress,
+      });
 
     } catch (error: any) {
       console.error(`❌ Blockchain query failed:`, error);
@@ -106,7 +125,11 @@ export const queryTransaction = action({
  * Query Base USDC transaction
  * Base is EVM-compatible, uses same RPC as Ethereum
  */
-async function queryBaseUsdcTransaction(transactionHash: string, alchemyKey: string) {
+async function queryBaseUsdcTransaction(
+  transactionHash: string,
+  alchemyKey: string,
+  opts?: { expectedFromAddress?: string; expectedToAddress?: string }
+) {
   const rpcUrl = `${RPC_ENDPOINTS.base}/${alchemyKey}`;
 
   console.log(`🔍 Querying Base blockchain for USDC transfer: ${transactionHash}`);
@@ -153,29 +176,74 @@ async function queryBaseUsdcTransaction(transactionHash: string, alchemyKey: str
     };
   }
 
-  // Parse USDC transfer from transaction input data
-  // ERC-20 transfer function signature: transfer(address,uint256)
   const input = tx.input;
+  // Parse USDC transfer from transaction input data
+  // ERC-20 transfer function signature: transfer(address,uint256) => 0xa9059cbb
+  if (!input || typeof input !== "string" || !input.startsWith("0xa9059cbb")) {
+    return {
+      success: false,
+      error: `Transaction is not a direct USDC transfer(address,uint256) call`,
+      transactionHash,
+      blockchain: "base",
+      hint: "X-402 tx-hash flow expects a standard ERC-20 transfer to the USDC contract"
+    };
+  }
   
   // Decode transfer amount from input data
   // Format: 0xa9059cbb (transfer sig) + 32 bytes (to address) + 32 bytes (amount)
   let usdcAmount = 0;
   let recipientAddress = "0x0";
   
-  if (input && input.length >= 138) {
-    // Extract recipient address (bytes 4-35, but take last 20 bytes)
-    recipientAddress = "0x" + input.slice(34, 74);
-    
-    // Extract amount (bytes 36-67)
-    const amountHex = input.slice(74, 138);
-    const amountRaw = BigInt("0x" + amountHex);
-    
-    // USDC has 6 decimals (1 USDC = 1,000,000 raw units)
-    usdcAmount = Number(amountRaw) / 1e6;
+  if (input.length < 138) {
+    return {
+      success: false,
+      error: "USDC transfer input is too short to decode recipient/amount",
+      transactionHash,
+      blockchain: "base",
+    };
   }
+
+  // Extract recipient address (bytes 4-35, but take last 20 bytes)
+  recipientAddress = "0x" + input.slice(34, 74);
+  
+  // Extract amount (bytes 36-67)
+  const amountHex = input.slice(74, 138);
+  const amountRaw = BigInt("0x" + amountHex);
+  
+  // USDC has 6 decimals (1 USDC = 1,000,000 raw units)
+  usdcAmount = Number(amountRaw) / 1e6;
 
   // 1 USDC = $1.00 USD (no price oracle needed for stablecoins)
   const amountUsd = usdcAmount;
+
+  // Optional: enforce expected addresses
+  if (opts?.expectedFromAddress && typeof opts.expectedFromAddress === "string") {
+    const actualFrom = (tx.from || "").toLowerCase();
+    if (actualFrom && actualFrom !== opts.expectedFromAddress.toLowerCase()) {
+      return {
+        success: false,
+        error: `Transaction payer mismatch. Expected from ${opts.expectedFromAddress}, got ${tx.from}`,
+        transactionHash,
+        blockchain: "base",
+        expectedFromAddress: opts.expectedFromAddress,
+        actualFromAddress: tx.from,
+      };
+    }
+  }
+
+  if (opts?.expectedToAddress && typeof opts.expectedToAddress === "string") {
+    const actualTo = (recipientAddress || "").toLowerCase();
+    if (actualTo && actualTo !== opts.expectedToAddress.toLowerCase()) {
+      return {
+        success: false,
+        error: `Transaction recipient mismatch. Expected to ${opts.expectedToAddress}, got ${recipientAddress}`,
+        transactionHash,
+        blockchain: "base",
+        expectedToAddress: opts.expectedToAddress,
+        actualToAddress: recipientAddress,
+      };
+    }
+  }
 
   const result = {
     success: true,
@@ -202,7 +270,10 @@ async function queryBaseUsdcTransaction(transactionHash: string, alchemyKey: str
  * Query Solana USDC transaction
  * Solana uses different transaction format with SPL tokens
  */
-async function querySolanaUsdcTransaction(signature: string) {
+async function querySolanaUsdcTransaction(
+  signature: string,
+  opts?: { expectedFromAddress?: string; expectedToAddress?: string }
+) {
   try {
     console.log(`🔍 Querying Solana blockchain for USDC transfer: ${signature}`);
     
@@ -264,6 +335,29 @@ async function querySolanaUsdcTransaction(signature: string) {
         transactionHash: signature,
         blockchain: "solana",
         hint: "X-402 disputes only accept USDC token transfers on Solana"
+      };
+    }
+
+    // Optional: enforce expected addresses (note: may be token accounts depending on wallet)
+    if (opts?.expectedFromAddress && usdcTransfer.from && usdcTransfer.from !== opts.expectedFromAddress) {
+      return {
+        success: false,
+        error: `Transaction payer mismatch. Expected from ${opts.expectedFromAddress}, got ${usdcTransfer.from}`,
+        transactionHash: signature,
+        blockchain: "solana",
+        expectedFromAddress: opts.expectedFromAddress,
+        actualFromAddress: usdcTransfer.from,
+      };
+    }
+
+    if (opts?.expectedToAddress && usdcTransfer.to && usdcTransfer.to !== opts.expectedToAddress) {
+      return {
+        success: false,
+        error: `Transaction recipient mismatch. Expected to ${opts.expectedToAddress}, got ${usdcTransfer.to}`,
+        transactionHash: signature,
+        blockchain: "solana",
+        expectedToAddress: opts.expectedToAddress,
+        actualToAddress: usdcTransfer.to,
       };
     }
 

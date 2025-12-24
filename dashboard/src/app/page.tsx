@@ -215,6 +215,151 @@ const ruling = await response.json();
         </div>
       </section>
 
+      {/* API Examples Section */}
+      <section className="py-24 bg-gradient-to-b from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+          <AnimatedSection direction="up" delay={0.1}>
+            <div className="text-center mb-16">
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">API EXAMPLES</Badge>
+              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+                Simple REST API
+              </h2>
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                File disputes and check status with straightforward HTTP requests
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* File Dispute Example */}
+            <AnimatedSection direction="right" delay={0.2}>
+              <div className="flex flex-col h-full">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">File a Dispute</h3>
+                  <p className="text-slate-600">Submit a payment dispute with transaction details and evidence</p>
+                </div>
+                <Card className="border-2 border-slate-200 shadow-lg flex-1">
+                  <CardHeader className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-t-lg border-b-0 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                      <span className="ml-auto text-xs text-slate-400 font-sans">file-dispute.ts</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="bg-slate-950 text-slate-100 p-4 font-mono text-xs rounded-b-lg overflow-x-auto">
+                    <pre className="leading-relaxed">
+{`// POST /api/disputes/payment
+const response = await fetch(
+  'https://api.x402disputes.com/api/disputes/payment',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      // Party identifiers
+      plaintiff: 'consumer:alice@example.com',
+      defendant: 'merchant:api-provider.com',
+      
+      // Transaction details
+      transactionId: 'x402_abc123',
+      transactionHash: '0x1a2b3c4d...',
+      amount: 29.99,
+      currency: 'USDC',
+      
+      // Dispute details
+      disputeReason: 'service_not_rendered',
+      description: 'API timeout after payment',
+      
+      // Evidence
+      evidenceUrls: [
+        'https://logs.alice.com/proof.json'
+      ]
+    })
+  }
+);
+
+const result = await response.json();
+// {
+//   success: true,
+//   caseId: "case_k123abc",
+//   status: "received",
+//   estimatedResolutionTime: "24 hours"
+// }`}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+            </AnimatedSection>
+
+            {/* Check Status Example */}
+            <AnimatedSection direction="left" delay={0.3}>
+              <div className="flex flex-col h-full">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Check Case Status</h3>
+                  <p className="text-slate-600">Query the current status and ruling of your dispute</p>
+                </div>
+                <Card className="border-2 border-slate-200 shadow-lg flex-1">
+                  <CardHeader className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-t-lg border-b-0 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                      <span className="ml-auto text-xs text-slate-400 font-sans">check-status.ts</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="bg-slate-950 text-slate-100 p-4 font-mono text-xs rounded-b-lg overflow-x-auto">
+                    <pre className="leading-relaxed">
+{`// GET /cases/:caseId
+const response = await fetch(
+  'https://api.x402disputes.com/cases/case_k123abc'
+);
+
+const caseData = await response.json();
+// {
+//   caseId: "case_k123abc",
+//   status: "decided",
+//   ruling: {
+//     verdict: "CONSUMER_WINS",
+//     confidence: 0.96,
+//     refundAmount: 29.99,
+//     reasoning: "Evidence shows API timeout 
+//                 before service delivery.",
+//     decidedAt: "2025-12-24T10:30:00Z",
+//     appealable: false
+//   },
+//   parties: {
+//     plaintiff: "consumer:alice@example.com",
+//     defendant: "merchant:api-provider.com"
+//   },
+//   timeline: {
+//     filed: "2025-12-23T10:00:00Z",
+//     analyzed: "2025-12-23T10:04:00Z",
+//     decided: "2025-12-24T10:30:00Z"
+//   }
+// }`}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+            </AnimatedSection>
+          </div>
+
+          <div className="mt-12 text-center">
+            <Button 
+              size="lg" 
+              className="bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 text-base px-8 h-12 shadow-lg hover:shadow-xl transition-all group"
+              onClick={() => window.location.href = 'https://docs.x402disputes.com'}
+            >
+              <BookOpen className="mr-2 h-5 w-5" />
+              View Full API Documentation
+              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Problem & Solution Section */}
       <section id="problem-solution" data-animate className="py-24 bg-white relative overflow-hidden">
         {/* Subtle background pattern */}

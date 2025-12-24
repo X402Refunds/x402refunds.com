@@ -30,6 +30,7 @@
  */
 
 import { httpAction, action } from "./_generated/server";
+// @ts-ignore - Convex generated `api` types can exceed TS instantiation depth in some TS configs.
 import { api } from "./_generated/api";
 import { v } from "convex/values";
 
@@ -158,13 +159,12 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   
   console.log(`   X-PAYMENT: ${xPayment ? 'present' : 'missing'}`);
   console.log(`   X-402-Transaction-Hash: ${txHash ? 'present' : 'missing'}`);
+
+  // Avoid TS instantiation depth issues on Convex's generated api types by calling runAction via `any`.
+  const runAction: any = ctx.runAction;
   
-  if (!xPayment && !txHash) {
-    // Step 2: Discovery request - return 402 WITHOUT validating body
-    console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
-    
-    // v1 schema format (Coinbase Payments MCP doesn't support v2)
-    const paymentRequired = {
+  // v1 schema format (Coinbase Payments MCP doesn't support v2)
+  const paymentRequired = {
       scheme: "exact",
       network: "base", // v1 uses simple network name
       maxAmountRequired: "10000", // v1 uses maxAmountRequired
@@ -194,7 +194,11 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         name: "USDC",
         version: "1"
       }
-    };
+  };
+
+  if (!xPayment && !txHash) {
+    // Step 2: Discovery request - return 402 WITHOUT validating body
+    console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
     
     // v1 protocol: Payment requirements go in BODY only (no header)
     return new Response(JSON.stringify({
@@ -222,7 +226,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`   Transaction: ${txHash.substring(0, 20)}...`);
     
     // Query blockchain directly to verify payment
-    const txResult = await ctx.runAction(api.lib.blockchain.queryTransaction, {
+    const txResult = await runAction((api as any).lib.blockchain.queryTransaction, {
       blockchain: "base",
       transactionHash: txHash,
       expectedToAddress: DEMO_AGENTS_WALLET
@@ -260,6 +264,21 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`   From: ${txResult.fromAddress}`);
     console.log(`   To: ${txResult.toAddress}`);
     console.log(`   Amount: ${txResult.value} USDC`);
+
+    // Defense-in-depth: ensure the USDC recipient matches our expected payTo
+    if ((txResult.toAddress || "").toLowerCase() !== DEMO_AGENTS_WALLET.toLowerCase()) {
+      return new Response(JSON.stringify({
+        error: "Payment recipient mismatch",
+        expectedTo: DEMO_AGENTS_WALLET,
+        actualTo: txResult.toAddress
+      }), {
+        status: 402,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
     
     // Validate payment meets requirements (0.01 USDC)
     const paidAmount = parseFloat(txResult.value);
@@ -327,11 +346,27 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   
   // FLOW 2: Signature (Traditional X-402) - Use facilitator verify/settle
   console.log(`🔐 X-PAYMENT signature provided - using facilitator flow`);
+  if (!xPayment) {
+    return new Response(JSON.stringify({
+      x402Version: 1,
+      error: "Payment required",
+      accepts: [paymentRequired]
+    }), {
+      status: 402,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+      }
+    });
+  }
+  const xPaymentHeader = xPayment;
 
   // Decode X-PAYMENT (base64 JSON) for debugging. We NEVER return the full signature.
   let decodedPaymentPayload: any = null;
   try {
-    decodedPaymentPayload = JSON.parse(atob(xPayment as string));
+    decodedPaymentPayload = JSON.parse(atob(xPaymentHeader));
   } catch {
     decodedPaymentPayload = null;
   }
@@ -353,10 +388,10 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`🔍 Step 1: Verifying payment with facilitator`);
     
     // STEP 1: Verify the payment signature BEFORE doing work
-    const verifyResult = await ctx.runAction(api.demoAgents.cdpAuth.verifyPayment, {
-      paymentHeader: xPayment,
+    const verifyResult = (await runAction((api as any).demoAgents.cdpAuth.verifyPayment, {
+      paymentHeader: xPaymentHeader,
       paymentRequirements: paymentRequirements
-    });
+    })) as any;
     
     console.log(`   Verification HTTP status: ${verifyResult.status}`);
     
@@ -488,10 +523,10 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`💰 Step 3: Settling payment on-chain via mcpay.tech facilitator`);
     
     // Call facilitator to settle payment
-    const settleResult = await ctx.runAction(api.demoAgents.cdpAuth.settlePayment, {
-      paymentHeader: xPayment,
+    const settleResult = (await runAction((api as any).demoAgents.cdpAuth.settlePayment, {
+      paymentHeader: xPaymentHeader,
       paymentRequirements: paymentRequirements
-    });
+    })) as any;
     
     console.log(`   Settlement HTTP status: ${settleResult.status}`);
     

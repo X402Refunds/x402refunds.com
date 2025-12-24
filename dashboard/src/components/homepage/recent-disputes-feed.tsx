@@ -4,9 +4,11 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Clock } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export function RecentDisputesFeed() {
   const recentCases = useQuery(api.cases.getRecentCases, { limit: 10 });
+  const [now] = useState(() => Date.now());
 
   // Loading state
   if (recentCases === undefined) {
@@ -48,7 +50,7 @@ export function RecentDisputesFeed() {
 
   // Format time ago
   const timeAgo = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    const seconds = Math.floor((now - timestamp) / 1000);
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;

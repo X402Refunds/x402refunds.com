@@ -12,9 +12,11 @@ import { useRouter } from "next/navigation";
 import { HeroStats } from "./hero-stats";
 import { CollapsibleStats } from "./collapsible-stats";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 export default function LiveActivityFeed() {
   const router = useRouter();
+  const [now] = useState(() => Date.now());
   
   // REAL-TIME DATA FROM CONVEX - Only dispute activity (excludes admin/audit events)
   const recentEvents = useQuery(api.events.getDisputeActivityEvents, {
@@ -362,7 +364,7 @@ export default function LiveActivityFeed() {
                       </Badge>
                       {case_.ruling && typeof case_.ruling === 'object' && 'decidedAt' in case_.ruling ? (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {Math.floor((Date.now() - (case_.ruling as { decidedAt: number }).decidedAt) / 60000)}m ago
+                          {Math.floor((now - (case_.ruling as { decidedAt: number }).decidedAt) / 60000)}m ago
                         </p>
                       ) : null}
                     </div>

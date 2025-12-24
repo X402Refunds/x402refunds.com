@@ -17,21 +17,21 @@ interface PartiesCardProps {
   merchant: PartyInfo;
 }
 
-export function PartiesCard({ consumer, merchant }: PartiesCardProps) {
-  const truncateAddress = (address: string, chars: number = 8) => {
-    if (address.length <= chars * 2) return address;
-    return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
-  };
+function truncateAddress(address: string, chars: number = 8) {
+  if (address.length <= chars * 2) return address;
+  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
+}
 
-  const PartySection = ({
-    title,
-    party,
-    badge,
-  }: {
-    title: string;
-    party: PartyInfo;
-    badge: React.ReactNode;
-  }) => (
+function PartySection({
+  title,
+  party,
+  badge,
+}: {
+  title: string;
+  party: PartyInfo;
+  badge: React.ReactNode;
+}) {
+  return (
     <div className="flex-1">
       <div className="flex items-center gap-2 mb-3">
         <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
@@ -87,6 +87,9 @@ export function PartiesCard({ consumer, merchant }: PartiesCardProps) {
       </div>
     </div>
   );
+}
+
+export function PartiesCard({ consumer, merchant }: PartiesCardProps) {
 
   return (
     <Card>
