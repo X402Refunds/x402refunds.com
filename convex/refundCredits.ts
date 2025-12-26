@@ -253,7 +253,7 @@ export const submitTopUpAndAutoApply = action({
       };
     }
 
-    const applied = await ctx.runMutation(applyVerifiedTopUp, {
+    const applied = await ctx.runMutation(internal.refundCredits.applyVerifiedTopUp, {
       organizationId: args.organizationId,
       blockchain: "base",
       txHash: tx,
