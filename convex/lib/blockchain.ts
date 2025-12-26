@@ -20,6 +20,83 @@ const USDC_CONTRACTS = {
 };
 
 /**
+ * Base USDC allowlist (native + bridged).
+ *
+ * Why: Smart wallets / paymasters often have tx.to != token contract, so we must verify using
+ * ERC-20 Transfer logs and accept a small set of USDC token contracts.
+ *
+ * - Native USDC: Circle native deployment on Base
+ * - USDbC: legacy/bridged USDC on Base (Coinbase/Circle references)
+ */
+export const BASE_USDC_CONTRACT_ALLOWLIST = new Set<string>([
+  USDC_CONTRACTS.base.toLowerCase(),
+  // Bridged USDC on Base (USDbC)
+  "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA".toLowerCase(),
+]);
+
+// keccak256("Transfer(address,address,uint256)")
+export const ERC20_TRANSFER_TOPIC0 =
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+export function topicToAddress(topic: string): string {
+  const t = String(topic || "");
+  return ("0x" + t.slice(-40)).toLowerCase();
+}
+
+export type TransferLogMatch = {
+  tokenContract: string;
+  payerAddress: string;
+  recipientAddress: string;
+  amountRaw: bigint;
+  logIndex: number;
+};
+
+/**
+ * Find matching ERC-20 Transfer logs in a receipt. This is AA-safe: it does NOT rely on tx.to.
+ */
+export function findErc20TransferMatches(args: {
+  logs: any[];
+  allowedTokenContracts: Set<string>;
+  expectedAmountRaw: bigint;
+  expectedToAddress?: string;
+}): TransferLogMatch[] {
+  const expectedTo = args.expectedToAddress ? args.expectedToAddress.toLowerCase() : null;
+
+  return (Array.isArray(args.logs) ? args.logs : [])
+    .map((log): TransferLogMatch | null => {
+      const tokenContract = String(log?.address || "").toLowerCase();
+      if (!args.allowedTokenContracts.has(tokenContract)) return null;
+
+      const topics = Array.isArray(log?.topics) ? log.topics : [];
+      if (topics.length < 3) return null;
+      if (String(topics[0] || "").toLowerCase() !== ERC20_TRANSFER_TOPIC0) return null;
+
+      const payerAddress = topicToAddress(topics[1]);
+      const recipientAddress = topicToAddress(topics[2]);
+      if (expectedTo && recipientAddress !== expectedTo) return null;
+
+      const dataHex = String(log?.data || "0x0");
+      let amountRaw: bigint;
+      try {
+        amountRaw = BigInt(dataHex);
+      } catch {
+        return null;
+      }
+      if (amountRaw !== args.expectedAmountRaw) return null;
+
+      const logIndex =
+        typeof log?.logIndex === "string" && String(log.logIndex).startsWith("0x")
+          ? parseInt(String(log.logIndex), 16)
+          : Number.isFinite(Number(log?.logIndex))
+            ? Number(log.logIndex)
+            : 0;
+
+      return { tokenContract, payerAddress, recipientAddress, amountRaw, logIndex };
+    })
+    .filter((x): x is TransferLogMatch => Boolean(x));
+}
+
+/**
  * Blockchain RPC Endpoints
  * Only Base and Solana are supported
  * 
@@ -244,20 +321,6 @@ async function queryBaseUsdcTransaction(
 
   const tx = data.result;
 
-  // Validate this is a USDC transfer
-  const toAddress = tx.to?.toLowerCase();
-  const expectedUsdcAddress = USDC_CONTRACTS.base.toLowerCase();
-
-  if (toAddress !== expectedUsdcAddress) {
-    return {
-      success: false,
-      error: `Transaction is not a USDC transfer. Expected USDC contract ${USDC_CONTRACTS.base}, got ${tx.to}`,
-      transactionHash,
-      blockchain: "base",
-      hint: "X-402 disputes only accept USDC token transfers on Base"
-    };
-  }
-
   // Instead of relying on tx.input decoding (which differs across token methods),
   // parse the transaction receipt logs for the ERC-20 Transfer event. This works for:
   // - transfer(address,uint256)
@@ -289,35 +352,31 @@ async function queryBaseUsdcTransaction(
 
   const receipt = receiptData.result;
   const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
+  const expectedTo = opts?.expectedToAddress ? opts.expectedToAddress.toLowerCase() : undefined;
 
-  // keccak256("Transfer(address,address,uint256)")
-  const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-
-  const usdcLogs = logs.filter((log) => {
-    const addr = (log?.address || "").toLowerCase();
+  // If we know the expected recipient, prefer logs that match it.
+  const candidates = (Array.isArray(logs) ? logs : []).filter((log) => {
+    const tokenContract = String(log?.address || "").toLowerCase();
+    if (!BASE_USDC_CONTRACT_ALLOWLIST.has(tokenContract)) return false;
     const topics = Array.isArray(log?.topics) ? log.topics : [];
-    return addr === expectedUsdcAddress && topics.length >= 3 && (topics[0] || "").toLowerCase() === TRANSFER_TOPIC0;
+    if (topics.length < 3) return false;
+    if (String(topics[0] || "").toLowerCase() !== ERC20_TRANSFER_TOPIC0) return false;
+    if (!expectedTo) return true;
+    const to = topicToAddress(String(topics[2] || ""));
+    return to === expectedTo;
   });
 
-  if (usdcLogs.length === 0) {
+  if (candidates.length === 0) {
     return {
       success: false,
-      error: "No USDC Transfer event found in transaction receipt",
+      error: "No accepted USDC Transfer event found in transaction receipt",
       transactionHash,
       blockchain: "base",
-      hint: "Expected the USDC contract to emit a Transfer event",
+      hint: `Expected a Transfer event from an accepted USDC contract (${Array.from(BASE_USDC_CONTRACT_ALLOWLIST).join(", ")})`,
     };
   }
 
-  // If we know the expected recipient, prefer the transfer that matches it.
-  const preferredLog =
-    opts?.expectedToAddress
-      ? usdcLogs.find((log) => {
-          const toTopic = String(log.topics?.[2] || "");
-          const to = ("0x" + toTopic.slice(-40)).toLowerCase();
-          return to === opts.expectedToAddress!.toLowerCase();
-        })
-      : usdcLogs[0];
+  const preferredLog = candidates[0];
 
   if (!preferredLog) {
     return {
@@ -330,8 +389,8 @@ async function queryBaseUsdcTransaction(
 
   const fromTopic = String(preferredLog.topics?.[1] || "");
   const toTopic = String(preferredLog.topics?.[2] || "");
-  const transferFrom = "0x" + fromTopic.slice(-40);
-  const recipientAddress = "0x" + toTopic.slice(-40);
+  const transferFrom = ("0x" + fromTopic.slice(-40)).toLowerCase();
+  const recipientAddress = ("0x" + toTopic.slice(-40)).toLowerCase();
   const dataHex = String(preferredLog.data || "0x0");
   const amountRaw = BigInt(dataHex);
 
@@ -438,17 +497,6 @@ async function queryBaseUsdcTransferByAmount(
   }
 
   const tx = txData.result;
-  const toAddress = (tx.to || "").toLowerCase();
-  const expectedUsdcAddress = USDC_CONTRACTS.base.toLowerCase();
-  if (toAddress !== expectedUsdcAddress) {
-    return {
-      ok: false,
-      blockchain: "base",
-      transactionHash,
-      code: "NOT_USDC",
-      message: `Transaction is not a USDC transfer (expected to ${USDC_CONTRACTS.base}, got ${tx.to})`,
-    };
-  }
 
   const receiptResp = await fetch(rpcUrl, {
     method: "POST",
@@ -473,40 +521,35 @@ async function queryBaseUsdcTransferByAmount(
 
   const receipt = receiptData.result;
   const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
-  const TRANSFER_TOPIC0 =
-    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
-  const usdcLogs = logs.filter((log) => {
-    const addr = String(log?.address || "").toLowerCase();
+  const matches = findErc20TransferMatches({
+    logs,
+    allowedTokenContracts: BASE_USDC_CONTRACT_ALLOWLIST,
+    expectedAmountRaw: BigInt(expectedAmountMicrousdc),
+    expectedToAddress: opts?.expectedToAddress,
+  });
+
+  // If there are no Transfer logs from allowed contracts at all, it's not USDC.
+  const anyAllowedTransfers = (Array.isArray(logs) ? logs : []).some((log) => {
+    const tokenContract = String(log?.address || "").toLowerCase();
     const topics = Array.isArray(log?.topics) ? log.topics : [];
     return (
-      addr === expectedUsdcAddress &&
+      BASE_USDC_CONTRACT_ALLOWLIST.has(tokenContract) &&
       topics.length >= 3 &&
-      String(topics[0] || "").toLowerCase() === TRANSFER_TOPIC0
+      String(topics[0] || "").toLowerCase() === ERC20_TRANSFER_TOPIC0
     );
   });
 
-  // Filter by amount.
-  const amountMatches = usdcLogs.filter((log) => {
-    const dataHex = String(log?.data || "0x0");
-    try {
-      const amountRaw = BigInt(dataHex);
-      return amountRaw === BigInt(expectedAmountMicrousdc);
-    } catch {
-      return false;
+  if (matches.length === 0) {
+    if (!anyAllowedTransfers) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash,
+        code: "NOT_USDC",
+        message: `No accepted USDC Transfer logs found in tx receipt (tx.to=${tx.to})`,
+      };
     }
-  });
-
-  const expectedTo = opts?.expectedToAddress ? opts.expectedToAddress.toLowerCase() : null;
-  const filteredByTo = expectedTo
-    ? amountMatches.filter((log) => {
-        const toTopic = String(log.topics?.[2] || "");
-        const to = ("0x" + toTopic.slice(-40)).toLowerCase();
-        return to === expectedTo;
-      })
-    : amountMatches;
-
-  if (filteredByTo.length === 0) {
     return {
       ok: false,
       blockchain: "base",
@@ -515,7 +558,7 @@ async function queryBaseUsdcTransferByAmount(
       message: `No USDC Transfer matched expected amount ${expectedAmountMicrousdc} microusdc`,
     };
   }
-  if (filteredByTo.length > 1) {
+  if (matches.length > 1) {
     return {
       ok: false,
       blockchain: "base",
@@ -525,29 +568,17 @@ async function queryBaseUsdcTransferByAmount(
     };
   }
 
-  const match = filteredByTo[0];
-  const fromTopic = String(match.topics?.[1] || "");
-  const toTopic = String(match.topics?.[2] || "");
-  const payer = ("0x" + fromTopic.slice(-40)).toLowerCase();
-  const recipient = ("0x" + toTopic.slice(-40)).toLowerCase();
-
-  const logIndexHex = String(match.logIndex || "0x0");
-  const logIndex =
-    typeof match.logIndex === "string" && match.logIndex.startsWith("0x")
-      ? parseInt(match.logIndex, 16)
-      : Number.isFinite(Number(match.logIndex))
-        ? Number(match.logIndex)
-        : parseInt(logIndexHex, 16) || 0;
+  const match = matches[0];
 
   return {
     ok: true,
     blockchain: "base",
     transactionHash,
-    payerAddress: payer,
-    recipientAddress: recipient,
+    payerAddress: match.payerAddress,
+    recipientAddress: match.recipientAddress,
     amountMicrousdc: expectedAmountMicrousdc,
     amountUsdc: formatMicrosToUsdc(expectedAmountMicrousdc),
-    logIndex,
+    logIndex: match.logIndex,
   };
 }
 
