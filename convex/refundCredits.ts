@@ -223,17 +223,21 @@ export const submitTopUpAndAutoApply = action({
       return { ok: false as const, code: parsed.code, message: parsed.message };
     }
 
-    // Get the platform deposit address from CDP (ensures this is a CDP-managed wallet).
-    const platform = await ctx.runAction(api.lib.coinbase.getOrCreatePlatformEvmAccount, {});
-    if (!platform.ok) {
-      return { ok: false as const, code: platform.code, message: platform.message };
+    // Static deposit address configured in Convex env.
+    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    if (!depositAddress) {
+      return {
+        ok: false as const,
+        code: "NOT_CONFIGURED",
+        message: "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS is not configured in Convex",
+      };
     }
 
     const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
       blockchain: "base",
       transactionHash: tx,
       expectedAmountMicrousdc: parsed.microusdc,
-      expectedToAddress: platform.address,
+      expectedToAddress: depositAddress,
     });
 
     if (!verified.ok) {
@@ -241,7 +245,7 @@ export const submitTopUpAndAutoApply = action({
     }
 
     // Extra safety: recipient must match deposit address.
-    if (verified.recipientAddress.toLowerCase() !== platform.address.toLowerCase()) {
+    if (verified.recipientAddress.toLowerCase() !== depositAddress.toLowerCase()) {
       return {
         ok: false as const,
         code: "WRONG_RECIPIENT",
@@ -268,9 +272,18 @@ export const submitTopUpAndAutoApply = action({
       status: "APPROVED" as const,
       topUpId: applied.topUpId,
       alreadyApplied: applied.alreadyApplied,
-      depositAddress: platform.address,
+      depositAddress,
       credits: summary,
     };
+  },
+});
+
+export const getPlatformDepositAddress = query({
+  args: {},
+  handler: async () => {
+    const address = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    if (!address) return { ok: false as const, code: "NOT_CONFIGURED" as const };
+    return { ok: true as const, address };
   },
 });
 

@@ -44,18 +44,15 @@ export default function BillingPage() {
     orgId ? { organizationId: orgId } : "skip",
   )
 
+  const deposit = useQuery(api.refundCredits.getPlatformDepositAddress, {})
   const submitTopUp = useAction(api.refundCredits.submitTopUpAndAutoApply)
-  const getOrCreatePlatformAccount = useAction(api.lib.coinbase.getOrCreatePlatformEvmAccount)
 
-  const [txHash, setTxHash] = useState("")
   const [amount, setAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<string | null>(null)
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null)
 
-  // We intentionally do NOT seed from NEXT_PUBLIC_PLATFORM_BASE_USDC_DEPOSIT_ADDRESS anymore:
-  // deposit addresses must come from CDP (Coinbase Server Wallet) to ensure we can actually send refunds.
-  const [depositAddress, setDepositAddress] = useState<string>("")
-  const [depositLookupResult, setDepositLookupResult] = useState<string | null>(null)
+  const depositAddress = deposit?.ok ? deposit.address : ""
 
   return (
     <DashboardLayout>
@@ -145,43 +142,14 @@ export default function BillingPage() {
                   Send USDC on Base to the platform deposit address:
                 </div>
 
-                {depositAddress ? (
+                {deposit?.ok ? (
                   <CopyableField value={depositAddress} label="Deposit address" truncate />
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    Not available yet. You can fetch it from Coinbase (CDP) once refunds are enabled.
+                    Deposit address is not configured yet. Set{" "}
+                    <code className="font-mono">PLATFORM_BASE_USDC_DEPOSIT_ADDRESS</code> in Convex.
                   </div>
                 )}
-
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    disabled={!orgId}
-                    onClick={async () => {
-                      setDepositLookupResult(null)
-                      try {
-                        const res = await getOrCreatePlatformAccount({})
-                        if (res.ok) {
-                          setDepositAddress(res.address)
-                          setDepositLookupResult(`Using account “${res.name}”`)
-                        } else {
-                          setDepositLookupResult(res.message)
-                        }
-                      } catch (e: unknown) {
-                        const message =
-                          e instanceof Error ? e.message : "Failed to fetch deposit address"
-                        setDepositLookupResult(message)
-                      }
-                    }}
-                  >
-                    Fetch deposit address from Coinbase
-                  </Button>
-                  {depositLookupResult && (
-                    <span className="text-sm text-muted-foreground">
-                      {depositLookupResult}
-                    </span>
-                  )}
-                </div>
 
                 <div className="text-xs text-muted-foreground">
                   After sending, we automatically verify the on-chain USDC transfer and credit your balance.
@@ -189,86 +157,38 @@ export default function BillingPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (USDC)</Label>
-                <Input
-                  id="amount"
-                  placeholder="e.g. 25.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="txHash">Transaction Hash (0x…)</Label>
-                <Input
-                  id="txHash"
-                  placeholder="0x..."
-                  value={txHash}
-                  onChange={(e) => setTxHash(e.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (USDC)</Label>
+              <Input
+                id="amount"
+                placeholder="e.g. 25.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                disabled={!orgId || submitting || !txHash || !amount}
-                onClick={async () => {
-                  if (!orgId) return
-                  setSubmitting(true)
-                  setSubmitResult(null)
-                  try {
-                    const res = await submitTopUp({
-                      organizationId: orgId,
-                      txHash,
-                      amount,
-                      amountUnit: "usdc",
-                    })
-                    if (res.ok) {
-                      setSubmitResult(res.alreadyApplied ? "Already credited." : "Credited successfully.")
-                    } else {
-                      setSubmitResult(res.message || "Failed to verify top-up")
-                    }
-                    setTxHash("")
-                    setAmount("")
-                  } catch (e: unknown) {
-                    const message =
-                      e instanceof Error ? e.message : "Failed to submit top up request"
-                    setSubmitResult(message)
-                  } finally {
-                    setSubmitting(false)
-                  }
-                }}
-              >
-                {submitting ? "Submitting…" : "Submit Top-Up"}
-              </Button>
-              {submitResult && (
-                <span className="text-sm text-muted-foreground">{submitResult}</span>
-              )}
-            </div>
+            {!isConnected && (
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground">Step 1: Connect wallet</div>
+                <ConnectWalletButton />
+              </div>
+            )}
 
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <div className="text-sm font-medium">Top up with wallet</div>
-              {!isConnected && (
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">
-                    Connect a Base wallet that holds USDC.
-                  </div>
-                  <ConnectWalletButton />
-                </div>
-              )}
-              {isConnected && (
+            {isConnected && (
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground">Step 2: Send USDC</div>
                 <Button
                   variant="default"
                   disabled={!orgId || !depositAddress || submitting || !amount}
                   onClick={async () => {
                     if (!orgId) return
                     if (!depositAddress) {
-                      setSubmitResult("Fetch the deposit address first.")
+                      setSubmitResult("Deposit address is not configured.")
                       return
                     }
                     setSubmitting(true)
                     setSubmitResult(null)
+                    setLastTxHash(null)
                     try {
                       const amountUnits = parseUnits(amount || "0", 6)
                       const hash = await writeContractAsync({
@@ -277,7 +197,8 @@ export default function BillingPage() {
                         functionName: "transfer",
                         args: [depositAddress as `0x${string}`, amountUnits],
                       })
-                      setTxHash(hash)
+                      setLastTxHash(hash)
+
                       const res = await submitTopUp({
                         organizationId: orgId,
                         txHash: hash,
@@ -285,27 +206,36 @@ export default function BillingPage() {
                         amountUnit: "usdc",
                       })
                       if (res.ok) {
-                        setSubmitResult(res.alreadyApplied ? "Already credited." : "Credited successfully.")
+                        setSubmitResult(
+                          res.alreadyApplied ? "Already credited." : "Credited successfully."
+                        )
                       } else {
                         setSubmitResult(res.message || "Failed to verify top-up")
                       }
                       setAmount("")
                     } catch (e: unknown) {
-                      const message =
-                        e instanceof Error ? e.message : "Wallet transfer failed"
+                      const message = e instanceof Error ? e.message : "Wallet transfer failed"
                       setSubmitResult(message)
                     } finally {
                       setSubmitting(false)
                     }
                   }}
                 >
-                  Send USDC from connected wallet
+                  {submitting ? "Sending…" : "Send USDC"}
                 </Button>
-              )}
-              <div className="text-xs text-muted-foreground">
-                This sends an on-chain USDC transfer to the platform deposit address, then auto-credits your org after verification.
+
+                {lastTxHash && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground">Transaction</div>
+                    <CopyableField value={lastTxHash} truncate />
+                  </div>
+                )}
+
+                {submitResult && (
+                  <div className="text-sm text-muted-foreground">{submitResult}</div>
+                )}
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <div className="text-sm font-medium">Recent Top-Ups</div>
