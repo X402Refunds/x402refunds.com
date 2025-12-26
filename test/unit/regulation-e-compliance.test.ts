@@ -27,13 +27,27 @@ describe("Regulation E Compliance", () => {
         createdAt: Date.now(),
       });
     });
+
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: testOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
   });
 
   it("should set 10 business day deadline on dispute creation", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "rege_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_rege_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -66,10 +80,13 @@ describe("Regulation E Compliance", () => {
   it("should resolve micro-disputes within 5 minutes (well under 10 business days)", async () => {
     const startTime = Date.now();
 
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "fast_resolve_001",
-      amount: 0.25, // Micro-dispute
-      currency: "USD",
+      transactionHash: "0xmock_fast_resolve_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_fast",
       defendant: "merchant_fast",
@@ -92,10 +109,13 @@ describe("Regulation E Compliance", () => {
   });
 
   it("should track Regulation E compliance status", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "compliance_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_compliance_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_comp",
       defendant: "merchant_comp",
@@ -112,10 +132,13 @@ describe("Regulation E Compliance", () => {
 
   it("should flag disputes approaching Regulation E deadline", async () => {
     // Create dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "approaching_deadline_001",
-      amount: 2.50, // Larger dispute, may need human review
-      currency: "USD",
+      transactionHash: "0xmock_approaching_deadline_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_deadline",
       defendant: "merchant_deadline",
@@ -143,10 +166,13 @@ describe("Regulation E Compliance", () => {
     // Create 10 micro-disputes
     const disputes = [];
     for (let i = 0; i < 10; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `auto_resolve_${i}`,
-        amount: Math.random() * 0.99,
-        currency: "USD",
+        transactionHash: `0xmock_auto_resolve_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 3}`,
@@ -171,10 +197,13 @@ describe("Regulation E Compliance", () => {
     // Regulation E may require provisional credit within 1 business day
     // while investigation continues up to 10 days
 
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "provisional_001",
-      amount: 5.00, // Larger amount may require provisional credit
-      currency: "USD",
+      transactionHash: "0xmock_provisional_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_provisional",
       defendant: "merchant_provisional",
@@ -198,10 +227,13 @@ describe("Regulation E Compliance", () => {
 
   it("should maintain complete investigation records for Regulation E audit", async () => {
     // Create dispute with full evidence trail
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "audit_trail_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_audit_trail_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_audit",
       defendant: "merchant_audit",
@@ -237,10 +269,13 @@ describe("Regulation E Compliance", () => {
     // Some transactions may be exempt from Regulation E
     // (e.g., business-to-business transactions)
 
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "b2b_exempt_001",
-      amount: 50.00, // Larger B2B transaction
-      currency: "USD",
+      transactionHash: "0xmock_b2b_exempt_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "business_customer",
       defendant: "business_merchant",
@@ -268,10 +303,13 @@ describe("Regulation E Compliance", () => {
 
     // Create batch of disputes
     for (let i = 0; i < batchSize; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `batch_compliance_${i}`,
-        amount: Math.random() * 0.99,
-        currency: "USD",
+        transactionHash: `0xmock_batch_compliance_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 10}`,

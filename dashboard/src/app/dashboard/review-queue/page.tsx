@@ -198,12 +198,12 @@ export default function ReviewQueuePage() {
                               e.stopPropagation()
                               if (!currentUser || !dispute.aiRecommendation) return
                               await customerReview({
-                                paymentDisputeId: dispute._id,
+                                paymentDisputeId: dispute._id as unknown as Id<"cases">,
                                 reviewerUserId: currentUser._id,
                                 decision: "APPROVE_AI",
                                 finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                               })
-                              setSuccessDisputeId(dispute._id)
+                              setSuccessDisputeId(dispute._id as unknown as Id<"cases">)
                             }}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />

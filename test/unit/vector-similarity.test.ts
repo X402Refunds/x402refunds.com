@@ -30,13 +30,27 @@ describe("Vector Similarity for Precedent Matching", () => {
         createdAt: Date.now(),
       });
     });
+
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: testOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
   });
 
   it("should store vector embeddings in paymentDisputes table", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "vector_test_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_vector_test_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -64,10 +78,13 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should find semantically similar disputes (when implemented)", async () => {
     // Create first dispute: "API timeout"
-    const dispute1 = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const dispute1 = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "sem_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_sem_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_1",
       defendant: "merchant_1",
@@ -78,10 +95,13 @@ describe("Vector Similarity for Precedent Matching", () => {
     });
 
     // Create second dispute: "Request timeout" (semantically similar)
-    const dispute2 = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const dispute2 = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "sem_002",
-      amount: 0.45,
-      currency: "USD",
+      transactionHash: "0xmock_sem_002",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_2",
       defendant: "merchant_2",
@@ -92,10 +112,13 @@ describe("Vector Similarity for Precedent Matching", () => {
     });
 
     // Create third dispute: "Duplicate charge" (semantically different)
-    const dispute3 = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const dispute3 = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "sem_003",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_sem_003",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_3",
       defendant: "merchant_3",
@@ -121,10 +144,13 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should weight similarity by human confirmation rate", async () => {
     // Create disputes with human confirmation data
-    const confirmedDispute = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const confirmedDispute = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "conf_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_conf_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_1",
       defendant: "merchant_1",
@@ -154,10 +180,13 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should handle novel dispute types without exact precedents", async () => {
     // Create a novel dispute type (no precedents)
-    const novelDispute = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const novelDispute = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "novel_001",
-      amount: 0.75,
-      currency: "USD",
+      transactionHash: "0xmock_novel_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_novel",
       defendant: "merchant_novel",
@@ -180,10 +209,13 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should update vector embeddings when dispute details change", async () => {
     // Create initial dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "update_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_update_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_update",
       defendant: "merchant_update",
@@ -213,10 +245,13 @@ describe("Vector Similarity for Precedent Matching", () => {
     // Create 100 disputes for performance testing
     const disputeIds = [];
     for (let i = 0; i < 100; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `perf_vec_${i}`,
-        amount: Math.random() * 0.99,
-        currency: "USD",
+        transactionHash: `0xmock_perf_vec_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 10}`,
@@ -246,10 +281,13 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should create precedent embeddings from resolved disputes", async () => {
     // Create and resolve dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "precedent_001",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_precedent_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_prec",
       defendant: "merchant_prec",

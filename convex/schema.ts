@@ -268,6 +268,13 @@ export default defineSchema({
     paymentDetails: v.optional(v.object({
       transactionId: v.string(),
       transactionHash: v.optional(v.string()),
+      // REQUIRED for new refund-to-source flows (kept optional for backward compatibility)
+      blockchain: v.optional(v.union(v.literal("base"), v.literal("solana"))),
+      // Canonical payment amount in microusdc (6 decimals). This is verified on-chain.
+      amountMicrousdc: v.optional(v.number()),
+      amountUnit: v.optional(v.union(v.literal("usdc"), v.literal("microusdc"))),
+      // Deterministic selector for the verified transfer within the transaction.
+      sourceTransferLogIndex: v.optional(v.number()),
       disputeReason: v.optional(v.union(
         v.literal("unauthorized"),
         v.literal("service_not_rendered"),
@@ -292,6 +299,9 @@ export default defineSchema({
       // Flat pricing: $0.05 per dispute (no tiers)
       pricingTier: v.optional(v.string()), // DEPRECATED: Kept for backward compat with old data, will be removed
       disputeFee: v.number(),
+      // Fee payment bookkeeping (charged when a dispute becomes org-reviewable)
+      feeChargedAt: v.optional(v.number()),
+      feeChargedMicrousdc: v.optional(v.number()),
       // Party metadata (for customer to identify users in their system)
       plaintiffMetadata: v.optional(v.object({
         email: v.optional(v.string()),
@@ -588,6 +598,19 @@ export default defineSchema({
   // REFUND SYSTEM TABLES (3) - Automated refunds
   // ========================================
 
+  // Organization refund credits (trial / internal credits)
+  orgRefundCredits: defineTable({
+    organizationId: v.id("organizations"),
+    enabled: v.boolean(),
+    trialCreditMicrousdc: v.number(), // e.g. 5 USDC = 5_000_000
+    spentMicrousdc: v.number(),
+    maxPerCaseMicrousdc: v.number(), // e.g. 0.25 USDC = 250_000
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_enabled", ["enabled"]),
+
   // Merchant balance management
   merchantBalances: defineTable({
     walletAddress: v.string(),  // CAIP-10 format: "solana:5eykt:..."
@@ -630,15 +653,35 @@ export default defineSchema({
     txSignature: v.optional(v.string()),  // Solana transaction signature
     status: v.union(
       v.literal("PENDING"),
+      v.literal("PENDING_SEND"),
       v.literal("EXECUTED"),
-      v.literal("FAILED")
+      v.literal("FAILED"),
+      v.literal("INVALID_PROOF"),
+      v.literal("AMBIGUOUS_PROOF"),
+      v.literal("INSUFFICIENT_CREDITS"),
+      v.literal("COINBASE_DISABLED")
     ),
     errorMessage: v.optional(v.string()),
     executedAt: v.optional(v.number()),
     createdAt: v.number(),
+
+    // New refund-to-source / provider fields (optional for backward compatibility)
+    sourceChain: v.optional(v.union(v.literal("base"), v.literal("solana"))),
+    sourceTxHash: v.optional(v.string()),
+    sourceTransferLogIndex: v.optional(v.number()),
+    amountMicrousdc: v.optional(v.number()),
+    refundToAddress: v.optional(v.string()),
+
+    provider: v.optional(v.union(v.literal("coinbase"))),
+    providerTransferId: v.optional(v.string()),
+    refundTxHash: v.optional(v.string()),
+    explorerUrl: v.optional(v.string()),
+    failureCode: v.optional(v.string()),
+    failureReason: v.optional(v.string()),
   })
     .index("by_case", ["caseId"])
     .index("by_status", ["status"])
     .index("by_from_wallet", ["fromWallet"])
-    .index("by_tx_signature", ["txSignature"]),
+    .index("by_tx_signature", ["txSignature"])
+    .index("by_source_triplet", ["sourceChain", "sourceTxHash", "sourceTransferLogIndex"]),
 });

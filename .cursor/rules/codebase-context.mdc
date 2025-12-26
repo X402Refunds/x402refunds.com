@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-24T17:38:23.780Z
+**Auto-generated on**: 2025-12-26T11:17:39.163Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -75,7 +75,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (50 files)
+### Convex Files (53 files)
 - **damageAgent.ts** - damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -87,7 +87,7 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes, analyzeDatabase, deleteAllAgentsExceptOne, deleteMockData, deleteLargeAmountCases, deleteZeroAmountCases, cleanupOrphanedRecords
 - **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -104,17 +104,20 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - queryTransaction, mockQueryTransaction
+- **blockchain.ts** - verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
+- **coinbase.ts** - sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
+- **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
 - **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **notifications.ts** - sendRuling
-- **paymentDisputes.ts** - receivePaymentDispute, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
-- **refunds.ts** - executeAutomatedRefund, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
+- **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
+- **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
+- **refunds.ts** - executeAutomatedRefund, createRefundAttempt, sendPendingRefund, getRefundTransaction, insertRefundFailure, createRefundAttemptRecord, markRefundFailed, rollbackAndFailRefund, markRefundExecuted, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
 - **schema.ts** - Core logic
 - **testing.ts** - cleanupTestData, deleteTestAgentsBatch, deleteTestCasesBatch, runTestCleanup, deleteSpecificCases
@@ -333,7 +336,7 @@ Common HTTP routes exposed:
 - 72 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 50 TypeScript files with serverless functions
+- 53 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -372,5 +375,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/24/2025, 11:08:23 PM
-Files scanned: 371
+Generated: 12/26/2025, 4:47:39 PM
+Files scanned: 374

@@ -82,10 +82,13 @@ describe("Auto-Approve AI Feature", () => {
     });
 
     // Create a micro dispute (< $1)
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "test-tx-123",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_test_tx_123",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       plaintiff: "consumer:test@example.com",
       defendant: "merchant:vendor@example.com",
       disputeReason: "quality_issue",
@@ -118,10 +121,13 @@ describe("Auto-Approve AI Feature", () => {
     });
 
     // Create a micro dispute (< $1) - these get quick decisions with potentially high confidence
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "test-tx-456",
-      amount: 0.75,
-      currency: "USD",
+      transactionHash: "0xmock_test_tx_456",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       plaintiff: "consumer:test2@example.com",
       defendant: "merchant:vendor2@example.com",
       disputeReason: "quality_issue",
@@ -138,7 +144,7 @@ describe("Auto-Approve AI Feature", () => {
     });
     
     expect(caseData?.reviewerOrganizationId).toBe(orgId);
-    expect(caseData?.amount).toBe(0.75);
+    expect(caseData?.amount).toBe(0.25);
     
     // Note: Workflow execution is async and may not complete within test timeframe
     // The important thing is that the organization has autoApproveAI=true set correctly
@@ -160,10 +166,13 @@ describe("Auto-Approve AI Feature", () => {
     });
 
     // Create a dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "test-tx-789",
-      amount: 0.60,
-      currency: "USD",
+      transactionHash: "0xmock_test_tx_789",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       plaintiff: "consumer:test3@example.com",
       defendant: "merchant:vendor3@example.com",
       disputeReason: "quality_issue",
@@ -188,10 +197,13 @@ describe("Auto-Approve AI Feature", () => {
 
   test("disputes without organization remain in review queue", async () => {
     // Create a dispute without reviewerOrganizationId
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "test-tx-no-org",
-      amount: 0.40,
-      currency: "USD",
+      transactionHash: "0xmock_test_tx_no_org",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       plaintiff: "consumer:test4@example.com",
       defendant: "merchant:vendor4@example.com",
       disputeReason: "quality_issue",

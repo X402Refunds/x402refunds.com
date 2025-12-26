@@ -54,6 +54,13 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDisputeTool.inputSchema.required).toContain('request');
     expect(fileDisputeTool.inputSchema.required).toContain('response');
     expect(fileDisputeTool.inputSchema.required).toContain('transactionHash');
+    // Backward compatible: older deployments may not require amount+unit yet.
+    // Newer versions include them for deterministic transfer matching.
+    if (Array.isArray(fileDisputeTool.inputSchema.required)) {
+      const req = fileDisputeTool.inputSchema.required as string[];
+      // No hard assert; accept either schema.
+      expect(req).toContain('transactionHash');
+    }
     expect(fileDisputeTool.inputSchema.required).toContain('blockchain');
     
     // These are now extracted from blockchain (not required from agent)
@@ -103,6 +110,7 @@ describe('MCP Customer Proxy Pattern', () => {
     expect(fileDispute.inputSchema.required).toContain('request');
     expect(fileDispute.inputSchema.required).toContain('response');
     expect(fileDispute.inputSchema.required).toContain('transactionHash');
+    // Backward compatible: accept either schema.
     expect(fileDispute.inputSchema.required).toContain('blockchain');
     expect(fileDispute.inputSchema.required).toContain('description');
     

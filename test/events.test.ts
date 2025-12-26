@@ -443,10 +443,13 @@ describe('Organization Events - Infrastructure Model', () => {
     });
 
     // File a payment dispute with this org as reviewer (Infrastructure Model pattern)
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_org_events_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_org_events_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:alice@example.com", // Not an agent in our system
       defendant: "merchant:shop@example.com", // Not an agent in our system
@@ -553,10 +556,13 @@ describe('Organization Events - Infrastructure Model', () => {
     const agentDisputeId = agentDisputeResult.caseId;
 
     // Type 2: File payment dispute where org is reviewer
-    const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: `txn_multi_${timestamp}`,
-      amount: 10.00,
-      currency: "USD",
+      transactionHash: `0xmock_multi_${timestamp}`,
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:bob@example.com",
       defendant: "merchant:vendor@example.com",
@@ -600,10 +606,13 @@ describe('Organization Events - Infrastructure Model', () => {
     });
 
     // File payment dispute with reviewerOrganizationId (what MCP should do with API key)
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: `txn_mcp_${timestamp}`,
-      amount: 2.50,
-      currency: "USD",
+      transactionHash: `0xmock_mcp_${timestamp}`,
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "consumer:user@example.com",
       defendant: "merchant:vendor@example.com",

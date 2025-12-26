@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
+import { internal } from "./_generated/api";
 
 // Validate Ethereum address format (0x followed by 40 hex characters)
 function isValidEthereumAddress(address: string): boolean {
@@ -747,6 +748,19 @@ export const registerAgentManual = mutation({
       });
 
       console.info(`✅ Manual agent registration successful: ${agentDid}`);
+
+      // 6. Backfill/assign any previously filed disputes against this wallet to this org
+      // Policy: only disputes filed at/after org.createdAt are eligible.
+      // This is the moment disputes become org-reviewable, so we also charge the $0.05 fee and only then trigger AI.
+      try {
+        await ctx.runMutation(internal.cases.assignUnassignedDisputesToOrgForWallet, {
+          organizationId: user.organizationId,
+          walletAddress: normalizedWalletAddress.toLowerCase(),
+        });
+      } catch (e: any) {
+        // Don't fail agent registration if backfill fails; this can be retried.
+        console.warn("Dispute assignment/backfill failed:", e?.message || String(e));
+      }
 
       return {
         success: true,

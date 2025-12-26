@@ -43,11 +43,13 @@ describe('MCP - Tool Definitions', () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toContain('payment dispute');
     
-    // Check for X-402 simplified schema (5 required fields - plaintiff/defendant extracted from blockchain)
+    // Check for X-402 simplified schema (7 required fields - plaintiff/defendant extracted from blockchain)
     expect(tool?.inputSchema.required).toContain('description');
     expect(tool?.inputSchema.required).toContain('request');  // Object
     expect(tool?.inputSchema.required).toContain('response');  // Object
     expect(tool?.inputSchema.required).toContain('transactionHash');
+    expect(tool?.inputSchema.required).toContain('amount');
+    expect(tool?.inputSchema.required).toContain('amountUnit');
     expect(tool?.inputSchema.required).toContain('blockchain');
     
     // Plaintiff/defendant now extracted from blockchain (not required from agent)

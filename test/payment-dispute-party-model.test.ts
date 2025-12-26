@@ -53,16 +53,31 @@ describe("Payment Dispute Three-Party Model", () => {
     const testPublicKey = "dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk";
     stripeApiKey = testPublicKey; // For backwards compatibility in tests
 
+    // Seed org refund credits (required for fee charging + AI gating)
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: stripeOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
+
     console.log("✅ Stripe (payment provider) organization created");
   });
 
   it("should correctly identify plaintiff as consumer (not payment provider)", async () => {
     // Scenario: Alice (Stripe customer) disputes OpenAI charge
 
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_alice_openai_001",
-      amount: 50,
-      currency: "USD",
+      transactionHash: "0xmock_alice_openai_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       // Parties
       plaintiff: "consumer:alice@stripe.com", // Alice (consumer) is plaintiff
@@ -106,10 +121,13 @@ describe("Payment Dispute Three-Party Model", () => {
   });
 
   it("should store party metadata for customer's system mapping", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_bob_anthropic_001",
-      amount: 100,
-      currency: "USD",
+      transactionHash: "0xmock_bob_anthropic_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "consumer:bob@stripe.com",
       defendant: "merchant:anthropic-acct@stripe.com",
@@ -138,7 +156,8 @@ describe("Payment Dispute Three-Party Model", () => {
     expect(dispute.plaintiffMetadata?.email).toBe("bob@company.com");
     expect(dispute.plaintiffMetadata?.name).toBe("Bob Johnson");
     expect(dispute.plaintiffMetadata?.customerId).toBe("cus_stripe_bob456");
-    expect(dispute.plaintiffMetadata?.walletAddress).toBe("0xbob123");
+    // Wallet address is normalized from on-chain verification (refund-to-source), overriding caller-provided walletAddress.
+    expect(dispute.plaintiffMetadata?.walletAddress).toBe("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
 
     // Verify defendant metadata (merchant)
     expect(dispute.defendantMetadata).toBeDefined();
@@ -153,10 +172,13 @@ describe("Payment Dispute Three-Party Model", () => {
     // This test verifies that when Stripe files a dispute,
     // the reviewerOrganizationId is set to Stripe's org
 
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_auto_detect_001",
-      amount: 25,
-      currency: "USD",
+      transactionHash: "0xmock_auto_detect_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:carol@stripe.com",
       defendant: "merchant:vendor@stripe.com",
@@ -193,10 +215,13 @@ describe("Payment Dispute Three-Party Model", () => {
     ];
 
     for (const testCase of testCases) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `txn_${Math.random().toString(36).substring(7)}`,
-        amount: 10,
-        currency: "USD",
+        transactionHash: `0xmock_${Math.random().toString(36).substring(7)}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: testCase.plaintiff,
         defendant: testCase.defendant,
@@ -217,10 +242,13 @@ describe("Payment Dispute Three-Party Model", () => {
   });
 
   it("should clarify who makes final decision (payment provider)", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_decision_maker_001",
-      amount: 75,
-      currency: "USD",
+      transactionHash: "0xmock_decision_maker_001",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:dave@stripe.com",
       defendant: "merchant:vendor@stripe.com",

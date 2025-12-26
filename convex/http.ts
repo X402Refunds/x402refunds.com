@@ -153,7 +153,7 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const { mcpDiscovery } = await import("./mcp");
-    return mcpDiscovery(ctx, request);
+    return await (mcpDiscovery as any)(ctx, request);
   })
 });
 
@@ -163,7 +163,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const { mcpInvoke } = await import("./mcp");
-    return mcpInvoke(ctx, request);
+    return await (mcpInvoke as any)(ctx, request);
   })
 });
 
@@ -317,13 +317,14 @@ http.route({
                 // Validate required fields - plaintiff/defendant are extracted from blockchain
                 if (!parameters.description || 
                     !parameters.request || !parameters.response || 
-                    !parameters.transactionHash || !parameters.blockchain) {
+                    !parameters.transactionHash || !parameters.blockchain ||
+                    parameters.amount === undefined || !parameters.amountUnit) {
                   invokeData = {
                     success: false,
                     error: {
                       code: "MISSING_REQUIRED_FIELDS",
                       message: "Missing required fields for dispute filing",
-                      required: ["description", "request", "response", "transactionHash", "blockchain"]
+                      required: ["description", "request", "response", "transactionHash", "blockchain", "amount", "amountUnit"]
                     }
                   };
                   break;
@@ -346,48 +347,58 @@ http.route({
                   break;
                 }
                 
-                // Query blockchain to extract USDC transaction details (plaintiff, defendant, amount)
-                // Blockchain is the source of truth - validates USDC transfer
-                console.log(`🔍 Querying ${parameters.blockchain} blockchain for USDC transfer: ${parameters.transactionHash}`);
-                const txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
-                  blockchain: parameters.blockchain,
-                  transactionHash: parameters.transactionHash
-                });
-                
-                if (!txDetails || !txDetails.success) {
+                // Deterministic verification: agent provides amount+unit, we verify tx contains exactly that USDC transfer.
+                const { parseUsdcAmountToMicros, formatMicrosToUsdc } = await import("./lib/usdc");
+                const parsed = parseUsdcAmountToMicros(parameters.amount, parameters.amountUnit);
+                if (!parsed.ok) {
                   invokeData = {
                     success: false,
                     error: {
-                      code: "TRANSACTION_NOT_FOUND",
-                      message: `Transaction not found on ${parameters.blockchain}`,
-                      details: (txDetails && 'error' in txDetails) ? txDetails.error : "Unknown error"
+                      code: "INVALID_AMOUNT",
+                      message: parsed.message,
+                      details: parsed.code,
                     }
                   };
                   break;
                 }
-                
-                // Extract plaintiff and defendant from blockchain transaction
-                const txData = txDetails as any;
-                const plaintiff = txData.fromAddress || "";  // Extracted from blockchain tx.from
-                const defendant = txData.toAddress || "";    // Extracted from blockchain tx.to
-                const txAmountUsd = txData.amountUsd || parseFloat(txData.value || "0");
-                
-                console.log(`✅ Transaction details extracted from blockchain:`);
-                console.log(`   Plaintiff (buyer): ${plaintiff}`);
-                console.log(`   Defendant (seller): ${defendant}`);
-                console.log(`   Amount: ${txAmountUsd} ${txData.currency || "USD"}`);
+
+                console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by amount: ${parameters.transactionHash}`);
+                const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+                  blockchain: parameters.blockchain,
+                  transactionHash: parameters.transactionHash,
+                  expectedAmountMicrousdc: parsed.microusdc,
+                });
+
+                if (!verify.ok) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "TRANSACTION_VERIFICATION_FAILED",
+                      message: verify.message,
+                      details: verify.code,
+                    }
+                  };
+                  break;
+                }
+
+                const plaintiff = verify.payerAddress;
+                const defendant = verify.recipientAddress;
+                const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
                 
                 // Build payment dispute args
                 const paymentDisputeArgs: any = {
                   transactionId: parameters.transactionHash,
                   amount: txAmountUsd,
-                  currency: txData.currency || "USD",
+                  currency: "USDC",
                   plaintiff: plaintiff,  // From blockchain
                   defendant: defendant,  // From blockchain
                   disputeReason: "quality_issue",
                   description: parameters.description,
                   evidenceUrls: [],
                   callbackUrl: parameters.callbackUrl,
+                  transactionHash: parameters.transactionHash,
+                  blockchain: parameters.blockchain,
+                  amountUnit: parameters.amountUnit,
                   plaintiffMetadata: { 
                     walletAddress: plaintiff,
                     requestJson: JSON.stringify(parameters.request)
@@ -408,7 +419,7 @@ http.route({
                 }
                 
                 // File the dispute
-                const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
+                const result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
                 
                 invokeData = {
                   success: true,
@@ -429,8 +440,8 @@ http.route({
                       plaintiff: `${plaintiff} (extracted from blockchain)`,
                       defendant: `${defendant} (extracted from blockchain)`,
                       amount: txAmountUsd,
-                      currency: txData.currency || "USD",
-                      blockNumber: txData.blockNumber
+                      currency: "USDC",
+                      logIndex: verify.logIndex
                     }
                   },
                   
@@ -1142,7 +1153,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
   const body = await request.json();
 
   // Validate required fields
-  const requiredFields = ["transactionId", "amount", "currency", "plaintiff", "defendant", "disputeReason"];
+  const requiredFields = ["transactionId", "transactionHash", "blockchain", "amount", "amountUnit", "currency", "plaintiff", "defendant", "disputeReason"];
   for (const field of requiredFields) {
     if (!body[field]) {
       return new Response(JSON.stringify({
@@ -1173,10 +1184,12 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
   }
 
   // Create payment dispute (organizationId auto-injected)
-  const result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, {
+  const result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, {
     transactionId: body.transactionId,
     transactionHash: body.transactionHash,
+    blockchain: body.blockchain,
     amount: body.amount,
+    amountUnit: body.amountUnit,
     currency: body.currency,
     plaintiff: body.plaintiff,
     defendant: body.defendant,
@@ -1363,22 +1376,12 @@ http.route({
         });
       }
       
-      // Claim the agent
-      // TODO: claimAgent mutation doesn't exist - this endpoint needs implementation
-      // @ts-expect-error - claimAgent mutation not implemented yet
-      const result = await ctx.runMutation(api.agents.claimAgent, {
-        walletAddress,
-        signature,
-        message,
-        organizationId: organizationId as any,
-        userId: userId as any,
-      });
-      
+      // Claiming is not implemented yet (no claimAgent mutation).
       return new Response(JSON.stringify({
-        success: true,
-        ...result,
-        message: "Agent claimed successfully"
+        success: false,
+        error: "Not implemented",
       }), {
+        status: 501,
         headers: corsHeaders,
       });
       
@@ -2326,7 +2329,7 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const { imageGeneratorGetHandler } = await import("./demoAgents");
-    return imageGeneratorGetHandler(ctx, request);
+    return await (imageGeneratorGetHandler as any)(ctx, request);
   })
 });
 
@@ -2336,7 +2339,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const { imageGeneratorHandler } = await import("./demoAgents");
-    return imageGeneratorHandler(ctx, request);
+    return await (imageGeneratorHandler as any)(ctx, request);
   })
 });
 

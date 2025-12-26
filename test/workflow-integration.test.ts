@@ -103,10 +103,13 @@ describe('Workflow Integration', () => {
   it('should trigger micro dispute workflow for <$1 payment disputes', async () => {
     // Payment disputes should use receivePaymentDispute, not fileDispute
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: `txn_micro_${timestamp}`,
-      amount: 0.50, // < $1, should trigger micro workflow
-      currency: 'USD',
+      transactionHash: `0xmock_micro_${timestamp}`,
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: 'USDC',
       paymentProtocol: 'ACP',
       plaintiff: `consumer:test-${timestamp}@example.com`,
       defendant: `merchant:test-${timestamp}@example.com`,
@@ -134,10 +137,13 @@ describe('Workflow Integration', () => {
   it('should trigger payment dispute workflow for >=$1 payment disputes', async () => {
     // Payment disputes should use receivePaymentDispute, not fileDispute
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: `txn_standard_${timestamp}`,
-      amount: 25.00, // >= $1, should trigger full payment workflow
-      currency: 'USD',
+      transactionHash: `0xmock_standard_${timestamp}`,
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: 'USDC',
       paymentProtocol: 'ACP',
       plaintiff: `consumer:test-${timestamp}@example.com`,
       defendant: `merchant:test-${timestamp}@example.com`,
@@ -185,10 +191,13 @@ describe('Workflow Integration', () => {
   it('should set retention policy based on dispute type', async () => {
     // Payment dispute - should have payment retention policy
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: `txn_retention_${timestamp}`,
-      amount: 5.00,
-      currency: 'USD',
+      transactionHash: `0xmock_retention_${timestamp}`,
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: 'USDC',
       paymentProtocol: 'ACP',
       plaintiff: `consumer:test-${timestamp}@example.com`,
       defendant: `merchant:test-${timestamp}@example.com`,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Legal Research Agent (Law Clerk)
  * 

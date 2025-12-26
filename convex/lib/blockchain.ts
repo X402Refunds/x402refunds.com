@@ -7,6 +7,7 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
+import { formatMicrosToUsdc } from "./usdc";
 
 /**
  * Supported blockchains and USDC contract addresses
@@ -28,6 +29,87 @@ const RPC_ENDPOINTS = {
   base: "https://base-mainnet.g.alchemy.com/v2",
   solana: "https://api.mainnet-beta.solana.com"
 } as const;
+
+/**
+ * Deterministically verify a USDC transfer by expected microusdc amount and return the payer + logIndex.
+ * This is used for refund-to-source flows (refund destination = payer).
+ */
+export const verifyUsdcTransferByAmount = action({
+  args: {
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
+    transactionHash: v.string(),
+    expectedAmountMicrousdc: v.number(), // integer microusdc
+    expectedToAddress: v.optional(v.string()), // optional extra disambiguation
+  },
+  handler: async (_ctx, args): Promise<
+    | {
+        ok: true;
+        blockchain: "base" | "solana";
+        transactionHash: string;
+        payerAddress: string;
+        recipientAddress: string;
+        amountMicrousdc: number;
+        amountUsdc: string;
+        logIndex: number;
+      }
+    | {
+        ok: false;
+        blockchain: "base" | "solana";
+        transactionHash: string;
+        code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NOT_CONFIGURED" | "UNSUPPORTED";
+        message: string;
+      }
+  > => {
+    const expected = args.expectedAmountMicrousdc;
+    if (!Number.isSafeInteger(expected) || expected <= 0) {
+      return {
+        ok: false,
+        blockchain: args.blockchain,
+        transactionHash: args.transactionHash,
+        code: "UNSUPPORTED",
+        message: "expectedAmountMicrousdc must be a positive safe integer",
+      };
+    }
+
+    const mockMode =
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST === "true" ||
+      process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+
+    if (mockMode) {
+      // In mock mode, assume the claimed amount matches deterministically.
+      return {
+        ok: true,
+        blockchain: args.blockchain,
+        transactionHash: args.transactionHash,
+        payerAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+        recipientAddress: (args.expectedToAddress || "0x9876543210987654321098765432109876543210").toLowerCase(),
+        amountMicrousdc: expected,
+        amountUsdc: formatMicrosToUsdc(expected),
+        logIndex: 0,
+      };
+    }
+
+    if (args.blockchain === "solana") {
+      return await querySolanaUsdcTransferByAmount(args.transactionHash, expected);
+    }
+
+    // Base uses Alchemy JSON-RPC (EVM-compatible)
+    const alchemyKey = process.env.ALCHEMY_API_KEY;
+    if (!alchemyKey) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: args.transactionHash,
+        code: "NOT_CONFIGURED",
+        message: "ALCHEMY_API_KEY is not configured (required to verify Base tx hashes)",
+      };
+    }
+    return await queryBaseUsdcTransferByAmount(args.transactionHash, alchemyKey, expected, {
+      expectedToAddress: args.expectedToAddress,
+    });
+  },
+});
 
 /**
  * Query USDC transaction details from blockchain
@@ -306,6 +388,276 @@ async function queryBaseUsdcTransaction(
   console.log(`   Amount: ${usdcAmount} USDC = $${amountUsd.toFixed(2)} USD`);
   
   return result;
+}
+
+async function queryBaseUsdcTransferByAmount(
+  transactionHash: string,
+  alchemyKey: string,
+  expectedAmountMicrousdc: number,
+  opts?: { expectedToAddress?: string },
+): Promise<
+  | {
+      ok: true;
+      blockchain: "base";
+      transactionHash: string;
+      payerAddress: string;
+      recipientAddress: string;
+      amountMicrousdc: number;
+      amountUsdc: string;
+      logIndex: number;
+    }
+  | {
+      ok: false;
+      blockchain: "base";
+      transactionHash: string;
+      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH";
+      message: string;
+    }
+> {
+  const rpcUrl = `${RPC_ENDPOINTS.base}/${alchemyKey}`;
+
+  const txResp = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      id: 1,
+      jsonrpc: "2.0",
+      method: "eth_getTransactionByHash",
+      params: [transactionHash],
+    }),
+  });
+  const txData = await txResp.json();
+  if (txData.error || !txData.result) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "TX_NOT_FOUND",
+      message: txData.error?.message || "Transaction not found",
+    };
+  }
+
+  const tx = txData.result;
+  const toAddress = (tx.to || "").toLowerCase();
+  const expectedUsdcAddress = USDC_CONTRACTS.base.toLowerCase();
+  if (toAddress !== expectedUsdcAddress) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "NOT_USDC",
+      message: `Transaction is not a USDC transfer (expected to ${USDC_CONTRACTS.base}, got ${tx.to})`,
+    };
+  }
+
+  const receiptResp = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      id: 2,
+      jsonrpc: "2.0",
+      method: "eth_getTransactionReceipt",
+      params: [transactionHash],
+    }),
+  });
+  const receiptData = await receiptResp.json();
+  if (receiptData.error || !receiptData.result) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "TX_NOT_FOUND",
+      message: receiptData.error?.message || "Transaction receipt not found",
+    };
+  }
+
+  const receipt = receiptData.result;
+  const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
+  const TRANSFER_TOPIC0 =
+    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+  const usdcLogs = logs.filter((log) => {
+    const addr = String(log?.address || "").toLowerCase();
+    const topics = Array.isArray(log?.topics) ? log.topics : [];
+    return (
+      addr === expectedUsdcAddress &&
+      topics.length >= 3 &&
+      String(topics[0] || "").toLowerCase() === TRANSFER_TOPIC0
+    );
+  });
+
+  // Filter by amount.
+  const amountMatches = usdcLogs.filter((log) => {
+    const dataHex = String(log?.data || "0x0");
+    try {
+      const amountRaw = BigInt(dataHex);
+      return amountRaw === BigInt(expectedAmountMicrousdc);
+    } catch {
+      return false;
+    }
+  });
+
+  const expectedTo = opts?.expectedToAddress ? opts.expectedToAddress.toLowerCase() : null;
+  const filteredByTo = expectedTo
+    ? amountMatches.filter((log) => {
+        const toTopic = String(log.topics?.[2] || "");
+        const to = ("0x" + toTopic.slice(-40)).toLowerCase();
+        return to === expectedTo;
+      })
+    : amountMatches;
+
+  if (filteredByTo.length === 0) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "NO_MATCH",
+      message: `No USDC Transfer matched expected amount ${expectedAmountMicrousdc} microusdc`,
+    };
+  }
+  if (filteredByTo.length > 1) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "MULTI_MATCH",
+      message: `Multiple USDC Transfers matched expected amount ${expectedAmountMicrousdc} microusdc`,
+    };
+  }
+
+  const match = filteredByTo[0];
+  const fromTopic = String(match.topics?.[1] || "");
+  const toTopic = String(match.topics?.[2] || "");
+  const payer = ("0x" + fromTopic.slice(-40)).toLowerCase();
+  const recipient = ("0x" + toTopic.slice(-40)).toLowerCase();
+
+  const logIndexHex = String(match.logIndex || "0x0");
+  const logIndex =
+    typeof match.logIndex === "string" && match.logIndex.startsWith("0x")
+      ? parseInt(match.logIndex, 16)
+      : Number.isFinite(Number(match.logIndex))
+        ? Number(match.logIndex)
+        : parseInt(logIndexHex, 16) || 0;
+
+  return {
+    ok: true,
+    blockchain: "base",
+    transactionHash,
+    payerAddress: payer,
+    recipientAddress: recipient,
+    amountMicrousdc: expectedAmountMicrousdc,
+    amountUsdc: formatMicrosToUsdc(expectedAmountMicrousdc),
+    logIndex,
+  };
+}
+
+async function querySolanaUsdcTransferByAmount(
+  signature: string,
+  expectedAmountMicrousdc: number,
+): Promise<
+  | {
+      ok: true;
+      blockchain: "solana";
+      transactionHash: string;
+      payerAddress: string;
+      recipientAddress: string;
+      amountMicrousdc: number;
+      amountUsdc: string;
+      logIndex: number;
+    }
+  | {
+      ok: false;
+      blockchain: "solana";
+      transactionHash: string;
+      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "UNSUPPORTED";
+      message: string;
+    }
+> {
+  const resp = await fetch(RPC_ENDPOINTS.solana, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTransaction",
+      params: [
+        signature,
+        {
+          encoding: "jsonParsed",
+          maxSupportedTransactionVersion: 0,
+        },
+      ],
+    }),
+  });
+  const data = await resp.json();
+  if (data.error || !data.result) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "TX_NOT_FOUND",
+      message: data.error?.message || "Transaction not found",
+    };
+  }
+
+  const instructions = data.result.transaction?.message?.instructions || [];
+  const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
+
+  for (let i = 0; i < instructions.length; i++) {
+    const ix = instructions[i];
+    if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
+    const info = ix.parsed?.info;
+    if (!info) continue;
+    if (info?.mint !== USDC_CONTRACTS.solana) continue;
+
+    const amountStr = info.amount || info.tokenAmount?.amount;
+    const decimals = info.decimals || info.tokenAmount?.decimals || 6;
+    if (decimals !== 6) continue;
+    try {
+      const amountRaw = BigInt(String(amountStr));
+      if (amountRaw === BigInt(expectedAmountMicrousdc)) {
+        matches.push({
+          ixIndex: i,
+          from: (info.source || info.authority || "").toString(),
+          to: (info.destination || "").toString(),
+          amountRaw,
+        });
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  if (matches.length === 0) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "NO_MATCH",
+      message: `No USDC transfer matched expected amount ${expectedAmountMicrousdc} microusdc`,
+    };
+  }
+  if (matches.length > 1) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "MULTI_MATCH",
+      message: `Multiple USDC transfers matched expected amount ${expectedAmountMicrousdc} microusdc`,
+    };
+  }
+
+  const match = matches[0];
+  return {
+    ok: true,
+    blockchain: "solana",
+    transactionHash: signature,
+    payerAddress: match.from,
+    recipientAddress: match.to,
+    amountMicrousdc: expectedAmountMicrousdc,
+    amountUsdc: formatMicrosToUsdc(expectedAmountMicrousdc),
+    logIndex: match.ixIndex,
+  };
 }
 
 /**

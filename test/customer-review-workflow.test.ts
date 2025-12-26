@@ -59,14 +59,29 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     });
     
     testApiKey = key;
+
+    // Seed org refund credits (required for fee charging + AI gating)
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: testOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
   });
 
   it("should route low-confidence disputes to customer review queue", async () => {
     // Generate dispute with low confidence (needs human review)
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_low_conf_001",
-      amount: 5.00, // Above $1 threshold → needs review
-      currency: "USD",
+      transactionHash: "0xmock_low_conf_001",
+      blockchain: "base",
+      amount: "5.00",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_wallet_abc",
       defendant: "merchant_agent_xyz",
@@ -92,10 +107,13 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should allow customer to approve AI recommendation", async () => {
     // Create dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_approve_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_approve_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -130,10 +148,13 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should allow customer to override AI recommendation", async () => {
     // Create dispute where AI will recommend CONSUMER_WINS
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_override_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_override_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -169,10 +190,13 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should prevent unauthorized users from reviewing other organization's disputes", async () => {
     // Create dispute for Org A
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_auth_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_auth_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -218,13 +242,16 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
     // Generate 100 disputes
     for (let i = 0; i < 100; i++) {
-      const amount = Math.random() < 0.9 ? 0.50 : 5.00; // 90% micro, 10% large
+      const amount = Math.random() < 0.9 ? 0.05 : 0.25;
       const reasons = ["api_timeout", "service_not_rendered", "quality_issue"] as const;
 
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `txn_batch_${i}`,
+        transactionHash: `0xmock_batch_${i}`,
+        blockchain: "base",
         amount,
-        currency: "USD",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ATXP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 5}`,
@@ -246,10 +273,13 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should maintain ADP custody chain after customer review", async () => {
     // Create and review dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_custody_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_custody_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -288,10 +318,13 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should create ADP-compliant ruling format", async () => {
     // Create and review dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_ruling_test",
-      amount: 5.00,
-      currency: "USD",
+      transactionHash: "0xmock_ruling_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",

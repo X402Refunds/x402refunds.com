@@ -48,6 +48,8 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
         body: { error: "Internal Server Error" }
       },
       transactionHash: `0x${timestamp}abc123`,
+      amount: "0.25",
+      amountUnit: "usdc",
       blockchain: "base"
     });
     
@@ -69,12 +71,14 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     }
   });
 
-  it('should validate blockchain enum (only ethereum, base, solana)', async () => {
+  it('should validate blockchain enum (only base, solana)', async () => {
     const { data } = await invokeMcpTool('x402_file_dispute', {
       description: "Testing blockchain validation",
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123",
+      amount: "0.25",
+      amountUnit: "usdc",
       blockchain: "polygon" // ❌ Invalid - not supported
     });
     
@@ -84,7 +88,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       expect(data.error.field).toBe('blockchain');
     }
     if (data.error.suggestion) {
-      expect(data.error.suggestion).toContain('Ethereum');
+      expect(data.error.suggestion).toContain('Base');
     }
     
     console.log("✅ Address validation works:", data.error.message);
@@ -99,7 +103,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     expect(data.error).toBeDefined();
     
     // Should fail with missing required field error
-    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_AMOUNT', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
     
     console.log("✅ Required field validation works:", data.error.code);
   });
@@ -110,6 +114,8 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123def456",
+      amount: "0.25",
+      amountUnit: "usdc",
       blockchain: "base",
       dryRun: true  // ← Validation only
     });

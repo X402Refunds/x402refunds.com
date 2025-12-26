@@ -26,13 +26,28 @@ describe("ADP Compliance - Payment Disputes", () => {
         createdAt: Date.now(),
       });
     });
+
+    // Seed org refund credits (required for fee charging + AI gating)
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: testOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
   });
 
   it("should generate SHA-256 hashes for evidence (ADP Evidence Message)", async () => {
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_sha256_test",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_sha256_test",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -74,10 +89,13 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should maintain custody chain with sequenceNumber and previousEventHash", async () => {
     // Create dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_custody_chain",
-      amount: 0.75,
-      currency: "USD",
+      transactionHash: "0xmock_custody_chain",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -124,10 +142,13 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should create rulings in ADP Award Message format", async () => {
     // Create micro-dispute (auto-resolves)
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_award_format",
-      amount: 0.25,
-      currency: "USD",
+      transactionHash: "0xmock_award_format",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",
@@ -169,10 +190,13 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should verify complete custody chain integrity", async () => {
     // Create and process dispute
-    const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
       transactionId: "txn_chain_integrity",
-      amount: 0.50,
-      currency: "USD",
+      transactionHash: "0xmock_chain_integrity",
+      blockchain: "base",
+      amount: "0.25",
+      amountUnit: "usdc",
+      currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "customer_abc",
       defendant: "merchant_xyz",

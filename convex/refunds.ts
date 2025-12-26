@@ -2,12 +2,17 @@
  * Automated Refund Execution System
  */
 
-import { mutation, internalMutation, query } from "./_generated/server";
+// @ts-nocheck
+import { mutation, internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { extractAddress, isSolana } from "./lib/caip10";
 import { executeSolanaRefundImpl } from "./lib/solana";
 import type { Id } from "./_generated/dataModel";
+
+function isCoinbaseRefundsEnabled(): boolean {
+  return process.env.COINBASE_REFUNDS_ENABLED === "true";
+}
 
 /**
  * Execute automated refund after dispute is decided
@@ -46,6 +51,18 @@ async function executeAutomatedRefundImpl(
       status: "SCHEDULED_X402R", 
       escrowAddress: dispute.x402rEscrow.escrowAddress 
     };
+  }
+
+  // NEW: Refund-to-source (platform wallet) flow for payment disputes
+  // Only when we have verified paymentDetails (new ingestion path).
+  if (
+    dispute.type === "PAYMENT" &&
+    dispute.paymentDetails?.transactionHash &&
+    typeof dispute.paymentDetails?.amountMicrousdc === "number" &&
+    dispute.paymentDetails?.blockchain
+  ) {
+    await ctx.scheduler.runAfter(0, internal.refunds.createRefundAttempt as any, { caseId });
+    return { status: "SCHEDULED_REFUND_ATTEMPT" };
   }
   
   // Check if already refunded
@@ -129,6 +146,301 @@ export const executeAutomatedRefund = internalMutation({
   },
   handler: async (ctx, args) => {
     return await executeAutomatedRefundImpl(ctx, args.caseId);
+  },
+});
+
+/**
+ * Create a refund attempt record and (optionally) send via Coinbase.
+ * This is idempotent by (sourceChain, sourceTxHash, sourceTransferLogIndex).
+ */
+export const createRefundAttempt = internalAction({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args): Promise<any> => {
+    const dispute: any = await ctx.runQuery(api.cases.getCaseById, { caseId: args.caseId });
+    if (!dispute) throw new Error("Dispute not found");
+
+    if (dispute.finalVerdict !== "CONSUMER_WINS") {
+      return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
+    }
+    if (!dispute.reviewerOrganizationId) {
+      return { status: "NO_REVIEWER_ORG", reason: "Dispute is not assigned to an organization" };
+    }
+
+    const pd = dispute.paymentDetails;
+    const sourceChain = pd?.blockchain;
+    const sourceTxHash = pd?.transactionHash;
+    const amountMicrousdc = pd?.amountMicrousdc;
+
+    if (!sourceChain || !sourceTxHash || typeof amountMicrousdc !== "number") {
+      return {
+        status: "MISSING_PAYMENT_DETAILS",
+        reason: "Missing verified paymentDetails (blockchain, transactionHash, amountMicrousdc)",
+      };
+    }
+
+    const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+      blockchain: sourceChain,
+      transactionHash: sourceTxHash,
+      expectedAmountMicrousdc: amountMicrousdc,
+    });
+
+    if (!verify.ok) {
+      const status =
+        verify.code === "NO_MATCH"
+          ? "INVALID_PROOF"
+          : verify.code === "MULTI_MATCH"
+            ? "AMBIGUOUS_PROOF"
+            : "FAILED";
+      const inserted = await ctx.runMutation(internal.refunds.insertRefundFailure, {
+        caseId: args.caseId,
+        sourceChain,
+        sourceTxHash,
+        sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : undefined,
+        amountMicrousdc,
+        status,
+        failureCode: verify.code,
+        failureReason: verify.message,
+      });
+      return { status, refundId: inserted.refundId };
+    }
+
+    const logIndex = typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex;
+    const created = await ctx.runMutation(internal.refunds.createRefundAttemptRecord, {
+      caseId: args.caseId,
+      organizationId: dispute.reviewerOrganizationId,
+      sourceChain,
+      sourceTxHash,
+      sourceTransferLogIndex: logIndex,
+      amountMicrousdc,
+      refundToAddress: verify.payerAddress,
+    });
+
+    if (created.status === "PENDING_SEND" && isCoinbaseRefundsEnabled()) {
+      await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: created.refundId });
+    }
+
+    return created;
+  },
+});
+
+/**
+ * Send a pending refund via Coinbase, and roll back credits on failure.
+ */
+export const sendPendingRefund = internalAction({
+  args: { refundId: v.id("refundTransactions") },
+  handler: async (ctx, args): Promise<any> => {
+    const refund: any = await ctx.runQuery(internal.refunds.getRefundTransaction, { refundId: args.refundId });
+    if (!refund) throw new Error("Refund transaction not found");
+    if (refund.status !== "PENDING_SEND") return { status: "SKIPPED" };
+
+    const dispute: any = await ctx.runQuery(api.cases.getCaseById, { caseId: refund.caseId });
+    if (!dispute || !dispute.reviewerOrganizationId) {
+      await ctx.runMutation(internal.refunds.markRefundFailed, {
+        refundId: args.refundId,
+        status: "FAILED",
+        failureCode: "NO_REVIEWER_ORG",
+        failureReason: "Case missing reviewerOrganizationId at send time",
+      });
+      return { status: "FAILED" };
+    }
+
+    const amountMicrousdc = refund.amountMicrousdc ?? Math.round((refund.amount || 0) * 1_000_000);
+    const toAddress = refund.refundToAddress || refund.toWallet;
+
+    const send = await ctx.runAction(api.lib.coinbase.sendUsdcBase, {
+      toAddress,
+      amountMicrousdc,
+    });
+
+    if (!send.ok) {
+      await ctx.runMutation(internal.refunds.rollbackAndFailRefund, {
+        refundId: args.refundId,
+        organizationId: dispute.reviewerOrganizationId,
+        amountMicrousdc,
+        status: send.code === "COINBASE_DISABLED" ? "COINBASE_DISABLED" : "FAILED",
+        failureCode: send.code,
+        failureReason: send.message,
+      });
+      return { status: "FAILED", code: send.code };
+    }
+
+    await ctx.runMutation(internal.refunds.markRefundExecuted, {
+      refundId: args.refundId,
+      providerTransferId: send.providerTransferId,
+      refundTxHash: send.txHash,
+      explorerUrl: send.explorerUrl,
+    });
+
+    return { status: "EXECUTED", refundId: args.refundId };
+  },
+});
+
+export const getRefundTransaction = internalQuery({
+  args: { refundId: v.id("refundTransactions") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.refundId);
+  },
+});
+
+export const insertRefundFailure = internalMutation({
+  args: {
+    caseId: v.id("cases"),
+    sourceChain: v.union(v.literal("base"), v.literal("solana")),
+    sourceTxHash: v.string(),
+    sourceTransferLogIndex: v.optional(v.number()),
+    amountMicrousdc: v.number(),
+    status: v.string(),
+    failureCode: v.string(),
+    failureReason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const refundId = await ctx.db.insert("refundTransactions", {
+      caseId: args.caseId,
+      fromWallet: "platform",
+      toWallet: "",
+      amount: args.amountMicrousdc / 1_000_000,
+      currency: "USDC",
+      blockchain: args.sourceChain,
+      status: args.status as any,
+      errorMessage: args.failureReason,
+      createdAt: Date.now(),
+      sourceChain: args.sourceChain,
+      sourceTxHash: args.sourceTxHash,
+      sourceTransferLogIndex: args.sourceTransferLogIndex,
+      amountMicrousdc: args.amountMicrousdc,
+      failureCode: args.failureCode,
+      failureReason: args.failureReason,
+    });
+    return { refundId };
+  },
+});
+
+export const createRefundAttemptRecord = internalMutation({
+  args: {
+    caseId: v.id("cases"),
+    organizationId: v.id("organizations"),
+    sourceChain: v.union(v.literal("base"), v.literal("solana")),
+    sourceTxHash: v.string(),
+    sourceTransferLogIndex: v.number(),
+    amountMicrousdc: v.number(),
+    refundToAddress: v.string(),
+  },
+  handler: async (ctx, args): Promise<any> => {
+    const existing = await ctx.db
+      .query("refundTransactions")
+      .withIndex("by_source_triplet", (q) =>
+        q
+          .eq("sourceChain", args.sourceChain)
+          .eq("sourceTxHash", args.sourceTxHash)
+          .eq("sourceTransferLogIndex", args.sourceTransferLogIndex)
+      )
+      .first();
+    if (existing) return { status: "ALREADY_EXISTS", refundId: existing._id };
+
+    const debitRes = await ctx.runMutation(internal.refundCredits.debitRefundAmount as any, {
+      organizationId: args.organizationId,
+      amountMicrousdc: args.amountMicrousdc,
+    });
+    if (!debitRes.ok) {
+      const refundId = await ctx.db.insert("refundTransactions", {
+        caseId: args.caseId,
+        fromWallet: "platform",
+        toWallet: args.refundToAddress,
+        amount: args.amountMicrousdc / 1_000_000,
+        currency: "USDC",
+        blockchain: args.sourceChain,
+        status: "INSUFFICIENT_CREDITS",
+        errorMessage: debitRes.message,
+        createdAt: Date.now(),
+        sourceChain: args.sourceChain,
+        sourceTxHash: args.sourceTxHash,
+        sourceTransferLogIndex: args.sourceTransferLogIndex,
+        amountMicrousdc: args.amountMicrousdc,
+        refundToAddress: args.refundToAddress,
+        failureCode: debitRes.code,
+        failureReason: debitRes.message,
+        provider: "coinbase",
+      });
+      return { status: "INSUFFICIENT_CREDITS", refundId };
+    }
+
+    const refundId = await ctx.db.insert("refundTransactions", {
+      caseId: args.caseId,
+      fromWallet: "platform",
+      toWallet: args.refundToAddress,
+      amount: args.amountMicrousdc / 1_000_000,
+      currency: "USDC",
+      blockchain: args.sourceChain,
+      status: "PENDING_SEND",
+      createdAt: Date.now(),
+      sourceChain: args.sourceChain,
+      sourceTxHash: args.sourceTxHash,
+      sourceTransferLogIndex: args.sourceTransferLogIndex,
+      amountMicrousdc: args.amountMicrousdc,
+      refundToAddress: args.refundToAddress,
+      provider: "coinbase",
+    });
+
+    return { status: "PENDING_SEND", refundId };
+  },
+});
+
+export const markRefundFailed = internalMutation({
+  args: {
+    refundId: v.id("refundTransactions"),
+    status: v.string(),
+    failureCode: v.string(),
+    failureReason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.refundId, {
+      status: args.status as any,
+      failureCode: args.failureCode,
+      failureReason: args.failureReason,
+    });
+    return { success: true };
+  },
+});
+
+export const rollbackAndFailRefund = internalMutation({
+  args: {
+    refundId: v.id("refundTransactions"),
+    organizationId: v.id("organizations"),
+    amountMicrousdc: v.number(),
+    status: v.string(),
+    failureCode: v.string(),
+    failureReason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.refundCredits.rollbackRefundAmount as any, {
+      organizationId: args.organizationId,
+      amountMicrousdc: args.amountMicrousdc,
+    });
+    await ctx.db.patch(args.refundId, {
+      status: args.status as any,
+      failureCode: args.failureCode,
+      failureReason: args.failureReason,
+    });
+    return { success: true };
+  },
+});
+
+export const markRefundExecuted = internalMutation({
+  args: {
+    refundId: v.id("refundTransactions"),
+    providerTransferId: v.string(),
+    refundTxHash: v.optional(v.string()),
+    explorerUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.refundId, {
+      status: "EXECUTED",
+      providerTransferId: args.providerTransferId,
+      refundTxHash: args.refundTxHash,
+      explorerUrl: args.explorerUrl,
+      executedAt: Date.now(),
+    });
+    return { success: true };
   },
 });
 

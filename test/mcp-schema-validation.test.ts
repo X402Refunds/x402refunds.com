@@ -30,11 +30,13 @@ describe("MCP Tool Schema Validation", () => {
       expect(disputeTool).toBeDefined();
 
       const required = disputeTool?.inputSchema.required;
-      // X-402 simplified (5 required fields - plaintiff/defendant extracted from blockchain)
+      // X-402 simplified (7 required fields - plaintiff/defendant extracted from blockchain)
       expect(required).toContain("description");
       expect(required).toContain("request");  // Object
       expect(required).toContain("response");  // Object
       expect(required).toContain("transactionHash");
+      expect(required).toContain("amount");
+      expect(required).toContain("amountUnit");
       expect(required).toContain("blockchain");
       
       // Plaintiff/defendant now extracted from blockchain (not required from agent)

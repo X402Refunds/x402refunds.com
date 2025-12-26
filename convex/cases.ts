@@ -469,6 +469,78 @@ export const backfillReviewerOrgId = mutation({
   },
 });
 
+/**
+ * Assign unassigned payment disputes to an org for a given agent wallet address.
+ *
+ * Policy:
+ * - Only disputes filed at or after org.createdAt are eligible.
+ * - After assignment, we attempt to charge the $0.05 fee from org credits.
+ * - AI is only triggered if fee is successfully charged and org AI is enabled.
+ */
+export const assignUnassignedDisputesToOrgForWallet = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    walletAddress: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) throw new Error("Organization not found");
+
+    const wallet = args.walletAddress.toLowerCase();
+    const limit = Math.min(args.limit ?? 500, 5000);
+
+    const candidates = await ctx.db
+      .query("cases")
+      .withIndex("by_defendant", (q) => q.eq("defendant", wallet))
+      .collect();
+
+    const eligible = candidates
+      .filter((c) => {
+        if (c.type !== "PAYMENT") return false;
+        if (c.reviewerOrganizationId) return false;
+        if (typeof c.filedAt !== "number") return false;
+        return c.filedAt >= org.createdAt;
+      })
+      .slice(0, limit);
+
+    let assigned = 0;
+    let feeCharged = 0;
+    let feeBlocked = 0;
+    let aiTriggered = 0;
+
+    for (const c of eligible) {
+      await ctx.db.patch(c._id, { reviewerOrganizationId: args.organizationId });
+      assigned++;
+
+      const feeRes = await ctx.runMutation(internal.refundCredits.chargeDisputeFeeForCase, { caseId: c._id });
+      if (!feeRes.ok) {
+        feeBlocked++;
+        // Mark as awaiting funding (no new status in schema; use tags + metadata)
+        await ctx.db.patch(c._id, {
+          tags: Array.from(new Set([...(c.tags || []), "awaiting_funding"])),
+          metadata: {
+            ...(c.metadata || {}),
+            fundingBlocked: true,
+            fundingBlockReason: feeRes.code,
+          },
+        });
+        continue;
+      }
+
+      feeCharged++;
+
+      // Only trigger AI if org AI enabled
+      if (org.aiEnabled === false) continue;
+
+      await ctx.scheduler.runAfter(0, internal.paymentDisputes.triggerPaymentWorkflow as any, { caseId: c._id });
+      aiTriggered++;
+    }
+
+    return { success: true, assigned, feeCharged, feeBlocked, aiTriggered };
+  },
+});
+
 // Internal version for workflows (workflows can only call internal functions)
 export const updateCaseStatus = internalMutation({
   args: {

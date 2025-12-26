@@ -16,6 +16,7 @@
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { formatMicrosToUsdc, parseUsdcAmountToMicros } from "./lib/usdc";
 
 /**
  * MCP Error Codes
@@ -77,7 +78,7 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 export const MCP_TOOLS = [
   {
     name: "x402_file_dispute",
-    description: "File X-402 payment dispute for API service failures. USDC payments on Base and Solana only. Permissionless filing with blockchain transaction verification. All transaction details (plaintiff, defendant, amount) are extracted directly from the blockchain.",
+    description: "File X-402 payment dispute for API service failures. USDC payments on Base and Solana only. Permissionless filing with blockchain transaction verification. Plaintiff/defendant are extracted from chain; amount is provided by the caller and must match a USDC Transfer in the transaction.",
     inputSchema: {
       type: "object",
       properties: {
@@ -116,6 +117,17 @@ export const MCP_TOOLS = [
           description: "REQUIRED. USDC token transfer transaction hash. We query the blockchain to extract all transaction details (from address, to address, amount). Format: 0x... for Base, base58 for Solana.",
           examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."]
         },
+        amount: {
+          description: "REQUIRED. Claimed disputed amount. Must match a USDC Transfer in the transaction hash.",
+          anyOf: [{ type: "string" }, { type: "number" }],
+          examples: ["0.25", 0.25, "250000"]
+        },
+        amountUnit: {
+          type: "string",
+          enum: ["usdc", "microusdc"],
+          description: "REQUIRED. Unit for `amount`. Use `usdc` for decimal amounts, or `microusdc` for integer base units (6 decimals).",
+          examples: ["usdc"]
+        },
         blockchain: {
           type: "string",
           enum: ["base", "solana"],
@@ -141,7 +153,7 @@ export const MCP_TOOLS = [
           description: "Optional. If true, validates parameters without filing."
         }
       },
-      required: ["description", "request", "response", "transactionHash", "blockchain"]
+      required: ["description", "request", "response", "transactionHash", "amount", "amountUnit", "blockchain"]
     }
   },
   {
@@ -387,6 +399,22 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               headers: { "Content-Type": "application/json" }
             });
           }
+
+        if (parameters.amount === undefined || !parameters.amountUnit) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "MISSING_AMOUNT",
+              message: "amount and amountUnit are required",
+              field: "amount",
+              expected: "amount (string|number) and amountUnit ('usdc'|'microusdc')",
+              suggestion: "Provide the disputed amount and unit to deterministically match the USDC Transfer log",
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
           
         if (!parameters.blockchain) {
           return new Response(JSON.stringify({
@@ -439,67 +467,57 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         }
         
-        // 2. Query blockchain to extract all transaction details
-        // Blockchain is the source of truth for plaintiff, defendant, amount, currency
-        console.log(`🔍 Querying blockchain ${parameters.blockchain} for tx: ${parameters.transactionHash}`);
-        let txDetails: any;
-        try {
-          txDetails = await ctx.runAction(api.lib.blockchain.queryTransaction, {
-            blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash
-          });
-        } catch (error: any) {
-          // Handle action execution errors
-        return new Response(JSON.stringify({
+        // 2. Deterministic verification: caller provides amount+unit; it must match a USDC Transfer in the tx.
+        const parsed = parseUsdcAmountToMicros(parameters.amount, parameters.amountUnit);
+        if (!parsed.ok) {
+          return new Response(JSON.stringify({
             success: false,
             error: {
-              code: "TRANSACTION_NOT_FOUND",
-              message: `Failed to query blockchain: ${error.message}`,
-              field: "transactionHash",
-              received: parameters.transactionHash,
-              expected: "Valid confirmed transaction on specified blockchain",
-              suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
-              details: error.message
-            }
-        }), {
-            status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-        }
-        
-        if (!txDetails || !txDetails.success) {
-        return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "TRANSACTION_NOT_FOUND",
-              message: `Transaction not found on ${parameters.blockchain}`,
-              field: "transactionHash",
-              received: parameters.transactionHash,
-              expected: "Valid confirmed transaction on specified blockchain",
-              suggestion: `Verify transaction exists on ${parameters.blockchain}. Check block explorer.`,
-              details: (txDetails && 'error' in txDetails) ? txDetails.error : "Unknown error"
+              code: "INVALID_AMOUNT",
+              message: parsed.message,
+              field: "amount",
+              details: parsed.code
             }
           }), {
             status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
+            headers: { "Content-Type": "application/json" }
+          });
         }
-        
-        // 3. Extract transaction details from blockchain
-        // Blockchain is the single source of truth - no validation needed
-        const txData = txDetails as any;
-        const plaintiff = txData.fromAddress || "";  // Extracted from blockchain tx.from
-        const defendant = txData.toAddress || "";    // Extracted from blockchain tx.to
-        const txValue = txData.value || "0";
-        const txCurrency = txData.currency || "USD";
-        const txBlockNumber = txData.blockNumber || 0;
-        const txAmountUsd = txData.amountUsd || parseFloat(txValue);
+
+        console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by amount for tx: ${parameters.transactionHash}`);
+        const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+          blockchain: parameters.blockchain,
+          transactionHash: parameters.transactionHash,
+          expectedAmountMicrousdc: parsed.microusdc,
+        });
+
+        if (!verify.ok) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "TRANSACTION_VERIFICATION_FAILED",
+              message: verify.message,
+              field: "transactionHash",
+              received: parameters.transactionHash,
+              details: verify.code
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // 3. Extract deterministic details for the dispute
+        const plaintiff = verify.payerAddress;
+        const defendant = verify.recipientAddress;
+        const txCurrency = "USDC";
+        const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
         
         console.log(`✅ Transaction details extracted from blockchain:`);
         console.log(`   Plaintiff (buyer): ${plaintiff}`);
         console.log(`   Defendant (seller): ${defendant}`);
         console.log(`   Amount: ${txAmountUsd} ${txCurrency}`);
-        console.log(`   Block: ${txBlockNumber}`);
+        console.log(`   LogIndex: ${verify.logIndex}`);
         
         // 4. Build evidence object from request/response
         const evidence: any = {
@@ -512,7 +530,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             transactionHash: parameters.transactionHash,
             fromAddress: plaintiff,  // From blockchain
             toAddress: defendant,    // From blockchain
-            blockNumber: txBlockNumber
+            logIndex: verify.logIndex
             // Note: 'value' not included - schema doesn't support it
           }
         };
@@ -593,7 +611,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               defendant: defendant,
               amount: txAmountUsd,
               currency: txCurrency,
-              blockNumber: txBlockNumber
+              logIndex: verify.logIndex
             },
             evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
             nextSteps: [
@@ -611,7 +629,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         // 7. File payment dispute with blockchain-extracted details
         const paymentDisputeArgs: any = {
           transactionId: parameters.transactionHash,
-          amount: txAmountUsd,
+          transactionHash: parameters.transactionHash,
+          blockchain: parameters.blockchain,
+          amount: parameters.amount,
+          amountUnit: parameters.amountUnit,
           currency: txCurrency,
           plaintiff: plaintiff,  // Extracted from blockchain
           defendant: defendant,  // Extracted from blockchain
@@ -651,7 +672,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           paymentDisputeArgs.reviewerOrganizationId = reviewerOrgId;
         }
         
-        result = await ctx.runMutation(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
+        result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
 
         return new Response(JSON.stringify({
           success: true,
@@ -687,7 +708,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               defendant: `${defendant} (extracted from blockchain)`,
               amount: txAmountUsd,
               currency: txCurrency,
-              blockNumber: txBlockNumber
+              logIndex: verify.logIndex
             }
           },
           

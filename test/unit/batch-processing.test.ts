@@ -28,6 +28,17 @@ describe("Batch Processing for Micro-Disputes", () => {
         createdAt: Date.now(),
       });
     });
+
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: testOrgId,
+        enabled: true,
+        trialCreditMicrousdc: 5_000_000,
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 250_000,
+        createdAt: Date.now(),
+      });
+    });
   });
 
   it("should process 100 similar micro-disputes with batch efficiency (Option 3: All require review)", async () => {
@@ -40,13 +51,16 @@ describe("Batch Processing for Micro-Disputes", () => {
 
     // Create 100 micro-disputes
     for (let i = 0; i < batchSize; i++) {
-      const amount = 0.25 + (Math.random() * 0.50); // $0.25-0.75
+      const amount = 0.25; // capped for refundability
       const reason = disputeReasons[i % disputeReasons.length];
 
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `batch_txn_${i}`,
+        transactionHash: `0xmock_batch_txn_${i}`,
+        blockchain: "base",
         amount,
-        currency: "USD",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 10}`, // 10 merchants, many customers
@@ -79,10 +93,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     // Create 10 API timeout disputes with similar amounts
     const timeoutDisputes = [];
     for (let i = 0; i < 10; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `timeout_txn_${i}`,
-        amount: 0.50, // Same amount for pattern matching
-        currency: "USD",
+        transactionHash: `0xmock_timeout_txn_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ATXP",
         plaintiff: `customer_${i}`,
         defendant: "slow_merchant_123", // Same merchant
@@ -111,10 +128,13 @@ describe("Batch Processing for Micro-Disputes", () => {
 
     // Create 50 disputes against same merchant
     for (let i = 0; i < disputeCount; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `high_volume_txn_${i}`,
-        amount: Math.random() * 0.99, // Random micro-amounts
-        currency: "USD",
+        transactionHash: `0xmock_high_volume_txn_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: problematicMerchant,
@@ -137,10 +157,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     // First wave: Create precedents
     const precedentResults = [];
     for (let i = 0; i < 5; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `precedent_txn_${i}`,
-        amount: 0.35,
-        currency: "USD",
+        transactionHash: `0xmock_precedent_txn_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: "merchant_abc",
@@ -155,10 +178,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     // Second wave: Similar disputes should reference precedents
     const similarResults = [];
     for (let i = 5; i < 10; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `similar_txn_${i}`,
-        amount: 0.35,
-        currency: "USD",
+        transactionHash: `0xmock_similar_txn_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: "merchant_abc",
@@ -185,10 +211,13 @@ describe("Batch Processing for Micro-Disputes", () => {
       const startTime = Date.now();
 
       for (let i = 0; i < size; i++) {
-        await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+        await t.action(api.paymentDisputes.receivePaymentDispute, {
           transactionId: `perf_txn_${size}_${i}`,
-          amount: Math.random() * 0.99,
-          currency: "USD",
+          transactionHash: `0xmock_perf_${size}_${i}`,
+          blockchain: "base",
+          amount: "0.25",
+          amountUnit: "usdc",
+          currency: "USDC",
           paymentProtocol: "ATXP",
           plaintiff: `customer_${i}`,
           defendant: `merchant_${i % 5}`,
@@ -231,10 +260,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     const batchPromises = Array.from({ length: concurrentBatches }, async (_, batchIndex) => {
       const batchResults = [];
       for (let i = 0; i < disputesPerBatch; i++) {
-        const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+        const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
           transactionId: `concurrent_batch${batchIndex}_txn_${i}`,
-          amount: Math.random() * 0.99,
-          currency: "USD",
+          transactionHash: `0xmock_concurrent_${batchIndex}_${i}`,
+          blockchain: "base",
+          amount: "0.25",
+          amountUnit: "usdc",
+          currency: "USDC",
           paymentProtocol: "ACP",
           plaintiff: `customer_${batchIndex}_${i}`,
           defendant: `merchant_${batchIndex}`,
@@ -262,10 +294,13 @@ describe("Batch Processing for Micro-Disputes", () => {
   it("should identify and flag anomalous patterns in batch", async () => {
     // Create normal pattern (90 disputes)
     for (let i = 0; i < 90; i++) {
-      await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `normal_txn_${i}`,
-        amount: 0.25 + (Math.random() * 0.25), // $0.25-0.50
-        currency: "USD",
+        transactionHash: `0xmock_normal_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: `customer_${i}`,
         defendant: `merchant_${i % 10}`,
@@ -279,10 +314,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     // Create anomaly (10 disputes with unusual characteristics)
     const anomalyResults = [];
     for (let i = 90; i < 100; i++) {
-      const result = await t.mutation(api.paymentDisputes.receivePaymentDispute, {
+      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
         transactionId: `anomaly_txn_${i}`,
-        amount: 0.95, // Higher than normal
-        currency: "USD",
+        transactionHash: `0xmock_anomaly_${i}`,
+        blockchain: "base",
+        amount: "0.25",
+        amountUnit: "usdc",
+        currency: "USDC",
         paymentProtocol: "ACP",
         plaintiff: "suspicious_customer_999", // Same customer
         defendant: `merchant_${i % 10}`,
