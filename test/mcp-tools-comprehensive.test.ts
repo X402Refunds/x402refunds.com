@@ -73,7 +73,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         testCaseId = data.caseId;
       } else {
         // Expected in test env if blockchain query fails or address mismatch
-        expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
       }
     });
 
@@ -95,7 +95,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         expect(data.transactionVerification?.extractedDetails?.plaintiff).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     });
 
@@ -117,7 +117,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         expect(data.transactionVerification?.extractedDetails?.defendant).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     });
 

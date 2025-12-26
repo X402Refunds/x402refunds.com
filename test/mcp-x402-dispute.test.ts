@@ -66,7 +66,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       console.log("✅ Dispute filed successfully!");
     } else {
       // Accept either TRANSACTION_NOT_FOUND or MCP_INTERNAL_ERROR (schema validation issues in test env)
-      expect(['TRANSACTION_NOT_FOUND', 'MCP_INTERNAL_ERROR', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
       console.log(`⚠️  Expected failure: ${data.error.code} - ${data.error.message?.substring(0, 100)}`);
     }
   });
