@@ -47,7 +47,7 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.server.pricing.flat_fee).toBe('$0.05 per dispute');
     });
 
-    it('should list all 3 X-402 MCP tools', async () => {
+    it('should list X-402 MCP tools (plus demo)', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
@@ -57,10 +57,17 @@ describe('MCP Protocol - Tool Discovery', () => {
         "x402_list_my_cases",
         "x402_check_case_status"
       ];
+      const expectedOptionalTools = [
+        "demo_image_generator",
+      ];
       
-      expect(manifest.tools.length).toBe(3);
-      // Check for the 3 X-402 tools
+      expect(manifest.tools.length).toBe(4);
+      // Check for the core X-402 tools
       for (const expectedTool of expectedTools) {
+        expect(toolNames).toContain(expectedTool);
+      }
+      // Check for the demo tool
+      for (const expectedTool of expectedOptionalTools) {
         expect(toolNames).toContain(expectedTool);
       }
       // Verify old tools are removed
@@ -165,7 +172,7 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
       expect(data.result).toBeDefined();
       expect(data.result.tools).toBeDefined();
       expect(Array.isArray(data.result.tools)).toBe(true);
-      expect(data.result.tools.length).toBe(3);
+      expect(data.result.tools.length).toBe(4);
       
       // Verify tools use inputSchema (MCP standard)
       data.result.tools.forEach((tool: any) => {
