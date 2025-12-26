@@ -18,6 +18,38 @@ function remainingCredit(row: { trialCreditMicrousdc: number; topUpMicrousdc?: n
   return Math.max(0, (row.trialCreditMicrousdc + (row.topUpMicrousdc || 0)) - row.spentMicrousdc);
 }
 
+async function ensureOrgRefundCreditsRow(ctx: any, organizationId: any) {
+  const existing = await ctx.db
+    .query("orgRefundCredits")
+    .withIndex("by_organization", (q: any) => q.eq("organizationId", organizationId))
+    .first();
+  if (existing) return existing;
+
+  const org = await ctx.db.get(organizationId);
+  if (!org) throw new Error("Organization not found");
+
+  // Determine rank by createdAt (approximate but stable enough for gating trial).
+  const allOrgs = await ctx.db.query("organizations").collect();
+  allOrgs.sort((a: any, b: any) => a.createdAt - b.createdAt);
+  const rank = allOrgs.findIndex((o: any) => o._id === organizationId) + 1;
+  const eligible = rank > 0 && rank <= 500;
+
+  const now = Date.now();
+  const id = await ctx.db.insert("orgRefundCredits", {
+    organizationId,
+    enabled: eligible,
+    trialCreditMicrousdc: eligible ? DEFAULT_TRIAL_CREDIT_MICROUSDC : 0,
+    topUpMicrousdc: 0,
+    spentMicrousdc: 0,
+    maxPerCaseMicrousdc: DEFAULT_MAX_PER_CASE_MICROUSDC,
+    createdAt: now,
+  });
+
+  const created = await ctx.db.get(id);
+  if (!created) throw new Error("Failed to create refund credits row");
+  return created;
+}
+
 export const getOrgRefundCredits = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -57,33 +89,9 @@ export const getOrgRefundCreditsSummary = query({
 export const ensureOrgRefundCredits = internalMutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("orgRefundCredits")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .first();
-    if (existing) return { success: true, created: false, id: existing._id };
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) throw new Error("Organization not found");
-
-    // Determine rank by createdAt (approximate but stable enough for gating trial).
-    const allOrgs = await ctx.db.query("organizations").collect();
-    allOrgs.sort((a, b) => a.createdAt - b.createdAt);
-    const rank = allOrgs.findIndex((o) => o._id === args.organizationId) + 1;
-    const eligible = rank > 0 && rank <= 500;
-
-    const now = Date.now();
-    const id = await ctx.db.insert("orgRefundCredits", {
-      organizationId: args.organizationId,
-      enabled: eligible,
-      trialCreditMicrousdc: eligible ? DEFAULT_TRIAL_CREDIT_MICROUSDC : 0,
-      topUpMicrousdc: 0,
-      spentMicrousdc: 0,
-      maxPerCaseMicrousdc: DEFAULT_MAX_PER_CASE_MICROUSDC,
-      createdAt: now,
-    });
-
-    return { success: true, created: true, eligible, id };
+    const row = await ensureOrgRefundCreditsRow(ctx, args.organizationId);
+    // eligible is implied by enabled for created rows; for existing rows we don't want to recompute.
+    return { success: true, created: false, id: row._id };
   },
 });
 
@@ -127,7 +135,7 @@ export const submitTopUpRequest = internalMutation({
   },
 });
 
-const applyVerifiedTopUp = internalMutation({
+export const applyVerifiedTopUp = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     blockchain: v.union(v.literal("base")),
@@ -153,21 +161,7 @@ const applyVerifiedTopUp = internalMutation({
       return { ok: true as const, topUpId: existing._id, alreadyApplied: true };
     }
 
-    const credits = await ctx.db
-      .query("orgRefundCredits")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .first();
-    if (!credits) {
-      // Ensure row exists then refetch
-      await ctx.runMutation(internal.refundCredits.ensureOrgRefundCredits, {
-        organizationId: args.organizationId,
-      });
-    }
-    const credits2 = await ctx.db
-      .query("orgRefundCredits")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .first();
-    if (!credits2) throw new Error("Refund credits row missing");
+    const credits2 = await ensureOrgRefundCreditsRow(ctx, args.organizationId);
 
     const now = Date.now();
     const topUpId =
