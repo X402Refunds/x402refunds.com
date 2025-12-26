@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@convex/_generated/api";
 import { build402ResponseBody, buildTopupPaymentRequirement } from "@/lib/x402-topup";
@@ -103,12 +102,13 @@ function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
 }
 
 export async function POST(request: Request) {
-  const { userId } = auth();
-  if (!userId) {
-    return NextResponse.json({ success: false, error: { code: "UNAUTHENTICATED" } }, { status: 401 });
-  }
+  // Public endpoint (x402 payment proof required). Rate limit by IP to reduce abuse.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
 
-  if (!checkRateLimit(`topup:${userId}`, 10, 60_000)) {
+  if (!checkRateLimit(`topup:${ip}`, 10, 60_000)) {
     return NextResponse.json(
       { success: false, error: { code: "RATE_LIMITED", message: "Too many attempts, try again shortly." } },
       { status: 429 }

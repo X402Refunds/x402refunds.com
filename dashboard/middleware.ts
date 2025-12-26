@@ -5,6 +5,8 @@ const isPublicRoute = createRouteMatcher([
   '/',           // Landing page
   '/sign-in(.*)', // Sign-in pages
   '/sign-up(.*)', // Sign-up pages
+  // Top-ups use x402 payment proof; keep endpoint public to avoid www/apex session issues.
+  '/api/billing/topup(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
