@@ -55,6 +55,12 @@ export const syncUser = mutation({
           name: args.name,
           updatedAt: Date.now(),
         });
+        // Ensure refund credits exist for org users who signed up before credits were introduced.
+        if (existingUser.organizationId) {
+          await ctx.runMutation(internal.refundCredits.ensureOrgRefundCredits, {
+            organizationId: existingUser.organizationId,
+          });
+        }
         console.info(`Updated existing user: ${existingUser._id}`);
         return existingUser._id;
       }

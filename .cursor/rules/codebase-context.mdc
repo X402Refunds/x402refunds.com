@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-26T14:43:07.317Z
+**Auto-generated on**: 2025-12-26T14:52:27.916Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -302,8 +302,9 @@ Common HTTP routes exposed:
 
 ## 📦 Dependencies
 
-### Production Dependencies (12)
+### Production Dependencies (13)
 - @ai-sdk/openai@^2.0.62
+- @coinbase/cdp-sdk@^1.40.1
 - @coinbase/coinbase-sdk@^0.25.0
 - @coinbase/x402@^0.6.6
 - @convex-dev/agent@^0.2.12
@@ -312,7 +313,6 @@ Common HTTP routes exposed:
 - @x402sdk/sdk@^1.1.0
 - ai@^5.0.87
 - convex@^1.31.2
-- convex-test@^0.0.38
 
 ### Dev Dependencies (9)
 - @semantic-release/changelog@^6.0.0
@@ -375,5 +375,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/26/2025, 8:13:07 PM
+Generated: 12/26/2025, 8:22:27 PM
 Files scanned: 376

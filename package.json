@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.62",
+    "@coinbase/cdp-sdk": "^1.40.1",
     "@coinbase/coinbase-sdk": "^0.25.0",
     "@coinbase/x402": "^0.6.6",
     "@convex-dev/agent": "^0.2.12",
