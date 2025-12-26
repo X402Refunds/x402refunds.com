@@ -108,13 +108,7 @@ export async function POST(request: Request) {
     request.headers.get("x-real-ip") ||
     "unknown";
 
-  if (!checkRateLimit(`topup:${ip}`, 10, 60_000)) {
-    return NextResponse.json(
-      { success: false, error: { code: "RATE_LIMITED", message: "Too many attempts, try again shortly." } },
-      { status: 429 }
-    );
-  }
-
+  // Parse request first so we can include orgId in rate-limit keys.
   const xPayment = request.headers.get("X-PAYMENT");
 
   let body: Record<string, unknown>;
@@ -128,6 +122,27 @@ export async function POST(request: Request) {
   const organizationId = typeof body.organizationId === "string" ? body.organizationId : undefined;
   const amount = body.amount;
   const amountUnit = (typeof body.amountUnit === "string" ? body.amountUnit : "usdc") as AmountUnit;
+
+  // Tightened rate limiting:
+  // - Discovery (402) is cheap: allow a few per minute.
+  // - Verify/settle is expensive: allow fewer per minute.
+  const orgKey = organizationId ? `org:${organizationId}` : "org:unknown";
+  const windowMs = 60_000;
+  const discoveryLimitPerMin = 6;
+  const settleLimitPerMin = 3;
+
+  const limitKeyBase = `topup:${ip}:${orgKey}`;
+  const ok =
+    !xPayment
+      ? checkRateLimit(`${limitKeyBase}:discover`, discoveryLimitPerMin, windowMs)
+      : checkRateLimit(`${limitKeyBase}:settle`, settleLimitPerMin, windowMs);
+
+  if (!ok) {
+    return NextResponse.json(
+      { success: false, error: { code: "RATE_LIMITED", message: "Too many attempts, try again shortly." } },
+      { status: 429 }
+    );
+  }
 
   if (!organizationId) {
     return NextResponse.json({ success: false, error: { code: "MISSING_ORG" } }, { status: 400 });
@@ -163,10 +178,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // Bind the X402 `resource` to the organizationId to prevent replaying a signed payload
+  // against a different orgId in our request body.
+  const resourceUrl = new URL(request.url);
+  resourceUrl.searchParams.set("orgId", organizationId);
+
   const requirement = buildTopupPaymentRequirement({
     amountMicrousdc: amountMicros,
     payTo: deposit.address,
-    resourceUrl: request.url,
+    resourceUrl: resourceUrl.toString(),
   });
 
   if (!xPayment) {
