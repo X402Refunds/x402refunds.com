@@ -603,6 +603,7 @@ export default defineSchema({
     organizationId: v.id("organizations"),
     enabled: v.boolean(),
     trialCreditMicrousdc: v.number(), // e.g. 5 USDC = 5_000_000
+    topUpMicrousdc: v.optional(v.number()), // additional credits from deposits
     spentMicrousdc: v.number(),
     maxPerCaseMicrousdc: v.number(), // e.g. 0.25 USDC = 250_000
     createdAt: v.number(),
@@ -690,6 +691,9 @@ export default defineSchema({
     organizationId: v.id("organizations"),
     blockchain: v.union(v.literal("base")), // MVP: Base only
     txHash: v.string(),
+    sourceTransferLogIndex: v.optional(v.number()),
+    payerAddress: v.optional(v.string()),
+    recipientAddress: v.optional(v.string()),
     amountMicrousdc: v.number(),
     status: v.union(v.literal("PENDING"), v.literal("APPROVED"), v.literal("REJECTED")),
     createdAt: v.number(),
@@ -698,5 +702,6 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_status", ["status"])
-    .index("by_txhash", ["txHash"]),
+    .index("by_txhash", ["txHash"])
+    .index("by_source_triplet", ["blockchain", "txHash", "sourceTransferLogIndex"]),
 });

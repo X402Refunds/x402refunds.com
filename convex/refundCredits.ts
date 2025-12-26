@@ -5,16 +5,17 @@
  * and we debit refund amounts when a refund attempt is created.
  */
 
-import { internalMutation, query } from "./_generated/server";
+import { action, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { parseUsdcAmountToMicros } from "./lib/usdc";
+import { api, internal } from "./_generated/api";
 
 export const DISPUTE_FEE_MICROUSDC = 50_000;
 export const DEFAULT_TRIAL_CREDIT_MICROUSDC = 5_000_000;
 export const DEFAULT_MAX_PER_CASE_MICROUSDC = 250_000;
 
-function remainingCredit(row: { trialCreditMicrousdc: number; spentMicrousdc: number }): number {
-  return Math.max(0, row.trialCreditMicrousdc - row.spentMicrousdc);
+function remainingCredit(row: { trialCreditMicrousdc: number; topUpMicrousdc?: number; spentMicrousdc: number }): number {
+  return Math.max(0, (row.trialCreditMicrousdc + (row.topUpMicrousdc || 0)) - row.spentMicrousdc);
 }
 
 export const getOrgRefundCredits = query({
@@ -35,12 +36,14 @@ export const getOrgRefundCreditsSummary = query({
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .first();
     if (!row) return null;
-    const remaining = Math.max(0, row.trialCreditMicrousdc - row.spentMicrousdc);
+    const topUps = row.topUpMicrousdc || 0;
+    const remaining = Math.max(0, (row.trialCreditMicrousdc + topUps) - row.spentMicrousdc);
     return {
       ...row,
       remainingMicrousdc: remaining,
       remainingUsdc: remaining / 1_000_000,
       trialCreditUsdc: row.trialCreditMicrousdc / 1_000_000,
+      topUpUsdc: topUps / 1_000_000,
       spentUsdc: row.spentMicrousdc / 1_000_000,
       maxPerCaseUsdc: row.maxPerCaseMicrousdc / 1_000_000,
     };
@@ -74,6 +77,7 @@ export const ensureOrgRefundCredits = internalMutation({
       organizationId: args.organizationId,
       enabled: eligible,
       trialCreditMicrousdc: eligible ? DEFAULT_TRIAL_CREDIT_MICROUSDC : 0,
+      topUpMicrousdc: 0,
       spentMicrousdc: 0,
       maxPerCaseMicrousdc: DEFAULT_MAX_PER_CASE_MICROUSDC,
       createdAt: now,
@@ -120,6 +124,153 @@ export const submitTopUpRequest = internalMutation({
     });
 
     return { success: true, status: "PENDING", topUpId };
+  },
+});
+
+const applyVerifiedTopUp = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    blockchain: v.union(v.literal("base")),
+    txHash: v.string(),
+    sourceTransferLogIndex: v.number(),
+    payerAddress: v.string(),
+    recipientAddress: v.string(),
+    amountMicrousdc: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Idempotency by (chain, txHash, logIndex)
+    const existing = await ctx.db
+      .query("refundTopUps")
+      .withIndex("by_source_triplet", (q) =>
+        q
+          .eq("blockchain", args.blockchain)
+          .eq("txHash", args.txHash)
+          .eq("sourceTransferLogIndex", args.sourceTransferLogIndex)
+      )
+      .first();
+
+    if (existing?.status === "APPROVED") {
+      return { ok: true as const, topUpId: existing._id, alreadyApplied: true };
+    }
+
+    const credits = await ctx.db
+      .query("orgRefundCredits")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .first();
+    if (!credits) {
+      // Ensure row exists then refetch
+      await ctx.runMutation(internal.refundCredits.ensureOrgRefundCredits, {
+        organizationId: args.organizationId,
+      });
+    }
+    const credits2 = await ctx.db
+      .query("orgRefundCredits")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .first();
+    if (!credits2) throw new Error("Refund credits row missing");
+
+    const now = Date.now();
+    const topUpId =
+      existing?._id ??
+      (await ctx.db.insert("refundTopUps", {
+        organizationId: args.organizationId,
+        blockchain: args.blockchain,
+        txHash: args.txHash,
+        sourceTransferLogIndex: args.sourceTransferLogIndex,
+        payerAddress: args.payerAddress.toLowerCase(),
+        recipientAddress: args.recipientAddress.toLowerCase(),
+        amountMicrousdc: args.amountMicrousdc,
+        status: "PENDING",
+        createdAt: now,
+      }));
+
+    await ctx.db.patch(topUpId, {
+      status: "APPROVED",
+      reviewedAt: now,
+      reviewerNote: "Auto-approved via on-chain verification",
+    });
+
+    await ctx.db.patch(credits2._id, {
+      topUpMicrousdc: (credits2.topUpMicrousdc || 0) + args.amountMicrousdc,
+      updatedAt: now,
+    });
+
+    return { ok: true as const, topUpId, alreadyApplied: false };
+  },
+});
+
+/**
+ * Automatic top-up reconciliation:
+ * - Verify there is a unique USDC Transfer log matching amount in txHash
+ * - Require it is sent to the platform deposit address (CDP account address)
+ * - Auto-credit org ledger
+ */
+export const submitTopUpAndAutoApply = action({
+  args: {
+    organizationId: v.id("organizations"),
+    txHash: v.string(),
+    amount: v.any(),
+    amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
+  },
+  handler: async (ctx, args) => {
+    const tx = args.txHash.trim();
+    if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
+      return { ok: false as const, code: "INVALID_TX_HASH", message: "Invalid txHash format (expected 0x + 64 hex chars)" };
+    }
+
+    const parsed = parseUsdcAmountToMicros(args.amount, args.amountUnit);
+    if (!parsed.ok) {
+      return { ok: false as const, code: parsed.code, message: parsed.message };
+    }
+
+    // Get the platform deposit address from CDP (ensures this is a CDP-managed wallet).
+    const platform = await ctx.runAction(api.lib.coinbase.getOrCreatePlatformEvmAccount, {});
+    if (!platform.ok) {
+      return { ok: false as const, code: platform.code, message: platform.message };
+    }
+
+    const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+      blockchain: "base",
+      transactionHash: tx,
+      expectedAmountMicrousdc: parsed.microusdc,
+      expectedToAddress: platform.address,
+    });
+
+    if (!verified.ok) {
+      return { ok: false as const, code: verified.code, message: verified.message };
+    }
+
+    // Extra safety: recipient must match deposit address.
+    if (verified.recipientAddress.toLowerCase() !== platform.address.toLowerCase()) {
+      return {
+        ok: false as const,
+        code: "WRONG_RECIPIENT",
+        message: "USDC transfer recipient does not match platform deposit address",
+      };
+    }
+
+    const applied = await ctx.runMutation(applyVerifiedTopUp, {
+      organizationId: args.organizationId,
+      blockchain: "base",
+      txHash: tx,
+      sourceTransferLogIndex: verified.logIndex,
+      payerAddress: verified.payerAddress,
+      recipientAddress: verified.recipientAddress,
+      amountMicrousdc: verified.amountMicrousdc,
+    });
+
+    const summary = await ctx.runQuery(api.refundCredits.getOrgRefundCreditsSummary, {
+      organizationId: args.organizationId,
+    });
+
+    return {
+      ok: true as const,
+      status: "APPROVED" as const,
+      topUpId: applied.topUpId,
+      alreadyApplied: applied.alreadyApplied,
+      depositAddress: platform.address,
+      credits: summary,
+    };
   },
 });
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation, useAction } from "convex/react"
+import { useQuery, useAction } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,10 +10,29 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CopyableField } from "@/components/case-detail/CopyableField"
+import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button"
+import { useAccount, useWriteContract } from "wagmi"
+import { parseUnits } from "viem"
+
+const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const
+const ERC20_ABI = [
+  {
+    type: "function",
+    name: "transfer",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const
 
 export default function BillingPage() {
   const currentUser = useQuery(api.users.getCurrentUser, {})
   const orgId = currentUser?.organizationId
+  const { isConnected } = useAccount()
+  const { writeContractAsync } = useWriteContract()
 
   const credits = useQuery(
     api.refundCredits.getOrgRefundCreditsSummary,
@@ -25,7 +44,7 @@ export default function BillingPage() {
     orgId ? { organizationId: orgId } : "skip",
   )
 
-  const submitTopUp = useMutation(api.refundCredits.submitTopUpRequest)
+  const submitTopUp = useAction(api.refundCredits.submitTopUpAndAutoApply)
   const getOrCreatePlatformAccount = useAction(api.lib.coinbase.getOrCreatePlatformEvmAccount)
 
   const [txHash, setTxHash] = useState("")
@@ -86,6 +105,12 @@ export default function BillingPage() {
                   <div className="text-sm text-muted-foreground">Spent</div>
                   <div className="text-2xl font-semibold">
                     {credits.spentUsdc.toFixed(2)} USDC
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <div className="text-sm text-muted-foreground">Top-Ups</div>
+                  <div className="text-lg font-medium">
+                    {credits.topUpUsdc.toFixed(2)} USDC
                   </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card p-4">
@@ -159,7 +184,7 @@ export default function BillingPage() {
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  Balance updates are manual for now. After sending, submit the tx hash below.
+                  After sending, we automatically verify the on-chain USDC transfer and credit your balance.
                 </div>
               </div>
             </div>
@@ -195,12 +220,15 @@ export default function BillingPage() {
                   try {
                     const res = await submitTopUp({
                       organizationId: orgId,
-                      blockchain: "base",
                       txHash,
                       amount,
                       amountUnit: "usdc",
                     })
-                    setSubmitResult(`Submitted: ${res.status}`)
+                    if (res.ok) {
+                      setSubmitResult(res.alreadyApplied ? "Already credited." : "Credited successfully.")
+                    } else {
+                      setSubmitResult(res.message || "Failed to verify top-up")
+                    }
                     setTxHash("")
                     setAmount("")
                   } catch (e: unknown) {
@@ -217,6 +245,66 @@ export default function BillingPage() {
               {submitResult && (
                 <span className="text-sm text-muted-foreground">{submitResult}</span>
               )}
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <div className="text-sm font-medium">Top up with wallet</div>
+              {!isConnected && (
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">
+                    Connect a Base wallet that holds USDC.
+                  </div>
+                  <ConnectWalletButton />
+                </div>
+              )}
+              {isConnected && (
+                <Button
+                  variant="default"
+                  disabled={!orgId || !depositAddress || submitting || !amount}
+                  onClick={async () => {
+                    if (!orgId) return
+                    if (!depositAddress) {
+                      setSubmitResult("Fetch the deposit address first.")
+                      return
+                    }
+                    setSubmitting(true)
+                    setSubmitResult(null)
+                    try {
+                      const amountUnits = parseUnits(amount || "0", 6)
+                      const hash = await writeContractAsync({
+                        address: BASE_USDC,
+                        abi: ERC20_ABI,
+                        functionName: "transfer",
+                        args: [depositAddress as `0x${string}`, amountUnits],
+                      })
+                      setTxHash(hash)
+                      const res = await submitTopUp({
+                        organizationId: orgId,
+                        txHash: hash,
+                        amount,
+                        amountUnit: "usdc",
+                      })
+                      if (res.ok) {
+                        setSubmitResult(res.alreadyApplied ? "Already credited." : "Credited successfully.")
+                      } else {
+                        setSubmitResult(res.message || "Failed to verify top-up")
+                      }
+                      setAmount("")
+                    } catch (e: unknown) {
+                      const message =
+                        e instanceof Error ? e.message : "Wallet transfer failed"
+                      setSubmitResult(message)
+                    } finally {
+                      setSubmitting(false)
+                    }
+                  }}
+                >
+                  Send USDC from connected wallet
+                </Button>
+              )}
+              <div className="text-xs text-muted-foreground">
+                This sends an on-chain USDC transfer to the platform deposit address, then auto-credits your org after verification.
+              </div>
             </div>
 
             <div className="space-y-2">

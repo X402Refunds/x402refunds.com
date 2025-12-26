@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-26T14:52:27.916Z
+**Auto-generated on**: 2025-12-26T15:37:45.041Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -116,7 +116,7 @@ consulate/
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
-- **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
+- **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, submitTopUpAndAutoApply, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
 - **refunds.ts** - executeAutomatedRefund, createRefundAttempt, sendPendingRefund, getRefundTransaction, insertRefundFailure, createRefundAttemptRecord, markRefundFailed, rollbackAndFailRefund, markRefundExecuted, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
 - **schema.ts** - Core logic
@@ -375,5 +375,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/26/2025, 8:22:27 PM
+Generated: 12/26/2025, 9:07:45 PM
 Files scanned: 376
