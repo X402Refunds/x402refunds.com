@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useAction } from "convex/react"
+import { useQuery } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,28 +11,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CopyableField } from "@/components/case-detail/CopyableField"
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button"
-import { useAccount, useWriteContract } from "wagmi"
-import { parseUnits } from "viem"
-
-const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const
-const ERC20_ABI = [
-  {
-    type: "function",
-    name: "transfer",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ name: "", type: "bool" }],
-  },
-] as const
+import { useAccount, useWalletClient } from "wagmi"
+import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature"
 
 export default function BillingPage() {
   const currentUser = useQuery(api.users.getCurrentUser, {})
   const orgId = currentUser?.organizationId
-  const { isConnected } = useAccount()
-  const { writeContractAsync } = useWriteContract()
+  const { address, isConnected } = useAccount()
+  const { data: walletClient } = useWalletClient()
 
   const credits = useQuery(
     api.refundCredits.getOrgRefundCreditsSummary,
@@ -45,7 +31,6 @@ export default function BillingPage() {
   )
 
   const deposit = useQuery(api.refundCredits.getPlatformDepositAddress, {})
-  const submitTopUp = useAction(api.refundCredits.submitTopUpAndAutoApply)
 
   const [amount, setAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -176,42 +161,78 @@ export default function BillingPage() {
 
             {isConnected && (
               <div className="space-y-3">
-                <div className="text-sm text-muted-foreground">Step 2: Send USDC</div>
+                <div className="text-sm text-muted-foreground">Step 2: Pay (gasless)</div>
                 <Button
                   variant="default"
-                  disabled={!orgId || !depositAddress || submitting || !amount}
+                  disabled={!orgId || !depositAddress || submitting || !amount || !walletClient || !address}
                   onClick={async () => {
                     if (!orgId) return
                     if (!depositAddress) {
                       setSubmitResult("Deposit address is not configured.")
                       return
                     }
+                    if (!walletClient || !address) {
+                      setSubmitResult("Wallet not ready.")
+                      return
+                    }
                     setSubmitting(true)
                     setSubmitResult(null)
                     setLastTxHash(null)
                     try {
-                      const amountUnits = parseUnits(amount || "0", 6)
-                      const hash = await writeContractAsync({
-                        address: BASE_USDC,
-                        abi: ERC20_ABI,
-                        functionName: "transfer",
-                        args: [depositAddress as `0x${string}`, amountUnits],
+                      // Step 1: Get 402 payment requirements
+                      const r1 = await fetch("/api/billing/topup", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          organizationId: orgId,
+                          amount,
+                          amountUnit: "usdc",
+                        }),
                       })
-                      setLastTxHash(hash)
 
-                      const res = await submitTopUp({
-                        organizationId: orgId,
-                        txHash: hash,
-                        amount,
-                        amountUnit: "usdc",
-                      })
-                      if (res.ok) {
-                        setSubmitResult(
-                          res.alreadyApplied ? "Already credited." : "Credited successfully."
-                        )
-                      } else {
-                        setSubmitResult(res.message || "Failed to verify top-up")
+                      if (r1.status !== 402) {
+                        const data = await r1.json().catch(() => ({}))
+                        throw new Error(data?.error?.message || `Expected 402, got ${r1.status}`)
                       }
+
+                      const paymentData = await r1.json()
+                      const requirements = parsePaymentRequirements(paymentData)
+
+                      // Prevent self-transfer (payer == payTo)
+                      if (address.toLowerCase() === requirements.payTo.toLowerCase()) {
+                        throw new Error(
+                          `Connected wallet is the same as the deposit address (${requirements.payTo}). Switch to a payer wallet.`
+                        )
+                      }
+
+                      // Step 2: Sign X-PAYMENT (no gas)
+                      const xPaymentHeader = await createX402PaymentSignature(
+                        walletClient,
+                        requirements,
+                        address
+                      )
+
+                      // Step 3: Retry with X-PAYMENT, server settles and credits
+                      const r2 = await fetch("/api/billing/topup", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          "X-PAYMENT": xPaymentHeader,
+                        },
+                        body: JSON.stringify({
+                          organizationId: orgId,
+                          amount,
+                          amountUnit: "usdc",
+                        }),
+                      })
+
+                      const data2 = await r2.json().catch(() => ({}))
+                      if (!r2.ok || !data2.success) {
+                        throw new Error(data2?.error?.message || `Payment failed: ${r2.status}`)
+                      }
+
+                      setLastTxHash(data2.txHash)
+                      setSubmitResult("Credited successfully.")
                       setAmount("")
                     } catch (e: unknown) {
                       const message = e instanceof Error ? e.message : "Wallet transfer failed"
@@ -221,7 +242,7 @@ export default function BillingPage() {
                     }
                   }}
                 >
-                  {submitting ? "Sending…" : "Send USDC"}
+                  {submitting ? "Processing…" : "Pay (gasless)"}
                 </Button>
 
                 {lastTxHash && (
