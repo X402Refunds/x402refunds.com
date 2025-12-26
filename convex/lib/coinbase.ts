@@ -22,27 +22,64 @@ function isEnabled(): boolean {
 }
 
 function getRequiredEnv(): { ok: true; env: Record<string, string> } | { ok: false; code: string; message: string } {
-  // NOTE: exact env var names can be decided later; keep them isolated here.
+  // CDP Server Wallet v2 env vars per Coinbase docs:
+  // - CDP_API_KEY_ID
+  // - CDP_API_KEY_SECRET
+  // - CDP_WALLET_SECRET
   const apiKeyId = process.env.CDP_API_KEY_ID;
   const apiKeySecret = process.env.CDP_API_KEY_SECRET;
-  const platformWalletId = process.env.CDP_PLATFORM_WALLET_ID;
+  const walletSecret = process.env.CDP_WALLET_SECRET;
 
-  if (!apiKeyId || !apiKeySecret) {
+  // Platform account naming (preferred). If unset, we fall back to a stable default.
+  // Back-compat: if CDP_PLATFORM_WALLET_ID exists from older config, treat it as an account name.
+  const platformAccountName =
+    process.env.CDP_PLATFORM_ACCOUNT_NAME ||
+    process.env.CDP_PLATFORM_WALLET_ID ||
+    "x402disputes-platform";
+
+  if (!apiKeyId || !apiKeySecret || !walletSecret) {
     return {
       ok: false,
       code: "COINBASE_NOT_CONFIGURED",
-      message: "CDP API credentials are not configured (CDP_API_KEY_ID / CDP_API_KEY_SECRET)",
+      message:
+        "CDP credentials are not configured (CDP_API_KEY_ID / CDP_API_KEY_SECRET / CDP_WALLET_SECRET)",
     };
   }
-  if (!platformWalletId) {
-    return {
-      ok: false,
-      code: "COINBASE_NOT_CONFIGURED",
-      message: "CDP platform wallet is not configured (CDP_PLATFORM_WALLET_ID)",
-    };
-  }
-  return { ok: true, env: { apiKeyId, apiKeySecret, platformWalletId } };
+
+  return { ok: true, env: { apiKeyId, apiKeySecret, walletSecret, platformAccountName } };
 }
+
+export const getOrCreatePlatformEvmAccount = action({
+  args: {},
+  handler: async (): Promise<
+    | { ok: true; name: string; address: string }
+    | { ok: false; code: string; message: string }
+  > => {
+    if (!isEnabled()) {
+      return { ok: false, code: "COINBASE_DISABLED", message: "Coinbase refunds are disabled" };
+    }
+    const envRes = getRequiredEnv();
+    if (!envRes.ok) return envRes;
+
+    try {
+      // Defer SDK import until runtime so missing deps/env never break deploy.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      const { CdpClient } = await import("@coinbase/cdp-sdk");
+
+      const cdp = new (CdpClient as any)({
+        apiKeyId: envRes.env.apiKeyId,
+        apiKeySecret: envRes.env.apiKeySecret,
+        walletSecret: envRes.env.walletSecret,
+      });
+
+      const account = await cdp.evm.getOrCreateAccount({ name: envRes.env.platformAccountName });
+      return { ok: true, name: envRes.env.platformAccountName, address: String(account.address) };
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to get/create platform account";
+      return { ok: false, code: "COINBASE_ACCOUNT_FAILED", message };
+    }
+  },
+});
 
 /**
  * Send USDC on Base from the platform wallet to a destination address.
@@ -63,51 +100,46 @@ export const sendUsdcBase = action({
     const envRes = getRequiredEnv();
     if (!envRes.ok) return envRes;
 
-    // Defer SDK import until runtime so missing deps/env never break deploy.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-    const { Coinbase } = await import("@coinbase/coinbase-sdk");
-    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-    const { Wallet } = await import("@coinbase/coinbase-sdk");
-
-    // NOTE: CDP Wallet API v2 auth details can be refined later. For now, we implement a safe stub
-    // that fails fast with a clear code if the SDK auth shape differs.
     try {
-      // Many Coinbase SDK examples expect configuring from a JSON file. In Convex we configure via env.
-      // If this fails, we return a structured error without throwing to keep the workflow resilient.
-      (Coinbase as any).configure?.({
+      // Defer SDK import until runtime so missing deps/env never break deploy.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      const { CdpClient } = await import("@coinbase/cdp-sdk");
+
+      const cdp = new (CdpClient as any)({
         apiKeyId: envRes.env.apiKeyId,
         apiKeySecret: envRes.env.apiKeySecret,
+        walletSecret: envRes.env.walletSecret,
       });
 
-      const wallet = await (Wallet as any).fetch?.(envRes.env.platformWalletId);
-      if (!wallet) {
-        return {
-          ok: false,
-          code: "COINBASE_WALLET_NOT_FOUND",
-          message: "Platform wallet not found in Coinbase",
-        };
+      // If the portal UI is broken, this still works: it will create (or reuse) an account by name.
+      const sender = await cdp.evm.getOrCreateAccount({ name: envRes.env.platformAccountName });
+
+      const amount = BigInt(args.amountMicrousdc);
+      if (amount <= 0n) {
+        return { ok: false, code: "INVALID_AMOUNT", message: "Amount must be > 0" };
       }
 
-      // Prefer a high-level transfer API if available.
-      // This may need adjustment once CDP Wallet API v2 auth and method names are finalized.
-      const transfer = await wallet.transfer?.({
+      const { transactionHash } = await sender.transfer({
         to: args.toAddress,
-        amount: args.amountMicrousdc,
+        amount,
         token: "usdc",
         network: "base",
       });
 
-      // Best-effort extraction of identifiers.
-      const providerTransferId = transfer?.id || transfer?.transferId || transfer?.transactionId || "unknown";
-      const txHash = transfer?.txHash || transfer?.hash || transfer?.transactionHash;
+      const txHash = transactionHash ? String(transactionHash) : undefined;
       const explorerUrl = txHash ? `https://basescan.org/tx/${txHash}` : undefined;
-
-      return { ok: true, providerTransferId: String(providerTransferId), txHash, explorerUrl };
-    } catch (e: any) {
+      return {
+        ok: true,
+        providerTransferId: txHash || "unknown",
+        txHash,
+        explorerUrl,
+      };
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Coinbase send failed";
       return {
         ok: false,
         code: "COINBASE_SEND_FAILED",
-        message: e?.message || "Coinbase send failed",
+        message,
         details: {
           // Avoid leaking secrets; only include safe, high-level details.
           toAddress: args.toAddress,

@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-26T11:33:20.257Z
+**Auto-generated on**: 2025-12-26T14:14:44.694Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -106,7 +106,7 @@ consulate/
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **blockchain.ts** - verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
-- **coinbase.ts** - sendUsdcBase
+- **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
@@ -375,5 +375,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/26/2025, 5:03:20 PM
+Generated: 12/26/2025, 7:44:44 PM
 Files scanned: 376

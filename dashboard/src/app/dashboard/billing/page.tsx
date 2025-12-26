@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "convex/react"
+import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "@convex/_generated/api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,14 +26,17 @@ export default function BillingPage() {
   )
 
   const submitTopUp = useMutation(api.refundCredits.submitTopUpRequest)
+  const getOrCreatePlatformAccount = useAction(api.lib.coinbase.getOrCreatePlatformEvmAccount)
 
   const [txHash, setTxHash] = useState("")
   const [amount, setAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<string | null>(null)
 
-  const depositAddress =
+  const [depositAddress, setDepositAddress] = useState<string>(
     process.env.NEXT_PUBLIC_PLATFORM_BASE_USDC_DEPOSIT_ADDRESS || ""
+  )
+  const [depositLookupResult, setDepositLookupResult] = useState<string | null>(null)
 
   return (
     <DashboardLayout>
@@ -111,23 +114,55 @@ export default function BillingPage() {
             <CardTitle>Top Up (Base USDC)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {depositAddress ? (
-              <div className="space-y-2">
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2">
                 <div className="text-sm text-muted-foreground">
-                  Send USDC on Base to this deposit address:
+                  Send USDC on Base to the platform deposit address:
                 </div>
-                <CopyableField value={depositAddress} label="Deposit address" truncate />
+
+                {depositAddress ? (
+                  <CopyableField value={depositAddress} label="Deposit address" truncate />
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Not available yet. You can fetch it from Coinbase (CDP) once refunds are enabled.
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    disabled={!orgId}
+                    onClick={async () => {
+                      setDepositLookupResult(null)
+                      try {
+                        const res = await getOrCreatePlatformAccount({})
+                        if (res.ok) {
+                          setDepositAddress(res.address)
+                          setDepositLookupResult(`Using account “${res.name}”`)
+                        } else {
+                          setDepositLookupResult(res.message)
+                        }
+                      } catch (e: unknown) {
+                        const message =
+                          e instanceof Error ? e.message : "Failed to fetch deposit address"
+                        setDepositLookupResult(message)
+                      }
+                    }}
+                  >
+                    Fetch deposit address from Coinbase
+                  </Button>
+                  {depositLookupResult && (
+                    <span className="text-sm text-muted-foreground">
+                      {depositLookupResult}
+                    </span>
+                  )}
+                </div>
+
                 <div className="text-xs text-muted-foreground">
                   Balance updates are manual for now. After sending, submit the tx hash below.
                 </div>
               </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                Deposit address is not configured yet. Set{" "}
-                <code className="font-mono">NEXT_PUBLIC_PLATFORM_BASE_USDC_DEPOSIT_ADDRESS</code>{" "}
-                to show it here.
-              </div>
-            )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
