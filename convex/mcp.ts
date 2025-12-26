@@ -409,12 +409,12 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               field: "amount",
               expected: "amount (string|number) and amountUnit ('usdc'|'microusdc')",
               suggestion: "Provide the disputed amount and unit to deterministically match the USDC Transfer log",
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
+              }
+            }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
           
         if (!parameters.blockchain) {
           return new Response(JSON.stringify({
@@ -470,7 +470,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         // 2. Deterministic verification: caller provides amount+unit; it must match a USDC Transfer in the tx.
         const parsed = parseUsdcAmountToMicros(parameters.amount, parameters.amountUnit);
         if (!parsed.ok) {
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
             success: false,
             error: {
               code: "INVALID_AMOUNT",
@@ -478,21 +478,21 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               field: "amount",
               details: parsed.code
             }
-          }), {
+        }), {
             status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         }
-
+        
         console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by amount for tx: ${parameters.transactionHash}`);
-        const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+        const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount as any, {
           blockchain: parameters.blockchain,
           transactionHash: parameters.transactionHash,
           expectedAmountMicrousdc: parsed.microusdc,
         });
 
         if (!verify.ok) {
-          return new Response(JSON.stringify({
+        return new Response(JSON.stringify({
             success: false,
             error: {
               code: "TRANSACTION_VERIFICATION_FAILED",
@@ -503,10 +503,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             }
           }), {
             status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
+          headers: { "Content-Type": "application/json" }
+        });
         }
-
+        
         // 3. Extract deterministic details for the dispute
         const plaintiff = verify.payerAddress;
         const defendant = verify.recipientAddress;

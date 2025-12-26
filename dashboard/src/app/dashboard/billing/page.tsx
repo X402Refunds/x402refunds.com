@@ -13,6 +13,7 @@ import { CopyableField } from "@/components/case-detail/CopyableField"
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button"
 import { useAccount, useWalletClient } from "wagmi"
 import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature"
+import type { Doc } from "@convex/_generated/dataModel"
 
 export default function BillingPage() {
   const currentUser = useQuery(api.users.getCurrentUser, {})
@@ -270,7 +271,7 @@ export default function BillingPage() {
               )}
               {topUps && topUps.length > 0 && (
                 <div className="space-y-2">
-                  {topUps.map((t) => (
+                  {topUps.map((t: Doc<"refundTopUps">) => (
                     <div
                       key={t._id}
                       className="flex items-center justify-between rounded-lg border border-border bg-card p-3"

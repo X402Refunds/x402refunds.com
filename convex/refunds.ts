@@ -53,18 +53,6 @@ async function executeAutomatedRefundImpl(
     };
   }
 
-  // NEW: Refund-to-source (platform wallet) flow for payment disputes
-  // Only when we have verified paymentDetails (new ingestion path).
-  if (
-    dispute.type === "PAYMENT" &&
-    dispute.paymentDetails?.transactionHash &&
-    typeof dispute.paymentDetails?.amountMicrousdc === "number" &&
-    dispute.paymentDetails?.blockchain
-  ) {
-    await ctx.scheduler.runAfter(0, internal.refunds.createRefundAttempt as any, { caseId });
-    return { status: "SCHEDULED_REFUND_ATTEMPT" };
-  }
-  
   // Check if already refunded
   const existingRefund = await ctx.db
     .query("refundTransactions")
@@ -74,6 +62,65 @@ async function executeAutomatedRefundImpl(
   if (existingRefund) {
     console.log(`⏭️  Refund already exists for case ${caseId}`);
     return { status: "ALREADY_REFUNDED", refundId: existingRefund._id };
+  }
+
+  // NEW: Refund-to-source (platform wallet) flow for payment disputes.
+  // Support both the new ingestion shape (paymentDetails.transactionHash/blockchain/amountMicrousdc)
+  // and the older shape used by the dashboard card (paymentDetails.crypto.transactionHash/blockchain).
+  if (dispute.type === "PAYMENT") {
+    const pd: any = dispute.paymentDetails || {};
+    const txHash: string | undefined = pd.transactionHash || pd.crypto?.transactionHash;
+    const rawChain: string | undefined = pd.blockchain || pd.crypto?.blockchain;
+    const chain = typeof rawChain === "string" ? rawChain.toLowerCase() : undefined;
+
+    const amountMicrousdc: number | undefined =
+      typeof pd.amountMicrousdc === "number"
+        ? pd.amountMicrousdc
+        : typeof dispute.amount === "number"
+          ? Math.round(dispute.amount * 1_000_000)
+          : undefined;
+
+    const chainOk = chain === "base" || chain === "solana";
+    const txOk = typeof txHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(txHash);
+    const amountOk = typeof amountMicrousdc === "number" && Number.isFinite(amountMicrousdc) && amountMicrousdc > 0;
+
+    if (txOk && chainOk && amountOk) {
+      // Backfill into the canonical fields used by the refund engine, so subsequent runs are consistent.
+      if (!pd.transactionHash || !pd.blockchain || typeof pd.amountMicrousdc !== "number") {
+        await ctx.db.patch(caseId, {
+          paymentDetails: {
+            ...(pd || {}),
+            transactionHash: txHash,
+            blockchain: chain,
+            amountMicrousdc,
+          },
+        });
+      }
+
+      await ctx.scheduler.runAfter(0, internal.refunds.createRefundAttempt as any, { caseId });
+      return { status: "SCHEDULED_REFUND_ATTEMPT" };
+    }
+
+    // If we can't deterministically refund-to-source, create a failure record so the UI can show why.
+    const missing: string[] = [];
+    if (!txOk) missing.push("transactionHash");
+    if (!chainOk) missing.push("blockchain");
+    if (!amountOk) missing.push("amountMicrousdc");
+
+    const refundId = await ctx.db.insert("refundTransactions", {
+      caseId,
+      fromWallet: "platform",
+      toWallet: dispute.plaintiff || "",
+      amount: typeof dispute.amount === "number" ? dispute.amount : 0,
+      currency: dispute.currency || "USDC",
+      blockchain: chainOk ? chain : "base",
+      status: "FAILED",
+      createdAt: Date.now(),
+      failureCode: "MISSING_PAYMENT_DETAILS",
+      failureReason: `Cannot issue refund-to-source: missing/invalid ${missing.join(", ")}`,
+    });
+
+    return { status: "FAILED", refundId, reason: "MISSING_PAYMENT_DETAILS" };
   }
   
   // Get merchant settings

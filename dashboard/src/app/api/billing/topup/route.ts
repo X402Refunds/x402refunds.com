@@ -17,8 +17,8 @@ function parseAmountToMicros(amount: unknown, unit: AmountUnit): number | null {
   if (!/^\d+(\.\d{1,6})?$/.test(s)) return null;
   const [whole, frac = ""] = s.split(".");
   const padded = (frac + "000000").slice(0, 6);
-  const micros = BigInt(whole) * 1_000_000n + BigInt(padded);
-  if (micros <= 0n || micros > BigInt(Number.MAX_SAFE_INTEGER)) return null;
+  const micros = BigInt(whole) * BigInt(1_000_000) + BigInt(padded);
+  if (micros <= BigInt(0) || micros > BigInt(Number.MAX_SAFE_INTEGER)) return null;
   return Number(micros);
 }
 

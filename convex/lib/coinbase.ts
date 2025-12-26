@@ -125,7 +125,7 @@ export const sendUsdcBase = action({
       const sender = await cdp.evm.getOrCreateAccount({ name: envRes.env.platformAccountName });
 
       const amount = BigInt(args.amountMicrousdc);
-      if (amount <= 0n) {
+      if (amount <= BigInt(0)) {
         return { ok: false, code: "INVALID_AMOUNT", message: "Amount must be > 0" };
       }
 

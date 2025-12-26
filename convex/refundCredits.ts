@@ -199,14 +199,14 @@ export const applyVerifiedTopUp = internalMutation({
  * - Require it is sent to the platform deposit address (CDP account address)
  * - Auto-credit org ledger
  */
-export const submitTopUpAndAutoApply = action({
+export const submitTopUpAndAutoApply: any = action({
   args: {
     organizationId: v.id("organizations"),
     txHash: v.string(),
     amount: v.any(),
     amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any> => {
     const tx = args.txHash.trim();
     if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
       return { ok: false as const, code: "INVALID_TX_HASH", message: "Invalid txHash format (expected 0x + 64 hex chars)" };
