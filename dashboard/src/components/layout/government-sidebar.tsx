@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, LayoutDashboard, AlertCircle, Bot } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, LayoutDashboard, AlertCircle, Bot, CreditCard } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -35,6 +35,11 @@ const orgNavigationItems: NavigationItem[] = [
     title: "Team",
     href: "/dashboard/team",
     icon: Users,
+  },
+  {
+    title: "Billing",
+    href: "/dashboard/billing",
+    icon: CreditCard,
   },
 ]
 

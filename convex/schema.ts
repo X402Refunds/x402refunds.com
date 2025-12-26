@@ -684,4 +684,19 @@ export default defineSchema({
     .index("by_from_wallet", ["fromWallet"])
     .index("by_tx_signature", ["txSignature"])
     .index("by_source_triplet", ["sourceChain", "sourceTxHash", "sourceTransferLogIndex"]),
+
+  // Manual top-up requests (user-submitted tx hash + amount)
+  refundTopUps: defineTable({
+    organizationId: v.id("organizations"),
+    blockchain: v.union(v.literal("base")), // MVP: Base only
+    txHash: v.string(),
+    amountMicrousdc: v.number(),
+    status: v.union(v.literal("PENDING"), v.literal("APPROVED"), v.literal("REJECTED")),
+    createdAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+    reviewerNote: v.optional(v.string()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_status", ["status"])
+    .index("by_txhash", ["txHash"]),
 });

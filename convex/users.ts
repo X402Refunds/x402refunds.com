@@ -1,5 +1,6 @@
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Helper to generate API key string
 function createApiKeyString(prefix: "csk_live_" | "csk_test_"): string {
@@ -90,6 +91,9 @@ export const syncUser = mutation({
         });
         org = await ctx.db.get(orgId);
         console.info(`Organization auto-verified via OAuth: ${domain}`);
+
+        // Ensure refund credits row exists (trial for first 500 orgs)
+        await ctx.runMutation(internal.refundCredits.ensureOrgRefundCredits, { organizationId: orgId });
         
         // Auto-generate default API keys for new organization (must happen before user creation)
         const tempUserId = await ctx.db.insert("users", {
@@ -138,6 +142,11 @@ export const syncUser = mutation({
           });
           console.info(`Existing organization now verified via OAuth: ${domain}`);
         }
+      }
+
+      // Ensure refund credits row exists for existing orgs too
+      if (org?._id) {
+        await ctx.runMutation(internal.refundCredits.ensureOrgRefundCredits, { organizationId: org._id });
       }
       
       // Create user

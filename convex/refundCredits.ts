@@ -7,6 +7,7 @@
 
 import { internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { parseUsdcAmountToMicros } from "./lib/usdc";
 
 export const DISPUTE_FEE_MICROUSDC = 50_000;
 export const DEFAULT_TRIAL_CREDIT_MICROUSDC = 5_000_000;
@@ -23,6 +24,113 @@ export const getOrgRefundCredits = query({
       .query("orgRefundCredits")
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .first();
+  },
+});
+
+export const getOrgRefundCreditsSummary = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("orgRefundCredits")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .first();
+    if (!row) return null;
+    const remaining = Math.max(0, row.trialCreditMicrousdc - row.spentMicrousdc);
+    return {
+      ...row,
+      remainingMicrousdc: remaining,
+      remainingUsdc: remaining / 1_000_000,
+      trialCreditUsdc: row.trialCreditMicrousdc / 1_000_000,
+      spentUsdc: row.spentMicrousdc / 1_000_000,
+      maxPerCaseUsdc: row.maxPerCaseMicrousdc / 1_000_000,
+    };
+  },
+});
+
+/**
+ * Ensure a row exists for an org. First 500 orgs get 5 USDC trial credit + enabled.
+ * Creates a disabled, 0-credit row for later orgs so the dashboard can still show a balance.
+ */
+export const ensureOrgRefundCredits = internalMutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("orgRefundCredits")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .first();
+    if (existing) return { success: true, created: false, id: existing._id };
+
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) throw new Error("Organization not found");
+
+    // Determine rank by createdAt (approximate but stable enough for gating trial).
+    const allOrgs = await ctx.db.query("organizations").collect();
+    allOrgs.sort((a, b) => a.createdAt - b.createdAt);
+    const rank = allOrgs.findIndex((o) => o._id === args.organizationId) + 1;
+    const eligible = rank > 0 && rank <= 500;
+
+    const now = Date.now();
+    const id = await ctx.db.insert("orgRefundCredits", {
+      organizationId: args.organizationId,
+      enabled: eligible,
+      trialCreditMicrousdc: eligible ? DEFAULT_TRIAL_CREDIT_MICROUSDC : 0,
+      spentMicrousdc: 0,
+      maxPerCaseMicrousdc: DEFAULT_MAX_PER_CASE_MICROUSDC,
+      createdAt: now,
+    });
+
+    return { success: true, created: true, eligible, id };
+  },
+});
+
+/**
+ * User-submitted top-up request (manual reconciliation for now).
+ * This does NOT credit immediately; it creates a PENDING record for review.
+ */
+export const submitTopUpRequest = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    blockchain: v.union(v.literal("base")),
+    txHash: v.string(),
+    amount: v.any(),
+    amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
+  },
+  handler: async (ctx, args) => {
+    const tx = args.txHash.trim();
+    if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
+      throw new Error("Invalid txHash format (expected 0x + 64 hex chars)");
+    }
+
+    const parsed = parseUsdcAmountToMicros(args.amount, args.amountUnit);
+    if (!parsed.ok) throw new Error(`Invalid amount: ${parsed.code} - ${parsed.message}`);
+
+    const dup = await ctx.db
+      .query("refundTopUps")
+      .withIndex("by_txhash", (q) => q.eq("txHash", tx))
+      .first();
+    if (dup) return { success: true, status: dup.status, topUpId: dup._id };
+
+    const topUpId = await ctx.db.insert("refundTopUps", {
+      organizationId: args.organizationId,
+      blockchain: args.blockchain,
+      txHash: tx,
+      amountMicrousdc: parsed.microusdc,
+      status: "PENDING",
+      createdAt: Date.now(),
+    });
+
+    return { success: true, status: "PENDING", topUpId };
+  },
+});
+
+export const listTopUpRequests = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("refundTopUps")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .order("desc")
+      .take(20);
   },
 });
 
