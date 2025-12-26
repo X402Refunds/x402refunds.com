@@ -43,6 +43,11 @@ export default function DisputeDetailPage() {
     disputeId ? { paymentDisputeId: disputeId as Id<"cases"> } : "skip"
   )
 
+  const refund = useQuery(
+    api.refunds.getRefundStatus,
+    dispute ? { caseId: dispute._id } : "skip"
+  )
+
   const customerReview = useMutation(api.paymentDisputes.customerReview)
 
   const handleApprove = async () => {
@@ -200,6 +205,79 @@ export default function DisputeDetailPage() {
             custodial={dispute.signedEvidence?.custodial || dispute.paymentDetails?.custodial}
             traditional={dispute.signedEvidence?.traditional || dispute.paymentDetails?.traditional}
           />
+        </motion.div>
+
+        {/* Refund Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.22 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-2xl">↩️</span>
+                Refund Status
+              </CardTitle>
+              <CardDescription>
+                Refunds are issued to the original payer address (refund-to-source) after approval.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {!refund && (
+                <div className="text-sm text-slate-600">
+                  No refund has been initiated yet.
+                </div>
+              )}
+
+              {refund && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm text-slate-600">Status</div>
+                    <Badge variant="secondary">{refund.status}</Badge>
+                  </div>
+
+                  {refund.refundToAddress && (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm text-slate-600">Refund To</div>
+                      <code className="text-xs bg-muted px-2 py-1 rounded border border-border font-mono text-foreground truncate max-w-[60%]">
+                        {refund.refundToAddress}
+                      </code>
+                    </div>
+                  )}
+
+                  {typeof refund.amountMicrousdc === "number" && (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm text-slate-600">Amount</div>
+                      <div className="text-sm font-medium text-slate-900">
+                        {(refund.amountMicrousdc / 1_000_000).toFixed(6)} USDC
+                      </div>
+                    </div>
+                  )}
+
+                  {refund.explorerUrl && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => window.open(refund.explorerUrl!, "_blank")}
+                    >
+                      View on Explorer
+                    </Button>
+                  )}
+
+                  {(refund.failureCode || refund.failureReason) && (
+                    <div className="rounded-md border border-border bg-muted p-3">
+                      <div className="text-sm font-medium text-slate-900">Failure</div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        {refund.failureCode ? `${refund.failureCode}: ` : ""}
+                        {refund.failureReason || "Unknown error"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Parties Card */}
