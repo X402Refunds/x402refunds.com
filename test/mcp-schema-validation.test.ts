@@ -103,13 +103,14 @@ describe("MCP Tool Schema Validation", () => {
       }
     });
 
-    it("should list exactly 3 tools (simplified set)", () => {
-      expect(MCP_TOOLS.length).toBe(3);
+    it("should list exactly 4 tools (simplified set + demo)", () => {
+      expect(MCP_TOOLS.length).toBe(4);
 
       const expectedTools = [
         "x402_file_dispute",
         "x402_list_my_cases",
-        "x402_check_case_status"
+        "x402_check_case_status",
+        "demo_image_generator"
       ];
 
       const actualNames = MCP_TOOLS.map(t => t.name);

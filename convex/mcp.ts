@@ -193,6 +193,34 @@ export const MCP_TOOLS = [
       },
       required: ["caseId"]
     }
+  },
+  {
+    name: "demo_image_generator",
+    description:
+      "Demo X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be disputed via x402_file_dispute.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          minLength: 3,
+          maxLength: 1000,
+          description: "REQUIRED. Image prompt (3-1000 chars).",
+          examples: ["a cat playing with a ball of yarn"]
+        },
+        size: {
+          type: "string",
+          description: "Optional. Image size (e.g. 1024x1024).",
+          examples: ["1024x1024"]
+        },
+        model: {
+          type: "string",
+          description: "Optional. Model name.",
+          examples: ["stable-diffusion-xl"]
+        }
+      },
+      required: ["prompt"]
+    }
   }
 ];
 

@@ -19,7 +19,7 @@ describe('MCP - Tool Definitions', () => {
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(3); // Simplified: x402_file_dispute, x402_list_my_cases, x402_check_case_status
+    expect(MCP_TOOLS.length).toBe(4); // Simplified + demo_image_generator
   });
 
   it('should have valid tool schemas', async () => {
