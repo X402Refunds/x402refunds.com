@@ -33,9 +33,9 @@ export default function BillingPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<string | null>(null)
 
-  const [depositAddress, setDepositAddress] = useState<string>(
-    process.env.NEXT_PUBLIC_PLATFORM_BASE_USDC_DEPOSIT_ADDRESS || ""
-  )
+  // We intentionally do NOT seed from NEXT_PUBLIC_PLATFORM_BASE_USDC_DEPOSIT_ADDRESS anymore:
+  // deposit addresses must come from CDP (Coinbase Server Wallet) to ensure we can actually send refunds.
+  const [depositAddress, setDepositAddress] = useState<string>("")
   const [depositLookupResult, setDepositLookupResult] = useState<string | null>(null)
 
   return (

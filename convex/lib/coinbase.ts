@@ -56,7 +56,12 @@ export const getOrCreatePlatformEvmAccount = action({
     | { ok: false; code: string; message: string }
   > => {
     if (!isEnabled()) {
-      return { ok: false, code: "COINBASE_DISABLED", message: "Coinbase refunds are disabled" };
+      return {
+        ok: false,
+        code: "COINBASE_DISABLED",
+        message:
+          "Coinbase refunds are disabled (set COINBASE_REFUNDS_ENABLED=true in Convex env vars)",
+      };
     }
     const envRes = getRequiredEnv();
     if (!envRes.ok) return envRes;
@@ -94,7 +99,12 @@ export const sendUsdcBase = action({
   },
   handler: async (_ctx, args): Promise<CoinbaseSendResult> => {
     if (!isEnabled()) {
-      return { ok: false, code: "COINBASE_DISABLED", message: "Coinbase refunds are disabled" };
+      return {
+        ok: false,
+        code: "COINBASE_DISABLED",
+        message:
+          "Coinbase refunds are disabled (set COINBASE_REFUNDS_ENABLED=true in Convex env vars)",
+      };
     }
 
     const envRes = getRequiredEnv();
