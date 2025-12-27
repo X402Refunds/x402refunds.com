@@ -602,6 +602,7 @@ describe("Refund System - Integration Tests", () => {
         evidenceIds: [],
         finalVerdict: "CONSUMER_WINS",
         decidedAt: Date.now(),
+        reviewerOrganizationId: organizationId,
         mock: false,
         humanReviewRequired: false,
         createdAt: Date.now(),
@@ -609,16 +610,23 @@ describe("Refund System - Integration Tests", () => {
     });
 
     // Call manualApproveRefund (which calls executeAutomatedRefund internally)
-    // Since auto-refund is disabled, it should return AWAITING_APPROVAL
+    // Even if auto-refund is disabled, manual approval should force the refund.
     const result = await t.mutation(api.refunds.manualApproveRefund, {
       caseId,
       approvedByUserId: userId,
     });
 
-    // Manual approval still respects the auto-refund setting
-    // In production, you'd need a different endpoint to force refund
-    expect(result.status).toBe("AWAITING_APPROVAL");
-    expect(result.reason).toBe("Auto-refund not enabled");
+    expect(result.status).toBe("SCHEDULED");
+
+    const refund = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", q => q.eq("caseId", caseId))
+        .first();
+    });
+
+    expect(refund).toBeTruthy();
+    expect(refund?.status).toBe("PENDING");
   });
 });
 

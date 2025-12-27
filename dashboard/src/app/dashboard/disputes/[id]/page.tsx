@@ -50,6 +50,7 @@ export default function DisputeDetailPage() {
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
   const retryRefundForCase = useMutation(api.refunds.retryRefundForCase)
+  const manualApproveRefund = useMutation(api.refunds.manualApproveRefund)
 
   const handleApprove = async () => {
     if (!currentUser || !dispute) return
@@ -117,6 +118,27 @@ export default function DisputeDetailPage() {
     } catch (error) {
       console.error("Failed to retry refund:", error)
       alert("Failed to retry refund. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleInitiateRefund = async () => {
+    if (!currentUser || !dispute) return
+    setSubmitting(true)
+    try {
+      const res = await manualApproveRefund({
+        caseId: dispute._id,
+        approvedByUserId: currentUser._id,
+      })
+      // The backend schedules the refund attempt; the status card will update once the refund row exists.
+      if (res?.status && res.status !== "SCHEDULED_REFUND_ATTEMPT" && res.status !== "SCHEDULED" && res.status !== "SCHEDULED_X402R") {
+        // Surface non-happy-path responses (e.g., missing payment details).
+        alert(`Refund not initiated: ${res.status}${res.reason ? ` (${res.reason})` : ""}`)
+      }
+    } catch (error) {
+      console.error("Failed to initiate refund:", error)
+      alert("Failed to initiate refund. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -250,6 +272,17 @@ export default function DisputeDetailPage() {
                 </div>
               )}
 
+              {!refund && dispute.finalVerdict === "CONSUMER_WINS" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleInitiateRefund}
+                  disabled={submitting}
+                >
+                  Send refund now
+                </Button>
+              )}
+
               {refund && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -295,16 +328,14 @@ export default function DisputeDetailPage() {
                     </div>
                   )}
 
-                  {refund.status === "FAILED" &&
-                    (refund.failureCode === "COINBASE_SEND_FAILED" ||
-                      refund.failureCode === "COINBASE_DISABLED") && (
+                  {(refund.status === "FAILED" || refund.status === "COINBASE_DISABLED" || refund.status === "PENDING_SEND") && (
                       <Button
                         variant="outline"
                         className="w-full"
                         onClick={handleRetryRefund}
                         disabled={submitting}
                       >
-                        Retry refund now
+                        {refund.status === "PENDING_SEND" ? "Send refund now" : "Retry refund now"}
                       </Button>
                     )}
                 </div>

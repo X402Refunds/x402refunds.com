@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-27T19:41:30.383Z
+**Auto-generated on**: 2025-12-27T21:28:53.887Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -104,7 +104,7 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
+- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, findErc20Transfers, verifyUsdcTransferByRecipient, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
@@ -113,7 +113,7 @@ consulate/
 - **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
 - **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
-- **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
 - **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, applyVerifiedTopUp, submitTopUpAndAutoApply, getPlatformDepositAddress, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
@@ -378,5 +378,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/28/2025, 1:11:30 AM
+Generated: 12/28/2025, 2:58:53 AM
 Files scanned: 380

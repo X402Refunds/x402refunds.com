@@ -1052,7 +1052,9 @@ export const customerReview = mutation({
       await ctx.scheduler.runAfter(
         0,
         internal.refunds.executeAutomatedRefund,
-        { caseId: args.paymentDisputeId }
+        // This is a human (customer) decision, so we force refund execution even if
+        // merchantSettings.autoRefundEnabled is disabled (human gate).
+        { caseId: args.paymentDisputeId, force: true }
       );
     }
 
@@ -1184,6 +1186,14 @@ export const autoApproveAIRecommendation = mutation({
     });
 
     console.info(`✅ Auto-approved dispute ${args.paymentDisputeId} after Regulation E deadline`);
+
+    // Trigger refund if consumer wins
+    if (aiVerdict === "CONSUMER_WINS") {
+      await ctx.scheduler.runAfter(0, internal.refunds.executeAutomatedRefund, {
+        caseId: args.paymentDisputeId,
+        force: true,
+      });
+    }
 
     return { success: true, ruling: dispute.aiRecommendation, rulingId };
   },

@@ -24,6 +24,7 @@ function isCoinbaseRefundsEnabled(): boolean {
 async function executeAutomatedRefundImpl(
   ctx: { db: any; scheduler: any },
   caseId: Id<"cases">,
+  opts?: { force?: boolean },
 ): Promise<any> {
   const dispute = await ctx.db.get(caseId);
   if (!dispute) {
@@ -129,14 +130,17 @@ async function executeAutomatedRefundImpl(
     .withIndex("by_wallet", (q: any) => q.eq("walletAddress", dispute.defendant))
     .first();
   
-  // Check if auto-refund is enabled
-  if (!merchantSettings || !merchantSettings.autoRefundEnabled) {
+  const force = Boolean(opts?.force);
+
+  // Check if auto-refund is enabled (unless forced by a human decision)
+  if (!force && (!merchantSettings || !merchantSettings.autoRefundEnabled)) {
     console.log(`⏸️  Auto-refund disabled for ${dispute.defendant}`);
     return { status: "AWAITING_APPROVAL", reason: "Auto-refund not enabled" };
   }
   
   // Check threshold
   if (
+    !force &&
     merchantSettings.requireApprovalOver &&
     dispute.amount &&
     dispute.amount > merchantSettings.requireApprovalOver
@@ -190,9 +194,10 @@ async function executeAutomatedRefundImpl(
 export const executeAutomatedRefund = internalMutation({
   args: {
     caseId: v.id("cases"),
+    force: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    return await executeAutomatedRefundImpl(ctx, args.caseId);
+    return await executeAutomatedRefundImpl(ctx, args.caseId, { force: args.force });
   },
 });
 
@@ -387,7 +392,7 @@ export const createRefundAttemptRecord = internalMutation({
       // by re-debiting credits and moving the record back to PENDING_SEND.
       const retryableCoinbaseFailure =
         existing.provider === "coinbase" &&
-        existing.status === "FAILED" &&
+        (existing.status === "FAILED" || existing.status === "COINBASE_DISABLED") &&
         (existing.failureCode === "COINBASE_SEND_FAILED" || existing.failureCode === "COINBASE_DISABLED");
 
       if (!retryableCoinbaseFailure) {
@@ -508,9 +513,15 @@ export const retryRefundForCase = mutation({
       return { ok: true as const, status: "EXECUTED", refundId: refund._id };
     }
 
+    // Allow manually re-sending a pending refund (e.g., if a background job was delayed).
+    if (refund.status === "PENDING_SEND") {
+      await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: refund._id });
+      return { ok: true as const, status: "SCHEDULED_SEND", refundId: refund._id };
+    }
+
     const retryable =
       refund.provider === "coinbase" &&
-      refund.status === "FAILED" &&
+      (refund.status === "FAILED" || refund.status === "COINBASE_DISABLED") &&
       (refund.failureCode === "COINBASE_SEND_FAILED" || refund.failureCode === "COINBASE_DISABLED");
 
     if (!retryable) {
@@ -729,15 +740,22 @@ export const manualApproveRefund = mutation({
     approvedByUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    // Verify user has permission
     const user = await ctx.db.get(args.approvedByUserId);
     if (!user) {
       throw new Error("User not found");
     }
-    
-    // Manual approval still respects merchant settings (see tests). This uses the same logic
-    // as the internal automated refund path but executes it in this mutation context.
-    return await executeAutomatedRefundImpl(ctx, args.caseId);
+
+    const dispute: any = await ctx.db.get(args.caseId);
+    if (!dispute) throw new Error("Dispute not found");
+
+    // Only allow customer org members to trigger manual refunds for org-assigned cases.
+    if (dispute.reviewerOrganizationId && user.organizationId !== dispute.reviewerOrganizationId) {
+      throw new Error("Unauthorized: user not from customer organization");
+    }
+
+    // Manual approval is intended to be the "human gate" when auto-refund is disabled.
+    // It should still execute the refund, bypassing merchantSettings.autoRefundEnabled/threshold gates.
+    return await executeAutomatedRefundImpl(ctx, args.caseId, { force: true });
   },
 });
 
