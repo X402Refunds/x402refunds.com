@@ -1002,6 +1002,29 @@ http.route({
       return await handlePaymentDispute(ctx, request, undefined);
     } catch (error: any) {
       console.error("Payment dispute error:", error);
+      const msg = String(error?.message || "");
+      if (msg.startsWith("DUPLICATE_PAYMENT_DISPUTE:")) {
+        try {
+          const json = msg.slice("DUPLICATE_PAYMENT_DISPUTE:".length);
+          const data = JSON.parse(json);
+          return new Response(JSON.stringify({
+            error: "Duplicate dispute: this transaction has already been disputed.",
+            code: "DUPLICATE_PAYMENT_DISPUTE",
+            ...data,
+          }), {
+            status: 409,
+            headers: corsHeaders,
+          });
+        } catch {
+          return new Response(JSON.stringify({
+            error: "Duplicate dispute: this transaction has already been disputed.",
+            code: "DUPLICATE_PAYMENT_DISPUTE",
+          }), {
+            status: 409,
+            headers: corsHeaders,
+          });
+        }
+      }
       return new Response(JSON.stringify({
         error: error.message,
         hint: "Check docs at https://www.x402disputes.com/docs"

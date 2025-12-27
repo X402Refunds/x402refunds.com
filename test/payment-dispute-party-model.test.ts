@@ -17,6 +17,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../convex/schema";
 import { api } from "../convex/_generated/api";
+import { internal } from "../convex/_generated/api";
 
 describe("Payment Dispute Three-Party Model", () => {
   let t: any;
@@ -264,5 +265,85 @@ describe("Payment Dispute Three-Party Model", () => {
     expect(dispute.humanReviewRequired).toBeDefined();
 
     console.log("✅ Payment provider (Stripe) identified as final decision maker");
+  });
+
+  it("should reject duplicate disputes by tx hash before any chain verification", async () => {
+    // Insert an existing PAYMENT case with the same (chain, txHash) so the intake path
+    // should reject immediately without calling the on-chain verifier.
+    const txHash = "0xmock_duplicate_txhash_001";
+    const now = Date.now();
+
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("cases", {
+        plaintiff: "consumer:alice@stripe.com",
+        defendant: "merchant:openai-acct@stripe.com",
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "preexisting dispute",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: now,
+        retentionPolicy: "payment",
+        reviewerOrganizationId: stripeOrgId,
+        paymentSourceChain: "base",
+        paymentSourceTxHash: txHash,
+        paymentDetails: {
+          transactionId: txHash,
+          transactionHash: txHash,
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeReason: "other",
+          regulationEDeadline: now + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+        },
+      });
+    });
+
+    // Pass a txHash that would normally fail verifier (not a real 0x64hex), but since we dedupe
+    // before verification, we should still get the DUPLICATE_PAYMENT_DISPUTE error.
+    await expect(
+      t.action(api.paymentDisputes.receivePaymentDispute, {
+        transactionId: "txn_dup_001",
+        transactionHash: txHash,
+        blockchain: "base",
+        currency: "USDC",
+        // recipientAddress is required by validator, but should not be used due to early dedupe.
+        recipientAddress: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        disputeReason: "other",
+        description: "duplicate filing attempt",
+        reviewerOrganizationId: stripeOrgId,
+      })
+    ).rejects.toThrow(/DUPLICATE_PAYMENT_DISPUTE/);
+  });
+
+  it("should reject duplicates in createPaymentDisputeCase (defense-in-depth)", async () => {
+    const args = {
+      transactionId: "0xmock_defense_in_depth_tx",
+      transactionHash: "0xmock_defense_in_depth_tx",
+      blockchain: "base" as const,
+      amountMicrousdc: 10_000,
+      amountUsdc: 0.01,
+      currency: "USDC",
+      plaintiff: "consumer:alice@stripe.com",
+      defendant: "merchant:openai-acct@stripe.com",
+      disputeReason: "other",
+      description: "defense in depth test",
+      reviewerOrganizationId: stripeOrgId,
+      sourceTransferLogIndex: 0,
+      payerAddress: "0x1111111111111111111111111111111111111111",
+      recipientAddress: "0x2222222222222222222222222222222222222222",
+      disputeFee: 0.05,
+    };
+
+    await t.mutation(internal.paymentDisputes.createPaymentDisputeCase as any, args as any);
+    await expect(
+      t.mutation(internal.paymentDisputes.createPaymentDisputeCase as any, args as any)
+    ).rejects.toThrow(/DUPLICATE_PAYMENT_DISPUTE/);
   });
 });

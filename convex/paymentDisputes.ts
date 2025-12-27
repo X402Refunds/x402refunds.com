@@ -11,7 +11,7 @@
  */
 
 // @ts-nocheck
-import { mutation, query, action, internalMutation } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
@@ -128,6 +128,21 @@ export const receivePaymentDispute = action({
     reviewerOrganizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args): Promise<any> => {
+    // DB-first de-dupe (cost-conscious): reject duplicates by (chain, txHash) before any chain verification.
+    const existing = await ctx.runQuery(internal.paymentDisputes.findExistingPaymentCaseByTxHash, {
+      blockchain: args.blockchain,
+      transactionHash: args.transactionHash,
+    });
+    if (existing) {
+      throw new Error(
+        `DUPLICATE_PAYMENT_DISPUTE:${JSON.stringify({
+          existingCaseId: existing._id,
+          status: existing.status,
+          finalVerdict: existing.finalVerdict,
+        })}`
+      );
+    }
+
     // Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
     const verifyRes = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
       blockchain: args.blockchain,
@@ -224,6 +239,24 @@ export const createPaymentDisputeCase = internalMutation({
     const now = Date.now();
     const isMicroDispute = args.amountUsdc < 1.0;
 
+    // Defense-in-depth: reject duplicates by (chain, txHash) even for internal callers.
+    const existing = await ctx.db
+      .query("cases")
+      .withIndex("by_payment_source_tx", (q) =>
+        q.eq("paymentSourceChain", args.blockchain).eq("paymentSourceTxHash", args.transactionHash)
+      )
+      .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+      .first();
+    if (existing) {
+      throw new Error(
+        `DUPLICATE_PAYMENT_DISPUTE:${JSON.stringify({
+          existingCaseId: existing._id,
+          status: existing.status,
+          finalVerdict: existing.finalVerdict,
+        })}`
+      );
+    }
+
     // Calculate Regulation E deadline (10 business days)
     const regulationEDeadline = now + (10 * 24 * 60 * 60 * 1000); // Simplified: 10 calendar days
 
@@ -247,6 +280,8 @@ export const createPaymentDisputeCase = internalMutation({
       regulationEDeadline,
       retentionPolicy: "payment",
       reviewerOrganizationId: args.reviewerOrganizationId,
+      paymentSourceChain: args.blockchain,
+      paymentSourceTxHash: args.transactionHash,
       paymentDetails: {
         transactionId: args.transactionId,
         transactionHash: args.transactionHash,
@@ -327,6 +362,23 @@ export const createPaymentDisputeCase = internalMutation({
     }
 
     return caseId;
+  },
+});
+
+// Internal helper: DB-first duplicate lookup by (chain, txHash)
+export const findExistingPaymentCaseByTxHash = internalQuery({
+  args: {
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
+    transactionHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("cases")
+      .withIndex("by_payment_source_tx", (q) =>
+        q.eq("paymentSourceChain", args.blockchain).eq("paymentSourceTxHash", args.transactionHash)
+      )
+      .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+      .first();
   },
 });
 

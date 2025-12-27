@@ -321,6 +321,13 @@ export default defineSchema({
       callbackUrl: v.optional(v.string()),
     })),
 
+    // Payment-source identifiers for fast, DB-first de-dupe (Convex can't index nested paymentDetails.*)
+    // Used by payment dispute intake to reject duplicates before any on-chain verification.
+    paymentSourceChain: v.optional(v.union(v.literal("base"), v.literal("solana"))),
+    paymentSourceTxHash: v.optional(v.string()),
+    // NOTE: Intentionally omitted in v1 dedupe plan (we only dedupe by tx hash).
+    // We can add paymentSourceTransferLogIndex in v2 if we evolve to logIndex-based dedupe.
+
     // Metadata
     mock: v.optional(v.boolean()),
     createdAt: v.optional(v.number()), // TEMP: Optional to allow migration
@@ -356,6 +363,7 @@ export default defineSchema({
     .index("by_needs_review", ["reviewerOrganizationId", "humanReviewRequired"])
     .index("by_status_and_type", ["status", "type"])
     .index("by_category", ["category"]) // For GENERAL disputes
+    .index("by_payment_source_tx", ["paymentSourceChain", "paymentSourceTxHash"])
     .index("by_test", ["isTestData"]), // Query test data for cleanup
 
   // Evidence manifests (ADP-compliant)

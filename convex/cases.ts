@@ -296,6 +296,42 @@ export const getCaseById = query({
   },
 });
 
+/**
+ * One-time migration/backfill:
+ * Populate paymentSourceChain/paymentSourceTxHash for historical PAYMENT cases
+ * from paymentDetails.blockchain/transactionHash when present.
+ *
+ * Safe to run multiple times; only patches rows missing the top-level fields.
+ */
+export const backfillPaymentSourceTx = internalMutation({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<{ scanned: number; updated: number }> => {
+    const limit = Math.max(1, Math.min(args.limit ?? 500, 2000));
+    const cases = await ctx.db
+      .query("cases")
+      .withIndex("by_type", (q) => q.eq("type", "PAYMENT"))
+      .take(limit);
+
+    let updated = 0;
+    for (const c of cases as any[]) {
+      if (c.paymentSourceChain && c.paymentSourceTxHash) continue;
+      const chain = c.paymentDetails?.blockchain;
+      const txHash = c.paymentDetails?.transactionHash;
+      if ((chain === "base" || chain === "solana") && typeof txHash === "string" && txHash.length > 0) {
+        await ctx.db.patch(c._id, {
+          paymentSourceChain: chain,
+          paymentSourceTxHash: txHash,
+        });
+        updated += 1;
+      }
+    }
+
+    return { scanned: cases.length, updated };
+  },
+});
+
 export const getCasesByStatus = query({
   args: {
     status: v.union(
