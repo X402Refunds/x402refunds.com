@@ -284,6 +284,16 @@ export default function BillingPage() {
                           </span>
                         </div>
                         <CopyableField value={t.txHash} truncate truncateLength={18} />
+                      {t.blockchain === "base" && (
+                        <a
+                          href={`https://basescan.org/tx/${t.txHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                        >
+                          View on BaseScan
+                        </a>
+                      )}
                       </div>
                       <Badge
                         variant={
