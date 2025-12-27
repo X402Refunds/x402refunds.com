@@ -144,7 +144,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         transactionHash: `0x${timestamp.toString(16)}`,
         amount: "0.25",
         amountUnit: "usdc",
-        blockchain: 'base',
+          blockchain: 'base',
         dryRun: true
       });
 

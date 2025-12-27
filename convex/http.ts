@@ -368,7 +368,7 @@ http.route({
                   transactionHash: parameters.transactionHash,
                   expectedAmountMicrousdc: parsed.microusdc,
                 });
-
+                
                 if (!verify.ok) {
                   invokeData = {
                     success: false,
@@ -380,7 +380,7 @@ http.route({
                   };
                   break;
                 }
-
+                
                 const plaintiff = verify.payerAddress;
                 const defendant = verify.recipientAddress;
                 const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));

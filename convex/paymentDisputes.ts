@@ -257,7 +257,7 @@ export const createPaymentDisputeCase = internalMutation({
         disputeFee: args.disputeFee,
       },
     });
-
+    
     if (args.evidenceUrls && args.evidenceUrls.length > 0) {
       for (const url of args.evidenceUrls) {
         const evidenceId = await ctx.db.insert("evidenceManifests", {
@@ -273,14 +273,14 @@ export const createPaymentDisputeCase = internalMutation({
             version: "1.0.0",
           },
         });
-
+        
         const existingCase = await ctx.db.get(caseId);
         if (existingCase) {
           await ctx.db.patch(caseId, { evidenceIds: [...existingCase.evidenceIds, evidenceId] });
         }
       }
     }
-
+    
     await createCustodyEvent(ctx, {
       type: "DISPUTE_FILED",
       caseId,

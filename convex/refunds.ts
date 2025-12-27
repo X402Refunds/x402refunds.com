@@ -382,7 +382,47 @@ export const createRefundAttemptRecord = internalMutation({
           .eq("sourceTransferLogIndex", args.sourceTransferLogIndex)
       )
       .first();
-    if (existing) return { status: "ALREADY_EXISTS", refundId: existing._id };
+    if (existing) {
+      // Allow retry for Coinbase send failures (e.g., insufficient ETH for gas on Base)
+      // by re-debiting credits and moving the record back to PENDING_SEND.
+      const retryableCoinbaseFailure =
+        existing.provider === "coinbase" &&
+        existing.status === "FAILED" &&
+        (existing.failureCode === "COINBASE_SEND_FAILED" || existing.failureCode === "COINBASE_DISABLED");
+
+      if (!retryableCoinbaseFailure) {
+        return { status: "ALREADY_EXISTS", refundId: existing._id };
+      }
+
+      const debitRes = await ctx.runMutation(internal.refundCredits.debitRefundAmount as any, {
+        organizationId: args.organizationId,
+        amountMicrousdc: args.amountMicrousdc,
+      });
+
+      if (!debitRes.ok) {
+        await ctx.db.patch(existing._id, {
+          status: "INSUFFICIENT_CREDITS",
+          errorMessage: debitRes.message,
+          failureCode: debitRes.code,
+          failureReason: debitRes.message,
+        });
+        return { status: "INSUFFICIENT_CREDITS", refundId: existing._id };
+      }
+
+      await ctx.db.patch(existing._id, {
+        status: "PENDING_SEND",
+        // Keep for audit, but clear failure fields so the UI reflects the retry attempt.
+        failureCode: undefined,
+        failureReason: undefined,
+        errorMessage: undefined,
+        // Ensure these are present in case they were missing in older rows.
+        amountMicrousdc: args.amountMicrousdc,
+        refundToAddress: args.refundToAddress,
+        provider: "coinbase",
+      });
+
+      return { status: "PENDING_SEND", refundId: existing._id, retried: true };
+    }
 
     const debitRes = await ctx.runMutation(internal.refundCredits.debitRefundAmount as any, {
       organizationId: args.organizationId,
@@ -429,6 +469,61 @@ export const createRefundAttemptRecord = internalMutation({
     });
 
     return { status: "PENDING_SEND", refundId };
+  },
+});
+
+/**
+ * Retry a failed refund-to-source attempt (Coinbase).
+ *
+ * Intended for cases where the platform wallet had insufficient gas/token balance at send time,
+ * and has since been funded. This schedules the same internal workflow and relies on
+ * createRefundAttemptRecord's retry logic to re-debit and re-send.
+ */
+export const retryRefundForCase = mutation({
+  args: {
+    caseId: v.id("cases"),
+    requesterUserId: v.id("users"),
+  },
+  handler: async (ctx, args): Promise<any> => {
+    const dispute: any = await ctx.db.get(args.caseId);
+    if (!dispute) throw new Error("Dispute not found");
+    if (!dispute.reviewerOrganizationId) throw new Error("Dispute is not assigned to an organization");
+
+    const requester: any = await ctx.db.get(args.requesterUserId);
+    if (!requester) throw new Error("Requester not found");
+    if (requester.organizationId !== dispute.reviewerOrganizationId) {
+      throw new Error("Unauthorized: requester not from customer organization");
+    }
+
+    const refund: any = await ctx.db
+      .query("refundTransactions")
+      .withIndex("by_case", (q: any) => q.eq("caseId", args.caseId))
+      .first();
+
+    if (!refund) {
+      return { ok: false as const, code: "NO_REFUND", message: "No refund record exists yet for this case" };
+    }
+
+    if (refund.status === "EXECUTED") {
+      return { ok: true as const, status: "EXECUTED", refundId: refund._id };
+    }
+
+    const retryable =
+      refund.provider === "coinbase" &&
+      refund.status === "FAILED" &&
+      (refund.failureCode === "COINBASE_SEND_FAILED" || refund.failureCode === "COINBASE_DISABLED");
+
+    if (!retryable) {
+      return {
+        ok: false as const,
+        code: "NOT_RETRYABLE",
+        message: `Refund is not in a retryable state (status=${refund.status}, code=${refund.failureCode || "n/a"})`,
+        refundId: refund._id,
+      };
+    }
+
+    await ctx.scheduler.runAfter(0, internal.refunds.createRefundAttempt as any, { caseId: args.caseId });
+    return { ok: true as const, status: "SCHEDULED", refundId: refund._id };
   },
 });
 

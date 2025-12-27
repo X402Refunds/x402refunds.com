@@ -49,6 +49,7 @@ export default function DisputeDetailPage() {
   )
 
   const customerReview = useMutation(api.paymentDisputes.customerReview)
+  const retryRefundForCase = useMutation(api.refunds.retryRefundForCase)
 
   const handleApprove = async () => {
     if (!currentUser || !dispute) return
@@ -97,6 +98,25 @@ export default function DisputeDetailPage() {
     } catch (error) {
       console.error("Failed to submit decision:", error)
       alert("Failed to submit decision. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleRetryRefund = async () => {
+    if (!currentUser || !dispute) return
+    setSubmitting(true)
+    try {
+      const res = await retryRefundForCase({
+        caseId: dispute._id,
+        requesterUserId: currentUser._id,
+      })
+      if (!res?.ok) {
+        alert(res?.message || "Refund is not retryable.")
+      }
+    } catch (error) {
+      console.error("Failed to retry refund:", error)
+      alert("Failed to retry refund. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -274,6 +294,19 @@ export default function DisputeDetailPage() {
                       </div>
                     </div>
                   )}
+
+                  {refund.status === "FAILED" &&
+                    (refund.failureCode === "COINBASE_SEND_FAILED" ||
+                      refund.failureCode === "COINBASE_DISABLED") && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleRetryRefund}
+                        disabled={submitting}
+                      >
+                        Retry refund now
+                      </Button>
+                    )}
                 </div>
               )}
             </CardContent>
