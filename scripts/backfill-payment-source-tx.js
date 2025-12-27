@@ -24,11 +24,12 @@ if (!deployment) {
 }
 
 const limit = Number(arg("--limit") || "1000");
-const maxPasses = Number(arg("--max-passes") || "50");
+const maxPasses = Number(arg("--max-passes") || "200");
 
+let cursor = null;
 for (let pass = 0; pass < maxPasses; pass++) {
   const env = { ...process.env, CONVEX_DEPLOYMENT: deployment };
-  const argsJson = JSON.stringify({ limit });
+  const argsJson = JSON.stringify({ limit, cursor });
   const cmd = ["exec", "convex", "run", "cases:backfillPaymentSourceTx", argsJson];
   const r = spawnSync("pnpm", cmd, { stdio: "pipe", encoding: "utf8", env });
   if (r.status !== 0) {
@@ -48,9 +49,10 @@ for (let pass = 0; pass < maxPasses; pass++) {
   } catch {
     parsed = null;
   }
-  const updated = parsed?.updated;
-  if (typeof updated === "number" && updated === 0) {
-    console.log("Backfill complete (no more rows to update).");
+  if (!parsed) continue;
+  cursor = parsed.cursor ?? null;
+  if (parsed.isDone) {
+    console.log("Backfill complete (reached end of table).");
     break;
   }
 }

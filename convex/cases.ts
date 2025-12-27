@@ -306,24 +306,27 @@ export const getCaseById = query({
 export const backfillPaymentSourceTx = internalMutation({
   args: {
     limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ scanned: number; updated: number }> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ scanned: number; updated: number; cursor: string | null; isDone: boolean }> => {
     const limit = Math.max(1, Math.min(args.limit ?? 500, 2000));
-    // Iterate PAYMENT cases missing the new top-level paymentSource fields.
-    // Uses the by_type index, then filters down to only rows requiring update.
-    const cases = await ctx.db
+
+    // Paginate over PAYMENT cases, oldest → newest, patching rows missing the new fields.
+    const pageRes = await ctx.db
       .query("cases")
       .withIndex("by_type", (q) => q.eq("type", "PAYMENT"))
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("paymentSourceChain"), undefined),
-          q.eq(q.field("paymentSourceTxHash"), undefined),
-        )
-      )
-      .take(limit);
+      .order("asc")
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: limit,
+      });
 
     let updated = 0;
-    for (const c of cases as any[]) {
+    for (const c of pageRes.page as any[]) {
+      if (c.paymentSourceChain && c.paymentSourceTxHash) continue;
       const chain = c.paymentDetails?.blockchain;
       const txHash = c.paymentDetails?.transactionHash;
       if ((chain === "base" || chain === "solana") && typeof txHash === "string" && txHash.length > 0) {
@@ -335,7 +338,12 @@ export const backfillPaymentSourceTx = internalMutation({
       }
     }
 
-    return { scanned: cases.length, updated };
+    return {
+      scanned: pageRes.page.length,
+      updated,
+      cursor: pageRes.continueCursor,
+      isDone: pageRes.isDone,
+    };
   },
 });
 
