@@ -19,6 +19,17 @@ type DepositResult =
 const GET_PLATFORM_DEPOSIT_ADDRESS = "refundCredits:getPlatformDepositAddress";
 const SUBMIT_TOPUP_AND_AUTO_APPLY = "refundCredits:submitTopUpAndAutoApply";
 
+function getConvexCloudUrl(): string {
+  const fallback = "https://perceptive-lyrebird-89.convex.cloud";
+  const raw = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (typeof raw !== "string") return fallback;
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  // ConvexHttpClient expects a deployment URL like https://<name>.convex.cloud
+  // (some environments accidentally set this to a .convex.site or custom domain).
+  if (!trimmed.includes(".convex.cloud")) return fallback;
+  return trimmed;
+}
+
 function parseAmountToMicros(amount: unknown, unit: AmountUnit): number | null {
   if (unit === "microusdc") {
     const n = typeof amount === "string" ? Number(amount) : (amount as number);
@@ -200,12 +211,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Prefer runtime env, then fall back to the known production deployment.
-  const convexUrl =
-    process.env.NEXT_PUBLIC_CONVEX_URL ||
-    "https://perceptive-lyrebird-89.convex.cloud";
-
-  const convex = new ConvexHttpClient(convexUrl);
+    const convex = new ConvexHttpClient(getConvexCloudUrl(), {
+      // Be resilient in case env values don't match Convex's default URL pattern.
+      skipConvexDeploymentUrlCheck: true,
+    });
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
   const runQuery = convex.query as unknown as (fn: unknown, args: unknown) => Promise<DepositResult>;
   const deposit = await runQuery(GET_PLATFORM_DEPOSIT_ADDRESS, {});
