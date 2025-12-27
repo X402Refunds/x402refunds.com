@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { parseDuplicatePaymentDisputeError } from "./lib/duplicateDispute";
 
 const http = httpRouter();
 
@@ -1002,30 +1003,16 @@ http.route({
       return await handlePaymentDispute(ctx, request, undefined);
     } catch (error: any) {
       console.error("Payment dispute error:", error);
-      const msg = String(error?.message || "");
-      const marker = "DUPLICATE_PAYMENT_DISPUTE:";
-      const idx = msg.indexOf(marker);
-      if (idx !== -1) {
-        try {
-          const json = msg.slice(idx + marker.length);
-          const data = JSON.parse(json);
-          return new Response(JSON.stringify({
-            error: "Duplicate dispute: this transaction has already been disputed.",
-            code: "DUPLICATE_PAYMENT_DISPUTE",
-            ...data,
-          }), {
-            status: 409,
-            headers: corsHeaders,
-          });
-        } catch {
-          return new Response(JSON.stringify({
-            error: "Duplicate dispute: this transaction has already been disputed.",
-            code: "DUPLICATE_PAYMENT_DISPUTE",
-          }), {
-            status: 409,
-            headers: corsHeaders,
-          });
-        }
+      const payload = parseDuplicatePaymentDisputeError(String(error?.message || ""));
+      if (payload) {
+        return new Response(JSON.stringify({
+          error: "Duplicate dispute: this transaction has already been disputed.",
+          code: "DUPLICATE_PAYMENT_DISPUTE",
+          ...payload,
+        }), {
+          status: 409,
+          headers: corsHeaders,
+        });
       }
       return new Response(JSON.stringify({
         error: error.message,
