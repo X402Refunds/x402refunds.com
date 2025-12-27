@@ -216,7 +216,7 @@ export async function POST(request: Request) {
       skipConvexDeploymentUrlCheck: true,
     });
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
-  const runQuery = convex.query as unknown as (fn: unknown, args: unknown) => Promise<DepositResult>;
+    const runQuery = convex.query.bind(convex) as unknown as (fn: unknown, args: unknown) => Promise<DepositResult>;
   const deposit = await runQuery(GET_PLATFORM_DEPOSIT_ADDRESS, {});
   if (!deposit.ok) {
     return NextResponse.json(
@@ -274,7 +274,7 @@ export async function POST(request: Request) {
 
   // Auto-credit via Convex (log-based USDC verification + idempotency).
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
-  const runAction = convex.action as unknown as (fn: unknown, args: unknown) => Promise<TopUpCreditResult>;
+    const runAction = convex.action.bind(convex) as unknown as (fn: unknown, args: unknown) => Promise<TopUpCreditResult>;
   const credited = await runAction(SUBMIT_TOPUP_AND_AUTO_APPLY, {
     organizationId: organizationId as Id<"organizations">,
     txHash,
