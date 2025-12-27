@@ -57,6 +57,57 @@ export function decodeXPaymentHeader(paymentHeader: string): unknown | null {
   return null;
 }
 
+function normalizePaymentPayloadForFacilitator(
+  decoded: unknown | null,
+  paymentRequirements: any,
+): unknown {
+  if (!decoded || typeof decoded !== "object") return decoded ?? null;
+
+  const obj = decoded as Record<string, unknown>;
+
+  // Some clients send `version` instead of `x402Version`.
+  const version =
+    typeof obj.x402Version === "number"
+      ? obj.x402Version
+      : typeof obj.version === "number"
+        ? obj.version
+        : typeof obj.version === "string"
+          ? Number(obj.version)
+          : undefined;
+
+  if (typeof version === "number" && Number.isFinite(version)) {
+    // Ensure `x402Version` exists for facilitators that strictly deserialize.
+    return { ...obj, x402Version: version };
+  }
+
+  // If the decoded object looks like an "inner payload" (authorization/signature),
+  // re-wrap it into the X-402 envelope the facilitator expects:
+  // { x402Version, scheme, network, payload }
+  const inferredScheme =
+    typeof obj.scheme === "string"
+      ? obj.scheme
+      : typeof paymentRequirements?.scheme === "string"
+        ? paymentRequirements.scheme
+        : undefined;
+  const inferredNetwork =
+    typeof obj.network === "string"
+      ? obj.network
+      : typeof paymentRequirements?.network === "string"
+        ? paymentRequirements.network
+        : undefined;
+
+  // If the decoded object already has a `payload` field, keep it; otherwise treat the
+  // whole object as the payload.
+  const innerPayload = obj.payload ?? obj;
+
+  return {
+    x402Version: 1,
+    scheme: inferredScheme,
+    network: inferredNetwork,
+    payload: innerPayload,
+  };
+}
+
 /**
  * Verify payment via mcpay.tech facilitator
  */
@@ -73,7 +124,11 @@ export const verifyPayment = action({
     
     // Facilitators often expect `paymentPayload` as a decoded JSON object, not a base64 string.
     // Decode and normalize any envelope formats.
-    const decodedPayload = decodeXPaymentHeader(args.paymentHeader);
+    const decodedPayloadRaw = decodeXPaymentHeader(args.paymentHeader);
+    const decodedPayload = normalizePaymentPayloadForFacilitator(
+      decodedPayloadRaw,
+      args.paymentRequirements,
+    );
 
     let lastStatus = 500;
     let lastBody = "";
@@ -89,7 +144,7 @@ export const verifyPayment = action({
           },
           body: JSON.stringify({
             // Facilitator schema: { paymentPayload, paymentRequirements }
-            paymentPayload: decodedPayload ?? args.paymentHeader,
+            paymentPayload: decodedPayload ?? decodedPayloadRaw ?? args.paymentHeader,
             paymentRequirements: args.paymentRequirements,
           }),
         });
@@ -133,7 +188,11 @@ export const settlePayment = action({
       ? [override]
       : ["https://facilitator.mcpay.tech", "https://facilitator.daydreams.systems"];
  
-    const decodedPayload = decodeXPaymentHeader(args.paymentHeader);
+    const decodedPayloadRaw = decodeXPaymentHeader(args.paymentHeader);
+    const decodedPayload = normalizePaymentPayloadForFacilitator(
+      decodedPayloadRaw,
+      args.paymentRequirements,
+    );
 
     let lastStatus = 500;
     let lastBody = "";
@@ -148,7 +207,7 @@ export const settlePayment = action({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            paymentPayload: decodedPayload ?? args.paymentHeader,
+            paymentPayload: decodedPayload ?? decodedPayloadRaw ?? args.paymentHeader,
             paymentRequirements: args.paymentRequirements,
           }),
         });
