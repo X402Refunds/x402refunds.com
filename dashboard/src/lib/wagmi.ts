@@ -26,13 +26,14 @@ export function getWagmiConfig(): Config {
   }
 
   if (!wagmiConfigInstance) {
+    const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+
     wagmiConfigInstance = createConfig({
       chains: [base, mainnet, polygon, arbitrum, optimism],
       connectors: [
         injected(),
-        walletConnect({ 
-          projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'placeholder' 
-        }),
+        // Only enable WalletConnect when the projectId is configured.
+        ...(walletConnectProjectId ? [walletConnect({ projectId: walletConnectProjectId })] : []),
       ],
       transports: {
         [base.id]: http(),

@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
-import { anyApi } from "convex/server";
 import type { Id } from "@convex/_generated/dataModel";
 import { build402ResponseBody, buildTopupPaymentRequirement } from "@/lib/x402-topup";
 
-// Use the untyped Convex API reference to avoid Next.js route TypeScript instantiation depth issues.
-const api = anyApi;
+// Uses Node APIs (Buffer) and should not run in the Edge runtime.
+export const runtime = "nodejs";
 
 type AmountUnit = "usdc" | "microusdc";
 
@@ -16,6 +15,9 @@ type TopUpCreditResult =
 type DepositResult =
   | { ok: true; address: string; [k: string]: unknown }
   | { ok: false; [k: string]: unknown };
+
+const GET_PLATFORM_DEPOSIT_ADDRESS = "refundCredits:getPlatformDepositAddress";
+const SUBMIT_TOPUP_AND_AUTO_APPLY = "refundCredits:submitTopUpAndAutoApply";
 
 function parseAmountToMicros(amount: unknown, unit: AmountUnit): number | null {
   if (unit === "microusdc") {
@@ -135,6 +137,7 @@ function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
 }
 
 export async function POST(request: Request) {
+  try {
   // Public endpoint (x402 payment proof required). Rate limit by IP to reduce abuse.
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -197,16 +200,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!convexUrl) {
-    return NextResponse.json({ success: false, error: { code: "NOT_CONFIGURED", message: "Missing NEXT_PUBLIC_CONVEX_URL" } }, { status: 500 });
-  }
+  // Prefer runtime env, then fall back to the known production deployment.
+  const convexUrl =
+    process.env.NEXT_PUBLIC_CONVEX_URL ||
+    "https://perceptive-lyrebird-89.convex.cloud";
 
   const convex = new ConvexHttpClient(convexUrl);
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
   const runQuery = convex.query as unknown as (fn: unknown, args: unknown) => Promise<DepositResult>;
-  const getPlatformDepositAddress = api.refundCredits.getPlatformDepositAddress as unknown;
-  const deposit = await runQuery(getPlatformDepositAddress, {});
+  const deposit = await runQuery(GET_PLATFORM_DEPOSIT_ADDRESS, {});
   if (!deposit.ok) {
     return NextResponse.json(
       { success: false, error: { code: "NOT_CONFIGURED", message: "Deposit address not configured" } },
@@ -264,8 +266,7 @@ export async function POST(request: Request) {
   // Auto-credit via Convex (log-based USDC verification + idempotency).
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
   const runAction = convex.action as unknown as (fn: unknown, args: unknown) => Promise<TopUpCreditResult>;
-  const submitTopUpAndAutoApply = api.refundCredits.submitTopUpAndAutoApply as unknown;
-  const credited = await runAction(submitTopUpAndAutoApply, {
+  const credited = await runAction(SUBMIT_TOPUP_AND_AUTO_APPLY, {
     organizationId: organizationId as Id<"organizations">,
     txHash,
     amount,
@@ -284,6 +285,13 @@ export async function POST(request: Request) {
     txHash,
     credits: credited.credits,
   });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { success: false, error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
+    );
+  }
 }
 
 
