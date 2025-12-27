@@ -628,6 +628,105 @@ describe("Refund System - Integration Tests", () => {
     expect(refund).toBeTruthy();
     expect(refund?.status).toBe("PENDING");
   });
+
+  it("should surface an executed refund for duplicate cases filed against the same source transfer", async () => {
+    // Create two PAYMENT cases with identical (chain, txHash, logIndex), simulating duplicate filing.
+    const now = Date.now();
+    const txHash = `0x${"a".repeat(64)}`;
+
+    const caseId1 = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: consumerWallet,
+        defendant: merchantWallet,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "Duplicate case 1",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        decidedAt: now,
+        reviewerOrganizationId: organizationId,
+        paymentDetails: {
+          transactionId: txHash,
+          blockchain: "base",
+          transactionHash: txHash,
+          sourceTransferLogIndex: 7,
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          disputeReason: "quality_issue",
+          regulationEDeadline: now + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+        },
+        mock: false,
+        humanReviewRequired: false,
+        createdAt: now,
+      });
+    });
+
+    const caseId2 = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: consumerWallet,
+        defendant: merchantWallet,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now + 1,
+        description: "Duplicate case 2",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        decidedAt: now + 1,
+        reviewerOrganizationId: organizationId,
+        paymentDetails: {
+          transactionId: txHash,
+          blockchain: "base",
+          transactionHash: txHash,
+          sourceTransferLogIndex: 7,
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          disputeReason: "quality_issue",
+          regulationEDeadline: now + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+        },
+        mock: false,
+        humanReviewRequired: false,
+        createdAt: now + 1,
+      });
+    });
+
+    // Insert a refund record attached to the first case (as if it executed already).
+    const refundId = await t.run(async (ctx) => {
+      return await ctx.db.insert("refundTransactions", {
+        caseId: caseId1,
+        fromWallet: "platform",
+        toWallet: consumerWallet,
+        amount: 0.01,
+        currency: "USDC",
+        blockchain: "base",
+        status: "EXECUTED",
+        createdAt: now,
+        executedAt: now,
+        sourceChain: "base",
+        sourceTxHash: txHash,
+        sourceTransferLogIndex: 7,
+        amountMicrousdc: 10_000,
+        refundToAddress: "0xabc",
+        provider: "coinbase",
+        providerTransferId: `0x${"b".repeat(64)}`,
+      });
+    });
+
+    // getRefundStatus for case 2 should still return the executed refund via source-triplet fallback.
+    const refund2 = await t.query(api.refunds.getRefundStatus, { caseId: caseId2 });
+    expect(refund2?._id).toBe(refundId);
+    expect(refund2?.status).toBe("EXECUTED");
+
+    // And attempting an automated refund for case 2 should be idempotent and not create a new record.
+    const res = await t.mutation(internal.refunds.executeAutomatedRefund, { caseId: caseId2, force: true });
+    expect(res.status).toBe("ALREADY_REFUNDED");
+  });
 });
 
 describe("Refund System - Edge Cases", () => {

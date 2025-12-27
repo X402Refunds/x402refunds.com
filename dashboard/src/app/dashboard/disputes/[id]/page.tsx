@@ -17,6 +17,7 @@ import { SignedEvidenceCard } from "@/components/dispute/SignedEvidenceCard"
 import { PaymentProofCard } from "@/components/dispute/PaymentProofCard"
 import { PartiesCard } from "@/components/dispute/PartiesCard"
 import { DisputeHeader } from "@/components/dispute/DisputeHeader"
+import { toast } from "sonner"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 
@@ -113,11 +114,21 @@ export default function DisputeDetailPage() {
         requesterUserId: currentUser._id,
       })
       if (!res?.ok) {
-        alert(res?.message || "Refund is not retryable.")
+        toast.error(res?.message || "Refund is not retryable.")
+        return
+      }
+      if (res.status === "EXECUTED") {
+        toast.success("Refund is already executed.")
+      } else if (res.status === "SCHEDULED_SEND") {
+        toast.success("Refund send scheduled.")
+      } else if (res.status === "SCHEDULED") {
+        toast.success("Refund retry scheduled.")
+      } else {
+        toast.success("Refund action accepted.")
       }
     } catch (error) {
       console.error("Failed to retry refund:", error)
-      alert("Failed to retry refund. Please try again.")
+      toast.error("Failed to retry refund. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -134,11 +145,13 @@ export default function DisputeDetailPage() {
       // The backend schedules the refund attempt; the status card will update once the refund row exists.
       if (res?.status && res.status !== "SCHEDULED_REFUND_ATTEMPT" && res.status !== "SCHEDULED" && res.status !== "SCHEDULED_X402R") {
         // Surface non-happy-path responses (e.g., missing payment details).
-        alert(`Refund not initiated: ${res.status}${res.reason ? ` (${res.reason})` : ""}`)
+        toast.error(`Refund not initiated: ${res.status}${res.reason ? ` (${res.reason})` : ""}`)
+        return
       }
+      toast.success("Refund initiation scheduled.")
     } catch (error) {
       console.error("Failed to initiate refund:", error)
-      alert("Failed to initiate refund. Please try again.")
+      toast.error("Failed to initiate refund. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -289,6 +302,12 @@ export default function DisputeDetailPage() {
                     <div className="text-sm text-slate-600">Status</div>
                     <Badge variant="secondary">{refund.status}</Badge>
                   </div>
+
+                  {refund.status === "EXECUTED" && (
+                    <div className="text-sm text-muted-foreground">
+                      Refund has been executed.
+                    </div>
+                  )}
 
                   {refund.refundToAddress && (
                     <div className="flex items-center justify-between gap-3">

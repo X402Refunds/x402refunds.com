@@ -85,6 +85,25 @@ async function executeAutomatedRefundImpl(
     const txOk = typeof txHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(txHash);
     const amountOk = typeof amountMicrousdc === "number" && Number.isFinite(amountMicrousdc) && amountMicrousdc > 0;
 
+    // If this payment has already been refunded-to-source (possibly from a different duplicate case),
+    // don't schedule a new attempt. This is idempotent by (chain, txHash, sourceTransferLogIndex).
+    const logIndex = typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : undefined;
+    if (chainOk && txOk && typeof logIndex === "number") {
+      const bySource = await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_source_triplet", (q: any) =>
+          q
+            .eq("sourceChain", chain)
+            .eq("sourceTxHash", txHash)
+            .eq("sourceTransferLogIndex", logIndex)
+        )
+        .first();
+      if (bySource) {
+        console.log(`⏭️  Refund already exists for source ${chain}:${txHash}@${logIndex}`);
+        return { status: "ALREADY_REFUNDED", refundId: bySource._id };
+      }
+    }
+
     if (txOk && chainOk && amountOk) {
       // Backfill into the canonical fields used by the refund engine, so subsequent runs are consistent.
       if (!pd.transactionHash || !pd.blockchain || typeof pd.amountMicrousdc !== "number") {
@@ -697,8 +716,37 @@ export const getRefundStatus = query({
       .query("refundTransactions")
       .withIndex("by_case", q => q.eq("caseId", args.caseId))
       .first();
-    
-    return refund || null;
+
+    if (refund) return refund;
+
+    // Fallback for duplicate cases filed against the same on-chain payment.
+    // Refund-to-source is idempotent by (sourceChain, sourceTxHash, sourceTransferLogIndex),
+    // so if a user files multiple disputes for the same transfer, the refund may be attached
+    // to the first case that triggered it. We still want the UI to show the refund.
+    const caseData: any = await ctx.db.get(args.caseId);
+    const pd = caseData?.paymentDetails;
+    const sourceChain = pd?.blockchain;
+    const sourceTxHash = pd?.transactionHash;
+    const sourceTransferLogIndex = pd?.sourceTransferLogIndex;
+
+    if (
+      (sourceChain === "base" || sourceChain === "solana") &&
+      typeof sourceTxHash === "string" &&
+      typeof sourceTransferLogIndex === "number"
+    ) {
+      const bySource = await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_source_triplet", (q: any) =>
+          q
+            .eq("sourceChain", sourceChain)
+            .eq("sourceTxHash", sourceTxHash)
+            .eq("sourceTransferLogIndex", sourceTransferLogIndex)
+        )
+        .first();
+      if (bySource) return bySource;
+    }
+
+    return null;
   },
 });
 
