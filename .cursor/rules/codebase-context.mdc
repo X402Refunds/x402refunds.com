@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-27T10:33:15.290Z
+**Auto-generated on**: 2025-12-27T18:55:22.544Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -104,7 +104,7 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
+- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
@@ -377,5 +377,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/27/2025, 4:03:15 PM
-Files scanned: 380
+Generated: 12/28/2025, 12:25:22 AM
+Files scanned: 379

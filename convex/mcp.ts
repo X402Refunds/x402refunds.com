@@ -16,7 +16,7 @@
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { formatMicrosToUsdc, parseUsdcAmountToMicros } from "./lib/usdc";
+import { formatMicrosToUsdc } from "./lib/usdc";
 
 /**
  * MCP Error Codes
@@ -117,22 +117,23 @@ export const MCP_TOOLS = [
           description: "REQUIRED. USDC token transfer transaction hash. We query the blockchain to extract all transaction details (from address, to address, amount). Format: 0x... for Base, base58 for Solana.",
           examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."]
         },
-        amount: {
-          description: "REQUIRED. Claimed disputed amount. Must match a USDC Transfer in the transaction hash.",
-          anyOf: [{ type: "string" }, { type: "number" }],
-          examples: ["0.25", 0.25, "250000"]
-        },
-        amountUnit: {
-          type: "string",
-          enum: ["usdc", "microusdc"],
-          description: "REQUIRED. Unit for `amount`. Use `usdc` for decimal amounts, or `microusdc` for integer base units (6 decimals).",
-          examples: ["usdc"]
-        },
         blockchain: {
           type: "string",
           enum: ["base", "solana"],
           description: "REQUIRED. Blockchain network where USDC payment occurred. Only Base and Solana are supported.",
           examples: ["base", "solana"]
+        },
+        recipientAddress: {
+          type: "string",
+          description:
+            "REQUIRED. Merchant/vendor address that received USDC in this transaction. Used to deterministically select the payment transfer log.",
+          examples: ["0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9"],
+        },
+        sourceTransferLogIndex: {
+          description:
+            "Optional. If the transaction contains multiple USDC transfers to the same recipient, provide the logIndex/instructionIndex to disambiguate.",
+          anyOf: [{ type: "string" }, { type: "number" }],
+          examples: [0, "3"],
         },
         sellerXSignature: {
           type: "string",
@@ -153,7 +154,7 @@ export const MCP_TOOLS = [
           description: "Optional. If true, validates parameters without filing."
         }
       },
-      required: ["description", "request", "response", "transactionHash", "amount", "amountUnit", "blockchain"]
+      required: ["description", "request", "response", "transactionHash", "blockchain", "recipientAddress"]
     }
   },
   {
@@ -428,22 +429,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             });
           }
 
-        if (parameters.amount === undefined || !parameters.amountUnit) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_AMOUNT",
-              message: "amount and amountUnit are required",
-              field: "amount",
-              expected: "amount (string|number) and amountUnit ('usdc'|'microusdc')",
-              suggestion: "Provide the disputed amount and unit to deterministically match the USDC Transfer log",
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-          
         if (!parameters.blockchain) {
           return new Response(JSON.stringify({
             success: false,
@@ -453,6 +438,38 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               field: "blockchain",
               expected: "ethereum, base, or solana",
               suggestion: "Specify which blockchain network the payment transaction occurred on. Only Ethereum, Base, and Solana are supported."
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        if (!parameters.recipientAddress) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "MISSING_RECIPIENT_ADDRESS",
+              message: "recipientAddress is required",
+              field: "recipientAddress",
+              expected: "Merchant/vendor address that received USDC",
+              suggestion: "Provide the merchant/vendor wallet address that received USDC in the transaction."
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // Breaking change: amount fields are no longer accepted (derive from chain).
+        if (parameters.amount !== undefined || parameters.amountUnit !== undefined) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: "UNSUPPORTED_FIELDS",
+              message: "amount/amountUnit are no longer accepted; amounts are derived from chain",
+              fields: ["amount", "amountUnit"],
+              suggestion: "Remove amount/amountUnit and provide recipientAddress (and optionally sourceTransferLogIndex if MULTI_MATCH)."
             }
           }), {
             status: 400,
@@ -495,44 +512,51 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         }
         
-        // 2. Deterministic verification: caller provides amount+unit; it must match a USDC Transfer in the tx.
-        const parsed = parseUsdcAmountToMicros(parameters.amount, parameters.amountUnit);
-        if (!parsed.ok) {
-        return new Response(JSON.stringify({
+        // 2. Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
+        const rawLogIndex = parameters.sourceTransferLogIndex;
+        const parsedLogIndex =
+          typeof rawLogIndex === "number"
+            ? rawLogIndex
+            : typeof rawLogIndex === "string" && rawLogIndex.trim() !== ""
+              ? Number(rawLogIndex)
+              : undefined;
+        if (parsedLogIndex !== undefined && (!Number.isSafeInteger(parsedLogIndex) || parsedLogIndex < 0)) {
+          return new Response(JSON.stringify({
             success: false,
             error: {
-              code: "INVALID_AMOUNT",
-              message: parsed.message,
-              field: "amount",
-              details: parsed.code
-            }
-        }), {
-            status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-        }
-        
-        console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by amount for tx: ${parameters.transactionHash}`);
-        const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount as any, {
-          blockchain: parameters.blockchain,
-          transactionHash: parameters.transactionHash,
-          expectedAmountMicrousdc: parsed.microusdc,
-        });
-
-        if (!verify.ok) {
-        return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "TRANSACTION_VERIFICATION_FAILED",
-              message: verify.message,
-              field: "transactionHash",
-              received: parameters.transactionHash,
-              details: verify.code
+              code: "INVALID_SOURCE_TRANSFER_LOG_INDEX",
+              message: "sourceTransferLogIndex must be a non-negative integer",
+              field: "sourceTransferLogIndex",
             }
           }), {
             status: 400,
-          headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by recipient for tx: ${parameters.transactionHash}`);
+        // @ts-ignore - avoid TS instantiation depth issues in downstream packages
+        const verify = await (ctx.runAction as any)(api.lib.blockchain.verifyUsdcTransferByRecipient, {
+          blockchain: parameters.blockchain,
+          transactionHash: parameters.transactionHash,
+          recipientAddress: parameters.recipientAddress,
+          sourceTransferLogIndex: parsedLogIndex,
         });
+
+        if (!verify.ok) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: {
+              code: verify.code,
+              message: verify.message,
+              field: verify.code === "MULTI_MATCH" ? "sourceTransferLogIndex" : "transactionHash",
+              received: parameters.transactionHash,
+              candidates: verify.candidates
+            }
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
         }
         
         // 3. Extract deterministic details for the dispute
@@ -656,14 +680,10 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         
         // 7. File payment dispute with blockchain-extracted details
         const paymentDisputeArgs: any = {
-          transactionId: parameters.transactionHash,
           transactionHash: parameters.transactionHash,
           blockchain: parameters.blockchain,
-          amount: parameters.amount,
-          amountUnit: parameters.amountUnit,
-          currency: txCurrency,
-          plaintiff: plaintiff,  // Extracted from blockchain
-          defendant: defendant,  // Extracted from blockchain
+          recipientAddress: parameters.recipientAddress,
+          sourceTransferLogIndex: verify.logIndex,
           disputeReason: "quality_issue",
           description: parameters.description,
           evidenceUrls: [],
@@ -765,7 +785,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         break;
         
       case "x402_check_case_status":
-        result = await ctx.runQuery(internal.cases.getCase, {
+        // @ts-ignore - avoid TS instantiation depth issues in downstream packages
+        result = await (ctx.runQuery as any)(internal.cases.getCase, {
           caseId: parameters.caseId as any
         });
         

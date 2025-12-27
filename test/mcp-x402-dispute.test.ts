@@ -48,8 +48,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
         body: { error: "Internal Server Error" }
       },
       transactionHash: `0x${timestamp}abc123`,
-      amount: "0.25",
-      amountUnit: "usdc",
+      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
       blockchain: "base"
     });
     
@@ -66,7 +65,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       console.log("✅ Dispute filed successfully!");
     } else {
       // Accept either TRANSACTION_NOT_FOUND or MCP_INTERNAL_ERROR (schema validation issues in test env)
-      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
       console.log(`⚠️  Expected failure: ${data.error.code} - ${data.error.message?.substring(0, 100)}`);
     }
   });
@@ -77,8 +76,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123",
-      amount: "0.25",
-      amountUnit: "usdc",
+      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
       blockchain: "polygon" // ❌ Invalid - not supported
     });
     
@@ -103,7 +101,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     expect(data.error).toBeDefined();
     
     // Should fail with missing required field error
-    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_AMOUNT', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_RECIPIENT_ADDRESS', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
     
     console.log("✅ Required field validation works:", data.error.code);
   });
@@ -114,8 +112,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123def456",
-      amount: "0.25",
-      amountUnit: "usdc",
+      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
       blockchain: "base",
       dryRun: true  // ← Validation only
     });

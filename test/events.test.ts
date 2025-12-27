@@ -447,12 +447,11 @@ describe('Organization Events - Infrastructure Model', () => {
       transactionId: "txn_org_events_test",
       transactionHash: "0xmock_org_events_test",
       blockchain: "base",
-      amount: "0.25",
-      amountUnit: "usdc",
       currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:alice@example.com", // Not an agent in our system
       defendant: "merchant:shop@example.com", // Not an agent in our system
+      recipientAddress: "merchant:shop@example.com",
       disputeReason: "service_not_rendered",
       description: "Test dispute for organization events",
       reviewerOrganizationId: orgId, // THIS org reviews this dispute
@@ -560,12 +559,11 @@ describe('Organization Events - Infrastructure Model', () => {
       transactionId: `txn_multi_${timestamp}`,
       transactionHash: `0xmock_multi_${timestamp}`,
       blockchain: "base",
-      amount: "0.25",
-      amountUnit: "usdc",
       currency: "USDC",
       paymentProtocol: "ACP",
       plaintiff: "consumer:bob@example.com",
       defendant: "merchant:vendor@example.com",
+      recipientAddress: "merchant:vendor@example.com",
       disputeReason: "amount_incorrect",
       description: "Payment dispute for multi-role test",
       reviewerOrganizationId: orgId, // Org reviews this one
@@ -610,12 +608,11 @@ describe('Organization Events - Infrastructure Model', () => {
       transactionId: `txn_mcp_${timestamp}`,
       transactionHash: `0xmock_mcp_${timestamp}`,
       blockchain: "base",
-      amount: "0.25",
-      amountUnit: "usdc",
       currency: "USDC",
       paymentProtocol: "ATXP",
       plaintiff: "consumer:user@example.com",
       defendant: "merchant:vendor@example.com",
+      recipientAddress: "merchant:vendor@example.com",
       disputeReason: "api_timeout",
       description: "MCP filed dispute test",
       reviewerOrganizationId: orgId, // CRITICAL: Must be set from API key

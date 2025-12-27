@@ -52,6 +52,142 @@ export type TransferLogMatch = {
 };
 
 /**
+ * Find ERC-20 Transfer logs to a given recipient. This is AA-safe: it does NOT rely on tx.to.
+ */
+export function findErc20TransfersToRecipient(args: {
+  logs: any[];
+  allowedTokenContracts: Set<string>;
+  expectedToAddress: string;
+}): TransferLogMatch[] {
+  const expectedTo = args.expectedToAddress.toLowerCase();
+  return (Array.isArray(args.logs) ? args.logs : [])
+    .map((log): TransferLogMatch | null => {
+      const tokenContract = String(log?.address || "").toLowerCase();
+      if (!args.allowedTokenContracts.has(tokenContract)) return null;
+
+      const topics = Array.isArray(log?.topics) ? log.topics : [];
+      if (topics.length < 3) return null;
+      if (String(topics[0] || "").toLowerCase() !== ERC20_TRANSFER_TOPIC0) return null;
+
+      const payerAddress = topicToAddress(topics[1]);
+      const recipientAddress = topicToAddress(topics[2]);
+      if (recipientAddress !== expectedTo) return null;
+
+      const dataHex = String(log?.data || "0x0");
+      let amountRaw: bigint;
+      try {
+        amountRaw = BigInt(dataHex);
+      } catch {
+        return null;
+      }
+
+      const logIndex =
+        typeof log?.logIndex === "string" && String(log.logIndex).startsWith("0x")
+          ? parseInt(String(log.logIndex), 16)
+          : Number.isFinite(Number(log?.logIndex))
+            ? Number(log.logIndex)
+            : 0;
+
+      return { tokenContract, payerAddress, recipientAddress, amountRaw, logIndex };
+    })
+    .filter((x): x is TransferLogMatch => Boolean(x));
+}
+
+type VerifyRecipientCandidates = Array<{
+  tokenContract: string;
+  payerAddress: string;
+  recipientAddress: string;
+  amountMicrousdc: number;
+  amountUsdc: string;
+  logIndex: number;
+}>;
+
+/**
+ * Verify a USDC transfer by recipient address (merchant/vendor) and optional logIndex.
+ *
+ * This supports the "minimal agent payload" flow:
+ * - Required: txHash + blockchain + recipientAddress
+ * - Optional: sourceTransferLogIndex to disambiguate if multiple transfers exist
+ */
+export const verifyUsdcTransferByRecipient = action({
+  args: {
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
+    transactionHash: v.string(),
+    recipientAddress: v.string(),
+    sourceTransferLogIndex: v.optional(v.number()),
+  },
+  handler: async (_ctx, args): Promise<
+    | {
+        ok: true;
+        blockchain: "base" | "solana";
+        transactionHash: string;
+        payerAddress: string;
+        recipientAddress: string;
+        amountMicrousdc: number;
+        amountUsdc: string;
+        logIndex: number;
+        tokenContract?: string;
+      }
+    | {
+        ok: false;
+        blockchain: "base" | "solana";
+        transactionHash: string;
+        code:
+          | "TX_NOT_FOUND"
+          | "NOT_USDC"
+          | "NO_MATCH"
+          | "MULTI_MATCH"
+          | "NO_MATCH_LOG_INDEX"
+          | "NOT_CONFIGURED"
+          | "UNSUPPORTED";
+        message: string;
+        candidates?: VerifyRecipientCandidates;
+      }
+  > => {
+    const mockMode =
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST === "true" ||
+      process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+
+    if (mockMode) {
+      // In mock mode, return a deterministic, single match unless a logIndex is requested.
+      const logIndex = typeof args.sourceTransferLogIndex === "number" ? args.sourceTransferLogIndex : 0;
+      return {
+        ok: true,
+        blockchain: args.blockchain,
+        transactionHash: args.transactionHash,
+        payerAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+        recipientAddress: args.recipientAddress,
+        amountMicrousdc: 250000, // 0.25 USDC
+        amountUsdc: formatMicrosToUsdc(250000),
+        logIndex,
+      };
+    }
+
+    if (args.blockchain === "solana") {
+      return await querySolanaUsdcTransferByRecipient(args.transactionHash, args.recipientAddress, {
+        sourceTransferLogIndex: args.sourceTransferLogIndex,
+      });
+    }
+
+    const alchemyKey = process.env.ALCHEMY_API_KEY;
+    if (!alchemyKey) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: args.transactionHash,
+        code: "NOT_CONFIGURED",
+        message: "ALCHEMY_API_KEY is not configured (required to verify Base tx hashes)",
+      };
+    }
+
+    return await queryBaseUsdcTransferByRecipient(args.transactionHash, alchemyKey, args.recipientAddress, {
+      sourceTransferLogIndex: args.sourceTransferLogIndex,
+    });
+  },
+});
+
+/**
  * Find matching ERC-20 Transfer logs in a receipt. This is AA-safe: it does NOT rely on tx.to.
  */
 export function findErc20TransferMatches(args: {
@@ -582,6 +718,198 @@ async function queryBaseUsdcTransferByAmount(
   };
 }
 
+async function queryBaseUsdcTransferByRecipient(
+  transactionHash: string,
+  alchemyKey: string,
+  recipientAddress: string,
+  opts?: { sourceTransferLogIndex?: number },
+): Promise<
+  | {
+      ok: true;
+      blockchain: "base";
+      transactionHash: string;
+      payerAddress: string;
+      recipientAddress: string;
+      amountMicrousdc: number;
+      amountUsdc: string;
+      logIndex: number;
+      tokenContract: string;
+    }
+  | {
+      ok: false;
+      blockchain: "base";
+      transactionHash: string;
+      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NO_MATCH_LOG_INDEX" | "UNSUPPORTED";
+      message: string;
+      candidates?: VerifyRecipientCandidates;
+    }
+> {
+  const rpcUrl = `${RPC_ENDPOINTS.base}/${alchemyKey}`;
+
+  const txResp = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      id: 101,
+      jsonrpc: "2.0",
+      method: "eth_getTransactionByHash",
+      params: [transactionHash],
+    }),
+  });
+  const txData = await txResp.json();
+  if (txData.error || !txData.result) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "TX_NOT_FOUND",
+      message: txData.error?.message || "Transaction not found",
+    };
+  }
+
+  const receiptResp = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      id: 102,
+      jsonrpc: "2.0",
+      method: "eth_getTransactionReceipt",
+      params: [transactionHash],
+    }),
+  });
+  const receiptData = await receiptResp.json();
+  if (receiptData.error || !receiptData.result) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "TX_NOT_FOUND",
+      message: receiptData.error?.message || "Transaction receipt not found",
+    };
+  }
+
+  const receipt = receiptData.result;
+  const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
+
+  // If there are no Transfer logs from allowed contracts at all, it's not USDC.
+  const anyAllowedTransfers = (Array.isArray(logs) ? logs : []).some((log) => {
+    const tokenContract = String(log?.address || "").toLowerCase();
+    const topics = Array.isArray(log?.topics) ? log.topics : [];
+    return (
+      BASE_USDC_CONTRACT_ALLOWLIST.has(tokenContract) &&
+      topics.length >= 3 &&
+      String(topics[0] || "").toLowerCase() === ERC20_TRANSFER_TOPIC0
+    );
+  });
+
+  const matches = findErc20TransfersToRecipient({
+    logs,
+    allowedTokenContracts: BASE_USDC_CONTRACT_ALLOWLIST,
+    expectedToAddress: recipientAddress,
+  });
+
+  const toFindLogIndex = opts?.sourceTransferLogIndex;
+  if (typeof toFindLogIndex === "number") {
+    const exact = matches.filter((m) => m.logIndex === toFindLogIndex);
+    if (exact.length !== 1) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash,
+        code: "NO_MATCH_LOG_INDEX",
+        message: `No USDC Transfer to ${recipientAddress} matched logIndex ${toFindLogIndex}`,
+      };
+    }
+    const m = exact[0];
+    if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash,
+        code: "UNSUPPORTED",
+        message: "USDC amount exceeds safe integer range",
+      };
+    }
+    const amountMicrousdc = Number(m.amountRaw);
+    return {
+      ok: true,
+      blockchain: "base",
+      transactionHash,
+      payerAddress: m.payerAddress,
+      recipientAddress: m.recipientAddress,
+      amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+      logIndex: m.logIndex,
+      tokenContract: m.tokenContract,
+    };
+  }
+
+  if (matches.length === 0) {
+    if (!anyAllowedTransfers) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash,
+        code: "NOT_USDC",
+        message: "No accepted USDC Transfer logs found in tx receipt",
+      };
+    }
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "NO_MATCH",
+      message: `No USDC Transfer matched recipient ${recipientAddress}`,
+    };
+  }
+  if (matches.length > 1) {
+    const candidates: VerifyRecipientCandidates = [];
+    for (const m of matches) {
+      if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
+      const amountMicrousdc = Number(m.amountRaw);
+      candidates.push({
+        tokenContract: m.tokenContract,
+        payerAddress: m.payerAddress,
+        recipientAddress: m.recipientAddress,
+        amountMicrousdc,
+        amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+        logIndex: m.logIndex,
+      });
+    }
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "MULTI_MATCH",
+      message: `Multiple USDC Transfers matched recipient ${recipientAddress}. Provide sourceTransferLogIndex to disambiguate.`,
+      candidates,
+    };
+  }
+
+  const m = matches[0];
+  if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+    return {
+      ok: false,
+      blockchain: "base",
+      transactionHash,
+      code: "UNSUPPORTED",
+      message: "USDC amount exceeds safe integer range",
+    };
+  }
+  const amountMicrousdc = Number(m.amountRaw);
+  return {
+    ok: true,
+    blockchain: "base",
+    transactionHash,
+    payerAddress: m.payerAddress,
+    recipientAddress: m.recipientAddress,
+    amountMicrousdc,
+    amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+    logIndex: m.logIndex,
+    tokenContract: m.tokenContract,
+  };
+}
+
 async function querySolanaUsdcTransferByAmount(
   signature: string,
   expectedAmountMicrousdc: number,
@@ -688,6 +1016,178 @@ async function querySolanaUsdcTransferByAmount(
     amountMicrousdc: expectedAmountMicrousdc,
     amountUsdc: formatMicrosToUsdc(expectedAmountMicrousdc),
     logIndex: match.ixIndex,
+  };
+}
+
+async function querySolanaUsdcTransferByRecipient(
+  signature: string,
+  recipientAddress: string,
+  opts?: { sourceTransferLogIndex?: number },
+): Promise<
+  | {
+      ok: true;
+      blockchain: "solana";
+      transactionHash: string;
+      payerAddress: string;
+      recipientAddress: string;
+      amountMicrousdc: number;
+      amountUsdc: string;
+      logIndex: number;
+    }
+  | {
+      ok: false;
+      blockchain: "solana";
+      transactionHash: string;
+      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NO_MATCH_LOG_INDEX" | "UNSUPPORTED";
+      message: string;
+      candidates?: VerifyRecipientCandidates;
+    }
+> {
+  const resp = await fetch(RPC_ENDPOINTS.solana, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 11,
+      method: "getTransaction",
+      params: [
+        signature,
+        {
+          encoding: "jsonParsed",
+          maxSupportedTransactionVersion: 0,
+        },
+      ],
+    }),
+  });
+  const data = await resp.json();
+  if (data.error || !data.result) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "TX_NOT_FOUND",
+      message: data.error?.message || "Transaction not found",
+    };
+  }
+
+  const expectedTo = recipientAddress;
+  const instructions = data.result.transaction?.message?.instructions || [];
+  const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
+
+  for (let i = 0; i < instructions.length; i++) {
+    const ix = instructions[i];
+    if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
+    const info = ix.parsed?.info;
+    if (!info) continue;
+    if (info?.mint !== USDC_CONTRACTS.solana) continue;
+
+    const to = (info.destination || "").toString();
+    if (to !== expectedTo) continue;
+
+    const amountStr = info.amount || info.tokenAmount?.amount;
+    const decimals = info.decimals || info.tokenAmount?.decimals || 6;
+    if (decimals !== 6) continue;
+    try {
+      const amountRaw = BigInt(String(amountStr));
+      matches.push({
+        ixIndex: i,
+        from: (info.source || info.authority || "").toString(),
+        to,
+        amountRaw,
+      });
+    } catch {
+      continue;
+    }
+  }
+
+  const toFindIx = opts?.sourceTransferLogIndex;
+  if (typeof toFindIx === "number") {
+    const exact = matches.filter((m) => m.ixIndex === toFindIx);
+    if (exact.length !== 1) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: signature,
+        code: "NO_MATCH_LOG_INDEX",
+        message: `No USDC transfer to ${recipientAddress} matched instruction index ${toFindIx}`,
+      };
+    }
+    const m = exact[0];
+    if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: signature,
+        code: "UNSUPPORTED",
+        message: "USDC amount exceeds safe integer range",
+      };
+    }
+    const amountMicrousdc = Number(m.amountRaw);
+    return {
+      ok: true,
+      blockchain: "solana",
+      transactionHash: signature,
+      payerAddress: m.from,
+      recipientAddress: m.to,
+      amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+      logIndex: m.ixIndex,
+    };
+  }
+
+  if (matches.length === 0) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "NO_MATCH",
+      message: `No USDC transfer matched recipient ${recipientAddress}`,
+    };
+  }
+  if (matches.length > 1) {
+    const candidates: VerifyRecipientCandidates = [];
+    for (const m of matches) {
+      if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
+      const amountMicrousdc = Number(m.amountRaw);
+      candidates.push({
+        tokenContract: USDC_CONTRACTS.solana,
+        payerAddress: m.from,
+        recipientAddress: m.to,
+        amountMicrousdc,
+        amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+        logIndex: m.ixIndex,
+      });
+    }
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "MULTI_MATCH",
+      message: `Multiple USDC transfers matched recipient ${recipientAddress}. Provide sourceTransferLogIndex to disambiguate.`,
+      candidates,
+    };
+  }
+
+  const m = matches[0];
+  if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "UNSUPPORTED",
+      message: "USDC amount exceeds safe integer range",
+    };
+  }
+  const amountMicrousdc = Number(m.amountRaw);
+  return {
+    ok: true,
+    blockchain: "solana",
+    transactionHash: signature,
+    payerAddress: m.from,
+    recipientAddress: m.to,
+    amountMicrousdc,
+    amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+    logIndex: m.ixIndex,
   };
 }
 

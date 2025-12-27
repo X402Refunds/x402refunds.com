@@ -58,8 +58,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
           body: { error: 'Internal Server Error' }
         },
         transactionHash: `0x${timestamp.toString(16)}abc123`,
-        amount: "0.25",
-        amountUnit: "usdc",
+        recipientAddress: testSellerAddress,
         blockchain: 'base'
       });
 
@@ -73,7 +72,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         testCaseId = data.caseId;
       } else {
         // Expected in test env if blockchain query fails or address mismatch
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
       }
     });
 
@@ -84,8 +83,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
         response: { status: 500, body: { error: 'timeout' } },
         transactionHash: '0xtest123',
-        amount: "0.25",
-        amountUnit: "usdc",
+        recipientAddress: testSellerAddress,
         blockchain: 'base'
       });
 
@@ -95,7 +93,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         expect(data.transactionVerification?.extractedDetails?.plaintiff).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     });
 
@@ -106,8 +104,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
         response: { status: 500, body: { error: 'timeout' } },
         transactionHash: '0xtest123',
-        amount: "0.25",
-        amountUnit: "usdc",
+        recipientAddress: testSellerAddress,
         blockchain: 'base'
       });
 
@@ -117,7 +114,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         expect(data.transactionVerification?.extractedDetails?.defendant).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     });
 
@@ -142,9 +139,8 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         request: { method: 'POST', url: 'https://api.test.com' },
         response: { status: 500 },
         transactionHash: `0x${timestamp.toString(16)}`,
-        amount: "0.25",
-        amountUnit: "usdc",
-          blockchain: 'base',
+        recipientAddress: testSellerAddress,
+        blockchain: 'base',
         dryRun: true
       });
 
@@ -169,8 +165,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         request: {},
         response: {},
         transactionHash: '0xtest123',
-        amount: "0.25",
-        amountUnit: "usdc",
+        recipientAddress: testSellerAddress,
         blockchain: 'invalid-chain' // Invalid
       });
 
@@ -199,8 +194,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
           request: { method: 'POST', url: 'https://api.test.com' },
           response: { status: 500 },
           transactionHash: `0x${timestamp.toString(16)}`,
-          amount: "0.25",
-          amountUnit: "usdc",
+          recipientAddress: testSellerAddress,
           blockchain: 'base'
         });
         
@@ -310,8 +304,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
           body: { error: 'Service unavailable' }
         },
         transactionHash: `0x${timestamp.toString(16)}`,
-        amount: "0.25",
-        amountUnit: "usdc",
+        recipientAddress: sellerAddress,
         blockchain: 'base',
         dryRun: true // Use dryRun to avoid actual filing
       });

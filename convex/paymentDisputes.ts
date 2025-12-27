@@ -20,7 +20,7 @@ import {
   type PaymentVerdict,
 } from "./disputePricing";
 import { workflowManager } from "./workflows";
-import { parseUsdcAmountToMicros } from "./lib/usdc";
+import { formatMicrosToUsdc } from "./lib/usdc";
 import type { Id } from "./_generated/dataModel";
 
 /**
@@ -72,23 +72,20 @@ import type { Id } from "./_generated/dataModel";
 export const receivePaymentDispute = action({
   args: {
     // Transaction details
-    transactionId: v.string(),
+    transactionId: v.optional(v.string()),
     transactionHash: v.string(),
     blockchain: v.union(v.literal("base"), v.literal("solana")),
-    amount: v.any(),
-    amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
-    currency: v.string(),
+    recipientAddress: v.string(), // merchant/vendor address
+    sourceTransferLogIndex: v.optional(v.number()),
+    // Optional customer-scoped identifiers (kept for internal callers/tests).
+    // If omitted, we fall back to onchain payer/recipient addresses.
+    plaintiff: v.optional(v.string()),
+    defendant: v.optional(v.string()),
+    currency: v.optional(v.string()),
     
     // DEPRECATED: paymentProtocol kept for backward compatibility with tests/existing code
     // Will be ignored, not validated, not stored
     paymentProtocol: v.optional(v.any()),
-
-    // Parties (customer-scoped identifiers)
-    // plaintiff = YOUR CUSTOMER (Alice) who is disputing the charge
-    // defendant = The merchant/vendor (OpenAI) who charged YOUR customer
-    // Examples: "consumer:alice@stripe.com", "merchant:openai-api@stripe.com"
-    plaintiff: v.string(),
-    defendant: v.string(),
 
     // Party metadata - helps YOU identify parties in YOUR system
     plaintiffMetadata: v.optional(v.object({
@@ -131,36 +128,52 @@ export const receivePaymentDispute = action({
     reviewerOrganizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args): Promise<any> => {
-    const parsedAmount = parseUsdcAmountToMicros(args.amount, args.amountUnit);
-    if (!parsedAmount.ok) {
-      throw new Error(`Invalid amount: ${parsedAmount.code} - ${parsedAmount.message}`);
-    }
-    const amountMicrousdc = parsedAmount.microusdc;
-    const amountUsdc = amountMicrousdc / 1_000_000;
-
-    console.info(`📥 Payment dispute received: ${args.transactionId} ($${amountUsdc})`);
-
-    // Calculate flat fee (no tiers, no token limits)
-    const feeBreakdown = calculateDisputeFee();
-
-    // Verify transaction on-chain matches the claimed amount and determine the deterministic transfer (logIndex).
-    const verifyRes = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+    // Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
+    const verifyRes = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
       blockchain: args.blockchain,
       transactionHash: args.transactionHash,
-      expectedAmountMicrousdc: amountMicrousdc,
+      recipientAddress: args.recipientAddress,
+      sourceTransferLogIndex: args.sourceTransferLogIndex,
     });
     if (!verifyRes.ok) {
       throw new Error(`Transaction verification failed: ${verifyRes.code} - ${verifyRes.message}`);
     }
 
+    const amountMicrousdc = verifyRes.amountMicrousdc;
+    const amountUsdc = amountMicrousdc / 1_000_000;
+    const plaintiff = verifyRes.payerAddress;
+    const defendant = verifyRes.recipientAddress;
+    const sourceTransferLogIndex = verifyRes.logIndex;
+    const plaintiffId = args.plaintiff || plaintiff;
+    const defendantId = args.defendant || defendant;
+    const currency = args.currency || "USDC";
+
+    console.info(`📥 Payment dispute received: ${args.transactionHash} ($${formatMicrosToUsdc(amountMicrousdc)})`);
+
+    // Calculate flat fee (no tiers, no token limits)
+    const feeBreakdown = calculateDisputeFee();
+
     const caseId: Id<"cases"> = await ctx.runMutation(internal.paymentDisputes.createPaymentDisputeCase, {
-      ...args,
+      transactionId: args.transactionId || args.transactionHash,
+      transactionHash: args.transactionHash,
+      blockchain: args.blockchain,
       amountMicrousdc,
       amountUsdc,
-      sourceTransferLogIndex: verifyRes.logIndex,
-      payerAddress: verifyRes.payerAddress,
-      recipientAddress: verifyRes.recipientAddress,
+      sourceTransferLogIndex,
+      payerAddress: plaintiff,
+      recipientAddress: defendant,
       disputeFee: feeBreakdown.fee,
+      currency,
+      plaintiff: plaintiffId,
+      defendant: defendantId,
+      disputeReason: args.disputeReason || "other",
+      description: args.description,
+      evidenceUrls: args.evidenceUrls,
+      callbackUrl: args.callbackUrl,
+      reviewerEmail: args.reviewerEmail,
+      reviewerOrganizationId: args.reviewerOrganizationId,
+      plaintiffMetadata: args.plaintiffMetadata,
+      defendantMetadata: args.defendantMetadata,
     });
 
     // Determine if human review will be required
@@ -188,8 +201,6 @@ export const createPaymentDisputeCase = internalMutation({
     transactionId: v.string(),
     transactionHash: v.string(),
     blockchain: v.union(v.literal("base"), v.literal("solana")),
-    amount: v.any(),
-    amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
     amountMicrousdc: v.number(),
     amountUsdc: v.number(),
     currency: v.string(),
@@ -241,7 +252,7 @@ export const createPaymentDisputeCase = internalMutation({
         transactionHash: args.transactionHash,
         blockchain: args.blockchain,
         amountMicrousdc: args.amountMicrousdc,
-        amountUnit: args.amountUnit,
+        amountUnit: "microusdc",
         sourceTransferLogIndex: args.sourceTransferLogIndex,
         disputeReason: args.disputeReason || "other",
         callbackUrl: args.callbackUrl,

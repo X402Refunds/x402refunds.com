@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { build402ResponseBody, buildTopupPaymentRequirement } from "@/lib/x402-topup";
 
 type AmountUnit = "usdc" | "microusdc";
+
+type TopUpCreditResult =
+  | { ok: true; credits?: unknown; [k: string]: unknown }
+  | { ok: false; code?: string; message?: string; [k: string]: unknown };
 
 function parseAmountToMicros(amount: unknown, unit: AmountUnit): number | null {
   if (unit === "microusdc") {
@@ -226,8 +231,10 @@ export async function POST(request: Request) {
   }
 
   // Auto-credit via Convex (log-based USDC verification + idempotency).
-  const credited = await convex.action(api.refundCredits.submitTopUpAndAutoApply, {
-    organizationId,
+  // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
+  const runAction = convex.action as unknown as (fn: unknown, args: unknown) => Promise<TopUpCreditResult>;
+  const credited = await runAction(api.refundCredits.submitTopUpAndAutoApply, {
+    organizationId: organizationId as Id<"organizations">,
     txHash,
     amount,
     amountUnit,

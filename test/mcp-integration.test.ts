@@ -48,9 +48,8 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.inputSchema.required).toContain('request');  // Object
     expect(tool?.inputSchema.required).toContain('response');  // Object
     expect(tool?.inputSchema.required).toContain('transactionHash');
-    expect(tool?.inputSchema.required).toContain('amount');
-    expect(tool?.inputSchema.required).toContain('amountUnit');
     expect(tool?.inputSchema.required).toContain('blockchain');
+    expect(tool?.inputSchema.required).toContain('recipientAddress');
     
     // Plaintiff/defendant now extracted from blockchain (not required from agent)
     expect(tool?.inputSchema.required).not.toContain('plaintiff');

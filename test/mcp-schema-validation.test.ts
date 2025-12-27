@@ -35,9 +35,8 @@ describe("MCP Tool Schema Validation", () => {
       expect(required).toContain("request");  // Object
       expect(required).toContain("response");  // Object
       expect(required).toContain("transactionHash");
-      expect(required).toContain("amount");
-      expect(required).toContain("amountUnit");
       expect(required).toContain("blockchain");
+      expect(required).toContain("recipientAddress");
       
       // Plaintiff/defendant now extracted from blockchain (not required from agent)
       expect(required).not.toContain("plaintiff");

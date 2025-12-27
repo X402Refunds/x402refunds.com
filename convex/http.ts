@@ -318,14 +318,29 @@ http.route({
                 if (!parameters.description || 
                     !parameters.request || !parameters.response || 
                     !parameters.transactionHash || !parameters.blockchain ||
-                    parameters.amount === undefined || !parameters.amountUnit) {
+                    !parameters.recipientAddress) {
                   invokeData = {
                     success: false,
                     error: {
                       code: "MISSING_REQUIRED_FIELDS",
                       message: "Missing required fields for dispute filing",
-                      required: ["description", "request", "response", "transactionHash", "blockchain", "amount", "amountUnit"]
+                      required: ["description", "request", "response", "transactionHash", "blockchain", "recipientAddress"]
                     }
+                  };
+                  break;
+                }
+
+                // Breaking change: amount fields are no longer accepted (derive from chain).
+                if (parameters.amount !== undefined || parameters.amountUnit !== undefined) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: "UNSUPPORTED_FIELDS",
+                      message: "amount/amountUnit are no longer accepted; amounts are derived from chain",
+                      fields: ["amount", "amountUnit"],
+                      suggestion:
+                        "Remove amount/amountUnit and provide recipientAddress (and optionally sourceTransferLogIndex if MULTI_MATCH).",
+                    },
                   };
                   break;
                 }
@@ -347,35 +362,42 @@ http.route({
                   break;
                 }
                 
-                // Deterministic verification: agent provides amount+unit, we verify tx contains exactly that USDC transfer.
-                const { parseUsdcAmountToMicros, formatMicrosToUsdc } = await import("./lib/usdc");
-                const parsed = parseUsdcAmountToMicros(parameters.amount, parameters.amountUnit);
-                if (!parsed.ok) {
+                // Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
+                const { formatMicrosToUsdc } = await import("./lib/usdc");
+                const rawLogIndex = parameters.sourceTransferLogIndex;
+                const parsedLogIndex =
+                  typeof rawLogIndex === "number"
+                    ? rawLogIndex
+                    : typeof rawLogIndex === "string" && rawLogIndex.trim() !== ""
+                      ? Number(rawLogIndex)
+                      : undefined;
+                if (parsedLogIndex !== undefined && (!Number.isSafeInteger(parsedLogIndex) || parsedLogIndex < 0)) {
                   invokeData = {
                     success: false,
                     error: {
-                      code: "INVALID_AMOUNT",
-                      message: parsed.message,
-                      details: parsed.code,
-                    }
+                      code: "INVALID_SOURCE_TRANSFER_LOG_INDEX",
+                      message: "sourceTransferLogIndex must be a non-negative integer",
+                      field: "sourceTransferLogIndex",
+                    },
                   };
                   break;
                 }
 
-                console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by amount: ${parameters.transactionHash}`);
-                const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+                console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by recipient: ${parameters.transactionHash}`);
+                const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
                   blockchain: parameters.blockchain,
                   transactionHash: parameters.transactionHash,
-                  expectedAmountMicrousdc: parsed.microusdc,
+                  recipientAddress: parameters.recipientAddress,
+                  sourceTransferLogIndex: parsedLogIndex,
                 });
                 
                 if (!verify.ok) {
                   invokeData = {
                     success: false,
                     error: {
-                      code: "TRANSACTION_VERIFICATION_FAILED",
+                      code: verify.code,
                       message: verify.message,
-                      details: verify.code,
+                      candidates: verify.candidates,
                     }
                   };
                   break;
@@ -387,18 +409,14 @@ http.route({
                 
                 // Build payment dispute args
                 const paymentDisputeArgs: any = {
-                  transactionId: parameters.transactionHash,
-                  amount: txAmountUsd,
-                  currency: "USDC",
-                  plaintiff: plaintiff,  // From blockchain
-                  defendant: defendant,  // From blockchain
+                  transactionHash: parameters.transactionHash,
+                  blockchain: parameters.blockchain,
+                  recipientAddress: parameters.recipientAddress,
+                  sourceTransferLogIndex: verify.logIndex,
                   disputeReason: "quality_issue",
                   description: parameters.description,
                   evidenceUrls: [],
                   callbackUrl: parameters.callbackUrl,
-                  transactionHash: parameters.transactionHash,
-                  blockchain: parameters.blockchain,
-                  amountUnit: parameters.amountUnit,
                   plaintiffMetadata: { 
                     walletAddress: plaintiff,
                     requestJson: JSON.stringify(parameters.request)
@@ -801,7 +819,8 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx) => {
     try {
-      const judges = await ctx.runQuery(api.judges.getJudges, {});
+      // @ts-ignore - Convex generated types can exceed TS instantiation depth in large http.ts
+      const judges = await (ctx.runQuery as any)(api.judges.getJudges, {});
 
       let neutrals = judges.map((judge: any) => ({
         id: judge._id,
@@ -892,7 +911,8 @@ const custodyHandler = httpAction(async (ctx, request) => {
   try {
     // Cast to Id<"cases"> for type safety
     const caseId = caseIdString as any;
-    const caseData = await ctx.runQuery(internal.cases.getCase, { caseId });
+    // @ts-ignore - Convex generated types can exceed TS instantiation depth in large http.ts
+    const caseData = await (ctx.runQuery as any)(internal.cases.getCase, { caseId });
 
     if (!caseData) {
       return new Response(JSON.stringify({
@@ -1152,8 +1172,8 @@ http.route({
 async function handlePaymentDispute(ctx: any, request: Request, organizationId: any) {
   const body = await request.json();
 
-  // Validate required fields
-  const requiredFields = ["transactionId", "transactionHash", "blockchain", "amount", "amountUnit", "currency", "plaintiff", "defendant", "disputeReason"];
+  // Minimal required fields (amount is derived from chain)
+  const requiredFields = ["transactionHash", "blockchain", "recipientAddress"];
   for (const field of requiredFields) {
     if (!body[field]) {
       return new Response(JSON.stringify({
@@ -1166,6 +1186,76 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
     }
   }
 
+  // Breaking change: amount fields are no longer accepted (derive from chain).
+  if (body.amount !== undefined || body.amountUnit !== undefined) {
+    return new Response(JSON.stringify({
+      error: "amount/amountUnit are no longer accepted; amounts are derived from chain",
+      code: "UNSUPPORTED_FIELDS",
+      fields: ["amount", "amountUnit"],
+      suggestion: "Remove amount/amountUnit and provide recipientAddress (and optionally sourceTransferLogIndex if MULTI_MATCH).",
+    }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  // Validate blockchain is supported (Base or Solana only)
+  const supportedChains = ["base", "solana"];
+  if (!supportedChains.includes(body.blockchain)) {
+    return new Response(JSON.stringify({
+      error: `Only Base and Solana chains are supported for USDC payments`,
+      code: "UNSUPPORTED_BLOCKCHAIN",
+      field: "blockchain",
+      received: body.blockchain,
+      expected: "base or solana",
+    }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  const rawLogIndex = body.sourceTransferLogIndex;
+  const parsedLogIndex =
+    typeof rawLogIndex === "number"
+      ? rawLogIndex
+      : typeof rawLogIndex === "string" && rawLogIndex.trim() !== ""
+        ? Number(rawLogIndex)
+        : undefined;
+  if (parsedLogIndex !== undefined && (!Number.isSafeInteger(parsedLogIndex) || parsedLogIndex < 0)) {
+    return new Response(JSON.stringify({
+      error: "sourceTransferLogIndex must be a non-negative integer",
+      code: "INVALID_SOURCE_TRANSFER_LOG_INDEX",
+      field: "sourceTransferLogIndex",
+    }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  // Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
+  const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
+    blockchain: body.blockchain,
+    transactionHash: body.transactionHash,
+    recipientAddress: body.recipientAddress,
+    sourceTransferLogIndex: parsedLogIndex,
+  });
+  if (!verify.ok) {
+    return new Response(JSON.stringify({
+      error: verify.message,
+      code: verify.code,
+      field: verify.code === "MULTI_MATCH" ? "sourceTransferLogIndex" : "transactionHash",
+      candidates: verify.candidates,
+    }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  const { formatMicrosToUsdc } = await import("./lib/usdc");
+  const plaintiff = verify.payerAddress;
+  const defendant = verify.recipientAddress;
+  const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
+
   // Auto-detect reviewerOrganizationId if not provided via API key
   // SECURITY: ONLY use defendant's organization (they review disputes filed against them)
   // NEVER use plaintiff's org (conflict of interest - they'd approve their own refunds!)
@@ -1174,7 +1264,7 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
   if (!reviewerOrgId) {
     // Check defendant's organization ONLY
     const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
-      walletAddress: body.defendant
+      walletAddress: defendant
     });
     
     if (defendantAgent?.organizationId) {
@@ -1185,15 +1275,11 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
 
   // Create payment dispute (organizationId auto-injected)
   const result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, {
-    transactionId: body.transactionId,
     transactionHash: body.transactionHash,
     blockchain: body.blockchain,
-    amount: body.amount,
-    amountUnit: body.amountUnit,
-    currency: body.currency,
-    plaintiff: body.plaintiff,
-    defendant: body.defendant,
-    disputeReason: body.disputeReason,
+    recipientAddress: body.recipientAddress,
+    sourceTransferLogIndex: verify.logIndex,
+    disputeReason: body.disputeReason || "other",
     description: body.description || "Payment dispute",
     evidenceUrls: body.evidenceUrls || [],
     callbackUrl: body.callbackUrl,
@@ -1206,6 +1292,19 @@ async function handlePaymentDispute(ctx: any, request: Request, organizationId: 
   return new Response(JSON.stringify({
     success: true,
     ...result,
+    transactionVerification: {
+      source: "blockchain",
+      blockchain: body.blockchain,
+      transactionHash: body.transactionHash,
+      recipientAddress: body.recipientAddress,
+      extractedDetails: {
+        plaintiff,
+        defendant,
+        amount: txAmountUsd,
+        currency: "USDC",
+        logIndex: verify.logIndex,
+      },
+    },
     message: result.isMicroDispute
       ? "Micro-dispute received. Auto-ruling in progress (< 5 min)."
       : "Dispute received. Processing with AI analysis (< 24 hours).",

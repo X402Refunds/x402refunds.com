@@ -199,7 +199,7 @@ export const applyVerifiedTopUp = internalMutation({
  * - Require it is sent to the platform deposit address (CDP account address)
  * - Auto-credit org ledger
  */
-export const submitTopUpAndAutoApply: any = action({
+export const submitTopUpAndAutoApply = action({
   args: {
     organizationId: v.id("organizations"),
     txHash: v.string(),
