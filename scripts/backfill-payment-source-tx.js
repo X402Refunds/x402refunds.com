@@ -29,7 +29,9 @@ const maxPasses = Number(arg("--max-passes") || "200");
 let cursor = null;
 for (let pass = 0; pass < maxPasses; pass++) {
   const env = { ...process.env, CONVEX_DEPLOYMENT: deployment };
-  const argsJson = JSON.stringify({ limit, cursor });
+  const argsObj = { limit };
+  if (cursor) argsObj.cursor = cursor;
+  const argsJson = JSON.stringify(argsObj);
   const cmd = ["exec", "convex", "run", "cases:backfillPaymentSourceTx", argsJson];
   const r = spawnSync("pnpm", cmd, { stdio: "pipe", encoding: "utf8", env });
   if (r.status !== 0) {

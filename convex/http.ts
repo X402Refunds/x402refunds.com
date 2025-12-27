@@ -1003,9 +1003,11 @@ http.route({
     } catch (error: any) {
       console.error("Payment dispute error:", error);
       const msg = String(error?.message || "");
-      if (msg.startsWith("DUPLICATE_PAYMENT_DISPUTE:")) {
+      const marker = "DUPLICATE_PAYMENT_DISPUTE:";
+      const idx = msg.indexOf(marker);
+      if (idx !== -1) {
         try {
-          const json = msg.slice("DUPLICATE_PAYMENT_DISPUTE:".length);
+          const json = msg.slice(idx + marker.length);
           const data = JSON.parse(json);
           return new Response(JSON.stringify({
             error: "Duplicate dispute: this transaction has already been disputed.",
