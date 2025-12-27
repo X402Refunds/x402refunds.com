@@ -38,9 +38,13 @@ for (let pass = 0; pass < maxPasses; pass++) {
   }
   const out = (r.stdout || "").trim();
   console.log(out);
-  let parsed;
+
+  // Convex CLI may include warnings; extract the last JSON object from stdout.
+  const jsonMatches = out.match(/\{[\s\S]*\}/g);
+  const lastJson = jsonMatches ? jsonMatches[jsonMatches.length - 1] : undefined;
+  let parsed = null;
   try {
-    parsed = JSON.parse(out.split("\n").pop() || "{}");
+    parsed = lastJson ? JSON.parse(lastJson) : null;
   } catch {
     parsed = null;
   }
