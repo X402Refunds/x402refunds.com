@@ -46,7 +46,6 @@ export function decodeXPaymentHeader(paymentHeader: string): unknown | null {
 
   // base64url (Node supports this encoding)
   try {
-    // @ts-expect-error Node Buffer supports "base64url" in modern runtimes
     const json = Buffer.from(paymentHeader, "base64url").toString("utf8");
     const parsed = tryParse(json);
     if (parsed !== null) return parsed;

@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "@convex/_generated/api";
+import { anyApi } from "convex/server";
 import type { Id } from "@convex/_generated/dataModel";
 import { build402ResponseBody, buildTopupPaymentRequirement } from "@/lib/x402-topup";
+
+// Use the untyped Convex API reference to avoid Next.js route TypeScript instantiation depth issues.
+const api = anyApi;
 
 type AmountUnit = "usdc" | "microusdc";
 
 type TopUpCreditResult =
   | { ok: true; credits?: unknown; [k: string]: unknown }
   | { ok: false; code?: string; message?: string; [k: string]: unknown };
+
+type DepositResult =
+  | { ok: true; address: string; [k: string]: unknown }
+  | { ok: false; [k: string]: unknown };
 
 function parseAmountToMicros(amount: unknown, unit: AmountUnit): number | null {
   if (unit === "microusdc") {
@@ -39,6 +46,23 @@ type FacilitatorRequest = {
   paymentRequirements: unknown;
 };
 
+function inferX402Version(decodedPayload: unknown): number {
+  if (decodedPayload && typeof decodedPayload === "object") {
+    const obj = decodedPayload as Record<string, unknown>;
+    const v =
+      typeof obj.x402Version === "number"
+        ? obj.x402Version
+        : typeof obj.version === "number"
+          ? obj.version
+          : typeof obj.version === "string"
+            ? Number(obj.version)
+            : undefined;
+
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+  }
+  return 1;
+}
+
 async function postToFacilitator(path: "/verify" | "/settle", args: FacilitatorRequest) {
   const urls = getFacilitatorUrls();
 
@@ -49,6 +73,8 @@ async function postToFacilitator(path: "/verify" | "/settle", args: FacilitatorR
     decodedPayload = null;
   }
 
+  const x402Version = inferX402Version(decodedPayload);
+
   let last: { status: number; body: string; url: string } = { status: 500, body: "", url: urls[0] };
 
   for (const baseUrl of urls) {
@@ -58,6 +84,8 @@ async function postToFacilitator(path: "/verify" | "/settle", args: FacilitatorR
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Some facilitator deployments strictly deserialize and require `x402Version` at top-level.
+          x402Version,
           paymentPayload: decodedPayload ?? args.paymentHeader,
           paymentRequirements: args.paymentRequirements,
         }),
@@ -175,7 +203,10 @@ export async function POST(request: Request) {
   }
 
   const convex = new ConvexHttpClient(convexUrl);
-  const deposit = await convex.query(api.refundCredits.getPlatformDepositAddress, {});
+  // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
+  const runQuery = convex.query as unknown as (fn: unknown, args: unknown) => Promise<DepositResult>;
+  const getPlatformDepositAddress = api.refundCredits.getPlatformDepositAddress as unknown;
+  const deposit = await runQuery(getPlatformDepositAddress, {});
   if (!deposit.ok) {
     return NextResponse.json(
       { success: false, error: { code: "NOT_CONFIGURED", message: "Deposit address not configured" } },
@@ -233,7 +264,8 @@ export async function POST(request: Request) {
   // Auto-credit via Convex (log-based USDC verification + idempotency).
   // Avoid TS instantiation depth issues on Convex FunctionReference generics in Next.js route context.
   const runAction = convex.action as unknown as (fn: unknown, args: unknown) => Promise<TopUpCreditResult>;
-  const credited = await runAction(api.refundCredits.submitTopUpAndAutoApply, {
+  const submitTopUpAndAutoApply = api.refundCredits.submitTopUpAndAutoApply as unknown;
+  const credited = await runAction(submitTopUpAndAutoApply, {
     organizationId: organizationId as Id<"organizations">,
     txHash,
     amount,
