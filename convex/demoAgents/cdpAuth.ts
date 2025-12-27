@@ -108,6 +108,22 @@ function normalizePaymentPayloadForFacilitator(
   };
 }
 
+function inferX402Version(decodedPayload: unknown | null): number {
+  if (decodedPayload && typeof decodedPayload === "object") {
+    const obj = decodedPayload as Record<string, unknown>;
+    const v =
+      typeof obj.x402Version === "number"
+        ? obj.x402Version
+        : typeof obj.version === "number"
+          ? obj.version
+          : typeof obj.version === "string"
+            ? Number(obj.version)
+            : undefined;
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+  }
+  return 1;
+}
+
 /**
  * Verify payment via mcpay.tech facilitator
  */
@@ -137,12 +153,15 @@ export const verifyPayment = action({
     for (const baseUrl of facilitatorUrls) {
       lastUrl = baseUrl;
       try {
+        const x402Version = inferX402Version(decodedPayload as any);
         const verifyResponse = await fetch(`${baseUrl}/verify`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            // Some facilitator deployments expect `x402Version` at the top-level.
+            x402Version,
             // Facilitator schema: { paymentPayload, paymentRequirements }
             paymentPayload: decodedPayload ?? decodedPayloadRaw ?? args.paymentHeader,
             paymentRequirements: args.paymentRequirements,
@@ -201,12 +220,14 @@ export const settlePayment = action({
     for (const baseUrl of facilitatorUrls) {
       lastUrl = baseUrl;
       try {
+        const x402Version = inferX402Version(decodedPayload as any);
         const settleResponse = await fetch(`${baseUrl}/settle`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            x402Version,
             paymentPayload: decodedPayload ?? decodedPayloadRaw ?? args.paymentHeader,
             paymentRequirements: args.paymentRequirements,
           }),

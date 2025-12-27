@@ -661,6 +661,26 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       // Parse response
       const responseText = settleResult.body;
       console.log(`   Settlement response: ${responseText.substring(0, 300)}`);
+
+      // If facilitator rejected settlement (422 etc), surface the raw body rather than
+      // treating it as an "unexpected_settle_error".
+      if (typeof settleResult.status === "number" && settleResult.status >= 400) {
+        return new Response(
+          JSON.stringify({
+            error: "Payment settlement rejected by facilitator",
+            facilitatorStatus: settleResult.status,
+            facilitator: settleResult.facilitator,
+            details: typeof responseText === "string" ? responseText.substring(0, 1200) : String(responseText),
+          }),
+          {
+            status: 402,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
     
       let settleData;
       try {
