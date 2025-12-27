@@ -18,6 +18,45 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 
+export function decodeXPaymentHeader(paymentHeader: string): unknown | null {
+  // X-PAYMENT is typically base64(JSON(...)) but some clients use base64url.
+  // Also, some clients embed an envelope like { paymentPayload, paymentRequirements }.
+  const tryParse = (jsonText: string): unknown | null => {
+    try {
+      const parsed: unknown = JSON.parse(jsonText);
+      if (parsed && typeof parsed === "object") {
+        const obj = parsed as Record<string, unknown>;
+        const maybeEnvelope = obj.paymentPayload;
+        if (maybeEnvelope && typeof maybeEnvelope === "object") return maybeEnvelope;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  // Standard base64
+  try {
+    const json = Buffer.from(paymentHeader, "base64").toString("utf8");
+    const parsed = tryParse(json);
+    if (parsed !== null) return parsed;
+  } catch {
+    // ignore
+  }
+
+  // base64url (Node supports this encoding)
+  try {
+    // @ts-expect-error Node Buffer supports "base64url" in modern runtimes
+    const json = Buffer.from(paymentHeader, "base64url").toString("utf8");
+    const parsed = tryParse(json);
+    if (parsed !== null) return parsed;
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
 /**
  * Verify payment via mcpay.tech facilitator
  */
@@ -33,14 +72,8 @@ export const verifyPayment = action({
       : ["https://facilitator.mcpay.tech", "https://facilitator.daydreams.systems"];
     
     // Facilitators often expect `paymentPayload` as a decoded JSON object, not a base64 string.
-    // Our client sends `X-PAYMENT` as base64(JSON(payload)), so we decode here.
-    let decodedPayload: unknown = null;
-    try {
-      const json = Buffer.from(args.paymentHeader, "base64").toString("utf8");
-      decodedPayload = JSON.parse(json);
-    } catch {
-      decodedPayload = null;
-    }
+    // Decode and normalize any envelope formats.
+    const decodedPayload = decodeXPaymentHeader(args.paymentHeader);
 
     let lastStatus = 500;
     let lastBody = "";
@@ -68,7 +101,7 @@ export const verifyPayment = action({
         // If no override is set and we got a 5xx, fall back to the next facilitator.
         if (!override && verifyResponse.status >= 500) continue;
 
-        return { status: verifyResponse.status, body: verifyText };
+        return { status: verifyResponse.status, body: verifyText, facilitator: baseUrl };
       } catch (err: any) {
         lastStatus = 500;
         lastBody = `fetch_error: ${err?.message || String(err)}`;
@@ -100,13 +133,7 @@ export const settlePayment = action({
       ? [override]
       : ["https://facilitator.mcpay.tech", "https://facilitator.daydreams.systems"];
  
-    let decodedPayload: unknown = null;
-    try {
-      const json = Buffer.from(args.paymentHeader, "base64").toString("utf8");
-      decodedPayload = JSON.parse(json);
-    } catch {
-      decodedPayload = null;
-    }
+    const decodedPayload = decodeXPaymentHeader(args.paymentHeader);
 
     let lastStatus = 500;
     let lastBody = "";
@@ -133,7 +160,7 @@ export const settlePayment = action({
         // If no override is set and we got a 5xx, fall back to the next facilitator.
         if (!override && settleResponse.status >= 500) continue;
 
-        return { status: settleResponse.status, body: settleText };
+        return { status: settleResponse.status, body: settleText, facilitator: baseUrl };
       } catch (err: any) {
         lastStatus = 500;
         lastBody = `fetch_error: ${err?.message || String(err)}`;

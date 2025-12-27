@@ -439,6 +439,50 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     
     const verifyText = verifyResult.body;
     console.log(`   Verification response: ${verifyText.substring(0, 300)}`);
+
+    // If the facilitator rejected the request (422 etc), surface the raw body and
+    // include minimal context so clients can fix their X-PAYMENT formatting.
+    if (typeof verifyResult.status === "number" && verifyResult.status >= 400) {
+      let decodedXPayment: unknown = null;
+      try {
+        // Try both base64 and base64url-ish by normalizing.
+        const normalized = xPaymentHeader.replace(/-/g, "+").replace(/_/g, "/");
+        decodedXPayment = JSON.parse(atob(normalized));
+      } catch {
+        decodedXPayment = null;
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: "Payment verification rejected by facilitator",
+          facilitatorStatus: verifyResult.status,
+          facilitator: verifyResult.facilitator,
+          // body from facilitator is often plain-text on 4xx; pass through (truncated)
+          details: typeof verifyText === "string" ? verifyText.substring(0, 1200) : String(verifyText),
+          debug: {
+            decodedPaymentPayloadShape:
+              decodedXPayment && typeof decodedXPayment === "object"
+                ? Object.keys(decodedXPayment as Record<string, unknown>).slice(0, 25)
+                : null,
+            paymentRequirements: {
+              scheme: paymentRequirements.scheme,
+              network: paymentRequirements.network,
+              asset: paymentRequirements.asset,
+              payTo: paymentRequirements.payTo,
+              maxAmountRequired: paymentRequirements.maxAmountRequired,
+              resource: paymentRequirements.resource,
+            },
+          },
+        }),
+        {
+          status: 402,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
     
     let verifyData;
     try {
