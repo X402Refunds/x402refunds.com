@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
-import { api } from "@convex/_generated/api"
+import { makeFunctionReference } from "convex/server"
 import { Id } from "@convex/_generated/dataModel"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,26 +34,35 @@ export default function DisputeDetailPage() {
 
   const disputeId = params.id as string
 
-  // Sync and get user
+  // Avoid importing the generated Convex `api` in this page (TS2589: deep instantiation).
+  // These string-based references are safe at runtime and keep the page type-checkable.
+  const qGetCurrentUser = makeFunctionReference<"query">("users:getCurrentUser")
+  const qGetPaymentDispute = makeFunctionReference<"query">("paymentDisputes:getPaymentDispute")
+  const qGetRefundStatus = makeFunctionReference<"query">("refunds:getRefundStatus")
+  const mCustomerReview = makeFunctionReference<"mutation">("paymentDisputes:customerReview")
+  const mRetryRefundForCase = makeFunctionReference<"mutation">("refunds:retryRefundForCase")
+  const mManualApproveRefund = makeFunctionReference<"mutation">("refunds:manualApproveRefund")
+
+  // Cast to a simple FunctionReference to avoid TS2589 deep-instantiation issues.
   const currentUser = useQuery(
-    api.users.getCurrentUser,
+    qGetCurrentUser,
     {} // Auth verified server-side via ctx.auth
   )
 
   // Get dispute details
   const dispute = useQuery(
-    api.paymentDisputes.getPaymentDispute,
+    qGetPaymentDispute,
     disputeId ? { paymentDisputeId: disputeId as Id<"cases"> } : "skip"
   )
 
   const refund = useQuery(
-    api.refunds.getRefundStatus,
+    qGetRefundStatus,
     dispute ? { caseId: dispute._id } : "skip"
   )
 
-  const customerReview = useMutation(api.paymentDisputes.customerReview)
-  const retryRefundForCase = useMutation(api.refunds.retryRefundForCase)
-  const manualApproveRefund = useMutation(api.refunds.manualApproveRefund)
+  const customerReview = useMutation(mCustomerReview)
+  const retryRefundForCase = useMutation(mRetryRefundForCase)
+  const manualApproveRefund = useMutation(mManualApproveRefund)
 
   const handleApprove = async () => {
     if (!currentUser || !dispute) return
@@ -231,7 +240,14 @@ export default function DisputeDetailPage() {
     )
   }
 
-  const isResolved = !!dispute.humanReviewedAt
+  // Consider the dispute resolved if a final verdict exists OR it has been reviewed OR a refund has been created/executed.
+  // (Historical data / manual refund paths can create refunds without setting humanReviewedAt.)
+  const isResolved =
+    dispute.status === "DECIDED" ||
+    typeof dispute.decidedAt === "number" ||
+    typeof dispute.finalVerdict === "string" ||
+    typeof dispute.humanReviewedAt === "number" ||
+    !!refund
   
   // Extract party information
   const consumerInfo = {
