@@ -14,6 +14,31 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
   let testUserId: any;
   let testApiKey: string;
 
+  const seedAiRecommendation = async (caseId: any, verdict: "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW") => {
+    const caseData = await t.run(async (ctx: any) => {
+      return await ctx.db.get(caseId);
+    });
+    const paymentAmountMicrousdc =
+      typeof caseData?.paymentDetails?.amountMicrousdc === "number"
+        ? caseData.paymentDetails.amountMicrousdc
+        : typeof caseData?.amount === "number"
+          ? Math.round(caseData.amount * 1_000_000)
+          : 0;
+
+    await t.run(async (ctx: any) => {
+      await ctx.db.patch(caseId, {
+        aiRecommendation: {
+          verdict,
+          confidence: 0.9,
+          reasoning: "Seeded AI recommendation for test (workflow component not running in convex-test).",
+          analyzedAt: Date.now(),
+          similarCases: [],
+          refundAmountMicrousdc: verdict === "CONSUMER_WINS" ? paymentAmountMicrousdc : undefined,
+        },
+      });
+    });
+  };
+
   beforeEach(async () => {
     console.log("🧪 Setting up test environment...");
     const modules = import.meta.glob('../convex/**/*.{ts,js}');
@@ -122,6 +147,9 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     
     // Wait for AI processing
     await new Promise(resolve => setTimeout(resolve, 100));
+
+    // In convex-test, workflows/AI don't run; seed a stored AI recommendation so APPROVE_AI is valid.
+    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
     
     // Customer approves AI decision
     const review = await t.mutation(api.paymentDisputes.customerReview, {
@@ -281,6 +309,9 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       description: "Custody chain test",
       reviewerOrganizationId: testOrgId,
     });
+
+    // Seed AI recommendation so APPROVE_AI is valid in convex-test.
+    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
     
     // Customer reviews
     await t.mutation(api.paymentDisputes.customerReview, {
@@ -325,6 +356,9 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
       description: "Ruling format test",
       reviewerOrganizationId: testOrgId,
     });
+
+    // Seed AI recommendation so APPROVE_AI is valid in convex-test.
+    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
     
     // Customer reviews
     const review = await t.mutation(api.paymentDisputes.customerReview, {

@@ -17,6 +17,7 @@ export const finalizeRuling = internalMutation({
     reasoning: v.string(),
     confidence: v.number(),
     auto: v.boolean(),
+    refundAmountMicrousdc: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Convert verdict to proper type
@@ -52,6 +53,7 @@ export const finalizeRuling = internalMutation({
         reasoning: args.reasoning,
         analyzedAt: Date.now(),
         similarCases: [],
+        refundAmountMicrousdc: args.refundAmountMicrousdc,
       },
     });
 

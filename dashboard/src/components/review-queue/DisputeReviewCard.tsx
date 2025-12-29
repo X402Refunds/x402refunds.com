@@ -38,9 +38,11 @@ interface DisputeReviewCardProps {
 
 export function DisputeReviewCard({ dispute, onApprove, onOverride, onManualDecision }: DisputeReviewCardProps) {
   // If AI says NEED_REVIEW, skip straight to manual decision (no AI recommendation to approve)
+  const hasAiRecommendation = typeof dispute.aiRecommendation === "string"
   const aiNeedsReview = dispute.aiRecommendation === "NEED_REVIEW"
   const [showOverride, setShowOverride] = useState(aiNeedsReview)
   const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
+  const [selectedPartialAmount, setSelectedPartialAmount] = useState<string>("")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
   
@@ -63,7 +65,16 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride, onManualDeci
   const handleApprove = async () => {
     setSubmitting(true)
     try {
-      await onApprove(dispute.aiRecommendation || "CONSUMER_WINS")
+      if (!hasAiRecommendation) {
+        alert("AI recommendation is not ready yet.")
+        return
+      }
+      if (aiNeedsReview) {
+        alert("AI marked this dispute as NEED_REVIEW. Please make a manual decision.")
+        return
+      }
+      if (!dispute.aiRecommendation) return
+      await onApprove(dispute.aiRecommendation)
     } finally {
       setSubmitting(false)
     }
@@ -207,14 +218,14 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride, onManualDeci
         {!showOverride ? (
           <div className="flex gap-3 pt-2">
             {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
-            {!aiNeedsReview && (
+            {hasAiRecommendation && !aiNeedsReview && (
               <Button
                 onClick={handleApprove}
                 disabled={submitting}
                 className="flex-1"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Approve AI Decision
+                Approve
               </Button>
             )}
             <Button
@@ -280,6 +291,21 @@ export function DisputeReviewCard({ dispute, onApprove, onOverride, onManualDeci
                 <span className="text-sm">Escalate to Panel</span>
               </label>
             </div>
+
+            {selectedVerdict === "PARTIAL_REFUND" && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Partial Refund Amount (USDC)
+                </label>
+                <input
+                  value={selectedPartialAmount}
+                  onChange={(e) => setSelectedPartialAmount(e.target.value)}
+                  placeholder="e.g. 0.250000"
+                  inputMode="decimal"
+                  className="w-full border rounded-md p-2 text-sm bg-background"
+                />
+              </div>
+            )}
             
             {/* Notes */}
             <div>

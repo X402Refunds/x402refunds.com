@@ -38,6 +38,7 @@ import type * as lib_blockchain from "../lib/blockchain.js";
 import type * as lib_caip10 from "../lib/caip10.js";
 import type * as lib_coinbase from "../lib/coinbase.js";
 import type * as lib_crypto from "../lib/crypto.js";
+import type * as lib_duplicateDispute from "../lib/duplicateDispute.js";
 import type * as lib_openrouter from "../lib/openrouter.js";
 import type * as lib_solana from "../lib/solana.js";
 import type * as lib_usdc from "../lib/usdc.js";
@@ -96,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   "lib/caip10": typeof lib_caip10;
   "lib/coinbase": typeof lib_coinbase;
   "lib/crypto": typeof lib_crypto;
+  "lib/duplicateDispute": typeof lib_duplicateDispute;
   "lib/openrouter": typeof lib_openrouter;
   "lib/solana": typeof lib_solana;
   "lib/usdc": typeof lib_usdc;

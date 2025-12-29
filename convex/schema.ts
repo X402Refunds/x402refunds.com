@@ -165,11 +165,14 @@ export default defineSchema({
         v.literal("PENDING"),           // Payment initiated, funds not yet deposited
         v.literal("HELD"),              // Funds locked in escrow, service in progress
         v.literal("DISPUTED"),          // Dispute filed, awaiting arbiter decision
+        v.literal("PARTIALLY_RELEASED"), // Partial refund/release executed (escrow may still hold remainder)
         v.literal("RELEASED_TO_BUYER"), // Refund executed
         v.literal("RELEASED_TO_MERCHANT") // Payment released to merchant
       ),
       depositTxHash: v.optional(v.string()),   // Transaction hash of deposit
       releaseTxHash: v.optional(v.string()),   // Transaction hash of release
+      // For partial releases, record the amount released by the arbiter.
+      releaseAmountMicrousdc: v.optional(v.number()),
       blockchain: v.string(),                   // "base-sepolia", "base-mainnet"
       createdAt: v.number(),
       resolvedAt: v.optional(v.number()),
@@ -248,6 +251,8 @@ export default defineSchema({
       analyzedAt: v.number(),
       similarCases: v.array(v.id("cases")),
       tokensUsed: v.optional(v.number()),
+      // Explicit refund amount recommendation (6 decimals, microusdc) when money should move.
+      refundAmountMicrousdc: v.optional(v.number()),
     })),
 
     // Human Review (Infrastructure Model - customer team makes final decision)
@@ -261,6 +266,8 @@ export default defineSchema({
     // Final Decision
     finalVerdict: v.optional(v.string()),
     decidedAt: v.optional(v.number()),
+    // Explicit final refund amount (6 decimals, microusdc). Required for CONSUMER_WINS/PARTIAL_REFUND execution.
+    finalRefundAmountMicrousdc: v.optional(v.number()),
 
     // ========================================
     // PAYMENT-SPECIFIC FIELDS (type=PAYMENT only)

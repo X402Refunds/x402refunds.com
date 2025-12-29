@@ -20,12 +20,14 @@ import { DisputeHeader } from "@/components/dispute/DisputeHeader"
 import { toast } from "sonner"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
+type AiRecommendationWithRefund = { refundAmountMicrousdc?: number }
 
 export default function DisputeDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [showOverride, setShowOverride] = useState(false)
   const [selectedVerdict, setSelectedVerdict] = useState<PaymentVerdict>("CONSUMER_WINS")
+  const [selectedPartialAmount, setSelectedPartialAmount] = useState<string>("")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -57,11 +59,23 @@ export default function DisputeDetailPage() {
     if (!currentUser || !dispute) return
     setSubmitting(true)
     try {
+      if (!dispute.aiRecommendation) {
+        throw new Error("AI recommendation is not ready yet");
+      }
+      if (dispute.aiRecommendation.verdict === "NEED_REVIEW") {
+        throw new Error("AI marked this dispute as NEED_REVIEW; please make a manual decision");
+      }
+      if (
+        (dispute.aiRecommendation.verdict === "CONSUMER_WINS" || dispute.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+        typeof (dispute.aiRecommendation as AiRecommendationWithRefund).refundAmountMicrousdc !== "number"
+      ) {
+        throw new Error("AI recommendation is missing a refund amount");
+      }
       await customerReview({
         paymentDisputeId: dispute._id,
         reviewerUserId: currentUser._id,
         decision: "APPROVE_AI",
-        finalVerdict: (dispute.aiRecommendation?.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW") || "CONSUMER_WINS",
+        finalVerdict: dispute.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
       })
       setShowSuccess(true)
       setTimeout(() => {
@@ -69,7 +83,7 @@ export default function DisputeDetailPage() {
       }, 1500)
     } catch (error) {
       console.error("Failed to approve:", error)
-      alert("Failed to approve decision. Please try again.")
+      alert(error instanceof Error ? error.message : "Failed to approve decision. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -89,17 +103,26 @@ export default function DisputeDetailPage() {
     try {
       // If AI said NEED_REVIEW, this is a manual decision (not an override)
       const decision = aiNeedsReview ? "AI_UNABLE" : "OVERRIDE"
+      let finalRefundAmountMicrousdc: number | undefined;
+      if (selectedVerdict === "PARTIAL_REFUND") {
+        const parsed = Number(selectedPartialAmount);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          throw new Error("Partial refund amount is required and must be > 0");
+        }
+        finalRefundAmountMicrousdc = Math.round(parsed * 1_000_000);
+      }
       await customerReview({
         paymentDisputeId: dispute._id,
         reviewerUserId: currentUser._id,
         decision: decision as "APPROVE_AI" | "OVERRIDE" | "AI_UNABLE",
         finalVerdict: selectedVerdict,
+        finalRefundAmountMicrousdc,
         notes,
       })
       router.push("/dashboard/review-queue")
     } catch (error) {
       console.error("Failed to submit decision:", error)
-      alert("Failed to submit decision. Please try again.")
+      alert(error instanceof Error ? error.message : "Failed to submit decision. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -161,10 +184,31 @@ export default function DisputeDetailPage() {
     switch (verdict) {
       case "CONSUMER_WINS": return "Consumer Wins (Full Refund)"
       case "MERCHANT_WINS": return "Merchant Wins (No Refund)"
-      case "PARTIAL_REFUND": return "Partial Refund"
+      case "PARTIAL_REFUND": return "Partial Refund (Amount Required)"
       case "NEED_REVIEW": return "Needs Review"
       default: return "Unknown"
     }
+  }
+
+  const formatAiAction = () => {
+    const ai = dispute?.aiRecommendation;
+    if (!ai) return null;
+    if (ai.verdict === "CONSUMER_WINS") {
+      const amt =
+        typeof (ai as AiRecommendationWithRefund).refundAmountMicrousdc === "number"
+          ? (((ai as AiRecommendationWithRefund).refundAmountMicrousdc as number) / 1_000_000).toFixed(6)
+          : undefined;
+      return `Approve: Send refund${amt ? ` (${amt} USDC)` : ""}`;
+    }
+    if (ai.verdict === "PARTIAL_REFUND") {
+      const amt =
+        typeof (ai as AiRecommendationWithRefund).refundAmountMicrousdc === "number"
+          ? (((ai as AiRecommendationWithRefund).refundAmountMicrousdc as number) / 1_000_000).toFixed(6)
+          : undefined;
+      return `Approve: Send partial refund${amt ? ` (${amt} USDC)` : ""}`;
+    }
+    if (ai.verdict === "MERCHANT_WINS") return "Approve: Deny refund";
+    return null;
   }
 
   if (!currentUser) {
@@ -285,7 +329,7 @@ export default function DisputeDetailPage() {
                 </div>
               )}
 
-              {!refund && dispute.finalVerdict === "CONSUMER_WINS" && (
+              {!refund && (dispute.finalVerdict === "CONSUMER_WINS" || dispute.finalVerdict === "PARTIAL_REFUND") && (
                 <Button
                   variant="outline"
                   className="w-full"
@@ -402,6 +446,15 @@ export default function DisputeDetailPage() {
                     <p className="text-lg font-bold text-slate-900">
                       {getVerdictDisplay(dispute.aiRecommendation?.verdict as PaymentVerdict)}
                     </p>
+                    {(dispute.aiRecommendation?.verdict === "CONSUMER_WINS" || dispute.aiRecommendation?.verdict === "PARTIAL_REFUND") &&
+                      typeof (dispute.aiRecommendation as AiRecommendationWithRefund).refundAmountMicrousdc === "number" && (
+                        <p className="text-sm text-slate-700 mt-1">
+                          Recommended refund:{" "}
+                          <span className="font-semibold">
+                            {(((dispute.aiRecommendation as AiRecommendationWithRefund).refundAmountMicrousdc as number) / 1_000_000).toFixed(6)} USDC
+                          </span>
+                        </p>
+                      )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-slate-600">Confidence</p>
@@ -493,14 +546,14 @@ export default function DisputeDetailPage() {
                 {!showOverride ? (
                   <div className="flex gap-4">
                     {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
-                    {dispute.aiRecommendation?.verdict !== "NEED_REVIEW" && (
+                    {dispute.aiRecommendation && dispute.aiRecommendation.verdict !== "NEED_REVIEW" && (
                       <Button
                         onClick={handleApprove}
                         disabled={submitting}
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
                       >
                         <CheckCircle className="h-5 w-5 mr-2" />
-                        Approve AI Recommendation
+                        {formatAiAction() || "Approve"}
                       </Button>
                     )}
                     <Button
@@ -550,6 +603,24 @@ export default function DisputeDetailPage() {
                         ))}
                       </div>
                     </div>
+
+                    {selectedVerdict === "PARTIAL_REFUND" && (
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 mb-2 block">
+                          Partial Refund Amount (USDC)
+                        </label>
+                        <input
+                          value={selectedPartialAmount}
+                          onChange={(e) => setSelectedPartialAmount(e.target.value)}
+                          placeholder="e.g. 0.250000"
+                          inputMode="decimal"
+                          className="w-full border-2 border-slate-200 rounded-lg p-3 text-sm focus:border-blue-600 focus:outline-none"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          This amount will be executed exactly as entered.
+                        </p>
+                      </div>
+                    )}
 
                     <div>
                       <label className="text-sm font-medium text-slate-700 mb-2 block">

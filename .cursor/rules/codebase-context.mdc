@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-27T23:58:03.342Z
+**Auto-generated on**: 2025-12-29T18:25:18.545Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 ## ⚡ Backend API (Convex Functions)
 
 ### Convex Files (54 files)
-- **damageAgent.ts** - damageCalculationAgent, calculateRefund
+- **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
 - **judgeAgent.ts** - createJudgeAgent, judgeAgent, judgeDecision
@@ -380,5 +380,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/28/2025, 5:28:03 AM
+Generated: 12/29/2025, 11:55:18 PM
 Files scanned: 383

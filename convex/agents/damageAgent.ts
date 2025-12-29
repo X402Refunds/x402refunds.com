@@ -12,6 +12,68 @@ import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
 
+function clampMicros(n: number, max: number): number {
+  const x = Number.isFinite(n) ? Math.round(n) : 0;
+  return Math.max(0, Math.min(max, x));
+}
+
+function toMicros(amountUsd: number): number {
+  // USDC has 6 decimals.
+  return Math.round(amountUsd * 1_000_000);
+}
+
+/**
+ * Deterministic refund recommendation for payment disputes.
+ * Used to compute explicit partial refund amounts (microusdc) that are enforceable by the backend.
+ */
+export function computeRefundRecommendationMicrousdc(args: {
+  transactionAmountUsd: number;
+  disputeType: string;
+}): { recommendedRefundMicrousdc: number; reasoning: string; confidence: number } {
+  const amountUsd = Math.max(0, args.transactionAmountUsd || 0);
+  const disputeType = (args.disputeType || "").toLowerCase();
+
+  let recommendedUsd = amountUsd;
+  let reasoning = "Defaulting to full transaction amount - review needed";
+  let confidence = 0.7;
+
+  switch (disputeType) {
+    case "unauthorized":
+    case "fraud":
+      recommendedUsd = amountUsd;
+      reasoning = "Full refund required for unauthorized/fraudulent transaction";
+      confidence = 0.85;
+      break;
+    case "service_not_rendered":
+      recommendedUsd = amountUsd;
+      reasoning = "Full refund required - service was never delivered";
+      confidence = 0.85;
+      break;
+    case "amount_incorrect":
+      recommendedUsd = amountUsd;
+      reasoning = "Refund difference between charged and agreed amount (needs validation)";
+      confidence = 0.6;
+      break;
+    case "quality_issue":
+      recommendedUsd = amountUsd * 0.5;
+      reasoning = "Partial refund due to quality issues - estimated 50% degradation";
+      confidence = 0.75;
+      break;
+    case "api_timeout":
+    case "rate_limit_breach":
+      recommendedUsd = amountUsd * 0.75;
+      reasoning = "Partial refund due to service interruption";
+      confidence = 0.75;
+      break;
+    default:
+      break;
+  }
+
+  const maxMicros = toMicros(amountUsd);
+  const recommendedRefundMicrousdc = clampMicros(toMicros(recommendedUsd), maxMicros);
+  return { recommendedRefundMicrousdc, reasoning, confidence };
+}
+
 // Calculate damages tool
 const calculateDamages = createTool({
   description: "Calculate recommended refund or damage amount based on dispute type and evidence.",
@@ -21,65 +83,16 @@ const calculateDamages = createTool({
     evidence: z.any().optional().describe("Additional evidence for calculation"),
   }),
   handler: async (ctx, args) => {
-    // Basic damage calculation logic
-    // This can be enhanced with more sophisticated financial analysis
-
-    let baseAmount = args.transactionAmount;
-    let additionalDamages = 0;
-    let reasoning = "";
-
-    // Different calculation logic based on dispute type
-    switch (args.disputeType) {
-      case "unauthorized":
-      case "fraud":
-        // Full refund for unauthorized charges
-        baseAmount = args.transactionAmount;
-        additionalDamages = 0;
-        reasoning = "Full refund required for unauthorized/fraudulent transaction";
-        break;
-
-      case "service_not_rendered":
-        // Full refund if service never delivered
-        baseAmount = args.transactionAmount;
-        additionalDamages = 0;
-        reasoning = "Full refund required - service was never delivered";
-        break;
-
-      case "amount_incorrect":
-        // Calculate difference between charged and agreed amount
-        // This would need evidence to determine correct amount
-        baseAmount = args.transactionAmount;
-        additionalDamages = 0;
-        reasoning = "Refund difference between charged and agreed amount";
-        break;
-
-      case "quality_issue":
-        // Partial refund based on quality degradation
-        baseAmount = args.transactionAmount * 0.5; // 50% refund default
-        additionalDamages = 0;
-        reasoning = "Partial refund due to quality issues - estimated 50% degradation";
-        break;
-
-      case "api_timeout":
-      case "rate_limit_breach":
-        // Partial refund or service credit
-        baseAmount = args.transactionAmount * 0.75; // 75% refund
-        additionalDamages = 0;
-        reasoning = "Partial refund due to service interruption";
-        break;
-
-      default:
-        baseAmount = args.transactionAmount;
-        reasoning = "Defaulting to full transaction amount - review needed";
-    }
-
+    const rec = computeRefundRecommendationMicrousdc({
+      transactionAmountUsd: args.transactionAmount,
+      disputeType: args.disputeType,
+    });
     return {
       success: true,
-      recommendedRefund: baseAmount + additionalDamages,
-      baseAmount,
-      additionalDamages,
-      reasoning,
-      confidence: 0.7, // Moderate confidence - human review recommended
+      recommendedRefund: rec.recommendedRefundMicrousdc / 1_000_000,
+      recommendedRefundMicrousdc: rec.recommendedRefundMicrousdc,
+      reasoning: rec.reasoning,
+      confidence: rec.confidence,
     };
   },
 });
@@ -124,18 +137,19 @@ export const calculateRefund = internalAction({
     disputeType: v.string(),
   },
   handler: async (ctx, args) => {
-    const result = await damageCalculationAgent.generateText(
-      ctx,
-      { userId: args.caseId },
-      {
-        prompt: `Calculate refund for case ${args.caseId}. Transaction amount: $${args.transactionAmount}, Dispute type: ${args.disputeType}`,
-      }
-    );
+    // Deterministic + enforceable output for downstream workflows.
+    // (We keep the Agent around for future richer logic, but the workflow requires structured output.)
+    const rec = computeRefundRecommendationMicrousdc({
+      transactionAmountUsd: args.transactionAmount,
+      disputeType: args.disputeType,
+    });
 
     return {
       success: true,
-      calculation: result.text,
-      // Don't include result.steps - contains non-Convex types
+      recommendedRefundMicrousdc: rec.recommendedRefundMicrousdc,
+      recommendedRefund: rec.recommendedRefundMicrousdc / 1_000_000,
+      reasoning: rec.reasoning,
+      confidence: rec.confidence,
     };
   },
 });

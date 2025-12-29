@@ -432,13 +432,25 @@ export default function DashboardPage() {
                                   className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                   onClick={async () => {
                                     if (!currentUser || !event.caseId) return
+                                    if (!caseData?.aiRecommendation) return
+                                    if (
+                                      (caseData.aiRecommendation.verdict === "CONSUMER_WINS" || caseData.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+                                      typeof (caseData.aiRecommendation as { refundAmountMicrousdc?: number }).refundAmountMicrousdc !== "number"
+                                    ) {
+                                      return
+                                    }
                                     await customerReview({
                                       paymentDisputeId: event.caseId,
                                       reviewerUserId: currentUser._id,
                                       decision: "APPROVE_AI",
-                                      finalVerdict: (caseData.aiRecommendation?.verdict || "CONSUMER_WINS") as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
+                                      finalVerdict: caseData.aiRecommendation.verdict as "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW",
                                     })
                                   }}
+                                  disabled={
+                                    !caseData?.aiRecommendation ||
+                                    ((caseData.aiRecommendation.verdict === "CONSUMER_WINS" || caseData.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+                                      typeof (caseData.aiRecommendation as { refundAmountMicrousdc?: number }).refundAmountMicrousdc !== "number")
+                                  }
                                 >
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Approve ({((caseData.aiRecommendation?.confidence || 0) * 100).toFixed(0)}%)

@@ -31,10 +31,37 @@ async function executeAutomatedRefundImpl(
     throw new Error("Dispute not found");
   }
   
-  // Only refund if consumer wins
-  if (dispute.finalVerdict !== "CONSUMER_WINS") {
+  // Only refund if consumer wins (full or partial)
+  if (dispute.finalVerdict !== "CONSUMER_WINS" && dispute.finalVerdict !== "PARTIAL_REFUND") {
     console.log(`⏭️  Skipping refund: verdict is ${dispute.finalVerdict}`);
     return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
+  }
+
+  // Refund amount is explicit for partial refunds, but for backward compatibility
+  // we allow full refunds (CONSUMER_WINS) to derive from payment amount if missing.
+  let refundAmountMicrousdc: number | undefined =
+    typeof dispute.finalRefundAmountMicrousdc === "number"
+      ? Math.round(dispute.finalRefundAmountMicrousdc)
+      : undefined;
+
+  if (!refundAmountMicrousdc || !Number.isFinite(refundAmountMicrousdc) || refundAmountMicrousdc <= 0) {
+    if (dispute.finalVerdict === "CONSUMER_WINS") {
+      const pd: any = dispute.paymentDetails || {};
+      const derived =
+        typeof pd.amountMicrousdc === "number"
+          ? pd.amountMicrousdc
+          : typeof dispute.amount === "number"
+            ? Math.round(dispute.amount * 1_000_000)
+            : undefined;
+      if (typeof derived === "number" && Number.isFinite(derived) && derived > 0) {
+        refundAmountMicrousdc = Math.round(derived);
+      }
+    }
+  }
+
+  if (!refundAmountMicrousdc || !Number.isFinite(refundAmountMicrousdc) || refundAmountMicrousdc <= 0) {
+    console.error(`❌ Missing finalRefundAmountMicrousdc for case ${caseId}`);
+    return { status: "FAILED", reason: "MISSING_FINAL_REFUND_AMOUNT" };
   }
   
   // NEW: Check if this dispute uses x402r escrow
@@ -74,7 +101,8 @@ async function executeAutomatedRefundImpl(
     const rawChain: string | undefined = pd.blockchain || pd.crypto?.blockchain;
     const chain = typeof rawChain === "string" ? rawChain.toLowerCase() : undefined;
 
-    const amountMicrousdc: number | undefined =
+    // Verified source payment amount (used for on-chain transfer proof validation).
+    const paymentAmountMicrousdc: number | undefined =
       typeof pd.amountMicrousdc === "number"
         ? pd.amountMicrousdc
         : typeof dispute.amount === "number"
@@ -83,7 +111,7 @@ async function executeAutomatedRefundImpl(
 
     const chainOk = chain === "base" || chain === "solana";
     const txOk = typeof txHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(txHash);
-    const amountOk = typeof amountMicrousdc === "number" && Number.isFinite(amountMicrousdc) && amountMicrousdc > 0;
+    const amountOk = typeof paymentAmountMicrousdc === "number" && Number.isFinite(paymentAmountMicrousdc) && paymentAmountMicrousdc > 0;
 
     // If this payment has already been refunded-to-source (possibly from a different duplicate case),
     // don't schedule a new attempt. This is idempotent by (chain, txHash, sourceTransferLogIndex).
@@ -112,7 +140,7 @@ async function executeAutomatedRefundImpl(
             ...(pd || {}),
             transactionHash: txHash,
             blockchain: chain,
-            amountMicrousdc,
+            amountMicrousdc: paymentAmountMicrousdc,
           },
         });
       }
@@ -230,7 +258,7 @@ export const createRefundAttempt = internalAction({
     const dispute: any = await ctx.runQuery(api.cases.getCaseById, { caseId: args.caseId });
     if (!dispute) throw new Error("Dispute not found");
 
-    if (dispute.finalVerdict !== "CONSUMER_WINS") {
+    if (dispute.finalVerdict !== "CONSUMER_WINS" && dispute.finalVerdict !== "PARTIAL_REFUND") {
       return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
     }
     if (!dispute.reviewerOrganizationId) {
@@ -240,19 +268,32 @@ export const createRefundAttempt = internalAction({
     const pd = dispute.paymentDetails;
     const sourceChain = pd?.blockchain;
     const sourceTxHash = pd?.transactionHash;
-    const amountMicrousdc = pd?.amountMicrousdc;
+    const paymentAmountMicrousdc = pd?.amountMicrousdc;
+    const refundAmountMicrousdc = dispute.finalRefundAmountMicrousdc;
 
-    if (!sourceChain || !sourceTxHash || typeof amountMicrousdc !== "number") {
+    if (!sourceChain || !sourceTxHash || typeof paymentAmountMicrousdc !== "number") {
       return {
         status: "MISSING_PAYMENT_DETAILS",
         reason: "Missing verified paymentDetails (blockchain, transactionHash, amountMicrousdc)",
+      };
+    }
+    if (typeof refundAmountMicrousdc !== "number" || !Number.isFinite(refundAmountMicrousdc) || refundAmountMicrousdc <= 0) {
+      return {
+        status: "MISSING_FINAL_REFUND_AMOUNT",
+        reason: "Missing case.finalRefundAmountMicrousdc (required for refund execution)",
+      };
+    }
+    if (refundAmountMicrousdc > paymentAmountMicrousdc) {
+      return {
+        status: "INVALID_FINAL_REFUND_AMOUNT",
+        reason: "finalRefundAmountMicrousdc exceeds paymentDetails.amountMicrousdc",
       };
     }
 
     const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
       blockchain: sourceChain,
       transactionHash: sourceTxHash,
-      expectedAmountMicrousdc: amountMicrousdc,
+      expectedAmountMicrousdc: paymentAmountMicrousdc,
     });
 
     if (!verify.ok) {
@@ -267,7 +308,7 @@ export const createRefundAttempt = internalAction({
         sourceChain,
         sourceTxHash,
         sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : undefined,
-        amountMicrousdc,
+        amountMicrousdc: paymentAmountMicrousdc,
         status,
         failureCode: verify.code,
         failureReason: verify.message,
@@ -282,7 +323,7 @@ export const createRefundAttempt = internalAction({
       sourceChain,
       sourceTxHash,
       sourceTransferLogIndex: logIndex,
-      amountMicrousdc,
+      amountMicrousdc: refundAmountMicrousdc,
       refundToAddress: verify.payerAddress,
     });
 

@@ -573,6 +573,28 @@ export const processWithAI = action({
     const humanReviewRequired: boolean = true;
 
     // 5. Store AI recommendation in cases table (single source of truth)
+    const paymentAmountMicrousdc =
+      typeof caseData.paymentDetails?.amountMicrousdc === "number"
+        ? caseData.paymentDetails.amountMicrousdc
+        : typeof caseData.amount === "number"
+          ? Math.round(caseData.amount * 1_000_000)
+          : undefined;
+
+    let refundAmountMicrousdc: number | undefined;
+    if (typeof paymentAmountMicrousdc === "number" && Number.isFinite(paymentAmountMicrousdc) && paymentAmountMicrousdc > 0) {
+      if (verdict === "CONSUMER_WINS") {
+        refundAmountMicrousdc = paymentAmountMicrousdc;
+      } else if (verdict === "PARTIAL_REFUND") {
+        // Fallback heuristic for legacy AI path (kept consistent with damage agent defaults).
+        const dr = (disputeReason || "").toLowerCase();
+        const ratio =
+          dr === "quality_issue" ? 0.5 :
+          (dr === "api_timeout" || dr === "rate_limit_breach") ? 0.75 :
+          0.5;
+        refundAmountMicrousdc = Math.max(0, Math.min(paymentAmountMicrousdc, Math.round(paymentAmountMicrousdc * ratio)));
+      }
+    }
+
     await ctx.runMutation(api.cases.storeAIRecommendation, {
       caseId: args.caseId,
       aiRecommendation: {
@@ -581,6 +603,7 @@ export const processWithAI = action({
         reasoning,
         analyzedAt: Date.now(),
         similarCases: similarDisputes.map((d: any) => d._id).filter(Boolean),
+        refundAmountMicrousdc,
       },
     });
 
@@ -615,9 +638,30 @@ export const updateWithAIRuling = mutation({
     humanReviewRequired: v.boolean(),
     similarPastCases: v.array(v.id("cases")), // Changed to cases
     tokensUsed: v.number(),
+    refundAmountMicrousdc: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     console.warn("DEPRECATED: updateWithAIRuling called. Use cases.storeAIRecommendation instead.");
+    const dispute: any = await ctx.db.get(args.paymentDisputeId);
+    const paymentAmountMicrousdc =
+      typeof dispute?.paymentDetails?.amountMicrousdc === "number"
+        ? dispute.paymentDetails.amountMicrousdc
+        : typeof dispute?.amount === "number"
+          ? Math.round(dispute.amount * 1_000_000)
+          : undefined;
+
+    let refundAmountMicrousdc: number | undefined = args.refundAmountMicrousdc;
+    if (
+      typeof paymentAmountMicrousdc === "number" &&
+      Number.isFinite(paymentAmountMicrousdc) &&
+      paymentAmountMicrousdc > 0
+    ) {
+      if (args.verdict === "CONSUMER_WINS") {
+        refundAmountMicrousdc = paymentAmountMicrousdc;
+      } else if (args.verdict === "PARTIAL_REFUND" && typeof refundAmountMicrousdc === "number") {
+        refundAmountMicrousdc = Math.max(0, Math.min(paymentAmountMicrousdc, Math.round(refundAmountMicrousdc)));
+      }
+    }
     // Forward to new API
     return await ctx.db.patch(args.paymentDisputeId, {
       aiRecommendation: {
@@ -626,6 +670,7 @@ export const updateWithAIRuling = mutation({
         reasoning: args.reasoning,
         analyzedAt: Date.now(),
         similarCases: args.similarPastCases,
+        refundAmountMicrousdc,
       },
       humanReviewRequired: args.humanReviewRequired,
       status: "ANALYZED",
@@ -997,6 +1042,8 @@ export const customerReview = mutation({
       v.literal("PARTIAL_REFUND"),
       v.literal("NEED_REVIEW")
     ),
+    // Required when human selects PARTIAL_REFUND (override/manual). Ignored for APPROVE_AI.
+    finalRefundAmountMicrousdc: v.optional(v.number()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -1013,6 +1060,52 @@ export const customerReview = mutation({
 
     const now = Date.now();
 
+    // Determine canonical payment amount (microusdc) for validation.
+    const paymentAmountMicrousdc: number | undefined =
+      typeof dispute.paymentDetails?.amountMicrousdc === "number"
+        ? dispute.paymentDetails.amountMicrousdc
+        : typeof dispute.amount === "number"
+          ? Math.round(dispute.amount * 1_000_000)
+          : undefined;
+
+    if (typeof paymentAmountMicrousdc !== "number" || !Number.isFinite(paymentAmountMicrousdc) || paymentAmountMicrousdc <= 0) {
+      throw new Error("Missing payment amount for refund calculation");
+    }
+
+    // Determine enforceable final refund amount (microusdc), if applicable.
+    let finalRefundAmountMicrousdc: number | undefined;
+
+    if (args.decision === "APPROVE_AI") {
+      if (!dispute.aiRecommendation) throw new Error("No AI recommendation to approve");
+      if (String(dispute.aiRecommendation.verdict) !== String(args.finalVerdict)) {
+        throw new Error("APPROVE_AI must use the stored AI verdict");
+      }
+      if (args.finalVerdict === "CONSUMER_WINS" || args.finalVerdict === "PARTIAL_REFUND") {
+        const aiAmt = (dispute.aiRecommendation as any).refundAmountMicrousdc;
+        if (typeof aiAmt !== "number" || !Number.isFinite(aiAmt) || aiAmt <= 0) {
+          throw new Error("AI refund amount missing");
+        }
+        if (aiAmt > paymentAmountMicrousdc) {
+          throw new Error("AI refund amount exceeds payment amount");
+        }
+        finalRefundAmountMicrousdc = Math.round(aiAmt);
+      }
+    } else {
+      // OVERRIDE / AI_UNABLE: human decision
+      if (args.finalVerdict === "CONSUMER_WINS") {
+        finalRefundAmountMicrousdc = paymentAmountMicrousdc;
+      } else if (args.finalVerdict === "PARTIAL_REFUND") {
+        const amt = args.finalRefundAmountMicrousdc;
+        if (typeof amt !== "number" || !Number.isFinite(amt) || amt <= 0) {
+          throw new Error("finalRefundAmountMicrousdc is required for PARTIAL_REFUND");
+        }
+        if (amt > paymentAmountMicrousdc) {
+          throw new Error("Partial refund amount exceeds payment amount");
+        }
+        finalRefundAmountMicrousdc = Math.round(amt);
+      }
+    }
+
     // Convert to agent verdict for rulings table
     const agentVerdict: "PLAINTIFF_WINS" | "DEFENDANT_WINS" | "SPLIT" | "NEED_PANEL" =
       args.finalVerdict === "CONSUMER_WINS" ? "PLAINTIFF_WINS" :
@@ -1025,6 +1118,7 @@ export const customerReview = mutation({
       humanReviewedBy: reviewer.email,
       humanAgreesWithAI: args.decision === "APPROVE_AI", // undefined/false if AI_UNABLE or OVERRIDE
       finalVerdict: args.finalVerdict, // Changed: use finalVerdict field from schema
+      finalRefundAmountMicrousdc,
       humanOverrideReason: args.notes, // Changed: use humanOverrideReason field from schema
       decidedAt: now,
       status: "DECIDED",
@@ -1100,7 +1194,7 @@ export const customerReview = mutation({
     }
 
     // Trigger automated refund if consumer wins
-    if (args.finalVerdict === "CONSUMER_WINS") {
+    if (args.finalVerdict === "CONSUMER_WINS" || args.finalVerdict === "PARTIAL_REFUND") {
       await ctx.scheduler.runAfter(
         0,
         internal.refunds.executeAutomatedRefund,
@@ -1197,11 +1291,29 @@ export const autoApproveAIRecommendation = mutation({
       aiVerdict === "PARTIAL_REFUND" ? "SPLIT" : "NEED_PANEL";
 
     // Update dispute with auto-approval
+    const paymentAmountMicrousdc: number | undefined =
+      typeof dispute.paymentDetails?.amountMicrousdc === "number"
+        ? dispute.paymentDetails.amountMicrousdc
+        : typeof dispute.amount === "number"
+          ? Math.round(dispute.amount * 1_000_000)
+          : undefined;
+
+    let finalRefundAmountMicrousdc: number | undefined;
+    if (aiVerdict === "CONSUMER_WINS") {
+      finalRefundAmountMicrousdc = paymentAmountMicrousdc;
+    } else if (aiVerdict === "PARTIAL_REFUND") {
+      const aiAmt = (dispute.aiRecommendation as any).refundAmountMicrousdc;
+      if (typeof aiAmt === "number" && Number.isFinite(aiAmt) && aiAmt > 0 && typeof paymentAmountMicrousdc === "number") {
+        finalRefundAmountMicrousdc = Math.max(0, Math.min(paymentAmountMicrousdc, Math.round(aiAmt)));
+      }
+    }
+
     await ctx.db.patch(args.paymentDisputeId, {
       humanReviewedAt: now,
       humanReviewedBy: "SYSTEM_AUTO_APPROVAL",
       humanAgreesWithAI: true,
       finalVerdict: aiVerdict, // Changed: use finalVerdict field from schema
+      finalRefundAmountMicrousdc,
       humanOverrideReason: "Auto-approved after Regulation E deadline (10 business days)",
       decidedAt: now,
       status: "DECIDED",
@@ -1239,8 +1351,8 @@ export const autoApproveAIRecommendation = mutation({
 
     console.info(`✅ Auto-approved dispute ${args.paymentDisputeId} after Regulation E deadline`);
 
-    // Trigger refund if consumer wins
-    if (aiVerdict === "CONSUMER_WINS") {
+    // Trigger refund if consumer wins (full or partial)
+    if (aiVerdict === "CONSUMER_WINS" || aiVerdict === "PARTIAL_REFUND") {
       await ctx.scheduler.runAfter(0, internal.refunds.executeAutomatedRefund, {
         caseId: args.paymentDisputeId,
         force: true,

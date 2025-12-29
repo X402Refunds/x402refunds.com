@@ -776,6 +776,7 @@ export const storeAIRecommendation = mutation({
       reasoning: v.string(),
       analyzedAt: v.number(),
       similarCases: v.array(v.id("cases")),
+      refundAmountMicrousdc: v.optional(v.number()),
     }),
   },
   handler: async (ctx, args) => {

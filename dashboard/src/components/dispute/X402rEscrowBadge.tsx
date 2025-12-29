@@ -19,10 +19,17 @@ import { useState } from "react";
 
 interface X402rEscrowBadgeProps {
   escrowAddress: string;
-  escrowState: "PENDING" | "HELD" | "DISPUTED" | "RELEASED_TO_BUYER" | "RELEASED_TO_MERCHANT";
+  escrowState:
+    | "PENDING"
+    | "HELD"
+    | "DISPUTED"
+    | "PARTIALLY_RELEASED"
+    | "RELEASED_TO_BUYER"
+    | "RELEASED_TO_MERCHANT";
   blockchain: string;
   depositTxHash?: string;
   releaseTxHash?: string;
+  releaseAmountMicrousdc?: number;
   amount?: number;
   currency?: string;
 }
@@ -33,6 +40,7 @@ export function X402rEscrowBadge({
   blockchain,
   depositTxHash,
   releaseTxHash,
+  releaseAmountMicrousdc,
   amount,
   currency = "USDC",
 }: X402rEscrowBadgeProps) {
@@ -67,6 +75,7 @@ export function X402rEscrowBadge({
         return "default";
       case "DISPUTED":
         return "destructive";
+      case "PARTIALLY_RELEASED":
       case "RELEASED_TO_BUYER":
       case "RELEASED_TO_MERCHANT":
         return "outline";
@@ -83,6 +92,7 @@ export function X402rEscrowBadge({
         return <Lock className="h-4 w-4" />;
       case "DISPUTED":
         return <AlertCircle className="h-4 w-4" />;
+      case "PARTIALLY_RELEASED":
       case "RELEASED_TO_BUYER":
       case "RELEASED_TO_MERCHANT":
         return <CheckCircle2 className="h-4 w-4" />;
@@ -100,6 +110,8 @@ export function X402rEscrowBadge({
         return "Funds in Escrow";
       case "DISPUTED":
         return "Dispute Filed";
+      case "PARTIALLY_RELEASED":
+        return "Partially Released";
       case "RELEASED_TO_BUYER":
         return "Refunded to Buyer";
       case "RELEASED_TO_MERCHANT":
@@ -118,6 +130,8 @@ export function X402rEscrowBadge({
         return "Funds are safely held in an x402r escrow smart contract until the service is completed.";
       case "DISPUTED":
         return "A dispute has been filed. Funds remain locked in escrow pending arbiter decision.";
+      case "PARTIALLY_RELEASED":
+        return "A partial amount has been released from escrow to the buyer. Remaining funds may still be held in escrow per contract behavior.";
       case "RELEASED_TO_BUYER":
         return "Funds have been released from escrow back to the buyer as a refund.";
       case "RELEASED_TO_MERCHANT":
@@ -152,6 +166,16 @@ export function X402rEscrowBadge({
             <span className="text-sm font-medium text-foreground">Escrow Amount</span>
             <span className="text-lg font-bold text-primary">
               ${amount.toFixed(2)} {currency}
+            </span>
+          </div>
+        )}
+
+        {/* Released amount (if partial) */}
+        {escrowState === "PARTIALLY_RELEASED" && typeof releaseAmountMicrousdc === "number" && (
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <span className="text-sm font-medium text-foreground">Released Amount</span>
+            <span className="text-lg font-bold text-primary">
+              ${(releaseAmountMicrousdc / 1_000_000).toFixed(6)} {currency}
             </span>
           </div>
         )}

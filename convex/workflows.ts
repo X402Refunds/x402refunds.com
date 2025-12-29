@@ -327,12 +327,36 @@ export const paymentDisputeWorkflow = workflow.define({
     });
 
     // Step 5: Store ruling
+    const paymentAmountMicrousdc =
+      typeof caseData.paymentDetails?.amountMicrousdc === "number"
+        ? caseData.paymentDetails.amountMicrousdc
+        : typeof caseData.amount === "number"
+          ? Math.round(caseData.amount * 1_000_000)
+          : undefined;
+
+    let refundAmountMicrousdc: number | undefined;
+    const verdictUpper = String(judgeResult?.verdict || "").toUpperCase();
+    if (paymentAmountMicrousdc && Number.isFinite(paymentAmountMicrousdc) && paymentAmountMicrousdc > 0) {
+      if (verdictUpper === "CONSUMER_WINS") {
+        refundAmountMicrousdc = paymentAmountMicrousdc;
+      } else if (verdictUpper === "PARTIAL_REFUND") {
+        const recMicros =
+          typeof damageCalculation?.recommendedRefundMicrousdc === "number"
+            ? Math.round(damageCalculation.recommendedRefundMicrousdc)
+            : undefined;
+        if (typeof recMicros === "number" && Number.isFinite(recMicros)) {
+          refundAmountMicrousdc = Math.max(0, Math.min(paymentAmountMicrousdc, recMicros));
+        }
+      }
+    }
+
     await step.runMutation(s.rulings.finalizeRuling, {
       caseId,
       verdict: judgeResult.verdict,
       reasoning: judgeResult.reasoning,
       confidence: judgeResult.confidence,
       auto: judgeResult.confidence >= 0.95,
+      refundAmountMicrousdc,
     });
 
     // Step 6: Update case status
@@ -429,6 +453,7 @@ export const generalDisputeWorkflow = workflow.define({
       reasoning: judgeResult.reasoning,
       confidence: judgeResult.confidence,
       auto: judgeResult.confidence >= 0.95,
+      // General disputes may have damages, but we don't execute refunds via refund engine here.
     });
 
     // Step 6: Update case status

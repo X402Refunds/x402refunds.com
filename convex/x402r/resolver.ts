@@ -15,7 +15,9 @@
 
 import { internalMutation, internalAction } from "../_generated/server";
 import { v } from "convex/values";
-import { internal, api } from "../_generated/api";
+// NOTE: Avoid importing generated API types at module scope to prevent excessive
+// type instantiation in downstream TypeScript builds. We dynamically import
+// `internal`/`api` inside handlers instead.
 import { requiresManualReview } from "./config";
 
 /**
@@ -56,6 +58,7 @@ export const resolveEscrowDispute = internalMutation({
     
     // Check if already resolved
     if (
+      caseData.x402rEscrow.escrowState === "PARTIALLY_RELEASED" ||
       caseData.x402rEscrow.escrowState === "RELEASED_TO_BUYER" ||
       caseData.x402rEscrow.escrowState === "RELEASED_TO_MERCHANT"
     ) {
@@ -76,21 +79,60 @@ export const resolveEscrowDispute = internalMutation({
       };
     }
     
-    // Determine winner based on verdict
-    const winner = caseData.finalVerdict === "CONSUMER_WINS" ? "BUYER" : "MERCHANT";
+    // Determine winner based on verdict (partial refunds still resolve in favor of BUYER for the released amount)
+    const winner =
+      caseData.finalVerdict === "CONSUMER_WINS" || caseData.finalVerdict === "PARTIAL_REFUND"
+        ? "BUYER"
+        : "MERCHANT";
     
+    // Determine amount to release.
+    // - For BUYER outcomes:
+    //   - PARTIAL_REFUND requires explicit finalRefundAmountMicrousdc.
+    //   - CONSUMER_WINS can derive full escrow amount for backward compatibility if missing.
+    // - For MERCHANT wins: release full escrow amount.
+    const escrowAmountMicros = Math.round((caseData.amount || 0) * 1_000_000);
+
+    let buyerReleaseMicros: number | undefined =
+      typeof caseData.finalRefundAmountMicrousdc === "number"
+        ? Math.round(caseData.finalRefundAmountMicrousdc)
+        : undefined;
+
+    if (winner === "BUYER") {
+      if (caseData.finalVerdict === "CONSUMER_WINS") {
+        if (!buyerReleaseMicros || buyerReleaseMicros <= 0) {
+          buyerReleaseMicros = escrowAmountMicros;
+        }
+      } else {
+        // PARTIAL_REFUND: must be explicit
+        if (!buyerReleaseMicros || buyerReleaseMicros <= 0) {
+          return { status: "NO_REFUND_AMOUNT", reason: "Missing finalRefundAmountMicrousdc for partial buyer release" };
+        }
+      }
+
+      if (buyerReleaseMicros > escrowAmountMicros) {
+        return { status: "INVALID_REFUND_AMOUNT", reason: "finalRefundAmountMicrousdc exceeds escrow amount" };
+      }
+    }
+
+    const amountToReleaseUsd =
+      winner === "BUYER"
+        ? (buyerReleaseMicros || 0) / 1_000_000
+        : caseData.amount || 0;
+
     console.log(
       `🔄 Resolving x402r escrow ${caseData.x402rEscrow.escrowAddress}: ${winner} wins`
     );
     
     // Schedule smart contract execution (async action)
-    await ctx.scheduler.runAfter(0, internal.x402r.resolver.executeRelease, {
+    // @ts-ignore - generated api types can trigger excessively deep instantiation in some TS programs
+    const { internal } = (await import("../_generated/api")) as any;
+    await (ctx.scheduler as any).runAfter(0, internal.x402r.resolver.executeRelease, {
       caseId: args.caseId,
       escrowAddress: caseData.x402rEscrow.escrowAddress,
       winner,
       buyerAddress: caseData.plaintiff,
       merchantAddress: caseData.defendant,
-      amount: caseData.amount || 0,
+      amount: amountToReleaseUsd,
     });
     
     return {
@@ -122,7 +164,9 @@ export const executeRelease = internalAction({
     
     try {
       // Call the smart contract via lib/x402r.ts
-      const result = await ctx.runAction(api.lib.x402r.resolveDispute, {
+      // @ts-ignore - generated api types can trigger excessively deep instantiation in some TS programs
+      const { api, internal } = (await import("../_generated/api")) as any;
+      const result = await (ctx as any).runAction(api.lib.x402r.resolveDispute, {
         escrowAddress: args.escrowAddress,
         winner: args.winner,
         buyerAddress: args.buyerAddress,
@@ -149,6 +193,8 @@ export const executeRelease = internalAction({
       console.error(`❌ Failed to release funds for case ${args.caseId}:`, error);
       
       // Mark as failed (will require manual retry)
+      // @ts-ignore - generated api types can trigger excessively deep instantiation in some TS programs
+      const { internal } = (await import("../_generated/api")) as any;
       await ctx.runMutation(internal.x402r.resolver.markFailed, {
         caseId: args.caseId,
         errorMessage: error.message,
@@ -178,8 +224,15 @@ export const markReleased = internalMutation({
       throw new Error(`Case ${args.caseId} not found or not x402r`);
     }
     
+    const isPartialBuyerRelease =
+      args.winner === "BUYER" &&
+      typeof caseData.finalVerdict === "string" &&
+      caseData.finalVerdict === "PARTIAL_REFUND";
+
     const newState =
-      args.winner === "BUYER" ? "RELEASED_TO_BUYER" : "RELEASED_TO_MERCHANT";
+      args.winner === "BUYER"
+        ? (isPartialBuyerRelease ? "PARTIALLY_RELEASED" : "RELEASED_TO_BUYER")
+        : "RELEASED_TO_MERCHANT";
     
     // Update case with release details
     await ctx.db.patch(args.caseId, {
@@ -187,6 +240,14 @@ export const markReleased = internalMutation({
         ...caseData.x402rEscrow,
         escrowState: newState,
         releaseTxHash: args.txHash,
+        releaseAmountMicrousdc:
+          args.winner === "BUYER"
+            ? (typeof caseData.finalRefundAmountMicrousdc === "number"
+                ? caseData.finalRefundAmountMicrousdc
+                : (caseData.finalVerdict === "CONSUMER_WINS"
+                    ? Math.round((caseData.amount || 0) * 1_000_000)
+                    : undefined))
+            : undefined,
         resolvedAt: Date.now(),
       },
       status: "DECIDED", // Mark case as fully decided
@@ -197,10 +258,20 @@ export const markReleased = internalMutation({
     );
     
     // Update adapter's escrow state tracker
+    // @ts-ignore - generated api types can trigger excessively deep instantiation in some TS programs
+    const { internal } = (await import("../_generated/api")) as any;
     await ctx.runMutation(internal.x402r.adapter.updateEscrowState, {
       caseId: args.caseId,
       newState,
       releaseTxHash: args.txHash,
+      releaseAmountMicrousdc:
+        args.winner === "BUYER"
+          ? (typeof caseData.finalRefundAmountMicrousdc === "number"
+              ? caseData.finalRefundAmountMicrousdc
+              : (caseData.finalVerdict === "CONSUMER_WINS"
+                  ? Math.round((caseData.amount || 0) * 1_000_000)
+                  : undefined))
+          : undefined,
     });
   },
 });
@@ -245,6 +316,8 @@ export const retryFailedRelease = internalMutation({
     console.log(`🔁 Retrying failed release for case ${args.caseId}`);
     
     // Re-run the resolution logic
+    // @ts-ignore - generated api types can trigger excessively deep instantiation in some TS programs
+    const { internal } = (await import("../_generated/api")) as any;
     return await ctx.runMutation(internal.x402r.resolver.resolveEscrowDispute, {
       caseId: args.caseId,
     });

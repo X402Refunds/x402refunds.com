@@ -149,10 +149,12 @@ export const updateEscrowState = internalMutation({
       v.literal("PENDING"),
       v.literal("HELD"),
       v.literal("DISPUTED"),
+      v.literal("PARTIALLY_RELEASED"),
       v.literal("RELEASED_TO_BUYER"),
       v.literal("RELEASED_TO_MERCHANT")
     ),
     releaseTxHash: v.optional(v.string()),
+    releaseAmountMicrousdc: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<void> => {
     const caseData = await ctx.db.get(args.caseId);
@@ -171,7 +173,11 @@ export const updateEscrowState = internalMutation({
         ...caseData.x402rEscrow,
         escrowState: args.newState,
         releaseTxHash: args.releaseTxHash,
-        resolvedAt: args.newState.startsWith("RELEASED") ? Date.now() : undefined,
+        releaseAmountMicrousdc: args.releaseAmountMicrousdc,
+        resolvedAt:
+          args.newState === "PARTIALLY_RELEASED" || args.newState.startsWith("RELEASED")
+            ? Date.now()
+            : undefined,
       },
     });
     

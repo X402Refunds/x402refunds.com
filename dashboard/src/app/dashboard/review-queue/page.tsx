@@ -111,7 +111,7 @@ export default function ReviewQueuePage() {
                   }}
                 >
                   <AnimatePresence>
-                    {displayQueue.map((dispute: { _id: string; amount?: number; currency?: string; paymentDetails?: { disputeReason?: string }; aiRecommendation?: { confidence: number; verdict: string; reasoning?: string } }) => {
+                    {displayQueue.map((dispute: { _id: string; amount?: number; currency?: string; paymentDetails?: { disputeReason?: string }; aiRecommendation?: { confidence: number; verdict: string; reasoning?: string; refundAmountMicrousdc?: number } }) => {
                       const isApproving = successDisputeId === dispute._id
                       return (
                         <motion.div
@@ -168,6 +168,12 @@ export default function ReviewQueuePage() {
                             }>
                               {dispute.aiRecommendation.verdict}
                             </Badge>
+                            {(dispute.aiRecommendation.verdict === "CONSUMER_WINS" || dispute.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+                              typeof dispute.aiRecommendation.refundAmountMicrousdc === "number" && (
+                                <span className="text-xs text-slate-600">
+                                  • {(dispute.aiRecommendation.refundAmountMicrousdc / 1_000_000).toFixed(6)} USDC
+                                </span>
+                              )}
                           </div>
         
                           {dispute.aiRecommendation.reasoning && (
@@ -197,6 +203,12 @@ export default function ReviewQueuePage() {
                             onClick={async (e) => {
                               e.stopPropagation()
                               if (!currentUser || !dispute.aiRecommendation) return
+                              if (
+                                (dispute.aiRecommendation.verdict === "CONSUMER_WINS" || dispute.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+                                typeof dispute.aiRecommendation.refundAmountMicrousdc !== "number"
+                              ) {
+                                return
+                              }
                               await customerReview({
                                 paymentDisputeId: dispute._id as unknown as Id<"cases">,
                                 reviewerUserId: currentUser._id,
@@ -205,9 +217,19 @@ export default function ReviewQueuePage() {
                               })
                               setSuccessDisputeId(dispute._id as unknown as Id<"cases">)
                             }}
+                            disabled={
+                              (dispute.aiRecommendation.verdict === "CONSUMER_WINS" || dispute.aiRecommendation.verdict === "PARTIAL_REFUND") &&
+                              typeof dispute.aiRecommendation.refundAmountMicrousdc !== "number"
+                            }
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve AI
+                            {dispute.aiRecommendation.verdict === "MERCHANT_WINS"
+                              ? "Approve: Deny refund"
+                              : dispute.aiRecommendation.verdict === "CONSUMER_WINS"
+                                ? "Approve: Send refund"
+                                : dispute.aiRecommendation.verdict === "PARTIAL_REFUND"
+                                  ? "Approve: Send partial refund"
+                                  : "Approve"}
                           </Button>
                         )}
                         <Button
