@@ -21,6 +21,7 @@ import { toast } from "sonner"
 
 type PaymentVerdict = "CONSUMER_WINS" | "MERCHANT_WINS" | "PARTIAL_REFUND" | "NEED_REVIEW"
 type AiRecommendationWithRefund = { refundAmountMicrousdc?: number }
+type PaymentDetailsWithAmount = { amountMicrousdc?: number }
 
 export default function DisputeDetailPage() {
   const params = useParams()
@@ -198,6 +199,37 @@ export default function DisputeDetailPage() {
       default: return "Unknown"
     }
   }
+
+  const getEffectiveFinalVerdict = (): PaymentVerdict | undefined => {
+    const fv = dispute?.finalVerdict as PaymentVerdict | undefined;
+    if (fv) return fv;
+    if (!refund) return undefined;
+    const refundMicros = typeof refund.amountMicrousdc === "number" ? refund.amountMicrousdc : undefined;
+    const paymentMicros =
+      typeof (dispute?.paymentDetails as PaymentDetailsWithAmount | undefined)?.amountMicrousdc === "number"
+        ? (dispute.paymentDetails as PaymentDetailsWithAmount).amountMicrousdc
+        : undefined;
+    if (typeof refundMicros === "number" && refundMicros > 0 && typeof paymentMicros === "number" && paymentMicros > 0) {
+      return refundMicros < paymentMicros ? "PARTIAL_REFUND" : "CONSUMER_WINS";
+    }
+    // If we have a refund record but can't compare amounts, treat as consumer win for display.
+    return "CONSUMER_WINS";
+  };
+
+  const getEffectiveReviewedAt = (): number | undefined => {
+    if (typeof dispute?.humanReviewedAt === "number") return dispute.humanReviewedAt;
+    if (typeof dispute?.decidedAt === "number") return dispute.decidedAt;
+    if (typeof refund?.executedAt === "number") return refund.executedAt;
+    return undefined;
+  };
+
+  const getDecisionTypeLabel = (): string => {
+    if (typeof dispute?.humanReviewedAt === "number") {
+      return dispute.humanAgreesWithAI ? "Approved AI" : "Human Override";
+    }
+    if (refund) return "System (refund executed)";
+    return "System";
+  };
 
   const formatAiAction = () => {
     const ai = dispute?.aiRecommendation;
@@ -510,25 +542,25 @@ export default function DisputeDetailPage() {
                   <div>
                     <p className="text-sm font-medium text-slate-600">Final Verdict</p>
                     <p className="text-lg font-bold text-slate-900">
-                      {getVerdictDisplay(dispute.finalVerdict as PaymentVerdict)}
+                      {getVerdictDisplay(getEffectiveFinalVerdict())}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Reviewed By</p>
-                    <p className="text-sm text-slate-900">{dispute.humanReviewedBy || "System"}</p>
+                    <p className="text-sm text-slate-900">{dispute.humanReviewedBy || (refund ? "System" : "System")}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Reviewed At</p>
                     <p className="text-sm text-slate-900">
-                      {dispute.humanReviewedAt
-                        ? new Date(dispute.humanReviewedAt).toLocaleString()
+                      {getEffectiveReviewedAt()
+                        ? new Date(getEffectiveReviewedAt() as number).toLocaleString()
                         : "N/A"}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Decision Type</p>
-                    <Badge variant={dispute.humanAgreesWithAI ? "default" : "secondary"}>
-                      {dispute.humanAgreesWithAI ? "Approved AI" : "Human Override"}
+                    <Badge variant={typeof dispute?.humanReviewedAt === "number" && dispute.humanAgreesWithAI ? "default" : "secondary"}>
+                      {getDecisionTypeLabel()}
                     </Badge>
                   </div>
                 </div>

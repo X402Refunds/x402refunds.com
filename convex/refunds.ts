@@ -14,6 +14,50 @@ function isCoinbaseRefundsEnabled(): boolean {
   return process.env.COINBASE_REFUNDS_ENABLED === "true";
 }
 
+async function backfillCaseDecisionFromRefund(
+  ctx: { db: any },
+  caseId: Id<"cases">,
+  refund: any,
+): Promise<void> {
+  const caseData: any = await ctx.db.get(caseId);
+  if (!caseData) return;
+  if (typeof caseData.finalVerdict === "string" && caseData.finalVerdict.length > 0) return;
+
+  const pd = caseData.paymentDetails || {};
+  const paymentAmountMicrousdc: number | undefined =
+    typeof pd.amountMicrousdc === "number"
+      ? Math.round(pd.amountMicrousdc)
+      : typeof caseData.amount === "number"
+        ? Math.round(caseData.amount * 1_000_000)
+        : undefined;
+
+  const refundAmountMicrousdc: number | undefined =
+    typeof refund?.amountMicrousdc === "number"
+      ? Math.round(refund.amountMicrousdc)
+      : typeof refund?.amount === "number"
+        ? Math.round(refund.amount * 1_000_000)
+        : undefined;
+
+  if (!refundAmountMicrousdc || !Number.isFinite(refundAmountMicrousdc) || refundAmountMicrousdc <= 0) return;
+
+  let verdict: "CONSUMER_WINS" | "PARTIAL_REFUND" = "CONSUMER_WINS";
+  if (
+    typeof paymentAmountMicrousdc === "number" &&
+    Number.isFinite(paymentAmountMicrousdc) &&
+    paymentAmountMicrousdc > 0 &&
+    refundAmountMicrousdc < paymentAmountMicrousdc
+  ) {
+    verdict = "PARTIAL_REFUND";
+  }
+
+  await ctx.db.patch(caseId, {
+    status: "DECIDED",
+    finalVerdict: verdict,
+    finalRefundAmountMicrousdc: refundAmountMicrousdc,
+    decidedAt: Date.now(),
+  });
+}
+
 /**
  * Execute automated refund after dispute is decided
  * Called by payment dispute workflow when verdict is CONSUMER_WINS
@@ -646,6 +690,7 @@ export const markRefundExecuted = internalMutation({
     explorerUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const existing: any = await ctx.db.get(args.refundId);
     await ctx.db.patch(args.refundId, {
       status: "EXECUTED",
       providerTransferId: args.providerTransferId,
@@ -653,6 +698,9 @@ export const markRefundExecuted = internalMutation({
       explorerUrl: args.explorerUrl,
       executedAt: Date.now(),
     });
+    if (existing?.caseId) {
+      await backfillCaseDecisionFromRefund(ctx, existing.caseId, existing);
+    }
     return { success: true };
   },
 });
@@ -692,6 +740,14 @@ export const executeOnChain = internalMutation({
       
       // Update refund transaction
       await ctx.db.patch(args.refundId, {
+        status: "EXECUTED",
+        txSignature: result.txSignature,
+        executedAt: Date.now(),
+      });
+
+      // Backfill case verdict/amount for legacy/manual refund flows where finalVerdict wasn't written.
+      await backfillCaseDecisionFromRefund(ctx, args.caseId, {
+        ...refund,
         status: "EXECUTED",
         txSignature: result.txSignature,
         executedAt: Date.now(),

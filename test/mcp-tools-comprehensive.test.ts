@@ -74,7 +74,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         // Expected in test env if blockchain query fails or address mismatch
         expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
       }
-    });
+    }, 30000);
 
     it('should extract plaintiff from blockchain (no validation needed)', async () => {
       // Plaintiff is now extracted from blockchain, so invalid plaintiff field is ignored
@@ -95,7 +95,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         // Or fail for other reasons (transaction not found, etc)
         expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
-    });
+    }, 30000);
 
     it('should extract defendant from blockchain (no validation needed)', async () => {
       // Defendant is now extracted from blockchain, so invalid defendant field is ignored
@@ -116,7 +116,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         // Or fail for other reasons (transaction not found, etc)
         expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
-    });
+    }, 30000);
 
     it('should validate required fields', async () => {
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
