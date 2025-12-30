@@ -222,19 +222,21 @@ export default function HomePage() {
       <section id="api" className="bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">Expose a Support API for your agent</h2>
-            <p className="mt-2 text-slate-600">Send a support ticket. Include a tx hash to open a dispute.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">Few lines to Enable Disputes</h2>
+            <p className="mt-2 text-slate-600">
+              Add one Link header. Buyers can file support tickets, and include a tx hash to open a dispute.
+            </p>
                 </div>
                 
           {(() => {
             const intakeUrl = `https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress`
-            const curl = `curl -sS ${intakeUrl} \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Timed out after payment\",\n    \"transactionHash\": \"0x...\",\n    \"blockchain\": \"base\"\n  }'`
+            const curl = `curl -sS ${intakeUrl} \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Timed out after payment\",\n    \"transactionHash\": \"0x7b1f6d09a8c2f4e6b1a3c9d2e8f0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c\",\n    \"blockchain\": \"base\"\n  }'`
             const merchantHeader = `Link: <${intakeUrl}>; rel=\"support\"; type=\"application/json\"`
-            const merchantExample = `// Return this on every successful response\n// CAIP-10 merchant: eip155:8453:0xYourMerchantAddress (or solana:<genesisHash>:<pubkey>)\nres.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);\n`
+            const merchantExample = `res.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);`
 
             return (
-              <div className="mt-8 space-y-4">
-                <div className="max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+              <div className="mt-8 max-w-5xl mx-auto grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                   <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-slate-950 truncate">Support intake request</div>
@@ -245,22 +247,13 @@ export default function HomePage() {
                   <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
 {curl}
                   </pre>
-                  <div className="px-5 pb-5 pt-1 text-left">
-                    <Button
-                      variant="outline"
-                      className="border-slate-300"
-                      onClick={() => (window.location.href = "/docs")}
-                    >
-                      View docs
-                    </Button>
-                  </div>
                 </div>
                 
-                <div className="max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                   <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-slate-950 truncate">Merchant integration</div>
-                      <div className="text-xs text-slate-500">Return a support link header (CAIP-10)</div>
+                      <div className="text-xs text-slate-500">Return a support Link header (CAIP-10)</div>
                   </div>
                     <CopyButton value={merchantHeader} label="Copied support Link header" />
                   </div>
