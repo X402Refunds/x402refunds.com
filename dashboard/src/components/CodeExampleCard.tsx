@@ -27,7 +27,7 @@ export function CodeExampleCard({
   copyValue?: string
 }) {
   return (
-    <Card className="gap-0 py-0 overflow-hidden shadow-sm">
+    <Card className="gap-0 py-0 overflow-hidden shadow-sm border-border/60">
       <CardHeader className="border-b">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
@@ -45,9 +45,9 @@ export function CodeExampleCard({
         </div>
       </CardHeader>
 
-      <CardContent className="px-0">
-        <pre className="bg-muted/50 text-foreground px-6 py-4 text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre">
-{code}
+      <CardContent className="p-0">
+        <pre className="m-0 bg-muted/40 text-foreground px-6 py-4 text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre">
+          <code>{code}</code>
         </pre>
       </CardContent>
     </Card>
