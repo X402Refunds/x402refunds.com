@@ -230,7 +230,7 @@ export default function HomePage() {
                 
           {(() => {
             const intakeUrl = `https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress`
-            const curl = `curl -sS ${intakeUrl} \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Timed out after payment\",\n    \"transactionHash\": \"0x7b1f6d09a8c2f4e6b1a3c9d2e8f0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c\",\n    \"blockchain\": \"base\"\n  }'`
+            const curl = `curl -sS ${intakeUrl} \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Timed out after payment\",\n    \"transactionHash\": \"0x7b1f6d09a8c2f4e6b1a3c9d2e8f0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c\",\n    \"blockchain\": \"base\",\n    \"evidenceUrls\": [\"https://example.com/logs/timeout.json\"],\n    \"callbackUrl\": \"https://example.com/webhooks/dispute\"\n  }'`
             const merchantHeader = `Link: <${intakeUrl}>; rel=\"support\"; type=\"application/json\"`
             const merchantExample = `res.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);`
 
@@ -239,12 +239,12 @@ export default function HomePage() {
                 <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                   <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-950 truncate">Support intake request</div>
-                      <div className="text-xs text-slate-500">HTTP • POST /api/support/&lt;merchantCAIP10&gt;</div>
+                      <div className="text-sm font-semibold text-slate-950 truncate">Create a dispute</div>
+                      <div className="text-xs text-slate-500">Send a message. Include a tx hash if you have one.</div>
                     </div>
                     <CopyButton value={curl} label="Copied support intake request" />
                   </div>
-                  <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
+                  <pre className="px-5 py-4 text-xs sm:text-sm text-slate-900 bg-slate-50 whitespace-pre-wrap break-words">
 {curl}
                   </pre>
                 </div>
@@ -253,11 +253,11 @@ export default function HomePage() {
                   <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-slate-950 truncate">Merchant integration</div>
-                      <div className="text-xs text-slate-500">Return a support Link header (CAIP-10)</div>
+                      <div className="text-xs text-slate-500">Give buyers one support/dispute URL (CAIP-10).</div>
                   </div>
                     <CopyButton value={merchantHeader} label="Copied support Link header" />
                   </div>
-                  <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
+                  <pre className="px-5 py-4 text-xs sm:text-sm text-slate-900 bg-slate-50 whitespace-pre-wrap break-words">
 {merchantExample}
                   </pre>
                 </div>
