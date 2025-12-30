@@ -84,6 +84,7 @@ export const verifySignedEvidence = internalAction({
   }> => {
     // Get case data with signed evidence (actions can call internal queries)
     // Avoid TS2589 deep instantiation by not binding generated API types here.
+    // @ts-expect-error TS2589: generated Convex API types are too deep; import untyped at runtime.
     const { internal } = (await import("../_generated/api")) as any;
     const caseData = await ctx.runQuery(internal.cases.getCase, { caseId: args.caseId });
     
