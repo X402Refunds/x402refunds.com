@@ -4,26 +4,63 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@clerk/nextjs"
+import Image from "next/image"
 
-function MediaPlaceholder({
-  label,
+function LandingScreenshot({
+  src,
+  alt,
   aspect = "aspect-[16/10]",
+  priority = false,
+  className,
 }: {
-  label: string
+  src: string
+  alt: string
   aspect?: string
+  priority?: boolean
+  className?: string
 }) {
   return (
-    <div className={`w-full ${aspect} rounded-xl border border-slate-200 bg-white shadow-sm`}>
-      <div className="h-full w-full flex items-center justify-center">
-        <div className="text-center px-6">
-          <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Placeholder
-          </div>
-          <div className="mt-2 text-sm font-medium text-slate-900">{label}</div>
-          <div className="mt-1 text-xs text-slate-500">(Add screenshot/graphic later)</div>
-        </div>
-      </div>
+    <div className={`relative w-full ${aspect} rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className || ""}`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        className="object-contain"
+        sizes="(min-width: 1024px) 50vw, 100vw"
+      />
     </div>
+  )
+}
+
+function ResponsiveLandingScreenshot({
+  desktopSrc,
+  mobileSrc,
+  alt,
+  priority = false,
+}: {
+  desktopSrc: string
+  mobileSrc: string
+  alt: string
+  priority?: boolean
+}) {
+  return (
+    <>
+      <LandingScreenshot
+        src={desktopSrc}
+        alt={alt}
+        priority={priority}
+        aspect="aspect-[16/10]"
+        className="hidden lg:block"
+      />
+      <LandingScreenshot
+        src={mobileSrc}
+        alt={alt}
+        priority={priority}
+        aspect="aspect-[9/16]"
+        className="lg:hidden"
+      />
+    </>
   )
 }
 
@@ -58,7 +95,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Inbox for disputes that need a decision
+                  Inbox when you need it (empty when you don’t)
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
@@ -66,7 +103,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Track status + retry failed refunds
+                  Refund status you can verify
                 </li>
               </ul>
 
@@ -96,7 +133,12 @@ export default function HomePage() {
             </div>
 
             <div>
-              <MediaPlaceholder label="Product screenshot: Inbox + dispute detail (decision + refund status)" />
+              <ResponsiveLandingScreenshot
+                desktopSrc="/landing/all-disputes.png"
+                mobileSrc="/landing/all-disputes-mobile.png"
+                alt="All disputes dashboard view"
+                priority
+              />
             </div>
           </div>
         </div>
@@ -136,23 +178,31 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div className="space-y-3">
               <h3 className="text-2xl font-bold text-slate-950">Inbox</h3>
-              <p className="text-slate-600">See disputes that need a decision. Nothing else.</p>
+              <p className="text-slate-600">Your place to review disputes. Calm when there’s nothing to do.</p>
               <ul className="text-sm text-slate-700 space-y-1">
-                <li>- Amount, reason, deadline</li>
-                <li>- “Review & decide” in one click</li>
+                <li>- “All caught up” when empty</li>
+                <li>- One click to jump into review</li>
               </ul>
             </div>
-            <MediaPlaceholder label="Screenshot: Inbox (disputes waiting on you)" />
+            <ResponsiveLandingScreenshot
+              desktopSrc="/landing/inbox-empty.png"
+              mobileSrc="/landing/inbox-empty-mobile.png"
+              alt="Inbox empty state"
+            />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-10 items-center">
-            <MediaPlaceholder label="Screenshot: Dispute detail (refund/deny/partial + refund status)" />
+            <ResponsiveLandingScreenshot
+              desktopSrc="/landing/dispute-status.png"
+              mobileSrc="/landing/dispute-status-mobile.png"
+              alt="Dispute detail showing refund status and resolution"
+            />
             <div className="space-y-3">
-              <h3 className="text-2xl font-bold text-slate-950">Decide + refund</h3>
-              <p className="text-slate-600">See what happened. Choose refund or deny. Done.</p>
+              <h3 className="text-2xl font-bold text-slate-950">Refund status</h3>
+              <p className="text-slate-600">See what happened and confirm the refund was sent.</p>
               <ul className="text-sm text-slate-700 space-y-1">
-                <li>- Refund / No refund / Partial refund</li>
-                <li>- Status: scheduled, sent, failed (retry)</li>
+                <li>- Status: executed / scheduled / failed</li>
+                <li>- View on explorer</li>
               </ul>
             </div>
           </div>
