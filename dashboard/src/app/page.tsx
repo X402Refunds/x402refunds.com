@@ -253,9 +253,10 @@ export default function HomePage() {
       {/* FINAL CTA */}
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
-          <h2 className="text-3xl sm:text-4xl font-bold">Start receiving disputes.</h2>
-          <p className="mt-2 text-slate-300 max-w-2xl">A simple dashboard to review disputes and send refunds.</p>
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
+            <h2 className="text-3xl sm:text-4xl font-bold">Start receiving disputes.</h2>
+            <p className="mt-2 text-slate-300">A simple dashboard to review disputes and send refunds.</p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Button 
                 size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
@@ -266,7 +267,7 @@ export default function HomePage() {
             <Button 
               size="lg" 
               variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 px-7 h-12"
+              className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
               onClick={() => {
                 const el = document.getElementById("api")
                 el?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -274,6 +275,7 @@ export default function HomePage() {
             >
               View dispute API request
             </Button>
+            </div>
           </div>
         </div>
       </section>
