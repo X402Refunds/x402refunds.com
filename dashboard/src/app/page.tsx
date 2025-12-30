@@ -247,16 +247,16 @@ export default function HomePage() {
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-6 lg:grid-cols-2">
                 <CodeExampleCard
-                  title="Create a dispute"
-                  description="Send a message. Include a tx hash if you have one."
+                  title="Buyer: file dispute"
+                  description="POST JSON to your support URL."
                   language="curl"
                   code={curl}
                   copyValue={curl}
                 />
 
                 <CodeExampleCard
-                  title="Merchant integration"
-                  description="Give buyers one support/dispute URL (CAIP-10)."
+                  title="Merchant: publish support URL"
+                  description="Add one header."
                   language="TypeScript"
                   code={merchantExample}
                   copyValue={merchantHeader}
