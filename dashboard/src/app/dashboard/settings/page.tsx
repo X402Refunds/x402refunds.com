@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 
 export default function SettingsPage() {
   const organization = useQuery(api.users.getCurrentUserOrganization, {})
@@ -29,15 +29,15 @@ export default function SettingsPage() {
             <CardDescription>Control how disputes are handled.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert className="border-amber-200">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Be careful</AlertTitle>
+            <Alert className="border-red-200 bg-red-50 text-red-950">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle className="text-red-950">Warning: this can send money automatically</AlertTitle>
               <AlertDescription>
-                Automatic refunds can send money without a human clicking “Confirm”. Use only if you trust the AI settings.
+                If enabled, the system may approve AI recommendations and execute refunds without a human clicking “Confirm”.
               </AlertDescription>
             </Alert>
 
-            <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-4">
               <div className="space-y-1">
                 <Label htmlFor="auto-approve" className="text-sm font-medium text-slate-950 cursor-pointer">
                   Automatic refunds
@@ -46,46 +46,27 @@ export default function SettingsPage() {
                   If enabled, the system may approve AI recommendations automatically.
                 </div>
               </div>
-              <Switch
-                id="auto-approve"
-                checked={organization?.autoApproveAI ?? false}
-                onCheckedChange={async (enabled) => {
-                  if (!organization?._id) return
-                  await updateAutoApprove({ organizationId: organization._id, enabled })
-                }}
-                className="data-[state=checked]:bg-blue-600"
-              />
+              <div className="flex items-center gap-3">
+                <div
+                  className={
+                    (organization?.autoApproveAI ?? false)
+                      ? "text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded-full"
+                      : "text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-1 rounded-full"
+                  }
+                >
+                  {(organization?.autoApproveAI ?? false) ? "ON" : "OFF"}
+                </div>
+                <Switch
+                  id="auto-approve"
+                  checked={organization?.autoApproveAI ?? false}
+                  onCheckedChange={async (enabled) => {
+                    if (!organization?._id) return
+                    await updateAutoApprove({ organizationId: organization._id, enabled })
+                  }}
+                  className="data-[state=checked]:bg-blue-600 scale-125"
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle>Authentication</CardTitle>
-            <CardDescription>How agents authenticate when interacting with the platform.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-700">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>API keys deprecated</AlertTitle>
-              <AlertDescription>
-                API keys have been replaced with Ed25519 public key authentication. Agents sign evidence with their private key.
-              </AlertDescription>
-            </Alert>
-
-            <div className="text-slate-600">
-              For most teams: register agents in <span className="font-medium text-slate-900">Agents</span>, then use the generated dispute URLs.
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle>Webhooks</CardTitle>
-            <CardDescription>Status updates (placeholder).</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Placeholder: webhook configuration will appear here.
           </CardContent>
         </Card>
       </div>

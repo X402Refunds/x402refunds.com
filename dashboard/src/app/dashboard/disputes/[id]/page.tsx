@@ -320,7 +320,6 @@ export default function DisputeDetailPage() {
             plaintiff={dispute.plaintiff}
             defendant={dispute.defendant}
             filedAt={dispute.filedAt}
-            deadline={dispute.regulationEDeadline}
             isResolved={isResolved}
           />
         </motion.div>

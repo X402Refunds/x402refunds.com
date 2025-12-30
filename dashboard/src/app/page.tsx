@@ -112,7 +112,7 @@ export default function HomePage() {
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
               <div className="mt-2 font-semibold text-slate-950">Receive disputes</div>
-              <div className="mt-1 text-sm text-slate-600">Disputes arrive from x402 payments (API/webhook).</div>
+              <div className="mt-1 text-sm text-slate-600">Disputes arrive from x402 payments (API).</div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">

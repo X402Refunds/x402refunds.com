@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -13,7 +13,6 @@ interface DisputeHeaderProps {
   plaintiff: string;
   defendant: string;
   filedAt: number;
-  deadline?: number;
   isResolved: boolean;
 }
 
@@ -24,7 +23,6 @@ export function DisputeHeader({
   plaintiff,
   defendant,
   filedAt,
-  deadline,
   isResolved,
 }: DisputeHeaderProps) {
   const router = useRouter();
@@ -47,34 +45,6 @@ export function DisputeHeader({
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   };
-
-  const getDeadlineInfo = (deadline: number, currentTime: number) => {
-    const diffMs = deadline - currentTime;
-    const diffDays = Math.floor(diffMs / 86400000);
-    const diffHours = Math.floor((diffMs % 86400000) / 3600000);
-
-    if (diffMs < 0) {
-      return { text: "Overdue", color: "text-red-600", icon: AlertCircle, urgent: true };
-    }
-    if (diffDays === 0) {
-      return {
-        text: `${diffHours} hour${diffHours !== 1 ? 's' : ''} remaining`,
-        color: "text-red-600",
-        icon: AlertCircle,
-        urgent: true
-      };
-    }
-    if (diffDays === 1) {
-      return { text: "1 day remaining", color: "text-amber-600", icon: Clock, urgent: true };
-    }
-    if (diffDays < 3) {
-      return { text: `${diffDays} days remaining`, color: "text-amber-600", icon: Clock, urgent: true };
-    }
-    return { text: `${diffDays} days remaining`, color: "text-slate-600", icon: Clock, urgent: false };
-  };
-
-  const deadlineInfo = deadline ? getDeadlineInfo(deadline, now) : null;
-  const DeadlineIcon = deadlineInfo?.icon;
 
   return (
     <div className="space-y-3">
@@ -99,15 +69,6 @@ export function DisputeHeader({
           </p>
           <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-500">
             <span>Filed {getRelativeTime(filedAt, now)}</span>
-            {deadlineInfo && !isResolved && (
-              <>
-                <span>•</span>
-                <span className={`flex items-center gap-1 ${deadlineInfo.color} ${deadlineInfo.urgent ? 'font-semibold' : ''}`}>
-                  {DeadlineIcon && <DeadlineIcon className="h-4 w-4" />}
-                  {deadlineInfo.text}
-                </span>
-              </>
-            )}
           </div>
         </div>
 

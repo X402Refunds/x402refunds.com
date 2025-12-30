@@ -97,7 +97,7 @@ export default function PricingPage() {
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      Full API + webhooks
+                      Full API
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -381,7 +381,7 @@ export default function PricingPage() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">1. Disputes Come In</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Via webhook, API, or dashboard. From ACP, ATXP, or any payment protocol.
+                Via API or dashboard. From ACP, ATXP, or any payment protocol.
                 Regulation E compliant from day one.
               </p>
             </div>
@@ -585,7 +585,7 @@ export default function PricingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
                 The platform fee ($0 or $249/month) covers: API access, review queue dashboard, team collaboration,
-                precedent AI, webhooks, and support. Dispute resolution fees are separate - a flat $0.05 per dispute
+                precedent AI and support. Dispute resolution fees are separate - a flat $0.05 per dispute
                 regardless of transaction amount.
               </AccordionContent>
             </AccordionItem>
@@ -649,7 +649,7 @@ export default function PricingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Absolutely. We have native support for both Agentic Commerce Protocol (ACP) and ATXP.
-                Simply configure our webhook endpoint in your payment processor, and disputes will flow
+                Configure the integration in your payment processor, and disputes will flow
                 automatically. API documentation available in the dashboard.
               </AccordionContent>
             </AccordionItem>

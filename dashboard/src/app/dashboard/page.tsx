@@ -22,7 +22,7 @@ type InboxDispute = {
   plaintiff?: string
   transactionHash?: string
   description?: string
-  regulationEDeadline?: number
+  filedAt?: number
   paymentDetails?: { disputeReason?: string }
   aiRecommendation?: { verdict: string; confidence: number }
 }
@@ -64,11 +64,11 @@ export default function DashboardInboxPage() {
   }, [])
 
   const needsDecisionCount = reviewQueue?.length || 0
-  const moneyAtRisk = (reviewQueue || []).reduce((sum, d) => sum + (d.amount || 0), 0)
-  const deadlinesSoonCount = (reviewQueue || []).filter((d) => {
-    if (typeof d.regulationEDeadline !== "number") return false
-    const hours = (d.regulationEDeadline - nowMs) / (1000 * 60 * 60)
-    return hours <= 48
+  const disputedAmount = (reviewQueue || []).reduce((sum, d) => sum + (d.amount || 0), 0)
+  const newTodayCount = (reviewQueue || []).filter((d) => {
+    if (typeof d.filedAt !== "number") return false
+    const hours = (nowMs - d.filedAt) / (1000 * 60 * 60)
+    return hours <= 24
   }).length
 
   const items = useMemo(() => {
@@ -139,21 +139,21 @@ export default function DashboardInboxPage() {
 
           <Card className="border border-slate-200">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-700">Money at risk</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-700">Disputed amount</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-950">${moneyAtRisk.toFixed(2)}</div>
-              <div className="text-xs text-slate-500 mt-1">Total disputed amount</div>
+              <div className="text-3xl font-bold text-slate-950">${disputedAmount.toFixed(2)}</div>
+              <div className="text-xs text-slate-500 mt-1">Total amount in disputes</div>
             </CardContent>
           </Card>
 
           <Card className="border border-slate-200">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-700">Deadlines soon</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-700">New today</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-950">{deadlinesSoonCount}</div>
-              <div className="text-xs text-slate-500 mt-1">Due in 48 hours</div>
+              <div className="text-3xl font-bold text-slate-950">{newTodayCount}</div>
+              <div className="text-xs text-slate-500 mt-1">Filed in the last 24 hours</div>
             </CardContent>
           </Card>
         </div>
@@ -182,19 +182,16 @@ export default function DashboardInboxPage() {
             ) : (
               <div className="divide-y divide-slate-200">
                 {items.map((d) => {
-                  const deadline = typeof d.regulationEDeadline === "number" ? new Date(d.regulationEDeadline) : null
-                  const hoursLeft =
-                    typeof d.regulationEDeadline === "number"
-                      ? (d.regulationEDeadline - nowMs) / (1000 * 60 * 60)
-                      : null
-                  const deadlineLabel =
-                    hoursLeft === null
-                      ? "No deadline"
-                      : hoursLeft <= 24
-                        ? "Due <24h"
-                        : hoursLeft <= 48
-                          ? "Due <48h"
-                          : "Due later"
+                  const filedAt = typeof d.filedAt === "number" ? d.filedAt : undefined
+                  const ageHours = typeof filedAt === "number" ? (nowMs - filedAt) / (1000 * 60 * 60) : undefined
+                  const ageLabel =
+                    typeof ageHours !== "number"
+                      ? "Filed: unknown"
+                      : ageHours < 1
+                        ? "Filed <1h ago"
+                        : ageHours < 24
+                          ? `Filed ${Math.floor(ageHours)}h ago`
+                          : `Filed ${Math.floor(ageHours / 24)}d ago`
 
                   return (
                     <div key={String(d._id)} className="py-4 flex items-center justify-between gap-4">
@@ -208,15 +205,10 @@ export default function DashboardInboxPage() {
                           </Badge>
                           <Badge
                             variant="secondary"
-                            className={
-                              hoursLeft !== null && hoursLeft <= 48
-                                ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                : "bg-slate-50 text-slate-700 border border-slate-200"
-                            }
+                            className="bg-slate-50 text-slate-700 border border-slate-200"
                           >
-                            {deadlineLabel}
+                            {ageLabel}
                           </Badge>
-                          {deadline && <span className="text-xs text-slate-500">{deadline.toLocaleDateString()}</span>}
                         </div>
 
                         <div className="mt-1 text-sm text-slate-600 truncate">Customer: {d.plaintiff || "Unknown"}</div>

@@ -25,7 +25,7 @@ type OrgCase = {
   description?: string
   decidedAt?: number
   humanReviewedAt?: number
-  regulationEDeadline?: number
+  filedAt?: number
   finalVerdict?: string
   paymentDetails?: { disputeReason?: string }
 }
@@ -177,11 +177,16 @@ export default function AllDisputesPage() {
                     typeof c.humanReviewedAt === "number" ||
                     typeof c.finalVerdict === "string"
 
-                  const deadline = typeof c.regulationEDeadline === "number" ? new Date(c.regulationEDeadline) : null
-                  const hoursLeft =
-                    typeof c.regulationEDeadline === "number"
-                      ? (c.regulationEDeadline - nowMs) / (1000 * 60 * 60)
-                      : null
+                  const filedAt = typeof c.filedAt === "number" ? c.filedAt : undefined
+                  const ageHours = typeof filedAt === "number" ? (nowMs - filedAt) / (1000 * 60 * 60) : undefined
+                  const ageLabel =
+                    typeof ageHours !== "number"
+                      ? "Filed: unknown"
+                      : ageHours < 1
+                        ? "Filed <1h ago"
+                        : ageHours < 24
+                          ? `Filed ${Math.floor(ageHours)}h ago`
+                          : `Filed ${Math.floor(ageHours / 24)}d ago`
 
                   return (
                     <div key={String(c._id)} className="py-4 flex items-center justify-between gap-4">
@@ -203,12 +208,9 @@ export default function AllDisputesPage() {
                           >
                             {decided ? "Decided" : "Waiting"}
                           </Badge>
-                          {!decided && hoursLeft !== null && hoursLeft <= 48 && (
-                            <Badge className="bg-amber-50 text-amber-700 border border-amber-200" variant="secondary">
-                              Due &lt;48h
-                            </Badge>
-                          )}
-                          {deadline && <span className="text-xs text-slate-500">{deadline.toLocaleDateString()}</span>}
+                          <Badge variant="secondary" className="bg-slate-50 text-slate-700 border border-slate-200">
+                            {ageLabel}
+                          </Badge>
                         </div>
                         <div className="mt-1 text-sm text-slate-600 truncate">Customer: {c.plaintiff || "Unknown"}</div>
                         {c.finalVerdict && <div className="mt-1 text-xs text-slate-500">Decision: {c.finalVerdict}</div>}

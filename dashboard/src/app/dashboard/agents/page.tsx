@@ -77,7 +77,7 @@ export default function AgentsPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Agent
             </Button>
