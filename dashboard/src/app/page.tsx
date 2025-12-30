@@ -5,8 +5,8 @@ import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
-import { CopyButton } from "@/components/ui/copy-button"
 import { TypewriterText } from "@/components/TypewriterText"
+import { CodeExampleCard } from "@/components/CodeExampleCard"
 
 function LandingScreenshot({
   src,
@@ -224,11 +224,16 @@ export default function HomePage() {
       </section>
 
       {/* API (BELOW FOLD) */}
-      <section id="api" className="bg-white">
+      <section
+        id="api"
+        className="border-t bg-gradient-to-b from-background via-background to-muted/25"
+      >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">Few lines to Enable Disputes</h2>
-            <p className="mt-2 text-slate-600">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Few lines to Enable Disputes
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
               Add one Link header. Buyers can file support tickets, and include a tx hash to open a dispute.
             </p>
                 </div>
@@ -240,32 +245,22 @@ export default function HomePage() {
             const merchantExample = `res.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);`
 
             return (
-              <div className="mt-8 max-w-5xl mx-auto grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-950 truncate">Create a dispute</div>
-                      <div className="text-xs text-slate-500">Send a message. Include a tx hash if you have one.</div>
-                    </div>
-                    <CopyButton value={curl} label="Copied support intake request" />
-                  </div>
-                  <pre className="px-5 py-4 text-xs sm:text-sm text-slate-900 bg-slate-50 whitespace-pre-wrap break-words">
-{curl}
-                  </pre>
-                </div>
-                
-                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-950 truncate">Merchant integration</div>
-                      <div className="text-xs text-slate-500">Give buyers one support/dispute URL (CAIP-10).</div>
-                  </div>
-                    <CopyButton value={merchantHeader} label="Copied support Link header" />
-                  </div>
-                  <pre className="px-5 py-4 text-xs sm:text-sm text-slate-900 bg-slate-50 whitespace-pre-wrap break-words">
-{merchantExample}
-                  </pre>
-                </div>
+              <div className="mt-10 max-w-5xl mx-auto grid gap-6 lg:grid-cols-2">
+                <CodeExampleCard
+                  title="Create a dispute"
+                  description="Send a message. Include a tx hash if you have one."
+                  language="curl"
+                  code={curl}
+                  copyValue={curl}
+                />
+
+                <CodeExampleCard
+                  title="Merchant integration"
+                  description="Give buyers one support/dispute URL (CAIP-10)."
+                  language="TypeScript"
+                  code={merchantExample}
+                  copyValue={merchantHeader}
+                />
               </div>
             )
           })()}
