@@ -228,27 +228,44 @@ export default function HomePage() {
                 
           {(() => {
             const curl = `curl -sS https://api.x402disputes.com/api/disputes/payment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"transactionId\": \"txn_123\",\n    \"amount\": 0.25,\n    \"currency\": \"USD\",\n    \"plaintiff\": \"consumer:alice\",\n    \"defendant\": \"0xMerchantWallet\",\n    \"disputeReason\": \"api_timeout\",\n    \"description\": \"Timed out after payment\",\n    \"transactionHash\": \"0x...\"\n  }'`
+            const merchantHeader = `Link: <https://api.x402disputes.com/api/disputes/payment?merchant=eip155:8453:0xYourMerchantAddress>; rel=\"dispute\"; type=\"application/json\"`
+            const merchantExample = `// Return this on every successful response\n// CAIP-10 merchant: eip155:8453:0xYourMerchantAddress (or solana:<genesisHash>:<pubkey>)\nres.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/disputes/payment?merchant=eip155:8453:0xYourMerchantAddress>; rel=\"dispute\"; type=\"application/json\"'\n);\n`
 
             return (
-              <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-950 truncate">Dispute API request</div>
-                    <div className="text-xs text-slate-500">HTTP • POST /api/disputes/payment</div>
+              <div className="mt-8 space-y-4">
+                <div className="max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-950 truncate">Dispute API request</div>
+                      <div className="text-xs text-slate-500">HTTP • POST /api/disputes/payment</div>
+                    </div>
+                    <CopyButton value={curl} label="Copied dispute API request" />
                   </div>
-                  <CopyButton value={curl} label="Copied dispute API request" />
-                </div>
-                <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
+                  <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
 {curl}
-                </pre>
-                <div className="px-5 pb-5 pt-1 text-left">
-                  <Button
-                    variant="outline"
-                    className="border-slate-300"
-                    onClick={() => (window.location.href = "/docs")}
-                  >
-                    View docs
-                  </Button>
+                  </pre>
+                  <div className="px-5 pb-5 pt-1 text-left">
+                    <Button
+                      variant="outline"
+                      className="border-slate-300"
+                      onClick={() => (window.location.href = "/docs")}
+                    >
+                      View docs
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-950 truncate">Merchant integration</div>
+                      <div className="text-xs text-slate-500">Return a dispute link header (CAIP-10)</div>
+                    </div>
+                    <CopyButton value={merchantHeader} label="Copied dispute Link header" />
+                  </div>
+                  <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
+{merchantExample}
+                  </pre>
                 </div>
               </div>
             )
