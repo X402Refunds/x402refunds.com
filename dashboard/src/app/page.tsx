@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
+import { CopyButton } from "@/components/ui/copy-button"
 
 function LandingScreenshot({
   src,
@@ -66,6 +67,8 @@ function ResponsiveLandingScreenshot({
 
 export default function HomePage() {
   const { isSignedIn } = useUser()
+  const primaryCtaLabel = isSignedIn ? "Open dashboard" : "Get ready to receive disputes"
+  const primaryCtaHref = isSignedIn ? "/dashboard" : "/sign-in"
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,13 +86,13 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Resolve x402 payment disputes.
+                Receive x402 payment disputes.
                 <br />
                 <span className="text-blue-600">Send refunds.</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Disputes come in. You make the call. Refunds go out.
+                Set your dispute link once. Disputes show up here. Refunds go out.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -111,9 +114,9 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                  onClick={() => (window.location.href = isSignedIn ? "/dashboard" : "/sign-in")}
+                  onClick={() => (window.location.href = primaryCtaHref)}
                 >
-                  Open dashboard
+                  {primaryCtaLabel}
                   </Button>
 
                 <Button
@@ -132,14 +135,14 @@ export default function HomePage() {
               <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
             </div>
 
-            <div>
+              <div>
               <ResponsiveLandingScreenshot
                 desktopSrc="/landing/all-disputes.png"
                 mobileSrc="/landing/all-disputes-mobile.png"
                 alt="All disputes dashboard view"
                 priority
               />
-            </div>
+              </div>
           </div>
         </div>
       </section>
@@ -155,20 +158,20 @@ export default function HomePage() {
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
               <div className="mt-2 font-semibold text-slate-950">Receive disputes</div>
               <div className="mt-1 text-sm text-slate-600">Disputes arrive from x402 payments (API).</div>
-            </div>
+                </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 2</div>
               <div className="mt-2 font-semibold text-slate-950">Make a decision</div>
               <div className="mt-1 text-sm text-slate-600">Refund, deny, or partial refund.</div>
-            </div>
+                </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 3</div>
               <div className="mt-2 font-semibold text-slate-950">Send + track refunds</div>
               <div className="mt-1 text-sm text-slate-600">See refund status and retry failures.</div>
-            </div>
-                </div>
+              </div>
+          </div>
         </div>
       </section>
 
@@ -183,7 +186,7 @@ export default function HomePage() {
                 <li>- “All caught up” when empty</li>
                 <li>- One click to jump into review</li>
               </ul>
-            </div>
+        </div>
             <ResponsiveLandingScreenshot
               desktopSrc="/landing/inbox-empty.png"
               mobileSrc="/landing/inbox-empty-mobile.png"
@@ -204,7 +207,7 @@ export default function HomePage() {
                 <li>- Status: executed / scheduled / failed</li>
                 <li>- View on explorer</li>
               </ul>
-            </div>
+                  </div>
           </div>
         </div>
       </section>
@@ -212,78 +215,61 @@ export default function HomePage() {
       {/* API (BELOW FOLD) */}
       <section id="api" className="bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="flex items-end justify-between gap-6 flex-wrap">
-              <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">API</h2>
-              <p className="mt-2 text-slate-600">For builders: file a dispute, then check status.</p>
-                        </div>
-            <Button variant="outline" className="border-slate-300" onClick={() => (window.location.href = "/docs")}>
-              View docs
-            </Button>
-                      </div>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">API</h2>
+            <p className="mt-2 text-slate-600">Copy/paste to file a dispute.</p>
+                </div>
+                
+          {(() => {
+            const curl = `curl -sS https://api.x402disputes.com/api/disputes/payment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"transactionId\": \"txn_123\",\n    \"amount\": 0.25,\n    \"currency\": \"USD\",\n    \"plaintiff\": \"consumer:alice\",\n    \"defendant\": \"0xMerchantWallet\",\n    \"disputeReason\": \"api_timeout\",\n    \"description\": \"Timed out after payment\",\n    \"transactionHash\": \"0x...\"\n  }'`
 
-          <div className="mt-8 grid lg:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-950 text-slate-50 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-800 text-xs text-slate-300">POST /api/disputes/payment</div>
-              <pre className="p-4 text-xs sm:text-sm overflow-x-auto">
-{`curl -sS https://api.x402disputes.com/api/disputes/payment \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "transactionId": "txn_123",
-    "amount": 0.25,
-    "currency": "USD",
-    "plaintiff": "consumer:alice",
-    "defendant": "0xMerchantWallet",
-    "disputeReason": "api_timeout",
-    "description": "Timed out after payment",
-    "transactionHash": "0x..."
-  }'`}
-                      </pre>
-                    </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-950 text-slate-50 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-800 text-xs text-slate-300">GET /cases/:caseId</div>
-              <pre className="p-4 text-xs sm:text-sm overflow-x-auto">
-{`curl -sS https://api.x402disputes.com/cases/k...`}
-                      </pre>
-                    </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TRANSPARENCY */}
-      <section className="bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">Transparent by default</h2>
-          <p className="mt-2 text-slate-600 max-w-2xl">Use the public registry to verify dispute status and outcomes.</p>
-          <div className="mt-6">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => (window.location.href = "/registry")}>
-              View public registry
-              </Button>
-          </div>
+            return (
+              <div className="mt-8 max-w-3xl mx-auto rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold text-slate-700">POST /api/disputes/payment</div>
+                  <CopyButton value={curl} label="Copied API request" />
+                </div>
+                <pre className="p-4 text-xs sm:text-sm overflow-x-auto text-slate-900">
+{curl}
+                </pre>
+                <div className="px-4 pb-4 text-left">
+                  <Button
+                    variant="outline"
+                    className="border-slate-300"
+                    onClick={() => (window.location.href = "/docs")}
+                  >
+                    View docs
+                  </Button>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </section>
 
       {/* FINAL CTA */}
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
-          <h2 className="text-3xl sm:text-4xl font-bold">Resolve disputes. Send refunds.</h2>
-          <p className="mt-2 text-slate-300 max-w-2xl">Keep your x402 payments reliable—without building a disputes stack.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold">Start receiving disputes.</h2>
+          <p className="mt-2 text-slate-300 max-w-2xl">A simple dashboard to review disputes and send refunds.</p>
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Button 
                 size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-              onClick={() => (window.location.href = isSignedIn ? "/dashboard" : "/sign-in")}
+              onClick={() => (window.location.href = primaryCtaHref)}
             >
-              Open dashboard
+              {primaryCtaLabel}
             </Button>
             <Button 
               size="lg" 
               variant="outline"
               className="border-white/20 text-white hover:bg-white/10 px-7 h-12"
-              onClick={() => (window.location.href = "/docs")}
+              onClick={() => {
+                const el = document.getElementById("api")
+                el?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }}
             >
-              View docs
+              View API request
             </Button>
           </div>
         </div>

@@ -108,7 +108,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 size="sm"
               >
                 <User className="h-4 w-4 mr-2" />
-                Open dashboard
+                Get ready to receive disputes
               </Button>
             )}
 
@@ -142,7 +142,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                       className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <User className="h-4 w-4 mr-2" />
-                      Open dashboard
+                      Get ready to receive disputes
                     </Button>
                   )}
 
