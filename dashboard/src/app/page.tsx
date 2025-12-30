@@ -245,7 +245,7 @@ export default function HomePage() {
             const merchantExample = `res.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);`
 
             return (
-              <div className="mt-10 max-w-5xl mx-auto grid gap-6 lg:grid-cols-2">
+              <div className="mt-10 max-w-5xl mx-auto grid items-start gap-6 lg:grid-cols-2">
                 <CodeExampleCard
                   title="Create a dispute"
                   description="Send a message. Include a tx hash if you have one."

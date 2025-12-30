@@ -4,14 +4,7 @@ import * as React from "react"
 
 import { CopyButton } from "@/components/ui/copy-button"
 import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 
 export function CodeExampleCard({
   title,
@@ -27,29 +20,29 @@ export function CodeExampleCard({
   copyValue?: string
 }) {
   return (
-    <Card className="gap-0 py-0 overflow-hidden shadow-sm border-border/60">
-      <CardHeader className="border-b">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-sm truncate">{title}</CardTitle>
-              <Badge variant="outline" className="text-[11px] py-0.5">
-                {language}
-              </Badge>
-            </div>
-            <CardDescription className="text-xs">{description}</CardDescription>
+    <Card className="overflow-hidden rounded-2xl border-border/60 bg-card py-0 shadow-[0_1px_0_rgba(0,0,0,0.03),0_12px_24px_rgba(0,0,0,0.06)]">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-semibold text-foreground truncate">{title}</div>
+            <Badge
+              variant="secondary"
+              className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+            >
+              {language}
+            </Badge>
           </div>
-          <CardAction>
-            <CopyButton value={copyValue ?? code} label={`Copied ${title}`} />
-          </CardAction>
+          <div className="mt-1 text-xs text-muted-foreground">{description}</div>
         </div>
-      </CardHeader>
 
-      <CardContent className="p-0">
-        <pre className="m-0 bg-muted/40 text-foreground px-6 py-4 text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre">
-          <code>{code}</code>
+        <CopyButton value={copyValue ?? code} label={`Copied ${title}`} />
+      </div>
+
+      <div className="border-t border-border/60 bg-muted/25">
+        <pre className="m-0 overflow-x-auto px-5 py-4 text-[13px] leading-6 text-foreground whitespace-pre">
+          <code className="font-mono">{code}</code>
         </pre>
-      </CardContent>
+      </div>
     </Card>
   )
 }
