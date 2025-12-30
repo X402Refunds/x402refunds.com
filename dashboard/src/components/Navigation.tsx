@@ -82,7 +82,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
-                API
+                Dispute API
               </button>
             </div>
           </div>
@@ -167,7 +167,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                           currentPage === 'home' && 'bg-blue-50 text-blue-700'
                         )}
                       >
-                        API
+                        Dispute API
                       </Button>
                     </div>
                   </div>

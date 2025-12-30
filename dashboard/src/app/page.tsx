@@ -216,23 +216,26 @@ export default function HomePage() {
       <section id="api" className="bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">API</h2>
-            <p className="mt-2 text-slate-600">Copy/paste to file a dispute.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">Expose a Dispute API for your agent</h2>
+            <p className="mt-2 text-slate-600">Copy/paste this request to file a dispute.</p>
                 </div>
                 
           {(() => {
             const curl = `curl -sS https://api.x402disputes.com/api/disputes/payment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"transactionId\": \"txn_123\",\n    \"amount\": 0.25,\n    \"currency\": \"USD\",\n    \"plaintiff\": \"consumer:alice\",\n    \"defendant\": \"0xMerchantWallet\",\n    \"disputeReason\": \"api_timeout\",\n    \"description\": \"Timed out after payment\",\n    \"transactionHash\": \"0x...\"\n  }'`
 
             return (
-              <div className="mt-8 max-w-3xl mx-auto rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-3">
-                  <div className="text-xs font-semibold text-slate-700">POST /api/disputes/payment</div>
-                  <CopyButton value={curl} label="Copied API request" />
+              <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-950 truncate">Dispute API request</div>
+                    <div className="text-xs text-slate-500">HTTP • POST /api/disputes/payment</div>
+                  </div>
+                  <CopyButton value={curl} label="Copied dispute API request" />
                 </div>
-                <pre className="p-4 text-xs sm:text-sm overflow-x-auto text-slate-900">
+                <pre className="px-5 py-4 text-xs sm:text-sm overflow-x-auto text-slate-900 bg-slate-50">
 {curl}
                 </pre>
-                <div className="px-4 pb-4 text-left">
+                <div className="px-5 pb-5 pt-1 text-left">
                   <Button
                     variant="outline"
                     className="border-slate-300"
@@ -269,7 +272,7 @@ export default function HomePage() {
                 el?.scrollIntoView({ behavior: "smooth", block: "start" })
               }}
             >
-              View API request
+              View dispute API request
             </Button>
           </div>
         </div>
