@@ -30,10 +30,23 @@ export function Navigation({ currentPage }: NavigationProps) {
     }
   }
 
+  const handleAnchor = (hash: string) => {
+    setMobileMenuOpen(false)
+
+    // If we aren't on the homepage, route to it first so anchors exist.
+    if (window.location.pathname !== "/") {
+      window.location.href = `/${hash}`
+      return
+    }
+
+    const el = document.getElementById(hash.replace("#", ""))
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
   return (
-    <nav className="border-b border-emerald-200 bg-gradient-to-r from-white via-emerald-50/30 to-white backdrop-blur-sm sticky top-0 z-50 shadow-lg relative">
-      {/* Emerald accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+    <nav className="border-b border-slate-200 bg-white backdrop-blur-sm sticky top-0 z-50 shadow-sm relative">
+      {/* Blue accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600/40 via-blue-600 to-blue-600/40" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
@@ -41,7 +54,7 @@ export function Navigation({ currentPage }: NavigationProps) {
             <div className="flex-shrink-0">
               <button 
                 onClick={() => window.location.href = '/'}
-                className="text-lg sm:text-2xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg px-2 py-1"
+                className="text-lg sm:text-2xl font-bold text-slate-950 hover:text-blue-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
               >
                 x402Disputes
               </button>
@@ -50,49 +63,26 @@ export function Navigation({ currentPage }: NavigationProps) {
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
               <button
-                onClick={() => handleNavigation('/registry')}
+                onClick={() => handleAnchor("#how-it-works")}
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  currentPage === 'registry' 
-                    ? 'text-primary bg-accent' 
-                    : 'text-foreground hover:text-foreground hover:bg-accent'
+                  currentPage === "home"
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
-                Registry
+                How it works
               </button>
               <button
-                onClick={() => handleNavigation('/pricing')}
+                onClick={() => handleAnchor("#api")}
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  currentPage === 'pricing' 
-                    ? 'text-primary bg-accent' 
-                    : 'text-foreground hover:text-foreground hover:bg-accent'
+                  currentPage === "home"
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
-                Pricing
-              </button>
-              <button
-                onClick={() => handleNavigation('/about')}
-                className={cn(
-                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  currentPage === 'about' 
-                    ? 'text-primary bg-accent' 
-                    : 'text-foreground hover:text-foreground hover:bg-accent'
-                )}
-              >
-                About
-              </button>
-              <button
-                onClick={() => handleNavigation('/docs')}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-              >
-                Docs
-              </button>
-              <button
-                onClick={() => handleNavigation('https://github.com/consulatehq/agentic-dispute-protocol', true)}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors whitespace-nowrap"
-              >
-                Agentic Dispute Protocol
+                API
               </button>
             </div>
           </div>
@@ -103,23 +93,22 @@ export function Navigation({ currentPage }: NavigationProps) {
             {isSignedIn && (
               <Button
                 onClick={() => window.location.href = '/dashboard'}
-                className="hidden md:flex"
+                className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
               >
                 <LayoutDashboard className="h-4 w-4 mr-2" />
-                Go to Dashboard
+                Open dashboard
               </Button>
             )}
             {/* Sign In Button - Desktop */}
             {!isSignedIn && (
               <Button
                 onClick={() => window.location.href = '/sign-in'}
-                className="hidden md:flex"
+                className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
-                variant="outline"
               >
                 <User className="h-4 w-4 mr-2" />
-                Sign In
+                Open dashboard
               </Button>
             )}
 
@@ -140,21 +129,20 @@ export function Navigation({ currentPage }: NavigationProps) {
                   {isSignedIn && (
                     <Button
                       onClick={() => handleNavigation('/dashboard')}
-                      className="w-full justify-start"
+                      className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <LayoutDashboard className="h-4 w-4 mr-2" />
-                      Go to Dashboard
+                      Open dashboard
                     </Button>
                   )}
                   {/* Sign In - Mobile */}
                   {!isSignedIn && (
                     <Button
                       onClick={() => handleNavigation('/sign-in')}
-                      className="w-full justify-start"
-                      variant="outline"
+                      className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <User className="h-4 w-4 mr-2" />
-                      Sign In
+                      Open dashboard
                     </Button>
                   )}
 
@@ -163,47 +151,23 @@ export function Navigation({ currentPage }: NavigationProps) {
                     <div className="space-y-1">
                       <Button
                         variant="ghost"
-                        onClick={() => handleNavigation('/registry')}
+                        onClick={() => handleAnchor("#how-it-works")}
                         className={cn(
                           "w-full justify-start",
-                          currentPage === 'registry' && 'bg-accent text-primary'
+                          currentPage === 'home' && 'bg-blue-50 text-blue-700'
                         )}
                       >
-                        Registry
+                        How it works
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => handleNavigation('/pricing')}
+                        onClick={() => handleAnchor("#api")}
                         className={cn(
                           "w-full justify-start",
-                          currentPage === 'pricing' && 'bg-accent text-primary'
+                          currentPage === 'home' && 'bg-blue-50 text-blue-700'
                         )}
                       >
-                        Pricing
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleNavigation('/about')}
-                        className={cn(
-                          "w-full justify-start",
-                          currentPage === 'about' && 'bg-accent text-primary'
-                        )}
-                      >
-                        About
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleNavigation('/docs')}
-                        className="w-full justify-start"
-                      >
-                        Documentation
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleNavigation('https://github.com/consulatehq/agentic-dispute-protocol', true)}
-                        className="w-full justify-start text-sm"
-                      >
-                        Agentic Dispute Protocol
+                        API
                       </Button>
                     </div>
                   </div>
