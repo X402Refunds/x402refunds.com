@@ -23,6 +23,8 @@ export function TypewriterText({
   text,
   speedMs = 55,
   startDelayMs = 0,
+  loop = false,
+  loopDelayMs = 1200,
   showCursor = true,
   cursorClassName,
   className,
@@ -30,6 +32,8 @@ export function TypewriterText({
   text: string
   speedMs?: number
   startDelayMs?: number
+  loop?: boolean
+  loopDelayMs?: number
   showCursor?: boolean
   cursorClassName?: string
   className?: string
@@ -43,25 +47,46 @@ export function TypewriterText({
       return
     }
 
-    setVisibleText("")
-
-    let i = 0
+    let cancelled = false
     let intervalId: number | undefined
-    const timeoutId = window.setTimeout(() => {
-      intervalId = window.setInterval(() => {
-        i += 1
-        setVisibleText(text.slice(0, i))
-        if (i >= text.length) {
-          if (intervalId !== undefined) window.clearInterval(intervalId)
-        }
-      }, Math.max(10, speedMs))
-    }, Math.max(0, startDelayMs))
+    let startTimeoutId: number | undefined
+    let loopTimeoutId: number | undefined
 
-    return () => {
-      window.clearTimeout(timeoutId)
+    const clearTimers = () => {
+      if (startTimeoutId !== undefined) window.clearTimeout(startTimeoutId)
+      if (loopTimeoutId !== undefined) window.clearTimeout(loopTimeoutId)
       if (intervalId !== undefined) window.clearInterval(intervalId)
     }
-  }, [prefersReducedMotion, speedMs, startDelayMs, text])
+
+    const runOnce = () => {
+      clearTimers()
+      setVisibleText("")
+      let i = 0
+
+      startTimeoutId = window.setTimeout(() => {
+        intervalId = window.setInterval(() => {
+          if (cancelled) return
+
+          i += 1
+          setVisibleText(text.slice(0, i))
+
+          if (i >= text.length) {
+            if (intervalId !== undefined) window.clearInterval(intervalId)
+            if (loop) {
+              loopTimeoutId = window.setTimeout(runOnce, Math.max(0, loopDelayMs))
+            }
+          }
+        }, Math.max(10, speedMs))
+      }, Math.max(0, startDelayMs))
+    }
+
+    runOnce()
+
+    return () => {
+      cancelled = true
+      clearTimers()
+    }
+  }, [prefersReducedMotion, speedMs, startDelayMs, loop, loopDelayMs, text])
 
   return (
     <span className={className}>

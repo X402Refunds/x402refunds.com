@@ -89,12 +89,17 @@ export default function HomePage() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
                 Receive x402 payment disputes.
                 <br />
-                <TypewriterText
-                  text="Send refunds."
-                  className="text-blue-600"
-                  speedMs={55}
-                  startDelayMs={150}
-                />
+                <span>
+                  Send{" "}
+                  <TypewriterText
+                    text="refunds."
+                    className="text-blue-600"
+                    speedMs={55}
+                    startDelayMs={150}
+                    loop
+                    loopDelayMs={1200}
+                  />
+                </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
