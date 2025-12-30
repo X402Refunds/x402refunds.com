@@ -89,7 +89,7 @@ export default function DisputeDetailPage() {
       })
       setShowSuccess(true)
       setTimeout(() => {
-        router.push("/dashboard/review-queue")
+        router.push("/dashboard")
       }, 1500)
     } catch (error) {
       console.error("Failed to approve:", error)
@@ -129,7 +129,7 @@ export default function DisputeDetailPage() {
         finalRefundAmountMicrousdc,
         notes,
       })
-      router.push("/dashboard/review-queue")
+      router.push("/dashboard")
     } catch (error) {
       console.error("Failed to submit decision:", error)
       alert(error instanceof Error ? error.message : "Failed to submit decision. Please try again.")
@@ -585,10 +585,8 @@ export default function DisputeDetailPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Review Actions</CardTitle>
-                <CardDescription>
-                  Make your final decision on this dispute
-                </CardDescription>
+                <CardTitle>Decision</CardTitle>
+                <CardDescription>Refund, deny, or partial refund.</CardDescription>
               </CardHeader>
               <CardContent>
                 {!showOverride ? (
@@ -598,10 +596,10 @@ export default function DisputeDetailPage() {
                       <Button
                         onClick={handleApprove}
                         disabled={submitting}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12"
                       >
                         <CheckCircle className="h-5 w-5 mr-2" />
-                        {formatAiAction() || "Approve"}
+                        {formatAiAction() ? `Use AI: ${formatAiAction()}` : "Use AI suggestion"}
                       </Button>
                     )}
                     <Button
@@ -609,13 +607,13 @@ export default function DisputeDetailPage() {
                       disabled={submitting}
                       variant={dispute.aiRecommendation?.verdict === "NEED_REVIEW" ? "default" : "outline"}
                       className={dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
-                        ? "flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white"
+                        ? "flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
                         : "flex-1 h-12"
                       }
                     >
                       {dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
-                        ? "Make Your Decision"
-                        : "Override AI Decision"
+                        ? "Make a decision"
+                        : "Choose different decision"
                       }
                     </Button>
                   </div>
@@ -624,12 +622,12 @@ export default function DisputeDetailPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-700 mb-3">
                         {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
-                          ? "Select Your Verdict"
-                          : "Select Your Verdict (Override AI)"
+                          ? "Choose your decision"
+                          : "Choose a different decision"
                         }
                       </p>
                       <div className="grid grid-cols-2 gap-3">
-                        {(["CONSUMER_WINS", "MERCHANT_WINS", "PARTIAL_REFUND", "NEED_REVIEW"] as const).map((verdict) => (
+                        {(["CONSUMER_WINS", "MERCHANT_WINS", "PARTIAL_REFUND"] as const).map((verdict) => (
                           <label
                             key={verdict}
                             className={`cursor-pointer p-3 border-2 rounded-lg transition-colors ${
@@ -693,11 +691,11 @@ export default function DisputeDetailPage() {
                       <Button
                         onClick={handleOverride}
                         disabled={submitting || !notes.trim()}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
-                          ? `Submit Decision: ${getVerdictDisplay(selectedVerdict)}`
-                          : `Submit Override: ${getVerdictDisplay(selectedVerdict)}`
+                          ? `Confirm: ${getVerdictDisplay(selectedVerdict)}`
+                          : `Confirm: ${getVerdictDisplay(selectedVerdict)}`
                         }
                       </Button>
                       {dispute.aiRecommendation?.verdict !== "NEED_REVIEW" && (
