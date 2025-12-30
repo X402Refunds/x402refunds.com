@@ -92,7 +92,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Set your dispute link once. Disputes show up here. Refunds go out.
+                Give buyers your dispute link. If there’s a problem, it shows up here.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -276,7 +276,7 @@ export default function HomePage() {
               View dispute API request
             </Button>
             </div>
-          </div>
+            </div>
         </div>
       </section>
 
