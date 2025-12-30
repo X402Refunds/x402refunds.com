@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, CheckCircle } from "lucide-react"
 
 type InboxDispute = {
   _id: Id<"cases">
@@ -88,6 +88,8 @@ export default function DashboardInboxPage() {
     })
   }, [query, reviewQueue])
 
+  const isEmpty = Array.isArray(reviewQueue) && reviewQueue.length === 0
+
   if (!isLoaded || !user) {
     return (
       <DashboardLayout>
@@ -117,46 +119,76 @@ export default function DashboardInboxPage() {
             <p className="text-slate-600 mt-1">Disputes waiting on you.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="border border-slate-200">
-              {needsDecisionCount} waiting
-            </Badge>
+            {isEmpty ? (
+              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+                All caught up
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="border border-slate-200">
+                {needsDecisionCount} waiting
+              </Badge>
+            )}
             <Button variant="outline" className="border-slate-300" onClick={() => router.push("/dashboard/disputes")}>
               View all <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {isEmpty ? (
           <Card className="border border-slate-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-700">Needs decision</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-950">{needsDecisionCount}</div>
-              <div className="text-xs text-slate-500 mt-1">Disputes in your inbox</div>
+            <CardContent className="py-10">
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div className="text-lg font-semibold text-slate-950">You’re all caught up.</div>
+                <div className="text-sm text-slate-600 max-w-md">
+                  When a dispute comes in, it will show up here for review.
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/dashboard/disputes")}>
+                    View all disputes <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" className="border-slate-300" onClick={() => router.push("/dashboard/agents")}>
+                    Agents
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-700">Needs decision</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-slate-950">{needsDecisionCount}</div>
+                <div className="text-xs text-slate-500 mt-1">Disputes in your inbox</div>
+              </CardContent>
+            </Card>
 
-          <Card className="border border-slate-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-700">Disputed amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-950">${disputedAmount.toFixed(2)}</div>
-              <div className="text-xs text-slate-500 mt-1">Total amount in disputes</div>
-            </CardContent>
-          </Card>
+            <Card className="border border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-700">Disputed amount</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-slate-950">${disputedAmount.toFixed(2)}</div>
+                <div className="text-xs text-slate-500 mt-1">Total amount in disputes</div>
+              </CardContent>
+            </Card>
 
-          <Card className="border border-slate-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-700">New today</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-950">{newTodayCount}</div>
-              <div className="text-xs text-slate-500 mt-1">Filed in the last 24 hours</div>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="border border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-700">New today</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-slate-950">{newTodayCount}</div>
+                <div className="text-xs text-slate-500 mt-1">Filed in the last 24 hours</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Card className="border border-slate-200">
           <CardHeader className="pb-3">
