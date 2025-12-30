@@ -317,8 +317,6 @@ export default function DisputeDetailPage() {
             disputeReason={dispute.paymentDetails?.disputeReason || "payment_dispute"}
             amount={dispute.amount || 0}
             currency={dispute.currency || "USD"}
-            plaintiff={dispute.plaintiff}
-            defendant={dispute.defendant}
             filedAt={dispute.filedAt}
             isResolved={isResolved}
           />
@@ -338,6 +336,165 @@ export default function DisputeDetailPage() {
           </motion.div>
         )}
 
+        {/* Outcome (Resolution + Refund) */}
+        {isResolved && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.18 }}
+          >
+            <Card className="border-l-4 border-l-emerald-600">
+              <CardHeader>
+                <CardTitle>Outcome</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Final Verdict</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {getVerdictDisplay(getEffectiveFinalVerdict())}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Reviewed By</p>
+                    <p className="text-sm text-slate-900">{dispute.humanReviewedBy || (refund ? "System" : "System")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Reviewed At</p>
+                    <p className="text-sm text-slate-900">
+                      {getEffectiveReviewedAt()
+                        ? new Date(getEffectiveReviewedAt() as number).toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Decision Type</p>
+                    <Badge variant={typeof dispute?.humanReviewedAt === "number" && dispute.humanAgreesWithAI ? "default" : "secondary"}>
+                      {getDecisionTypeLabel()}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Refund */}
+                {(() => {
+                  const effectiveVerdict = getEffectiveFinalVerdict();
+                  const refundRequired =
+                    effectiveVerdict === "CONSUMER_WINS" ||
+                    effectiveVerdict === "PARTIAL_REFUND" ||
+                    !!refund;
+                  if (!refundRequired) return null;
+
+                  const expectedRefundMicros =
+                    typeof dispute.finalRefundAmountMicrousdc === "number"
+                      ? dispute.finalRefundAmountMicrousdc
+                      : undefined;
+
+                  return (
+                    <div className="pt-4 border-t space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-slate-600">Refund</div>
+                        <Badge variant="secondary">{refund?.status ?? "NOT_SENT"}</Badge>
+                      </div>
+
+                      {!refund && (
+                        <div className="space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            Refunds are issued to the original payer address (refund-to-source) after approval.
+                          </p>
+
+                          {typeof expectedRefundMicros === "number" && (
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm text-slate-600">Amount</div>
+                              <div className="text-sm font-medium text-slate-900">
+                                {(expectedRefundMicros / 1_000_000).toFixed(6)} USDC
+                              </div>
+                            </div>
+                          )}
+
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={handleInitiateRefund}
+                            disabled={submitting}
+                          >
+                            Send refund now
+                          </Button>
+                        </div>
+                      )}
+
+                      {refund && (
+                        <div className="space-y-3">
+                          {refund.status === "EXECUTED" && (
+                            <div className="text-sm text-muted-foreground">
+                              Refund has been executed.
+                            </div>
+                          )}
+
+                          {refund.refundToAddress && (
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm text-slate-600">Refund To</div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded border border-border font-mono text-foreground truncate max-w-[60%]">
+                                {refund.refundToAddress}
+                              </code>
+                            </div>
+                          )}
+
+                          {typeof refund.amountMicrousdc === "number" && (
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm text-slate-600">Amount</div>
+                              <div className="text-sm font-medium text-slate-900">
+                                {(refund.amountMicrousdc / 1_000_000).toFixed(6)} USDC
+                              </div>
+                            </div>
+                          )}
+
+                          {refund.explorerUrl && (
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => window.open(refund.explorerUrl!, "_blank")}
+                            >
+                              View refund transaction
+                            </Button>
+                          )}
+
+                          {(refund.failureCode || refund.failureReason) && (
+                            <div className="rounded-md border border-border bg-muted p-3">
+                              <div className="text-sm font-medium text-slate-900">Failure</div>
+                              <div className="text-xs text-slate-600 mt-1">
+                                {refund.failureCode ? `${refund.failureCode}: ` : ""}
+                                {refund.failureReason || "Unknown error"}
+                              </div>
+                            </div>
+                          )}
+
+                          {(refund.status === "FAILED" || refund.status === "COINBASE_DISABLED" || refund.status === "PENDING_SEND") && (
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={handleRetryRefund}
+                              disabled={submitting}
+                            >
+                              {refund.status === "PENDING_SEND" ? "Send refund now" : "Retry refund now"}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {dispute.humanOverrideReason && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Review Notes</p>
+                    <p className="text-sm text-slate-700">{dispute.humanOverrideReason}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Payment Proof Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -345,113 +502,13 @@ export default function DisputeDetailPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <PaymentProofCard
+            collapsedByDefault
             amount={dispute.amount || 0}
             currency={dispute.currency || "USD"}
             crypto={dispute.signedEvidence?.crypto || dispute.paymentDetails?.crypto}
             custodial={dispute.signedEvidence?.custodial || dispute.paymentDetails?.custodial}
             traditional={dispute.signedEvidence?.traditional || dispute.paymentDetails?.traditional}
           />
-        </motion.div>
-
-        {/* Refund Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.22 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span className="text-2xl">↩️</span>
-                Refund Status
-              </CardTitle>
-              <CardDescription>
-                Refunds are issued to the original payer address (refund-to-source) after approval.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {!refund && (
-                <div className="text-sm text-slate-600">
-                  No refund has been initiated yet.
-                </div>
-              )}
-
-              {!refund && (dispute.finalVerdict === "CONSUMER_WINS" || dispute.finalVerdict === "PARTIAL_REFUND") && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleInitiateRefund}
-                  disabled={submitting}
-                >
-                  Send refund now
-                </Button>
-              )}
-
-              {refund && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm text-slate-600">Status</div>
-                    <Badge variant="secondary">{refund.status}</Badge>
-                  </div>
-
-                  {refund.status === "EXECUTED" && (
-                    <div className="text-sm text-muted-foreground">
-                      Refund has been executed.
-                    </div>
-                  )}
-
-                  {refund.refundToAddress && (
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm text-slate-600">Refund To</div>
-                      <code className="text-xs bg-muted px-2 py-1 rounded border border-border font-mono text-foreground truncate max-w-[60%]">
-                        {refund.refundToAddress}
-                      </code>
-                    </div>
-                  )}
-
-                  {typeof refund.amountMicrousdc === "number" && (
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm text-slate-600">Amount</div>
-                      <div className="text-sm font-medium text-slate-900">
-                        {(refund.amountMicrousdc / 1_000_000).toFixed(6)} USDC
-                      </div>
-                    </div>
-                  )}
-
-                  {refund.explorerUrl && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => window.open(refund.explorerUrl!, "_blank")}
-                    >
-                      View on Explorer
-                    </Button>
-                  )}
-
-                  {(refund.failureCode || refund.failureReason) && (
-                    <div className="rounded-md border border-border bg-muted p-3">
-                      <div className="text-sm font-medium text-slate-900">Failure</div>
-                      <div className="text-xs text-slate-600 mt-1">
-                        {refund.failureCode ? `${refund.failureCode}: ` : ""}
-                        {refund.failureReason || "Unknown error"}
-                      </div>
-                    </div>
-                  )}
-
-                  {(refund.status === "FAILED" || refund.status === "COINBASE_DISABLED" || refund.status === "PENDING_SEND") && (
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleRetryRefund}
-                        disabled={submitting}
-                      >
-                        {refund.status === "PENDING_SEND" ? "Send refund now" : "Retry refund now"}
-                      </Button>
-                    )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </motion.div>
 
         {/* Parties Card */}
@@ -524,56 +581,6 @@ export default function DisputeDetailPage() {
           {/* Workflow Timeline - Collapsed by default */}
           <AgentWorkflowTimeline caseId={disputeId as Id<"cases">} defaultExpanded={false} />
         </motion.div>
-
-        {/* Resolution Status */}
-        {isResolved && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
-          >
-            <Card className="border-l-4 border-l-emerald-600">
-              <CardHeader>
-                <CardTitle>Resolution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Final Verdict</p>
-                    <p className="text-lg font-bold text-slate-900">
-                      {getVerdictDisplay(getEffectiveFinalVerdict())}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Reviewed By</p>
-                    <p className="text-sm text-slate-900">{dispute.humanReviewedBy || (refund ? "System" : "System")}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Reviewed At</p>
-                    <p className="text-sm text-slate-900">
-                      {getEffectiveReviewedAt()
-                        ? new Date(getEffectiveReviewedAt() as number).toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Decision Type</p>
-                    <Badge variant={typeof dispute?.humanReviewedAt === "number" && dispute.humanAgreesWithAI ? "default" : "secondary"}>
-                      {getDecisionTypeLabel()}
-                    </Badge>
-                  </div>
-                </div>
-
-                {dispute.humanOverrideReason && (
-                  <div className="pt-4 border-t">
-                    <p className="text-sm font-medium text-slate-600 mb-2">Review Notes</p>
-                    <p className="text-sm text-slate-700">{dispute.humanOverrideReason}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
 
         {/* Action Buttons */}
         {!isResolved && (

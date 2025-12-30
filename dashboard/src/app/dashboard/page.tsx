@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic"
 import { useEffect, useMemo, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
+import { makeFunctionReference } from "convex/server"
 import { useRouter } from "next/navigation"
-import { api } from "@convex/_generated/api"
 import type { Id } from "@convex/_generated/dataModel"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -34,12 +34,17 @@ export default function DashboardInboxPage() {
   const [query, setQuery] = useState("")
   const [nowMs, setNowMs] = useState<number>(0)
 
+  // Avoid importing the generated Convex `api` in this page (TS2589: deep instantiation).
+  const mSyncUser = makeFunctionReference<"mutation">("users:syncUser")
+  const qGetCurrentUser = makeFunctionReference<"query">("users:getCurrentUser")
+  const qGetCustomerReviewQueue = makeFunctionReference<"query">("paymentDisputes:getCustomerReviewQueue")
+
   // Sync user on page load (keeps dashboard resilient for new accounts).
-  const syncUser = useMutation(api.users.syncUser)
-  const currentUser = useQuery(api.users.getCurrentUser, {})
+  const syncUser = useMutation(mSyncUser)
+  const currentUser = useQuery(qGetCurrentUser, {})
 
   const reviewQueue = useQuery(
-    api.paymentDisputes.getCustomerReviewQueue,
+    qGetCustomerReviewQueue,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId, limit: 50 } : "skip",
   ) as InboxDispute[] | undefined
 

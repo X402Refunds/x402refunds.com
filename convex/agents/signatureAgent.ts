@@ -83,7 +83,8 @@ export const verifySignedEvidence = internalAction({
     error?: string;
   }> => {
     // Get case data with signed evidence (actions can call internal queries)
-    const { internal } = await import("../_generated/api");
+    // Avoid TS2589 deep instantiation by not binding generated API types here.
+    const { internal } = (await import("../_generated/api")) as any;
     const caseData = await ctx.runQuery(internal.cases.getCase, { caseId: args.caseId });
     
     if (!caseData) {

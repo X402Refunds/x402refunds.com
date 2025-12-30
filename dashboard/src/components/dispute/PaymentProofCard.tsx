@@ -3,12 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 interface PaymentProofCardProps {
   amount: number;
   currency: string;
+  collapsedByDefault?: boolean;
   crypto?: {
     currency: string;
     blockchain: string;
@@ -36,11 +37,13 @@ interface PaymentProofCardProps {
 export function PaymentProofCard({
   amount,
   currency,
+  collapsedByDefault = false,
   crypto,
   custodial,
   traditional,
 }: PaymentProofCardProps) {
   const [copiedHash, setCopiedHash] = useState(false);
+  const [expanded, setExpanded] = useState(!collapsedByDefault);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -70,15 +73,90 @@ export function PaymentProofCard({
     return explorers[blockchain.toLowerCase()] || 'Explorer';
   };
 
+  const primaryPaymentExplorerUrl = crypto?.explorerUrl;
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">💰</span>
-          <CardTitle>Payment Proof</CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">💰</span>
+            <CardTitle>Payment</CardTitle>
+          </div>
+
+          {collapsedByDefault && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              aria-label={expanded ? "Hide payment details" : "Show payment details"}
+            >
+              {expanded ? (
+                <>
+                  Hide details <ChevronUp className="h-4 w-4 ml-2" />
+                </>
+              ) : (
+                <>
+                  Show details <ChevronDown className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Collapsed summary */}
+        {collapsedByDefault && !expanded && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-600">Amount</div>
+              <div className="text-sm font-medium text-slate-900">
+                ${amount.toFixed(2)} {currency}
+              </div>
+            </div>
+
+            {crypto?.transactionHash && (
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm text-slate-600">Transaction</div>
+                <code
+                  className="text-xs bg-muted px-2 py-1 rounded border border-border font-mono text-foreground truncate max-w-[60%]"
+                  title={crypto.transactionHash}
+                >
+                  {crypto.transactionHash}
+                </code>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              {crypto?.transactionHash && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => copyToClipboard(crypto.transactionHash!)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  {copiedHash ? "Copied" : "Copy hash"}
+                </Button>
+              )}
+
+              {primaryPaymentExplorerUrl && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => window.open(primaryPaymentExplorerUrl, "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View payment
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Expanded content */}
+        {(!collapsedByDefault || expanded) && (
+          <>
         {/* Amount */}
         <div>
           <p className="text-sm font-medium text-slate-600">Amount</p>
@@ -244,6 +322,8 @@ export function PaymentProofCard({
               </div>
             )}
           </div>
+        )}
+          </>
         )}
       </CardContent>
     </Card>

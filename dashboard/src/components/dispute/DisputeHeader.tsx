@@ -10,8 +10,6 @@ interface DisputeHeaderProps {
   disputeReason: string;
   amount: number;
   currency: string;
-  plaintiff: string;
-  defendant: string;
   filedAt: number;
   isResolved: boolean;
 }
@@ -20,8 +18,6 @@ export function DisputeHeader({
   disputeReason,
   amount,
   currency,
-  plaintiff,
-  defendant,
   filedAt,
   isResolved,
 }: DisputeHeaderProps) {
@@ -62,12 +58,13 @@ export function DisputeHeader({
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">
-            Dispute: {formatReason(disputeReason)} - ${amount.toFixed(2)} {currency}
+            Dispute: {formatReason(disputeReason)}
           </h1>
-          <p className="text-slate-600 text-lg">
-            {plaintiff} vs {defendant}
-          </p>
           <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-500">
+            <span className="font-medium text-slate-900">
+              ${amount.toFixed(2)} {currency}
+            </span>
+            <span>•</span>
             <span>Filed {getRelativeTime(filedAt, now)}</span>
           </div>
         </div>
