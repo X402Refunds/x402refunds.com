@@ -60,19 +60,14 @@ const MOCK_DISPUTES: MockDispute[] = [
 export function HeroShot({ variant }: { variant: "desktop" | "mobile" }) {
   const isMobile = variant === "mobile"
 
-  // Fixed canvases so screenshots are deterministic and match the landing hero aspect ratios.
+  // Fixed canvases so screenshots are deterministic. Kept within the browser tool's capture limits.
   const frameStyle: CSSProperties = isMobile
-    ? { width: 900, height: 1600 } // 9:16
-    : { width: 1600, height: 1000 } // 16:10
+    ? { width: 864, height: 1536 } // 9:16
+    : { width: 1200, height: 750 } // 16:10
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8">
-      <div
-        id="hero-shot"
-        style={frameStyle}
-        className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
-      >
-        <div className="h-full w-full p-10">
+    <div id="hero-shot" style={frameStyle} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="h-full w-full p-8">
           <div className="flex items-start justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold text-slate-950">All disputes</h1>
@@ -137,7 +132,6 @@ export function HeroShot({ variant }: { variant: "desktop" | "mobile" }) {
               </CardContent>
             </Card>
           </div>
-        </div>
       </div>
     </div>
   )

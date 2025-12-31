@@ -12,6 +12,10 @@ import { CodeExampleCard } from "@/components/CodeExampleCard"
 // holding onto older `/public` assets after swaps.
 const ALL_DISPUTES_DESKTOP_SRC = "/landing/all-disputes-2025-12-31.png"
 const ALL_DISPUTES_MOBILE_SRC = "/landing/all-disputes-mobile-2025-12-31.png"
+const INBOX_EMPTY_DESKTOP_SRC = "/landing/inbox-empty-2025-12-31.png"
+const INBOX_EMPTY_MOBILE_SRC = "/landing/inbox-empty-mobile-2025-12-31.png"
+const DISPUTE_STATUS_DESKTOP_SRC = "/landing/dispute-status-2025-12-31.png"
+const DISPUTE_STATUS_MOBILE_SRC = "/landing/dispute-status-mobile-2025-12-31.png"
 
 function LandingScreenshot({
   src,
@@ -156,6 +160,7 @@ export default function HomePage() {
                 alt="All disputes dashboard view"
                 priority
               />
+              <div className="mt-2 text-xs text-slate-500">Illustration (AI-generated)</div>
               </div>
           </div>
         </div>
@@ -202,16 +207,17 @@ export default function HomePage() {
               </ul>
         </div>
             <ResponsiveLandingScreenshot
-              desktopSrc="/landing/inbox-empty.png"
-              mobileSrc="/landing/inbox-empty-mobile.png"
+              desktopSrc={INBOX_EMPTY_DESKTOP_SRC}
+              mobileSrc={INBOX_EMPTY_MOBILE_SRC}
               alt="Inbox empty state"
             />
+            <div className="mt-2 text-xs text-slate-500">Illustration (AI-generated)</div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <ResponsiveLandingScreenshot
-              desktopSrc="/landing/dispute-status.png"
-              mobileSrc="/landing/dispute-status-mobile.png"
+              desktopSrc={DISPUTE_STATUS_DESKTOP_SRC}
+              mobileSrc={DISPUTE_STATUS_MOBILE_SRC}
               alt="Dispute detail showing refund status and resolution"
             />
             <div className="space-y-3">
@@ -221,7 +227,8 @@ export default function HomePage() {
                 <li>- Status: executed / scheduled / failed</li>
                 <li>- View on explorer</li>
               </ul>
-                  </div>
+              <div className="pt-1 text-xs text-slate-500">Illustration (AI-generated)</div>
+            </div>
           </div>
         </div>
       </section>
