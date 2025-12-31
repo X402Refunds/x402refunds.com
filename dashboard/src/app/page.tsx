@@ -19,23 +19,29 @@ function LandingScreenshot({
   aspect = "aspect-[16/10]",
   priority = false,
   className,
+  imageClassName,
 }: {
   src: string
   alt: string
   aspect?: string
   priority?: boolean
   className?: string
+  imageClassName?: string
 }) {
   return (
-    <div className={`relative w-full ${aspect} rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className || ""}`}>
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        priority={priority}
-        className="object-contain"
-        sizes="(min-width: 1024px) 50vw, 100vw"
-      />
+    <div className={`w-full ${aspect} rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className || ""}`}>
+      <div className="w-full h-full p-4">
+        <div className="relative w-full h-full">
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            priority={priority}
+            className={imageClassName || "object-contain"}
+            sizes="(min-width: 1024px) 50vw, 100vw"
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -45,11 +51,15 @@ function ResponsiveLandingScreenshot({
   mobileSrc,
   alt,
   priority = false,
+  desktopAspect = "aspect-[16/10]",
+  mobileAspect = "aspect-[9/16]",
 }: {
   desktopSrc: string
   mobileSrc: string
   alt: string
   priority?: boolean
+  desktopAspect?: string
+  mobileAspect?: string
 }) {
   return (
     <>
@@ -57,14 +67,14 @@ function ResponsiveLandingScreenshot({
         src={desktopSrc}
         alt={alt}
         priority={priority}
-        aspect="aspect-[16/10]"
+        aspect={desktopAspect}
         className="hidden lg:block"
       />
       <LandingScreenshot
         src={mobileSrc}
         alt={alt}
         priority={priority}
-        aspect="aspect-[9/16]"
+        aspect={mobileAspect}
         className="lg:hidden"
       />
     </>
@@ -157,6 +167,7 @@ export default function HomePage() {
                 mobileSrc={ALL_DISPUTES_MOBILE_SRC}
                 alt="All disputes dashboard view"
                 priority
+                desktopAspect="aspect-[4/3]"
               />
               </div>
           </div>
