@@ -8,6 +8,11 @@ import Image from "next/image"
 import { TypewriterText } from "@/components/TypewriterText"
 import { CodeExampleCard } from "@/components/CodeExampleCard"
 
+// NOTE: `next/image` caches optimized outputs by URL. When we update a file in `/public`
+// without changing its URL, Vercel may continue serving the old optimized variant.
+// Bump this to force a refresh.
+const LANDING_IMAGE_VERSION = "2025-12-31"
+
 function LandingScreenshot({
   src,
   alt,
@@ -148,8 +153,8 @@ export default function HomePage() {
 
               <div>
               <ResponsiveLandingScreenshot
-                desktopSrc="/landing/all-disputes.png"
-                mobileSrc="/landing/all-disputes-mobile.png"
+                desktopSrc={`/landing/all-disputes.png?v=${LANDING_IMAGE_VERSION}`}
+                mobileSrc={`/landing/all-disputes-mobile.png?v=${LANDING_IMAGE_VERSION}`}
                 alt="All disputes dashboard view"
                 priority
               />
