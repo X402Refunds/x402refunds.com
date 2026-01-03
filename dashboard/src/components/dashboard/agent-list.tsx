@@ -153,13 +153,13 @@ export function AgentList({ agents }: AgentListProps) {
                 <TableCell className="font-mono text-xs">
                   {agent.walletAddress ? (
                     <a 
-                      href={`https://api.x402disputes.com/disputes/claim?vendor=${agent.walletAddress}`}
+                      href={`https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(agent.walletAddress)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
-                      title={`Dispute URL: https://api.x402disputes.com/disputes/claim?vendor=${agent.walletAddress}`}
+                      title={`Disputes URL: https://api.x402disputes.com/v1/disputes?merchant=${agent.walletAddress}`}
                     >
-                      /disputes/claim?vendor={agent.walletAddress.slice(0, 20)}...
+                      /v1/disputes?merchant={agent.walletAddress.slice(0, 20)}...
                     </a>
                   ) : (
                     <span className="text-muted-foreground">No wallet address</span>

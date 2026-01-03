@@ -166,6 +166,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ENABLE DISPUTES (NO SDK REQUIRED) */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Enable disputes in 60 seconds
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+              Publish a dispute link, top up your refund pool, and (optionally) publish terms for the arbiter to enforce.
+            </p>
+          </div>
+
+          {(() => {
+            const merchant = "eip155:8453:0xYourTreasuryAddress"
+            const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(merchant)}`
+            const merchantHeader = `Link: <${disputeUrl}>; rel=\"payment-dispute\"; type=\"application/json\"`
+            const merchantExample = `res.setHeader(\n  \"Link\",\n  '<${disputeUrl}>; rel=\"payment-dispute\"; type=\"application/json\"'\n);`
+
+            const wellKnown = `{\n  \"x402disputes\": {\n    \"merchant\": \"${merchant}\",\n    \"paymentDisputeUrl\": \"${disputeUrl}\",\n    \"topupUrl\": \"https://x402disputes.com/topup/\",\n    \"terms\": {\n      \"refundWindowDays\": 7,\n      \"evidenceWindowDays\": 7,\n      \"autoRefund\": true,\n      \"currency\": \"USDC\"\n    }\n  }\n}`
+
+            const topupSteps = `Open: https://x402disputes.com/topup/\nEnter: ${merchant}\nPay: USDC on Base\n\nIf a dispute is approved, refunds can auto-execute from this balance.`
+
+            return (
+              <div className="mt-10 max-w-5xl mx-auto grid items-start gap-6 lg:grid-cols-3">
+                <CodeExampleCard
+                  title="Merchant: publish dispute URL"
+                  description="Add one header to your paid responses."
+                  language="TypeScript"
+                  code={merchantExample}
+                  copyValue={merchantHeader}
+                />
+
+                <CodeExampleCard
+                  title="Merchant: top up refund pool"
+                  description="Use the web page (no cURL)."
+                  language="text"
+                  code={topupSteps}
+                  copyValue="https://x402disputes.com/topup/"
+                />
+
+                <CodeExampleCard
+                  title="Optional: publish terms"
+                  description="Serve this at /.well-known/x402.json for the arbiter to read."
+                  language="json"
+                  code={wellKnown}
+                  copyValue={wellKnown}
+                />
+              </div>
+            )
+          })()}
+
+          <div className="mt-8 max-w-5xl mx-auto">
+            <CodeExampleCard
+              title="Buyer: file a dispute (no SDK)"
+              description="Wallet-first payment dispute intake."
+              language="curl"
+              code={`curl -sS https://api.x402disputes.com/v1/disputes \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"buyer\": \"buyer:your-id-or-wallet\",\n    \"merchant\": \"eip155:8453:0xYourTreasuryAddress\",\n    \"txHash\": \"0xYourPaymentTransactionHash\",\n    \"chain\": \"base\",\n    \"amountMicrousdc\": \"10000\",\n    \"reason\": \"api_timeout\",\n    \"evidenceUrlOrHash\": \"https://example.com/logs/timeout.json\"\n  }'`}
+              copyValue={`curl -sS https://api.x402disputes.com/v1/disputes \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"buyer\": \"buyer:your-id-or-wallet\",\n    \"merchant\": \"eip155:8453:0xYourTreasuryAddress\",\n    \"txHash\": \"0xYourPaymentTransactionHash\",\n    \"chain\": \"base\",\n    \"amountMicrousdc\": \"10000\",\n    \"reason\": \"api_timeout\",\n    \"evidenceUrlOrHash\": \"https://example.com/logs/timeout.json\"\n  }'`}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
@@ -233,50 +296,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* API (BELOW FOLD) */}
-      <section
-        id="api"
-        className="border-t bg-gradient-to-b from-background via-background to-muted/25"
-      >
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Few lines to Enable Disputes
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Add one Link header. Buyers can file support tickets, and include a tx hash to open a dispute.
-            </p>
-                </div>
-                
-          {(() => {
-            const intakeUrl = `https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress`
-            const curl = `curl -sS ${intakeUrl} \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Timed out after payment\",\n    \"transactionHash\": \"0x7b1f6d09a8c2f4e6b1a3c9d2e8f0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c\",\n    \"blockchain\": \"base\",\n    \"evidenceUrls\": [\"https://example.com/logs/timeout.json\"],\n    \"callbackUrl\": \"https://example.com/webhooks/dispute\"\n  }'`
-            const merchantHeader = `Link: <${intakeUrl}>; rel=\"support\"; type=\"application/json\"`
-            const merchantExample = `res.setHeader(\n  \"Link\",\n  '<https://api.x402disputes.com/api/support/eip155:8453:0xYourMerchantAddress>; rel=\"support\"; type=\"application/json\"'\n);`
-
-            return (
-              <div className="mt-10 max-w-5xl mx-auto grid items-start gap-6 lg:grid-cols-2">
-                <CodeExampleCard
-                  title="Buyer: file dispute"
-                  description="POST JSON to your support URL."
-                  language="curl"
-                  code={curl}
-                  copyValue={curl}
-                />
-
-                <CodeExampleCard
-                  title="Merchant: publish support URL"
-                  description="Add one header."
-                  language="TypeScript"
-                  code={merchantExample}
-                  copyValue={merchantHeader}
-                />
-              </div>
-            )
-          })()}
-        </div>
-      </section>
-
       {/* FINAL CTA */}
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
@@ -296,11 +315,11 @@ export default function HomePage() {
               variant="outline"
               className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
               onClick={() => {
-                const el = document.getElementById("api")
+                const el = document.getElementById("how-it-works")
                 el?.scrollIntoView({ behavior: "smooth", block: "start" })
               }}
             >
-              View support API
+              See how it works
             </Button>
             </div>
             </div>

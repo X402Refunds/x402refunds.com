@@ -22,6 +22,26 @@ export interface PaymentRequirements {
   maxTimeoutSeconds?: number;
 }
 
+// x402 v2 Payment-Required header payload (minimal fields we consume)
+export interface PaymentRequiredV2 {
+  x402Version: 2;
+  accepts: Array<{
+    scheme: "exact";
+    network: string; // eip155:<chainId>
+    asset: string;
+    amount: string; // atomic units (microusdc)
+    payTo: string;
+    resource?: string;
+    description?: string;
+    mimeType?: string;
+    maxTimeoutSeconds?: number;
+    extra?: {
+      name?: string;
+      version?: string;
+    };
+  }>;
+}
+
 // X402 "exact" EVM payload shape (EIP-3009 TransferWithAuthorization)
 // See Coinbase x402 spec + PayAI echo-merchant implementation.
 export interface X402PaymentPayload {
@@ -133,6 +153,107 @@ export async function createX402PaymentSignature(
   console.log('✅ X-PAYMENT payload created (base64 encoded)');
 
   return encoded;
+}
+
+function chainIdFromNetwork(network: string): number {
+  // v2 uses CAIP-2-like network strings: eip155:8453
+  const m = network.match(/^eip155:(\d+)$/);
+  if (m) {
+    const id = Number(m[1]);
+    if (Number.isSafeInteger(id) && id > 0) return id;
+  }
+  // legacy fallback
+  if (network === "base") return 8453;
+  return 8453;
+}
+
+export function parsePaymentRequiredHeaderV2(paymentRequiredB64: string): PaymentRequiredV2 {
+  const decoded = JSON.parse(atob(paymentRequiredB64)) as unknown;
+  if (!decoded || typeof decoded !== "object") {
+    throw new Error("Invalid PAYMENT-REQUIRED payload");
+  }
+  const obj = decoded as Record<string, unknown>;
+  const x402Version = obj["x402Version"];
+  const accepts = obj["accepts"];
+  if (x402Version !== 2 || !Array.isArray(accepts) || accepts.length === 0) {
+    throw new Error("PAYMENT-REQUIRED must contain x402Version=2 and accepts[]");
+  }
+  return decoded as PaymentRequiredV2;
+}
+
+/**
+ * Create x402 v2 PAYMENT-SIGNATURE payload for EVM exact scheme (EIP-3009).
+ *
+ * Returns a base64(JSON(...)) string suitable for the PAYMENT-SIGNATURE header.
+ */
+export async function createX402PaymentSignatureV2(
+  walletClient: WalletClient,
+  requirement: PaymentRequiredV2["accepts"][number],
+  userAddress: string
+): Promise<string> {
+  const chainId = chainIdFromNetwork(requirement.network);
+
+  const domain = {
+    name: (requirement.extra?.name || "USD Coin") as string,
+    version: (requirement.extra?.version || "2") as string,
+    chainId,
+    verifyingContract: requirement.asset as `0x${string}`,
+  } as const;
+
+  const types = {
+    TransferWithAuthorization: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "validAfter", type: "uint256" },
+      { name: "validBefore", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
+    ],
+  } as const;
+
+  const now = Math.floor(Date.now() / 1000);
+
+  const nonceBytes = new Uint8Array(32);
+  crypto.getRandomValues(nonceBytes);
+  const nonceHex = `0x${Array.from(nonceBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")}` as `0x${string}`;
+
+  const message = {
+    from: userAddress as `0x${string}`,
+    to: requirement.payTo as `0x${string}`,
+    value: BigInt(requirement.amount),
+    validAfter: BigInt(now),
+    validBefore: BigInt(now + 300),
+    nonce: nonceHex,
+  } as const;
+
+  const signature = await walletClient.signTypedData({
+    account: userAddress as `0x${string}`,
+    domain,
+    types,
+    primaryType: "TransferWithAuthorization",
+    message,
+  });
+
+  const payload = {
+    x402Version: 2,
+    scheme: requirement.scheme,
+    network: requirement.network,
+    payload: {
+      signature,
+      authorization: {
+        from: userAddress,
+        to: requirement.payTo,
+        value: requirement.amount,
+        validAfter: message.validAfter.toString(),
+        validBefore: message.validBefore.toString(),
+        nonce: message.nonce,
+      },
+    },
+  };
+
+  return btoa(JSON.stringify(payload));
 }
 
 /**

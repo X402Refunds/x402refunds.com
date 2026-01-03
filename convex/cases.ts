@@ -347,6 +347,344 @@ export const backfillPaymentSourceTx = internalMutation({
   },
 });
 
+/**
+ * One-time migration/upsert:
+ * Normalize legacy PAYMENT disputes to the wallet-first v1 schema conventions:
+ * - Prefer CAIP-10 for plaintiff/defendant when they look like on-chain addresses
+ * - Ensure currency/amount fields are populated from paymentDetails.amountMicrousdc when present
+ * - Populate metadata.v1 (buyer/merchant/txHash/chain/amountMicrousdc/reason) when missing
+ *
+ * Idempotent: safe to run multiple times.
+ *
+ * IMPORTANT: This mutates existing dispute rows. Run with dryRun first.
+ */
+export const migratePaymentCasesToWalletFirstV1 = internalMutation({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    scanned: number;
+    updated: number;
+    cursor: string | null;
+    isDone: boolean;
+    dryRun: boolean;
+  }> => {
+    const dryRun = args.dryRun ?? true;
+    const limit = Math.max(1, Math.min(args.limit ?? 500, 2000));
+
+    const SOLANA_MAINNET_CHAIN_ID = "5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf";
+
+    function normalizeCaip10ForPayment(
+      value: string,
+      chain: "base" | "solana" | null,
+    ): string | null {
+      const raw = (value || "").trim();
+      if (!raw) return null;
+      // Already CAIP-10-ish
+      if (raw.includes(":")) {
+        const parts = raw.split(":");
+        if (parts.length !== 3) return raw;
+        const [ns, chainId, addr] = parts;
+        if (ns === "eip155" && addr.startsWith("0x") && addr.length === 42) {
+          // Wallet-first: default to Base chainId (8453) when chain is base or unknown.
+          const nextChainId = chain === "solana" ? chainId : "8453";
+          return `eip155:${nextChainId}:${addr.toLowerCase()}`;
+        }
+        return raw;
+      }
+
+      // EVM address
+      if (/^0x[a-fA-F0-9]{40}$/.test(raw)) {
+        const nextChainId = chain === "solana" ? "1" : "8453";
+        return `eip155:${nextChainId}:${raw.toLowerCase()}`;
+      }
+
+      // Solana-like base58 (best-effort)
+      if (chain === "solana" && raw.length >= 32 && raw.length <= 44) {
+        return `solana:${SOLANA_MAINNET_CHAIN_ID}:${raw}`;
+      }
+
+      return raw;
+    }
+
+    // Paginate over PAYMENT cases, oldest → newest.
+    const pageRes = await ctx.db
+      .query("cases")
+      .withIndex("by_type", (q) => q.eq("type", "PAYMENT"))
+      .order("asc")
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: limit,
+      });
+
+    let updated = 0;
+
+    for (const c of pageRes.page as any[]) {
+      const chain: "base" | "solana" | null =
+        c.paymentSourceChain ||
+        c.paymentDetails?.blockchain ||
+        c.signedEvidence?.crypto?.blockchain ||
+        null;
+
+      const next: any = {};
+
+      // Normalize plaintiff/defendant to CAIP-10 when they look like on-chain identifiers.
+      const nextPlaintiff = typeof c.plaintiff === "string" ? normalizeCaip10ForPayment(c.plaintiff, chain) : null;
+      const nextDefendant = typeof c.defendant === "string" ? normalizeCaip10ForPayment(c.defendant, chain) : null;
+      if (nextPlaintiff && nextPlaintiff !== c.plaintiff) next.plaintiff = nextPlaintiff;
+      if (nextDefendant && nextDefendant !== c.defendant) next.defendant = nextDefendant;
+
+      // Ensure amount/currency are populated for PAYMENT disputes.
+      const amountMicros: number | undefined = c.paymentDetails?.amountMicrousdc;
+      if (typeof amountMicros === "number" && Number.isFinite(amountMicros) && amountMicros > 0) {
+        if (typeof c.amount !== "number") next.amount = amountMicros / 1_000_000;
+        if (typeof c.currency !== "string" || !c.currency) next.currency = "USDC";
+      } else if ((typeof c.currency !== "string" || !c.currency) && (typeof c.amount === "number")) {
+        // Best-effort: if amount exists but currency missing, default to USDC for PAYMENT.
+        next.currency = "USDC";
+      }
+
+      // Populate metadata.v1 if missing (wallet-first compatibility layer).
+      const existingMeta = c.metadata && typeof c.metadata === "object" ? c.metadata : {};
+      const hasV1 = !!existingMeta?.v1;
+      if (!hasV1) {
+        const buyer = (next.plaintiff || c.plaintiff) as string;
+        const merchantRaw = (next.defendant || c.defendant) as string;
+        const merchant = normalizeCaip10ForPayment(merchantRaw, chain) || merchantRaw;
+        const txHash = c.paymentSourceTxHash || c.paymentDetails?.transactionHash || c.paymentDetails?.transactionId;
+
+        next.metadata = {
+          ...existingMeta,
+          v1: {
+            buyer,
+            merchant,
+            chain: chain || undefined,
+            txHash: typeof txHash === "string" ? txHash : undefined,
+            amountMicrousdc: typeof amountMicros === "number" ? amountMicros : undefined,
+            reason: c.paymentDetails?.disputeReason || undefined,
+          },
+          migrations: {
+            ...(existingMeta?.migrations || {}),
+            walletFirstV1: {
+              appliedAt: Date.now(),
+              original: {
+                plaintiff: c.plaintiff,
+                defendant: c.defendant,
+              },
+            },
+          },
+        };
+      } else {
+        // Tighten: ensure metadata.v1.merchant and cases.defendant are CAIP-10 for wallet-first payment cases.
+        const v1 = existingMeta?.v1;
+        const v1MerchantRaw = typeof v1?.merchant === "string" ? (v1.merchant as string) : "";
+        const v1Merchant = v1MerchantRaw ? (normalizeCaip10ForPayment(v1MerchantRaw, chain) || v1MerchantRaw) : null;
+        if (v1Merchant && v1Merchant !== v1MerchantRaw) {
+          next.metadata = {
+            ...existingMeta,
+            v1: { ...(existingMeta?.v1 || {}), merchant: v1Merchant },
+          };
+        }
+        // Keep defendant aligned with v1 merchant where possible.
+        if (v1Merchant && typeof c.defendant === "string" && v1Merchant !== c.defendant) {
+          next.defendant = v1Merchant;
+        }
+      }
+
+      if (Object.keys(next).length === 0) continue;
+      if (!dryRun) {
+        await ctx.db.patch(c._id, next);
+      }
+      updated += 1;
+    }
+
+    return {
+      scanned: pageRes.page.length,
+      updated,
+      cursor: pageRes.continueCursor,
+      isDone: pageRes.isDone,
+      dryRun,
+    };
+  },
+});
+
+/**
+ * Secret-gated runner for migratePaymentCasesToWalletFirstV1.
+ * Exists so scripts can run this without calling internal mutations directly.
+ */
+export const runMigratePaymentCasesToWalletFirstV1 = mutation({
+  args: {
+    secret: v.string(),
+    dryRun: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const expected = process.env.MIGRATIONS_SECRET;
+    if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
+    if (args.secret !== expected) throw new Error("Unauthorized");
+
+    const i = internal as any;
+    return await ctx.runMutation(i.cases.migratePaymentCasesToWalletFirstV1, {
+      dryRun: args.dryRun,
+      limit: args.limit,
+      cursor: args.cursor,
+    });
+  },
+});
+
+/**
+ * One-time destructive cleanup:
+ * Delete all non-PAYMENT cases and all directly-associated records ("orphans"):
+ * - evidenceManifests where caseId == deletedCaseId
+ * - rulings where caseId == deletedCaseId
+ * - feedbackSignals where caseId == deletedCaseId
+ * - workflowSteps where caseId == deletedCaseId
+ * - refundTransactions where caseId == deletedCaseId
+ * - events where caseId == deletedCaseId
+ *
+ * Idempotent per-run cursor paging; safe to re-run until updated=0.
+ */
+export const purgeNonPaymentCasesAndOrphans = internalMutation({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    scanned: number;
+    deletedCases: number;
+    deletedEvidence: number;
+    deletedRulings: number;
+    deletedEvents: number;
+    deletedFeedback: number;
+    deletedWorkflowSteps: number;
+    deletedRefundTransactions: number;
+    cursor: string | null;
+    isDone: boolean;
+    dryRun: boolean;
+  }> => {
+    const dryRun = args.dryRun ?? true;
+    const limit = Math.max(1, Math.min(args.limit ?? 250, 1000));
+
+    const pageRes = await ctx.db
+      .query("cases")
+      .withIndex("by_filed_at")
+      .order("asc")
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: limit,
+      });
+
+    let deletedCases = 0;
+    let deletedEvidence = 0;
+    let deletedRulings = 0;
+    let deletedEvents = 0;
+    let deletedFeedback = 0;
+    let deletedWorkflowSteps = 0;
+    let deletedRefundTransactions = 0;
+
+    for (const c of pageRes.page as any[]) {
+      const type = typeof c.type === "string" ? c.type : "";
+      if (type === "PAYMENT") continue;
+
+      const caseId = c._id;
+
+      // Delete associated records first.
+      const evidence = await ctx.db
+        .query("evidenceManifests")
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .collect();
+      const rulings = await ctx.db
+        .query("rulings")
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .collect();
+      const feedback = await ctx.db
+        .query("feedbackSignals")
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .collect();
+      const steps = await ctx.db
+        .query("workflowSteps")
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .collect();
+      const refunds = await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .collect();
+
+      // events.caseId is optional; index is (caseId, sequenceNumber)
+      const events = await ctx.db
+        .query("events")
+        .withIndex("by_case_sequence", (q) => q.eq("caseId", caseId))
+        .collect();
+
+      if (!dryRun) {
+        for (const r of evidence) await ctx.db.delete(r._id);
+        for (const r of rulings) await ctx.db.delete(r._id);
+        for (const r of feedback) await ctx.db.delete(r._id);
+        for (const r of steps) await ctx.db.delete(r._id);
+        for (const r of refunds) await ctx.db.delete(r._id);
+        for (const r of events) await ctx.db.delete(r._id);
+        await ctx.db.delete(caseId);
+      }
+
+      deletedCases += 1;
+      deletedEvidence += evidence.length;
+      deletedRulings += rulings.length;
+      deletedFeedback += feedback.length;
+      deletedWorkflowSteps += steps.length;
+      deletedRefundTransactions += refunds.length;
+      deletedEvents += events.length;
+    }
+
+    return {
+      scanned: pageRes.page.length,
+      deletedCases,
+      deletedEvidence,
+      deletedRulings,
+      deletedEvents,
+      deletedFeedback,
+      deletedWorkflowSteps,
+      deletedRefundTransactions,
+      cursor: pageRes.continueCursor,
+      isDone: pageRes.isDone,
+      dryRun,
+    };
+  },
+});
+
+/**
+ * Secret-gated runner for purgeNonPaymentCasesAndOrphans.
+ */
+export const runPurgeNonPaymentCasesAndOrphans = mutation({
+  args: {
+    secret: v.string(),
+    dryRun: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const expected = process.env.MIGRATIONS_SECRET;
+    if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
+    if (args.secret !== expected) throw new Error("Unauthorized");
+
+    const i = internal as any;
+    return await ctx.runMutation(i.cases.purgeNonPaymentCasesAndOrphans, {
+      dryRun: args.dryRun,
+      limit: args.limit,
+      cursor: args.cursor,
+    });
+  },
+});
+
 export const getCasesByStatus = query({
   args: {
     status: v.union(
@@ -438,6 +776,64 @@ export const getRecentCases = query({
     }
     
     return await query.take(args.limit ?? 20);
+  },
+});
+
+/**
+ * Public registry feed: recent PAYMENT cases with a minimal, wallet-first-oriented shape.
+ * Used by the Convex HTTP route GET /live/feed.
+ */
+export const listLiveFeedCases = query({
+  args: {
+    limit: v.optional(v.number()),
+    status: v.optional(v.string()),
+    merchant: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.max(1, Math.min(args.limit ?? 20, 200));
+    const status = typeof args.status === "string" && args.status.trim() ? args.status.trim() : null;
+    const merchant = typeof args.merchant === "string" && args.merchant.trim() ? args.merchant.trim() : null;
+
+    let rows = await ctx.db
+      .query("cases")
+      .withIndex("by_filed_at")
+      .order("desc")
+      .take(limit);
+
+    rows = rows.filter((c: any) => c?.type === "PAYMENT");
+
+    if (status) {
+      rows = rows.filter((c: any) => c?.status === status);
+    }
+    if (merchant) {
+      rows = rows.filter((c: any) => c?.defendant === merchant || c?.metadata?.v1?.merchant === merchant);
+    }
+
+    const cases = rows.map((c: any) => {
+      const buyer = c?.metadata?.v1?.buyer ?? c?.plaintiff ?? null;
+      const merchant = c?.metadata?.v1?.merchant ?? c?.defendant ?? null;
+      const reason = c?.metadata?.v1?.reason ?? c?.paymentDetails?.disputeReason ?? null;
+      const currency = c?.currency ?? (c?.metadata?.v1?.chain ? "USDC" : null);
+      const amountMicrousdc =
+        typeof c?.metadata?.v1?.amountMicrousdc === "number"
+          ? c.metadata.v1.amountMicrousdc
+          : (typeof c?.amount === "number" && (currency === "USDC" || currency === "USD"))
+            ? Math.round(c.amount * 1_000_000)
+            : null;
+
+      return {
+        caseId: c._id,
+        filedAt: c.filedAt,
+        status: c.status,
+        buyer,
+        merchant,
+        reason,
+        amountMicrousdc,
+        currency,
+      };
+    });
+
+    return { cases };
   },
 });
 

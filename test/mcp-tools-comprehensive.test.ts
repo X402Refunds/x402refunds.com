@@ -134,7 +134,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
         description: 'Test dispute for dryRun validation',
         request: { method: 'POST', url: 'https://api.test.com' },
         response: { status: 500 },
@@ -160,7 +160,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       const { response, data } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
         description: 'Test',
         request: {},
         response: {},
@@ -189,7 +189,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
           plaintiff: testBuyerAddress,
           defendant: testSellerAddress,
-          disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${testSellerAddress}`,
+          disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
           description: 'Test case for status check',
           request: { method: 'POST', url: 'https://api.test.com' },
           response: { status: 500 },
@@ -290,7 +290,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
         plaintiff: buyerAddress,
         defendant: sellerAddress,
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${sellerAddress}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${sellerAddress}`,
         description: 'X-402 integration test dispute',
         request: {
           method: 'POST',

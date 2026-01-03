@@ -6,12 +6,11 @@ import { cleanupTestDataDirect } from './fixtures/test-cleanup-helper';
  * HTTP Endpoint Tests - Pure HTTP Testing (No Hybrid Approach)
  *
  * Tests for critical HTTP endpoints:
- * - POST /agents/register
  * - POST /evidence
  * - POST /api/disputes/agent (formerly /disputes)
- * - POST /api/disputes/payment
  * - GET /cases/:caseId
- * - POST /agents/capabilities
+ * - Wallet-first: POST /v1/topup, POST /v1/disputes
+ * - Public registry: GET /live/feed
  *
  * IMPORTANT: These are pure HTTP tests that validate error responses and input validation.
  * They do NOT use convex-test (in-memory database) because that creates a separate database
@@ -24,41 +23,32 @@ import { cleanupTestDataDirect } from './fixtures/test-cleanup-helper';
  * - Authentication failures (401 errors)
  */
 
-describe('HTTP API - Agent Registration', () => {
-  // Pure HTTP tests - validate public key registration
-
-  describe('POST /agents/register', () => {
-    it('should require public key', async () => {
-      const agentData = {
-        name: 'HTTP Test Agent',
-        organizationName: 'Test Org',
-        // Missing publicKey
-      };
-
-      const response = await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(agentData),
-      });
-
-      // Should return 400 for missing required field
-      expect(response.status).toBe(400);
+describe("HTTP API - Removed endpoints", () => {
+  it("POST /agents/register should be removed (404)", async () => {
+    const response = await fetch(`${API_BASE_URL}/agents/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Test", publicKey: "abc", organizationName: "Test" }),
     });
+    expect(response.status).toBe(404);
+  });
 
-    it('should require organization name', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Test Agent',
-          publicKey: 'dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk',
-          // Missing organizationName
-        }),
-      });
-
-      // Should return 400 for missing required field
-      expect(response.status).toBe(400);
+  it("POST /agents/capabilities should be removed (404)", async () => {
+    const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentDid: "did:agent:test", capabilities: ["x"] }),
     });
+    expect(response.status).toBe(404);
+  });
+
+  it("POST /api/disputes/payment should be removed (404)", async () => {
+    const response = await fetch(`${API_BASE_URL}/api/disputes/payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    expect(response.status).toBe(404);
   });
 });
 
@@ -145,17 +135,17 @@ describe('HTTP API - Dispute Filing', () => {
   // Pure HTTP tests - validate error responses and input validation without test data
 
   describe('POST /api/disputes/agent', () => {
-    it('should reject missing required fields', async () => {
+    it('should be removed (404)', async () => {
       const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plaintiff: 'did:test:nonexistent-plaintiff',
-          // Missing defendant and other required fields
         }),
       });
 
-      expect(response.status).toBe(400);
+      // May be 400 on older deployments; should become 404 after endpoint removal is deployed.
+      expect([400, 404]).toContain(response.status);
     });
 
     it('should reject dispute with empty type', async () => {
@@ -203,6 +193,43 @@ describe('HTTP API - Dispute Filing', () => {
       expect([400, 404]).toContain(response.status);
     });
   });
+
+  describe("POST /v1/disputes (wallet-first)", () => {
+    it("should reject missing merchant", async () => {
+      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyer: "buyer:anonymous",
+          // missing merchant
+        }),
+      });
+
+      // Endpoint may not exist on older deployments.
+      expect([400, 404]).toContain(response.status);
+    });
+
+    it("should accept a minimal wallet-first dispute", async () => {
+      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyer: "buyer:test",
+          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+          reason: "api_timeout",
+          amountMicrousdc: "10000",
+        }),
+      });
+
+      // Endpoint may not exist on older deployments.
+      expect([200, 404]).toContain(response.status);
+      if (response.status === 200) {
+        const data = await response.json();
+        expect(data.ok).toBe(true);
+        expect(data.disputeId).toBeDefined();
+      }
+    });
+  });
 });
 
 describe('HTTP API - Case Status', () => {
@@ -236,67 +263,50 @@ describe('HTTP API - Case Status', () => {
   });
 });
 
-describe('HTTP API - Agent Capabilities', () => {
-  // Pure HTTP tests - validate error responses without test data
-
-  describe('POST /agents/capabilities', () => {
-    it('should reject invalid agent DID', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentDid: 'did:agent:nonexistent-12345',
-          capabilities: ['test'],
-        }),
-      });
-
-      expect([400, 404]).toContain(response.status);
+describe("HTTP API - Wallet-first Topup (v1/v2 discovery)", () => {
+  it("POST /v1/topup should return 400 for missing merchant", async () => {
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountMicrousdc: "10000",
+        currency: "USDC",
+      }),
     });
-
-    it('should reject missing required fields', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Missing agentDid
-          capabilities: ['test'],
-        }),
-      });
-
-      expect(response.status).toBe(400);
-    });
-
-    it('should reject malformed capabilities (not array)', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentDid: 'did:agent:test',
-          capabilities: 'not-an-array',
-        }),
-      });
-
-      expect([400, 404]).toContain(response.status);
-    });
-
-    it('should reject invalid JSON', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'invalid json',
-      });
-
-      // Should return 400 or 500 depending on how error is handled
-      expect([400, 500]).toContain(response.status);
-    });
+    // Endpoint may not exist on older deployments.
+    expect([400, 404]).toContain(response.status);
   });
-  
-  afterAll(async () => {
-    // Clean up any test data created (though these are mostly error tests)
-    if (!USE_LIVE_API) {
-      const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
-      await cleanupTestDataDirect(convexUrl);
-    }
+
+  it("POST /v1/topup should return 402 with PAYMENT-REQUIRED header and v1 body", async () => {
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+      }),
+    });
+    // Endpoint may not exist on older deployments or may be unconfigured (deposit address).
+    expect([402, 404, 500]).toContain(response.status);
+    if (response.status === 404) return;
+    if (response.status === 500) return;
+
+    const paymentRequired = response.headers.get("PAYMENT-REQUIRED");
+    expect(typeof paymentRequired === "string" && paymentRequired.length > 0).toBe(true);
+
+    const body = await response.json();
+    expect(body.x402Version).toBe(1);
+    expect(Array.isArray(body.accepts)).toBe(true);
+    expect(body.accepts.length).toBeGreaterThan(0);
   });
+});
+
+afterAll(async () => {
+  // Clean up any test data created (though these are mostly error tests)
+  if (!USE_LIVE_API) {
+    const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
+    await cleanupTestDataDirect(convexUrl);
+  }
 });
 

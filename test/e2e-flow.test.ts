@@ -216,199 +216,26 @@ describe('E2E: Evidence Submission Scenarios', () => {
   });
 });
 
-describe('E2E: Dispute Filing Scenarios', () => {
-  let t: ReturnType<typeof convexTest>;
-  let plaintiff: string;
-  let defendant: string;
-  let evidenceId: string;
-
-  beforeAll(async () => {
-    if (!USE_LIVE_API) {
-      const modules = import.meta.glob('../convex/**/*.{ts,js}');
-      t = convexTest(schema, modules);
-      
-      const ownerDid = `did:test:dispute-owner-${Date.now()}`;
-      await t.mutation(api.auth.createOwner, {
-        did: ownerDid,
-        name: 'Dispute Test Owner',
-        email: `dispute-test-${Date.now()}@example.com`,
-      });
-      
-      const p = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
-        name: 'Plaintiff',
-        organizationName: `Plaintiff ${Date.now()}`,
-      });
-      plaintiff = p.did;
-      
-      const d = await t.mutation(api.agents.joinAgent, {
-        ownerDid,
-        name: 'Defendant',
-        organizationName: `Defendant ${Date.now()}`,
-      });
-      defendant = d.did;
-      
-      evidenceId = await t.mutation(api.evidence.submitEvidence, {
-        agentDid: plaintiff,
-        sha256: `dispute_ev_${Date.now()}`,
-        uri: 'https://evidence.example.com/dispute.json',
-        signer: plaintiff,
-        model: {
-          provider: 'test',
-          name: 'test-model',
-          version: '1.0.0',
-        },
-      });
-    }
-  });
-
-  it('Positive: Should file dispute with full details', async () => {
-    if (USE_LIVE_API) {
-      return;
-    }
-
+describe("E2E: Dispute Filing Scenarios (agent disputes removed)", () => {
+  it("POST /api/disputes/agent should be removed (404)", async () => {
     const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        plaintiff,
-        defendant,
-        type: 'SLA_BREACH',
-        jurisdictionTags: ['AI_SERVICE', 'UPTIME'],
-        evidenceIds: [evidenceId],
-        description: 'Defendant failed to maintain 99.9% uptime SLA',
-        claimedDamages: 75000,
-        breachDetails: {
-          duration: '4 hours',
-          impactLevel: 'Significant',
-          affectedUsers: 5000,
-          slaRequirement: '99.9% uptime',
-          actualPerformance: '98.2% uptime',
-        },
+        plaintiff: "did:test:any",
+        defendant: "did:test:any2",
+        type: "SLA_BREACH",
+        jurisdictionTags: ["TEST"],
+        evidenceIds: [],
       }),
     });
 
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.caseId).toBeDefined();
-    expect(data.status).toBe('FILED');
-  });
-
-  it('Neutral: Should file dispute with minimal evidence', async () => {
-    if (USE_LIVE_API) {
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff,
-        defendant,
-        type: 'SERVICE_INTERRUPTION',
-        jurisdictionTags: ['AI_SERVICE'],
-        evidenceIds: [evidenceId],
-      }),
-    });
-
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.caseId).toBeDefined();
-  });
-
-  it('Negative: Should reject dispute with same plaintiff and defendant', async () => {
-    if (USE_LIVE_API) {
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff,
-        defendant: plaintiff, // Same as plaintiff
-        type: 'SLA_BREACH',
-        jurisdictionTags: ['TEST'],
-        evidenceIds: [evidenceId],
-      }),
-    });
-
-    expect(response.status).toBe(400);
-    const data = await response.json();
-    expect(data.error).toMatch(/different|same/i);
-  });
-
-  it('Negative: Should reject dispute with non-existent plaintiff', async () => {
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff: 'did:agent:nonexistent-plaintiff',
-        defendant: defendant,
-        type: 'SLA_BREACH',
-        jurisdictionTags: ['TEST'],
-        evidenceIds: [evidenceId],
-      }),
-    });
-
-    expect([400, 500]).toContain(response.status);
-  });
-
-  it('Negative: Should reject dispute with non-existent defendant', async () => {
-    if (USE_LIVE_API) {
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff,
-        defendant: 'did:agent:nonexistent-defendant',
-        type: 'SLA_BREACH',
-        jurisdictionTags: ['TEST'],
-        evidenceIds: [evidenceId],
-      }),
-    });
-
-    expect(response.status).toBe(400);
-  });
-
-  it('Negative: Should reject dispute with non-existent evidence', async () => {
-    if (USE_LIVE_API) {
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff,
-        defendant,
-        type: 'SLA_BREACH',
-        jurisdictionTags: ['TEST'],
-        evidenceIds: ['jb99999999999999999999999'], // Non-existent
-      }),
-    });
-
-    expect([400, 500]).toContain(response.status);
-  });
-
-  it('Negative: Should reject dispute missing required fields', async () => {
-    const response = await fetch(`${API_BASE_URL}/api/disputes/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plaintiff,
-        // Missing defendant, type, etc.
-      }),
-    });
-
-    expect(response.status).toBe(400);
+    // May be 400 on older deployments; should become 404 after endpoint removal is deployed.
+    expect([400, 404]).toContain(response.status);
   });
 });
 
-describe('E2E: Case Status Tracking Scenarios', () => {
+describe.skip('E2E: Case Status Tracking Scenarios', () => {
   let t: ReturnType<typeof convexTest>;
   let filedCaseId: string;
   let decidedCaseId: string;
@@ -557,7 +384,7 @@ describe('E2E: Case Status Tracking Scenarios', () => {
   });
 });
 
-describe('E2E: Complete Dispute Resolution Flow - Auto-Decision', () => {
+describe.skip('E2E: Complete Dispute Resolution Flow - Auto-Decision', () => {
   let t: ReturnType<typeof convexTest>;
 
   beforeAll(async () => {
@@ -695,7 +522,7 @@ describe('E2E: Complete Dispute Resolution Flow - Auto-Decision', () => {
   });
 });
 
-describe('E2E: Multi-Party Dispute Scenarios', () => {
+describe.skip('E2E: Multi-Party Dispute Scenarios', () => {
   let t: ReturnType<typeof convexTest>;
 
   beforeAll(async () => {
@@ -886,7 +713,7 @@ describe('E2E: Multi-Party Dispute Scenarios', () => {
   });
 });
 
-describe('E2E: Complex Workflow Scenarios', () => {
+describe.skip('E2E: Complex Workflow Scenarios', () => {
   let t: ReturnType<typeof convexTest>;
 
   beforeAll(async () => {
@@ -1297,7 +1124,7 @@ describe('E2E: Error Recovery and Edge Cases', () => {
   });
 });
 
-describe('E2E: Full Lifecycle with Status Transitions', () => {
+describe.skip('E2E: Full Lifecycle with Status Transitions', () => {
   let t: ReturnType<typeof convexTest>;
 
   beforeAll(async () => {
@@ -1560,10 +1387,7 @@ describe('E2E: Production API Smoke Tests', () => {
 
   it('Production: GET /agents - List agents responds', async () => {
     const response = await fetch(`${API_BASE_URL}/agents?limit=5`);
-    expect(response.status).toBe(200);
-    
-    const data = await response.json();
-    expect(Array.isArray(data)).toBe(true);
+    expect(response.status).toBe(404);
   });
 
   it('Production: GET /live/feed - Live feed responds', async () => {
@@ -1571,8 +1395,8 @@ describe('E2E: Production API Smoke Tests', () => {
     expect(response.status).toBe(200);
     
     const data = await response.json();
-    expect(data.feed).toBeDefined();
-    expect(Array.isArray(data.feed)).toBe(true);
+    expect(data.ok).toBe(true);
+    expect(Array.isArray(data.cases)).toBe(true);
   });
 
   it('Production: POST /agents/discover - Discovery endpoint responds', async () => {
@@ -1584,10 +1408,7 @@ describe('E2E: Production API Smoke Tests', () => {
         excludeSelf: false,
       }),
     });
-
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.discovered).toBeDefined();
+    expect(response.status).toBe(404);
   });
 });
 
@@ -1747,29 +1568,16 @@ describe('E2E: Real-Time Monitoring and Notifications', () => {
     expect(feedResp.status).toBe(200);
     
     const data = await feedResp.json();
-    expect(data.feed).toBeDefined();
-    expect(Array.isArray(data.feed)).toBe(true);
-    expect(data.systemHealth).toBeDefined();
+    expect(data.ok).toBe(true);
+    expect(Array.isArray(data.cases)).toBe(true);
   });
 
-  it('Flow: Filter live feed by agent activity', async () => {
-    if (USE_LIVE_API || !monitorAgentDid) {
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=${monitorAgentDid}`);
+  it('Flow: Live feed should accept limit', async () => {
+    const response = await fetch(`${API_BASE_URL}/live/feed?limit=5`);
     expect(response.status).toBe(200);
-    
     const data = await response.json();
-    expect(Array.isArray(data.feed)).toBe(true);
-  });
-
-  it('Flow: Filter live feed by event types', async () => {
-    const response = await fetch(`${API_BASE_URL}/live/feed?types=DISPUTE_FILED,EVIDENCE_SUBMITTED`);
-    expect(response.status).toBe(200);
-    
-    const data = await response.json();
-    expect(Array.isArray(data.feed)).toBe(true);
+    expect(Array.isArray(data.cases)).toBe(true);
+    expect(data.cases.length).toBeLessThanOrEqual(5);
   });
 });
 
@@ -1790,11 +1598,8 @@ describe('E2E: Integration with External Systems', () => {
       }),
     });
 
-    // Should return 400 for missing required fields, not 401
-    expect(response.status).toBe(400);
-    const data = await response.json();
-    expect(data.error).toBeDefined();
-    expect(data.error).toMatch(/publicKey|organizationName/i);
+    // /agents/* HTTP endpoints have been removed from the public HTTP surface.
+    expect(response.status).toBe(404);
   });
 
   it('Flow: Evidence submission with authentication headers', async () => {

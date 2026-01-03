@@ -1,10 +1,8 @@
 "use client"
 
-import { useQuery } from "convex/react"
-import { api } from "@convex/_generated/api"
 import { DisputeRow } from "./DisputeRow"
 import { Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 interface DisputeFeedProps {
@@ -13,13 +11,81 @@ interface DisputeFeedProps {
   limit?: number
 }
 
+type RegistryCase = {
+  caseId: string
+  filedAt: number
+  status: string
+  buyer: string | null
+  merchant: string | null
+  reason: string | null
+  amountMicrousdc: number | null
+  currency: string | null
+}
+
 export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: DisputeFeedProps) {
   const [displayLimit, setDisplayLimit] = useState(limit)
-  
-  // Real-time query with Convex subscriptions
-  const cases = useQuery(api.cases.getRecentCases, { limit: displayLimit })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [rows, setRows] = useState<RegistryCase[]>([])
 
-  if (cases === undefined) {
+  const API_BASE = "https://api.x402disputes.com"
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const resp = await fetch(`${API_BASE}/live/feed?limit=${displayLimit}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        })
+        if (!resp.ok) throw new Error(`Failed to load feed (${resp.status})`)
+        const data = await resp.json()
+        const cases = Array.isArray(data?.cases) ? (data.cases as RegistryCase[]) : []
+        if (!cancelled) setRows(cases)
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (!cancelled) setError(msg || "Failed to load disputes")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [displayLimit])
+
+  const filteredCases = useMemo(() => {
+    const list = rows ?? []
+    let out = list
+
+    if (filter === "pending") {
+      out = out.filter((c) => ["FILED", "ANALYZED", "IN_REVIEW"].includes(c.status))
+    } else if (filter === "resolved") {
+      out = out.filter((c) => ["DECIDED", "CLOSED"].includes(c.status))
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      out = out.filter((c) => {
+        return [
+          c.caseId,
+          c.buyer,
+          c.merchant,
+          c.reason,
+        ]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q))
+      })
+    }
+
+    return out
+  }, [rows, filter, searchQuery])
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
@@ -27,31 +93,13 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
     )
   }
 
-  if (!cases || !Array.isArray(cases)) {
+  if (error) {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500">Unable to load disputes. Please try again.</p>
+        <p className="text-xs text-slate-400 mt-2">{error}</p>
       </div>
     )
-  }
-
-  // Filter cases based on status
-  let filteredCases = cases
-  if (filter === 'pending') {
-    filteredCases = cases.filter((c: typeof cases[number]) => c.status && ['FILED', 'ANALYZED', 'IN_REVIEW'].includes(c.status))
-  } else if (filter === 'resolved') {
-    filteredCases = cases.filter((c: typeof cases[number]) => c.status && ['DECIDED', 'CLOSED'].includes(c.status))
-  }
-
-  // Filter by search query if provided
-  if (searchQuery) {
-    const query = searchQuery.toLowerCase()
-    filteredCases = filteredCases.filter((c: typeof cases[number]) => {
-      const caseId = c._id?.toLowerCase() || ''
-      const plaintiff = c.plaintiff?.toLowerCase() || ''
-      const defendant = c.defendant?.toLowerCase() || ''
-      return caseId.includes(query) || plaintiff.includes(query) || defendant.includes(query)
-    })
   }
 
   if (filteredCases.length === 0) {
@@ -71,16 +119,16 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
           Found {filteredCases.length} dispute{filteredCases.length === 1 ? '' : 's'} matching &ldquo;{searchQuery}&rdquo;
         </div>
       )}
-      {filteredCases.map((case_: typeof cases[number], index: number) => {
+      {filteredCases.map((case_: RegistryCase, index: number) => {
         try {
           return (
             <DisputeRow
-              key={case_._id || `case-${index}`}
-              caseId={case_._id || 'unknown'}
-              plaintiff={case_.plaintiff ?? 'Unknown'}
-              defendant={case_.defendant ?? 'Unknown'}
-              amount={case_.amount}
-              currency={case_.currency}
+              key={case_.caseId || `case-${index}`}
+              caseId={case_.caseId || 'unknown'}
+              plaintiff={case_.buyer ?? 'Unknown'}
+              defendant={case_.merchant ?? 'Unknown'}
+              amount={typeof case_.amountMicrousdc === "number" ? case_.amountMicrousdc / 1_000_000 : undefined}
+              currency={case_.currency ?? "USDC"}
               status={case_.status ?? 'FILED'}
               filedAt={case_.filedAt ?? 0}
             />

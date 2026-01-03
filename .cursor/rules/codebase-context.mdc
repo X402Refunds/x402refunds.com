@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2025-12-31T13:26:44.906Z
+**Auto-generated on**: 2026-01-03T03:18:47.870Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -49,6 +49,7 @@ consulate/
 ## 🎨 Common Assets
 
 ### Favicons (dashboard/public/)
+- coverage/favicon.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/favicon-192.png
 - dashboard/public/favicon-32.png
@@ -62,6 +63,7 @@ consulate/
 - public/consulate-workspace-logo.png
 
 ### Other Images
+- coverage/sort-arrow-sprite.png
 - dashboard/public/apple-touch-icon.png
 - dashboard/public/consulate-dispute-illustration-index-page.png
 - dashboard/public/consulate-one-api-illustration-index-page.png
@@ -71,11 +73,11 @@ consulate/
 - dashboard/public/landing/all-disputes-mobile-2025-12-31.png
 - dashboard/public/landing/all-disputes-mobile.png
 - dashboard/public/landing/all-disputes.png
-- dashboard/public/landing/dispute-status-2025-12-31.png
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (54 files)
+### Convex Files (58 files)
+- **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
 - **index.ts** - quickDecision
@@ -84,10 +86,10 @@ consulate/
 - **signatureAgent.ts** - signatureVerificationAgent, verifySignedEvidence
 - **specValidatorAgent.ts** - specValidatorAgent, validateApiContract
 - **supportAgent.ts** - customerSupportAgent, handleSupportTicket
-- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet
+- **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet, migrateAgentWalletsToCaip10
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, backfillPaymentSourceTx, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, backfillPaymentSourceTx, migratePaymentCasesToWalletFirstV1, runMigratePaymentCasesToWalletFirstV1, purgeNonPaymentCasesAndOrphans, runPurgeNonPaymentCasesAndOrphans, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, listLiveFeedCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes, analyzeDatabase, deleteAllAgentsExceptOne, deleteMockData, deleteLargeAmountCases, deleteZeroAmountCases, cleanupOrphanedRecords
 - **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -115,11 +117,14 @@ consulate/
 - **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **migrations.ts** - runCaseTypeCounts
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
+- **pool.ts** - cases_fileWalletPaymentDispute, cases_listWalletDisputesByMerchant, topup_creditMerchantBalanceFromTx, arbiter_resolveDispute
 - **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, applyVerifiedTopUp, submitTopUpAndAutoApply, getPlatformDepositAddress, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
 - **refunds.ts** - executeAutomatedRefund, createRefundAttempt, sendPendingRefund, getRefundTransaction, insertRefundFailure, createRefundAttemptRecord, retryRefundForCase, markRefundFailed, rollbackAndFailRefund, markRefundExecuted, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
+- **sanity.ts** - runCountPaymentCasesWithNonCaip10Defendant, runCountAgentsWithNonCaip10WalletAddress
 - **schema.ts** - Core logic
 - **testing.ts** - cleanupTestData, deleteTestAgentsBatch, deleteTestCasesBatch, runTestCleanup, deleteSpecificCases
 - **types.ts** - EvidenceManifestSchema, PanelSchema, RulingSchema, PrecedentSchema, ReputationSchema, EventSchema
@@ -182,7 +187,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (43 test files)
+### Test Suites (49 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -193,6 +198,7 @@ Common HTTP routes exposed:
 - test/cases.test.ts
 - test/customer-review-workflow.test.ts
 - test/e2e-flow.test.ts
+- test/e2e-wallet-first.test.ts
 - test/events.test.ts
 - test/evidence-specialized.test.ts
 - test/http-agent-claiming.test.ts
@@ -216,12 +222,17 @@ Common HTTP routes exposed:
 - test/system-endpoints.test.ts
 - test/unit/aa-usdc-transfer-logs.test.ts
 - test/unit/batch-processing.test.ts
+- test/unit/caip10-sanity-checks.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
+- test/unit/migrate-wallet-first-payment-cases.test.ts
+- test/unit/purge-nonpayment-cases.test.ts
 - test/unit/regulation-e-compliance.test.ts
+- test/unit/v1-wallet-first-disputes.test.ts
 - test/unit/vector-similarity.test.ts
 - test/unit/webhooks.test.ts
 - test/unit/x402-payment-header-decode.test.ts
 - test/unit/x402-topup-requirements.test.ts
+- test/unit/x402-v2-client-helpers.test.ts
 - test/users.test.ts
 - test/workflow-agent-outputs.test.ts
 - test/workflow-integration.test.ts
@@ -341,13 +352,13 @@ Common HTTP routes exposed:
 - 74 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 54 TypeScript files with serverless functions
+- 58 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 43 test files using Vitest
+- 49 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -380,5 +391,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 12/31/2025, 6:56:44 PM
-Files scanned: 412
+Generated: 1/3/2026, 8:48:47 AM
+Files scanned: 507

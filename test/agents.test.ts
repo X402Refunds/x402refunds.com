@@ -53,7 +53,7 @@ describe('Agent Registration & Reputation - MVP', () => {
       expect(result.did).toBeDefined();
       expect(result.did).toMatch(/^did:agent:test-organization-\d+$/);
       if (result.disputeUrl) {
-      expect(result.disputeUrl).toContain('/disputes/claim?vendor=');
+      expect(result.disputeUrl).toContain('/v1/disputes?merchant=');
       }
       expect(result.publicKey).toBe(testPublicKey);
 
@@ -120,7 +120,7 @@ describe('Agent Registration & Reputation - MVP', () => {
       });
       
       expect(firstAgent.agentId).toBeDefined();
-      expect(firstAgent.walletAddress).toBe(walletAddress.toLowerCase());
+      expect(firstAgent.walletAddress).toBe(`eip155:8453:${walletAddress.toLowerCase()}`);
 
       // Try to register second agent with same wallet address
       await expect(

@@ -92,211 +92,34 @@ describe('Consulate HTTP API - Agent Management', () => {
   });
 
   describe('GET /agents - List Agents', () => {
-    it('should list all agents with default limit', async () => {
+    it('should be removed (404)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    });
-
-    it('should filter agents by functional type', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents?type=general&limit=5`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeLessThanOrEqual(5);
-    });
-
-    it('should respect limit parameter', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents?limit=3`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeLessThanOrEqual(3);
-    });
-
-    it('should reject invalid functional type', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents?type=invalid_type_12345`);
-      // May return empty array or error
-      expect([200, 400]).toContain(response.status);
-    });
-
-    it('should handle limit > 1000 gracefully', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents?limit=9999`);
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      // Should cap at reasonable limit
-      expect(data.length).toBeLessThanOrEqual(1000);
-    });
-
-    it('should handle negative limit', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents?limit=-5`);
-      // Should treat as invalid or use default
-      expect([200, 400]).toContain(response.status);
+      expect(response.status).toBe(404);
     });
   });
 
   describe('GET /agents/top-reputation - Top Agents', () => {
-    it('should return top agents by overall score', async () => {
+    it('should be removed (404)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=5`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeLessThanOrEqual(5);
-    });
-
-    it('should support sorting by win rate', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?sortBy=winRate&limit=3`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    });
-
-    it('should reject invalid sortBy parameter', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?sortBy=invalidSort`);
-      // May ignore invalid sort and use default
-      expect([200, 400]).toContain(response.status);
-    });
-
-    it('should handle limit = 0', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=0`);
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    });
-
-    it('should handle no agents scenario', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=1000`);
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
+      expect(response.status).toBe(404);
     });
   });
 
   describe('POST /agents/discover - Agent Discovery', () => {
-    it('should discover agents by functional type', async () => {
+    it('should be removed (404)', async () => {
       const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-          excludeSelf: false
-        })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ functionalTypes: ["general"] }),
       });
-
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(data.discovered).toBeDefined();
-      expect(Array.isArray(data.agents)).toBe(true);
-      expect(data.timestamp).toBeDefined();
-    });
-
-    it('should exclude self from discovery', async () => {
-      const selfDid = 'did:agent:self-test';
-      
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-          excludeSelf: true,
-          agentDid: selfDid
-        })
-      });
-
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      const foundSelf = data.agents.some((agent: any) => agent.did === selfDid);
-      expect(foundSelf).toBe(false);
-    });
-
-    it('should reject invalid functional types array', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          functionalTypes: 'not-an-array',
-        })
-      });
-
-      // May accept and handle gracefully
-      expect([200, 400]).toContain(response.status);
-    });
-
-    it('should handle empty discovery results gracefully', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          functionalTypes: ['extremely-rare-type-that-does-not-exist'],
-        })
-      });
-
-      expect([200, 400]).toContain(response.status);
-      if (response.status === 200) {
-        const data = await response.json();
-        expect(data.discovered).toBeGreaterThanOrEqual(0);
-      }
-    });
-
-    it('should reject malformed request body', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'invalid json {',
-      });
-
-      expect([400, 500]).toContain(response.status);
+      expect(response.status).toBe(404);
     });
   });
 
   describe('GET /agents/:did/reputation - Get Reputation', () => {
-    it('should return 404 for non-existent agent', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/did:agent:non-existent-999/reputation`);
+    it('should be removed (404)', async () => {
+      const response = await fetch(`${API_BASE_URL}/agents/did:agent:any/reputation`);
       expect(response.status).toBe(404);
-    });
-
-    it('should reject malformed DID', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/invalid-did-format/reputation`);
-      expect([400, 404]).toContain(response.status);
-    });
-
-    it('should return reputation for valid agent', async () => {
-      // Create agent first
-      if (!USE_LIVE_API) {
-        const agent = await t.mutation(api.agents.joinAgent, {
-          name: 'Rep Test Agent',
-          publicKey: testOwnerDid, // testOwnerDid now stores the public key
-          organizationName: `Rep Test Org ${Date.now()}`,
-        });
-
-        const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
-        expect([200, 404]).toContain(response.status);
-      }
-    });
-
-    it('should handle agent with no cases', async () => {
-      // Agent with no dispute history should return default reputation
-      if (!USE_LIVE_API) {
-        const agent = await t.mutation(api.agents.joinAgent, {
-          apiKey: testOwnerDid, // testOwnerDid now stores the API key
-          name: 'No Cases Agent',
-        });
-
-        const response = await fetch(`${API_BASE_URL}/agents/${agent.did}/reputation`);
-        if (response.status === 200) {
-          const data = await response.json();
-          expect(data.totalCases).toBe(0);
-        }
-      }
     });
   });
 });
@@ -568,68 +391,44 @@ describe('Consulate HTTP API - Webhooks & Notifications', () => {
 
 describe('Consulate HTTP API - Real-Time Monitoring', () => {
   describe('GET /live/feed - Live Activity Feed', () => {
-    it('should return live feed', async () => {
+    it('should return cases-based live feed', async () => {
       const response = await fetch(`${API_BASE_URL}/live/feed`);
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data.feed)).toBe(true);
-      expect(data.systemHealth).toBeDefined();
+      expect(data.ok).toBe(true);
+      expect(Array.isArray(data.cases)).toBe(true);
+      expect(Array.isArray(data.feed)).toBe(true); // compatibility alias
       expect(data.lastUpdate).toBeDefined();
     });
 
-    it('should filter feed by event types', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed?types=DISPUTE_FILED,CASE_STATUS_UPDATED`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data.feed)).toBe(true);
-    });
-
-    it('should filter feed by agent', async () => {
-      const testAgentDid = 'did:agent:test';
-      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=${testAgentDid}`);
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(Array.isArray(data.feed)).toBe(true);
-    });
-
-    it('should reject invalid event types', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed?types=INVALID_TYPE,ANOTHER_INVALID`);
+    it('should support limit', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed?limit=5`);
       expect(response.status).toBe(200);
       const data = await response.json();
-      // Should return empty feed or ignore invalid types
-      expect(Array.isArray(data.feed)).toBe(true);
+      expect(Array.isArray(data.cases)).toBe(true);
+      expect(data.cases.length).toBeLessThanOrEqual(5);
     });
 
-    it('should handle empty feed gracefully', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=did:agent:no-activity-999`);
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data.feed).toHaveLength(0);
-    });
-
-    it('should reject invalid agent DID filter', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=invalid-did-format`);
-      // May filter out or ignore invalid DID
-      expect(response.status).toBe(200);
+    it('should reject invalid limit', async () => {
+      const response = await fetch(`${API_BASE_URL}/live/feed?limit=0`);
+      expect(response.status).toBe(400);
     });
 
     it('should limit feed size appropriately', async () => {
       const response = await fetch(`${API_BASE_URL}/live/feed`);
       expect(response.status).toBe(200);
       const data = await response.json();
-      expect(Array.isArray(data.feed)).toBe(true);
+      expect(Array.isArray(data.cases)).toBe(true);
       // Should not return more than reasonable limit
-      expect(data.feed.length).toBeLessThanOrEqual(100);
+      expect(data.cases.length).toBeLessThanOrEqual(100);
     });
   });
 });
 
 describe('Consulate HTTP API - Error Handling', () => {
   it('should return 400/500 for malformed JSON', async () => {
-    const response = await fetch(`${API_BASE_URL}/agents/register`, {
+    const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{'
@@ -640,45 +439,30 @@ describe('Consulate HTTP API - Error Handling', () => {
   });
 
   it('should return 400 for missing required fields', async () => {
-    const response = await fetch(`${API_BASE_URL}/agents/register`, {
+    const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Incomplete Agent' })
+      body: JSON.stringify({ buyer: 'buyer:test' })
     });
 
     // Should fail on validation (400), not auth (401)
     expect(response.status).toBe(400);
     const data = await response.json();
-    expect(data.error).toBeDefined();
-    expect(data.error).toMatch(/publicKey|organizationName/i);
+    expect(data.ok).toBe(false);
   });
 });
 
 describe('Consulate HTTP API - Integration Flow', () => {
-  it('should complete a full agent workflow', async () => {
-    // 1. List agents
-    const listResponse = await fetch(`${API_BASE_URL}/agents?limit=5`);
-    expect(listResponse.status).toBe(200);
-    const agents = await listResponse.json();
-    expect(Array.isArray(agents)).toBe(true);
+  it('should complete a minimal public workflow', async () => {
+    const health = await fetch(`${API_BASE_URL}/health`);
+    expect(health.status).toBe(200);
 
-    // 2. If agents exist, get reputation for first one
-    if (agents.length > 0 && agents[0].did) {
-      const repResponse = await fetch(`${API_BASE_URL}/agents/${agents[0].did}/reputation`);
-      // May be 200 (found) or 404 (not found) - both are valid
-      expect([200, 404]).toContain(repResponse.status);
-    }
+    const mcp = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
+    expect(mcp.status).toBe(200);
 
-    // 3. Get top agents
-    const topResponse = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=3`);
-    expect(topResponse.status).toBe(200);
-    const topAgents = await topResponse.json();
-    expect(Array.isArray(topAgents)).toBe(true);
-
-    // 4. Check live feed
-    const feedResponse = await fetch(`${API_BASE_URL}/live/feed`);
+    const feedResponse = await fetch(`${API_BASE_URL}/live/feed?limit=5`);
     expect(feedResponse.status).toBe(200);
     const feed = await feedResponse.json();
-    expect(Array.isArray(feed.feed)).toBe(true);
+    expect(Array.isArray(feed.cases)).toBe(true);
   });
 });

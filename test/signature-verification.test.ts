@@ -195,10 +195,9 @@ describe("Signature Verification System", () => {
     });
   });
 
-  describe("HTTP Endpoint: /disputes/claim", () => {
+  describe("HTTP Endpoint: /disputes/claim (removed)", () => {
     it("should handle buyer dispute claim with signature verification", async () => {
-      // This test would require HTTP testing
-      // For now, we've tested the underlying mutations
+      // Endpoint removed; underlying signature verification is still tested elsewhere.
       expect(true).toBe(true);
     });
   });

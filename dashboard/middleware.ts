@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from "next/server"
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -8,9 +9,21 @@ const isPublicRoute = createRouteMatcher([
   '/screenshots(.*)', // Public screenshot routes for marketing assets (no auth)
   // Top-ups use x402 payment proof; keep endpoint public to avoid www/apex session issues.
   '/api/billing/topup(.*)',
+  // Wallet-first v1 (no-login) pages
+  '/topup(.*)',
+  '/disputes(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
+  // Force canonical host so /topup works even if www points at a stale deployment.
+  const host = request.headers.get("host") || ""
+  if (host === "www.x402disputes.com") {
+    const url = request.nextUrl.clone()
+    url.host = "x402disputes.com"
+    url.protocol = "https:"
+    return NextResponse.redirect(url, 308)
+  }
+
   // Protect all non-public routes
   if (!isPublicRoute(request)) {
     await auth.protect()

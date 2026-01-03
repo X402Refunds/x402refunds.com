@@ -220,8 +220,9 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.events).toBeDefined();
-      expect(Array.isArray(data.events)).toBe(true);
+      expect(data.ok).toBe(true);
+      expect(data.cases).toBeDefined();
+      expect(Array.isArray(data.cases)).toBe(true);
       
       // Verify CORS headers
       expect(response.headers.get('access-control-allow-origin')).toBe('*');

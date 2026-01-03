@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
@@ -7,6 +7,22 @@ import { internal } from "./_generated/api";
 // Validate Ethereum address format (0x followed by 40 hex characters)
 function isValidEthereumAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+function normalizeWalletToCaip10Base(walletAddress: string): string | null {
+  const raw = walletAddress.trim();
+  // Legacy 0x... (assume Base / eip155:8453)
+  if (/^0x[a-fA-F0-9]{40}$/.test(raw)) {
+    return `eip155:8453:${raw.toLowerCase()}`;
+  }
+  // Already CAIP-10 eip155
+  const m = raw.match(/^eip155:(\\d+):(0x[a-fA-F0-9]{40})$/);
+  if (m) {
+    const chainId = Number(m[1]);
+    if (!Number.isSafeInteger(chainId) || chainId <= 0) return null;
+    return `eip155:${chainId}:${m[2].toLowerCase()}`;
+  }
+  return null;
 }
 
 // Agent registration with Ed25519 public key
@@ -51,22 +67,28 @@ export const joinAgent = mutation({
         throw new Error("Public key is required for agent registration");
       }
 
-      // Validate Ethereum address format (if provided)
+      // Validate Ethereum address format (if provided) and store as CAIP-10.
       let normalizedWalletAddress: string | undefined = undefined;
       if (args.walletAddress) {
-        normalizedWalletAddress = args.walletAddress.trim();
-        if (!isValidEthereumAddress(normalizedWalletAddress)) {
-          throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+        const caip10 = normalizeWalletToCaip10Base(args.walletAddress);
+        if (!caip10) {
+          throw new Error(
+            "Invalid walletAddress. Expected 0x followed by 40 hex characters, or CAIP-10 eip155:<chainId>:0x<40hex>."
+          );
         }
-        
+
+        normalizedWalletAddress = caip10;
+
         // Check if wallet address is already in use
         const existingAgent = await ctx.db
           .query("agents")
-          .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress!.toLowerCase()))
+          .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress))
           .first();
-        
+
         if (existingAgent) {
-          throw new Error(`Wallet address ${normalizedWalletAddress} is already registered to agent ${existingAgent.did} (${existingAgent.name || 'unnamed'}). Each Ethereum address can only be associated with one agent.`);
+          throw new Error(
+            `Wallet address ${normalizedWalletAddress} is already registered to agent ${existingAgent.did} (${existingAgent.name || "unnamed"}). Each wallet can only be associated with one agent.`
+          );
         }
       }
 
@@ -87,7 +109,7 @@ export const joinAgent = mutation({
         name: args.name,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
-        walletAddress: normalizedWalletAddress?.toLowerCase(), // Store normalized Ethereum address (optional)
+        walletAddress: normalizedWalletAddress, // Store CAIP-10 (optional)
         openApiSpec: args.openApiSpec,
         specVersion: args.specVersion,
         mock: args.mock ?? false,
@@ -134,8 +156,10 @@ export const joinAgent = mutation({
       return { 
         agentId, 
         did: agentDid,
-        walletAddress: normalizedWalletAddress?.toLowerCase(),
-        disputeUrl: normalizedWalletAddress ? `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}` : undefined,
+        walletAddress: normalizedWalletAddress,
+        disputeUrl: normalizedWalletAddress
+          ? `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(normalizedWalletAddress.toLowerCase())}`
+          : undefined,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
@@ -673,16 +697,18 @@ export const registerAgentManual = mutation({
     try {
       console.info(`Manual agent registration for ${args.name}`);
 
-      // Validate Ethereum address format
-      const normalizedWalletAddress = args.walletAddress.trim();
-      if (!isValidEthereumAddress(normalizedWalletAddress)) {
-        throw new Error("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)");
+      // Validate wallet address format and store as CAIP-10
+      const normalizedWalletAddress = normalizeWalletToCaip10Base(args.walletAddress);
+      if (!normalizedWalletAddress) {
+        throw new Error(
+          "Invalid walletAddress. Expected 0x followed by 40 hex characters, or CAIP-10 eip155:<chainId>:0x<40hex>."
+        );
       }
 
       // Check if wallet address is already in use
       const existingAgent = await ctx.db
         .query("agents")
-        .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress.toLowerCase()))
+        .withIndex("by_wallet", (q) => q.eq("walletAddress", normalizedWalletAddress))
         .first();
       
       if (existingAgent) {
@@ -721,7 +747,7 @@ export const registerAgentManual = mutation({
         organizationName: orgName,
         organizationId: user.organizationId,
         publicKey: args.publicKey,
-        walletAddress: normalizedWalletAddress.toLowerCase(), // Store normalized Ethereum address
+        walletAddress: normalizedWalletAddress, // Store CAIP-10
         openApiSpec: args.openApiSpec,
         specVersion: args.specVersion,
         deployedByUserId: args.userId,
@@ -755,7 +781,7 @@ export const registerAgentManual = mutation({
       try {
         await ctx.runMutation(internal.cases.assignUnassignedDisputesToOrgForWallet, {
           organizationId: user.organizationId,
-          walletAddress: normalizedWalletAddress.toLowerCase(),
+          walletAddress: normalizedWalletAddress,
         });
       } catch (e: any) {
         // Don't fail agent registration if backfill fails; this can be retried.
@@ -766,8 +792,8 @@ export const registerAgentManual = mutation({
         success: true,
         agentId,
         did: agentDid,
-        walletAddress: normalizedWalletAddress.toLowerCase(),
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${normalizedWalletAddress.toLowerCase()}`,
+        walletAddress: normalizedWalletAddress,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(normalizedWalletAddress)}`,
         organizationName: orgName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,
@@ -877,10 +903,21 @@ export { quickDecision } from "./agents/index";
 export const getAgentByWallet = query({
   args: { walletAddress: v.string() },
   handler: async (ctx, { walletAddress }) => {
-    const agent = await ctx.db
-      .query("agents")
-      .withIndex("by_wallet", (q) => q.eq("walletAddress", walletAddress.toLowerCase()))
-      .first();
+    const raw = walletAddress.trim();
+    const caip10 = normalizeWalletToCaip10Base(raw);
+    const tryKeys: string[] = [];
+    if (caip10) tryKeys.push(caip10);
+    // Backward compatibility: some historical rows may still store raw 0x lowercased
+    if (/^0x[a-fA-F0-9]{40}$/.test(raw)) tryKeys.push(raw.toLowerCase());
+
+    let agent = null as any;
+    for (const key of tryKeys) {
+      agent = await ctx.db
+        .query("agents")
+        .withIndex("by_wallet", (q) => q.eq("walletAddress", key))
+        .first();
+      if (agent) break;
+    }
     
     if (!agent) return null;
     
@@ -904,3 +941,47 @@ export const getAgentByWallet = query({
   },
 });
 
+/**
+ * Idempotent migration: normalize agents.walletAddress to CAIP-10.
+ * - 0x... -> eip155:8453:0x...
+ * - eip155:<n>:0x... -> lowercases the address portion
+ */
+export const migrateAgentWalletsToCaip10 = internalMutation({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ scanned: number; updated: number; cursor: string | null; isDone: boolean; dryRun: boolean }> => {
+    const dryRun = args.dryRun ?? true;
+    const limit = Math.max(1, Math.min(args.limit ?? 500, 2000));
+
+    const page = await ctx.db
+      .query("agents")
+      .withIndex("by_did")
+      .order("asc")
+      .paginate({ cursor: args.cursor ?? null, numItems: limit });
+
+    let updated = 0;
+    for (const agent of page.page as any[]) {
+      const w = typeof agent.walletAddress === "string" ? agent.walletAddress.trim() : "";
+      if (!w) continue;
+      const normalized = normalizeWalletToCaip10Base(w);
+      if (!normalized) continue;
+      if (normalized === agent.walletAddress) continue;
+
+      if (!dryRun) {
+        await ctx.db.patch(agent._id, { walletAddress: normalized });
+      }
+      updated += 1;
+    }
+
+    return {
+      scanned: page.page.length,
+      updated,
+      cursor: page.continueCursor,
+      isDone: page.isDone,
+      dryRun,
+    };
+  },
+});

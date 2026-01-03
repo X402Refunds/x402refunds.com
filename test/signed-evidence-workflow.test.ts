@@ -165,7 +165,7 @@ describe("Signed Evidence Workflow", () => {
       status: 500,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
         consulateAdp: "https://api.x402disputes.com/.well-known/adp",
         vendorDid: vendor.did,
       },
@@ -385,7 +385,7 @@ describe("Signed Evidence Workflow", () => {
       status: 200,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
         consulateAdp: "https://api.x402disputes.com/.well-known/adp",
         vendorDid: vendor.did,
       },
@@ -474,7 +474,7 @@ describe("Signed Evidence Workflow", () => {
       status: 503,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`,
+        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
         consulateAdp: "https://api.x402disputes.com/.well-known/adp",
         vendorDid: vendor.did,
       },
@@ -557,7 +557,7 @@ describe("Signed Evidence Workflow", () => {
     };
     
     // Seller includes dispute URL in SIGNED headers
-    const disputeUrl = `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`;
+    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
     const response = {
       status: 500,
       headers: {
@@ -615,11 +615,11 @@ describe("Signed Evidence Workflow", () => {
 
   it("should extract vendor DID from dispute URL query parameter", async () => {
     const vendorDid = "did:agent:openai-inc-12345";
-    const disputeUrl = `https://api.x402disputes.com/disputes/claim?vendor=${vendorDid}`;
+    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendorDid}`;
     
     // Parse URL to extract vendor DID
     const url = new URL(disputeUrl);
-    const extractedVendor = url.searchParams.get("vendor");
+    const extractedVendor = url.searchParams.get("merchant");
     
     expect(extractedVendor).toBe(vendorDid);
     
@@ -642,7 +642,7 @@ describe("Signed Evidence Workflow", () => {
     });
     
     // Seller provides dispute URL in response headers
-    const disputeUrl = `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`;
+    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
     
     const request = {
       method: "POST",
@@ -676,7 +676,7 @@ describe("Signed Evidence Workflow", () => {
     // Simulate buyer extracting dispute URL from signed headers
     const extractedDisputeUrl = response.headers.disputeUrl;
     const urlObj = new URL(extractedDisputeUrl);
-    const vendorFromUrl = urlObj.searchParams.get("vendor");
+    const vendorFromUrl = urlObj.searchParams.get("merchant");
     
     expect(vendorFromUrl).toBe(vendor.did);
     
@@ -710,7 +710,7 @@ describe("Signed Evidence Workflow", () => {
     });
     
     // Seller's dispute URL from signed headers
-    const disputeUrl = `https://api.x402disputes.com/disputes/claim?vendor=${vendor.did}`;
+    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
     
     const request = {
       method: "POST",
@@ -779,12 +779,12 @@ describe("Signed Evidence Workflow", () => {
   });
 
   it("should handle HTTP endpoint for buyer dispute claims", async () => {
-    // This tests the /disputes/claim HTTP endpoint
+    // Legacy /disputes/claim endpoint was removed; signed evidence is handled via PAYMENT disputes and wallet-first endpoints.
     // which accepts signed evidence via REST API
     
     console.log("📝 NOTE: HTTP endpoint testing requires integration tests");
     console.log("   See test/http-endpoints.test.ts for HTTP API tests");
-    console.log("   Endpoint: POST /disputes/claim?vendor={vendorDid}");
+    console.log("   Endpoint: (removed) /disputes/claim?vendor={vendorDid}");
     console.log("   Accepts: request, response, crypto/traditional, signature");
     console.log("   Backend extracts vendor DID from URL query parameter");
     
@@ -813,6 +813,6 @@ describe("Signed Evidence Workflow", () => {
  * 1. Add signedEvidence to fileDispute args in convex/cases.ts
  * 2. Ensure signedEvidence is stored in caseData
  * 3. Trigger signature verification in workflow
- * 4. Update http.ts /disputes/claim endpoint to properly handle signed evidence
+ * 4. (Removed) /disputes/claim endpoint
  */
 

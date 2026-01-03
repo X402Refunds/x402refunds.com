@@ -1,9 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { convexTest } from 'convex-test';
-import { api } from '../convex/_generated/api';
-import schema from '../convex/schema';
-import { API_BASE_URL, USE_LIVE_API } from './fixtures';
-import { setupTestAgents, createTestCase } from './fixtures/api-helpers';
+import { describe, it, expect } from 'vitest';
+import { API_BASE_URL } from './fixtures';
 
 /**
  * System & Discovery Endpoints Tests
@@ -12,8 +8,6 @@ import { setupTestAgents, createTestCase } from './fixtures/api-helpers';
  * - GET /health
  * - GET /version
  * - GET /
- * - POST /agents/discover
- * - GET /agents/top-reputation
  * - GET /live/feed
  */
 
@@ -103,322 +97,34 @@ describe('System - Health & Info', () => {
   });
 });
 
-describe('Agent Discovery', () => {
-  let t: ReturnType<typeof convexTest>;
-  let testAgentDid: string;
-
-  beforeAll(async () => {
-    if (!USE_LIVE_API) {
-      const modules = import.meta.glob('../convex/**/*.{ts,js}');
-      t = convexTest(schema, modules);
-      
-      const { plaintiff } = await setupTestAgents(t);
-      testAgentDid = plaintiff.did;
-    }
+describe("Removed endpoints: /agents/*", () => {
+  it("POST /agents/discover should be removed (404)", async () => {
+    const response = await fetch(`${API_BASE_URL}/agents/discover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ functionalTypes: ["general"] }),
+    });
+    expect(response.status).toBe(404);
   });
 
-  describe('POST /agents/discover', () => {
-    it.skipIf(USE_LIVE_API)('should discover agents by functional type', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-        }),
-      });
-
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(data.discovered).toBeGreaterThanOrEqual(0);
-      expect(data.agents).toBeDefined();
-      expect(Array.isArray(data.agents)).toBe(true);
-      expect(data.timestamp).toBeGreaterThan(0);
-    });
-
-    it.skipIf(USE_LIVE_API)('should filter by capabilities', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          capabilities: ['data-processing'],
-          functionalTypes: ['api'],
-        }),
-      });
-
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      
-      // All returned agents should match the functional type
-      if (data.agents.length > 0) {
-        const allMatch = data.agents.every(
-          (agent: any) => agent.functionalType === 'api'
-        );
-        expect(allMatch).toBe(true);
-      }
-    });
-
-    it.skipIf(USE_LIVE_API)('should exclude self when requested', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-          excludeSelf: true,
-          agentDid: testAgentDid,
-        }),
-      });
-
-      const data = await response.json();
-      
-      // Self should not be in results
-      const selfIncluded = data.agents.some(
-        (agent: any) => agent.did === testAgentDid
-      );
-      expect(selfIncluded).toBe(false);
-    });
-
-    it.skipIf(USE_LIVE_API)('should include agent details in results', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.agents.length > 0) {
-        const agent = data.agents[0];
-        expect(agent.did).toBeDefined();
-        expect(agent.functionalType).toBeDefined();
-        expect(agent.capabilities).toBeDefined();
-        expect(agent.endpoint).toBeDefined();
-        expect(agent.status).toBeDefined();
-      }
-    });
-
-    it('should handle empty capability filter', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          capabilities: [],
-          functionalTypes: ['general'],
-        }),
-      });
-
-      expect(response.status).toBe(200);
-    });
-
-    it.skipIf(USE_LIVE_API)('should include CORS headers', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionalTypes: ['general'],
-        }),
-      });
-
-      expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    });
-  });
-
-  describe('GET /agents/top-reputation', () => {
-    it('should return top agents by reputation', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation`);
-      
-      expect(response.status).toBe(200);
-      
-      const agents = await response.json();
-      expect(Array.isArray(agents)).toBe(true);
-    });
-
-    it('should limit results', async () => {
-      const limit = 5;
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=${limit}`);
-      
-      const agents = await response.json();
-      expect(agents.length).toBeLessThanOrEqual(limit);
-    });
-
-    it('should sort by overall score by default', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=10`);
-      const agents = await response.json();
-      
-      if (agents.length > 1) {
-        // Check descending order (reputationScore is now at top level)
-        for (let i = 1; i < agents.length; i++) {
-          expect(agents[i - 1].reputationScore).toBeGreaterThanOrEqual(
-            agents[i].reputationScore
-          );
-        }
-      }
-    });
-
-    it('should support sorting by win rate', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?sortBy=winRate&limit=10`);
-      
-      expect(response.status).toBe(200);
-      const agents = await response.json();
-      
-      if (agents.length > 1) {
-        // Check descending order by win rate (winRate is now at top level)
-        for (let i = 1; i < agents.length; i++) {
-          expect(agents[i - 1].winRate).toBeGreaterThanOrEqual(
-            agents[i].winRate
-          );
-        }
-      }
-    });
-
-    it('should include reputation details', async () => {
-      const response = await fetch(`${API_BASE_URL}/agents/top-reputation?limit=1`);
-      const agents = await response.json();
-      
-      if (agents.length > 0) {
-        const agent = agents[0];
-        expect(agent.agentDid).toBeDefined();
-        expect(agent.reputationScore).toBeDefined();
-        expect(agent.reputationScore).toBeGreaterThanOrEqual(0);
-        expect(agent.casesAsDefendant).toBeDefined();
-        expect(agent.casesAsDefendant).toBeGreaterThanOrEqual(0);
-      }
-    });
+  it("GET /agents/top-reputation should be removed (404)", async () => {
+    const response = await fetch(`${API_BASE_URL}/agents/top-reputation`);
+    expect(response.status).toBe(404);
   });
 });
 
 describe('Live Monitoring', () => {
-  let t: ReturnType<typeof convexTest>;
-  let testAgentDid: string;
-
-  beforeAll(async () => {
-    if (!USE_LIVE_API) {
-      const modules = import.meta.glob('../convex/**/*.{ts,js}');
-      t = convexTest(schema, modules);
-      
-      const { plaintiff, defendant } = await setupTestAgents(t);
-      testAgentDid = plaintiff.did;
-      
-      // Create some activity
-      await createTestCase(t, plaintiff.did, defendant.did);
-    }
-  });
-
   describe('GET /live/feed', () => {
-    it('should return live activity feed', async () => {
+    it('should return cases-based registry feed', async () => {
       const response = await fetch(`${API_BASE_URL}/live/feed`);
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.feed).toBeDefined();
-      expect(Array.isArray(data.feed)).toBe(true);
+      expect(data.ok).toBe(true);
+      expect(Array.isArray(data.cases)).toBe(true);
+      expect(Array.isArray(data.feed)).toBe(true); // compatibility alias
       expect(data.lastUpdate).toBeGreaterThan(0);
-      expect(data.systemHealth).toBeDefined();
-      expect(['OPERATIONAL', 'DEGRADED', 'DOWN']).toContain(data.systemHealth);
-    });
-
-    it('should include event details', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed`);
-      const data = await response.json();
-      
-      if (data.feed.length > 0) {
-        const event = data.feed[0];
-        expect(event.id).toBeDefined();
-        expect(event.type).toBeDefined();
-        expect(event.message).toBeDefined();
-        expect(event.timestamp).toBeGreaterThan(0);
-        expect(event.participants).toBeDefined();
-        expect(Array.isArray(event.participants)).toBe(true);
-        expect(event.impact).toBeDefined();
-        expect(['financial', 'operational', 'legal', 'informational']).toContain(event.impact);
-      }
-    });
-
-    it.skipIf(USE_LIVE_API)('should filter by agent DID', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed?agentDid=${testAgentDid}`);
-      
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      
-      // All events should involve the specified agent
-      if (data.feed.length > 0) {
-        const allRelevant = data.feed.every(
-          (event: any) => event.participants.includes(testAgentDid)
-        );
-        expect(allRelevant).toBe(true);
-      }
-    });
-
-    it('should filter by event types', async () => {
-      const eventTypes = 'DISPUTE_FILED,CASE_STATUS_UPDATED';
-      const response = await fetch(`${API_BASE_URL}/live/feed?types=${eventTypes}`);
-      
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      
-      // All events should match requested types
-      if (data.feed.length > 0) {
-        const allowedTypes = eventTypes.split(',');
-        const allMatch = data.feed.every(
-          (event: any) => allowedTypes.includes(event.type)
-        );
-        expect(allMatch).toBe(true);
-      }
-    });
-
-    it('should format event messages correctly', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed`);
-      const data = await response.json();
-      
-      // All events should have non-empty messages
-      const allHaveMessages = data.feed.every(
-        (event: any) => event.message && event.message.length > 0
-      );
-      expect(allHaveMessages).toBe(true);
-    });
-
-    it('should include case IDs for relevant events', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed`);
-      const data = await response.json();
-      
-      // Events related to cases should have caseId
-      const caseEvents = data.feed.filter(
-        (event: any) => event.type.includes('CASE') || event.type.includes('DISPUTE')
-      );
-      
-      if (caseEvents.length > 0) {
-        // At least some should have caseId
-        const someCaseIds = caseEvents.some(
-          (event: any) => event.caseId !== null
-        );
-        expect(someCaseIds).toBe(true);
-      }
-    });
-
-    it('should categorize event impact', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed`);
-      const data = await response.json();
-      
-      const validImpacts = ['financial', 'operational', 'legal', 'informational'];
-      const allValidImpacts = data.feed.every(
-        (event: any) => validImpacts.includes(event.impact)
-      );
-      expect(allValidImpacts).toBe(true);
     });
 
     it('should include CORS headers', async () => {
@@ -427,26 +133,12 @@ describe('Live Monitoring', () => {
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
     });
 
-    it('should sort events by timestamp descending', async () => {
-      const response = await fetch(`${API_BASE_URL}/live/feed`);
-      const data = await response.json();
-      
-      if (data.feed.length > 1) {
-        // Events should be newest first
-        for (let i = 1; i < data.feed.length; i++) {
-          expect(data.feed[i - 1].timestamp).toBeGreaterThanOrEqual(
-            data.feed[i].timestamp
-          );
-        }
-      }
-    });
-
     it('should limit feed to reasonable size', async () => {
       const response = await fetch(`${API_BASE_URL}/live/feed`);
       const data = await response.json();
       
-      // Should not return too many events (limit should be ~20)
-      expect(data.feed.length).toBeLessThanOrEqual(50);
+      // Default limit is 20; allow some slack for legacy aliases.
+      expect(data.cases.length).toBeLessThanOrEqual(50);
     });
   });
 });

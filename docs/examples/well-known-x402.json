@@ -1,0 +1,15 @@
+{
+  "x402Version": 1,
+  "disputes": {
+    "protocol": "x402disputes",
+    "version": "1",
+    "merchant": "eip155:8453:0xyourmerchantaddress",
+    "disputeUrl": "https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xyourmerchantaddress",
+    "termsUrl": "https://merchant.example/refunds",
+    "terms": {
+      "refundWindowSeconds": 604800,
+      "disputeFilingWindowSeconds": 604800
+    }
+  }
+}
+

@@ -1,7 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
-import { parseDuplicatePaymentDisputeError } from "./lib/duplicateDispute";
 
 const http = httpRouter();
 
@@ -9,8 +8,13 @@ const http = httpRouter();
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Agent-DID, X-Agent-Signature, X-SLA-Report, X-PAYMENT, X-Payment-Proof, X-402-Transaction-Hash, PAYMENT-SIGNATURE",
-  "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, X-402-PAYMENT-RESPONSE",
+  // Wallet-first v1 endpoints support BOTH x402 v1 and v2:
+  // - v1: X-PAYMENT (base64 JSON), 402 response body accepts[]
+  // - v2: PAYMENT-SIGNATURE, 402 PAYMENT-REQUIRED header (base64 JSON)
+  // Keep permissive for agents + browsers.
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, Link, PAYMENT-REQUIRED, PAYMENT-SIGNATURE, PAYMENT-RESPONSE, X-PAYMENT, X-402-Transaction-Hash, X-PAYMENT-RESPONSE, X-402-PAYMENT-RESPONSE",
+  "Access-Control-Expose-Headers": "Link, PAYMENT-REQUIRED, PAYMENT-RESPONSE, X-PAYMENT-RESPONSE, X-402-PAYMENT-RESPONSE",
   "Content-Type": "application/json"
 };
 
@@ -31,23 +35,19 @@ http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/adp/neutrals", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/agents/register", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/agents/claim", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/agents", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/evidence", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/webhooks/register", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/live/feed", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/report", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsHandler });
 // New unified dispute endpoints
-http.route({ path: "/api/disputes/payment", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/disputes/agent", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/disputes/claim", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/disputes/payment/stats", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/api/disputes/payment/review-queue", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
+// Wallet-first v1 endpoints (no signup, no API keys)
+http.route({ path: "/v1/topup", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler });
+// NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
+// Use static paths with query/body for ID-based operations.
+http.route({ path: "/v1/dispute", method: "OPTIONS", handler: optionsHandler });
 // Demo agents for dispute testing
 http.route({ path: "/demo-agents/image-generator", method: "OPTIONS", handler: optionsHandler });
 
@@ -994,692 +994,300 @@ http.route({
 
 // === UNIFIED DISPUTE INGESTION (Multi-Product Architecture) ===
 
-// Payment disputes endpoint
+// NOTE: Legacy payment intake endpoint removed.
+// Use wallet-first: POST /v1/disputes
+
+// === WALLET-FIRST V1 ENDPOINTS (NO SIGNUP, NO API KEYS) ===
+
+const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+function base64EncodeJson(obj: unknown): string {
+  return btoa(JSON.stringify(obj));
+}
+
+function jsonError(status: number, payload: unknown) {
+  return new Response(JSON.stringify(payload), { status, headers: corsHeaders });
+}
+
+// POST /v1/topup
+// - No PAYMENT-SIGNATURE: returns 402 + PAYMENT-REQUIRED (base64 JSON).
+// - With PAYMENT-SIGNATURE: verify+settle via facilitator, verify on-chain deposit, credit merchant ledger.
 http.route({
-  path: "/api/disputes/payment",
+  path: "/v1/topup",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    try {
-      return await handlePaymentDispute(ctx, request, undefined);
-    } catch (error: any) {
-      console.error("Payment dispute error:", error);
-      const payload = parseDuplicatePaymentDisputeError(String(error?.message || ""));
-      if (payload) {
-        return new Response(JSON.stringify({
-          error: "Duplicate dispute: this transaction has already been disputed.",
-          code: "DUPLICATE_PAYMENT_DISPUTE",
-          ...payload,
-        }), {
-          status: 409,
-          headers: corsHeaders,
-        });
-      }
-      return new Response(JSON.stringify({
-        error: error.message,
-        hint: "Check docs at https://www.x402disputes.com/docs"
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+    const body = await request.json().catch(() => ({} as any));
+    const merchant = typeof body?.merchant === "string" ? body.merchant : "";
+    const currency = typeof body?.currency === "string" ? body.currency : "USDC";
+    const amountMicrousdcRaw = body?.amountMicrousdc;
+
+    if (!merchant || typeof merchant !== "string") {
+      return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
     }
-  })
-});
-
-// Agent disputes endpoint (no auth required for backward compatibility)
-http.route({
-  path: "/api/disputes/agent",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      // Note: No authentication required for agent disputes (matches old /disputes behavior)
-      return await handleAgentDispute(ctx, request, undefined);
-    } catch (error: any) {
-      console.error("Agent dispute error:", error);
-      return new Response(JSON.stringify({
-        error: error.message,
-        hint: "Check docs at https://www.x402disputes.com/docs"
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+    if (currency !== "USDC") {
+      return jsonError(400, { ok: false, code: "UNSUPPORTED_CURRENCY", message: "Only USDC is supported" });
     }
-  })
-});
+    const amountMicrousdc =
+      typeof amountMicrousdcRaw === "number"
+        ? amountMicrousdcRaw
+        : typeof amountMicrousdcRaw === "string"
+          ? Number(amountMicrousdcRaw)
+          : NaN;
+    if (!Number.isSafeInteger(amountMicrousdc) || amountMicrousdc <= 0) {
+      return jsonError(400, { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc must be a positive integer" });
+    }
 
-// Buyer dispute claim endpoint with signature verification
-http.route({
-  path: "/disputes/claim",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      const url = new URL(request.url);
-      const vendorId = url.searchParams.get("vendor");
-      
-      if (!vendorId) {
-        return new Response(JSON.stringify({
-          error: "Missing vendor parameter",
-          hint: "Use /disputes/claim?vendor=0x[ethereum-address] (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      const body = await request.json();
-      
-      // Validate required fields
-      const requiredFields = ["transactionId", "amount", "complaint", "signature", "request", "response"];
-      for (const field of requiredFields) {
-        if (!body[field]) {
-          return new Response(JSON.stringify({
-            error: `Missing required field: ${field}`,
-            required: requiredFields,
-          }), {
-            status: 400,
-            headers: corsHeaders,
-          });
-        }
-      }
-      
-      // 1. Get vendor's public key
-      const vendor = await ctx.runQuery(api.agents.getAgent, { did: vendorId });
-      if (!vendor) {
-        return new Response(JSON.stringify({
-          error: "Vendor not found",
-          vendorId
-        }), {
-          status: 404,
-          headers: corsHeaders,
-        });
-      }
-      
-      if (!vendor.publicKey) {
-        return new Response(JSON.stringify({
-          error: "Vendor has no public key registered",
-          hint: "Vendor must register with an Ed25519 public key"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      // 2. Verify signature
-      const payload = JSON.stringify({
-        request: body.request,
-        response: body.response,
-        amountUsd: body.amountUsd || body.amount,
-      });
-      
-      const verified = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
-        publicKey: vendor.publicKey,
-        signature: body.signature,
-        payload,
-      });
-      
-      if (!verified) {
-        return new Response(JSON.stringify({
-          error: "Signature verification failed",
-          hint: "Evidence may be tampered or signature is invalid"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      // 3. Determine reviewerOrganizationId from defendant's organization
-      // SECURITY: ONLY use defendant's org (they review disputes filed against them)
-      // NEVER use plaintiff's org (conflict of interest!)
-      let reviewerOrganizationId: any = undefined;
-      if (vendor.organizationId) {
-        reviewerOrganizationId = vendor.organizationId;
-      }
-      // If defendant has no org or agent record, dispute remains unassigned
+    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    if (!depositAddress) {
+      return jsonError(500, { ok: false, code: "NOT_CONFIGURED", message: "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS not configured" });
+    }
 
-      // 3. Create dispute case with signed evidence
-      const caseId = await ctx.runMutation(api.cases.fileDispute, {
-        plaintiff: body.buyerId || `buyer:${body.buyerEmail || "anonymous"}`,
-        defendant: vendorId,
-        type: "PAYMENT",
-        jurisdictionTags: ["payment", "signature-verified"],
-        evidenceIds: [],
-        description: body.complaint,
-        amount: body.amountUsd || body.amount, // Support both old and new field names
-        currency: body.crypto ? body.crypto.currency : (body.currency || "USD"),
-        reviewerOrganizationId, // Link to defendant's organization
-        signedEvidence: {
-          request: body.request,
-          response: body.response,
-          amountUsd: body.amountUsd || body.amount,
-          signature: body.signature,
-          signatureVerified: true,
-          vendorDid: vendorId,
+    // x402 v2: requirements in PAYMENT-REQUIRED header (base64 JSON).
+    const paymentRequiredV2 = {
+      x402Version: 2,
+      accepts: [
+        {
+          scheme: "exact",
+          network: "eip155:8453",
+          asset: USDC_BASE_MAINNET,
+          amount: String(amountMicrousdc),
+          // Facilitator implementations often still read this legacy field name.
+          maxAmountRequired: String(amountMicrousdc),
+          payTo: depositAddress,
+          resource: request.url,
+          description: "x402disputes refund pool top-up (Base USDC)",
+          mimeType: "application/json",
+          maxTimeoutSeconds: 60,
+          extra: {
+            name: "USD Coin",
+            version: "2",
+          },
         },
+      ],
+    };
+
+    // x402 v1: requirement in 402 body accepts[] (JSON)
+    const paymentRequiredV1 = {
+      x402Version: 1,
+      accepts: [
+        {
+          scheme: "exact",
+          network: "base",
+          maxAmountRequired: String(amountMicrousdc),
+          asset: USDC_BASE_MAINNET,
+          payTo: depositAddress,
+          resource: request.url,
+          description: "x402disputes refund pool top-up (Base USDC)",
+          mimeType: "application/json",
+          maxTimeoutSeconds: 60,
+          extra: {
+            name: "USD Coin",
+            version: "2",
+          },
+        },
+      ],
+    };
+
+    const paymentSig = request.headers.get("PAYMENT-SIGNATURE");
+    const xPayment = request.headers.get("X-PAYMENT");
+    const txHashHeader = request.headers.get("X-402-Transaction-Hash");
+
+    // If caller already has an on-chain tx hash (v1 hash-forwarding flow), skip facilitator.
+    if (txHashHeader) {
+      const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+        blockchain: "base",
+        transactionHash: txHashHeader,
+        expectedAmountMicrousdc: amountMicrousdc,
+        expectedToAddress: depositAddress,
       });
-      
-      return new Response(JSON.stringify({
-        success: true,
-        caseId,
-        disputeUrl: `https://api.x402disputes.com/cases/${caseId}`,
-        signatureVerified: true,
-        vendorDid: vendorId,
-        message: "Dispute filed successfully with verified evidence"
-      }), {
-        headers: corsHeaders,
+      if (!verified.ok) {
+        return jsonError(400, { ok: false, code: verified.code, message: verified.message });
+      }
+
+      const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
+        merchant,
+        blockchain: "base",
+        txHash: txHashHeader,
+        sourceTransferLogIndex: verified.logIndex,
+        amountMicrousdc: verified.amountMicrousdc,
+        payerAddress: verified.payerAddress,
+        recipientAddress: verified.recipientAddress,
       });
-      
-    } catch (error: any) {
-      console.error("Buyer dispute claim error:", error);
-      return new Response(JSON.stringify({
-        error: error.message,
-        hint: "Ensure all required fields are provided and signature is valid"
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+      if (!credited?.ok) return jsonError(400, credited);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          merchant,
+          txHash: txHashHeader,
+          creditedMicrousdc: credited.creditedMicrousdc,
+          newBalanceMicrousdc: credited.newBalanceMicrousdc,
+        }),
+        { status: 200, headers: corsHeaders },
+      );
     }
-  })
-});
 
-// Handler: Payment disputes (ACP/ATXP integration)
-async function handlePaymentDispute(ctx: any, request: Request, organizationId: any) {
-  const body = await request.json();
-
-  // Minimal required fields (amount is derived from chain)
-  const requiredFields = ["transactionHash", "blockchain", "recipientAddress"];
-  for (const field of requiredFields) {
-    if (!body[field]) {
-      return new Response(JSON.stringify({
-        error: `Missing required field: ${field}`,
-        required: requiredFields,
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  }
-
-  // Breaking change: amount fields are no longer accepted (derive from chain).
-  if (body.amount !== undefined || body.amountUnit !== undefined) {
-    return new Response(JSON.stringify({
-      error: "amount/amountUnit are no longer accepted; amounts are derived from chain",
-      code: "UNSUPPORTED_FIELDS",
-      fields: ["amount", "amountUnit"],
-      suggestion: "Remove amount/amountUnit and provide recipientAddress (and optionally sourceTransferLogIndex if MULTI_MATCH).",
-    }), {
-      status: 400,
-      headers: corsHeaders,
-    });
-  }
-
-  // Validate blockchain is supported (Base or Solana only)
-  const supportedChains = ["base", "solana"];
-  if (!supportedChains.includes(body.blockchain)) {
-    return new Response(JSON.stringify({
-      error: `Only Base and Solana chains are supported for USDC payments`,
-      code: "UNSUPPORTED_BLOCKCHAIN",
-      field: "blockchain",
-      received: body.blockchain,
-      expected: "base or solana",
-    }), {
-      status: 400,
-      headers: corsHeaders,
-    });
-  }
-
-  const rawLogIndex = body.sourceTransferLogIndex;
-  const parsedLogIndex =
-    typeof rawLogIndex === "number"
-      ? rawLogIndex
-      : typeof rawLogIndex === "string" && rawLogIndex.trim() !== ""
-        ? Number(rawLogIndex)
-        : undefined;
-  if (parsedLogIndex !== undefined && (!Number.isSafeInteger(parsedLogIndex) || parsedLogIndex < 0)) {
-    return new Response(JSON.stringify({
-      error: "sourceTransferLogIndex must be a non-negative integer",
-      code: "INVALID_SOURCE_TRANSFER_LOG_INDEX",
-      field: "sourceTransferLogIndex",
-    }), {
-      status: 400,
-      headers: corsHeaders,
-    });
-  }
-
-  // Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
-  const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
-    blockchain: body.blockchain,
-    transactionHash: body.transactionHash,
-    recipientAddress: body.recipientAddress,
-    sourceTransferLogIndex: parsedLogIndex,
-  });
-  if (!verify.ok) {
-    return new Response(JSON.stringify({
-      error: verify.message,
-      code: verify.code,
-      field: verify.code === "MULTI_MATCH" ? "sourceTransferLogIndex" : "transactionHash",
-      candidates: verify.candidates,
-    }), {
-      status: 400,
-      headers: corsHeaders,
-    });
-  }
-
-  const { formatMicrosToUsdc } = await import("./lib/usdc");
-  const plaintiff = verify.payerAddress;
-  const defendant = verify.recipientAddress;
-  const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
-
-  // Auto-detect reviewerOrganizationId if not provided via API key
-  // SECURITY: ONLY use defendant's organization (they review disputes filed against them)
-  // NEVER use plaintiff's org (conflict of interest - they'd approve their own refunds!)
-  let reviewerOrgId = organizationId;
-  
-  if (!reviewerOrgId) {
-    // Check defendant's organization ONLY
-    const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, {
-      walletAddress: defendant
-    });
-    
-    if (defendantAgent?.organizationId) {
-      reviewerOrgId = defendantAgent.organizationId;
-    }
-    // If defendant has no org or agent record, dispute remains unassigned
-  }
-
-  // Create payment dispute (organizationId auto-injected)
-  const result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, {
-    transactionHash: body.transactionHash,
-    blockchain: body.blockchain,
-    recipientAddress: body.recipientAddress,
-    sourceTransferLogIndex: verify.logIndex,
-    disputeReason: body.disputeReason || "other",
-    description: body.description || "Payment dispute",
-    evidenceUrls: body.evidenceUrls || [],
-    callbackUrl: body.callbackUrl,
-    reviewerOrganizationId: reviewerOrgId, // Auto-detected from API key OR agent lookup
-    // Party metadata - helps customer identify parties in their system
-    plaintiffMetadata: body.plaintiffMetadata,
-    defendantMetadata: body.defendantMetadata,
-  });
-
-  return new Response(JSON.stringify({
-    success: true,
-    ...result,
-    transactionVerification: {
-      source: "blockchain",
-      blockchain: body.blockchain,
-      transactionHash: body.transactionHash,
-      recipientAddress: body.recipientAddress,
-      extractedDetails: {
-        plaintiff,
-        defendant,
-        amount: txAmountUsd,
-        currency: "USDC",
-        logIndex: verify.logIndex,
-      },
-    },
-    message: result.isMicroDispute
-      ? "Micro-dispute received. Auto-ruling in progress (< 5 min)."
-      : "Dispute received. Processing with AI analysis (< 24 hours).",
-    regulationECompliant: true,
-    deadlines: {
-      initialResponse: result.estimatedResolutionTime,
-      regulationEFinal: "10 business days",
-    },
-  }), {
-    headers: corsHeaders,
-  });
-}
-
-// Handler: Agent disputes (general SLA/contract violations)
-async function handleAgentDispute(ctx: any, request: Request, organizationId: any | undefined) {
-  const body = await request.json();
-
-  // Validate required fields for agent disputes
-  const requiredFields = ["plaintiff", "defendant", "type", "jurisdictionTags", "evidenceIds"];
-  for (const field of requiredFields) {
-    if (!body[field]) {
-      return new Response(JSON.stringify({
-        error: `Missing required field: ${field}`,
-        required: requiredFields,
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  }
-
-  // Create agent dispute
-  const result = await ctx.runMutation(api.cases.fileDispute, {
-    plaintiff: body.plaintiff,
-    defendant: body.defendant,
-    type: body.type,
-    jurisdictionTags: body.jurisdictionTags,
-    evidenceIds: body.evidenceIds,
-    description: body.description,
-    claimedDamages: body.claimedDamages,
-    breachDetails: body.breachDetails,
-  });
-
-  return new Response(JSON.stringify({
-    success: true,
-    caseId: result,
-    message: "Agent dispute filed successfully",
-  }), {
-    headers: corsHeaders,
-  });
-}
-
-// Get payment dispute statistics
-http.route({
-  path: "/api/disputes/payment/stats",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      const stats = await ctx.runQuery(api.paymentDisputes.getMicroDisputeStats, {});
-
-      return new Response(JSON.stringify({
-        success: true,
-        ...stats,
-        timestamp: Date.now(),
-      }), {
+    // Discovery: return BOTH v2 header and v1 body so either client can proceed.
+    if (!paymentSig && !xPayment) {
+      return new Response(JSON.stringify(paymentRequiredV1), {
+        status: 402,
         headers: {
           ...corsHeaders,
-          "Cache-Control": "public, max-age=60", // Cache for 1 minute
+          "PAYMENT-REQUIRED": base64EncodeJson(paymentRequiredV2),
         },
       });
-    } catch (error: any) {
-      return new Response(JSON.stringify({
-        error: error.message,
-      }), {
-        status: 500,
-        headers: corsHeaders,
-      });
     }
-  })
+
+    // Verify + settle via facilitator (node action).
+    // v2 uses PAYMENT-SIGNATURE; v1 uses X-PAYMENT.
+    const paymentHeader = paymentSig || xPayment;
+    const paymentRequirements = paymentSig ? paymentRequiredV2.accepts[0] : paymentRequiredV1.accepts[0];
+
+    const verify: any = await (ctx.runAction as any)((api as any).demoAgents.cdpAuth.verifyPayment, {
+      paymentHeader,
+      paymentRequirements,
+    });
+    if (verify?.status >= 400) {
+      return jsonError(400, { ok: false, code: "VERIFY_FAILED", facilitator: verify?.facilitator, message: verify?.body });
+    }
+
+    const settle: any = await (ctx.runAction as any)((api as any).demoAgents.cdpAuth.settlePayment, {
+      paymentHeader,
+      paymentRequirements,
+    });
+    if (settle?.status >= 400) {
+      return jsonError(400, { ok: false, code: "SETTLE_FAILED", facilitator: settle?.facilitator, message: settle?.body });
+    }
+
+    let txHash: string | null = null;
+    try {
+      const parsed = JSON.parse(String(settle?.body ?? ""));
+      txHash = typeof parsed?.transaction === "string" ? parsed.transaction : typeof parsed?.transactionHash === "string" ? parsed.transactionHash : null;
+    } catch {
+      txHash = null;
+    }
+    if (!txHash) {
+      return jsonError(502, { ok: false, code: "NO_TX_HASH", message: "Facilitator did not return a transaction hash" });
+    }
+
+    // Verify unique USDC transfer by amount to our deposit address, then credit merchant.
+    const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+      blockchain: "base",
+      transactionHash: txHash,
+      expectedAmountMicrousdc: amountMicrousdc,
+      expectedToAddress: depositAddress,
+    });
+    if (!verified.ok) {
+      return jsonError(400, { ok: false, code: verified.code, message: verified.message });
+    }
+
+    const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
+      merchant,
+      blockchain: "base",
+      txHash,
+      sourceTransferLogIndex: verified.logIndex,
+      amountMicrousdc: verified.amountMicrousdc,
+      payerAddress: verified.payerAddress,
+      recipientAddress: verified.recipientAddress,
+    });
+
+    if (!credited?.ok) {
+      return jsonError(400, credited);
+    }
+
+      return new Response(JSON.stringify({
+      ok: true,
+      merchant,
+      txHash,
+      creditedMicrousdc: credited.creditedMicrousdc,
+      newBalanceMicrousdc: credited.newBalanceMicrousdc,
+    }), { status: 200, headers: corsHeaders });
+  }),
 });
 
-// Get disputes needing human review
+// POST /v1/disputes
 http.route({
-  path: "/api/disputes/payment/review-queue",
+  path: "/v1/disputes",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json().catch(() => ({} as any));
+    const buyer = typeof body?.buyer === "string" ? body.buyer : "buyer:anonymous";
+    const merchant = typeof body?.merchant === "string" ? body.merchant : "";
+    const txHash = typeof body?.txHash === "string" ? body.txHash : undefined;
+    const chain = typeof body?.chain === "string" ? body.chain : undefined;
+    const amountMicrousdc = body?.amountMicrousdc;
+    const reason = typeof body?.reason === "string" ? body.reason : undefined;
+    const evidenceUrlOrHash = typeof body?.evidenceUrlOrHash === "string" ? body.evidenceUrlOrHash : undefined;
+    const agentId = typeof body?.agentId === "string" ? body.agentId : undefined;
+    const txId = typeof body?.txId === "string" ? body.txId : undefined;
+
+    if (!merchant) return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
+
+    const created = await (ctx.runMutation as any)((api as any).pool.cases_fileWalletPaymentDispute, {
+      buyer,
+      merchant,
+      txHash,
+      chain: chain === "base" ? "base" : undefined,
+      amountMicrousdc,
+      reason,
+      evidenceUrlOrHash,
+      agentId,
+      txId,
+    });
+    if (!created?.ok) return jsonError(400, created);
+
+    return new Response(JSON.stringify({ ok: true, disputeId: created.disputeId }), { status: 200, headers: corsHeaders });
+  }),
+});
+
+// GET /v1/disputes?merchant=<caip10>
+http.route({
+  path: "/v1/disputes",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    try {
-      const url = new URL(request.url);
-      const limit = parseInt(url.searchParams.get("limit") || "20");
+    const url = new URL(request.url);
+    const merchant = url.searchParams.get("merchant") || "";
+    const limit = Number(url.searchParams.get("limit") || "50");
 
-      const disputes = await ctx.runQuery(api.paymentDisputes.getDisputesNeedingHumanReview, {
-        limit,
-      });
-
-      return new Response(JSON.stringify({
-        success: true,
-        count: disputes.length,
-        disputes,
-        timestamp: Date.now(),
-      }), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({
-        error: error.message,
-      }), {
-        status: 500,
-        headers: corsHeaders,
-      });
-    }
-  })
+    const res = await ctx.runQuery((api as any).pool.cases_listWalletDisputesByMerchant, {
+      merchant,
+      limit,
+    });
+    if (!res?.ok) return jsonError(400, res);
+    return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+  }),
 });
+
+// GET /v1/dispute?id=<caseId>
+http.route({
+  path: "/v1/dispute",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id") || "";
+    if (!id) return jsonError(400, { ok: false, code: "MISSING_ID" });
+
+    let row: any = null;
+    try {
+      row = await (ctx.runQuery as any)((api as any).cases.getCaseById, { caseId: id });
+    } catch (e: any) {
+      // Invalid IDs fail validation in Convex (v.id("cases")).
+      return jsonError(400, { ok: false, code: "INVALID_ID", message: e?.message || "Invalid caseId" });
+    }
+    if (!row) return jsonError(404, { ok: false, code: "NOT_FOUND" });
+
+    return new Response(JSON.stringify({ ok: true, dispute: row }), { status: 200, headers: corsHeaders });
+  }),
+});
+
+// === END WALLET-FIRST V1 ENDPOINTS ===
+
+// NOTE: Legacy public payment stats/review-queue endpoints removed.
+// Dashboard uses Convex queries (e.g. paymentDisputes:getCustomerReviewQueue) directly.
 
 // === END DISPUTE INGESTION ENDPOINTS ===
 
-// Agent claiming - sellers prove ownership of Ethereum address
-http.route({
-  path: "/agents/claim",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      const body = await request.json();
-      const { walletAddress, signature, message, organizationId, userId } = body;
-      
-      // Validate required fields
-      if (!walletAddress) {
-        return new Response(JSON.stringify({
-          error: "Missing required field: walletAddress"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      if (!signature) {
-        return new Response(JSON.stringify({
-          error: "Missing required field: signature"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      if (!message) {
-        return new Response(JSON.stringify({
-          error: "Missing required field: message"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      if (!organizationId) {
-        return new Response(JSON.stringify({
-          error: "Missing required field: organizationId"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      if (!userId) {
-        return new Response(JSON.stringify({
-          error: "Missing required field: userId"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-      
-      // Claiming is not implemented yet (no claimAgent mutation).
-      return new Response(JSON.stringify({
-        success: false,
-        error: "Not implemented",
-      }), {
-        status: 501,
-        headers: corsHeaders,
-      });
-      
-    } catch (error: any) {
-      console.error("Agent claiming failed:", error);
-      return new Response(JSON.stringify({
-        error: error.message
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// Agent registration with Ed25519 public key
-http.route({
-  path: "/agents/register",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    try {
-      // Parse request body
-      const body = await request.json();
-      const { name, publicKey, organizationName, openApiSpec, specVersion, functionalType, buildHash, configHash, mock } = body;
-      
-      // Validate required fields
-      if (!name) {
-        return new Response(JSON.stringify({ 
-          error: "Missing required field: name",
-          required: ["name", "publicKey", "organizationName"],
-          optional: ["openApiSpec", "specVersion", "functionalType", "buildHash", "configHash", "mock"]
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
-      if (!publicKey) {
-        return new Response(JSON.stringify({ 
-          error: "Missing required field: publicKey",
-          hint: "Provide base64-encoded Ed25519 public key"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
-      if (!organizationName) {
-        return new Response(JSON.stringify({ 
-          error: "Missing required field: organizationName",
-          hint: "Provide organization name for agent registration"
-        }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
-      // Register agent with public key
-      const result = await ctx.runMutation(api.agents.joinAgent, {
-        name,
-        publicKey,
-        organizationName,
-        openApiSpec,
-        specVersion,
-        functionalType: functionalType || "general",
-        buildHash,
-        configHash,
-        mock: mock || false
-      });
-      
-      return new Response(JSON.stringify({
-        success: true,
-        agentId: result.agentId,
-        agentDid: result.did,
-        disputeUrl: result.disputeUrl,
-        organizationName: result.organizationName,
-        hasOpenApiSpec: result.hasOpenApiSpec,
-        message: result.message
-      }), {
-        headers: corsHeaders,
-      });
-      
-    } catch (error: any) {
-      console.error("Agent registration failed:", error);
-      return new Response(JSON.stringify({ 
-        error: error.message,
-        hint: "Ensure all required fields are provided"
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// List agents
-http.route({
-  path: "/agents",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const url = new URL(request.url);
-    const functionalType = url.searchParams.get("type") || undefined;
-    const limit = parseInt(url.searchParams.get("limit") || "50");
-    
-    try {
-      const agents = await ctx.runQuery(api.agents.getAgentsByFunctionalType, {
-        functionalType: functionalType as any,
-        limit
-      });
-      
-      return new Response(JSON.stringify(agents), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// Get agent reputation
-http.route({
-  path: "/agents/:did/reputation",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const did = request.url.split("/agents/")[1].split("/reputation")[0];
-    
-    try {
-      const reputation = await ctx.runQuery(api.agents.getAgentReputation, {
-        agentDid: did
-      });
-      
-      if (!reputation) {
-        return new Response(JSON.stringify({ 
-          error: "Reputation not found" 
-        }), {
-          status: 404,
-          headers: corsHeaders,
-        });
-      }
-      
-      return new Response(JSON.stringify(reputation), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// Get top agents by reputation
-http.route({
-  path: "/agents/top-reputation",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get("limit") || "10");
-    const sortBy = (url.searchParams.get("sortBy") || "overallScore") as "overallScore" | "winRate";
-    
-    try {
-      const agents = await ctx.runQuery(api.agents.getTopAgentsByReputation, {
-        limit,
-        sortBy
-      });
-      
-      return new Response(JSON.stringify(agents), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
+// NOTE: Public /agents/* HTTP endpoints removed. SaaS dashboard uses Convex client queries/mutations.
 
 // Submit evidence
 http.route({
@@ -1782,101 +1390,7 @@ http.route({
 
 
 // === REAL-WORLD AGENT INTEGRATION ENDPOINTS ===
-
-// Agent discovery - find other agents by capability
-http.route({
-  path: "/agents/discover",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const { capabilities, functionalTypes, location, excludeSelf } = body;
-    
-    try {
-      let agents = await ctx.runQuery(api.agents.getAgentsByFunctionalType, {
-        functionalType: functionalTypes?.[0] || "general",
-        limit: 100
-      });
-      
-      // Filter by capabilities if specified
-      if (capabilities && capabilities.length > 0) {
-        agents = agents.filter((agent: any) => {
-          const agentCapabilities = agent.specialization?.capabilities || [];
-          return capabilities.some((cap: string) => agentCapabilities.includes(cap));
-        });
-      }
-      
-      // Exclude self if requested
-      if (excludeSelf && body.agentDid) {
-        agents = agents.filter((agent: any) => agent.did !== body.agentDid);
-      }
-      
-      // Return discovery results with capability matching
-      const discoveryResults = agents.map((agent: any) => ({
-        did: agent.did,
-        functionalType: agent.functionalType,
-        capabilities: agent.specialization?.capabilities || [],
-        certifications: agent.specialization?.certifications || [],
-        endpoint: `https://${agent.did.split(':')[2]}.ai/api`,
-        status: agent.status,
-        lastSeen: agent.createdAt
-      }));
-      
-      return new Response(JSON.stringify({
-        discovered: discoveryResults.length,
-        agents: discoveryResults,
-        timestamp: Date.now()
-      }), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
-
-// Agent capabilities endpoint - advertise what you can do
-http.route({
-  path: "/agents/capabilities",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const { agentDid, capabilities, slaProfile, endpoint } = body;
-    
-    try {
-      // Update agent's advertised capabilities
-      const agent = await ctx.runQuery(api.agents.getAgent, { did: agentDid });
-      if (!agent) {
-        throw new Error("Agent not found");
-      }
-      
-      // Store capability advertisement (would typically update the agent record)
-      // For now, return success and log the capability update
-      console.log(`Agent ${agentDid} updated capabilities:`, capabilities);
-      
-      return new Response(JSON.stringify({
-        success: true,
-        agentDid,
-        capabilitiesRegistered: capabilities?.length || 0,
-        slaProfileActive: !!slaProfile,
-        timestamp: Date.now()
-      }), {
-        headers: corsHeaders,
-      });
-    } catch (error: any) {
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-  })
-});
+// NOTE: Public agent discovery/capabilities endpoints removed.
 
 // Webhook registration - agents register for dispute notifications
 http.route({
@@ -1986,54 +1500,44 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
-    const agentDid = url.searchParams.get("agentDid");
-    const eventTypes = url.searchParams.get("types")?.split(",") || null;
-    
-    try {
-      const recentEvents = await ctx.runQuery(api.events.getRecentEvents, { limit: 20 });
-      
-      let filteredEvents = recentEvents;
-      
-      // Filter by agent if specified
-      if (agentDid) {
-        filteredEvents = filteredEvents.filter((event: any) => 
-          event.agentDid === agentDid || 
-          (event.payload?.parties && event.payload.parties.includes(agentDid))
-        );
-      }
-      
-      // Filter by event types if specified
-      if (eventTypes) {
-        filteredEvents = filteredEvents.filter((event: any) => 
-          eventTypes.includes(event.type)
-        );
-      }
-      
-      const liveFeed = filteredEvents.map((event: any) => ({
-        id: event._id,
-        type: event.type,
-        message: formatEventMessage(event),
-        timestamp: event.timestamp,
-        participants: event.payload?.parties || [event.agentDid].filter(Boolean),
-        impact: getEventImpact(event.type),
-        caseId: event.caseId || null
-      }));
-      
+    const limitRaw = url.searchParams.get("limit");
+    const status = url.searchParams.get("status"); // optional
+    const merchant = url.searchParams.get("merchant"); // optional CAIP-10 merchant filter
+
+    const limit =
+      limitRaw && limitRaw.trim() !== ""
+        ? Number(limitRaw)
+        : 20;
+    if (!Number.isFinite(limit) || !Number.isSafeInteger(limit) || limit <= 0 || limit > 200) {
       return new Response(JSON.stringify({
-        feed: liveFeed, // Main feed data
-        events: liveFeed, // Alias for compatibility
-        lastUpdate: Date.now(),
-        systemHealth: "OPERATIONAL"
-      }), {
-        headers: corsHeaders,
+        ok: false,
+        code: "INVALID_LIMIT",
+        message: "limit must be an integer between 1 and 200",
+      }), { status: 400, headers: corsHeaders });
+    }
+
+    try {
+      const res = await ctx.runQuery(api.cases.listLiveFeedCases, {
+        limit,
+        status: status ?? undefined,
+        merchant: merchant ?? undefined,
       });
+      const cases = Array.isArray((res as any)?.cases) ? (res as any).cases : [];
+
+      // Keep legacy keys for compatibility, but make the primary payload `cases`.
+      return new Response(JSON.stringify({
+        ok: true,
+        cases,
+        feed: cases,
+        events: cases,
+        lastUpdate: Date.now(),
+      }), { status: 200, headers: corsHeaders });
     } catch (error: any) {
       return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+        ok: false,
+        code: "INTERNAL_ERROR",
+        message: error?.message || "Failed to load live feed",
+      }), { status: 500, headers: corsHeaders });
     }
   })
 });

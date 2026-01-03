@@ -701,6 +701,34 @@ export default defineSchema({
     .index("by_tx_signature", ["txSignature"])
     .index("by_source_triplet", ["sourceChain", "sourceTxHash", "sourceTransferLogIndex"]),
 
+  // ============================================================================
+  // WALLET-FIRST DISPUTES (V1) - Idempotency + Arbiter Auth
+  // ============================================================================
+
+  // Idempotent top-ups keyed by on-chain transfer selector + merchant identity.
+  merchantTopups: defineTable({
+    merchant: v.string(), // CAIP-10 (e.g., "eip155:8453:0x...")
+    blockchain: v.union(v.literal("base")), // MVP: Base only
+    txHash: v.string(),
+    sourceTransferLogIndex: v.number(),
+    amountMicrousdc: v.number(),
+    payerAddress: v.optional(v.string()),
+    recipientAddress: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_merchant", ["merchant"])
+    .index("by_txhash", ["txHash"])
+    .index("by_source_triplet", ["blockchain", "txHash", "sourceTransferLogIndex"]),
+
+  // Arbiter nonce store to prevent replay of signed /v1/disputes/:id/resolve requests.
+  arbiterNonces: defineTable({
+    nonce: v.string(), // caller-supplied random value (hex or uuid); stored as-is
+    arbiter: v.string(), // CAIP-10 identity configured in env
+    usedAt: v.number(),
+  })
+    .index("by_nonce", ["nonce"])
+    .index("by_arbiter", ["arbiter"]),
+
   // Manual top-up requests (user-submitted tx hash + amount)
   refundTopUps: defineTable({
     organizationId: v.id("organizations"),

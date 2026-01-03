@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as agentWalletMigrations from "../agentWalletMigrations.js";
 import type * as agents from "../agents.js";
 import type * as agents_damageAgent from "../agents/damageAgent.js";
 import type * as agents_evidenceAgent from "../agents/evidenceAgent.js";
@@ -45,11 +46,14 @@ import type * as lib_usdc from "../lib/usdc.js";
 import type * as lib_x402r from "../lib/x402r.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
+import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as paymentDisputes from "../paymentDisputes.js";
+import type * as pool from "../pool.js";
 import type * as refundCredits from "../refundCredits.js";
 import type * as refunds from "../refunds.js";
 import type * as rulings from "../rulings.js";
+import type * as sanity from "../sanity.js";
 import type * as testing from "../testing.js";
 import type * as types from "../types.js";
 import type * as users from "../users.js";
@@ -67,6 +71,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agentWalletMigrations: typeof agentWalletMigrations;
   agents: typeof agents;
   "agents/damageAgent": typeof agents_damageAgent;
   "agents/evidenceAgent": typeof agents_evidenceAgent;
@@ -104,11 +109,14 @@ declare const fullApi: ApiFromModules<{
   "lib/x402r": typeof lib_x402r;
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;
+  migrations: typeof migrations;
   notifications: typeof notifications;
   paymentDisputes: typeof paymentDisputes;
+  pool: typeof pool;
   refundCredits: typeof refundCredits;
   refunds: typeof refunds;
   rulings: typeof rulings;
+  sanity: typeof sanity;
   testing: typeof testing;
   types: typeof types;
   users: typeof users;

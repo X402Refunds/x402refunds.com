@@ -1,0 +1,2 @@
+Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantAddress>; rel="payment-dispute https://x402disputes.com/rel/payment-dispute"; type="application/json"
+
