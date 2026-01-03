@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CopyableField } from "@/components/case-detail/CopyableField";
-import { normalizeMerchantToCaip10 } from "@/lib/caip10";
+import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402disputes.com";
 
@@ -28,7 +28,7 @@ export default function DisputesPage() {
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<DisputeRow[]>([]);
 
-  const merchantNormalized = useMemo(() => normalizeMerchantToCaip10(merchant, "base"), [merchant]);
+  const merchantNormalized = useMemo(() => normalizeMerchantToCaip10Base(merchant), [merchant]);
   const merchantCaip10 = merchantNormalized.caip10;
 
   const fetchUrl = useMemo(() => {

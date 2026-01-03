@@ -24,12 +24,14 @@ export function CopyableField({
     ? `${value.substring(0, truncateLength)}...` 
     : value);
 
+  const codeClass = truncate ? "truncate" : "whitespace-pre-wrap break-all";
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <code className="text-sm font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+            <code className={`text-sm font-mono bg-muted px-2 py-1 rounded flex-1 ${codeClass}`}>
               {display}
             </code>
           </TooltipTrigger>
