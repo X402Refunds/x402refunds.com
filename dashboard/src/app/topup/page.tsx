@@ -11,14 +11,14 @@ import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { useAccount, useWalletClient } from "wagmi";
 import { createX402PaymentSignatureV2, parsePaymentRequiredHeaderV2 } from "@/lib/x402-signature";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 const API_BASE = "https://api.x402disputes.com";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
+const MIN_TOPUP_MICROUSDC = BigInt(10_000); // $0.01
 
 function parseUsdcToMicros(amount: string): string | null {
   const s = amount.trim();
-  if (!/^\d+(\.\d{1,6})?$/.test(s)) return null;
+  // Accept "5", "5.", "5.0" ... up to 6 decimals.
+  if (!/^\d+(\.\d{0,6})?$/.test(s)) return null;
   const [whole, frac = ""] = s.split(".");
   const padded = (frac + "000000").slice(0, 6);
   const micros = BigInt(whole) * BigInt(1_000_000) + BigInt(padded);
@@ -30,7 +30,6 @@ export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
-  const [chain, setChain] = useState<"base">("base");
   const [merchantAddress, setMerchantAddress] = useState("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
@@ -42,6 +41,7 @@ export default function TopupPage() {
     }
   }, [amountMicros]);
   const overMax = !!amountMicrosBig && amountMicrosBig > MAX_TOPUP_MICROUSDC;
+  const underMin = !!amountMicrosBig && amountMicrosBig > BigInt(0) && amountMicrosBig < MIN_TOPUP_MICROUSDC;
 
   const merchantNormalized = useMemo(() => normalizeMerchantToCaip10Base(merchantAddress), [merchantAddress]);
   const merchantCaip10 = merchantNormalized.caip10;
@@ -54,14 +54,23 @@ export default function TopupPage() {
   const aiPrompt = useMemo(() => {
     const m = merchantCaip10 || "eip155:8453:0xYOUR_MERCHANT_WALLET";
     return [
-      "You are helping me add x402 dispute support to my API.",
+      "You are helping me add dispute + refund support for my x402-monetized API resource.",
+      "",
+      "Context:",
+      "- x402 is an HTTP payment flow: an API can return 402 Payment Required with payment requirements,",
+      "  and the client retries with a payment proof header (e.g. PAYMENT-SIGNATURE / X-PAYMENT).",
+      "- After a successful paid response, I want buyers to discover a dispute URL and file disputes.",
       "",
       `My merchant wallet identity (CAIP-10) is: ${m}`,
       "",
-      "Please update my server so every successful paid response includes this HTTP header:",
+      "Goal:",
+      "1) For every successful paid response (i.e. after x402 payment is accepted), include this HTTP header:",
       `Link: <https://api.x402disputes.com/v1/disputes?merchant=${m}>; rel=\"payment-dispute https://x402disputes.com/rel/payment-dispute\"; type=\"application/json\"`,
       "",
-      "Use the framework I mention (Express/Fastify/Next/etc). Show the exact code changes and where to place them.",
+      "2) Do NOT change my payloads. Just add the header.",
+      "3) Show me exactly where to add it in my code for the framework I use (Express/Fastify/Next/etc).",
+      "",
+      "Bonus (optional): show how to publish /.well-known/x402.json with my dispute terms and the dispute URL.",
     ].join("\n");
   }, [merchantCaip10]);
 
@@ -100,14 +109,7 @@ export default function TopupPage() {
 
           <div className="space-y-2">
             <Label>Blockchain</Label>
-            <Select value={chain} onValueChange={(v) => setChain(v as "base")}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select chain" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="base">Base (USDC)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="text-sm text-muted-foreground">Base (USDC)</div>
           </div>
 
           <div className="space-y-2">
@@ -127,6 +129,9 @@ export default function TopupPage() {
             {overMax && (
               <div className="text-xs text-destructive">Max top up is $10 USDC</div>
             )}
+            {underMin && (
+              <div className="text-xs text-destructive">Minimum top up is $0.01 USDC</div>
+            )}
           </div>
 
           {!isConnected ? (
@@ -141,18 +146,19 @@ export default function TopupPage() {
           )}
 
           <Button
-            disabled={!merchantCaip10 || !amountMicros || overMax || !isConnected || !walletClient || !address}
+            disabled={status === "processing"}
             onClick={async () => {
               setError(null);
               setTxHash(null);
               setNewBalanceMicros(null);
               setStatus("processing");
               try {
-                if (!walletClient || !address) throw new Error("Wallet not ready");
                 if (!merchantCaip10) throw new Error(merchantNormalized.error || "Merchant wallet is required");
-                if (!amountMicros) throw new Error("Amount is required");
+                if (!amountMicros) throw new Error("Enter an amount");
+                if (!amountMicrosBig) throw new Error("Enter an amount");
                 if (overMax) throw new Error("Max top up is $10 USDC");
-                if (chain !== "base") throw new Error("Only Base is supported");
+                if (underMin) throw new Error("Minimum top up is $0.01 USDC");
+                if (!isConnected || !walletClient || !address) throw new Error("Connect a wallet to pay");
 
                 // 1) request payment requirements (402)
                 const res = await fetch(`${API_BASE}/v1/topup`, {
@@ -225,7 +231,7 @@ export default function TopupPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Step 2 — Ask an AI to add your dispute link</CardTitle>
+          <CardTitle>Step 2 — Copy/paste into an AI</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="text-sm text-muted-foreground">
