@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CopyableField } from "@/components/case-detail/CopyableField";
+import { normalizeMerchantToCaip10 } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402disputes.com";
 
@@ -27,11 +28,14 @@ export default function DisputesPage() {
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<DisputeRow[]>([]);
 
+  const merchantNormalized = useMemo(() => normalizeMerchantToCaip10(merchant, "base"), [merchant]);
+  const merchantCaip10 = merchantNormalized.caip10;
+
   const fetchUrl = useMemo(() => {
-    const m = merchant.trim();
+    const m = merchantCaip10?.trim() ?? "";
     if (!m) return null;
     return `${API_BASE}/v1/disputes?merchant=${encodeURIComponent(m)}&limit=50`;
-  }, [merchant]);
+  }, [merchantCaip10]);
 
   useEffect(() => {
     setRows([]);
@@ -43,7 +47,7 @@ export default function DisputesPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Disputes</h1>
         <p className="text-sm text-muted-foreground">
-          Public dispute registry. Search by merchant identity (CAIP-10).
+          Public dispute registry. Search by merchant wallet address (defaults to Base).
         </p>
       </div>
 
@@ -53,13 +57,21 @@ export default function DisputesPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="merchant">Merchant (CAIP-10)</Label>
+            <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
               id="merchant"
-              placeholder="eip155:8453:0x..."
+              placeholder="0x..."
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
             />
+            {merchant.trim() && merchantNormalized.error && (
+              <div className="text-xs text-destructive">{merchantNormalized.error}</div>
+            )}
+            {merchantCaip10 && (
+              <div className="text-xs text-muted-foreground">
+                Normalized identity: <code className="font-mono">{merchantCaip10}</code>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">

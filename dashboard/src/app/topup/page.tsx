@@ -10,8 +10,11 @@ import { CopyableField } from "@/components/case-detail/CopyableField";
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { useAccount, useWalletClient } from "wagmi";
 import { createX402PaymentSignatureV2, parsePaymentRequiredHeaderV2 } from "@/lib/x402-signature";
+import { normalizeMerchantToCaip10, type SupportedTopupChain } from "@/lib/caip10";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API_BASE = "https://api.x402disputes.com";
+const GASLESS_TOPUP_ENABLED = false; // Coming soon
 
 function parseUsdcToMicros(amount: string): string | null {
   const s = amount.trim();
@@ -27,9 +30,12 @@ export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
-  const [merchant, setMerchant] = useState("");
+  const [chain, setChain] = useState<SupportedTopupChain>("base");
+  const [merchantAddress, setMerchantAddress] = useState("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
+  const merchantNormalized = useMemo(() => normalizeMerchantToCaip10(merchantAddress, chain), [merchantAddress, chain]);
+  const merchantCaip10 = merchantNormalized.caip10;
 
   const [status, setStatus] = useState<"idle" | "needs_payment" | "processing" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -38,39 +44,62 @@ export default function TopupPage() {
   const [newBalanceMicros, setNewBalanceMicros] = useState<string | null>(null);
 
   const linkHeaderExample = useMemo(() => {
-    const m = merchant.trim();
+    const m = merchantCaip10?.trim() ?? "";
     if (!m) return "";
     return `Link: <${API_BASE}/v1/disputes?merchant=${encodeURIComponent(m)}>; rel="payment-dispute https://x402disputes.com/rel/payment-dispute"; type="application/json"`;
-  }, [merchant]);
+  }, [merchantCaip10]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Top up refund balance</h1>
         <p className="text-sm text-muted-foreground">
-          No signup required. Fund a merchant wallet (CAIP-10). Credits are tracked per merchant, custody is pooled.
+          No signup required. Fund a merchant wallet. Credits are tracked per merchant, custody is pooled.
         </p>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Top up (Base USDC)</CardTitle>
+          <CardTitle>Top up (USDC)</CardTitle>
           <Badge variant={status === "success" ? "default" : status === "error" ? "destructive" : "secondary"}>
             {status === "idle" ? "Ready" : status === "needs_payment" ? "Payment required" : status === "processing" ? "Processing" : status === "success" ? "Credited" : "Error"}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="merchant">Merchant (CAIP-10)</Label>
+            <Label>Blockchain</Label>
+            <Select value={chain} onValueChange={(v) => setChain(v as SupportedTopupChain)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select chain" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="base">Base (USDC)</SelectItem>
+                <SelectItem value="solana" disabled>
+                  Solana (coming soon)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
               id="merchant"
-              placeholder="eip155:8453:0x..."
-              value={merchant}
-              onChange={(e) => setMerchant(e.target.value)}
+              placeholder="0x..."
+              value={merchantAddress}
+              onChange={(e) => setMerchantAddress(e.target.value)}
             />
             <div className="text-xs text-muted-foreground">
-              Example: <code className="font-mono">eip155:8453:0xabc...</code>
+              Example: <code className="font-mono">0xabc...</code> (we’ll normalize it to CAIP-10 automatically)
             </div>
+            {merchantAddress.trim() && merchantNormalized.error && (
+              <div className="text-xs text-destructive">{merchantNormalized.error}</div>
+            )}
+            {merchantCaip10 && (
+              <div className="text-xs text-muted-foreground">
+                Normalized identity: <code className="font-mono">{merchantCaip10}</code>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -100,7 +129,7 @@ export default function TopupPage() {
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
-              disabled={!merchant.trim() || !amountMicros}
+              disabled={!merchantCaip10 || !amountMicros || chain !== "base"}
               onClick={async () => {
                 setError(null);
                 setTxHash(null);
@@ -112,7 +141,7 @@ export default function TopupPage() {
                   const res = await fetch(`${API_BASE}/v1/topup`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ merchant: merchant.trim(), amountMicrousdc: amountMicros, currency: "USDC" }),
+                    body: JSON.stringify({ merchant: merchantCaip10, amountMicrousdc: amountMicros, currency: "USDC" }),
                   });
 
                   if (res.status !== 402) {
@@ -134,7 +163,16 @@ export default function TopupPage() {
             </Button>
 
             <Button
-              disabled={!isConnected || !walletClient || !address || !paymentRequiredB64 || !amountMicros || !merchant.trim()}
+              disabled={
+                !GASLESS_TOPUP_ENABLED ||
+                !isConnected ||
+                !walletClient ||
+                !address ||
+                !paymentRequiredB64 ||
+                !amountMicros ||
+                !merchantCaip10 ||
+                chain !== "base"
+              }
               onClick={async () => {
                 setError(null);
                 setTxHash(null);
@@ -160,7 +198,7 @@ export default function TopupPage() {
                       "Content-Type": "application/json",
                       "PAYMENT-SIGNATURE": paymentSignature,
                     },
-                    body: JSON.stringify({ merchant: merchant.trim(), amountMicrousdc: amountMicros, currency: "USDC" }),
+                    body: JSON.stringify({ merchant: merchantCaip10, amountMicrousdc: amountMicros, currency: "USDC" }),
                   });
 
                   const data = await res2.json().catch(() => ({}));
@@ -177,7 +215,11 @@ export default function TopupPage() {
                 }
               }}
             >
-              Pay (gasless)
+              {GASLESS_TOPUP_ENABLED ? "Top up (gasless)" : "Top up (gasless) — coming soon"}
+            </Button>
+
+            <Button variant="secondary" disabled className="sm:ml-auto">
+              Merchant: see disputes (coming soon)
             </Button>
           </div>
 
@@ -221,7 +263,10 @@ export default function TopupPage() {
             Publish your dispute capability in every paid response using a <code className="font-mono">Link</code> header.
           </div>
           <CopyableField
-            value={linkHeaderExample || `Link: <${API_BASE}/v1/disputes?merchant=eip155:8453:0x...>; rel=\"payment-dispute https://x402disputes.com/rel/payment-dispute\"; type=\"application/json\"`}
+            value={
+              linkHeaderExample ||
+              `Link: <${API_BASE}/v1/disputes?merchant=eip155:8453:0x...>; rel="payment-dispute https://x402disputes.com/rel/payment-dispute"; type="application/json"`
+            }
             label="Link header"
             truncate={false}
           />
