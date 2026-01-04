@@ -88,14 +88,14 @@ export function Navigation({ currentPage }: NavigationProps) {
           {/* Right Section */}
           <div className="flex items-center gap-2">
             {/* Top up - Desktop */}
-            <Button
+              <Button
               onClick={() => window.location.href = "/topup"}
               className="hidden md:flex"
               variant="outline"
-              size="sm"
-            >
+                size="sm"
+              >
               Top up
-            </Button>
+              </Button>
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -110,13 +110,13 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <SheetTitle className="text-2xl font-bold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
-                  <Button
+                    <Button
                     onClick={() => handleNavigation("/topup")}
                     className="w-full justify-start"
                     variant="outline"
-                  >
+                    >
                     Top up
-                  </Button>
+                    </Button>
 
                   <div className="border-t border-border pt-4 space-y-3">
                     {/* Main Navigation */}
