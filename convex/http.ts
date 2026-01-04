@@ -1007,7 +1007,7 @@ function base64EncodeJson(obj: unknown): string {
 
 function jsonError(status: number, payload: unknown) {
   return new Response(JSON.stringify(payload), { status, headers: corsHeaders });
-}
+    }
 
 // POST /v1/topup
 // - No PAYMENT-SIGNATURE: returns 402 + PAYMENT-REQUIRED (base64 JSON).
@@ -1026,7 +1026,7 @@ http.route({
     }
     if (currency !== "USDC") {
       return jsonError(400, { ok: false, code: "UNSUPPORTED_CURRENCY", message: "Only USDC is supported" });
-    }
+      }
     const amountMicrousdc =
       typeof amountMicrousdcRaw === "number"
         ? amountMicrousdcRaw
@@ -1099,10 +1099,10 @@ http.route({
         transactionHash: txHashHeader,
         expectedAmountMicrousdc: amountMicrousdc,
         expectedToAddress: depositAddress,
-      });
+  });
       if (!verified.ok) {
         return jsonError(400, { ok: false, code: verified.code, message: verified.message });
-      }
+  }
 
       const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
         merchant,
@@ -1112,7 +1112,7 @@ http.route({
         amountMicrousdc: verified.amountMicrousdc,
         payerAddress: verified.payerAddress,
         recipientAddress: verified.recipientAddress,
-      });
+  });
       if (!credited?.ok) return jsonError(400, credited);
 
       return new Response(
@@ -1125,7 +1125,7 @@ http.route({
         }),
         { status: 200, headers: corsHeaders },
       );
-    }
+}
 
     // Discovery: return BOTH v2 header and v1 body so either client can proceed.
     if (!paymentSig && !xPayment) {
@@ -1154,7 +1154,7 @@ http.route({
     const settle: any = await (ctx.runAction as any)((api as any).demoAgents.cdpAuth.settlePayment, {
       paymentHeader,
       paymentRequirements,
-    });
+      });
     if (settle?.status >= 400) {
       return jsonError(400, { ok: false, code: "SETTLE_FAILED", facilitator: settle?.facilitator, message: settle?.body });
     }
@@ -1176,11 +1176,11 @@ http.route({
       transactionHash: txHash,
       expectedAmountMicrousdc: amountMicrousdc,
       expectedToAddress: depositAddress,
-    });
+        });
     if (!verified.ok) {
       return jsonError(400, { ok: false, code: verified.code, message: verified.message });
-    }
-
+      }
+      
     const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
       merchant,
       blockchain: "base",
@@ -1189,7 +1189,7 @@ http.route({
       amountMicrousdc: verified.amountMicrousdc,
       payerAddress: verified.payerAddress,
       recipientAddress: verified.recipientAddress,
-    });
+        });
 
     if (!credited?.ok) {
       return jsonError(400, credited);
@@ -1233,7 +1233,7 @@ http.route({
       evidenceUrlOrHash,
       agentId,
       txId,
-    });
+      });
     if (!created?.ok) return jsonError(400, created);
 
     return new Response(JSON.stringify({ ok: true, disputeId: created.disputeId }), { status: 200, headers: corsHeaders });
@@ -1248,11 +1248,11 @@ http.route({
     const url = new URL(request.url);
     const merchant = url.searchParams.get("merchant") || "";
     const limit = Number(url.searchParams.get("limit") || "50");
-
+    
     const res = await ctx.runQuery((api as any).pool.cases_listWalletDisputesByMerchant, {
       merchant,
       limit,
-    });
+      });
     if (!res?.ok) return jsonError(400, res);
     return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
   }),
@@ -1273,7 +1273,7 @@ http.route({
     } catch (e: any) {
       // Invalid IDs fail validation in Convex (v.id("cases")).
       return jsonError(400, { ok: false, code: "INVALID_ID", message: e?.message || "Invalid caseId" });
-    }
+      }
     if (!row) return jsonError(404, { ok: false, code: "NOT_FOUND" });
 
     return new Response(JSON.stringify({ ok: true, dispute: row }), { status: 200, headers: corsHeaders });
@@ -1514,8 +1514,8 @@ http.route({
         code: "INVALID_LIMIT",
         message: "limit must be an integer between 1 and 200",
       }), { status: 400, headers: corsHeaders });
-    }
-
+      }
+      
     try {
       const res = await ctx.runQuery(api.cases.listLiveFeedCases, {
         limit,

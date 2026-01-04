@@ -99,16 +99,16 @@ describe('System - Health & Info', () => {
 
 describe("Removed endpoints: /agents/*", () => {
   it("POST /agents/discover should be removed (404)", async () => {
-    const response = await fetch(`${API_BASE_URL}/agents/discover`, {
+      const response = await fetch(`${API_BASE_URL}/agents/discover`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ functionalTypes: ["general"] }),
-    });
+      });
     expect(response.status).toBe(404);
-  });
+    });
 
   it("GET /agents/top-reputation should be removed (404)", async () => {
-    const response = await fetch(`${API_BASE_URL}/agents/top-reputation`);
+      const response = await fetch(`${API_BASE_URL}/agents/top-reputation`);
     expect(response.status).toBe(404);
   });
 });

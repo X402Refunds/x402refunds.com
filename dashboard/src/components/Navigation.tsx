@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { User, Menu, LayoutDashboard } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -19,7 +18,6 @@ interface NavigationProps {
 
 export function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { isSignedIn } = useUser()
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -74,7 +72,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 How it works
               </button>
               <button
-                onClick={() => handleAnchor("#api")}
+                onClick={() => handleAnchor("#enable")}
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   currentPage === "home"
@@ -82,35 +80,22 @@ export function Navigation({ currentPage }: NavigationProps) {
                     : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
-                Dispute API
+                Enable disputes
               </button>
             </div>
           </div>
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* Go to Dashboard Button - Desktop (when signed in) */}
-            {isSignedIn && (
-              <Button
-                onClick={() => window.location.href = '/dashboard'}
-                className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Open dashboard
-              </Button>
-            )}
-            {/* Sign In Button - Desktop */}
-            {!isSignedIn && (
-              <Button
-                onClick={() => window.location.href = '/sign-in'}
-                className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Get ready to receive disputes
-              </Button>
-            )}
+            {/* Top up - Desktop */}
+            <Button
+              onClick={() => window.location.href = "/topup"}
+              className="hidden md:flex"
+              variant="outline"
+              size="sm"
+            >
+              Top up
+            </Button>
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -125,26 +110,13 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <SheetTitle className="text-2xl font-bold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
-                  {/* Go to Dashboard - Mobile (when signed in) */}
-                  {isSignedIn && (
-                    <Button
-                      onClick={() => handleNavigation('/dashboard')}
-                      className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <LayoutDashboard className="h-4 w-4 mr-2" />
-                      Open dashboard
-                    </Button>
-                  )}
-                  {/* Sign In - Mobile */}
-                  {!isSignedIn && (
-                    <Button
-                      onClick={() => handleNavigation('/sign-in')}
-                      className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Get ready to receive disputes
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleNavigation("/topup")}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    Top up
+                  </Button>
 
                   <div className="border-t border-border pt-4 space-y-3">
                     {/* Main Navigation */}
@@ -161,13 +133,13 @@ export function Navigation({ currentPage }: NavigationProps) {
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => handleAnchor("#api")}
+                        onClick={() => handleAnchor("#enable")}
                         className={cn(
                           "w-full justify-start",
                           currentPage === 'home' && 'bg-blue-50 text-blue-700'
                         )}
                       >
-                        Dispute API
+                        Enable disputes
                       </Button>
                     </div>
                   </div>

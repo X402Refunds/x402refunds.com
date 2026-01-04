@@ -19,6 +19,7 @@ export function Footer() {
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-emerald-400 transition-colors">Uptime</button></li>
               <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('/sign-in', '_self')} className="hover:text-emerald-400 transition-colors">Merchant dashboard (optional)</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">

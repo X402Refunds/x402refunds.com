@@ -25,13 +25,13 @@ import { cleanupTestDataDirect } from './fixtures/test-cleanup-helper';
 
 describe("HTTP API - Removed endpoints", () => {
   it("POST /agents/register should be removed (404)", async () => {
-    const response = await fetch(`${API_BASE_URL}/agents/register`, {
+      const response = await fetch(`${API_BASE_URL}/agents/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Test", publicKey: "abc", organizationName: "Test" }),
     });
     expect(response.status).toBe(404);
-  });
+    });
 
   it("POST /agents/capabilities should be removed (404)", async () => {
     const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
@@ -268,20 +268,20 @@ describe("HTTP API - Wallet-first Topup (v1/v2 discovery)", () => {
     const response = await fetch(`${API_BASE_URL}/v1/topup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+        body: JSON.stringify({
         amountMicrousdc: "10000",
         currency: "USDC",
-      }),
-    });
+        }),
+      });
     // Endpoint may not exist on older deployments.
-    expect([400, 404]).toContain(response.status);
-  });
+      expect([400, 404]).toContain(response.status);
+    });
 
   it("POST /v1/topup should return 402 with PAYMENT-REQUIRED header and v1 body", async () => {
     const response = await fetch(`${API_BASE_URL}/v1/topup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+        body: JSON.stringify({
         merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
         amountMicrousdc: "10000",
         currency: "USDC",
@@ -299,14 +299,14 @@ describe("HTTP API - Wallet-first Topup (v1/v2 discovery)", () => {
     expect(body.x402Version).toBe(1);
     expect(Array.isArray(body.accepts)).toBe(true);
     expect(body.accepts.length).toBeGreaterThan(0);
+    });
   });
-});
-
-afterAll(async () => {
-  // Clean up any test data created (though these are mostly error tests)
-  if (!USE_LIVE_API) {
-    const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
-    await cleanupTestDataDirect(convexUrl);
-  }
+  
+  afterAll(async () => {
+    // Clean up any test data created (though these are mostly error tests)
+    if (!USE_LIVE_API) {
+      const convexUrl = API_BASE_URL.replace('.convex.site', '.convex.cloud');
+      await cleanupTestDataDirect(convexUrl);
+    }
 });
 

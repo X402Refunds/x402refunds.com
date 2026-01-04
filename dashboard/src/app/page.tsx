@@ -3,10 +3,8 @@
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
-import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 import { TypewriterText } from "@/components/TypewriterText"
-import { CodeExampleCard } from "@/components/CodeExampleCard"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
 // holding onto older `/public` assets after swaps.
@@ -74,10 +72,6 @@ function ResponsiveLandingScreenshot({
 }
 
 export default function HomePage() {
-  const { isSignedIn } = useUser()
-  const primaryCtaLabel = isSignedIn ? "Open dashboard" : "Get ready to receive disputes"
-  const primaryCtaHref = isSignedIn ? "/dashboard" : "/sign-in"
-
   return (
     <div className="min-h-screen bg-white">
       <Navigation currentPage="home" />
@@ -94,12 +88,12 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Receive x402 payment disputes.
+                Plug-and-play disputes + refunds
                 <br />
                 <span>
-                  Send{" "}
+                  for{" "}
                   <TypewriterText
-                    text="refunds."
+                    text="x402 payments."
                     className="text-blue-600"
                     speedMs={55}
                     startDelayMs={150}
@@ -110,7 +104,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Give buyers your dispute link. If there’s a problem, it shows up here.
+                No signup. Add one header. Top up USDC. Get notified when disputes come in.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -129,24 +123,24 @@ export default function HomePage() {
               </ul>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button 
-                    size="lg" 
+                <Button
+                  size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                  onClick={() => (window.location.href = primaryCtaHref)}
+                  onClick={() => {
+                    const el = document.getElementById("enable")
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }}
                 >
-                  {primaryCtaLabel}
-                  </Button>
+                  Enable disputes (no signup)
+                </Button>
 
                 <Button
                   size="lg"
                   variant="outline"
                   className="border-slate-300 text-slate-900 hover:bg-slate-50 px-7 h-12"
-                  onClick={() => {
-                    const el = document.getElementById("how-it-works")
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }}
+                  onClick={() => (window.location.href = "/topup")}
                 >
-                  See how it works
+                  Top up refund credits
                 </Button>
               </div>
 
@@ -166,65 +160,48 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ENABLE DISPUTES (NO SDK REQUIRED) */}
-      <section className="border-b border-slate-200 bg-white">
+      {/* ENABLE DISPUTES (PLUG AND PLAY) */}
+      <section id="enable" className="border-b border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Enable disputes in 60 seconds
+              Plug-and-play. No signup required.
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Publish a dispute link, top up your refund pool, and (optionally) publish terms for the arbiter to enforce.
+              Three steps. Copy/paste once. You’re live.
             </p>
           </div>
 
-          {(() => {
-            const merchant = "eip155:8453:0xYourTreasuryAddress"
-            const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(merchant)}`
-            const merchantHeader = `Link: <${disputeUrl}>; rel=\"payment-dispute\"; type=\"application/json\"`
-            const merchantExample = `res.setHeader(\n  \"Link\",\n  '<${disputeUrl}>; rel=\"payment-dispute\"; type=\"application/json\"'\n);`
-
-            const wellKnown = `{\n  \"x402disputes\": {\n    \"merchant\": \"${merchant}\",\n    \"paymentDisputeUrl\": \"${disputeUrl}\",\n    \"topupUrl\": \"https://x402disputes.com/topup/\",\n    \"terms\": {\n      \"refundWindowDays\": 7,\n      \"evidenceWindowDays\": 7,\n      \"autoRefund\": true,\n      \"currency\": \"USDC\"\n    }\n  }\n}`
-
-            const topupSteps = `Open: https://x402disputes.com/topup/\nEnter: ${merchant}\nPay: USDC on Base\n\nIf a dispute is approved, refunds can auto-execute from this balance.`
-
-            return (
-              <div className="mt-10 max-w-5xl mx-auto grid items-start gap-6 lg:grid-cols-3">
-                <CodeExampleCard
-                  title="Merchant: publish dispute URL"
-                  description="Add one header to your paid responses."
-                  language="TypeScript"
-                  code={merchantExample}
-                  copyValue={merchantHeader}
-                />
-
-                <CodeExampleCard
-                  title="Merchant: top up refund pool"
-                  description="Use the web page (no cURL)."
-                  language="text"
-                  code={topupSteps}
-                  copyValue="https://x402disputes.com/topup/"
-                />
-
-                <CodeExampleCard
-                  title="Optional: publish terms"
-                  description="Serve this at /.well-known/x402.json for the arbiter to read."
-                  language="json"
-                  code={wellKnown}
-                  copyValue={wellKnown}
-                />
+          <div className="mt-10 max-w-5xl mx-auto grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <div className="text-xs font-semibold text-blue-600">STEP 1</div>
+              <div className="mt-2 font-semibold text-slate-950">Top up refund credits</div>
+              <div className="mt-1 text-sm text-slate-600">Fund refunds for your merchant wallet (Base USDC).</div>
+              <div className="mt-4">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => (window.location.href = "/topup")}>
+                  Top up
+                </Button>
               </div>
-            )
-          })()}
+            </div>
 
-          <div className="mt-8 max-w-5xl mx-auto">
-            <CodeExampleCard
-              title="Buyer: file a dispute (no SDK)"
-              description="Wallet-first payment dispute intake."
-              language="curl"
-              code={`curl -sS https://api.x402disputes.com/v1/disputes \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"buyer\": \"buyer:your-id-or-wallet\",\n    \"merchant\": \"eip155:8453:0xYourTreasuryAddress\",\n    \"txHash\": \"0xYourPaymentTransactionHash\",\n    \"chain\": \"base\",\n    \"amountMicrousdc\": \"10000\",\n    \"reason\": \"api_timeout\",\n    \"evidenceUrlOrHash\": \"https://example.com/logs/timeout.json\"\n  }'`}
-              copyValue={`curl -sS https://api.x402disputes.com/v1/disputes \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"buyer\": \"buyer:your-id-or-wallet\",\n    \"merchant\": \"eip155:8453:0xYourTreasuryAddress\",\n    \"txHash\": \"0xYourPaymentTransactionHash\",\n    \"chain\": \"base\",\n    \"amountMicrousdc\": \"10000\",\n    \"reason\": \"api_timeout\",\n    \"evidenceUrlOrHash\": \"https://example.com/logs/timeout.json\"\n  }'`}
-            />
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <div className="text-xs font-semibold text-blue-600">STEP 2</div>
+              <div className="mt-2 font-semibold text-slate-950">Add one header</div>
+              <div className="mt-1 text-sm text-slate-600">Copy/paste a prompt into an AI to add your dispute Link header.</div>
+              <div className="mt-4">
+                <Button variant="outline" className="border-slate-300 text-slate-900 hover:bg-slate-50" onClick={() => (window.location.href = "/topup")}>
+                  Get the prompt
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <div className="text-xs font-semibold text-blue-600">STEP 3</div>
+              <div className="mt-2 font-semibold text-slate-950">Get notified (recommended)</div>
+              <div className="mt-1 text-sm text-slate-600">
+                Publish <span className="font-mono">/.well-known/x402.json</span> with a webhook or support email.
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -238,21 +215,21 @@ export default function HomePage() {
           <div className="mt-8 grid md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
-              <div className="mt-2 font-semibold text-slate-950">Receive disputes</div>
-              <div className="mt-1 text-sm text-slate-600">Disputes arrive from x402 payments (API).</div>
-                </div>
+              <div className="mt-2 font-semibold text-slate-950">Top up refund credits</div>
+              <div className="mt-1 text-sm text-slate-600">Fund refunds for your merchant wallet.</div>
+            </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 2</div>
-              <div className="mt-2 font-semibold text-slate-950">Make a decision</div>
-              <div className="mt-1 text-sm text-slate-600">Refund, deny, or partial refund.</div>
-                </div>
+              <div className="mt-2 font-semibold text-slate-950">Disputes show up</div>
+              <div className="mt-1 text-sm text-slate-600">Buyers file disputes from your x402 payments.</div>
+            </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 3</div>
-              <div className="mt-2 font-semibold text-slate-950">Send + track refunds</div>
-              <div className="mt-1 text-sm text-slate-600">See refund status and retry failures.</div>
-              </div>
+              <div className="mt-2 font-semibold text-slate-950">Approve → refunds send</div>
+              <div className="mt-1 text-sm text-slate-600">Approved disputes can auto-refund from your credits.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -300,27 +277,27 @@ export default function HomePage() {
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
           <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-            <h2 className="text-3xl sm:text-4xl font-bold">Start receiving disputes.</h2>
-            <p className="mt-2 text-slate-300">A simple dashboard to review disputes and send refunds.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold">Enable disputes in minutes.</h2>
+            <p className="mt-2 text-slate-300">Plug-and-play. No signup. Top up and add one header.</p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button 
-                size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-              onClick={() => (window.location.href = primaryCtaHref)}
-            >
-              {primaryCtaLabel}
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
-              onClick={() => {
-                const el = document.getElementById("how-it-works")
-                el?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }}
-            >
-              See how it works
-            </Button>
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+                onClick={() => {
+                  const el = document.getElementById("enable")
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+              >
+                Enable disputes
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
+                onClick={() => (window.location.href = "/topup")}
+              >
+                Top up refund credits
+              </Button>
             </div>
             </div>
         </div>
