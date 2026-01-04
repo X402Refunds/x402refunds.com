@@ -165,8 +165,8 @@ export default function HomePage() {
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
                 <CodeExampleCard
-                  title="Step 1 — /.well-known/x402.json"
-                  description="Tell buyers your dispute URL, support email, and terms."
+                  title="Step 1 — Publish /.well-known/x402.json"
+                  description="This tells buyers your dispute URL and terms."
                   language="json"
                   code={wellKnown}
                   copyValue={wellKnown}
@@ -174,7 +174,7 @@ export default function HomePage() {
                 />
 
                 <CodeExampleCard
-                  title="Step 2 — Link header"
+                  title="Step 2 — Add a Link header"
                   description="Buyers discover where to file disputes from your paid response."
                   language="text"
                   code={linkHeader}
@@ -182,9 +182,9 @@ export default function HomePage() {
                 />
 
                 <CodeExampleCard
-                  title="Step 3 (optional) — Top up refund credits"
+                  title="Step 3 — Top up refund credits"
                   description="Add credits so approved disputes can refund automatically."
-                  language="optional"
+                  language="text"
                   code={`Open: https://x402disputes.com/topup/`}
                   copyValue="https://x402disputes.com/topup/"
                 />
