@@ -97,7 +97,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                No signup. Publish x402.json and a Link header.
+                No signup. Copy/paste x402.json and a Link header.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -165,8 +165,8 @@ export default function HomePage() {
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
                 <CodeExampleCard
-                  title="Step 1 — Publish /.well-known/x402.json"
-                  description="This tells buyers your dispute URL and terms."
+                  title="Step 1 — /.well-known/x402.json"
+                  description="Tell buyers your dispute URL, support email, and terms."
                   language="json"
                   code={wellKnown}
                   copyValue={wellKnown}
@@ -174,7 +174,7 @@ export default function HomePage() {
                 />
 
                 <CodeExampleCard
-                  title="Step 2 — Add a Link header"
+                  title="Step 2 — Link header"
                   description="Buyers discover where to file disputes from your paid response."
                   language="text"
                   code={linkHeader}
