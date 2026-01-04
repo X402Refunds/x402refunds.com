@@ -4,7 +4,6 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { TypewriterText } from "@/components/TypewriterText"
 import { CodeExampleCard } from "@/components/CodeExampleCard"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
@@ -93,12 +92,7 @@ export default function HomePage() {
                 <br />
                 <span>
                   for{" "}
-                  <TypewriterText
-                    text="x402 payments."
-                    className="text-blue-600"
-                    speedMs={55}
-                    startDelayMs={150}
-                  />
+                  <span className="text-blue-600">x402 payments.</span>
                 </span>
               </h1>
               
