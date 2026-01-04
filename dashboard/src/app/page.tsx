@@ -170,6 +170,7 @@ export default function HomePage() {
                   language="json"
                   code={wellKnown}
                   copyValue={wellKnown}
+                  collapsedLines={10}
                 />
 
                 <CodeExampleCard
@@ -180,22 +181,13 @@ export default function HomePage() {
                   copyValue={linkHeader}
                 />
 
-                <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[0_1px_0_rgba(0,0,0,0.03),0_12px_24px_rgba(0,0,0,0.06)]">
-                  <div className="text-xs font-semibold text-muted-foreground">STEP 3 (OPTIONAL)</div>
-                  <div className="mt-2 font-semibold text-foreground">Top up refund credits</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Add credits so approved disputes can refund automatically.
-                  </div>
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      className="border-slate-300 text-slate-900 hover:bg-slate-50"
-                      onClick={() => (window.location.href = "/topup")}
-                    >
-                      Top up (optional)
-                    </Button>
-                  </div>
-                </div>
+                <CodeExampleCard
+                  title="Step 3 (optional) — Top up refund credits"
+                  description="Add credits so approved disputes can refund automatically."
+                  language="optional"
+                  code={`Open: https://x402disputes.com/topup/`}
+                  copyValue="https://x402disputes.com/topup/"
+                />
               </div>
             )
           })()}
