@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { CopyButton } from "@/components/ui/copy-button"
 import Image from "next/image"
-import { CodeExampleCard } from "@/components/CodeExampleCard"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
 // holding onto older `/public` assets after swaps.
@@ -78,8 +77,8 @@ function SetupStepCard({
   description,
   children,
 }: {
-  title: string
-  description: string
+  title: React.ReactNode
+  description: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -98,11 +97,24 @@ function SetupStepCard({
   )
 }
 
-function CopyBlock({ label, value }: { label: string; value: string }) {
+function CopyBlock({
+  label,
+  hint,
+  labelClassName,
+  value,
+}: {
+  label: string
+  hint?: string
+  labelClassName?: string
+  value: string
+}) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        <div className="text-xs font-medium text-muted-foreground">
+          <span className={labelClassName}>{label}</span>
+          {hint ? <span className="ml-2 text-muted-foreground">{hint}</span> : null}
+        </div>
         <CopyButton value={value} label={`Copied ${label}`} />
       </div>
       <pre className="m-0 overflow-x-auto rounded-lg border border-border/60 bg-background px-3 py-3 text-[13px] leading-6 text-foreground whitespace-pre">
@@ -138,7 +150,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                No signup. Copy/paste x402.json and a Link header.
+                No signup. Copy/paste <span className="font-mono">/.well-known/x402.json</span> + a Link header.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -206,38 +218,56 @@ export default function HomePage() {
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
                 <SetupStepCard
-                  title="Step 1 — Enable disputes (copy/paste)"
-                  description="Publish x402.json and add a Link header to your paid responses."
+                  title={
+                    <>
+                      Step 1 — Publish{" "}
+                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
+                        /.well-known/x402.json
+                      </span>
+                    </>
+                  }
+                  description="This is your public dispute policy + support email."
                 >
                   <div className="space-y-4">
-                    <CopyBlock label="/.well-known/x402.json" value={wellKnown} />
-                    <CopyBlock label="Link header" value={linkHeader} />
+                    <CopyBlock
+                      label="/.well-known/x402.json"
+                      labelClassName="font-mono rounded bg-muted px-1.5 py-0.5"
+                      value={wellKnown}
+                    />
+                    <CopyBlock
+                      label="Link header"
+                      hint="(return this on every paid response)"
+                      value={linkHeader}
+                    />
                   </div>
                 </SetupStepCard>
 
                 <SetupStepCard
-                  title="Step 2 — Receive disputes"
-                  description="We’ll notify you when a dispute is filed."
+                  title="Step 2 — Receive disputes by email"
+                  description={
+                    <>
+                      When a dispute is filed, we email the{" "}
+                      <span className="font-mono">supportEmail</span> from your{" "}
+                      <span className="font-mono">/.well-known/x402.json</span>.
+                    </>
+                  }
                 >
-                  <div className="space-y-3 text-sm text-foreground">
-                    <div>
-                      We email you at the{" "}
-                      <span className="font-mono">supportEmail</span> in your{" "}
-                      <span className="font-mono">x402.json</span>.
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Optional: use a webhook or the merchant dashboard for richer notifications.
-                    </div>
+                  <div className="text-sm text-foreground">
+                    We email you at <span className="font-mono">supportEmail</span>.
                   </div>
                 </SetupStepCard>
 
-                <CodeExampleCard
-                  title="Step 3 — Top up refund credits"
-                  description="Optional: add credits so approved disputes can refund automatically."
-                  language="text"
-                  code={`Open: https://x402disputes.com/topup/`}
-                  copyValue="https://x402disputes.com/topup/"
-                />
+                <SetupStepCard
+                  title="Step 3 — Top up refund credits (optional)"
+                  description="Optional: add USDC so approved disputes can refund automatically."
+                >
+                  <a
+                    href="/topup"
+                    className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    Top up refund credits →
+                  </a>
+                </SetupStepCard>
               </div>
             )
           })()}
@@ -254,7 +284,7 @@ export default function HomePage() {
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
               <div className="mt-2 font-semibold text-slate-950">Enable disputes</div>
-              <div className="mt-1 text-sm text-slate-600">Publish x402.json + add a Link header.</div>
+              <div className="mt-1 text-sm text-slate-600">Publish /.well-known/x402.json + return a Link header.</div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">

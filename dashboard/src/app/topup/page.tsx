@@ -51,29 +51,6 @@ export default function TopupPage() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [newBalanceMicros, setNewBalanceMicros] = useState<string | null>(null);
 
-  const aiPrompt = useMemo(() => {
-    const m = merchantCaip10 || "eip155:8453:0xYOUR_MERCHANT_WALLET";
-    return [
-      "You are helping me add dispute + refund support for my x402-monetized API resource.",
-      "",
-      "Context:",
-      "- x402 is an HTTP payment flow: an API can return 402 Payment Required with payment requirements,",
-      "  and the client retries with a payment proof header (e.g. PAYMENT-SIGNATURE / X-PAYMENT).",
-      "- After a successful paid response, I want buyers to discover a dispute URL and file disputes.",
-      "",
-      `My merchant wallet identity (CAIP-10) is: ${m}`,
-      "",
-      "Goal:",
-      "1) For every successful paid response (i.e. after x402 payment is accepted), include this HTTP header:",
-      `Link: <https://api.x402disputes.com/v1/disputes?merchant=${m}>; rel=\"payment-dispute https://x402disputes.com/rel/payment-dispute\"; type=\"application/json\"`,
-      "",
-      "2) Do NOT change my payloads. Just add the header.",
-      "3) Show me exactly where to add it in my code for the framework I use (Express/Fastify/Next/etc).",
-      "",
-      "Bonus (optional): show how to publish /.well-known/x402.json with my dispute terms and the dispute URL.",
-    ].join("\n");
-  }, [merchantCaip10]);
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="space-y-1">
@@ -226,18 +203,6 @@ export default function TopupPage() {
               {error}
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Step 2 — Copy/paste into an AI</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="text-sm text-muted-foreground">
-            Copy/paste this prompt into ChatGPT/Claude and follow the instructions.
-          </div>
-          <CopyableField value={aiPrompt} label="AI prompt" truncate={false} />
         </CardContent>
       </Card>
     </div>
