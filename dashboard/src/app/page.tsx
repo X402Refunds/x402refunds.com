@@ -3,6 +3,8 @@
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { CopyButton } from "@/components/ui/copy-button"
 import Image from "next/image"
 import { CodeExampleCard } from "@/components/CodeExampleCard"
 
@@ -68,6 +70,45 @@ function ResponsiveLandingScreenshot({
         className="lg:hidden"
       />
     </>
+  )
+}
+
+function SetupStepCard({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="overflow-hidden rounded-2xl border-border/60 bg-card py-0 shadow-[0_1px_0_rgba(0,0,0,0.03),0_12px_24px_rgba(0,0,0,0.06)]">
+      <div className="px-5 py-4">
+        <div className="text-sm font-semibold text-foreground leading-snug break-words">
+          {title}
+        </div>
+        <div className="mt-1 text-xs text-muted-foreground">{description}</div>
+      </div>
+
+      <div className="border-t border-border/60 bg-muted/25 px-5 py-4">
+        {children}
+      </div>
+    </Card>
+  )
+}
+
+function CopyBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        <CopyButton value={value} label={`Copied ${label}`} />
+      </div>
+      <pre className="m-0 overflow-x-auto rounded-lg border border-border/60 bg-background px-3 py-3 text-[13px] leading-6 text-foreground whitespace-pre">
+        <code className="font-mono">{value}</code>
+      </pre>
+    </div>
   )
 }
 
@@ -152,7 +193,7 @@ export default function HomePage() {
               Plug-and-play disputes. No signup required.
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Copy/paste two snippets. Optional: add refund credits for automatic refunds.
+              Copy/paste the snippets below. Disputes arrive by email. Optional: add refund credits for automatic refunds.
             </p>
           </div>
 
@@ -164,26 +205,35 @@ export default function HomePage() {
 
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
-                <CodeExampleCard
-                  title="Step 1 — Publish /.well-known/x402.json"
-                  description="This tells buyers your dispute URL and terms."
-                  language="json"
-                  code={wellKnown}
-                  copyValue={wellKnown}
-                  collapsedLines={10}
-                />
+                <SetupStepCard
+                  title="Step 1 — Enable disputes (copy/paste)"
+                  description="Publish x402.json and add a Link header to your paid responses."
+                >
+                  <div className="space-y-4">
+                    <CopyBlock label="/.well-known/x402.json" value={wellKnown} />
+                    <CopyBlock label="Link header" value={linkHeader} />
+                  </div>
+                </SetupStepCard>
 
-                <CodeExampleCard
-                  title="Step 2 — Add a Link header"
-                  description="Buyers discover where to file disputes from your paid response."
-                  language="text"
-                  code={linkHeader}
-                  copyValue={linkHeader}
-                />
+                <SetupStepCard
+                  title="Step 2 — Receive disputes"
+                  description="We’ll notify you when a dispute is filed."
+                >
+                  <div className="space-y-3 text-sm text-foreground">
+                    <div>
+                      We email you at the{" "}
+                      <span className="font-mono">supportEmail</span> in your{" "}
+                      <span className="font-mono">x402.json</span>.
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Optional: use a webhook or the merchant dashboard for richer notifications.
+                    </div>
+                  </div>
+                </SetupStepCard>
 
                 <CodeExampleCard
                   title="Step 3 — Top up refund credits"
-                  description="Add credits so approved disputes can refund automatically."
+                  description="Optional: add credits so approved disputes can refund automatically."
                   language="text"
                   code={`Open: https://x402disputes.com/topup/`}
                   copyValue="https://x402disputes.com/topup/"
@@ -203,21 +253,21 @@ export default function HomePage() {
           <div className="mt-8 grid md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
-              <div className="mt-2 font-semibold text-slate-950">Top up refund credits</div>
-              <div className="mt-1 text-sm text-slate-600">Fund refunds for your merchant wallet.</div>
-                </div>
+              <div className="mt-2 font-semibold text-slate-950">Enable disputes</div>
+              <div className="mt-1 text-sm text-slate-600">Publish x402.json + add a Link header.</div>
+            </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 2</div>
-              <div className="mt-2 font-semibold text-slate-950">Disputes show up</div>
-              <div className="mt-1 text-sm text-slate-600">Buyers file disputes from your x402 payments.</div>
-                </div>
+              <div className="mt-2 font-semibold text-slate-950">Disputes arrive</div>
+              <div className="mt-1 text-sm text-slate-600">We notify you (email by default).</div>
+            </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 3</div>
-              <div className="mt-2 font-semibold text-slate-950">Approve → refunds send</div>
-              <div className="mt-1 text-sm text-slate-600">Approved disputes can auto-refund from your credits.</div>
-              </div>
+              <div className="mt-2 font-semibold text-slate-950">Review → refund / deny</div>
+              <div className="mt-1 text-sm text-slate-600">Optional: top up credits for automatic refunds.</div>
+            </div>
           </div>
         </div>
       </section>
