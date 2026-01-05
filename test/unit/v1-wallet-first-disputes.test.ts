@@ -17,6 +17,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const res = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:alice",
       merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      merchantOrigin: "https://localhost",
       txHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
       chain: "base",
       amountMicrousdc: "10000",
@@ -41,6 +42,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const d1 = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:a",
       merchant: merchantRaw,
+      merchantOrigin: "https://localhost",
       reason: "r1",
     });
     expect(d1.ok).toBe(true);
@@ -48,6 +50,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const d2 = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:b",
       merchant: merchantRaw,
+      merchantOrigin: "https://localhost",
       reason: "r2",
     });
     expect(d2.ok).toBe(true);
@@ -125,6 +128,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:bob",
       merchant: "eip155:8453:0x0000000000000000000000000000000000000002",
+      merchantOrigin: "https://localhost",
       reason: "service_not_rendered",
     });
     expect(created.ok).toBe(true);
@@ -173,6 +177,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:stale",
       merchant: "eip155:8453:0x0000000000000000000000000000000000000002",
+      merchantOrigin: "https://localhost",
       reason: "service_not_rendered",
     });
     expect(created.ok).toBe(true);
@@ -212,6 +217,7 @@ describe("v1 wallet-first disputes (unit)", () => {
     const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       buyer: "buyer:attacked",
       merchant: "eip155:8453:0x0000000000000000000000000000000000000002",
+      merchantOrigin: "https://localhost",
       reason: "service_not_rendered",
     });
     expect(created.ok).toBe(true);

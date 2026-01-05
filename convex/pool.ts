@@ -16,6 +16,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
+import { internal } from "./_generated/api";
 
 type ChainRef = "base";
 
@@ -61,6 +62,8 @@ export const cases_fileWalletPaymentDispute = mutation({
   args: {
     buyer: v.string(),
     merchant: v.string(), // CAIP-10 eip155
+    merchantOrigin: v.string(), // https origin used to fetch /.well-known/x402.json
+    merchantX402MetadataUrl: v.optional(v.string()), // optional override for x402.json url
     txHash: v.optional(v.string()),
     chain: v.optional(v.union(v.literal("base"))),
     amountMicrousdc: v.optional(v.any()),
@@ -75,6 +78,17 @@ export const cases_fileWalletPaymentDispute = mutation({
 
     const buyer = (args.buyer || "").trim();
     if (!buyer) return { ok: false, code: "INVALID_BUYER", message: "buyer is required" };
+
+    const merchantOrigin = (args.merchantOrigin || "").trim();
+    if (!merchantOrigin) return { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: "merchantOrigin is required" };
+    if (!merchantOrigin.startsWith("https://")) {
+      return { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: "merchantOrigin must be an https:// origin" };
+    }
+
+    const merchantX402MetadataUrl =
+      typeof args.merchantX402MetadataUrl === "string" && args.merchantX402MetadataUrl.trim()
+        ? args.merchantX402MetadataUrl.trim()
+        : undefined;
 
     const now = Date.now();
     const amountParsed = args.amountMicrousdc !== undefined ? parseMicros(args.amountMicrousdc) : null;
@@ -94,6 +108,8 @@ export const cases_fileWalletPaymentDispute = mutation({
         v1: {
           buyer,
           merchant: parsedMerchant.normalized,
+          merchantOrigin,
+          merchantX402MetadataUrl,
           agentId: args.agentId,
           txId: args.txId,
           txHash: args.txHash,
@@ -105,6 +121,18 @@ export const cases_fileWalletPaymentDispute = mutation({
       },
       createdAt: now,
     } as any);
+
+    // Notify merchant asynchronously (does not block dispute filing).
+    try {
+      await ctx.scheduler.runAfter(
+        0,
+        (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
+        { caseId: disputeId }
+      );
+    } catch (e: any) {
+      // Don't fail dispute filing if scheduler is unavailable (e.g. some test environments).
+      console.warn("Failed to schedule merchant notification:", e?.message || String(e));
+    }
 
     return { ok: true, disputeId };
   },

@@ -1213,6 +1213,9 @@ http.route({
     const body = await request.json().catch(() => ({} as any));
     const buyer = typeof body?.buyer === "string" ? body.buyer : "buyer:anonymous";
     const merchant = typeof body?.merchant === "string" ? body.merchant : "";
+    const merchantOriginRaw = typeof body?.merchantOrigin === "string" ? body.merchantOrigin : "";
+    const merchantX402MetadataUrlRaw =
+      typeof body?.merchantX402MetadataUrl === "string" ? body.merchantX402MetadataUrl : undefined;
     const txHash = typeof body?.txHash === "string" ? body.txHash : undefined;
     const chain = typeof body?.chain === "string" ? body.chain : undefined;
     const amountMicrousdc = body?.amountMicrousdc;
@@ -1222,10 +1225,35 @@ http.route({
     const txId = typeof body?.txId === "string" ? body.txId : undefined;
 
     if (!merchant) return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
+    if (!merchantOriginRaw) {
+      return jsonError(400, { ok: false, code: "MISSING_MERCHANT_ORIGIN", message: "merchantOrigin (https origin) is required" });
+    }
+
+    let merchantOrigin: string;
+    try {
+      const u = new URL(merchantOriginRaw);
+      if (u.protocol !== "https:") throw new Error("merchantOrigin must be https://");
+      merchantOrigin = u.origin;
+    } catch (e: any) {
+      return jsonError(400, { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: e?.message || "Invalid merchantOrigin URL" });
+    }
+
+    let merchantX402MetadataUrl: string | undefined = undefined;
+    if (merchantX402MetadataUrlRaw) {
+      try {
+        const u = new URL(merchantX402MetadataUrlRaw);
+        if (u.protocol !== "https:") throw new Error("merchantX402MetadataUrl must be https://");
+        merchantX402MetadataUrl = u.toString();
+      } catch (e: any) {
+        return jsonError(400, { ok: false, code: "INVALID_MERCHANT_X402_METADATA_URL", message: e?.message || "Invalid merchantX402MetadataUrl URL" });
+      }
+    }
 
     const created = await (ctx.runMutation as any)((api as any).pool.cases_fileWalletPaymentDispute, {
       buyer,
       merchant,
+      merchantOrigin,
+      merchantX402MetadataUrl,
       txHash,
       chain: chain === "base" ? "base" : undefined,
       amountMicrousdc,

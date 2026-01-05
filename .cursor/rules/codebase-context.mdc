@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-05T12:43:12.130Z
+**Auto-generated on**: 2026-01-05T13:11:23.843Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (58 files)
+### Convex Files (60 files)
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
@@ -111,12 +111,14 @@ consulate/
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **duplicateDispute.ts** - parseDuplicatePaymentDisputeError
+- **email.ts** - Core logic
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
 - **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
 - **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
+- **merchantNotifications.ts** - notifyMerchantDisputeFiled
 - **migrations.ts** - runCaseTypeCounts
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
@@ -187,7 +189,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (49 test files)
+### Test Suites (50 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -224,6 +226,7 @@ Common HTTP routes exposed:
 - test/unit/batch-processing.test.ts
 - test/unit/caip10-sanity-checks.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
+- test/unit/merchant-notifications.test.ts
 - test/unit/migrate-wallet-first-payment-cases.test.ts
 - test/unit/purge-nonpayment-cases.test.ts
 - test/unit/regulation-e-compliance.test.ts
@@ -352,13 +355,13 @@ Common HTTP routes exposed:
 - 74 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 58 TypeScript files with serverless functions
+- 60 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 49 test files using Vitest
+- 50 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -391,5 +394,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/5/2026, 6:13:12 PM
-Files scanned: 507
+Generated: 1/5/2026, 6:41:23 PM
+Files scanned: 510

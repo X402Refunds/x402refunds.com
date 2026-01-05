@@ -48,6 +48,7 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
       body: JSON.stringify({
         buyer: "buyer:e2e",
         merchant,
+        merchantOrigin: "https://localhost",
         reason: "api_timeout",
         amountMicrousdc: "10000",
         chain: "base",
