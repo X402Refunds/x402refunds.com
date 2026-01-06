@@ -223,6 +223,44 @@ http.route({
   }),
 });
 
+// One-click dispute actions from email (approve/refund/reject)
+http.route({
+  path: "/v1/merchant/action",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token") || "";
+    if (!token) {
+      return new Response("Missing token", {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    const res = await ctx.runMutation((api as any).merchantEmailActions.applyDecisionFromToken, { token });
+    if (!res?.ok) {
+      const message = typeof res?.message === "string" ? res.message : "Action failed";
+      const code = typeof res?.code === "string" ? res.code : "ERROR";
+      return new Response(`${code}: ${message}`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    const body =
+      `Decision recorded.\n\n` +
+      `Case: ${res.caseId}\n` +
+      `Verdict: ${res.verdict}\n` +
+      `Refund scheduled: ${res.refundScheduled ? "yes" : "no"}\n\n` +
+      `View: https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(res.caseId)}\n`;
+
+    return new Response(body, {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }),
+});
+
 // === MCP (Model Context Protocol) ENDPOINTS ===
 // Agent-native integration for zero-friction dispute filing
 

@@ -98,6 +98,11 @@ function buildMerchantEmailText(params: {
   amountMicrousdc?: number;
   txHash?: string;
   chain?: string;
+  actions?: {
+    approveFullUrl: string;
+    approvePartialUrl: string;
+    rejectUrl: string;
+  };
 }): string {
   const lines: string[] = [];
   lines.push("New dispute filed");
@@ -110,6 +115,13 @@ function buildMerchantEmailText(params: {
   if (params.chain) lines.push(`Chain: ${params.chain}`);
   if (params.txHash) lines.push(`Tx: ${params.txHash}`);
   lines.push("");
+  if (params.actions) {
+    lines.push("Actions:");
+    lines.push(`- Approve full refund: ${params.actions.approveFullUrl}`);
+    lines.push(`- Approve partial refund (50%): ${params.actions.approvePartialUrl}`);
+    lines.push(`- Reject dispute: ${params.actions.rejectUrl}`);
+    lines.push("");
+  }
   lines.push("View:");
   lines.push(`- https://x402disputes.com/disputes?merchant=${encodeURIComponent(params.merchant)}`);
   lines.push(`- https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(params.caseId)}`);
@@ -286,6 +298,20 @@ export const notifyMerchantDisputeFiled = internalAction({
     }
 
     const subject = `New dispute filed (${String(args.caseId).slice(0, 8)})`;
+    const paymentAmountMicrousdc =
+      typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
+    const actions =
+      typeof paymentAmountMicrousdc === "number" && paymentAmountMicrousdc > 0
+        ? await ctx.runMutation((internal as any).merchantEmailActions.createActionTokensForCase, {
+            caseId: args.caseId,
+            merchant: expectedMerchant,
+            origin: merchantOrigin,
+            supportEmail: String(supportEmail),
+            paymentAmountMicrousdc,
+          })
+        : null;
+
+    const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
     const text = buildMerchantEmailText({
       caseId: String(args.caseId),
       buyer,
@@ -294,6 +320,13 @@ export const notifyMerchantDisputeFiled = internalAction({
       amountMicrousdc,
       txHash,
       chain,
+      actions: actions
+        ? {
+            approveFullUrl: `${baseActionUrl}${encodeURIComponent(String(actions.approveFull))}`,
+            approvePartialUrl: `${baseActionUrl}${encodeURIComponent(String(actions.approvePartial))}`,
+            rejectUrl: `${baseActionUrl}${encodeURIComponent(String(actions.reject))}`,
+          }
+        : undefined,
     });
 
     const sent = await sendEmail({

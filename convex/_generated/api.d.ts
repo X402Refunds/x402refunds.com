@@ -47,6 +47,7 @@ import type * as lib_usdc from "../lib/usdc.js";
 import type * as lib_x402r from "../lib/x402r.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
+import type * as merchantEmailVerification from "../merchantEmailVerification.js";
 import type * as merchantNotifications from "../merchantNotifications.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   "lib/x402r": typeof lib_x402r;
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;
+  merchantEmailVerification: typeof merchantEmailVerification;
   merchantNotifications: typeof merchantNotifications;
   migrations: typeof migrations;
   notifications: typeof notifications;

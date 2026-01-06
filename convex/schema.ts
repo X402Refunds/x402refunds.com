@@ -778,4 +778,27 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_tuple", ["merchant", "origin", "supportEmail"])
     .index("by_expires", ["expiresAt"]),
+
+  // One-click email action tokens for dispute decisions (approve/reject/partial refund).
+  // These are single-use and short-lived.
+  merchantEmailActionTokens: defineTable({
+    token: v.string(), // random uuid
+    caseId: v.id("cases"),
+    merchant: v.string(), // CAIP-10
+    origin: v.string(), // https origin
+    supportEmail: v.string(),
+    action: v.union(
+      v.literal("APPROVE_FULL_REFUND"),
+      v.literal("REJECT"),
+      v.literal("APPROVE_PARTIAL_REFUND"),
+    ),
+    // Only for partial refunds (microusdc)
+    refundAmountMicrousdc: v.optional(v.number()),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_case", ["caseId"])
+    .index("by_expires", ["expiresAt"]),
 });
