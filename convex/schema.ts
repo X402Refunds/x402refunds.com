@@ -747,4 +747,35 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_txhash", ["txHash"])
     .index("by_source_triplet", ["blockchain", "txHash", "sourceTransferLogIndex"]),
+
+  // ============================================================================
+  // MERCHANT EMAIL VERIFICATION (NO-SIGNUP NOTIFICATIONS)
+  // ============================================================================
+
+  // Verified notification channel for a (merchant, origin, supportEmail) tuple.
+  merchantEmailVerifications: defineTable({
+    merchant: v.string(), // CAIP-10 (e.g., "eip155:8453:0x...")
+    origin: v.string(), // https://merchant.example
+    supportEmail: v.string(),
+    verifiedAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_tuple", ["merchant", "origin", "supportEmail"])
+    .index("by_merchant_origin", ["merchant", "origin"]),
+
+  // Pending verification tokens (sent to supportEmail).
+  merchantEmailVerificationTokens: defineTable({
+    token: v.string(), // random uuid
+    merchant: v.string(),
+    origin: v.string(),
+    supportEmail: v.string(),
+    createdAt: v.number(),
+    lastSentAt: v.optional(v.number()),
+    expiresAt: v.number(),
+    confirmedAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_tuple", ["merchant", "origin", "supportEmail"])
+    .index("by_expires", ["expiresAt"]),
 });

@@ -181,6 +181,48 @@ http.route({
   }),
 });
 
+// Merchant email verification (no-signup notifications)
+// Clicked from an email sent to supportEmail on the first dispute for a (merchant, origin).
+http.route({
+  path: "/v1/merchant/verify-email",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token") || "";
+
+    if (!token) {
+      return new Response("Missing token", {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    const res = await ctx.runMutation((api as any).merchantEmailVerification.confirmVerificationToken, {
+      token,
+    });
+
+    if (!res?.ok) {
+      const reason = typeof res?.reason === "string" ? res.reason : "INVALID_TOKEN";
+      return new Response(`Verification failed: ${reason}`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    const body =
+      `Email verified.\n\n` +
+      `Merchant: ${res.merchant}\n` +
+      `Origin: ${res.origin}\n` +
+      `Email: ${res.supportEmail}\n\n` +
+      `You will now receive dispute emails for this origin.\n`;
+
+    return new Response(body, {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }),
+});
+
 // === MCP (Model Context Protocol) ENDPOINTS ===
 // Agent-native integration for zero-friction dispute filing
 

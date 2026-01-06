@@ -114,5 +114,78 @@ describe("merchant notifications (unit)", () => {
     expect(res.emailed).toBe(false);
     expect(res.reason).toBe("EMAIL_NOT_CONFIGURED");
   });
+
+  it("gates dispute emails behind email verification and creates a token", async () => {
+    const merchantAddress = "0x0000000000000000000000000000000000000003";
+    const merchantCaip10 = `eip155:8453:${merchantAddress}`;
+
+    // x402.json fetch should succeed; email sending will be blocked in tests (no RESEND_API_KEY/EMAIL_FROM)
+    globalThis.fetch = vi.fn(async (url: any) => {
+      const u = String(url);
+      if (u === "https://merchant2.example/.well-known/x402.json") {
+        return new Response(
+          JSON.stringify({
+            x402disputes: { merchant: merchantCaip10, supportEmail: "disputes@merchant.com" },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      throw new Error(`Unexpected fetch: ${u}`);
+    }) as any;
+
+    const now = Date.now();
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "0xbuyer",
+        defendant: merchantAddress,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "api_timeout: test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {
+            requestJson: JSON.stringify({ method: "POST", url: "https://merchant2.example/v1/chat" }),
+          },
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+    });
+
+    const res = await t.action(api.merchantNotifications.notifyMerchantDisputeFiled, { caseId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(false);
+    expect(res.reason).toBe("EMAIL_NOT_CONFIGURED");
+
+    const tokens = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantEmailVerificationTokens")
+        .withIndex("by_tuple", (q) =>
+          q
+            .eq("merchant", merchantCaip10)
+            .eq("origin", "https://merchant2.example")
+            .eq("supportEmail", "disputes@merchant.com"),
+        )
+        .collect();
+    });
+    expect(tokens.length).toBe(1);
+    expect(tokens[0].merchant).toBe(merchantCaip10);
+    expect(tokens[0].origin).toBe("https://merchant2.example");
+    expect(tokens[0].supportEmail).toBe("disputes@merchant.com");
+    expect(typeof tokens[0].token).toBe("string");
+  });
 });
 
