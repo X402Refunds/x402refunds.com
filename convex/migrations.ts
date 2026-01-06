@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * Secret-gated stats helper: count cases by `type` without exposing case data.
@@ -33,3 +34,33 @@ export const runCaseTypeCounts = mutation({
   },
 });
 
+/**
+ * Secret-gated cleanup helper: delete specific cases by ID.
+ * NOTE: This is destructive. Use only for test/demo cleanup.
+ */
+export const runDeleteSpecificCases = mutation({
+  args: {
+    secret: v.string(),
+    caseIds: v.array(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ deleted: number; failed: number }> => {
+    const expected = process.env.MIGRATIONS_SECRET;
+    if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
+    if (args.secret !== expected) throw new Error("Unauthorized");
+
+    const ids = (args.caseIds || []).filter(Boolean);
+    if (ids.length === 0) return { deleted: 0, failed: 0 };
+    if (ids.length > 50) throw new Error("Too many caseIds (max 50)");
+
+    // Call the existing internal mutation. It expects v.id("cases") typed IDs,
+    // but we accept strings here and cast for operational flexibility.
+    const res = await (ctx.runMutation as any)((internal as any).testing.deleteSpecificCases, {
+      caseIds: ids as any,
+    });
+
+    return {
+      deleted: typeof res?.deleted === "number" ? res.deleted : 0,
+      failed: typeof res?.failed === "number" ? res.failed : 0,
+    };
+  },
+});
