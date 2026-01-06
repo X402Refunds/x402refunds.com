@@ -161,7 +161,7 @@ http.route({
     const supportEmail =
       process.env.DEMO_AGENTS_SUPPORT_EMAIL ||
       process.env.SUPPORT_EMAIL ||
-      "vivek@consulatehq.com";
+      "vbkotecha@gmail.com";
 
     return new Response(
       JSON.stringify({
