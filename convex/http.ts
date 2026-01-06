@@ -30,6 +30,7 @@ const optionsHandler = httpAction(async () => {
 http.route({ path: "/", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/health", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/version", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/.well-known/x402.json", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/mcp.json", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp", method: "OPTIONS", handler: optionsHandler });
@@ -143,6 +144,41 @@ http.route({
       headers: corsHeaders,
     });
   })
+});
+
+// Merchant x402 metadata (demo-friendly)
+// Merchants publish this file on THEIR domain. For the built-in demo agent, we serve it here
+// so Claude Desktop can exercise the full "Link header → dispute → email" flow.
+http.route({
+  path: "/.well-known/x402.json",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    void ctx;
+    const baseOrigin = new URL(request.url).origin;
+    const demoWallet = "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9";
+    const merchant = `eip155:8453:${demoWallet.toLowerCase()}`;
+    const disputeUrl = `${baseOrigin}/v1/disputes?merchant=${merchant}`;
+    const supportEmail =
+      process.env.DEMO_AGENTS_SUPPORT_EMAIL ||
+      process.env.SUPPORT_EMAIL ||
+      "support@x402disputes.com";
+
+    return new Response(
+      JSON.stringify({
+        x402disputes: {
+          merchant,
+          paymentDisputeUrl: disputeUrl,
+          supportEmail,
+          terms: {
+            refundWindowDays: 7,
+            evidenceWindowDays: 7,
+            currency: "USDC",
+          },
+        },
+      }),
+      { headers: corsHeaders },
+    );
+  }),
 });
 
 // === MCP (Model Context Protocol) ENDPOINTS ===

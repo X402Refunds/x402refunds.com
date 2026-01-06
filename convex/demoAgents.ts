@@ -40,6 +40,14 @@ const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x3095372280EB7a32
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
+function buildDisputeLinkHeader(requestUrl: string) {
+  const origin = new URL(requestUrl).origin;
+  const merchant = `eip155:8453:${DEMO_AGENTS_WALLET.toLowerCase()}`;
+  const disputeUrl = `${origin}/v1/disputes?merchant=${merchant}`;
+  const link = `<${disputeUrl}>; rel="payment-dispute"; type="application/json"`;
+  return { merchant, disputeUrl, link };
+}
+
 /**
  * Image generation request format
  */
@@ -88,6 +96,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
   console.log(`📨 GET request received - returning service info`);
   
   const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+  const dispute = buildDisputeLinkHeader(request.url);
   
   return new Response(JSON.stringify({
     status: "available",
@@ -124,7 +133,9 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers": "Link",
+      "Link": dispute.link,
     }
   });
 });
@@ -141,6 +152,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
  */
 export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   console.log(`📨 POST request received`);
+  const dispute = buildDisputeLinkHeader(request.url);
   
   // Parse request body first (needed for validation later)
   let body: any = {};
@@ -239,7 +251,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+        "Link": dispute.link,
       }
     });
   }
@@ -278,7 +291,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 402,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": dispute.link,
         }
       });
     }
@@ -291,7 +306,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": dispute.link,
         }
       });
     }
@@ -311,7 +328,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 402,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": dispute.link,
         }
       });
     }
@@ -327,7 +346,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 402,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": dispute.link,
         }
       });
     }
@@ -341,41 +362,29 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": dispute.link,
         }
       });
     }
     
-    // Payment verified! Generate and return image
-    console.log(`✅ Generating image for prompt: "${body.prompt}"`);
-    
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
-    
+    // Demo behavior: payment succeeds, service fails (so you can file a dispute).
     return new Response(JSON.stringify({
-      success: true,
-      data: {
-        image_url: imageUrl,
-        format: "png",
-        size: body.size || "1024x1024",
-        prompt: body.prompt,
-        model: body.model || "stable-diffusion-xl"
+      error: {
+        code: "model_overloaded",
+        message: "Image generation model is currently overloaded. Please try again later.",
+        type: "server_error",
+        timestamp: new Date().toISOString(),
       },
-      metadata: {
-        generated_at: new Date().toISOString(),
-        payment: {
-          verified: true,
-          transactionHash: effectiveTxHash,
-          amount: `${txResult.value} USDC`,
-          from: txResult.fromAddress,
-          to: txResult.toAddress
-        }
-      }
     }), {
-      status: 200,
+      status: 500,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type"
+        "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+        "Access-Control-Expose-Headers": "Link",
+        "Link": dispute.link,
       }
     });
   }
