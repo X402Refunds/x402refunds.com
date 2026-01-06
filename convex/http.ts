@@ -241,6 +241,17 @@ http.route({
     if (!res?.ok) {
       const message = typeof res?.message === "string" ? res.message : "Action failed";
       const code = typeof res?.code === "string" ? res.code : "ERROR";
+      if (code === "INSUFFICIENT_CREDITS") {
+        const body =
+          `Refund not sent yet — insufficient refund credits.\n\n` +
+          `Top up refund credits here:\n` +
+          `- https://x402disputes.com/topup\n\n` +
+          `After topping up, click the email link again.\n`;
+        return new Response(body, {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
+        });
+      }
       return new Response(`${code}: ${message}`, {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
@@ -281,7 +292,6 @@ http.route({
     bodyLines.push("");
     bodyLines.push("Track this case:");
     bodyLines.push(`- Case tracking: ${trackingUrl}`);
-    bodyLines.push(`- API JSON: ${caseUrl}`);
     bodyLines.push("");
 
     const body = bodyLines.join("\n");
@@ -1451,7 +1461,16 @@ http.route({
       }
     if (!row) return jsonError(404, { ok: false, code: "NOT_FOUND" });
 
-    return new Response(JSON.stringify({ ok: true, dispute: row }), { status: 200, headers: corsHeaders });
+    // Include refund status/proof when available so callers can show "refunding/refunded" without
+    // additional Convex SDK queries.
+    let refund: any = null;
+    try {
+      refund = await ctx.runQuery((api as any).refunds.getRefundStatus, { caseId: id });
+    } catch {
+      refund = null;
+    }
+
+    return new Response(JSON.stringify({ ok: true, dispute: row, refund }), { status: 200, headers: corsHeaders });
   }),
 });
 

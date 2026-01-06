@@ -105,28 +105,25 @@ function buildMerchantEmailText(params: {
   };
 }): string {
   const lines: string[] = [];
-  lines.push("New dispute filed");
+  lines.push("Dispute received");
   lines.push("");
-  lines.push(`Case: ${params.caseId}`);
-  lines.push(`Merchant: ${params.merchant}`);
-  lines.push(`Buyer: ${params.buyer}`);
+  lines.push(`Case ID: ${params.caseId}`);
+  if (typeof params.amountMicrousdc === "number") lines.push(`Amount: ${(params.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
   if (params.reason) lines.push(`Reason: ${params.reason}`);
-  if (typeof params.amountMicrousdc === "number") lines.push(`Amount: ${params.amountMicrousdc / 1_000_000} USDC`);
   if (params.chain) lines.push(`Chain: ${params.chain}`);
-  if (params.txHash) lines.push(`Tx: ${params.txHash}`);
+  if (params.txHash) lines.push(`Payment tx: ${params.txHash}`);
   lines.push("");
   if (params.actions) {
-    lines.push("Actions:");
+    lines.push("Take action:");
     lines.push(`- Approve full refund: ${params.actions.approveFullUrl}`);
     lines.push(`- Approve partial refund (50%): ${params.actions.approvePartialUrl}`);
     lines.push(`- Reject dispute: ${params.actions.rejectUrl}`);
     lines.push("");
   }
-  lines.push("View:");
-  lines.push(`- https://x402disputes.com/disputes?merchant=${encodeURIComponent(params.merchant)}`);
-  lines.push(`- https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(params.caseId)}`);
+  lines.push("Track status:");
+  lines.push(`- https://x402disputes.com/cases/${encodeURIComponent(params.caseId)}`);
   lines.push("");
-  lines.push("If you publish /.well-known/x402.json, this email is sent to supportEmail.");
+  lines.push("Sent by x402disputes.com");
   return lines.join("\n");
 }
 
@@ -297,7 +294,7 @@ export const notifyMerchantDisputeFiled = internalAction({
       return { ok: true, emailed: true, reason: "EMAIL_VERIFICATION_SENT" };
     }
 
-    const subject = `New dispute filed (${String(args.caseId).slice(0, 8)})`;
+    const subject = `Dispute received (${String(args.caseId).slice(0, 8)})`;
     const paymentAmountMicrousdc =
       typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
     const disputeFeeMicrousdc =
