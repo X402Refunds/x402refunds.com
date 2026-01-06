@@ -54,5 +54,65 @@ describe("merchant notifications (unit)", () => {
     expect(res.emailed).toBe(false);
     expect(res.reason).toBe("MERCHANT_MISMATCH");
   });
+
+  it("derives merchantOrigin from paymentDetails.plaintiffMetadata.requestJson and reaches email adapter", async () => {
+    const merchantAddress = "0x0000000000000000000000000000000000000001";
+    const merchantCaip10 = `eip155:8453:${merchantAddress}`;
+
+    // Mock only the well-known fetch; email adapter should short-circuit with EMAIL_NOT_CONFIGURED
+    // (no RESEND_API_KEY/EMAIL_FROM in unit test env).
+    globalThis.fetch = vi.fn(async (url: any) => {
+      const u = String(url);
+      if (u === "https://merchant.example/.well-known/x402.json") {
+        return new Response(
+          JSON.stringify({
+            x402disputes: {
+              merchant: merchantCaip10,
+              supportEmail: "disputes@merchant.com",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      throw new Error(`Unexpected fetch: ${u}`);
+    }) as any;
+
+    const now = Date.now();
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "0xbuyer",
+        defendant: merchantAddress,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "api_timeout: test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {
+            requestJson: JSON.stringify({ method: "POST", url: "https://merchant.example/v1/chat" }),
+          },
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+    });
+
+    const res = await t.action(api.merchantNotifications.notifyMerchantDisputeFiled, { caseId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(false);
+    expect(res.reason).toBe("EMAIL_NOT_CONFIGURED");
+  });
 });
 

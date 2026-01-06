@@ -17,6 +17,32 @@ type X402Metadata = {
   };
 };
 
+function normalizeMerchantIdForBase(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^eip155:\d+:0x[a-fA-F0-9]{40}$/.test(s)) {
+    const m = s.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
+    if (!m) return null;
+    return `eip155:${m[1]}:${m[2].toLowerCase()}`;
+  }
+  if (/^0x[a-fA-F0-9]{40}$/.test(s)) return `eip155:8453:${s.toLowerCase()}`;
+  return null;
+}
+
+function deriveMerchantOriginFromRequestJson(requestJson?: string): string | null {
+  if (!requestJson) return null;
+  try {
+    const parsed = JSON.parse(requestJson);
+    const url = typeof parsed?.url === "string" ? parsed.url : null;
+    if (!url) return null;
+    const u = new URL(url);
+    if (u.protocol !== "https:") return null;
+    return u.origin;
+  } catch {
+    return null;
+  }
+}
+
 function isBlockedHostname(hostname: string): boolean {
   const h = hostname.toLowerCase();
   return (
@@ -98,11 +124,20 @@ export const notifyMerchantDisputeFiled = internalAction({
     const caseData: any = await ctx.runQuery((internal as any).cases.getCase, { caseId: args.caseId });
     if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
 
-    const merchant = String(caseData.defendant || "");
+    const merchantRaw = String(caseData.defendant || "");
     const buyer = String(caseData.plaintiff || "");
     const v1 = caseData?.metadata?.v1 || {};
 
-    const merchantOrigin = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const paymentDetails = caseData?.paymentDetails;
+    const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
+    const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
+
+    // Wallet-first stores merchantOrigin in metadata.v1. Legacy payment disputes store requestJson in paymentDetails.*.
+    const merchantOriginFromV1 = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOriginFromPayment = deriveMerchantOriginFromRequestJson(
+      typeof paymentRequestJson === "string" ? paymentRequestJson : undefined,
+    );
+    const merchantOrigin = merchantOriginFromV1 || merchantOriginFromPayment || "";
     const overrideUrl = typeof v1?.merchantX402MetadataUrl === "string" ? v1.merchantX402MetadataUrl : undefined;
     if (!merchantOrigin && !overrideUrl) return { ok: true, emailed: false, reason: "NO_MERCHANT_ORIGIN" };
 
@@ -110,8 +145,16 @@ export const notifyMerchantDisputeFiled = internalAction({
     const fetched = await fetchX402Json(metadataUrl);
     if (!fetched.ok) return { ok: true, emailed: false, reason: fetched.code };
 
-    const jsonMerchant = fetched.data?.x402disputes?.merchant;
-    if (!jsonMerchant || String(jsonMerchant) !== merchant) {
+    const expectedMerchant =
+      paymentChain === "base" || merchantRaw.startsWith("eip155:")
+        ? normalizeMerchantIdForBase(merchantRaw)
+        : null;
+    if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
+
+    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchant =
+      typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
+    if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
       return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
     }
 
@@ -125,17 +168,34 @@ export const notifyMerchantDisputeFiled = internalAction({
         ? v1.amountMicrousdc
         : typeof v1?.amountMicrousdc === "string" && /^\d+$/.test(v1.amountMicrousdc)
           ? Number(v1.amountMicrousdc)
-          : undefined;
+          : typeof paymentDetails?.amountMicrousdc === "number"
+            ? paymentDetails.amountMicrousdc
+            : undefined;
 
     const subject = `New dispute filed (${String(args.caseId).slice(0, 8)})`;
     const text = buildMerchantEmailText({
       caseId: String(args.caseId),
       buyer,
-      merchant,
-      reason: typeof v1?.reason === "string" ? v1.reason : undefined,
+      merchant: expectedMerchant,
+      reason:
+        typeof v1?.reason === "string"
+          ? v1.reason
+          : typeof caseData?.description === "string"
+            ? caseData.description
+            : undefined,
       amountMicrousdc,
-      txHash: typeof v1?.txHash === "string" ? v1.txHash : undefined,
-      chain: typeof v1?.chain === "string" ? v1.chain : undefined,
+      txHash:
+        typeof v1?.txHash === "string"
+          ? v1.txHash
+          : typeof paymentDetails?.transactionHash === "string"
+            ? paymentDetails.transactionHash
+            : undefined,
+      chain:
+        typeof v1?.chain === "string"
+          ? v1.chain
+          : typeof paymentChain === "string"
+            ? paymentChain
+            : undefined,
     });
 
     const sent = await sendEmail({

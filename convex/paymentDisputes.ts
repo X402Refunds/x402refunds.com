@@ -340,6 +340,18 @@ export const createPaymentDisputeCase = internalMutation({
       },
     });
 
+    // Best-effort merchant notification (no-signup): derive merchantOrigin from paymentDetails.plaintiffMetadata.requestJson.
+    // Never blocks dispute filing.
+    try {
+      await ctx.scheduler.runAfter(
+        0,
+        (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
+        { caseId },
+      );
+    } catch (e: any) {
+      console.warn("Failed to schedule merchant notification:", e?.message || String(e));
+    }
+
     // Trigger AI workflow ONLY when case is assigned to an org and fee is paid.
     if (args.reviewerOrganizationId) {
       const org = await ctx.db.get(args.reviewerOrganizationId);
