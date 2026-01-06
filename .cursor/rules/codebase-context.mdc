@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-06T08:12:38.673Z
+**Auto-generated on**: 2026-01-06T08:18:52.858Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -119,7 +119,7 @@ consulate/
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **merchantNotifications.ts** - notifyMerchantDisputeFiled
-- **migrations.ts** - runCaseTypeCounts, runDeleteSpecificCases
+- **migrations.ts** - runCaseTypeCounts, runDeleteSpecificCases, runNotifyMerchantDisputeFiled
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
 - **pool.ts** - cases_fileWalletPaymentDispute, cases_listWalletDisputesByMerchant, topup_creditMerchantBalanceFromTx, arbiter_resolveDispute
@@ -394,5 +394,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/6/2026, 12:12:38 AM
+Generated: 1/6/2026, 12:18:52 AM
 Files scanned: 510

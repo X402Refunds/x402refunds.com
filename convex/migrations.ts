@@ -64,3 +64,32 @@ export const runDeleteSpecificCases = mutation({
     };
   },
 });
+
+/**
+ * Secret-gated operational helper: trigger merchant notification for a case and return the result.
+ * Useful for debugging email delivery in production without exposing internal actions publicly.
+ */
+export const runNotifyMerchantDisputeFiled = mutation({
+  args: {
+    secret: v.string(),
+    caseId: v.string(),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: boolean; emailed?: boolean; reason?: string }> => {
+    const expected = process.env.MIGRATIONS_SECRET;
+    if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
+    if (args.secret !== expected) throw new Error("Unauthorized");
+
+    const res = await (ctx.runAction as any)(
+      (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
+      { caseId: args.caseId as any },
+    );
+    return {
+      ok: Boolean(res?.ok),
+      emailed: res?.emailed,
+      reason: res?.reason,
+    };
+  },
+});
