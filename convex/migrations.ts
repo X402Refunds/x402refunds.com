@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -69,7 +69,7 @@ export const runDeleteSpecificCases = mutation({
  * Secret-gated operational helper: trigger merchant notification for a case and return the result.
  * Useful for debugging email delivery in production without exposing internal actions publicly.
  */
-export const runNotifyMerchantDisputeFiled = mutation({
+export const runNotifyMerchantDisputeFiled = action({
   args: {
     secret: v.string(),
     caseId: v.string(),
@@ -82,6 +82,9 @@ export const runNotifyMerchantDisputeFiled = mutation({
     if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
     if (args.secret !== expected) throw new Error("Unauthorized");
 
+    // NOTE: This must be an action (not a mutation) because notification does network I/O:
+    // - fetch merchant /.well-known/x402.json
+    // - send email via provider
     const res = await (ctx.runAction as any)(
       (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
       { caseId: args.caseId as any },
