@@ -43,12 +43,23 @@ describe("merchant email actions (unit)", () => {
           amountUnit: "microusdc",
           sourceTransferLogIndex: 0,
           disputeFee: 0.05,
+          disputeFee: 0.05,
           regulationEDeadline: now + 10_000,
           plaintiffMetadata: {},
           defendantMetadata: {},
         },
         paymentSourceChain: "base",
         paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchant,
+        currency: "USDC",
+        availableBalance: 1.0,
+        lockedBalance: 0,
+        totalDeposited: 1.0,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
       } as any);
       await ctx.db.insert("merchantEmailVerifications", {
         merchant,
@@ -58,6 +69,19 @@ describe("merchant email actions (unit)", () => {
         createdAt: now,
         updatedAt: now,
       } as any);
+
+      // Sufficient credits: refund (0.01) + fee (0.05) => 0.06 USDC.
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchant,
+        currency: "USDC",
+        availableBalance: 1,
+        lockedBalance: 0,
+        totalDeposited: 1,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
       const token = "tok_full_refund";
       await ctx.db.insert("merchantEmailActionTokens", {
         token,
@@ -93,6 +117,98 @@ describe("merchant email actions (unit)", () => {
         .first();
     });
     expect(typeof tokenRec?.usedAt).toBe("number");
+
+    const balanceAfter = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantBalances")
+        .withIndex("by_wallet_currency", (q) => q.eq("walletAddress", merchant).eq("currency", "USDC"))
+        .first();
+    });
+    // Debits refund amount (0.01) + fee (0.05) = 0.06
+    expect(balanceAfter?.availableBalance).toBeCloseTo(0.94, 6);
+  });
+
+  it("rejects refund action when credits are insufficient and does not consume the token", async () => {
+    const now = Date.now();
+    const merchant = "eip155:8453:0x0000000000000000000000000000000000000002";
+    const origin = "https://merchant.example";
+    const supportEmail = "support@merchant.example";
+
+    await t.run(async (ctx) => {
+      const id = await ctx.db.insert("cases", {
+        plaintiff: "0xbuyer",
+        defendant: merchant,
+        status: "IN_REVIEW",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "api_timeout",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "22".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "22".repeat(32),
+      } as any);
+
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchant,
+        currency: "USDC",
+        availableBalance: 0.01, // insufficient for refund+fee (0.06)
+        lockedBalance: 0,
+        totalDeposited: 0.01,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
+      await ctx.db.insert("merchantEmailVerifications", {
+        merchant,
+        origin,
+        supportEmail,
+        verifiedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
+      await ctx.db.insert("merchantEmailActionTokens", {
+        token: "tok_insufficient",
+        caseId: id,
+        merchant,
+        origin,
+        supportEmail,
+        action: "APPROVE_FULL_REFUND",
+        refundAmountMicrousdc: 10_000,
+        createdAt: now,
+        expiresAt: now + 60_000,
+      } as any);
+    });
+
+    const res = await t.mutation(internal.merchantEmailActions.applyDecisionFromToken, {
+      token: "tok_insufficient",
+    });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.code).toBe("INSUFFICIENT_CREDITS");
+
+    const tokenRec = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantEmailActionTokens")
+        .withIndex("by_token", (q) => q.eq("token", "tok_insufficient"))
+        .first();
+    });
+    expect(tokenRec?.usedAt).toBeUndefined();
   });
 });
 

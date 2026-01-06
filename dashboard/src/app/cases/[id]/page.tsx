@@ -88,6 +88,7 @@ export default function PublicCaseTrackingPage() {
   // Fetch case details (public endpoint - no auth required)
   const caseDetails = useQuery(api.cases.getCaseById, { caseId });
   const caseEvidence = useQuery(api.evidence.getEvidenceByCaseId, { caseId });
+  const refund = useQuery(api.refunds.getRefundStatus, caseDetails ? { caseId } : "skip");
 
   // Fetch payment dispute data if this is a payment dispute case
   const paymentDispute = useQuery(
@@ -146,6 +147,15 @@ export default function PublicCaseTrackingPage() {
   };
   const statusColor = statusColors[caseDetails.status] || "bg-slate-50 text-slate-700 border-slate-200";
 
+  const refundStatus =
+    refund && typeof refund.status === "string" ? String(refund.status) : null;
+  const isRefundVerdict =
+    caseDetails.finalVerdict === "CONSUMER_WINS" || caseDetails.finalVerdict === "PARTIAL_REFUND";
+  const refundExplorerUrl =
+    refund && "explorerUrl" in refund && typeof refund.explorerUrl === "string"
+      ? refund.explorerUrl
+      : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
       <motion.div 
@@ -186,11 +196,19 @@ export default function PublicCaseTrackingPage() {
                 <div>
                   <CardTitle className="text-2xl">Case Status</CardTitle>
                   <CardDescription className="mt-2">
-                    {getStatusDescription(caseDetails.status)}
+                    {caseDetails.status === "DECIDED" && isRefundVerdict
+                      ? refundStatus === "EXECUTED"
+                        ? "Decision reached — refund sent on-chain."
+                        : "Decision reached — refund is being processed."
+                      : getStatusDescription(caseDetails.status)}
                   </CardDescription>
                 </div>
                 <Badge className={`${statusColor} border-2 px-4 py-2 text-base font-semibold`}>
-                  {caseDetails.status}
+                  {caseDetails.status === "DECIDED" && isRefundVerdict
+                    ? refundStatus === "EXECUTED"
+                      ? "REFUNDED"
+                      : "REFUNDING"
+                    : caseDetails.status}
                 </Badge>
               </div>
             </CardHeader>
@@ -208,6 +226,34 @@ export default function PublicCaseTrackingPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Refund status (only for refunding decisions) */}
+              {caseDetails.status === "DECIDED" && isRefundVerdict && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600 mb-1">Refund</p>
+                      <p className="text-sm text-slate-900">
+                        {refundStatus === "EXECUTED"
+                          ? "Sent on-chain"
+                          : refundStatus
+                            ? `Processing (${refundStatus})`
+                            : "Processing (queued)"}
+                      </p>
+                    </div>
+                    {refundExplorerUrl && (
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => window.open(refundExplorerUrl, "_blank")}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        View on Basescan
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Dashboard Link - for merchants to resolve disputes */}
               {paymentDispute && !["DECIDED", "CLOSED"].includes(caseDetails.status) && (
@@ -535,6 +581,27 @@ export default function PublicCaseTrackingPage() {
                   </>
                 )}
 
+                {["DECIDED", "CLOSED"].includes(caseDetails.status) && isRefundVerdict && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {refundStatus === "EXECUTED" ? "Refund Sent" : "Refund Processing"}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          {refundStatus === "EXECUTED"
+                            ? "Refund transaction confirmed on-chain"
+                            : "Your refund is being processed"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 {!["DECIDED", "CLOSED"].includes(caseDetails.status) && (
                   <>
                     <Separator />
@@ -554,7 +621,7 @@ export default function PublicCaseTrackingPage() {
           </Card>
           </motion.div>
 
-          {/* Final Decision (if available) */}
+          {/* Decision (if available) */}
           {caseDetails.finalVerdict && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -565,10 +632,16 @@ export default function PublicCaseTrackingPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-purple-600" />
-                  AI Recommendation
+                  Decision
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Pending merchant review
+                  {caseDetails.finalVerdict === "MERCHANT_WINS"
+                    ? "Dispute rejected"
+                    : refundStatus === "EXECUTED"
+                      ? "Refund sent on-chain"
+                      : isRefundVerdict
+                        ? "Refund processing"
+                        : "Decision recorded"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

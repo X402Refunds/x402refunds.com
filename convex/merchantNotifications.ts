@@ -300,16 +300,33 @@ export const notifyMerchantDisputeFiled = internalAction({
     const subject = `New dispute filed (${String(args.caseId).slice(0, 8)})`;
     const paymentAmountMicrousdc =
       typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
-    const actions =
-      typeof paymentAmountMicrousdc === "number" && paymentAmountMicrousdc > 0
-        ? await ctx.runMutation((internal as any).merchantEmailActions.createActionTokensForCase, {
-            caseId: args.caseId,
-            merchant: expectedMerchant,
-            origin: merchantOrigin,
-            supportEmail: String(supportEmail),
-            paymentAmountMicrousdc,
-          })
+    const disputeFeeMicrousdc =
+      typeof paymentDetails?.disputeFee === "number" && Number.isFinite(paymentDetails.disputeFee) && paymentDetails.disputeFee > 0
+        ? Math.round(paymentDetails.disputeFee * 1_000_000)
+        : 0;
+    const requiredMicrousdc =
+      typeof paymentAmountMicrousdc === "number" ? paymentAmountMicrousdc + disputeFeeMicrousdc : undefined;
+
+    // Only show action links if the merchant has enough refund credits to cover (refund + fee).
+    const balance =
+      typeof requiredMicrousdc === "number"
+        ? await ctx.runQuery((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
         : null;
+    const hasSufficientCredits =
+      typeof requiredMicrousdc === "number" &&
+      balance?.ok === true &&
+      typeof balance.availableMicrousdc === "number" &&
+      balance.availableMicrousdc >= requiredMicrousdc;
+
+    const actions = hasSufficientCredits
+      ? await ctx.runMutation((internal as any).merchantEmailActions.createActionTokensForCase, {
+          caseId: args.caseId,
+          merchant: expectedMerchant,
+          origin: merchantOrigin,
+          supportEmail: String(supportEmail),
+          paymentAmountMicrousdc: paymentAmountMicrousdc as number,
+        })
+      : null;
 
     const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
     const text = buildMerchantEmailText({

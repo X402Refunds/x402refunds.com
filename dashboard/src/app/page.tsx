@@ -178,7 +178,7 @@ export default function HomePage() {
                   }}
                 >
                   Enable disputes (no signup required)
-                  </Button>
+                </Button>
               </div>
 
               <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
@@ -285,19 +285,19 @@ export default function HomePage() {
               <div className="text-xs font-semibold text-blue-600">STEP 1</div>
               <div className="mt-2 font-semibold text-slate-950">Enable disputes</div>
               <div className="mt-1 text-sm text-slate-600">Publish /.well-known/x402.json + return a Link header.</div>
-            </div>
+                </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 2</div>
               <div className="mt-2 font-semibold text-slate-950">Disputes arrive</div>
               <div className="mt-1 text-sm text-slate-600">We notify you (email by default).</div>
-            </div>
+                </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="text-xs font-semibold text-blue-600">STEP 3</div>
               <div className="mt-2 font-semibold text-slate-950">Review → refund / deny</div>
               <div className="mt-1 text-sm text-slate-600">Optional: top up credits for automatic refunds.</div>
-            </div>
+              </div>
           </div>
         </div>
       </section>

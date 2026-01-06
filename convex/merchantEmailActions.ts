@@ -1,6 +1,7 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { parseCaip10Eip155 } from "./lib/caip10";
 
 function normalizeOrigin(origin: string): string | null {
   try {
@@ -151,6 +152,44 @@ export const applyDecisionFromToken = internalMutation({
       }
       if (finalRefundAmountMicrousdc > paymentAmountMicrousdc) {
         return { ok: false, code: "AMOUNT_TOO_LARGE", message: "Refund amount exceeds payment amount" };
+      }
+    }
+
+    // If the action issues a refund, require sufficient merchant credits (refund + fee) at click time.
+    if (finalVerdict !== "MERCHANT_WINS") {
+      const disputeFeeUsdc =
+        typeof dispute.paymentDetails?.disputeFee === "number" && Number.isFinite(dispute.paymentDetails.disputeFee)
+          ? dispute.paymentDetails.disputeFee
+          : 0;
+      const feeMicrousdc = Math.max(0, Math.round(disputeFeeUsdc * 1_000_000));
+      const requiredMicrousdc = (finalRefundAmountMicrousdc as number) + feeMicrousdc;
+
+      const bal: any = await ctx.db
+        .query("merchantBalances")
+        .withIndex("by_wallet_currency", (q: any) =>
+          q.eq("walletAddress", String(rec.merchant || "")).eq("currency", "USDC"),
+        )
+        .first();
+      const availableUsdc = typeof bal?.availableBalance === "number" ? bal.availableBalance : 0;
+      const availableMicrousdc = Math.max(0, Math.round(availableUsdc * 1_000_000));
+      if (availableMicrousdc < requiredMicrousdc) {
+        return {
+          ok: false,
+          code: "INSUFFICIENT_CREDITS",
+          message: "Insufficient refund credits to cover refund + fee. Top up at https://x402disputes.com/topup and try again.",
+        };
+      }
+
+      // Debit credits now (so the action is deterministic and we don't oversubscribe credits).
+      const requiredUsdc = requiredMicrousdc / 1_000_000;
+      const refundUsdc = (finalRefundAmountMicrousdc as number) / 1_000_000;
+      if (bal?._id) {
+        await ctx.db.patch(bal._id, {
+          availableBalance: Math.max(0, availableUsdc - requiredUsdc),
+          totalRefunded: (bal.totalRefunded || 0) + refundUsdc,
+          lastRefundAt: now,
+          updatedAt: now,
+        });
       }
     }
 

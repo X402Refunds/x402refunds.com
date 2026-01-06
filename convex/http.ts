@@ -247,13 +247,44 @@ http.route({
       });
     }
 
-    const body =
-      `Decision recorded.\n\n` +
-      `Case: ${res.caseId}\n` +
-      `Verdict: ${res.verdict}\n` +
-      `Refund scheduled: ${res.refundScheduled ? "yes" : "no"}\n\n` +
-      `View: https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(res.caseId)}\n`;
+    const caseUrl = `https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(res.caseId)}`;
+    const trackingUrl = `https://x402disputes.com/cases/${encodeURIComponent(res.caseId)}`;
 
+    const bodyLines: string[] = [];
+    const isReject = String(res.verdict) === "MERCHANT_WINS";
+    bodyLines.push(isReject ? "All set — dispute rejected." : "All set — refund is being processed.");
+    bodyLines.push("");
+    bodyLines.push(`Case: ${res.caseId}`);
+    bodyLines.push(`Decision: ${res.verdict}`);
+    bodyLines.push("");
+    if (res.refundScheduled) {
+      // Best-effort: if the refund already executed quickly, show the on-chain proof right here.
+      const refund = await ctx.runQuery((api as any).refunds.getRefundStatus, { caseId: res.caseId as any });
+      if (refund?.status === "EXECUTED") {
+        bodyLines.push("Refund: sent on-chain.");
+        const proofUrl =
+          typeof refund.explorerUrl === "string" && refund.explorerUrl
+            ? refund.explorerUrl
+            : typeof refund.refundTxHash === "string" && refund.refundTxHash
+              ? `https://basescan.org/tx/${refund.refundTxHash}`
+              : "";
+        if (proofUrl) bodyLines.push(`On-chain proof: ${proofUrl}`);
+      } else if (refund?.status) {
+        bodyLines.push(`Refund: processing (${String(refund.status)})`);
+      } else {
+        bodyLines.push("Refund: processing now.");
+      }
+      bodyLines.push("You can track progress on the case page below.");
+    } else {
+      bodyLines.push("Refund: not applicable for this decision.");
+    }
+    bodyLines.push("");
+    bodyLines.push("Track this case:");
+    bodyLines.push(`- Case tracking: ${trackingUrl}`);
+    bodyLines.push(`- API JSON: ${caseUrl}`);
+    bodyLines.push("");
+
+    const body = bodyLines.join("\n");
     return new Response(body, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },

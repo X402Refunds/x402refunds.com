@@ -12,7 +12,7 @@
  * cases.status enum during the MVP.
  */
 
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
@@ -135,6 +135,24 @@ export const cases_fileWalletPaymentDispute = mutation({
     }
 
     return { ok: true, disputeId };
+  },
+});
+
+// Internal helper: read merchant USDC balance (microusdc) for gating email actions.
+export const getMerchantUsdcBalanceMicrousdc = internalQuery({
+  args: { merchant: v.string() }, // CAIP-10 eip155
+  handler: async (ctx, args): Promise<{ ok: boolean; availableMicrousdc?: number }> => {
+    const parsed = parseCaip10Eip155(args.merchant);
+    if (!parsed.ok) return { ok: false };
+    const row: any = await ctx.db
+      .query("merchantBalances")
+      .withIndex("by_wallet_currency", (q: any) =>
+        q.eq("walletAddress", parsed.normalized).eq("currency", "USDC"),
+      )
+      .first();
+    const availableUsdc = typeof row?.availableBalance === "number" ? row.availableBalance : 0;
+    const availableMicrousdc = Math.max(0, Math.round(availableUsdc * 1_000_000));
+    return { ok: true, availableMicrousdc };
   },
 });
 
