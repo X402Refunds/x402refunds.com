@@ -120,7 +120,7 @@ function buildMerchantEmailText(params: {
 
 export const notifyMerchantDisputeFiled = internalAction({
   args: { caseId: v.id("cases") },
-  handler: async (ctx, args): Promise<{ ok: boolean; emailed?: boolean; reason?: string }> => {
+  handler: async (ctx, args): Promise<{ ok: boolean; emailed?: boolean; reason?: string; details?: string }> => {
     const caseData: any = await ctx.runQuery((internal as any).cases.getCase, { caseId: args.caseId });
     if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
 
@@ -206,7 +206,7 @@ export const notifyMerchantDisputeFiled = internalAction({
     });
 
     if (!sent.ok) {
-      return { ok: true, emailed: false, reason: sent.code };
+      return { ok: true, emailed: false, reason: sent.code, details: sent.message };
     }
 
     return { ok: true, emailed: true };

@@ -77,7 +77,7 @@ export const runNotifyMerchantDisputeFiled = action({
   handler: async (
     ctx,
     args,
-  ): Promise<{ ok: boolean; emailed?: boolean; reason?: string }> => {
+  ): Promise<{ ok: boolean; emailed?: boolean; reason?: string; details?: string }> => {
     const expected = process.env.MIGRATIONS_SECRET;
     if (!expected) throw new Error("MIGRATIONS_SECRET is not configured");
     if (args.secret !== expected) throw new Error("Unauthorized");
@@ -92,7 +92,8 @@ export const runNotifyMerchantDisputeFiled = action({
     return {
       ok: Boolean(res?.ok),
       emailed: res?.emailed,
-      reason: res?.reason,
+      reason: typeof res?.reason === "string" ? res.reason : undefined,
+      details: typeof res?.details === "string" ? res.details : undefined,
     };
   },
 });
