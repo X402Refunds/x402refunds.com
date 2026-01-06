@@ -43,7 +43,6 @@ describe("merchant email actions (unit)", () => {
           amountUnit: "microusdc",
           sourceTransferLogIndex: 0,
           disputeFee: 0.05,
-          disputeFee: 0.05,
           regulationEDeadline: now + 10_000,
           plaintiffMetadata: {},
           defendantMetadata: {},
