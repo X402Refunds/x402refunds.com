@@ -96,7 +96,6 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
   console.log(`📨 GET request received - returning service info`);
   
   const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-  const dispute = buildDisputeLinkHeader(request.url);
   
   return new Response(JSON.stringify({
     status: "available",
@@ -134,8 +133,6 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Expose-Headers": "Link",
-      "Link": dispute.link,
     }
   });
 });
@@ -251,8 +248,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
-        "Link": dispute.link,
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
       }
     });
   }
@@ -292,8 +288,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Expose-Headers": "Link",
-          "Link": dispute.link,
         }
       });
     }
@@ -307,8 +301,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Expose-Headers": "Link",
-          "Link": dispute.link,
         }
       });
     }
@@ -329,8 +321,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Expose-Headers": "Link",
-          "Link": dispute.link,
         }
       });
     }
@@ -347,8 +337,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Expose-Headers": "Link",
-          "Link": dispute.link,
         }
       });
     }
@@ -363,8 +351,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Expose-Headers": "Link",
-          "Link": dispute.link,
         }
       });
     }
@@ -383,8 +369,6 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "Link",
-        "Link": dispute.link,
       }
     });
   }
@@ -797,8 +781,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
-          "X-PAYMENT-RESPONSE": paymentResponseB64
+          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+          "X-PAYMENT-RESPONSE": paymentResponseB64,
+          "Link": dispute.link,
         }
       });
     }
@@ -834,7 +819,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
+          "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+          "Link": dispute.link,
         },
       },
     );

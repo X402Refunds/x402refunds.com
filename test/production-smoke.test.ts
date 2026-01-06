@@ -56,6 +56,23 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       // Verify CORS headers
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
     }, 15000); // 15s test timeout
+
+    it('GET /.well-known/x402.json - Merchant x402 metadata', async () => {
+      const response = await fetch(`${API_BASE_URL}/.well-known/x402.json`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data?.x402disputes).toBeDefined();
+      expect(typeof data.x402disputes.merchant).toBe('string');
+      expect(data.x402disputes.merchant).toMatch(/^eip155:\d+:0x[a-f0-9]{40}$/);
+      expect(typeof data.x402disputes.supportEmail).toBe('string');
+      expect(data.x402disputes.supportEmail).toContain('@');
+
+      // Verify CORS headers
+      expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    }, 15000);
   });
 
   describe('MCP Endpoints', () => {
