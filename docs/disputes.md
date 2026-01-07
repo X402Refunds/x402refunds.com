@@ -4,19 +4,24 @@
 
 **What this does**: post-transaction disputes + refunds for x402 payments.
 
-If someone pays you (USDC on Base) and your API fails (timeout, 500, bad output), they can file a dispute.
+**The problem**: AI agents pay for APIs and digital goods. Sometimes the result is wrong, low-quality, or never arrives.
 
-You (the merchant) get an inbox + a workflow to **refund / deny / partial refund**. You can optionally add refund credits to automate refunds.
+If someone pays you and your x402 API fails (timeout, 500, bad output), they can file a dispute.
 
-**Key idea**: this is for what happens **after** the payment.
+It’s also for “the API worked, but the output/product was bad or unsatisfactory.”
 
 You do **not** need to build:
 - chargebacks
-- a refund inbox
+- a dispute inbox
 - dispute tracking pages
 - “did you refund?” status pages
 
-This is intentionally simple: disputes are permissionless, the transaction is verified on-chain, and the merchant handles resolution.
+**What you get**: disputes sent straight to your email, plus the ability to **refund / deny / partial refund**.
+
+This is intentionally simple:
+- disputes are permissionless
+- the payment is verified on-chain
+- you decide the outcome (optional: add refund credits to automate refunds)
 
 ## Integration Guide for Merchants
 
