@@ -738,6 +738,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         return new Response(JSON.stringify({
           success: true,
           disputeType: "PAYMENT",
+          created: filed.created === true,
+          duplicate: filed.duplicate === true,
           caseId: filed.caseId,
           status: filed.status || "received",
           disputeFee: filed.disputeFee,
@@ -767,7 +769,9 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             }
           },
           evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
-          message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
+          message: filed.created === false
+            ? `Dispute already exists for this transaction. Returning the existing case.`
+            : `X-402 payment dispute filed. All transaction details verified from blockchain.`,
           trackingUrl: filed.trackingUrl,
           evidenceUrls: filed.evidenceUrls || [],
           nextSteps: [

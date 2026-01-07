@@ -29,6 +29,8 @@ describe("canonical dispute (unit): duplicates", () => {
       expect(res.caseId).toBe(existingCaseId);
       expect(res.trackingUrl).toBe(`https://x402disputes.com/cases/${existingCaseId}`);
       expect(res.status).toBe("received");
+      expect(res.created).toBe(false);
+      expect(res.duplicate).toBe(true);
     }
   });
 });

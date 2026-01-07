@@ -73,7 +73,18 @@ export type CanonicalDisputeInput = {
 };
 
 export type CanonicalDisputeResult =
-  | { ok: true; caseId: string; trackingUrl: string; evidenceUrls?: string[]; disputeFee?: number; status?: string }
+  | {
+      ok: true;
+      caseId: string;
+      trackingUrl: string;
+      /** True if this call created a new case. False if it returned an existing case (duplicate). */
+      created?: boolean;
+      /** Convenience: true when created=false */
+      duplicate?: boolean;
+      evidenceUrls?: string[];
+      disputeFee?: number;
+      status?: string;
+    }
   | { ok: false; code: string; message: string; field?: string };
 
 export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInput): Promise<CanonicalDisputeResult> {
@@ -185,6 +196,8 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
         ok: true,
         caseId,
         trackingUrl: `https://x402disputes.com/cases/${caseId}`,
+        created: false,
+        duplicate: true,
         evidenceUrls,
         status: typeof dup.status === "string" ? dup.status : undefined,
       };
@@ -200,6 +213,8 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
     ok: true,
     caseId,
     trackingUrl,
+    created: true,
+    duplicate: false,
     evidenceUrls,
     disputeFee: typeof result?.fee === "number" ? result.fee : undefined,
     status: typeof result?.status === "string" ? result.status : undefined,

@@ -114,7 +114,7 @@ export default function FileDisputePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedEvidenceUrls, setUploadedEvidenceUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [fileResult, setFileResult] = useState<{ caseId: string; trackingUrl: string } | null>(null);
+  const [fileResult, setFileResult] = useState<{ caseId: string; trackingUrl: string; created?: boolean; duplicate?: boolean } | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -214,6 +214,8 @@ export default function FileDisputePage() {
       setFileResult({
         caseId: String(obj?.caseId || ""),
         trackingUrl: String(obj?.trackingUrl || ""),
+        created: obj?.created === true,
+        duplicate: obj?.duplicate === true,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -272,8 +274,8 @@ export default function FileDisputePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2">
-                <span>Dispute filed</span>
-                <Badge>Success</Badge>
+                <span>{fileResult.created === false ? "Already filed" : "Dispute filed"}</span>
+                <Badge>{fileResult.created === false ? "Existing" : "Success"}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
