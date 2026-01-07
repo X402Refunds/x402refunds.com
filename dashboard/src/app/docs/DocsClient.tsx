@@ -7,13 +7,38 @@ import { Separator } from "@/components/ui/separator";
 export type DocsSectionKey = "overview" | "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
 
+const SECTION_HASH: Record<DocsSectionKey, string> = {
+  overview: "overview",
+  merchants: "integration-guide-for-merchants",
+  buyers: "file-disputes-as-a-buyer-agent",
+};
+
+function keyFromHash(hash: string): DocsSectionKey | null {
+  const h = (hash || "").replace(/^#/, "").trim().toLowerCase();
+  for (const [key, slug] of Object.entries(SECTION_HASH) as Array<[DocsSectionKey, string]>) {
+    if (h === slug) return key;
+  }
+  return null;
+}
+
+function setHashForKey(key: DocsSectionKey) {
+  if (typeof window === "undefined") return;
+  const slug = SECTION_HASH[key];
+  try {
+    window.history.replaceState(null, "", `#${slug}`);
+  } catch {
+    // Fallback
+    window.location.hash = `#${slug}`;
+  }
+}
+
 export function DocsClient(props: {
   title: string;
   sections: Record<DocsSectionKey, string>;
   buyerPanels?: { http?: string; mcp?: string };
 }) {
   const [active, setActive] = useState<DocsSectionKey>("overview");
-  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("http");
+  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +126,11 @@ export function DocsClient(props: {
   };
 
   useEffect(() => {
+    const initial = typeof window !== "undefined" ? keyFromHash(window.location.hash) : null;
+    if (initial) setActive(initial);
+  }, []);
+
+  useEffect(() => {
     if (active !== "buyers") {
       enhanceRenderedHtml(contentRef.current);
       return;
@@ -125,7 +155,10 @@ export function DocsClient(props: {
                 type="button"
                 variant={active === item.key ? "secondary" : "ghost"}
                 className="justify-start md:w-full"
-                onClick={() => setActive(item.key)}
+                onClick={() => {
+                  setActive(item.key);
+                  setHashForKey(item.key);
+                }}
               >
                 {item.label}
               </Button>
@@ -138,21 +171,21 @@ export function DocsClient(props: {
         <div className="rounded-lg border border-border bg-card">
           <div className="p-6">
             {active === "buyers" && buyerHasPanels ? (
-              <div>
+              <div id={SECTION_HASH.buyers}>
                 <div className="flex gap-2 mb-4">
                   <Button
                     type="button"
                     variant={buyerMode === "http" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("http")}
                   >
-                    HTTP (default)
+                    HTTP
                   </Button>
                   <Button
                     type="button"
                     variant={buyerMode === "mcp" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("mcp")}
                   >
-                    MCP
+                    MCP (default)
                   </Button>
                 </div>
 
@@ -170,7 +203,7 @@ export function DocsClient(props: {
                 </div>
               </div>
             ) : (
-              <div ref={contentRef}>
+              <div ref={contentRef} id={SECTION_HASH[active]}>
                 <article
                   className="markdown"
                   dangerouslySetInnerHTML={{ __html: props.sections[active] }}
