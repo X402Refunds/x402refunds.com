@@ -61,7 +61,7 @@ export function Navigation({ currentPage }: NavigationProps) {
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
               <button
-                onClick={() => handleNavigation("/topup")}
+                onClick={() => handleNavigation("/check-balance")}
                 className={[
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   isHome
@@ -140,7 +140,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                   </Button>
 
                   <Button
-                    onClick={() => handleNavigation("/topup")}
+                    onClick={() => handleNavigation("/check-balance")}
                     className="w-full justify-start"
                     variant="outline"
                   >

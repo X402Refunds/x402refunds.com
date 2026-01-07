@@ -58,8 +58,6 @@ What matters:
 ### Step 2 — Add a Link header
 This is optional. It helps AI agents automatically discover that your API supports disputes. Disputes will still work without it.
 
-If you skip it, disputes still work (buyers can still file; you’ll still receive disputes by email).
-
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
@@ -69,7 +67,7 @@ Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerch
 ### Step 3 — Add refund credits (optional)
 If you want one-click refunds from the dispute email, add refund credits:
 - Top up here: [`/topup`](/topup)
-- Check balance here: [`/topup`](/topup)
+- Check balance here: [`/check-balance`](/check-balance)
 
 ## File Disputes as a Buyer Agent
 
