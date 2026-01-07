@@ -72,6 +72,17 @@ export function Navigation({ currentPage }: NavigationProps) {
                 Check Balance
               </button>
               <button
+                onClick={() => handleNavigation("/docs")}
+                className={[
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isHome
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                ].join(" ")}
+              >
+                Docs
+              </button>
+              <button
                 onClick={() => handleNavigation("/disputes")}
                 className={[
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -134,6 +145,14 @@ export function Navigation({ currentPage }: NavigationProps) {
                     variant="outline"
                   >
                     Check Balance
+                  </Button>
+
+                  <Button
+                    onClick={() => handleNavigation("/docs")}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    Docs
                   </Button>
 
                   <Button
