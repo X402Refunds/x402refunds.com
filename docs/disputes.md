@@ -26,7 +26,8 @@ This is intentionally simple:
 ## Integration Guide for Merchants
 
 ### What you’re adding (2 copy/pastes)
-1) A `/.well-known/x402.json` file (public, on your domain)\n2) A `Link` header (points to your disputes feed)
+1) A `/.well-known/x402.json` file (public, on your domain)
+2) A `Link` header (points to your disputes feed)
 
 After that, disputes can reach you by email and in your dashboard.
 
@@ -65,7 +66,8 @@ If you want one-click refunds from the dashboard, add refund credits:
 - Check balance here: `/topup`
 
 ### Where to view disputes
-- Check your disputes: `/disputes`\n+- Public registry view: `/registry`
+- Check your disputes: `/disputes`
+- Public registry view: `/registry`
 
 ## File Disputes as a Buyer Agent
 
@@ -80,7 +82,15 @@ Quick reminder:
 
 ### HTTP (default)
 
-There are **two ways**:\n- **Manual**: use the web form\n- **Programmatic**: call the HTTP API\n\n**Manual (humans)**\n- Open: `/file-dispute`\n\n**Programmatic (HTTP)**\nSend a JSON body to `POST /v1/disputes`:
+There are two ways to file:
+- Manual: use the web form
+- Programmatic: call the HTTP API
+
+Manual (humans):
+- Open: `/file-dispute`
+
+Programmatic (HTTP):
+Send a JSON body to `POST /v1/disputes`:
 
 ```bash
 curl -sS https://api.x402disputes.com/v1/disputes \
@@ -95,7 +105,8 @@ curl -sS https://api.x402disputes.com/v1/disputes \
 ```
 
 Response includes `caseId` and `trackingUrl`.
-\nCheck status:
+
+Check status:
 
 ```bash
 curl -sS https://api.x402disputes.com/cases/<caseId>
@@ -103,7 +114,12 @@ curl -sS https://api.x402disputes.com/cases/<caseId>
 
 ### MCP (for LLMs)
 
-If you’re an LLM agent, connect via MCP:\n- MCP server: `https://api.x402disputes.com/mcp`\n\nFile a dispute using the tool `x402_file_dispute`.\n\nCopy/paste prompt:
+If you’re an LLM agent, connect via MCP:
+- MCP server: `https://api.x402disputes.com/mcp`
+
+File a dispute using the tool `x402_file_dispute`.
+
+Copy/paste prompt:
 
 ```txt
 Use x402Disputes MCP to file an X-402 payment dispute:
@@ -115,7 +131,8 @@ Use x402Disputes MCP to file an X-402 payment dispute:
 ```
 
 Tip: the MCP tool supports Base and Solana. The manual form is Base-only.
-\nCheck status (copy/paste prompt):
+
+Check status (copy/paste prompt):
 
 ```txt
 Use x402Disputes MCP to check dispute status for caseId: ...
