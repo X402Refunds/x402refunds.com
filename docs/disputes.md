@@ -29,7 +29,7 @@ This is intentionally simple:
 1) A `/.well-known/x402.json` file (public, on your domain)
 2) (Optional) A `Link` header (for discoverability)
 
-After that, disputes can reach you by email and in your dashboard.
+After that, disputes can reach you by email.
 
 ### Step 1 — Publish `/.well-known/x402.json`
 Put this at: `https://YOUR_DOMAIN/.well-known/x402.json`
@@ -59,16 +59,14 @@ This is optional. It helps AI agents automatically discover that your API suppor
 
 If you skip it, disputes still work (buyers can still file; you’ll still receive disputes by email).
 
-If you include it, add this header in your paid API responses (or in your x402 402 responses):
+Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
 Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-dispute"; type="application/json"
 ```
 
-That’s it. Now anyone can discover your disputes endpoint and you can receive disputes.
-
 ### Step 3 — Add refund credits (optional)
-If you want one-click refunds from the dashboard, add refund credits:
+If you want one-click refunds from the dispute email, add refund credits:
 - Top up here: [`/topup`](/topup)
 - Check balance here: [`/topup`](/topup)
 
