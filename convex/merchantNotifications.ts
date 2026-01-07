@@ -155,37 +155,22 @@ function buildMerchantVerificationEmailText(params: {
   origin: string;
   supportEmail: string;
   confirmUrl: string;
-  dispute: {
-    caseId: string;
-    buyer: string;
-    reason?: string;
-    amountMicrousdc?: number;
-    txHash?: string;
-    chain?: string;
-  };
 }): string {
   const lines: string[] = [];
-  lines.push("Confirm dispute emails");
+  lines.push("ACTION REQUIRED: VERIFY YOUR EMAIL FIRST");
   lines.push("");
-  lines.push(`Merchant: ${params.merchant}`);
-  lines.push(`Origin: ${params.origin}`);
-  lines.push(`Email: ${params.supportEmail}`);
+  lines.push("Step 1 (required): verify this email so we can send dispute notifications.");
   lines.push("");
-  lines.push("Click to confirm you want to receive dispute emails:");
+  lines.push(`Merchant wallet: ${params.merchant}`);
+  lines.push(`Merchant origin: ${params.origin}`);
+  lines.push(`Notification email: ${params.supportEmail}`);
+  lines.push("");
+  lines.push("Verify email:");
   lines.push(params.confirmUrl);
   lines.push("");
-  lines.push("Dispute received:");
-  lines.push(
-    buildDisputeSummaryLines({
-    caseId: params.dispute.caseId,
-    reason: params.dispute.reason,
-    amountMicrousdc: params.dispute.amountMicrousdc,
-    txHash: params.dispute.txHash,
-    chain: params.dispute.chain,
-  }).join("\n"),
-  );
+  lines.push("After you verify, we will email you the dispute details and one-click actions.");
   lines.push("");
-  lines.push("Until you confirm, we will not email future disputes for this origin.");
+  lines.push("Sent by x402disputes.com");
   return lines.join("\n");
 }
 
@@ -276,6 +261,7 @@ export const notifyMerchantDisputeFiled = internalAction({
           merchant: expectedMerchant,
           origin: merchantOrigin,
           supportEmail: String(supportEmail),
+          caseId: args.caseId,
         },
       );
 
@@ -287,20 +273,12 @@ export const notifyMerchantDisputeFiled = internalAction({
         String(tokenRes.token),
       )}`;
 
-      const subject = `Confirm dispute emails (${expectedMerchant.slice(0, 18)}…)`;
+      const subject = `ACTION REQUIRED: Verify dispute emails (${expectedMerchant.slice(0, 18)}…)`;
       const text = buildMerchantVerificationEmailText({
         merchant: expectedMerchant,
         origin: String(tokenRes.origin || merchantOrigin),
         supportEmail: String(supportEmail),
         confirmUrl,
-        dispute: {
-          caseId: String(args.caseId),
-          buyer,
-          reason,
-          amountMicrousdc,
-          txHash,
-          chain,
-        },
       });
 
       const sent = await sendEmail({

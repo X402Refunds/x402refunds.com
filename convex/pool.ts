@@ -12,11 +12,11 @@
  * cases.status enum during the MVP.
  */
 
-import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 type ChainRef = "base";
 
@@ -272,6 +272,79 @@ export const topup_creditMerchantBalanceFromTx = mutation({
     });
 
     return { ok: true, creditedMicrousdc: args.amountMicrousdc, newBalanceMicrousdc: Math.round(nextAvailable * 1_000_000) };
+  },
+});
+
+/**
+ * Finalize a top-up asynchronously:
+ * - verify USDC Transfer log exists on-chain (may take a few seconds after facilitator settle)
+ * - credit merchant ledger (idempotent)
+ * - optionally re-notify merchant for a specific case (so action links appear after funding)
+ */
+export const topup_finalizeFromTxHash = internalAction({
+  args: {
+    merchant: v.string(), // CAIP-10 eip155
+    txHash: v.string(),
+    expectedAmountMicrousdc: v.number(),
+    caseId: v.optional(v.id("cases")),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; txHash: string; credited?: boolean; reason?: string }> => {
+    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    if (!depositAddress) {
+      return { ok: false, txHash: args.txHash, reason: "NOT_CONFIGURED" };
+    }
+
+    // Retry for up to ~30s (indexing / propagation lag is common).
+    const maxAttempts = 12;
+    let verified: any = null;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const res = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+        blockchain: "base",
+        transactionHash: args.txHash,
+        expectedAmountMicrousdc: args.expectedAmountMicrousdc,
+        expectedToAddress: depositAddress,
+      });
+      verified = res as any;
+      if (verified?.ok) break;
+      const code = String(verified?.code || "");
+      const retryable = code === "TX_NOT_FOUND" || code === "NO_MATCH";
+      if (!retryable) break;
+      await new Promise((r) => setTimeout(r, 750 + attempt * 500));
+    }
+
+    if (!verified?.ok) {
+      return { ok: false, txHash: args.txHash, reason: String(verified?.code || "VERIFY_FAILED") };
+    }
+
+    const credited = await ctx.runMutation((api as any).pool.topup_creditMerchantBalanceFromTx, {
+      merchant: args.merchant,
+      blockchain: "base",
+      txHash: args.txHash,
+      sourceTransferLogIndex: verified.logIndex,
+      amountMicrousdc: verified.amountMicrousdc,
+      payerAddress: verified.payerAddress,
+      recipientAddress: verified.recipientAddress,
+    });
+
+    if (!credited?.ok) {
+      return { ok: false, txHash: args.txHash, reason: String(credited?.code || "CREDIT_FAILED") };
+    }
+
+    // After credits land, re-notify merchant for the specific case so action links can appear.
+    if (args.caseId) {
+      try {
+        const caseData: any = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId: args.caseId });
+        if (caseData && String(caseData.defendant || "") === String(args.merchant)) {
+          await (ctx.runAction as any)((internal as any).merchantNotifications.notifyMerchantDisputeFiled, {
+            caseId: args.caseId,
+          });
+        }
+      } catch {
+        // Never fail credit finalization due to notification follow-up.
+      }
+    }
+
+    return { ok: true, txHash: args.txHash, credited: true };
   },
 });
 

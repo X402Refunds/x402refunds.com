@@ -770,6 +770,9 @@ export default defineSchema({
     merchant: v.string(),
     origin: v.string(),
     supportEmail: v.string(),
+    // The most recent dispute case that triggered verification for this tuple.
+    // Used to send a separate "Dispute received" email immediately after verification.
+    caseId: v.optional(v.id("cases")),
     createdAt: v.number(),
     lastSentAt: v.optional(v.number()),
     expiresAt: v.number(),

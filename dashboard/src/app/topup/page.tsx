@@ -50,7 +50,7 @@ export default function TopupPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [newBalanceMicros, setNewBalanceMicros] = useState<string | null>(null);
+  const [estimatedNewBalanceUsdc, setEstimatedNewBalanceUsdc] = useState<number | null>(null);
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [balanceMicros, setBalanceMicros] = useState<string | null>(null);
 
@@ -189,7 +189,7 @@ export default function TopupPage() {
             onClick={async () => {
               setError(null);
               setTxHash(null);
-              setNewBalanceMicros(null);
+              setEstimatedNewBalanceUsdc(null);
               setStatus("processing");
               try {
                 if (!merchantCaip10) throw new Error(merchantNormalized.error || "Merchant wallet is required");
@@ -246,7 +246,9 @@ export default function TopupPage() {
                 }
 
                 setTxHash(data.txHash || null);
-                setNewBalanceMicros(String(data.newBalanceMicrousdc ?? ""));
+                setEstimatedNewBalanceUsdc(
+                  typeof data.estimatedNewBalanceUsdc === "number" ? data.estimatedNewBalanceUsdc : null,
+                );
                 setStatus("success");
               } catch (e: unknown) {
                 setStatus("error");
@@ -264,9 +266,15 @@ export default function TopupPage() {
             </div>
           )}
 
-          {newBalanceMicros && (
-            <div className="text-xs text-muted-foreground">
-              New balance (microusdc): <code className="font-mono">{newBalanceMicros}</code>
+          {typeof estimatedNewBalanceUsdc === "number" && (
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>
+                Estimated new balance (USDC):{" "}
+                <code className="font-mono">{estimatedNewBalanceUsdc.toFixed(6)}</code>
+              </div>
+              <div>
+                Credits finalize after the on-chain transfer is confirmed. Use “Check current credits” to refresh.
+              </div>
             </div>
           )}
 

@@ -44,6 +44,7 @@ export const createOrReuseVerificationToken = internalMutation({
     merchant: v.string(),
     origin: v.string(),
     supportEmail: v.string(),
+    caseId: v.optional(v.id("cases")),
     // Optional: allow callers to force another email if needed.
     forceSend: v.optional(v.boolean()),
   },
@@ -75,6 +76,11 @@ export const createOrReuseVerificationToken = internalMutation({
       existing.expiresAt > now &&
       typeof existing.token === "string"
     ) {
+      // Track the latest dispute that triggered verification so we can send a separate dispute email after confirmation.
+      if (args.caseId && (!existing.caseId || String(existing.caseId) !== String(args.caseId))) {
+        await ctx.db.patch(existing._id, { caseId: args.caseId });
+      }
+
       const canSend =
         Boolean(args.forceSend) ||
         !existing.lastSentAt ||
@@ -94,6 +100,7 @@ export const createOrReuseVerificationToken = internalMutation({
       merchant: args.merchant,
       origin,
       supportEmail: args.supportEmail,
+      caseId: args.caseId,
       createdAt: now,
       lastSentAt: now,
       expiresAt,
@@ -110,14 +117,22 @@ export const confirmVerificationToken = internalMutation({
   handler: async (
     ctx,
     args,
-  ): Promise<{ ok: boolean; merchant?: string; origin?: string; supportEmail?: string; reason?: string }> => {
+  ): Promise<{ ok: boolean; merchant?: string; origin?: string; supportEmail?: string; caseId?: string; reason?: string }> => {
     const now = Date.now();
     const rec = await ctx.db
       .query("merchantEmailVerificationTokens")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .first();
     if (!rec) return { ok: false, reason: "INVALID_TOKEN" };
-    if (rec.confirmedAt) return { ok: true, merchant: rec.merchant, origin: rec.origin, supportEmail: rec.supportEmail };
+    if (rec.confirmedAt) {
+      return {
+        ok: true,
+        merchant: rec.merchant,
+        origin: rec.origin,
+        supportEmail: rec.supportEmail,
+        caseId: rec.caseId ? String(rec.caseId) : undefined,
+      };
+    }
     if (rec.expiresAt <= now) return { ok: false, reason: "EXPIRED_TOKEN" };
 
     await ctx.db.patch(rec._id, { confirmedAt: now });
@@ -145,7 +160,13 @@ export const confirmVerificationToken = internalMutation({
       });
     }
 
-    return { ok: true, merchant: rec.merchant, origin: rec.origin, supportEmail: rec.supportEmail };
+    return {
+      ok: true,
+      merchant: rec.merchant,
+      origin: rec.origin,
+      supportEmail: rec.supportEmail,
+      caseId: rec.caseId ? String(rec.caseId) : undefined,
+    };
   },
 });
 

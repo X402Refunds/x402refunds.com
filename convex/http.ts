@@ -219,6 +219,20 @@ http.route({
       `Email: ${res.supportEmail}\n\n` +
       `You will now receive dispute emails for this origin.\n`;
 
+    // If this verification was triggered by a dispute, send a separate "Dispute received" email now.
+    try {
+      const caseId = typeof res.caseId === "string" ? res.caseId : "";
+      if (caseId) {
+        await ctx.scheduler.runAfter(
+          0,
+          (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
+          { caseId: caseId as any },
+        );
+      }
+    } catch {
+      // Never fail verification response due to notification follow-up.
+    }
+
     return new Response(body, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
@@ -1193,7 +1207,8 @@ http.route({
 
 // POST /v1/topup
 // - No PAYMENT-SIGNATURE: returns 402 + PAYMENT-REQUIRED (base64 JSON).
-// - With PAYMENT-SIGNATURE: verify+settle via facilitator, verify on-chain deposit, credit merchant ledger.
+// - With PAYMENT-SIGNATURE or X-PAYMENT: verify+settle via facilitator, return tx hash immediately,
+//   and finalize credit asynchronously (on-chain verification can lag).
 http.route({
   path: "/v1/topup",
   method: "POST",
@@ -1275,83 +1290,44 @@ http.route({
     const xPayment = request.headers.get("X-PAYMENT");
     const txHashHeader = request.headers.get("X-402-Transaction-Hash");
 
-    async function verifyUsdcTransferByAmountWithRetries(params: {
-      transactionHash: string;
-      expectedAmountMicrousdc: number;
-      expectedToAddress: string;
-      maxAttempts?: number;
-    }) {
-      const maxAttempts = Math.max(1, Math.min(params.maxAttempts ?? 7, 12));
-      let last: any = null;
-
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
-          blockchain: "base",
-          transactionHash: params.transactionHash,
-          expectedAmountMicrousdc: params.expectedAmountMicrousdc,
-          expectedToAddress: params.expectedToAddress,
-        });
-        if ((verified as any)?.ok) return verified as any;
-
-        last = verified as any;
-        const code = String((last as any)?.code || "");
-        // These failures are often transient immediately after a facilitator settles a tx.
-        const retryable = code === "TX_NOT_FOUND" || code === "NO_MATCH";
-        if (!retryable) break;
-
-        // Backoff: 250ms, 500ms, 1s, 1.5s, 2s, 2.5s, 3s (max ~10s)
-        const delayMs = 250 + attempt * 250;
-        await new Promise((r) => setTimeout(r, delayMs));
-      }
-      return last;
-    }
-
-    async function maybeSendActionsEmailForCase(): Promise<void> {
-      if (!caseId) return;
+    async function estimatedNewBalanceUsdc(): Promise<number | null> {
       try {
-        const caseData: any = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId });
-        if (!caseData) return;
-        if (String(caseData.defendant || "") !== String(merchant)) return;
-        await (ctx.runAction as any)((internal as any).merchantNotifications.notifyMerchantDisputeFiled, {
-          caseId,
-        });
+        const res: any = await (ctx.runQuery as any)((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant });
+        if (!res?.ok) return null;
+        const currentMicros = Number(res.availableMicrousdc ?? 0);
+        if (!Number.isFinite(currentMicros)) return null;
+        return (currentMicros + amountMicrousdc) / 1_000_000;
       } catch {
-        // Never fail top-up due to notification follow-up errors.
+        return null;
       }
     }
 
     // If caller already has an on-chain tx hash (v1 hash-forwarding flow), skip facilitator.
     if (txHashHeader) {
-      const verified = await verifyUsdcTransferByAmountWithRetries({
-        transactionHash: txHashHeader,
-        expectedAmountMicrousdc: amountMicrousdc,
-        expectedToAddress: depositAddress,
-      });
-      if (!verified.ok) {
-        return jsonError(400, { ok: false, code: verified.code, message: verified.message });
-  }
-
-      const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
-        merchant,
-        blockchain: "base",
-        txHash: txHashHeader,
-        sourceTransferLogIndex: verified.logIndex,
-        amountMicrousdc: verified.amountMicrousdc,
-        payerAddress: verified.payerAddress,
-        recipientAddress: verified.recipientAddress,
-  });
-      if (!credited?.ok) return jsonError(400, credited);
-
-      await maybeSendActionsEmailForCase();
+      try {
+        await ctx.scheduler.runAfter(
+          0,
+          (internal as any).pool.topup_finalizeFromTxHash,
+          {
+            merchant,
+            txHash: txHashHeader,
+            expectedAmountMicrousdc: amountMicrousdc,
+            caseId: caseId ? (caseId as any) : undefined,
+          },
+        );
+      } catch {
+        // If scheduler fails, client can retry later; don't block response.
+      }
+      const est = await estimatedNewBalanceUsdc();
       return new Response(
         JSON.stringify({
           ok: true,
           merchant,
           txHash: txHashHeader,
-          creditedMicrousdc: credited.creditedMicrousdc,
-          newBalanceMicrousdc: credited.newBalanceMicrousdc,
+          status: "PENDING",
+          estimatedNewBalanceUsdc: est,
         }),
-        { status: 200, headers: corsHeaders },
+        { status: 202, headers: corsHeaders },
       );
 }
 
@@ -1398,46 +1374,32 @@ http.route({
       return jsonError(502, { ok: false, code: "NO_TX_HASH", message: "Facilitator did not return a transaction hash" });
     }
 
-    // Verify unique USDC transfer by amount to our deposit address, then credit merchant.
-    const verified = await verifyUsdcTransferByAmountWithRetries({
-      transactionHash: txHash,
-      expectedAmountMicrousdc: amountMicrousdc,
-      expectedToAddress: depositAddress,
-    });
-    if (!verified.ok) {
-      return jsonError(400, {
-        ok: false,
-        code: verified.code,
-        message: verified.message,
-        hint:
-          verified.code === "TX_NOT_FOUND" || verified.code === "NO_MATCH"
-            ? "Transaction may still be propagating. Wait a few seconds and try again."
-            : undefined,
-      });
-      }
-      
-    const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
-      merchant,
-      blockchain: "base",
-      txHash,
-      sourceTransferLogIndex: verified.logIndex,
-      amountMicrousdc: verified.amountMicrousdc,
-      payerAddress: verified.payerAddress,
-      recipientAddress: verified.recipientAddress,
-        });
-
-    if (!credited?.ok) {
-      return jsonError(400, credited);
+    // Finalize credit asynchronously so this endpoint returns fast.
+    try {
+      await ctx.scheduler.runAfter(
+        0,
+        (internal as any).pool.topup_finalizeFromTxHash,
+        {
+          merchant,
+          txHash,
+          expectedAmountMicrousdc: amountMicrousdc,
+          caseId: caseId ? (caseId as any) : undefined,
+        },
+      );
+    } catch {
+      // If scheduler fails, client can retry later; don't block response.
     }
-
-      await maybeSendActionsEmailForCase();
-      return new Response(JSON.stringify({
-      ok: true,
-      merchant,
-      txHash,
-      creditedMicrousdc: credited.creditedMicrousdc,
-      newBalanceMicrousdc: credited.newBalanceMicrousdc,
-    }), { status: 200, headers: corsHeaders });
+    const est = await estimatedNewBalanceUsdc();
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        merchant,
+        txHash,
+        status: "PENDING",
+        estimatedNewBalanceUsdc: est,
+      }),
+      { status: 202, headers: corsHeaders },
+    );
   }),
 });
 
