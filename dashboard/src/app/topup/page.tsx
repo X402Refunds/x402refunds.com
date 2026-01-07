@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CopyableField } from "@/components/case-detail/CopyableField";
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { useAccount, useWalletClient } from "wagmi";
-import { createX402PaymentSignatureV2, parsePaymentRequiredHeaderV2 } from "@/lib/x402-signature";
+import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 const API_BASE = "https://api.x402disputes.com";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
@@ -214,23 +214,23 @@ export default function TopupPage() {
                   const text = await res.text();
                   throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
                 }
-                const pr = res.headers.get("PAYMENT-REQUIRED");
-                if (!pr) throw new Error("Missing PAYMENT-REQUIRED header");
-
-                // 2) sign
-                const required = parsePaymentRequiredHeaderV2(pr);
-                const requirement = required.accepts[0];
-                if (address.toLowerCase() === requirement.payTo.toLowerCase()) {
-                  throw new Error(`Connected wallet is the same as payTo (${requirement.payTo}). Switch to a payer wallet.`);
+                const response402 = await res.json().catch(() => ({}));
+                const requirement = parsePaymentRequirements(response402);
+                if (address.toLowerCase() === String(requirement.payTo).toLowerCase()) {
+                  throw new Error(
+                    `Connected wallet is the same as payTo (${requirement.payTo}). Switch to a payer wallet.`,
+                  );
                 }
-                const paymentSignature = await createX402PaymentSignatureV2(walletClient, requirement, address);
 
-                // 3) settle
+                // 2) sign (x402 v1: X-PAYMENT)
+                const xPayment = await createX402PaymentSignature(walletClient, requirement, address);
+
+                // 3) settle (send X-PAYMENT header)
                 const res2 = await fetch(`${API_BASE}/v1/topup`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    "PAYMENT-SIGNATURE": paymentSignature,
+                    "X-PAYMENT": xPayment,
                   },
                   body: JSON.stringify({
                     merchant: merchantCaip10,
