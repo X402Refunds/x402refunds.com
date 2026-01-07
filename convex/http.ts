@@ -1275,6 +1275,37 @@ http.route({
     const xPayment = request.headers.get("X-PAYMENT");
     const txHashHeader = request.headers.get("X-402-Transaction-Hash");
 
+    async function verifyUsdcTransferByAmountWithRetries(params: {
+      transactionHash: string;
+      expectedAmountMicrousdc: number;
+      expectedToAddress: string;
+      maxAttempts?: number;
+    }) {
+      const maxAttempts = Math.max(1, Math.min(params.maxAttempts ?? 7, 12));
+      let last: any = null;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+          blockchain: "base",
+          transactionHash: params.transactionHash,
+          expectedAmountMicrousdc: params.expectedAmountMicrousdc,
+          expectedToAddress: params.expectedToAddress,
+        });
+        if ((verified as any)?.ok) return verified as any;
+
+        last = verified as any;
+        const code = String((last as any)?.code || "");
+        // These failures are often transient immediately after a facilitator settles a tx.
+        const retryable = code === "TX_NOT_FOUND" || code === "NO_MATCH";
+        if (!retryable) break;
+
+        // Backoff: 250ms, 500ms, 1s, 1.5s, 2s, 2.5s, 3s (max ~10s)
+        const delayMs = 250 + attempt * 250;
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+      return last;
+    }
+
     async function maybeSendActionsEmailForCase(): Promise<void> {
       if (!caseId) return;
       try {
@@ -1291,12 +1322,11 @@ http.route({
 
     // If caller already has an on-chain tx hash (v1 hash-forwarding flow), skip facilitator.
     if (txHashHeader) {
-      const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
-        blockchain: "base",
+      const verified = await verifyUsdcTransferByAmountWithRetries({
         transactionHash: txHashHeader,
         expectedAmountMicrousdc: amountMicrousdc,
         expectedToAddress: depositAddress,
-  });
+      });
       if (!verified.ok) {
         return jsonError(400, { ok: false, code: verified.code, message: verified.message });
   }
@@ -1369,14 +1399,21 @@ http.route({
     }
 
     // Verify unique USDC transfer by amount to our deposit address, then credit merchant.
-    const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
-      blockchain: "base",
+    const verified = await verifyUsdcTransferByAmountWithRetries({
       transactionHash: txHash,
       expectedAmountMicrousdc: amountMicrousdc,
       expectedToAddress: depositAddress,
-        });
+    });
     if (!verified.ok) {
-      return jsonError(400, { ok: false, code: verified.code, message: verified.message });
+      return jsonError(400, {
+        ok: false,
+        code: verified.code,
+        message: verified.message,
+        hint:
+          verified.code === "TX_NOT_FOUND" || verified.code === "NO_MATCH"
+            ? "Transaction may still be propagating. Wait a few seconds and try again."
+            : undefined,
+      });
       }
       
     const credited = await (ctx.runMutation as any)((api as any).pool.topup_creditMerchantBalanceFromTx, {
