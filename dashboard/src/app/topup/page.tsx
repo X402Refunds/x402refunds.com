@@ -47,12 +47,13 @@ export default function TopupPage() {
   const merchantNormalized = useMemo(() => normalizeMerchantToCaip10Base(merchantAddress), [merchantAddress]);
   const merchantCaip10 = merchantNormalized.caip10;
 
-  const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "processing" | "submitted" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [estimatedNewBalanceUsdc, setEstimatedNewBalanceUsdc] = useState<number | null>(null);
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [balanceMicros, setBalanceMicros] = useState<string | null>(null);
+  const [requiredMicros, setRequiredMicros] = useState<number | null>(null);
 
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...
@@ -67,6 +68,87 @@ export default function TopupPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchBalance = async (merchant: string) => {
+    setBalanceStatus("loading");
+    try {
+      const res = await fetch(`${API_BASE}/v1/merchant/balance?merchant=${encodeURIComponent(merchant)}`, {
+        method: "GET",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.message || `Failed to fetch balance: ${res.status}`);
+      }
+      setBalanceMicros(String(data.availableMicrousdc ?? "0"));
+      setBalanceStatus("success");
+    } catch (e: unknown) {
+      setBalanceStatus("error");
+      setBalanceMicros(null);
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  // Automatically fetch current credits when merchant wallet becomes valid.
+  useEffect(() => {
+    if (!merchantCaip10) {
+      setBalanceStatus("idle");
+      setBalanceMicros(null);
+      return;
+    }
+    void fetchBalance(merchantCaip10);
+  }, [merchantCaip10]);
+
+  // If we have a dispute case, show how many credits are required for one-click actions.
+  useEffect(() => {
+    if (!caseId) {
+      setRequiredMicros(null);
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/v1/dispute?id=${encodeURIComponent(caseId)}`, { method: "GET" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.ok) return;
+        const dispute = data?.dispute;
+        const amountMicrousdc = typeof dispute?.paymentDetails?.amountMicrousdc === "number" ? dispute.paymentDetails.amountMicrousdc : null;
+        const disputeFeeUsdc = typeof dispute?.paymentDetails?.disputeFee === "number" ? dispute.paymentDetails.disputeFee : null;
+        if (typeof amountMicrousdc !== "number" || typeof disputeFeeUsdc !== "number") {
+          setRequiredMicros(null);
+          return;
+        }
+        setRequiredMicros(Math.round(amountMicrousdc + disputeFeeUsdc * 1_000_000));
+      } catch {
+        setRequiredMicros(null);
+      }
+    })();
+  }, [caseId]);
+
+  // After submitting a top-up, auto-refresh credits for a short time (no user action).
+  useEffect(() => {
+    if (!merchantCaip10 || !txHash) return;
+    let stopped = false;
+    let attempts = 0;
+    const maxAttempts = 15; // ~30s at 2s interval
+    const interval = setInterval(() => {
+      if (stopped) return;
+      attempts += 1;
+      void fetchBalance(merchantCaip10);
+      if (attempts >= maxAttempts) {
+        stopped = true;
+        clearInterval(interval);
+      }
+    }, 2000);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [merchantCaip10, txHash]);
+
+  const availableUsdc =
+    balanceStatus === "success" && balanceMicros ? Number(balanceMicros) / 1_000_000 : null;
+  const requiredUsdc = typeof requiredMicros === "number" ? requiredMicros / 1_000_000 : null;
+  const hasEnoughForActions =
+    typeof availableUsdc === "number" && typeof requiredUsdc === "number" ? availableUsdc >= requiredUsdc : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
@@ -86,8 +168,14 @@ export default function TopupPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Top up balance</CardTitle>
-          <Badge variant={status === "success" ? "default" : status === "error" ? "destructive" : "secondary"}>
-            {status === "idle" ? "Ready" : status === "processing" ? "Processing" : status === "success" ? "Credited" : "Error"}
+          <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
+            {status === "idle"
+              ? "Ready"
+              : status === "processing"
+                ? "Processing"
+                : status === "submitted"
+                  ? "Submitted"
+                  : "Error"}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -105,46 +193,52 @@ export default function TopupPage() {
             {merchantAddress.trim() && merchantNormalized.error && (
               <div className="text-xs text-destructive">{merchantNormalized.error}</div>
             )}
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!merchantCaip10 || balanceStatus === "loading"}
-                onClick={async () => {
-                  setBalanceStatus("loading");
-                  setBalanceMicros(null);
-                  try {
-                    if (!merchantCaip10) throw new Error("Enter a merchant wallet first");
-                    const res = await fetch(
-                      `${API_BASE}/v1/merchant/balance?merchant=${encodeURIComponent(merchantCaip10)}`,
-                      { method: "GET" },
-                    );
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok || !data?.ok) {
-                      throw new Error(data?.message || `Failed to fetch balance: ${res.status}`);
-                    }
-                    setBalanceMicros(String(data.availableMicrousdc ?? "0"));
-                    setBalanceStatus("success");
-                  } catch (e: unknown) {
-                    setBalanceStatus("error");
-                    setBalanceMicros(null);
-                    setError(e instanceof Error ? e.message : String(e));
-                  }
-                }}
-              >
-                Check current credits
-              </Button>
-              {balanceStatus === "success" && balanceMicros && (
-                <span className="text-xs text-muted-foreground">
-                  Available:{" "}
-                  <code className="font-mono">
-                    {(Number(balanceMicros) / 1_000_000).toFixed(6)} USDC
-                  </code>
-                </span>
+            {merchantCaip10 && (
+              <div className="text-sm">
+                <div className="text-xs text-muted-foreground">Refund credits</div>
+                <div className="font-medium text-foreground">
+                  {balanceStatus === "loading"
+                    ? "Loading…"
+                    : balanceStatus === "success" && typeof availableUsdc === "number"
+                      ? `${availableUsdc.toFixed(6)} USDC`
+                      : balanceStatus === "error"
+                        ? "Unable to load"
+                        : "—"}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {caseId && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-1">
+              <div className="text-sm font-medium text-foreground">For dispute {caseId.slice(0, 8)}…</div>
+              {typeof requiredUsdc === "number" ? (
+                <div className="text-xs text-muted-foreground">
+                  One-click actions require at least <code className="font-mono">{requiredUsdc.toFixed(6)} USDC</code>{" "}
+                  (refund + dispute fee).
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  We’ll email one-click actions after your credits are sufficient.
+                </div>
+              )}
+              {typeof hasEnoughForActions === "boolean" && (
+                <div className="text-xs">
+                  {hasEnoughForActions ? (
+                    <span className="text-foreground">
+                      Status: <span className="font-medium">Enough credits</span> — you should receive approve/reject
+                      links by email.
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Status: <span className="font-medium text-foreground">Not enough credits yet</span> — top up a
+                      bit more to enable approve/reject links.
+                    </span>
+                  )}
+                </div>
               )}
             </div>
-          </div>
+          )}
 
           <div className="space-y-2">
             <Label>Blockchain</Label>
@@ -249,7 +343,7 @@ export default function TopupPage() {
                 setEstimatedNewBalanceUsdc(
                   typeof data.estimatedNewBalanceUsdc === "number" ? data.estimatedNewBalanceUsdc : null,
                 );
-                setStatus("success");
+                setStatus("submitted");
               } catch (e: unknown) {
                 setStatus("error");
                 setError(e instanceof Error ? e.message : String(e));
@@ -260,9 +354,17 @@ export default function TopupPage() {
           </Button>
 
           {txHash && (
-            <div className="space-y-1">
-              <div className="text-sm font-medium">Transaction</div>
-              <CopyableField value={txHash} truncate={false} />
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-foreground">Payment transaction hash (Base)</div>
+              <CopyableField value={txHash} truncate={false} label="Copied transaction hash" />
+              <a
+                className="text-xs text-muted-foreground underline"
+                href={`https://basescan.org/tx/${encodeURIComponent(txHash)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on Basescan
+              </a>
             </div>
           )}
 
@@ -271,9 +373,6 @@ export default function TopupPage() {
               <div>
                 Estimated new balance (USDC):{" "}
                 <code className="font-mono">{estimatedNewBalanceUsdc.toFixed(6)}</code>
-              </div>
-              <div>
-                Credits finalize after the on-chain transfer is confirmed. Use “Check current credits” to refresh.
               </div>
             </div>
           )}
