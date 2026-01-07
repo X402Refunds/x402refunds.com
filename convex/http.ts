@@ -1505,19 +1505,23 @@ http.route({
       descriptionCanonical.trim();
 
     if (hasCanonical) {
-      const res = await fileCanonicalDispute(ctx, {
-        merchant: merchantCanonical,
-        merchantApiUrl,
-        txHash: txHashCanonical,
-        description: descriptionCanonical,
-        evidenceUrls: evidenceUrlsCanonical,
-        callbackUrl: callbackUrlCanonical,
-        merchantX402MetadataUrl: merchantX402MetadataUrlCanonical,
-        request: requestCanonical,
-        response: responseCanonical,
-      });
-      if (!res.ok) return jsonError(400, { ok: false, code: res.code, message: res.message, field: res.field });
-      return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+      try {
+        const res = await fileCanonicalDispute(ctx, {
+          merchant: merchantCanonical,
+          merchantApiUrl,
+          txHash: txHashCanonical,
+          description: descriptionCanonical,
+          evidenceUrls: evidenceUrlsCanonical,
+          callbackUrl: callbackUrlCanonical,
+          merchantX402MetadataUrl: merchantX402MetadataUrlCanonical,
+          request: requestCanonical,
+          response: responseCanonical,
+        });
+        if (!res.ok) return jsonError(400, { ok: false, code: res.code, message: res.message, field: res.field });
+        return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+      } catch (e: any) {
+        return jsonError(500, { ok: false, code: "INTERNAL_ERROR", message: e?.message || "Internal error" });
+      }
     }
 
     const buyer = typeof body?.buyer === "string" ? body.buyer : "buyer:anonymous";

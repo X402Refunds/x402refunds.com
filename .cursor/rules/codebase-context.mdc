@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-07T22:51:33.846Z
+**Auto-generated on**: 2026-01-07T23:34:54.483Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -192,7 +192,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (53 test files)
+### Test Suites (54 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -229,6 +229,7 @@ Common HTTP routes exposed:
 - test/unit/base-caip10-mapping.test.ts
 - test/unit/batch-processing.test.ts
 - test/unit/caip10-sanity-checks.test.ts
+- test/unit/canonical-dispute-duplicate.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
 - test/unit/merchant-email-actions.test.ts
 - test/unit/merchant-notifications.test.ts
@@ -367,7 +368,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 53 test files using Vitest
+- 54 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -400,5 +401,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/7/2026, 2:51:33 PM
-Files scanned: 518
+Generated: 1/7/2026, 3:34:54 PM
+Files scanned: 519

@@ -187,13 +187,41 @@ export default function FileDisputePage() {
           ...(response ? { response } : {}),
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.message || data?.error?.message || `Failed (${res.status})`);
+      const raw = await res.text().catch(() => "");
+      let data: unknown = null;
+      try {
+        data = raw ? (JSON.parse(raw) as unknown) : null;
+      } catch {
+        data = null;
       }
-      setFileResult({ caseId: String(data.caseId), trackingUrl: String(data.trackingUrl) });
+
+      const obj =
+        data && typeof data === "object" ? (data as Record<string, unknown>) : null;
+      const ok = obj?.ok === true;
+
+      if (!res.ok || !ok) {
+        const msgFromTopLevel =
+          typeof obj?.message === "string" ? obj.message : null;
+        const err = obj?.error;
+        const msgFromError =
+          err && typeof err === "object" && typeof (err as Record<string, unknown>).message === "string"
+            ? String((err as Record<string, unknown>).message)
+            : null;
+        const msg = msgFromTopLevel || msgFromError || raw || `Failed (${res.status})`;
+        throw new Error(msg);
+      }
+
+      setFileResult({
+        caseId: String(obj?.caseId || ""),
+        trackingUrl: String(obj?.trackingUrl || ""),
+      });
     } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setApiError(
+        msg === "Failed to fetch"
+          ? "Network error. If you received an email, the dispute may have been filed already. Check your inbox/spam and avoid filing duplicates."
+          : msg,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -240,13 +268,6 @@ export default function FileDisputePage() {
           <p className="text-sm text-muted-foreground">Base only (USDC). One submission.</p>
         </div>
 
-        {apiError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Request failed</AlertTitle>
-            <AlertDescription>{apiError}</AlertDescription>
-          </Alert>
-        ) : null}
-
         {fileResult?.caseId ? (
           <Card>
             <CardHeader>
@@ -287,6 +308,7 @@ export default function FileDisputePage() {
           </Card>
         ) : null}
 
+        {fileResult?.caseId ? null : (
         <form className="space-y-6" onSubmit={submitDispute}>
           <Card>
             <CardHeader>
@@ -433,6 +455,13 @@ export default function FileDisputePage() {
 
           <Separator />
 
+          {apiError ? (
+            <Alert variant="destructive">
+              <AlertTitle>Request failed</AlertTitle>
+              <AlertDescription>{apiError}</AlertDescription>
+            </Alert>
+          ) : null}
+
           <div className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" disabled={uploading || submitting || formSubmitting}>
               {submitting ? "Filing…" : "File dispute"}
@@ -457,6 +486,7 @@ export default function FileDisputePage() {
             Note: Filing is permissionless. We’ll attach any uploaded evidence as URLs on the case.
           </div>
         </form>
+        )}
       </main>
 
       <Footer />

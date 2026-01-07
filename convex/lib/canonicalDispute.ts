@@ -1,6 +1,7 @@
 // Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
 import * as apiMod from "../_generated/api.js";
 const api: any = (apiMod as any).api;
+import { parseDuplicatePaymentDisputeError } from "./duplicateDispute";
 
 const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 
@@ -172,7 +173,25 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
     // ignore
   }
 
-  const result: any = await ctx.runAction((api as any).paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
+  let result: any = null;
+  try {
+    result = await ctx.runAction((api as any).paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    const dup = parseDuplicatePaymentDisputeError(message);
+    if (dup?.existingCaseId) {
+      const caseId = String(dup.existingCaseId);
+      return {
+        ok: true,
+        caseId,
+        trackingUrl: `https://x402disputes.com/cases/${caseId}`,
+        evidenceUrls,
+        status: typeof dup.status === "string" ? dup.status : undefined,
+      };
+    }
+    return { ok: false, code: "INTAKE_FAILED", message };
+  }
+
   const caseId = typeof result?.caseId === "string" ? result.caseId : "";
   const trackingUrl = `https://x402disputes.com/cases/${caseId}`;
   if (!caseId) return { ok: false, code: "INTERNAL_ERROR", message: "Failed to create case" };
