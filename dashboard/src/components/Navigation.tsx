@@ -11,7 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10"
@@ -27,6 +27,7 @@ export function Navigation({ currentPage }: NavigationProps) {
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [balanceMicrousdc, setBalanceMicrousdc] = useState<number | null>(null)
   const [balanceError, setBalanceError] = useState<string | null>(null)
+  const [checkIntent, setCheckIntent] = useState<"balance" | "disputes">("balance")
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -106,22 +107,49 @@ export function Navigation({ currentPage }: NavigationProps) {
               </button>
 
               <Dialog open={checkOpen} onOpenChange={setCheckOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    onClick={() => setCheckOpen(true)}
-                    className={cn(
-                      "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                      currentPage === "home"
-                        ? "text-slate-900 hover:bg-slate-100"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                    )}
-                  >
-                    Check
-                  </button>
-                </DialogTrigger>
+                <button
+                  onClick={() => {
+                    setCheckIntent("balance")
+                    setCheckOpen(true)
+                  }}
+                  className={cn(
+                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                    currentPage === "home"
+                      ? "text-slate-900 hover:bg-slate-100"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  Check Balance
+                </button>
+                <button
+                  onClick={() => {
+                    setCheckIntent("disputes")
+                    setCheckOpen(true)
+                  }}
+                  className={cn(
+                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                    currentPage === "home"
+                      ? "text-slate-900 hover:bg-slate-100"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  Check Your Disputes
+                </button>
+                <button
+                  onClick={() => handleNavigation("/file-dispute")}
+                  className={cn(
+                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                    currentPage === "home"
+                      ? "text-slate-900 hover:bg-slate-100"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  File a Dispute
+                </button>
+
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Check your status</DialogTitle>
+                    <DialogTitle>{checkIntent === "balance" ? "Check balance" : "Check your disputes"}</DialogTitle>
                   </DialogHeader>
 
                   <div className="space-y-4">
@@ -145,11 +173,11 @@ export function Navigation({ currentPage }: NavigationProps) {
 
                     <div className="flex flex-col gap-2">
                       <Button
-                        variant="outline"
+                        variant={checkIntent === "balance" ? "default" : "outline"}
                         disabled={!checkMerchant || balanceStatus === "loading"}
                         onClick={runBalanceCheck}
                       >
-                        {balanceStatus === "loading" ? "Checking refund credits…" : "Check refund credits"}
+                        {balanceStatus === "loading" ? "Checking balance…" : "Check balance"}
                       </Button>
 
                       {balanceStatus === "success" && typeof balanceMicrousdc === "number" && (
@@ -163,10 +191,11 @@ export function Navigation({ currentPage }: NavigationProps) {
                       )}
 
                       <Button
+                        variant={checkIntent === "disputes" ? "default" : "outline"}
                         disabled={!checkMerchant}
                         onClick={() => window.location.href = `/party/${encodeURIComponent(checkMerchant || "")}`}
                       >
-                        View disputes for this wallet
+                        Check your disputes
                       </Button>
 
                       <Button
@@ -174,7 +203,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                         disabled={!checkMerchant}
                         onClick={() => window.location.href = `/topup?merchant=${encodeURIComponent(checkMerchant || "")}`}
                       >
-                        Top up refund credits
+                        Top up balance
                       </Button>
                     </div>
                   </div>
@@ -218,12 +247,33 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <Button
                     onClick={() => {
                       setMobileMenuOpen(false)
+                      setCheckIntent("balance")
                       setCheckOpen(true)
                     }}
                     className="w-full justify-start"
                     variant="outline"
                   >
-                    Check refund credits / disputes
+                    Check Balance
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      setCheckIntent("disputes")
+                      setCheckOpen(true)
+                    }}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    Check Your Disputes
+                  </Button>
+
+                  <Button
+                    onClick={() => handleNavigation("/file-dispute")}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    File a Dispute
                   </Button>
 
                   <div className="border-t border-border pt-4 space-y-3">

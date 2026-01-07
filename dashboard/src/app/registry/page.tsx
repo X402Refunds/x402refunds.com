@@ -36,7 +36,7 @@ export default function RegistryPage() {
               </Button>
               <Button 
                 className="bg-blue-600 hover:bg-blue-500"
-                onClick={() => window.location.href = '/sign-in'}
+                onClick={() => window.location.href = '/file-dispute'}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 File Dispute

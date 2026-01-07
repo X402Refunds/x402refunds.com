@@ -311,7 +311,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       },
       
       pricing: {
-        flat_fee: "$0.05 per dispute"
+        flat_fee: "$0.05 per dispute (paid by merchant; free for filers)"
       },
       resolution_time: "< 10 minutes avg, 10 business days max (Regulation E)",
       url: "https://api.x402disputes.com"
@@ -658,7 +658,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               currency: txCurrency,
               blockchain: parameters.blockchain,
               transactionHash: parameters.transactionHash,
-              estimatedFee: 0.05
+              estimatedFee: 0,
+              merchantProcessingFee: 0.05
             },
             validations: {
               transactionFound: `✓ Transaction found on ${parameters.blockchain}`,
@@ -684,7 +685,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
               "Remove 'dryRun: true' to file the dispute",
               signatureProvided ? null : "Consider including sellerXSignature for stronger evidence",
               "Dispute will be filed immediately",
-              "Fee: $0.05",
+              "Filing fee: $0.00 (merchant pays $0.05 processing fee)",
               "Resolution within 5-10 minutes for micro-disputes"
             ].filter(Boolean)
           }), {

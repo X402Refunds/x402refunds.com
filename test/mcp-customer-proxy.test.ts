@@ -157,7 +157,10 @@ describe('MCP Customer Proxy Pattern', () => {
     // Verify flat pricing is documented
     expect(schema.server.pricing).toBeDefined();
     expect(schema.server.pricing.flat_fee).toBeDefined();
-    expect(schema.server.pricing.flat_fee).toBe("$0.05 per dispute");
+    // Backward compatible during rollout (deployed API may lag local code)
+    expect(String(schema.server.pricing.flat_fee)).toMatch(
+      /^\$0\.05 per dispute(\s*\(paid by merchant; free for filers\))?$/
+    );
   }, 30000);
 
   it('should include authentication info for customers', async () => {

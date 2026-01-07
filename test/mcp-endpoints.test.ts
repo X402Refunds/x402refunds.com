@@ -44,7 +44,10 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.server.name).toBe('x402disputes.com - Permissionless X-402 Dispute Resolution');
       expect(manifest.server.dispute_types).toContain('Payment disputes only');
       expect(manifest.server.pricing).toBeDefined();
-      expect(manifest.server.pricing.flat_fee).toBe('$0.05 per dispute');
+      // Backward compatible during rollout (deployed API may lag local code)
+      expect(String(manifest.server.pricing.flat_fee)).toMatch(
+        /^\$0\.05 per dispute(\s*\(paid by merchant; free for filers\))?$/
+      );
     });
 
     it('should list X-402 MCP tools (plus demo)', async () => {

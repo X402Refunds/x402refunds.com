@@ -7,8 +7,11 @@
 
 import { internalAction, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import * as apiMod from "./_generated/api.js";
 import { sendEmail } from "./lib/email";
+
+// Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
+const api: any = (apiMod as any).api;
 
 type X402Metadata = {
   x402disputes?: {
@@ -174,10 +177,11 @@ function buildMerchantVerificationEmailText(params: {
   return lines.join("\n");
 }
 
-export const notifyMerchantDisputeFiled = internalAction({
+export const notifyMerchantDisputeFiled: any = internalAction({
   args: { caseId: v.id("cases") },
-  handler: async (ctx, args): Promise<{ ok: boolean; emailed?: boolean; reason?: string; details?: string }> => {
-    const caseData: any = await ctx.runQuery((internal as any).cases.getCase, { caseId: args.caseId });
+  handler: async (ctx: any, args: { caseId: any }): Promise<any> => {
+    // NOTE: Cast runQuery to any to avoid excessively-deep type instantiations from generated Convex query types.
+    const caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
     if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
 
     const merchantRaw = String(caseData.defendant || "");
@@ -220,7 +224,7 @@ export const notifyMerchantDisputeFiled = internalAction({
     }
 
     // Email verification gate: only send ongoing dispute emails after supportEmail confirms for this (merchant, origin).
-    const verified = await ctx.runQuery((internal as any).merchantEmailVerification.getVerification, {
+    const verified = await (ctx.runQuery as any)(api.merchantEmailVerification.getVerification, {
       merchant: expectedMerchant,
       origin: merchantOrigin,
       supportEmail: String(supportEmail),
@@ -255,8 +259,8 @@ export const notifyMerchantDisputeFiled = internalAction({
           : undefined;
 
     if (!verified) {
-      const tokenRes = await ctx.runMutation(
-        (internal as any).merchantEmailVerification.createOrReuseVerificationToken,
+      const tokenRes = await (ctx.runMutation as any)(
+        api.merchantEmailVerification.createOrReuseVerificationToken,
         {
           merchant: expectedMerchant,
           origin: merchantOrigin,
@@ -308,7 +312,7 @@ export const notifyMerchantDisputeFiled = internalAction({
     // Only show action links if the merchant has enough refund credits to cover (refund + fee).
     const balance =
       typeof requiredMicrousdc === "number"
-        ? await ctx.runQuery((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
+        ? await (ctx.runQuery as any)(api.pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
         : null;
     const hasSufficientCredits =
       typeof requiredMicrousdc === "number" &&
@@ -317,7 +321,7 @@ export const notifyMerchantDisputeFiled = internalAction({
       balance.availableMicrousdc >= requiredMicrousdc;
 
     const actions = hasSufficientCredits
-      ? await ctx.runMutation((internal as any).merchantEmailActions.createActionTokensForCase, {
+      ? await (ctx.runMutation as any)(api.merchantEmailActions.createActionTokensForCase, {
           caseId: args.caseId,
           merchant: expectedMerchant,
           origin: merchantOrigin,
@@ -365,10 +369,11 @@ export const notifyMerchantDisputeFiled = internalAction({
 /**
  * Status helper for the top-up page. Does NOT send email.
  */
-export const getNotificationStatusForCase = internalAction({
+export const getNotificationStatusForCase: any = internalAction({
   args: { caseId: v.id("cases") },
-  handler: async (ctx, args) => {
-    const caseData: any = await ctx.runQuery((internal as any).cases.getCase, { caseId: args.caseId });
+  handler: async (ctx, args): Promise<any> => {
+    // NOTE: Cast runQuery to any to avoid excessively-deep type instantiations from generated Convex query types.
+    const caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
     if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
 
     const merchantRaw = String(caseData.defendant || "");
@@ -401,11 +406,11 @@ export const getNotificationStatusForCase = internalAction({
     const requiredMicrousdc =
       typeof paymentAmountMicrousdc === "number" ? paymentAmountMicrousdc + disputeFeeMicrousdc : undefined;
 
-    const balance =
+    const balance: any =
       typeof requiredMicrousdc === "number"
-        ? await ctx.runQuery((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
+        ? await (ctx.runQuery as any)(api.pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
         : null;
-    const hasSufficientCredits =
+    const hasSufficientCredits: boolean =
       typeof requiredMicrousdc === "number" &&
       balance?.ok === true &&
       typeof balance.availableMicrousdc === "number" &&
@@ -459,8 +464,8 @@ export const getNotificationStatusForCase = internalAction({
 
     const supportEmail = fetched.data?.x402disputes?.supportEmail;
     const email = supportEmail && isLikelyEmailAddress(String(supportEmail)) ? String(supportEmail) : null;
-    const verified = email
-      ? await ctx.runQuery((internal as any).merchantEmailVerification.getVerification, {
+    const verified: any = email
+      ? await (ctx.runQuery as any)(api.merchantEmailVerification.getVerification, {
           merchant: expectedMerchant,
           origin: merchantOrigin,
           supportEmail: email,
