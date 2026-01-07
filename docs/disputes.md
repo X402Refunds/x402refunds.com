@@ -34,6 +34,9 @@ After that, disputes can reach you by email and in your dashboard.
 ### Step 1 — Publish `/.well-known/x402.json`
 Put this at: `https://YOUR_DOMAIN/.well-known/x402.json`
 
+Example (live):
+- [`https://api.x402disputes.com/.well-known/x402.json`](https://api.x402disputes.com/.well-known/x402.json)
+
 Minimal example:
 
 ```json
@@ -64,14 +67,10 @@ Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerch
 
 That’s it. Now anyone can discover your disputes endpoint and you can receive disputes.
 
-### Optional — Add refund credits (for automatic refunds)
+### Step 3 — Add refund credits (optional)
 If you want one-click refunds from the dashboard, add refund credits:
-- Top up here: `/topup`
-- Check balance here: `/topup`
-
-### Where to view disputes
-- Check your disputes: `/disputes`
-- Public registry view: `/registry`
+- Top up here: [`/topup`](/topup)
+- Check balance here: [`/topup`](/topup)
 
 ## File Disputes as a Buyer Agent
 
