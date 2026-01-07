@@ -274,34 +274,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" className="bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-950">How it works</h2>
-          <p className="mt-2 text-slate-600 max-w-2xl">Three steps. No jargon.</p>
-
-          <div className="mt-8 grid md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <div className="text-xs font-semibold text-blue-600">STEP 1</div>
-              <div className="mt-2 font-semibold text-slate-950">Enable disputes</div>
-              <div className="mt-1 text-sm text-slate-600">Publish /.well-known/x402.json + return a Link header.</div>
-                </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <div className="text-xs font-semibold text-blue-600">STEP 2</div>
-              <div className="mt-2 font-semibold text-slate-950">Disputes arrive</div>
-              <div className="mt-1 text-sm text-slate-600">We notify you (email by default).</div>
-                </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <div className="text-xs font-semibold text-blue-600">STEP 3</div>
-              <div className="mt-2 font-semibold text-slate-950">Review → refund / deny</div>
-              <div className="mt-1 text-sm text-slate-600">Optional: top up credits for automatic refunds.</div>
-              </div>
-          </div>
-        </div>
-      </section>
-
       {/* WHAT YOU GET */}
       <section className="bg-slate-50 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-12">

@@ -11,6 +11,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { normalizeMerchantToCaip10Base } from "@/lib/caip10"
 
 interface NavigationProps {
   currentPage?: 'home' | 'pricing' | 'about' | 'registry'
@@ -18,6 +22,11 @@ interface NavigationProps {
 
 export function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [checkOpen, setCheckOpen] = useState(false)
+  const [checkWallet, setCheckWallet] = useState("")
+  const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [balanceMicrousdc, setBalanceMicrousdc] = useState<number | null>(null)
+  const [balanceError, setBalanceError] = useState<string | null>(null)
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -41,6 +50,30 @@ export function Navigation({ currentPage }: NavigationProps) {
     el?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  const checkWalletNormalized = normalizeMerchantToCaip10Base(checkWallet)
+  const checkMerchant = checkWalletNormalized.caip10
+
+  const runBalanceCheck = async () => {
+    try {
+      setBalanceError(null)
+      setBalanceMicrousdc(null)
+      setBalanceStatus("loading")
+      if (!checkMerchant) throw new Error(checkWalletNormalized.error || "Enter a wallet address")
+      const res = await fetch(
+        `https://api.x402disputes.com/v1/merchant/balance?merchant=${encodeURIComponent(checkMerchant)}`,
+        { method: "GET" },
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) throw new Error(data?.message || `Failed to fetch balance (${res.status})`)
+      const micros = Number(data.availableMicrousdc ?? 0)
+      setBalanceMicrousdc(Number.isFinite(micros) ? micros : 0)
+      setBalanceStatus("success")
+    } catch (e: unknown) {
+      setBalanceStatus("error")
+      setBalanceError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
   return (
     <nav className="border-b border-slate-200 bg-white backdrop-blur-sm sticky top-0 z-50 shadow-sm relative">
       {/* Blue accent bar */}
@@ -61,7 +94,7 @@ export function Navigation({ currentPage }: NavigationProps) {
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
               <button
-                onClick={() => handleAnchor("#how-it-works")}
+                onClick={() => handleNavigation("/topup")}
                 className={cn(
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   currentPage === "home"
@@ -69,16 +102,84 @@ export function Navigation({ currentPage }: NavigationProps) {
                     : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
-                How it works
-              </button>
-              <Button
-                onClick={() => handleNavigation("/topup")}
-                variant="outline"
-                size="sm"
-                className="ml-2"
-              >
                 Top up
-              </Button>
+              </button>
+
+              <Dialog open={checkOpen} onOpenChange={setCheckOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    onClick={() => setCheckOpen(true)}
+                    className={cn(
+                      "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                      currentPage === "home"
+                        ? "text-slate-900 hover:bg-slate-100"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    )}
+                  >
+                    Check
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Check your status</DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="check-wallet">Merchant wallet</Label>
+                      <Input
+                        id="check-wallet"
+                        placeholder="0x… or eip155:8453:0x…"
+                        value={checkWallet}
+                        onChange={(e) => {
+                          setCheckWallet(e.target.value)
+                          setBalanceStatus("idle")
+                          setBalanceMicrousdc(null)
+                          setBalanceError(null)
+                        }}
+                      />
+                      {checkWallet.trim() && checkWalletNormalized.error && (
+                        <div className="text-xs text-destructive">{checkWalletNormalized.error}</div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        disabled={!checkMerchant || balanceStatus === "loading"}
+                        onClick={runBalanceCheck}
+                      >
+                        {balanceStatus === "loading" ? "Checking refund credits…" : "Check refund credits"}
+                      </Button>
+
+                      {balanceStatus === "success" && typeof balanceMicrousdc === "number" && (
+                        <div className="text-sm text-muted-foreground">
+                          Available:{" "}
+                          <code className="font-mono">{(balanceMicrousdc / 1_000_000).toFixed(6)} USDC</code>
+                        </div>
+                      )}
+                      {balanceStatus === "error" && balanceError && (
+                        <div className="text-sm text-destructive">{balanceError}</div>
+                      )}
+
+                      <Button
+                        disabled={!checkMerchant}
+                        onClick={() => window.location.href = `/party/${encodeURIComponent(checkMerchant || "")}`}
+                      >
+                        View disputes for this wallet
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        disabled={!checkMerchant}
+                        onClick={() => window.location.href = `/topup?merchant=${encodeURIComponent(checkMerchant || "")}`}
+                      >
+                        Top up refund credits
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
           
@@ -106,27 +207,28 @@ export function Navigation({ currentPage }: NavigationProps) {
                   <SheetTitle className="text-2xl font-bold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
-                    <Button
+                  <Button
                     onClick={() => handleNavigation("/topup")}
                     className="w-full justify-start"
                     variant="outline"
-                    >
+                  >
                     Top up
-                    </Button>
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      setCheckOpen(true)
+                    }}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    Check refund credits / disputes
+                  </Button>
 
                   <div className="border-t border-border pt-4 space-y-3">
                     {/* Main Navigation */}
                     <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleAnchor("#how-it-works")}
-                        className={cn(
-                          "w-full justify-start",
-                          currentPage === 'home' && 'bg-blue-50 text-blue-700'
-                        )}
-                      >
-                        How it works
-                      </Button>
                       <Button
                         variant="ghost"
                         onClick={() => handleAnchor("#enable")}
