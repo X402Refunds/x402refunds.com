@@ -10,24 +10,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { normalizeMerchantToCaip10Base } from "@/lib/caip10"
 
 interface NavigationProps {
   currentPage?: 'home' | 'pricing' | 'about' | 'registry'
 }
 
-export function Navigation({ currentPage }: NavigationProps) {
+export function Navigation({ currentPage: _currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [checkOpen, setCheckOpen] = useState(false)
-  const [checkWallet, setCheckWallet] = useState("")
-  const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-  const [balanceMicrousdc, setBalanceMicrousdc] = useState<number | null>(null)
-  const [balanceError, setBalanceError] = useState<string | null>(null)
-  const [checkIntent, setCheckIntent] = useState<"balance" | "disputes">("balance")
+  // Intentionally unused for now (kept for API compatibility / potential future highlighting)
+  void _currentPage
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -51,30 +42,6 @@ export function Navigation({ currentPage }: NavigationProps) {
     el?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
-  const checkWalletNormalized = normalizeMerchantToCaip10Base(checkWallet)
-  const checkMerchant = checkWalletNormalized.caip10
-
-  const runBalanceCheck = async () => {
-    try {
-      setBalanceError(null)
-      setBalanceMicrousdc(null)
-      setBalanceStatus("loading")
-      if (!checkMerchant) throw new Error(checkWalletNormalized.error || "Enter a wallet address")
-      const res = await fetch(
-        `https://api.x402disputes.com/v1/merchant/balance?merchant=${encodeURIComponent(checkMerchant)}`,
-        { method: "GET" },
-      )
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data?.ok) throw new Error(data?.message || `Failed to fetch balance (${res.status})`)
-      const micros = Number(data.availableMicrousdc ?? 0)
-      setBalanceMicrousdc(Number.isFinite(micros) ? micros : 0)
-      setBalanceStatus("success")
-    } catch (e: unknown) {
-      setBalanceStatus("error")
-      setBalanceError(e instanceof Error ? e.message : String(e))
-    }
-  }
-
   return (
     <nav className="border-b border-slate-200 bg-white backdrop-blur-sm sticky top-0 z-50 shadow-sm relative">
       {/* Blue accent bar */}
@@ -94,135 +61,38 @@ export function Navigation({ currentPage }: NavigationProps) {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
-              <button
-                onClick={() => handleNavigation("/topup")}
-                className={cn(
-                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  currentPage === "home"
-                    ? "text-slate-900 hover:bg-slate-100"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                )}
+              <Button
+                size="sm"
+                onClick={() => handleAnchor("#enable")}
               >
-                Top up
-              </button>
-
-              <Dialog open={checkOpen} onOpenChange={setCheckOpen}>
-                <button
-                  onClick={() => {
-                    setCheckIntent("balance")
-                    setCheckOpen(true)
-                  }}
-                  className={cn(
-                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    currentPage === "home"
-                      ? "text-slate-900 hover:bg-slate-100"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  )}
-                >
-                  Check Balance
-                </button>
-                <button
-                  onClick={() => {
-                    setCheckIntent("disputes")
-                    setCheckOpen(true)
-                  }}
-                  className={cn(
-                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    currentPage === "home"
-                      ? "text-slate-900 hover:bg-slate-100"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  )}
-                >
-                  Check Your Disputes
-                </button>
-                <button
-                  onClick={() => handleNavigation("/file-dispute")}
-                  className={cn(
-                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    currentPage === "home"
-                      ? "text-slate-900 hover:bg-slate-100"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  )}
-                >
-                  File a Dispute
-                </button>
-
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{checkIntent === "balance" ? "Check balance" : "Check your disputes"}</DialogTitle>
-                  </DialogHeader>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="check-wallet">Merchant wallet</Label>
-                      <Input
-                        id="check-wallet"
-                        placeholder="0x… or eip155:8453:0x…"
-                        value={checkWallet}
-                        onChange={(e) => {
-                          setCheckWallet(e.target.value)
-                          setBalanceStatus("idle")
-                          setBalanceMicrousdc(null)
-                          setBalanceError(null)
-                        }}
-                      />
-                      {checkWallet.trim() && checkWalletNormalized.error && (
-                        <div className="text-xs text-destructive">{checkWalletNormalized.error}</div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant={checkIntent === "balance" ? "default" : "outline"}
-                        disabled={!checkMerchant || balanceStatus === "loading"}
-                        onClick={runBalanceCheck}
-                      >
-                        {balanceStatus === "loading" ? "Checking balance…" : "Check balance"}
-                      </Button>
-
-                      {balanceStatus === "success" && typeof balanceMicrousdc === "number" && (
-                        <div className="text-sm text-muted-foreground">
-                          Available:{" "}
-                          <code className="font-mono">{(balanceMicrousdc / 1_000_000).toFixed(6)} USDC</code>
-                        </div>
-                      )}
-                      {balanceStatus === "error" && balanceError && (
-                        <div className="text-sm text-destructive">{balanceError}</div>
-                      )}
-
-                      <Button
-                        variant={checkIntent === "disputes" ? "default" : "outline"}
-                        disabled={!checkMerchant}
-                        onClick={() => window.location.href = `/party/${encodeURIComponent(checkMerchant || "")}`}
-                      >
-                        Check your disputes
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        disabled={!checkMerchant}
-                        onClick={() => window.location.href = `/topup?merchant=${encodeURIComponent(checkMerchant || "")}`}
-                      >
-                        Top up balance
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                Enable disputes (no signup required)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleNavigation("/topup")}
+              >
+                Check Balance
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleNavigation("/disputes")}
+              >
+                Check Your Disputes
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleNavigation("/file-dispute")}
+              >
+                File a Dispute
+              </Button>
             </div>
           </div>
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* Primary CTA - Desktop */}
-            <Button
-              onClick={() => handleAnchor("#enable")}
-              className="hidden md:flex"
-              size="sm"
-            >
-              Enable disputes
-            </Button>
-
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
@@ -237,19 +107,15 @@ export function Navigation({ currentPage }: NavigationProps) {
                 </SheetHeader>
                 <div className="mt-6 flex flex-col gap-4">
                   <Button
-                    onClick={() => handleNavigation("/topup")}
+                    onClick={() => handleAnchor("#enable")}
                     className="w-full justify-start"
-                    variant="outline"
+                    variant="default"
                   >
-                    Top up
+                    Enable disputes (no signup required)
                   </Button>
 
                   <Button
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      setCheckIntent("balance")
-                      setCheckOpen(true)
-                    }}
+                    onClick={() => handleNavigation("/topup")}
                     className="w-full justify-start"
                     variant="outline"
                   >
@@ -257,11 +123,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                   </Button>
 
                   <Button
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      setCheckIntent("disputes")
-                      setCheckOpen(true)
-                    }}
+                    onClick={() => handleNavigation("/disputes")}
                     className="w-full justify-start"
                     variant="outline"
                   >
@@ -275,22 +137,6 @@ export function Navigation({ currentPage }: NavigationProps) {
                   >
                     File a Dispute
                   </Button>
-
-                  <div className="border-t border-border pt-4 space-y-3">
-                    {/* Main Navigation */}
-                    <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleAnchor("#enable")}
-                        className={cn(
-                          "w-full justify-start",
-                          currentPage === 'home' && 'bg-blue-50 text-blue-700'
-                        )}
-                      >
-                        Enable disputes
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </SheetContent>
             </Sheet>

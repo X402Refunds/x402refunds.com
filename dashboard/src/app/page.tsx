@@ -168,43 +168,6 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button 
-                    size="lg" 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                  onClick={() => {
-                    const el = document.getElementById("enable")
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }}
-                >
-                  Enable disputes (no signup required)
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-7 h-12"
-                  onClick={() => (window.location.href = "/topup")}
-                >
-                  Check Balance
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-7 h-12"
-                  onClick={() => (window.location.href = "/disputes")}
-                >
-                  Check Your Disputes
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-7 h-12"
-                  onClick={() => (window.location.href = "/file-dispute")}
-                >
-                  File a Dispute
-                </Button>
-              </div>
-
               <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
             </div>
 
