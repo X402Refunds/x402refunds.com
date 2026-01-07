@@ -1,259 +1,104 @@
-# x402 Escrow & Disputes
+# x402 Disputes & Refunds
 
 ## Overview
 
-**What this does**: pre-transaction escrow for x402-protected resources.
+**What this does**: post-transaction disputes + refunds for x402 payments.
 
-**Mental model**
+If someone pays you (USDC on Base) and your API fails (timeout, 500, bad output), they can file a dispute.
 
-> Buyer pays escrow. Buyer can dispute during a short window. If no dispute, escrow releases funds automatically.
+You (the merchant) get an inbox + a workflow to **refund / deny / partial refund**. You can optionally add refund credits to automate refunds.
 
-**Disputes (2 modes)**
-- **Pre-transaction**: dispute during the escrow hold window (recommended)
-- **Post-transaction**: dispute after payment for service failure
+**Key idea**: this is for what happens **after** the payment.
 
-**You do NOT build**
-- No chargebacks
-- No refunds logic on your server
-- No settlement jobs
-- No custody
+You do **not** need to build:
+- chargebacks
+- a refund inbox
+- dispute tracking pages
+- “did you refund?” status pages
 
-### Escrow + dispute flow
-
-High-level: 402 → pay escrow → verify → deliver → dispute window → release/refund.
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Server
-    participant Facilitator
-    participant Escrow
-    participant Blockchain
-
-    Client->>Server: GET /api
-    Server-->>Client: 402 PAYMENT-REQUIRED { payTo: Escrow }
-
-    Client->>Client: Create payment payload
-    Client->>Server: GET /api + PAYMENT-SIGNATURE
-
-    Server->>Facilitator: POST /verify
-    Facilitator-->>Server: 200 Verification
-
-    Server->>Server: Do work
-    Server-->>Client: 200 OK + PAYMENT-RESPONSE
-
-    Note over Escrow: Funds held
-
-    Client->>Escrow: dispute (arbiter decides)
-
-    Escrow->>Client: refund (if dispute ruled in favor)
-
-    Escrow->>Blockchain: release funds (after timeout)
-```
+This is intentionally simple: disputes are permissionless, the transaction is verified on-chain, and the merchant handles resolution.
 
 ## Integration Guide for Merchants
 
-### Prerequisites
-- You serve paid resources over x402
-- You want a short dispute window
-- You don’t want to manage refunds/settlement
+### What you’re adding (2 copy/pastes)
+1) A `/.well-known/x402.json` file (public, on your domain)\n2) A `Link` header (points to your disputes feed)
 
-### 1) Register and get escrow details
+After that, disputes can reach you by email and in your dashboard.
 
-Register your agent: [https://www.x402disputes.com/dashboard/agents/](https://www.x402disputes.com/dashboard/agents/)
+### Step 1 — Publish `/.well-known/x402.json`
+Put this at: `https://YOUR_DOMAIN/.well-known/x402.json`
 
-You receive:
-- `ESCROW_ADDRESS` (smart contract)
-- `disputeUrl` (buyers file disputes here)
+Minimal example:
 
-```ts
-const ESCROW_ADDRESS = "0xEscrowContractAddress";
-const MERCHANT_ADDRESS = "0xYourWallet";
-```
-
-### 2) Create a payment intent (server-side only)
-
-Payment intents are **anti-replay** + **idempotency** guards (off-chain).
-Create **one payment intent per 402** you issue (i.e. per request/response).
-
-```ts
-import { randomUUID } from "crypto";
-
-type PaymentIntent = {
-  id: string;
-  expiresAt: number;
-  used: boolean;
-  // bind to what you promised in the 402
-  method: string;
-  path: string;
-  paramsHash: string;
-  amount: string;
-  asset: string;
-  payTo: string;
-  // optional: return the same payload if retried after fulfillment
-  fulfilledResponse?: unknown;
-};
-
-const paymentIntents = new Map<string, PaymentIntent>();
-
-function createPaymentIntent() {
-  const intent: PaymentIntent = {
-    id: randomUUID(),
-    expiresAt: Date.now() + 5 * 60 * 1000,
-    used: false,
-    method: "GET",
-    path: "/api",
-    paramsHash: "sha256(params)",
-    amount: "10000",
-    asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-    payTo: "0xEscrowContractAddress",
-  };
-  paymentIntents.set(intent.id, intent);
-  return intent;
+```json
+{
+  "x402disputes": {
+    "merchant": "eip155:8453:0xYourMerchantWallet",
+    "supportEmail": "disputes@yourdomain.com",
+    "paymentDisputeUrl": "https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet"
+  }
 }
 ```
 
-Rules:
-- One intent = one successful response
-- Expired or reused intents are rejected
+What matters:
+- `merchant`: your Base wallet in CAIP-10
+- `supportEmail`: where disputes should be delivered
+- `paymentDisputeUrl`: points to your disputes feed
 
-Rules (recommended)
-- **Bind intent**: store `{method,path,paramsHash,amount,asset,payTo}` with the intent; on retry, recompute and reject mismatches.
-- **No replay**: once an intent is used, reject it (and reject a reused payment proof).
-- **Idempotency**: if intent already fulfilled, return the same response (or `409 Already Fulfilled`).
-- **Auto-release**: escrow releases funds to the merchant after `disputeWindowSeconds` if no dispute is filed.
-- **Verify**: `PAYMENT-SIGNATURE` is client payment proof; validate via facilitator `/verify`.
-
-### 3) Return `402 PAYMENT-REQUIRED` (v2, escrow-enabled)
-
-**All payment requirements live in the header.**
-
-- Header: `PAYMENT-REQUIRED`
-- Value: `base64(paymentRequired)`
-
-```ts
-const intent = createPaymentIntent();
-
-const paymentRequired = {
-  x402Version: 2,
-  accepts: [
-    {
-      scheme: "exact",
-      network: "eip155:8453", // Base mainnet
-      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-      amount: "10000", // atomic units (6 decimals)
-      payTo: ESCROW_ADDRESS,
-      paymentIntentId: intent.id,
-      policy: {
-        mode: "escrow",
-        disputeWindowSeconds: 300,
-        disputeUrl: "https://api.x402disputes.com/disputes/claim?vendor=0x49af4074577ea313c5053cbb7560ac39e34b05e8",
-      },
-    },
-  ],
-};
-
-const paymentRequiredB64 = Buffer.from(JSON.stringify(paymentRequired)).toString("base64");
-res.status(402).setHeader("PAYMENT-REQUIRED", paymentRequiredB64);
-res.end();
-```
-
-### 4) Verify payment on retry
-
-On retry, client sends:
-- `PAYMENT-SIGNATURE`
-- `paymentIntentId`
-
-What this means (client-side):
-- The client (x402 tooling) retries the same request with `PAYMENT-SIGNATURE`.
-- The client must also include the `paymentIntentId` you issued in the original 402 (header or query param).
-
-```ts
-function verifyPayment({ txHash, paymentIntentId }: { txHash: string; paymentIntentId: string }) {
-  const intent = paymentIntents.get(paymentIntentId);
-  if (!intent) throw new Error("Invalid payment intent");
-  if (intent.used) throw new Error("Payment intent already used");
-  if (Date.now() > intent.expiresAt) throw new Error("Payment intent expired");
-
-  // Bind intent: reject if request doesn't match what you issued the intent for.
-  // (You compute these from the retry request.)
-  // if (intent.method !== method || intent.path !== path || intent.payTo !== ESCROW_ADDRESS) throw new Error("Intent mismatch");
-
-  // Call facilitator /verify:
-  // - tx exists
-  // - paid to ESCROW_ADDRESS
-  // - correct asset + amount
-
-  intent.used = true;
-}
-```
-
-### 5) What escrow does (not your code)
-
-- Holds funds
-- Buyer can dispute during `holdSeconds`
-- If buyer wins → refund from escrow
-- If no dispute → release funds after timeout
-
-### Defaults
+### Step 2 — Add a Link header
+In your paid API responses (or in your x402 402 responses), include a link to your dispute feed:
 
 ```txt
-paymentIntent TTL = 300 seconds
-disputeWindowSeconds = 180-600       // APIs (3-10 mins)
-disputeWindowSeconds = 1800          // digital goods (30 mins)
-disputeWindowSeconds = 172800        // services (48 hours)
+Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-dispute"; type="application/json"
 ```
 
-### Timing (merchant-side)
-- **First request**: you return `402 PAYMENT-REQUIRED`
-- **Retry window**: intent TTL (recommended 5 minutes)
-- **Dispute window**: `disputeWindowSeconds` (buyer can dispute before release)
-- **Payout**: after `disputeWindowSeconds` if no dispute is filed
+That’s it. Now anyone can discover your disputes endpoint and you can receive disputes.
+
+### Optional — Add refund credits (for automatic refunds)
+If you want one-click refunds from the dashboard, add refund credits:
+- Top up here: `/topup`
+- Check balance here: `/topup`
+
+### Where to view disputes
+- Check your disputes: `/disputes`\n+- Public registry view: `/registry`
 
 ## File Disputes as a Buyer Agent
 
-If you paid an x402-protected resource, you can file a dispute here.
+If you paid a merchant via x402 and something went wrong, you can file a dispute.
 
-**Connect your LLM via MCP**
-- URL: `https://api.x402disputes.com/mcp`
+Quick reminder:
+- **Filing is free for the filer** (merchant pays the processing fee).
+- We verify the payment **on-chain** (USDC transfer).
 
 ### Timing (typical)
-- **Hold window**: `disputeWindowSeconds` (you must dispute before release)
-- **Resolution**: minutes for most micro disputes; up to 10 business days max (Reg E)
+- Resolution: fast for micro disputes; up to 10 business days max (Reg E).
 
 ### HTTP (default)
 
-File a dispute:
+There are **two ways**:\n- **Manual**: use the web form\n- **Programmatic**: call the HTTP API\n\n**Manual (humans)**\n- Open: `/file-dispute`\n\n**Programmatic (HTTP)**\nSend a JSON body to `POST /v1/disputes`:
 
 ```bash
-curl -sS https://api.x402disputes.com/mcp/invoke \
+curl -sS https://api.x402disputes.com/v1/disputes \
   -H "Content-Type: application/json" \
   -d '{
-    "tool": "x402_file_dispute",
-    "parameters": {
-      "description": "API timed out after payment",
-      "request": { "method": "POST", "url": "https://merchant.com/v1/resource" },
-      "response": { "status": 504, "body": { "error": "timeout" } },
-      "transactionHash": "0x...",
-      "blockchain": "base"
-    }
+    "merchant": "eip155:8453:0xYourMerchantWallet",
+    "merchantApiUrl": "https://api.merchant.com/v1/endpoint-you-called",
+    "txHash": "0xYourBaseTxHash",
+    "description": "Payment succeeded, then the API returned 500.",
+    "evidenceUrls": ["https://example.com/logs/timeout.json"]
   }'
 ```
 
-Check case status:
+Response includes `caseId` and `trackingUrl`.
+\nCheck status:
 
 ```bash
-curl -sS https://api.x402disputes.com/mcp/invoke \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "x402_check_case_status",
-    "parameters": { "caseId": "..." }
-  }'
+curl -sS https://api.x402disputes.com/cases/<caseId>
 ```
 
 ### MCP (for LLMs)
 
-File a dispute (copy/paste prompt):
+If you’re an LLM agent, connect via MCP:\n- MCP server: `https://api.x402disputes.com/mcp`\n\nFile a dispute using the tool `x402_file_dispute`.\n\nCopy/paste prompt:
 
 ```txt
 Use x402Disputes MCP to file an X-402 payment dispute:
@@ -264,7 +109,8 @@ Use x402Disputes MCP to file an X-402 payment dispute:
 - blockchain: base
 ```
 
-Check status (copy/paste prompt):
+Tip: the MCP tool supports Base and Solana. The manual form is Base-only.
+\nCheck status (copy/paste prompt):
 
 ```txt
 Use x402Disputes MCP to check dispute status for caseId: ...

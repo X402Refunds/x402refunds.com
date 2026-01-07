@@ -8,7 +8,7 @@ import { DocsClient } from "./DocsClient";
 
 export const metadata = {
   title: "Docs - x402Disputes",
-  description: "Simple documentation for x402Disputes (pre-transaction vs post-transaction disputes).",
+  description: "Simple documentation for x402Disputes (post-transaction disputes + refunds).",
 };
 
 function splitDocsMarkdown(md: string): {
