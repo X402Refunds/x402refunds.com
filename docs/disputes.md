@@ -27,7 +27,7 @@ This is intentionally simple:
 
 ### What you’re adding (2 copy/pastes)
 1) A `/.well-known/x402.json` file (public, on your domain)
-2) A `Link` header (points to your disputes feed)
+2) (Optional) A `Link` header (for discoverability)
 
 After that, disputes can reach you by email and in your dashboard.
 
@@ -52,7 +52,11 @@ What matters:
 - `paymentDisputeUrl`: points to your disputes feed
 
 ### Step 2 — Add a Link header
-In your paid API responses (or in your x402 402 responses), include a link to your dispute feed:
+This is optional. It helps AI agents automatically discover that your API supports disputes.
+
+If you skip it, disputes still work (buyers can still file; you’ll still receive disputes by email).
+
+If you include it, add this header in your paid API responses (or in your x402 402 responses):
 
 ```txt
 Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-dispute"; type="application/json"
