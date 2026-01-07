@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-07T15:36:36.681Z
+**Auto-generated on**: 2026-01-07T16:10:32.880Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -120,7 +120,7 @@ consulate/
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **merchantEmailActions.ts** - createActionTokensForCase, getToken, markTokenUsed, applyDecisionFromToken
 - **merchantEmailVerification.ts** - getVerification, createOrReuseVerificationToken, confirmVerificationToken
-- **merchantNotifications.ts** - notifyMerchantDisputeFiled
+- **merchantNotifications.ts** - notifyMerchantDisputeFiled, getNotificationStatusForCase, throttleResendForCase
 - **migrations.ts** - runCaseTypeCounts, runDeleteSpecificCases, runNotifyMerchantDisputeFiled
 - **notifications.ts** - sendRuling
 - **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
@@ -397,5 +397,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/7/2026, 7:36:36 AM
+Generated: 1/7/2026, 8:10:32 AM
 Files scanned: 513
