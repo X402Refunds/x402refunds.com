@@ -273,11 +273,92 @@ describe("merchant notifications (unit)", () => {
     expect(text).toContain(
       `https://x402disputes.com/topup?merchant=${encodeURIComponent(merchantCaip10)}&caseId=${encodeURIComponent(
         String(caseId),
-      )}`,
+      )}&email=${encodeURIComponent(supportEmail)}`,
     );
 
     process.env.RESEND_API_KEY = prevResendKey;
     process.env.EMAIL_FROM = prevEmailFrom;
+  });
+
+  it("getNotificationStatusForCase returns requiredUsdc and hasSufficientCredits without needing x402.json fetch", async () => {
+    const now = Date.now();
+    const merchantAddress = "0x00000000000000000000000000000000000000bb";
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "buyer:test-status",
+        defendant: merchantAddress,
+        status: "IN_REVIEW",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "22".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "22".repeat(32),
+        // No merchantOrigin in metadata: forces status helper to avoid fetching x402.json.
+      } as any);
+    });
+
+    // Ensure merchant has enough credits: 0.06 USDC available.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: `eip155:8453:${merchantAddress}`,
+        currency: "USDC",
+        availableBalance: 0.06,
+        lockedBalance: 0,
+        totalDeposited: 0.06,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+    });
+
+    const status = await t.action((api as any).merchantNotifications.getNotificationStatusForCase, { caseId });
+    expect(status.ok).toBe(true);
+    expect(status.requiredUsdc).toBeCloseTo(0.06, 6);
+    expect(status.hasSufficientCredits).toBe(true);
+    expect(status.supportEmail).toBe(null);
+    expect(status.verified).toBe(false);
+  });
+
+  it("throttleResendForCase rate limits repeated calls", async () => {
+    const now = Date.now();
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "buyer:test-throttle",
+        defendant: "0x00000000000000000000000000000000000000cc",
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "test",
+        evidenceIds: [],
+        createdAt: now,
+        metadata: { v1: {} },
+      } as any);
+    });
+
+    const first = await t.mutation((api as any).merchantNotifications.throttleResendForCase, { caseId });
+    expect(first.ok).toBe(true);
+
+    const second = await t.mutation((api as any).merchantNotifications.throttleResendForCase, { caseId });
+    expect(second.ok).toBe(false);
+    expect(second.code).toBe("RATE_LIMITED");
+    expect(typeof second.waitMs).toBe("number");
   });
 });
 

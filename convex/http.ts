@@ -240,6 +240,76 @@ http.route({
   }),
 });
 
+// Merchant notification status (for topup UX): where emails go, verification, required credits.
+http.route({
+  path: "/v1/merchant/notification-status",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const caseId = url.searchParams.get("caseId") || "";
+    if (!caseId) {
+      return jsonError(400, { ok: false, code: "MISSING_CASE_ID", message: "caseId is required" });
+    }
+
+    let res: any = null;
+    try {
+      res = await (ctx.runAction as any)((internal as any).merchantNotifications.getNotificationStatusForCase, {
+        caseId,
+      });
+    } catch (e: any) {
+      return jsonError(400, { ok: false, code: "INVALID_CASE_ID", message: e?.message || "Invalid caseId" });
+    }
+
+    if (!res?.ok) {
+      return jsonError(404, { ok: false, code: res?.reason || "NOT_FOUND" });
+    }
+
+    return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+  }),
+});
+
+// Resend merchant notification email for a case (rate-limited).
+http.route({
+  path: "/v1/merchant/resend",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json().catch(() => ({} as any));
+    const caseId = typeof body?.caseId === "string" ? body.caseId : "";
+    if (!caseId) {
+      return jsonError(400, { ok: false, code: "MISSING_CASE_ID", message: "caseId is required" });
+    }
+
+    // Basic rate limiting so this endpoint can't be spammed.
+    try {
+      const throttle: any = await (ctx.runMutation as any)((internal as any).merchantNotifications.throttleResendForCase, {
+        caseId,
+      });
+      if (!throttle?.ok) {
+        return jsonError(429, {
+          ok: false,
+          code: throttle?.code || "RATE_LIMITED",
+          waitMs: throttle?.waitMs,
+          message: "Please wait before resending",
+        });
+      }
+    } catch (e: any) {
+      return jsonError(400, { ok: false, code: "INVALID_CASE_ID", message: e?.message || "Invalid caseId" });
+    }
+
+    try {
+      await ctx.scheduler.runAfter(
+        0,
+        (internal as any).merchantNotifications.notifyMerchantDisputeFiled,
+        { caseId: caseId as any },
+      );
+    } catch {
+      // Scheduler failures shouldn't block the response.
+    }
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: corsHeaders });
+  }),
+});
+
 // One-click dispute actions from email (approve/refund/reject)
 http.route({
   path: "/v1/merchant/action",

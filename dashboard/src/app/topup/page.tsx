@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,10 @@ export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
+  const didPrefill = useRef(false);
   const [merchantAddress, setMerchantAddress] = useState("");
   const [caseId, setCaseId] = useState<string>("");
+  const [prefilledEmail, setPrefilledEmail] = useState<string>("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
   const amountMicrosBig = useMemo(() => {
@@ -53,20 +55,29 @@ export default function TopupPage() {
   const [estimatedNewBalanceUsdc, setEstimatedNewBalanceUsdc] = useState<number | null>(null);
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [balanceMicros, setBalanceMicros] = useState<string | null>(null);
-  const [requiredMicros, setRequiredMicros] = useState<number | null>(null);
+
+  const [notificationEmail, setNotificationEmail] = useState<string | null>(null);
+  const [notificationVerified, setNotificationVerified] = useState<boolean | null>(null);
+  const [notificationRequiredUsdc, setNotificationRequiredUsdc] = useState<number | null>(null);
+  const [notificationHasSufficientCredits, setNotificationHasSufficientCredits] = useState<boolean | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...
+    if (didPrefill.current) return;
+    didPrefill.current = true;
     try {
       const url = new URL(window.location.href);
       const merchantFromQuery = url.searchParams.get("merchant");
       const caseFromQuery = url.searchParams.get("caseId") || url.searchParams.get("case") || "";
-      if (merchantFromQuery && !merchantAddress.trim()) setMerchantAddress(merchantFromQuery);
-      if (caseFromQuery && !caseId) setCaseId(caseFromQuery);
+      const emailFromQuery = url.searchParams.get("email") || "";
+      if (merchantFromQuery) setMerchantAddress((prev) => (prev.trim() ? prev : merchantFromQuery));
+      if (caseFromQuery) setCaseId((prev) => (prev ? prev : caseFromQuery));
+      if (emailFromQuery) setPrefilledEmail((prev) => (prev ? prev : emailFromQuery));
     } catch {
       // Ignore
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBalance = async (merchant: string) => {
@@ -98,27 +109,30 @@ export default function TopupPage() {
     void fetchBalance(merchantCaip10);
   }, [merchantCaip10]);
 
-  // If we have a dispute case, show how many credits are required for one-click actions.
+  // If we have a dispute case, fetch notification status (email + verification + required credits).
   useEffect(() => {
     if (!caseId) {
-      setRequiredMicros(null);
+      setNotificationEmail(null);
+      setNotificationVerified(null);
+      setNotificationRequiredUsdc(null);
+      setNotificationHasSufficientCredits(null);
       return;
     }
     void (async () => {
       try {
-        const res = await fetch(`${API_BASE}/v1/dispute?id=${encodeURIComponent(caseId)}`, { method: "GET" });
+        const res = await fetch(`${API_BASE}/v1/merchant/notification-status?caseId=${encodeURIComponent(caseId)}`, {
+          method: "GET",
+        });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data?.ok) return;
-        const dispute = data?.dispute;
-        const amountMicrousdc = typeof dispute?.paymentDetails?.amountMicrousdc === "number" ? dispute.paymentDetails.amountMicrousdc : null;
-        const disputeFeeUsdc = typeof dispute?.paymentDetails?.disputeFee === "number" ? dispute.paymentDetails.disputeFee : null;
-        if (typeof amountMicrousdc !== "number" || typeof disputeFeeUsdc !== "number") {
-          setRequiredMicros(null);
-          return;
-        }
-        setRequiredMicros(Math.round(amountMicrousdc + disputeFeeUsdc * 1_000_000));
+        setNotificationEmail(typeof data.supportEmail === "string" ? data.supportEmail : null);
+        setNotificationVerified(typeof data.verified === "boolean" ? data.verified : null);
+        setNotificationRequiredUsdc(typeof data.requiredUsdc === "number" ? data.requiredUsdc : null);
+        setNotificationHasSufficientCredits(
+          typeof data.hasSufficientCredits === "boolean" ? data.hasSufficientCredits : null,
+        );
       } catch {
-        setRequiredMicros(null);
+        // ignore
       }
     })();
   }, [caseId]);
@@ -146,9 +160,9 @@ export default function TopupPage() {
 
   const availableUsdc =
     balanceStatus === "success" && balanceMicros ? Number(balanceMicros) / 1_000_000 : null;
-  const requiredUsdc = typeof requiredMicros === "number" ? requiredMicros / 1_000_000 : null;
+  const requiredUsdc = typeof notificationRequiredUsdc === "number" ? notificationRequiredUsdc : null;
   const hasEnoughForActions =
-    typeof availableUsdc === "number" && typeof requiredUsdc === "number" ? availableUsdc >= requiredUsdc : null;
+    typeof notificationHasSufficientCredits === "boolean" ? notificationHasSufficientCredits : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
@@ -237,6 +251,68 @@ export default function TopupPage() {
                   )}
                 </div>
               )}
+
+              <div className="pt-2 text-xs text-muted-foreground space-y-1">
+                <div>
+                  Notifications sent to:{" "}
+                  <code className="font-mono">
+                    {notificationEmail || prefilledEmail || "from /.well-known/x402.json"}
+                  </code>
+                </div>
+                {prefilledEmail && notificationEmail && prefilledEmail !== notificationEmail && (
+                  <div>
+                    Note: link email differs from x402.json. Using <code className="font-mono">{notificationEmail}</code>.
+                  </div>
+                )}
+                {typeof notificationVerified === "boolean" && (
+                  <div>
+                    Email verification:{" "}
+                    <span className="font-medium text-foreground">{notificationVerified ? "Verified" : "Not verified"}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={resendStatus === "sending"}
+                  onClick={async () => {
+                    setResendStatus("sending");
+                    setResendMessage(null);
+                    try {
+                      const res = await fetch(`${API_BASE}/v1/merchant/resend`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ caseId }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok || !data?.ok) {
+                        const msg =
+                          typeof data?.message === "string"
+                            ? data.message
+                            : typeof data?.code === "string"
+                              ? data.code
+                              : `Failed: ${res.status}`;
+                        throw new Error(msg);
+                      }
+                      setResendStatus("sent");
+                      setResendMessage("Sent. Check inbox/spam.");
+                    } catch (e: unknown) {
+                      setResendStatus("error");
+                      setResendMessage(e instanceof Error ? e.message : String(e));
+                    }
+                  }}
+                >
+                  Resend email
+                </Button>
+                {resendMessage && (
+                  <div className={resendStatus === "error" ? "text-xs text-destructive mt-2" : "text-xs text-muted-foreground mt-2"}>
+                    {resendMessage}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

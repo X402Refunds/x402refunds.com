@@ -5,7 +5,7 @@
  * and it strictly matches the merchant wallet in the dispute, we email supportEmail.
  */
 
-import { internalAction } from "./_generated/server";
+import { internalAction, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { sendEmail } from "./lib/email";
@@ -329,7 +329,7 @@ export const notifyMerchantDisputeFiled = internalAction({
     const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
     const topupUrl = `https://x402disputes.com/topup?merchant=${encodeURIComponent(
       expectedMerchant,
-    )}&caseId=${encodeURIComponent(String(args.caseId))}`;
+    )}&caseId=${encodeURIComponent(String(args.caseId))}&email=${encodeURIComponent(String(supportEmail))}`;
 
     const text = buildMerchantDisputeEmailText({
       caseId: String(args.caseId),
@@ -362,3 +362,151 @@ export const notifyMerchantDisputeFiled = internalAction({
   },
 });
 
+/**
+ * Status helper for the top-up page. Does NOT send email.
+ */
+export const getNotificationStatusForCase = internalAction({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const caseData: any = await ctx.runQuery((internal as any).cases.getCase, { caseId: args.caseId });
+    if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
+
+    const merchantRaw = String(caseData.defendant || "");
+    const v1 = caseData?.metadata?.v1 || {};
+
+    const paymentDetails = caseData?.paymentDetails;
+    const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
+    const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
+
+    const merchantOriginFromV1 = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOriginFromPayment = deriveMerchantOriginFromRequestJson(
+      typeof paymentRequestJson === "string" ? paymentRequestJson : undefined,
+    );
+    const merchantOrigin = merchantOriginFromV1 || merchantOriginFromPayment || "";
+    const overrideUrl = typeof v1?.merchantX402MetadataUrl === "string" ? v1.merchantX402MetadataUrl : undefined;
+
+    const expectedMerchant =
+      paymentChain === "base" || merchantRaw.startsWith("eip155:")
+        ? normalizeMerchantIdForBase(merchantRaw)
+        : null;
+    if (!expectedMerchant) return { ok: false, reason: "UNSUPPORTED_MERCHANT_ID" };
+
+    // Compute required credits (refund + dispute fee).
+    const paymentAmountMicrousdc =
+      typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
+    const disputeFeeMicrousdc =
+      typeof paymentDetails?.disputeFee === "number" && Number.isFinite(paymentDetails.disputeFee) && paymentDetails.disputeFee > 0
+        ? Math.round(paymentDetails.disputeFee * 1_000_000)
+        : 0;
+    const requiredMicrousdc =
+      typeof paymentAmountMicrousdc === "number" ? paymentAmountMicrousdc + disputeFeeMicrousdc : undefined;
+
+    const balance =
+      typeof requiredMicrousdc === "number"
+        ? await ctx.runQuery((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
+        : null;
+    const hasSufficientCredits =
+      typeof requiredMicrousdc === "number" &&
+      balance?.ok === true &&
+      typeof balance.availableMicrousdc === "number" &&
+      balance.availableMicrousdc >= requiredMicrousdc;
+
+    // If we can't determine the merchant origin, return what we can.
+    if (!merchantOrigin && !overrideUrl) {
+      return {
+        ok: true,
+        merchant: expectedMerchant,
+        origin: null,
+        supportEmail: null,
+        verified: false,
+        requiredMicrousdc,
+        requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
+        hasSufficientCredits,
+      };
+    }
+
+    const metadataUrl = overrideUrl || new URL("/.well-known/x402.json", merchantOrigin).toString();
+    const fetched = await fetchX402Json(metadataUrl);
+    if (!fetched.ok) {
+      return {
+        ok: true,
+        merchant: expectedMerchant,
+        origin: merchantOrigin || null,
+        supportEmail: null,
+        verified: false,
+        requiredMicrousdc,
+        requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
+        hasSufficientCredits,
+        reason: fetched.code,
+      };
+    }
+
+    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
+    if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
+      return {
+        ok: true,
+        merchant: expectedMerchant,
+        origin: merchantOrigin || null,
+        supportEmail: null,
+        verified: false,
+        requiredMicrousdc,
+        requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
+        hasSufficientCredits,
+        reason: "MERCHANT_MISMATCH",
+      };
+    }
+
+    const supportEmail = fetched.data?.x402disputes?.supportEmail;
+    const email = supportEmail && isLikelyEmailAddress(String(supportEmail)) ? String(supportEmail) : null;
+    const verified = email
+      ? await ctx.runQuery((internal as any).merchantEmailVerification.getVerification, {
+          merchant: expectedMerchant,
+          origin: merchantOrigin,
+          supportEmail: email,
+        })
+      : null;
+
+    return {
+      ok: true,
+      merchant: expectedMerchant,
+      origin: merchantOrigin || null,
+      supportEmail: email,
+      verified: Boolean(verified),
+      requiredMicrousdc,
+      requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
+      hasSufficientCredits,
+    };
+  },
+});
+
+/**
+ * Simple throttle so resend can't be spammed. Stored on cases.metadata.v1.lastResendAt.
+ */
+export const throttleResendForCase = internalMutation({
+  args: { caseId: v.id("cases"), minIntervalMs: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const minIntervalMs = Math.max(5_000, Math.min(args.minIntervalMs ?? 60_000, 10 * 60_000));
+    const row: any = await ctx.db.get(args.caseId);
+    if (!row) return { ok: false, code: "NOT_FOUND" };
+
+    const now = Date.now();
+    const meta: any = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+    const v1: any = meta.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
+    const last = typeof v1.lastResendAt === "number" ? v1.lastResendAt : 0;
+    const waitMs = last ? Math.max(0, minIntervalMs - (now - last)) : 0;
+    if (waitMs > 0) return { ok: false, code: "RATE_LIMITED", waitMs };
+
+    await ctx.db.patch(args.caseId, {
+      metadata: {
+        ...meta,
+        v1: {
+          ...v1,
+          lastResendAt: now,
+        },
+      },
+    });
+
+    return { ok: true };
+  },
+});
