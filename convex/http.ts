@@ -51,6 +51,8 @@ http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHa
 http.route({ path: "/v1/topup", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/balance", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/merchant/notification-status", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/merchant/resend", method: "OPTIONS", handler: optionsHandler });
 // NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
 // Use static paths with query/body for ID-based operations.
 http.route({ path: "/v1/dispute", method: "OPTIONS", handler: optionsHandler });
