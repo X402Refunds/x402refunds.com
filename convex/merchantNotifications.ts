@@ -90,10 +90,28 @@ async function fetchX402Json(urlString: string): Promise<{ ok: true; data: X402M
   }
 }
 
-function buildMerchantEmailText(params: {
+function buildDisputeSummaryLines(params: {
   caseId: string;
-  buyer: string;
-  merchant: string;
+  reason?: string;
+  amountMicrousdc?: number;
+  txHash?: string;
+  chain?: string;
+}): string[] {
+  const lines: string[] = [];
+  lines.push("Dispute received");
+  lines.push("");
+  lines.push(`Case ID: ${params.caseId}`);
+  if (typeof params.amountMicrousdc === "number") {
+    lines.push(`Amount: ${(params.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
+  }
+  if (params.reason) lines.push(`Reason: ${params.reason}`);
+  if (params.chain) lines.push(`Chain: ${params.chain}`);
+  if (params.txHash) lines.push(`Payment tx: ${params.txHash}`);
+  return lines;
+}
+
+function buildMerchantDisputeEmailText(params: {
+  caseId: string;
   reason?: string;
   amountMicrousdc?: number;
   txHash?: string;
@@ -103,26 +121,31 @@ function buildMerchantEmailText(params: {
     approvePartialUrl: string;
     rejectUrl: string;
   };
+  topup?: {
+    url: string;
+    requiredMicrousdc?: number;
+  };
 }): string {
   const lines: string[] = [];
-  lines.push("Dispute received");
+  lines.push(...buildDisputeSummaryLines(params));
   lines.push("");
-  lines.push(`Case ID: ${params.caseId}`);
-  if (typeof params.amountMicrousdc === "number") lines.push(`Amount: ${(params.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
-  if (params.reason) lines.push(`Reason: ${params.reason}`);
-  if (params.chain) lines.push(`Chain: ${params.chain}`);
-  if (params.txHash) lines.push(`Payment tx: ${params.txHash}`);
-  lines.push("");
+
   if (params.actions) {
     lines.push("Take action:");
     lines.push(`- Approve full refund: ${params.actions.approveFullUrl}`);
     lines.push(`- Approve partial refund (50%): ${params.actions.approvePartialUrl}`);
     lines.push(`- Reject dispute: ${params.actions.rejectUrl}`);
     lines.push("");
+  } else if (params.topup) {
+    lines.push("Next step:");
+    lines.push("Top up refund credits to enable one-click approvals and automated refunds.");
+    if (typeof params.topup.requiredMicrousdc === "number") {
+      lines.push(`Required: ${(params.topup.requiredMicrousdc / 1_000_000).toFixed(6)} USDC`);
+    }
+    lines.push(`Top up: ${params.topup.url}`);
+    lines.push("");
   }
-  lines.push("Track status:");
-  lines.push(`- https://x402disputes.com/cases/${encodeURIComponent(params.caseId)}`);
-  lines.push("");
+
   lines.push("Sent by x402disputes.com");
   return lines.join("\n");
 }
@@ -152,15 +175,15 @@ function buildMerchantVerificationEmailText(params: {
   lines.push(params.confirmUrl);
   lines.push("");
   lines.push("Dispute received:");
-  lines.push(buildMerchantEmailText({
+  lines.push(
+    buildDisputeSummaryLines({
     caseId: params.dispute.caseId,
-    buyer: params.dispute.buyer,
-    merchant: params.merchant,
     reason: params.dispute.reason,
     amountMicrousdc: params.dispute.amountMicrousdc,
     txHash: params.dispute.txHash,
     chain: params.dispute.chain,
-  }));
+  }).join("\n"),
+  );
   lines.push("");
   lines.push("Until you confirm, we will not email future disputes for this origin.");
   return lines.join("\n");
@@ -326,10 +349,12 @@ export const notifyMerchantDisputeFiled = internalAction({
       : null;
 
     const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
-    const text = buildMerchantEmailText({
+    const topupUrl = `https://x402disputes.com/topup?merchant=${encodeURIComponent(
+      expectedMerchant,
+    )}&caseId=${encodeURIComponent(String(args.caseId))}`;
+
+    const text = buildMerchantDisputeEmailText({
       caseId: String(args.caseId),
-      buyer,
-      merchant: expectedMerchant,
       reason,
       amountMicrousdc,
       txHash,
@@ -341,6 +366,7 @@ export const notifyMerchantDisputeFiled = internalAction({
             rejectUrl: `${baseActionUrl}${encodeURIComponent(String(actions.reject))}`,
           }
         : undefined,
+      topup: actions ? undefined : { url: topupUrl, requiredMicrousdc },
     });
 
     const sent = await sendEmail({

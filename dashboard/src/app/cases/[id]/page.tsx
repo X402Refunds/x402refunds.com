@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { anyApi } from "convex/server";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { Clock, FileText, DollarSign, Calendar, Shield, ExternalLink, Sparkles } from "lucide-react"
 import { motion } from "framer-motion";
@@ -86,13 +86,13 @@ export default function PublicCaseTrackingPage() {
   const caseId = params.id as Id<"cases">;
 
   // Fetch case details (public endpoint - no auth required)
-  const caseDetails = useQuery(api.cases.getCaseById, { caseId });
-  const caseEvidence = useQuery(api.evidence.getEvidenceByCaseId, { caseId });
-  const refund = useQuery(api.refunds.getRefundStatus, caseDetails ? { caseId } : "skip");
+  const caseDetails = useQuery(anyApi.cases.getCaseById, { caseId });
+  const caseEvidence = useQuery(anyApi.evidence.getEvidenceByCaseId, { caseId });
+  const refund = useQuery(anyApi.refunds.getRefundStatus, caseDetails ? { caseId } : "skip");
 
   // Fetch payment dispute data if this is a payment dispute case
   const paymentDispute = useQuery(
-    api.paymentDisputes.getPaymentDisputeByCaseId,
+    anyApi.paymentDisputes.getPaymentDisputeByCaseId,
     caseDetails ? { caseId } : "skip"
   );
 

@@ -187,5 +187,97 @@ describe("merchant notifications (unit)", () => {
     expect(tokens[0].supportEmail).toBe("disputes@merchant.com");
     expect(typeof tokens[0].token).toBe("string");
   });
+
+  it("when credits are insufficient, dispute email includes a top-up link and does not include action links", async () => {
+    const prevResendKey = process.env.RESEND_API_KEY;
+    const prevEmailFrom = process.env.EMAIL_FROM;
+    process.env.RESEND_API_KEY = "test_key";
+    process.env.EMAIL_FROM = "disputes@x402disputes.com";
+
+    const merchantAddress = "0x00000000000000000000000000000000000000aa";
+    const merchantCaip10 = `eip155:8453:${merchantAddress}`;
+    const origin = "https://merchant-lowbalance.example";
+    const supportEmail = "disputes@merchant.com";
+
+    let resendPayload: any = null;
+    globalThis.fetch = vi.fn(async (url: any, init?: any) => {
+      const u = String(url);
+      if (u === `${origin}/.well-known/x402.json`) {
+        return new Response(
+          JSON.stringify({
+            x402disputes: { merchant: merchantCaip10, supportEmail },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (u === "https://api.resend.com/emails") {
+        resendPayload = JSON.parse(String(init?.body || "{}"));
+        return new Response(JSON.stringify({ id: "email_123" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${u}`);
+    }) as any;
+
+    const now = Date.now();
+    const caseId = await t.run(async (ctx) => {
+      // Mark channel as verified so we send the dispute email (not the verification email).
+      await ctx.db.insert("merchantEmailVerifications", {
+        merchant: merchantCaip10,
+        origin,
+        supportEmail,
+        verifiedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
+      return await ctx.db.insert("cases", {
+        plaintiff: "0xbuyer",
+        defendant: merchantCaip10,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "api_timeout: test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        metadata: {
+          v1: {
+            merchantOrigin: origin,
+            amountMicrousdc: 10_000,
+            reason: "api_timeout",
+            txHash: "0x" + "11".repeat(32),
+            chain: "base",
+          },
+        },
+      } as any);
+    });
+
+    const res = await t.action(api.merchantNotifications.notifyMerchantDisputeFiled, { caseId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(true);
+
+    expect(resendPayload?.subject).toMatch(/Dispute received/);
+    expect(typeof resendPayload?.text).toBe("string");
+    const text = String(resendPayload.text);
+
+    // No one-click action links when credits are insufficient/unknown.
+    expect(text).not.toContain("Approve full refund:");
+    expect(text).not.toContain("Approve partial refund");
+    expect(text).not.toContain("Reject dispute:");
+
+    // Should include a top-up link prefilled with merchant + caseId.
+    expect(text).toContain("Top up refund credits");
+    expect(text).toContain(
+      `https://x402disputes.com/topup?merchant=${encodeURIComponent(merchantCaip10)}&caseId=${encodeURIComponent(
+        String(caseId),
+      )}`,
+    );
+
+    process.env.RESEND_API_KEY = prevResendKey;
+    process.env.EMAIL_FROM = prevEmailFrom;
+  });
 });
 

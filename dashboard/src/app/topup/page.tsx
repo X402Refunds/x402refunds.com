@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ export default function TopupPage() {
   const { data: walletClient } = useWalletClient();
 
   const [merchantAddress, setMerchantAddress] = useState("");
+  const [caseId, setCaseId] = useState<string>("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
   const amountMicrosBig = useMemo(() => {
@@ -50,6 +51,22 @@ export default function TopupPage() {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [newBalanceMicros, setNewBalanceMicros] = useState<string | null>(null);
+  const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [balanceMicros, setBalanceMicros] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Prefill from email links: /topup?merchant=...&caseId=...
+    try {
+      const url = new URL(window.location.href);
+      const merchantFromQuery = url.searchParams.get("merchant");
+      const caseFromQuery = url.searchParams.get("caseId") || url.searchParams.get("case") || "";
+      if (merchantFromQuery && !merchantAddress.trim()) setMerchantAddress(merchantFromQuery);
+      if (caseFromQuery && !caseId) setCaseId(caseFromQuery);
+    } catch {
+      // Ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
@@ -58,6 +75,12 @@ export default function TopupPage() {
         <p className="text-sm text-muted-foreground">
           Add USDC so approved disputes can be refunded automatically. No account required.
         </p>
+        {caseId && (
+          <p className="text-sm text-muted-foreground">
+            After you top up, we&apos;ll re-send one-click actions for case{" "}
+            <code className="font-mono">{caseId}</code>.
+          </p>
+        )}
       </div>
 
       <Card>
@@ -82,6 +105,45 @@ export default function TopupPage() {
             {merchantAddress.trim() && merchantNormalized.error && (
               <div className="text-xs text-destructive">{merchantNormalized.error}</div>
             )}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!merchantCaip10 || balanceStatus === "loading"}
+                onClick={async () => {
+                  setBalanceStatus("loading");
+                  setBalanceMicros(null);
+                  try {
+                    if (!merchantCaip10) throw new Error("Enter a merchant wallet first");
+                    const res = await fetch(
+                      `${API_BASE}/v1/merchant/balance?merchant=${encodeURIComponent(merchantCaip10)}`,
+                      { method: "GET" },
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data?.ok) {
+                      throw new Error(data?.message || `Failed to fetch balance: ${res.status}`);
+                    }
+                    setBalanceMicros(String(data.availableMicrousdc ?? "0"));
+                    setBalanceStatus("success");
+                  } catch (e: unknown) {
+                    setBalanceStatus("error");
+                    setBalanceMicros(null);
+                    setError(e instanceof Error ? e.message : String(e));
+                  }
+                }}
+              >
+                Check current credits
+              </Button>
+              {balanceStatus === "success" && balanceMicros && (
+                <span className="text-xs text-muted-foreground">
+                  Available:{" "}
+                  <code className="font-mono">
+                    {(Number(balanceMicros) / 1_000_000).toFixed(6)} USDC
+                  </code>
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -141,7 +203,12 @@ export default function TopupPage() {
                 const res = await fetch(`${API_BASE}/v1/topup`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ merchant: merchantCaip10, amountMicrousdc: amountMicros, currency: "USDC" }),
+                  body: JSON.stringify({
+                    merchant: merchantCaip10,
+                    amountMicrousdc: amountMicros,
+                    currency: "USDC",
+                    caseId: caseId || undefined,
+                  }),
                 });
                 if (res.status !== 402) {
                   const text = await res.text();
@@ -165,7 +232,12 @@ export default function TopupPage() {
                     "Content-Type": "application/json",
                     "PAYMENT-SIGNATURE": paymentSignature,
                   },
-                  body: JSON.stringify({ merchant: merchantCaip10, amountMicrousdc: amountMicros, currency: "USDC" }),
+                  body: JSON.stringify({
+                    merchant: merchantCaip10,
+                    amountMicrousdc: amountMicros,
+                    currency: "USDC",
+                    caseId: caseId || undefined,
+                  }),
                 });
 
                 const data = await res2.json().catch(() => ({}));

@@ -1,6 +1,10 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+// NOTE: In the dashboard workspace, TypeScript can hit "excessively deep" instantiation
+// when importing the full generated API type graph. We use require() to keep this file
+// runtime-correct while avoiding type-level recursion during dashboard type-check.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { api, internal } = require("./_generated/api") as any;
 
 const http = httpRouter();
 
@@ -46,6 +50,7 @@ http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHa
 // Wallet-first v1 endpoints (no signup, no API keys)
 http.route({ path: "/v1/topup", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/merchant/balance", method: "OPTIONS", handler: optionsHandler });
 // NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
 // Use static paths with query/body for ID-based operations.
 http.route({ path: "/v1/dispute", method: "OPTIONS", handler: optionsHandler });
@@ -197,9 +202,7 @@ http.route({
       });
     }
 
-    const res = await ctx.runMutation((api as any).merchantEmailVerification.confirmVerificationToken, {
-      token,
-    });
+    const res = await (ctx.runMutation as any)(internal.merchantEmailVerification.confirmVerificationToken, { token });
 
     if (!res?.ok) {
       const reason = typeof res?.reason === "string" ? res.reason : "INVALID_TOKEN";
@@ -237,7 +240,7 @@ http.route({
       });
     }
 
-    const res = await ctx.runMutation((api as any).merchantEmailActions.applyDecisionFromToken, { token });
+    const res = await (ctx.runMutation as any)(internal.merchantEmailActions.applyDecisionFromToken, { token });
     if (!res?.ok) {
       const message = typeof res?.message === "string" ? res.message : "Action failed";
       const code = typeof res?.code === "string" ? res.code : "ERROR";
@@ -1166,6 +1169,28 @@ function jsonError(status: number, payload: unknown) {
   return new Response(JSON.stringify(payload), { status, headers: corsHeaders });
     }
 
+// GET /v1/merchant/balance?merchant=eip155:8453:0x...
+http.route({
+  path: "/v1/merchant/balance",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const merchant = url.searchParams.get("merchant") || "";
+    if (!merchant) {
+      return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
+    }
+
+    const res: any = await (ctx.runQuery as any)((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant });
+    if (!res?.ok) {
+      return jsonError(400, { ok: false, code: "INVALID_MERCHANT", message: "merchant must be CAIP-10 eip155:..." });
+    }
+    return new Response(JSON.stringify({ ok: true, merchant, availableMicrousdc: res.availableMicrousdc ?? 0 }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
 // POST /v1/topup
 // - No PAYMENT-SIGNATURE: returns 402 + PAYMENT-REQUIRED (base64 JSON).
 // - With PAYMENT-SIGNATURE: verify+settle via facilitator, verify on-chain deposit, credit merchant ledger.
@@ -1177,6 +1202,7 @@ http.route({
     const merchant = typeof body?.merchant === "string" ? body.merchant : "";
     const currency = typeof body?.currency === "string" ? body.currency : "USDC";
     const amountMicrousdcRaw = body?.amountMicrousdc;
+    const caseId = typeof body?.caseId === "string" ? body.caseId : "";
 
     if (!merchant || typeof merchant !== "string") {
       return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
@@ -1249,6 +1275,20 @@ http.route({
     const xPayment = request.headers.get("X-PAYMENT");
     const txHashHeader = request.headers.get("X-402-Transaction-Hash");
 
+    async function maybeSendActionsEmailForCase(): Promise<void> {
+      if (!caseId) return;
+      try {
+        const caseData: any = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId });
+        if (!caseData) return;
+        if (String(caseData.defendant || "") !== String(merchant)) return;
+        await (ctx.runAction as any)((internal as any).merchantNotifications.notifyMerchantDisputeFiled, {
+          caseId,
+        });
+      } catch {
+        // Never fail top-up due to notification follow-up errors.
+      }
+    }
+
     // If caller already has an on-chain tx hash (v1 hash-forwarding flow), skip facilitator.
     if (txHashHeader) {
       const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
@@ -1272,6 +1312,7 @@ http.route({
   });
       if (!credited?.ok) return jsonError(400, credited);
 
+      await maybeSendActionsEmailForCase();
       return new Response(
         JSON.stringify({
           ok: true,
@@ -1352,6 +1393,7 @@ http.route({
       return jsonError(400, credited);
     }
 
+      await maybeSendActionsEmailForCase();
       return new Response(JSON.stringify({
       ok: true,
       merchant,

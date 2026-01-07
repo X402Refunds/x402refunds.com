@@ -1,7 +1,6 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { parseCaip10Eip155 } from "./lib/caip10";
 
 function normalizeOrigin(origin: string): string | null {
   try {
@@ -208,7 +207,7 @@ export const applyDecisionFromToken = internalMutation({
 
     let refundScheduled = false;
     if (finalVerdict === "CONSUMER_WINS" || finalVerdict === "PARTIAL_REFUND") {
-      await ctx.scheduler.runAfter(0, (internal as any).refunds.executeAutomatedRefund, {
+      await (ctx.scheduler.runAfter as any)(0, (internal as any).refunds.executeAutomatedRefund, {
         caseId: rec.caseId,
         force: true,
       });

@@ -71,31 +71,27 @@ export function Navigation({ currentPage }: NavigationProps) {
               >
                 How it works
               </button>
-              <button
-                onClick={() => handleAnchor("#enable")}
-                className={cn(
-                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  currentPage === "home"
-                    ? "text-slate-900 hover:bg-slate-100"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                )}
+              <Button
+                onClick={() => handleNavigation("/topup")}
+                variant="outline"
+                size="sm"
+                className="ml-2"
               >
-                Enable disputes
-              </button>
+                Top up
+              </Button>
             </div>
           </div>
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* Top up - Desktop */}
-              <Button
-              onClick={() => window.location.href = "/topup"}
+            {/* Primary CTA - Desktop */}
+            <Button
+              onClick={() => handleAnchor("#enable")}
               className="hidden md:flex"
-              variant="outline"
-                size="sm"
-              >
-              Top up
-              </Button>
+              size="sm"
+            >
+              Enable disputes
+            </Button>
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
