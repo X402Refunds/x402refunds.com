@@ -15,10 +15,9 @@ interface NavigationProps {
   currentPage?: 'home' | 'pricing' | 'about' | 'registry'
 }
 
-export function Navigation({ currentPage: _currentPage }: NavigationProps) {
+export function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  // Intentionally unused for now (kept for API compatibility / potential future highlighting)
-  void _currentPage
+  const isHome = currentPage === "home"
 
   const handleNavigation = (href: string, external = false) => {
     setMobileMenuOpen(false)
@@ -61,38 +60,53 @@ export function Navigation({ currentPage: _currentPage }: NavigationProps) {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2">
-              <Button
-                size="sm"
-                onClick={() => handleAnchor("#enable")}
-              >
-                Enable disputes (no signup required)
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
+              <button
                 onClick={() => handleNavigation("/topup")}
+                className={[
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isHome
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                ].join(" ")}
               >
                 Check Balance
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
+              </button>
+              <button
                 onClick={() => handleNavigation("/disputes")}
+                className={[
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isHome
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                ].join(" ")}
               >
                 Check Your Disputes
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
+              </button>
+              <button
                 onClick={() => handleNavigation("/file-dispute")}
+                className={[
+                  "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  isHome
+                    ? "text-slate-900 hover:bg-slate-100"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                ].join(" ")}
               >
                 File a Dispute
-              </Button>
+              </button>
             </div>
           </div>
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
+            {/* Primary CTA - Desktop */}
+            <Button
+              onClick={() => handleAnchor("#enable")}
+              className="hidden md:flex"
+              size="sm"
+            >
+              Enable disputes (no signup required)
+            </Button>
+
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
