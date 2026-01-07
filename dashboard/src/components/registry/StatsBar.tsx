@@ -65,8 +65,8 @@ export function StatsBar() {
             icon={TrendingUp}
             label="Total Disputes"
             value={displayStats.totalDisputes.toLocaleString()}
-            iconColor="text-emerald-600"
-            bgColor="bg-emerald-50"
+            iconColor="text-blue-600"
+            bgColor="bg-blue-50"
           />
           <StatCard
             icon={Clock}

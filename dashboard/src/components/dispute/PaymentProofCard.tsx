@@ -274,7 +274,7 @@ export function PaymentProofCard({
             {custodial.isOnChain !== undefined && (
               <div className="text-sm text-slate-600">
                 {custodial.isOnChain ? (
-                  <span className="text-emerald-600">✓ On-chain transaction</span>
+                  <span className="text-blue-600">✓ On-chain transaction</span>
                 ) : (
                   <span className="text-amber-600">⊙ Off-chain (internal transfer)</span>
                 )}

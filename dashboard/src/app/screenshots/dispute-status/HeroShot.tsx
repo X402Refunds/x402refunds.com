@@ -21,7 +21,7 @@ export function DisputeStatusHeroShot({ variant }: { variant: "desktop" | "mobil
             <p className="text-slate-600 mt-1">Confirm the refund was sent and track progress.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200">
               Executed
             </Badge>
             <Badge variant="secondary" className="border border-slate-200">
@@ -38,7 +38,7 @@ export function DisputeStatusHeroShot({ variant }: { variant: "desktop" | "mobil
             <CardContent className="pt-0 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-slate-600">Status</div>
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200">
                   executed
                 </Badge>
               </div>

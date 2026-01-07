@@ -138,7 +138,7 @@ export default function PublicCaseTrackingPage() {
 
   const statusColors: Record<string, string> = {
     "FILED": "bg-blue-50 text-blue-700 border-blue-200",
-    "DECIDED": "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "DECIDED": "bg-blue-50 text-blue-700 border-blue-200",
     "DISMISSED": "bg-slate-50 text-slate-700 border-slate-200",
     "APPEALED": "bg-blue-50 text-blue-700 border-blue-200",
     "AUTORULED": "bg-purple-50 text-purple-700 border-purple-200",
@@ -258,15 +258,15 @@ export default function PublicCaseTrackingPage() {
               {/* Dashboard Link - for merchants to resolve disputes */}
               {paymentDispute && !["DECIDED", "CLOSED"].includes(caseDetails.status) && (
                 <div className="mt-6 pt-6 border-t">
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-emerald-900 mb-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-900 mb-2">
                       Are you the merchant?
                     </p>
-                    <p className="text-sm text-emerald-700 mb-3">
+                    <p className="text-sm text-blue-700 mb-3">
                       Review AI analysis and resolve this dispute in your dashboard.
                     </p>
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => window.location.href = `/dashboard/disputes/${caseId}`}
                     >
                       Go to Dashboard to Resolve
@@ -344,7 +344,7 @@ export default function PublicCaseTrackingPage() {
                     <Badge className={
                       caseDetails.paymentDetails.paymentType === "non_custodial" ? "bg-purple-100 text-purple-700 border-purple-300" :
                       caseDetails.paymentDetails.paymentType === "custodial" ? "bg-blue-100 text-blue-700 border-blue-300" :
-                      caseDetails.paymentDetails.paymentType === "traditional" ? "bg-green-100 text-green-700 border-green-300" :
+                      caseDetails.paymentDetails.paymentType === "traditional" ? "bg-blue-100 text-blue-700 border-blue-300" :
                       "bg-slate-100 text-slate-700 border-slate-300"
                     }>
                       {caseDetails.paymentDetails.paymentType === "non_custodial" ? "🔷 Crypto (Non-Custodial)" :
@@ -453,28 +453,28 @@ export default function PublicCaseTrackingPage() {
 
                 {/* Traditional Payment Details */}
                 {caseDetails.paymentDetails.traditional && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
-                    <p className="text-sm font-semibold text-green-900">Traditional Payment</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-semibold text-blue-900">Traditional Payment</p>
                     <div className="grid gap-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-green-700">Method:</span>
+                        <span className="text-blue-700">Method:</span>
                         <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.paymentMethod}</span>
                       </div>
                       {caseDetails.paymentDetails.traditional.processor && (
                         <div className="flex justify-between">
-                          <span className="text-green-700">Processor:</span>
+                          <span className="text-blue-700">Processor:</span>
                           <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.processor}</span>
                         </div>
                       )}
                       {caseDetails.paymentDetails.traditional.processorTransactionId && (
                         <div>
-                          <span className="text-green-700 text-xs">Transaction ID: </span>
+                          <span className="text-blue-700 text-xs">Transaction ID: </span>
                           <span className="font-mono text-xs">{caseDetails.paymentDetails.traditional.processorTransactionId}</span>
                         </div>
                       )}
                       {caseDetails.paymentDetails.traditional.cardBrand && (
                         <div className="flex justify-between">
-                          <span className="text-green-700">Card:</span>
+                          <span className="text-blue-700">Card:</span>
                           <span className="font-semibold capitalize">{caseDetails.paymentDetails.traditional.cardBrand}</span>
                           {caseDetails.paymentDetails.traditional.lastFourDigits && (
                             <span className="text-xs">•••• {caseDetails.paymentDetails.traditional.lastFourDigits}</span>
@@ -540,8 +540,8 @@ export default function PublicCaseTrackingPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                    <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                    <div className="h-3 w-3 rounded-full bg-blue-600" />
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900">Dispute Received</p>
@@ -553,8 +553,8 @@ export default function PublicCaseTrackingPage() {
                   <>
                     <Separator />
                     <div className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <div className="h-3 w-3 rounded-full bg-blue-600" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">Under Review</p>
@@ -568,8 +568,8 @@ export default function PublicCaseTrackingPage() {
                   <>
                     <Separator />
                     <div className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <div className="h-3 w-3 rounded-full bg-blue-600" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">Decision Reached</p>
@@ -585,8 +585,8 @@ export default function PublicCaseTrackingPage() {
                   <>
                     <Separator />
                     <div className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                        <div className="h-3 w-3 rounded-full bg-emerald-600" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <div className="h-3 w-3 rounded-full bg-blue-600" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">

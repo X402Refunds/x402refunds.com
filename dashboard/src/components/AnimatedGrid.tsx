@@ -4,7 +4,7 @@ interface AnimatedGridProps {
   color?: string
 }
 
-export function AnimatedGrid({ color = '#10b981' }: AnimatedGridProps) {
+export function AnimatedGrid({ color = '#2563eb' }: AnimatedGridProps) {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Subtle animated grid pattern */}
@@ -21,19 +21,19 @@ export function AnimatedGrid({ color = '#10b981' }: AnimatedGridProps) {
       />
       
       {/* Floating orbs with gentle pulse */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-green-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
       
       {/* Center glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px]">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
       </div>
 
       {/* Subtle scan line effect for tech feel */}
       <div 
         className="absolute inset-0 opacity-[0.02]"
         style={{
-          background: 'linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.1) 50%, transparent 100%)',
+          background: 'linear-gradient(180deg, transparent 0%, rgba(37, 99, 235, 0.1) 50%, transparent 100%)',
           animation: 'scan 8s linear infinite'
         }}
       />

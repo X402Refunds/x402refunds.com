@@ -164,11 +164,11 @@ export default function TestDemoAgentPage() {
               </p>
             </div>
 
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950 rounded-lg">
-              <p className="font-medium text-emerald-900 dark:text-emerald-100">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <p className="font-medium text-blue-900 dark:text-blue-100">
                 💡 Why This is Better:
               </p>
-              <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-1">
+              <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
                 Traditional crypto transactions require two tokens (USDC + ETH for gas).
                 With X-402 signatures, you only need USDC. The facilitator pays gas fees
                 and handles the blockchain complexity.

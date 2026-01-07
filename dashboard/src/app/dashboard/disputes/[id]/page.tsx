@@ -343,7 +343,7 @@ export default function DisputeDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.18 }}
           >
-            <Card className="border-l-4 border-l-emerald-600">
+            <Card className="border-l-4 border-l-blue-600">
               <CardHeader>
                 <CardTitle>Outcome</CardTitle>
               </CardHeader>

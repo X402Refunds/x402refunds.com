@@ -22,7 +22,7 @@ export function InboxEmptyHeroShot({ variant }: { variant: "desktop" | "mobile" 
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200">
               All caught up
             </Badge>
             <Button variant="outline" className="border-slate-300">
@@ -35,8 +35,8 @@ export function InboxEmptyHeroShot({ variant }: { variant: "desktop" | "mobile" 
           <Card className="border border-slate-200">
             <CardContent className="py-14">
               <div className="flex items-start gap-4">
-                <div className="h-10 w-10 shrink-0 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                <div className="h-10 w-10 shrink-0 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-lg font-semibold text-slate-950">You’re all caught up.</div>

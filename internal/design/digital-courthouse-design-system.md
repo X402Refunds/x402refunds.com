@@ -44,47 +44,46 @@ slate-50:  #f8fafc  /* Page backgrounds */
 
 ---
 
-#### **Emerald Authority** (Primary Brand & Actions)
+#### **Blue Authority** (Primary Brand & Actions)
 ```css
-emerald-950: #022c22  /* Deep emerald for gradients */
-emerald-900: #064e3b  /* */
-emerald-600: #059669  /* */
-emerald-500: #10b981  /* PRIMARY BRAND - Actions, accents, trust */
-emerald-400: #34d399  /* Hover states, highlights */
-emerald-300: #6ee7b7  /* Light accents */
-emerald-200: #a7f3d0  /* Badge borders */
-emerald-100: #d1fae5  /* Subtle backgrounds */
-emerald-50:  #ecfdf5  /* Success backgrounds */
+blue-950: #172554    /* Deep blue for gradients */
+blue-900: #1e3a8a    /* */
+blue-700: #1d4ed8    /* */
+blue-600: #2563eb    /* PRIMARY BRAND - Actions, accents, trust */
+blue-500: #3b82f6    /* Hover states, highlights */
+blue-300: #93c5fd    /* Light accents */
+blue-200: #bfdbfe    /* Badge borders */
+blue-100: #dbeafe    /* Subtle backgrounds */
+blue-50:  #eff6ff    /* Info/success backgrounds */
 ```
 
 **Usage:**
-- **emerald-500** (#10b981): Primary brand color - buttons, links, key actions
-- **emerald-400**: Hover states, active elements
-- **emerald-50**: Success states, positive badges
+- **blue-600** (#2563eb): Primary brand color - buttons, links, key actions
+- **blue-500**: Hover states, active elements
+- **blue-50**: Positive/info badges and subtle backgrounds
 
-**Why Emerald?**
-- Professional and trustworthy (government/legal associations)
-- Stands out in enterprise B2B space (differentiates from typical blue)
-- Conveys "verified", "approved", "operational" states
+**Why Blue?**
+- Professional and trustworthy (security/infra associations)
+- Matches the landing page and creates a consistent brand across the site
 - Works beautifully with slate for high contrast
 
 ---
 
-#### **Supporting Green** (Complementary Accents)
+#### **Supporting Indigo** (Complementary Accents)
 ```css
-green-600: #16a34a   /* Complementary to emerald */
-green-500: #22c55e   /* Secondary brand accents */
+indigo-600: #4f46e5   /* Complementary to blue */
+indigo-500: #6366f1   /* Secondary accents */
 ```
 
 ---
 
 ### Semantic Colors: Status System
 
-#### **Success / Approved** (Emerald)
+#### **Success / Approved** (Blue)
 ```css
-emerald-600: #059669  /* Success actions */
-emerald-200: #a7f3d0  /* Badge borders */
-emerald-50:  #ecfdf5  /* Success backgrounds */
+blue-600: #2563eb   /* Success actions */
+blue-200: #bfdbfe   /* Badge borders */
+blue-50:  #eff6ff   /* Success backgrounds */
 ```
 
 #### **Warning / Pending** (Amber)
@@ -173,8 +172,8 @@ font-normal:    400  /* Body text */
 - Labels: `text-slate-700 font-medium`
 
 **Dark Backgrounds:**
-- Headings: `text-white font-bold` or `text-emerald-300`
-- Body: `text-slate-100` or `text-emerald-100`
+- Headings: `text-white font-bold` or `text-blue-300`
+- Body: `text-slate-100` or `text-blue-100`
 - Labels: `text-slate-200`
 
 ---
@@ -183,12 +182,12 @@ font-normal:    400  /* Body text */
 
 ### Buttons
 
-#### **Primary Action** (Emerald - Main CTAs)
+#### **Primary Action** (Blue - Main CTAs)
 ```tsx
-<Button className="bg-gradient-to-r from-emerald-500 to-green-600 
-                   text-white hover:from-emerald-400 hover:to-green-500 
+<Button className="bg-gradient-to-r from-blue-600 to-blue-700 
+                   text-white hover:from-blue-500 hover:to-blue-600 
                    px-8 py-3 rounded-lg font-semibold 
-                   shadow-lg shadow-emerald-500/50 hover:shadow-xl 
+                   shadow-lg shadow-blue-600/40 hover:shadow-xl 
                    transition-all duration-200">
   Get Started Free
 </Button>
@@ -205,8 +204,8 @@ font-normal:    400  /* Body text */
 
 #### **Outline** (Neutral Action)
 ```tsx
-<Button className="border-2 border-emerald-500/50 text-emerald-300 
-                   hover:bg-emerald-500/10 hover:border-emerald-400 
+<Button className="border-2 border-blue-500/50 text-blue-300 
+                   hover:bg-blue-500/10 hover:border-blue-400 
                    px-8 py-3 rounded-lg font-semibold backdrop-blur-sm 
                    transition-all duration-200">
   Learn More
@@ -228,7 +227,7 @@ font-normal:    400  /* Body text */
 #### **Status Badges**
 ```tsx
 // Success / Operational
-<Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 
+<Badge className="bg-blue-50 text-blue-700 border border-blue-200 
                  font-semibold">
   ● Operational
 </Badge>
@@ -254,8 +253,8 @@ font-normal:    400  /* Body text */
 
 #### **Feature Badges** (On dark backgrounds)
 ```tsx
-<Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 
-                 backdrop-blur-sm shadow-lg shadow-emerald-500/20">
+<Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 
+                 backdrop-blur-sm shadow-lg shadow-blue-500/20">
   Production-Ready
 </Badge>
 ```
@@ -267,7 +266,7 @@ font-normal:    400  /* Body text */
 #### **Standard Card** (Light theme)
 ```tsx
 <Card className="bg-white border-2 border-slate-200 
-               hover:border-emerald-300 hover:shadow-xl 
+               hover:border-blue-300 hover:shadow-xl 
                shadow-md transition-all duration-300">
   <CardHeader>
     <CardTitle className="text-2xl font-bold text-slate-900">
@@ -296,13 +295,13 @@ font-normal:    400  /* Body text */
 
 #### **Feature Card with Icon**
 ```tsx
-<Card className="border-2 border-slate-200 hover:border-emerald-300 
+<Card className="border-2 border-slate-200 hover:border-blue-300 
                shadow-md hover:shadow-xl transition-all duration-300 group">
   <CardHeader>
-    <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 
+    <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 
                    rounded-xl flex items-center justify-center mb-4 
                    group-hover:scale-110 transition-transform">
-      <Icon className="h-7 w-7 text-emerald-600" />
+      <Icon className="h-7 w-7 text-blue-600" />
     </div>
     <CardTitle className="text-2xl text-slate-900">Title</CardTitle>
   </CardHeader>
@@ -320,24 +319,24 @@ font-normal:    400  /* Body text */
 ```tsx
 <section className="relative overflow-hidden min-h-[calc(100vh-80px)] 
                    flex items-center py-20 sm:py-32 
-                   bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950">
-  <AnimatedGrid color="#10b981" />
+                   bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+  <AnimatedGrid color="#2563eb" />
   
   <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 w-full text-center relative z-10">
-    <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 
-                     backdrop-blur-sm shadow-lg shadow-emerald-500/20">
+    <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 
+                     backdrop-blur-sm shadow-lg shadow-blue-500/20">
       Production-Ready
     </Badge>
     
     <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
-      <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 
+      <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 
                      bg-clip-text text-transparent 
-                     drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                     drop-shadow-[0_0_30px_rgba(37,99,235,0.5)]">
         Your Headline
       </span>
     </h1>
     
-    <p className="text-xl sm:text-2xl text-emerald-100 max-w-3xl mx-auto">
+    <p className="text-xl sm:text-2xl text-blue-100 max-w-3xl mx-auto">
       Your subheadline
     </p>
   </div>
@@ -349,7 +348,7 @@ font-normal:    400  /* Body text */
 <section className="py-24 bg-white">
   <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
     <div className="text-center mb-16">
-      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 mb-4">
+      <Badge className="bg-blue-100 text-blue-700 border-blue-200 mb-4">
         FEATURES
       </Badge>
       <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
@@ -371,36 +370,36 @@ font-normal:    400  /* Body text */
 
 #### **Main Navigation**
 ```tsx
-<nav className="border-b border-emerald-200 
-                bg-gradient-to-r from-white via-emerald-50/30 to-white 
+<nav className="border-b border-blue-200 
+                bg-gradient-to-r from-white via-blue-50/30 to-white 
                 backdrop-blur-sm sticky top-0 z-50 shadow-lg relative">
-  {/* Emerald accent bar */}
+  {/* Blue accent bar */}
   <div className="absolute top-0 left-0 right-0 h-1 
-                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+                  bg-gradient-to-r from-blue-500/50 via-blue-500 to-blue-500/50" />
   
   {/* Navigation content */}
 </nav>
 ```
 
 **Pattern:**
-- Subtle emerald gradient background (white → emerald-50/30 → white)
-- Emerald border (border-emerald-200) instead of slate
-- Emerald accent bar at top (1px gradient line)
+- Subtle blue gradient background (white → blue-50/30 → white)
+- Blue border (border-blue-200) instead of slate
+- Blue accent bar at top (1px gradient line)
 - Enhanced shadow for depth (shadow-lg)
 - Backdrop blur for modern glass effect
 
 #### **Navigation Dropdown Menu**
 ```tsx
 <div className="w-[600px] p-6 
-                bg-gradient-to-br from-white to-emerald-50/20 
-                border-2 border-emerald-200 shadow-2xl rounded-lg">
+                bg-gradient-to-br from-white to-blue-50/20 
+                border-2 border-blue-200 shadow-2xl rounded-lg">
   {/* Menu content */}
 </div>
 ```
 
 **Pattern:**
-- Gradient background (white → emerald-50/20)
-- Emerald border (border-emerald-200)
+- Gradient background (white → blue-50/20)
+- Blue border (border-blue-200)
 - Strong shadow for elevation (shadow-2xl)
 
 ---
@@ -409,27 +408,27 @@ font-normal:    400  /* Body text */
 
 #### **Main Footer**
 ```tsx
-<footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 
+<footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 
                   text-slate-400 py-12 sm:py-16 
-                  border-t-4 border-emerald-600/30 relative">
-  {/* Emerald accent bar */}
+                  border-t-4 border-blue-600/30 relative">
+  {/* Blue accent bar */}
   <div className="absolute top-0 left-0 right-0 h-1 
-                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+                  bg-gradient-to-r from-blue-500/50 via-blue-500 to-blue-500/50" />
   
   {/* Footer content */}
 </footer>
 ```
 
 **Pattern:**
-- Dark gradient background (slate-900 → slate-900 → emerald-950)
-- Emerald accent border at top (border-t-4 border-emerald-600/30)
-- Emerald accent bar (1px gradient line)
+- Dark gradient background (slate-900 → slate-900 → blue-950)
+- Blue accent border at top (border-t-4 border-blue-600/30)
+- Blue accent bar (1px gradient line)
 - Text color: slate-400 for readability
 
 **Why this works:**
-- Creates visual continuity with emerald brand throughout the page
+- Creates visual continuity with blue brand throughout the page
 - Dark footer provides strong contrast to white content areas
-- Emerald gradient adds warmth and brand presence
+- Blue gradient adds warmth and brand presence
 - Accent bars create cohesive design language
 
 ---
@@ -438,26 +437,26 @@ font-normal:    400  /* Body text */
 
 #### **Government/Dashboard Header**
 ```tsx
-<header className="bg-gradient-to-r from-white via-emerald-50/20 to-white 
-                  border-b border-emerald-200 px-4 sm:px-6 py-3 relative shadow-sm">
-  {/* Emerald accent bar */}
+<header className="bg-gradient-to-r from-white via-blue-50/20 to-white 
+                  border-b border-blue-200 px-4 sm:px-6 py-3 relative shadow-sm">
+  {/* Blue accent bar */}
   <div className="absolute top-0 left-0 right-0 h-1 
-                  bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+                  bg-gradient-to-r from-blue-500/50 via-blue-500 to-blue-500/50" />
   
   {/* Header content */}
 </header>
 ```
 
 **Pattern:**
-- Subtle emerald gradient (white → emerald-50/20 → white)
-- Emerald border (border-emerald-200)
-- Emerald accent bar (1px gradient)
+- Subtle blue gradient (white → blue-50/20 → white)
+- Blue border (border-blue-200)
+- Blue accent bar (1px gradient)
 - Light shadow for separation (shadow-sm)
 
 **Design Rationale:**
 - Matches public navigation header for consistency
 - Subtle enough for dashboard context (less prominent than public nav)
-- Emerald accents maintain brand presence
+- Blue accents maintain brand presence
 - Professional appearance suitable for internal tools
 
 ---
@@ -505,14 +504,14 @@ py-24:  96px  /* Large section spacing */
 
 ```tsx
 // For dark hero sections
-<AnimatedGrid color="#10b981" />
+<AnimatedGrid color="#2563eb" />
 ```
 
 ### Gradient Backgrounds
 
 #### **Dark Hero**
 ```css
-bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950
+bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950
 ```
 
 #### **Light Sections**
@@ -535,7 +534,7 @@ shadow-md hover:shadow-xl
 shadow-lg hover:shadow-2xl
 
 /* Glowing elements */
-shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60
+shadow-lg shadow-blue-600/40 hover:shadow-xl hover:shadow-blue-600/50
 ```
 
 ---
@@ -544,7 +543,7 @@ shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60
 
 ### Landing Page Structure
 
-1. **Hero Section** - Dark gradient with AnimatedGrid, emerald accents
+1. **Hero Section** - Dark gradient with AnimatedGrid, blue accents
 2. **Problem/Solution** - Light background, clear problem/solution split
 3. **How It Works** - Light background with numbered steps
 4. **Features** - Dark background with premium feel
@@ -556,7 +555,7 @@ shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60
 1. **Header** - Light, professional, jurisdiction badge
 2. **Sidebar** - Light background, clear navigation
 3. **Main Content** - Metric cards, data tables
-4. **Cards** - White with emerald hover accents
+4. **Cards** - White with blue hover accents
 
 ---
 
@@ -564,7 +563,7 @@ shadow-lg shadow-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/60
 
 ### DO ✅
 
-- Use emerald-500 (#10b981) as primary brand color
+- Use blue-600 (#2563eb) as primary brand color
 - Maintain dark hero sections with AnimatedGrid
 - Use slate for professional neutrality
 - Apply generous whitespace (8-point grid)
@@ -617,10 +616,10 @@ className="py-12 sm:py-20 lg:py-32"
 All combinations meet WCAG AA standards (AAA preferred):
 
 ```
-✅ emerald-500 on white:  4.8:1 (AA)
+✅ blue-600 on white:     4.8:1 (AA)
 ✅ slate-900 on white:   17.5:1 (AAA)
 ✅ slate-600 on white:    8.2:1 (AAA)
-✅ white on emerald-500:  4.8:1 (AA)
+✅ white on blue-600:     4.8:1 (AA)
 ✅ white on slate-900:   17.5:1 (AAA)
 ```
 
@@ -629,7 +628,7 @@ All combinations meet WCAG AA standards (AAA preferred):
 ```css
 focus:outline-none 
 focus:ring-2 
-focus:ring-emerald-500 
+focus:ring-blue-500 
 focus:ring-offset-2
 ```
 
@@ -641,30 +640,30 @@ focus:ring-offset-2
 
 ```css
 /* Primary Brand */
-bg-emerald-500 text-white              /* Primary button */
-text-emerald-500                       /* Links, accents */
+bg-blue-600 text-white                 /* Primary button */
+text-blue-600                          /* Links, accents */
 
 /* Backgrounds */
 bg-slate-50                            /* Page background (light) */
 bg-white                               /* Card background */
 bg-slate-900                           /* Dark sections */
-bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950  /* Hero */
+bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950     /* Hero */
 
 /* Text */
 text-slate-900                         /* Headings (light bg) */
 text-slate-600                         /* Body (light bg) */
 text-white                             /* Text (dark bg) */
-text-emerald-100                       /* Text (dark bg, accented) */
+text-blue-100                          /* Text (dark bg, accented) */
 
 /* Borders */
 border-slate-200                       /* Default borders */
-border-emerald-200                     /* Accented borders (headers, footers) */
-hover:border-emerald-300               /* Hover states */
+border-blue-200                        /* Accented borders (headers, footers) */
+hover:border-blue-300                  /* Hover states */
 
 /* Header/Footer Patterns */
-bg-gradient-to-r from-white via-emerald-50/30 to-white  /* Navigation header */
-bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950  /* Footer */
-border-t-4 border-emerald-600/30                         /* Footer accent border */
+bg-gradient-to-r from-white via-blue-50/30 to-white             /* Navigation header */
+bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950      /* Footer */
+border-t-4 border-blue-600/30                                /* Footer accent border */
 ```
 
 ---
@@ -677,18 +676,15 @@ border-t-4 border-emerald-600/30                         /* Footer accent border
 
 ### Changelog
 
-- **v2.0.1** (Nov 2025): Enhanced header/footer with emerald branding
-  - Navigation header: Added emerald gradient background (white → emerald-50/30 → white)
-  - Navigation header: Emerald borders and accent bars for brand consistency
-  - Footer: Added emerald gradient (slate-900 → emerald-950) for visual harmony
-  - Footer: Emerald accent border and accent bar
-  - Dashboard header: Enhanced with emerald gradient and accent bar
+- **v2.0.2** (Jan 2026): Switched primary brand color to blue
+  - Updated shadcn `--primary` to blue for consistent branding across pages
+  - Replaced emerald/green accents in UI components with blue equivalents
+  - Updated header/footer accents, glows, and status styling to match landing page
   - Improved visual continuity across all pages
   - Maintains professional appearance while strengthening brand presence
 
 - **v2.0.0** (Nov 2025): Digital Courthouse redesign
-  - Emerald (#10b981) as primary brand color
-  - Professional slate + emerald color system
+  - Professional slate + color system
   - AnimatedGrid background component
   - Removed playful elements (Matrix rain)
   - Enterprise-grade polish

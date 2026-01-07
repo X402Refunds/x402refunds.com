@@ -34,7 +34,7 @@ export function SearchBar({ onSearchChange, onFilterChange, currentFilter }: Sea
           placeholder="Search case ID, wallet address, or merchant..."
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10 pr-10 h-12 text-base border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
+          className="pl-10 pr-10 h-12 text-base border-slate-300 focus:border-blue-500 focus:ring-blue-500"
         />
         {searchValue && (
           <button
@@ -49,13 +49,13 @@ export function SearchBar({ onSearchChange, onFilterChange, currentFilter }: Sea
       {/* Filter Tabs */}
       <Tabs value={currentFilter} onValueChange={(v) => onFilterChange(v as "all" | "pending" | "resolved")}>
         <TabsList className="w-full grid grid-cols-3 lg:w-auto">
-          <TabsTrigger value="all" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+          <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             All Disputes
           </TabsTrigger>
           <TabsTrigger value="pending" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
             Pending
           </TabsTrigger>
-          <TabsTrigger value="resolved" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+          <TabsTrigger value="resolved" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             Resolved
           </TabsTrigger>
         </TabsList>

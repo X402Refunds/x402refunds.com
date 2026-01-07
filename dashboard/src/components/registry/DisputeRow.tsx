@@ -52,9 +52,9 @@ export function DisputeRow({
     switch (status) {
       case 'FILED': return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'ANALYZED': return 'bg-purple-100 text-purple-800 border-purple-200'
-      case 'AUTORULED': return 'bg-green-100 text-green-800 border-green-200'
+      case 'AUTORULED': return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'IN_REVIEW': return 'bg-amber-100 text-amber-800 border-amber-200'
-      case 'DECIDED': return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      case 'DECIDED': return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'CLOSED': return 'bg-slate-100 text-slate-800 border-slate-200'
       default: return 'bg-slate-100 text-slate-800 border-slate-200'
     }
@@ -82,7 +82,7 @@ export function DisputeRow({
                 className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {copiedField === 'caseId' ? (
-                  <Check className="h-3 w-3 text-emerald-600" />
+                  <Check className="h-3 w-3 text-blue-600" />
                 ) : (
                   <Copy className="h-3 w-3" />
                 )}
@@ -114,7 +114,7 @@ export function DisputeRow({
                 e.stopPropagation()
                 router.push(`/party/${encodeURIComponent(plaintiff || 'Unknown')}`)
               }}
-              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              className="text-sm font-mono text-blue-600 hover:text-blue-700 hover:underline transition-colors truncate font-medium"
               title="View all cases for this address"
             >
               {formatAddress(plaintiff)}
@@ -128,7 +128,7 @@ export function DisputeRow({
               title="Copy address"
             >
               {copiedField === 'plaintiff' ? (
-                <Check className="h-3 w-3 text-emerald-600" />
+                <Check className="h-3 w-3 text-blue-600" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}
@@ -141,7 +141,7 @@ export function DisputeRow({
                 e.stopPropagation()
                 router.push(`/party/${encodeURIComponent(defendant || 'Unknown')}`)
               }}
-              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              className="text-sm font-mono text-blue-600 hover:text-blue-700 hover:underline transition-colors truncate font-medium"
               title="View all cases for this address"
             >
               {formatAddress(defendant)}
@@ -155,7 +155,7 @@ export function DisputeRow({
               title="Copy address"
             >
               {copiedField === 'defendant' ? (
-                <Check className="h-3 w-3 text-emerald-600" />
+                <Check className="h-3 w-3 text-blue-600" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}
@@ -180,7 +180,7 @@ export function DisputeRow({
               className="text-slate-400 hover:text-slate-600 transition-colors"
             >
               {copiedField === 'caseId' ? (
-                <Check className="h-3 w-3 text-emerald-600" />
+                <Check className="h-3 w-3 text-blue-600" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}
@@ -196,7 +196,7 @@ export function DisputeRow({
                 e.stopPropagation()
                 router.push(`/party/${encodeURIComponent(plaintiff || 'Unknown')}`)
               }}
-              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              className="text-sm font-mono text-blue-600 hover:text-blue-700 hover:underline transition-colors truncate font-medium"
               title="View all cases for this address"
             >
               {formatAddress(plaintiff)}
@@ -210,7 +210,7 @@ export function DisputeRow({
               title="Copy address"
             >
               {copiedField === 'plaintiff' ? (
-                <Check className="h-3 w-3 text-emerald-600" />
+                <Check className="h-3 w-3 text-blue-600" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}
@@ -223,7 +223,7 @@ export function DisputeRow({
                 e.stopPropagation()
                 router.push(`/party/${encodeURIComponent(defendant || 'Unknown')}`)
               }}
-              className="text-sm font-mono text-emerald-600 hover:text-emerald-700 hover:underline transition-colors truncate font-medium"
+              className="text-sm font-mono text-blue-600 hover:text-blue-700 hover:underline transition-colors truncate font-medium"
               title="View all cases for this address"
             >
               {formatAddress(defendant)}
@@ -237,7 +237,7 @@ export function DisputeRow({
               title="Copy address"
             >
               {copiedField === 'defendant' ? (
-                <Check className="h-3 w-3 text-emerald-600" />
+                <Check className="h-3 w-3 text-blue-600" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}

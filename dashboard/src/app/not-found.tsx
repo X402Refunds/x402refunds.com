@@ -32,7 +32,6 @@ export default function NotFound() {
           <Button 
             asChild
             size="lg"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             <Link href="/">
               <Home className="mr-2 h-5 w-5" />
@@ -57,7 +56,7 @@ export default function NotFound() {
             If you believe this is an error, please{' '}
             <a 
               href="mailto:support@x402disputes.com" 
-              className="text-emerald-600 hover:text-emerald-700 underline"
+              className="text-blue-600 hover:text-blue-700 underline"
             >
               contact support
             </a>

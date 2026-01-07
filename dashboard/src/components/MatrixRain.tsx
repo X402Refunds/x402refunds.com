@@ -10,7 +10,7 @@ interface MatrixRainProps {
 }
 
 export function MatrixRain({ 
-  color = '#10b981', 
+  color = '#2563eb', 
   fontSize = 14,
   columns = 50,
   speed = 1
@@ -48,7 +48,7 @@ export function MatrixRain({
         r: parseInt(result[1], 16),
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
-      } : { r: 16, g: 185, b: 129 } // Default emerald
+      } : { r: 37, g: 99, b: 235 } // Default blue
     }
     const rgb = hexToRgb(color)
 

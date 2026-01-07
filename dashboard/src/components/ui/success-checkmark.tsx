@@ -37,7 +37,7 @@ export function SuccessCheckmark({ show, onComplete, className = "", inline = fa
       >
         {/* Backdrop circle that expands */}
         <motion.div
-          className="absolute w-20 h-20 bg-emerald-500 rounded-full -top-1 -right-1"
+          className="absolute w-20 h-20 bg-blue-600 rounded-full -top-1 -right-1"
           initial={{ scale: 0, opacity: 0.6 }}
           animate={{ scale: 3, opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -45,7 +45,7 @@ export function SuccessCheckmark({ show, onComplete, className = "", inline = fa
         
         {/* Main checkmark container */}
         <motion.div
-          className="relative bg-white rounded-full p-3 shadow-xl border-2 border-emerald-500"
+          className="relative bg-white rounded-full p-3 shadow-xl border-2 border-blue-600"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{
@@ -65,7 +65,7 @@ export function SuccessCheckmark({ show, onComplete, className = "", inline = fa
               ease: "easeOut",
             }}
           >
-            <Check className="w-6 h-6 text-emerald-600 stroke-[3]" />
+            <Check className="w-6 h-6 text-blue-600 stroke-[3]" />
           </motion.div>
         </motion.div>
       </motion.div>
@@ -82,7 +82,7 @@ export function SuccessCheckmark({ show, onComplete, className = "", inline = fa
     >
       {/* Backdrop circle that expands */}
       <motion.div
-        className="absolute w-32 h-32 bg-emerald-500 rounded-full"
+        className="absolute w-32 h-32 bg-blue-600 rounded-full"
         initial={{ scale: 0, opacity: 0.8 }}
         animate={{ scale: 4, opacity: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -109,7 +109,7 @@ export function SuccessCheckmark({ show, onComplete, className = "", inline = fa
             ease: "easeOut",
           }}
         >
-          <Check className="w-12 h-12 text-emerald-600 stroke-[3]" />
+          <Check className="w-12 h-12 text-blue-600 stroke-[3]" />
         </motion.div>
       </motion.div>
     </motion.div>

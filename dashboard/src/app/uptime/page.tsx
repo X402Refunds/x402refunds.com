@@ -78,7 +78,7 @@ export default function UptimePage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
-        return "text-emerald-600 bg-emerald-50 border-emerald-200"
+        return "text-blue-600 bg-blue-50 border-blue-200"
       case "degraded":
         return "text-yellow-600 bg-yellow-50 border-yellow-200"
       case "outage":
@@ -91,7 +91,7 @@ export default function UptimePage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "operational":
-        return <CheckCircle className="h-5 w-5 text-emerald-600" />
+        return <CheckCircle className="h-5 w-5 text-blue-600" />
       case "degraded":
         return <AlertCircle className="h-5 w-5 text-yellow-600" />
       case "outage":
@@ -104,7 +104,7 @@ export default function UptimePage() {
   const overallStatus = loading ? "loading" : (systemStatus?.status || "operational")
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-emerald-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/30">
       <Navigation />
       
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -121,7 +121,7 @@ export default function UptimePage() {
           <CardHeader className="text-center pb-6">
             <div className="flex items-center justify-center gap-3 mb-4">
               {loading ? (
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
               ) : (
                 getStatusIcon(overallStatus)
               )}
@@ -140,7 +140,7 @@ export default function UptimePage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Services</h2>
           
           {services.map((service) => (
-            <Card key={service.name} className="border border-slate-200 hover:border-emerald-300 transition-colors">
+            <Card key={service.name} className="border border-slate-200 hover:border-blue-300 transition-colors">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -153,7 +153,7 @@ export default function UptimePage() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <div className="text-sm text-slate-600">Uptime</div>
-                      <div className="font-bold text-emerald-600">{service.uptime}%</div>
+                      <div className="font-bold text-blue-600">{service.uptime}%</div>
                     </div>
                     <Badge className={getStatusColor(service.status)}>
                       {service.status === "operational" ? "Operational" : service.status === "degraded" ? "Degraded" : "Outage"}
@@ -176,7 +176,7 @@ export default function UptimePage() {
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-8 bg-emerald-500 rounded hover:bg-emerald-600 transition-colors cursor-pointer"
+                  className="h-8 bg-blue-500 rounded hover:bg-blue-600 transition-colors cursor-pointer"
                   title={`Day ${30 - i}: 100% uptime`}
                 />
               ))}
@@ -187,7 +187,7 @@ export default function UptimePage() {
             </div>
             <div className="flex items-center gap-6 mt-6 justify-center">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-emerald-500 rounded"></div>
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
                 <span className="text-sm text-slate-700">Operational</span>
               </div>
               <div className="flex items-center gap-2">
@@ -203,22 +203,22 @@ export default function UptimePage() {
         </Card>
 
         {/* SLA Commitment */}
-        <Card className="mt-8 border border-emerald-200 bg-emerald-50/30">
+        <Card className="mt-8 border border-blue-200 bg-blue-50/30">
           <CardHeader>
             <CardTitle className="text-slate-900">SLA Commitment</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600">99.9%</div>
+                <div className="text-3xl font-bold text-blue-600">99.9%</div>
                 <div className="text-sm text-slate-600 mt-1">Uptime Guarantee</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600">&lt; 200ms</div>
+                <div className="text-3xl font-bold text-blue-600">&lt; 200ms</div>
                 <div className="text-sm text-slate-600 mt-1">Average Response Time</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600">24/7</div>
+                <div className="text-3xl font-bold text-blue-600">24/7</div>
                 <div className="text-sm text-slate-600 mt-1">Monitoring & Support</div>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function UptimePage() {
             Need help or experiencing issues?{' '}
             <a 
               href="mailto:vivek@x402disputes.com" 
-              className="text-emerald-600 hover:text-emerald-700 font-medium underline"
+              className="text-blue-600 hover:text-blue-700 font-medium underline"
             >
               Contact Support
             </a>

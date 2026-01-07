@@ -88,13 +88,13 @@ export function ReputationSidebar() {
             }
 
             const getScoreColor = (score: number) => {
-              if (score >= 700) return 'text-emerald-600'
+              if (score >= 700) return 'text-blue-600'
               if (score >= 500) return 'text-amber-600'
               return 'text-red-600'
             }
 
             const getTrendIcon = (score: number) => {
-              if (score >= 700) return <TrendingUp className="h-3 w-3 text-emerald-600" />
+              if (score >= 700) return <TrendingUp className="h-3 w-3 text-blue-600" />
               if (score >= 500) return <TrendingUp className="h-3 w-3 text-amber-600" />
               return <TrendingDown className="h-3 w-3 text-red-600" />
             }

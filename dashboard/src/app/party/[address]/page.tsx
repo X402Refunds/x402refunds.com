@@ -22,7 +22,7 @@ export default function PartyPage() {
         <Navigation currentPage="home" />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
         </main>
         <Footer />
@@ -69,12 +69,12 @@ export default function PartyPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-emerald-600" />
+                <TrendingUp className="h-4 w-4 text-blue-600" />
                 As Plaintiff
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-600">{asPlaintiff.length}</div>
+              <div className="text-3xl font-bold text-blue-600">{asPlaintiff.length}</div>
             </CardContent>
           </Card>
           

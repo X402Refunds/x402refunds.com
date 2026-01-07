@@ -343,7 +343,7 @@
 <Button
   variant="outline"
   size="sm"
-  className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
 >
   [Action]
 </Button>
@@ -356,14 +356,14 @@
 
 **Consistency Requirements:**
 - All destructive buttons use red color scheme
-- All positive buttons use emerald color scheme
+- All positive buttons use blue color scheme
 - Icon size: `h-4 w-4` (consistent across all action buttons)
 - Loading icon size: `h-4 w-4` (same as action icons)
 
 **Examples:**
 - **API Keys**: "Revoke" button (red, Ban icon)
 - **Agents**: "Suspend" button (red, Ban icon)
-- **Agents**: "Activate" button (emerald, no icon)
+- **Agents**: "Activate" button (blue, no icon)
 
 ### **Notification Philosophy**
 

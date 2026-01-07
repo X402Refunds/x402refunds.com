@@ -71,7 +71,7 @@ export function DisputeHeader({
 
         <div className="flex-shrink-0">
           {isResolved ? (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 h-8 px-4">
+            <Badge className="bg-blue-50 text-blue-700 border-blue-200 h-8 px-4">
               <CheckCircle className="h-4 w-4 mr-2" />
               Resolved
             </Badge>

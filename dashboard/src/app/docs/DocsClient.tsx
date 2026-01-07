@@ -87,7 +87,7 @@ export function DocsClient(props: {
       const btn = createCopyButton(async () => {
         try {
           await navigator.clipboard.writeText(value);
-          btn.style.borderColor = "rgb(16 185 129)"; // emerald-500
+          btn.style.borderColor = "rgb(37 99 235)"; // blue-600
           setTimeout(() => {
             btn.style.borderColor = "";
           }, 900);

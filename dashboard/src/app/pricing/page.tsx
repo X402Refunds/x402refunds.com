@@ -73,7 +73,7 @@ export default function PricingPage() {
 
                 <Button
                   size="lg"
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-white"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
                   onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
                 >
                   Get Started
@@ -83,37 +83,37 @@ export default function PricingPage() {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Basic AI judge + human review queue
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Precedent learning from your decisions
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Full API
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Up to 5 team members
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Resolution in &lt; 10 minutes
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Priority email support
                     </span>
@@ -134,8 +134,8 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Card className="border-4 border-emerald-600 shadow-xl relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+              <Card className="border-4 border-blue-600 shadow-xl relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
                 Most Popular
               </div>
               <CardHeader className="pb-6">
@@ -162,43 +162,43 @@ export default function PricingPage() {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Everything in Starter
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       <strong>Custom terms and conditions knowledge base</strong>
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       <strong>Privacy policy judgments</strong>
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Advanced analytics + exports
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Up to 15 team members
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Resolution in &lt; 10 minutes
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       Priority support (4hr SLA)
                     </span>
@@ -309,43 +309,43 @@ export default function PricingPage() {
 
           <div className="flex justify-center max-w-2xl mx-auto">
             {/* Flat Fee Card */}
-            <Card className="border-4 border-emerald-600 shadow-xl bg-white dark:bg-slate-900 w-full max-w-md">
+            <Card className="border-4 border-blue-600 shadow-xl bg-white dark:bg-slate-900 w-full max-w-md">
               <CardHeader className="pb-6 text-center">
-                <Badge className="mb-4 bg-emerald-50 text-emerald-700 border-emerald-200 mx-auto w-fit">All Disputes</Badge>
+                <Badge className="mb-4 bg-blue-50 text-blue-700 border-blue-200 mx-auto w-fit">All Disputes</Badge>
                 <CardTitle className="text-6xl font-bold text-slate-900 dark:text-slate-100 mb-2">$0.05</CardTitle>
                 <p className="text-lg text-slate-600 dark:text-slate-400">per dispute</p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="text-center py-4 bg-emerald-50 dark:bg-emerald-950 rounded-lg border-2 border-emerald-200 dark:border-emerald-800">
-                    <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
+                  <div className="text-center py-4 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
                       No tiers. No complexity.
                     </p>
-                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
                       Same price whether it&apos;s $0.50 or $5,000
                     </p>
                   </div>
                   <div className="space-y-3 pt-4">
                     <div className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         Direct agent filing (permissionless)
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         Cryptographic evidence verification
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         Regulation E compliant
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         Full chain of custody tracking
                       </span>
@@ -376,8 +376,8 @@ export default function PricingPage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Webhook className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Webhook className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">1. Disputes Come In</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -387,8 +387,8 @@ export default function PricingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bot className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">2. Evidence Review</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -398,8 +398,8 @@ export default function PricingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">3. Resolution & Settlement</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -428,7 +428,7 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b-2 border-slate-200 dark:border-slate-800">
                   <th className="text-left py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
-                  <th className="py-6 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
+                  <th className="py-6 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-wide">
                       x402Disputes
                     </div>
@@ -443,9 +443,9 @@ export default function PricingPage() {
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Cost per dispute</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Average handling cost</div>
                   </td>
-                  <td className="py-5 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-7 w-7 text-emerald-600 mr-2 flex-shrink-0" />
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
                       <span className="font-bold text-lg text-slate-900 dark:text-slate-100">$0.05</span>
                     </div>
                   </td>
@@ -460,9 +460,9 @@ export default function PricingPage() {
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Resolution time</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Time to final decision</div>
                   </td>
-                  <td className="py-5 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-7 w-7 text-emerald-600 mr-2 flex-shrink-0" />
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
                       <span className="font-bold text-lg text-slate-900 dark:text-slate-100">&lt; 10 minutes</span>
                     </div>
                   </td>
@@ -493,9 +493,9 @@ export default function PricingPage() {
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Regulation E compliance</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Consumer protection built-in</div>
                   </td>
-                  <td className="py-5 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-7 w-7 text-emerald-600 mr-2 flex-shrink-0" />
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
                       <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Automated</span>
                     </div>
                   </td>
@@ -510,9 +510,9 @@ export default function PricingPage() {
                     <div className="font-semibold text-slate-900 dark:text-slate-100">Scalability</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Handle volume spikes</div>
                   </td>
-                  <td className="py-5 px-8 bg-emerald-50 dark:bg-emerald-950 border-l-4 border-r-4 border-emerald-600">
+                  <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
-                      <Check className="h-7 w-7 text-emerald-600 mr-2 flex-shrink-0" />
+                      <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
                       <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Infinite</span>
                     </div>
                   </td>
@@ -543,9 +543,9 @@ export default function PricingPage() {
                     <div className="font-bold text-slate-900 dark:text-slate-100">10,000 disputes/month</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Total monthly cost</div>
                   </td>
-                  <td className="py-6 px-8 bg-emerald-100 dark:bg-emerald-900 border-l-4 border-r-4 border-emerald-600">
+                  <td className="py-6 px-8 bg-blue-100 dark:bg-blue-900 border-l-4 border-r-4 border-blue-600">
                     <div className="text-center">
-                      <div className="text-3xl font-black text-emerald-600">$249</div>
+                      <div className="text-3xl font-black text-blue-600">$249</div>
                       <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-semibold">99.9% cost reduction</div>
                     </div>
                   </td>
@@ -568,7 +568,7 @@ export default function PricingPage() {
 
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Who makes the final decision on disputes?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -580,7 +580,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-2">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 What&apos;s included in the platform fee?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -591,7 +591,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-3">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 How does the AI learn from my decisions?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -603,7 +603,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-4">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Is this Regulation E compliant?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -614,7 +614,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-5">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 What&apos;s the difference between Starter and Growth?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -625,7 +625,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-6">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Is this compatible with the Agentic Dispute Protocol (ADP)?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
@@ -644,7 +644,7 @@ export default function PricingPage() {
             </AccordionItem>
 
             <AccordionItem value="item-7">
-              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-emerald-600">
+              <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
                 Can I integrate with ACP/ATXP payment protocols?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">

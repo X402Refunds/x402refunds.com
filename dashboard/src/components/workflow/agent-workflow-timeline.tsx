@@ -64,7 +64,7 @@ export function AgentWorkflowTimeline({
   const getStatusIcon = (status: WorkflowStep["status"]) => {
     switch (status) {
       case "COMPLETED":
-        return <CheckCircle className="h-5 w-5 text-emerald-600" />;
+        return <CheckCircle className="h-5 w-5 text-blue-600" />;
       case "FAILED":
         return <XCircle className="h-5 w-5 text-red-600" />;
       case "SKIPPED":
@@ -86,7 +86,7 @@ export function AgentWorkflowTimeline({
     };
     
     const colors: Record<WorkflowStep["status"], string> = {
-      COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      COMPLETED: "bg-blue-50 text-blue-700 border-blue-200",
       FAILED: "bg-red-50 text-red-700 border-red-200",
       SKIPPED: "bg-slate-50 text-slate-500 border-slate-200",
       RUNNING: "bg-blue-50 text-blue-700 border-blue-200",
@@ -201,7 +201,7 @@ export function AgentWorkflowTimeline({
                             {step.result || step.stepName}
                           </p>
                           {step.verdict && (
-                            <p className="text-sm font-medium text-emerald-700 ml-6 mt-1">
+                            <p className="text-sm font-medium text-blue-700 ml-6 mt-1">
                               Verdict: {step.verdict}
                               {step.confidence !== undefined && (
                                 <> ({(step.confidence * 100).toFixed(1)}% confidence)</>

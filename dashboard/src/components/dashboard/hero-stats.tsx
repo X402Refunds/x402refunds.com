@@ -21,7 +21,7 @@ export function HeroStats() {
       <CardContent className="p-4 sm:p-6">
         {/* Compact Status Bar */}
         <div className="flex items-center justify-between mb-4">
-          <Badge className={`${isSystemActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+          <Badge className={`${isSystemActive ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
             {isSystemActive ? '● Live' : '○ Idle'}
           </Badge>
           <span className="text-xs text-slate-500">
@@ -32,9 +32,9 @@ export function HeroStats() {
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Disputes Resolved */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
+              <CheckCircle className="h-5 w-5 text-blue-600" />
               <span className="text-xs sm:text-sm text-slate-700 font-medium uppercase tracking-wide">
                 Disputes Resolved (24H)
               </span>

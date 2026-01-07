@@ -109,7 +109,7 @@ export function HeroShot({ variant }: { variant: "desktop" | "mobile" }) {
                             variant="secondary"
                             className={
                               d.decided
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
                                 : "bg-slate-50 text-slate-700 border border-slate-200"
                             }
                           >

@@ -53,7 +53,7 @@ export function CollapsibleStats() {
             </CardContent>
           </Card>
           
-          <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
+          <Card className="border-slate-200 hover:border-blue-300 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">Cases Resolved</CardTitle>
               <TrendingUp className="h-4 w-4 text-slate-600" />
@@ -85,7 +85,7 @@ export function CollapsibleStats() {
             </CardContent>
           </Card>
           
-          <Card className="border-slate-200 hover:border-emerald-300 transition-colors">
+          <Card className="border-slate-200 hover:border-blue-300 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700">System Activity</CardTitle>
               <Activity className="h-4 w-4 text-slate-600" />

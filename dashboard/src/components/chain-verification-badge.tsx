@@ -39,7 +39,7 @@ export function ChainVerificationBadge({ caseId }: { caseId: Id<"cases"> }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isValid ? (
-              <ShieldCheck className="h-5 w-5 text-green-600" />
+              <ShieldCheck className="h-5 w-5 text-blue-600" />
             ) : (
               <ShieldAlert className="h-5 w-5 text-destructive" />
             )}
@@ -54,7 +54,7 @@ export function ChainVerificationBadge({ caseId }: { caseId: Id<"cases"> }) {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Status:</span>
-              <span className={isValid ? "text-green-600 font-medium" : "text-destructive font-medium"}>
+              <span className={isValid ? "text-blue-600 font-medium" : "text-destructive font-medium"}>
                 {isValid ? "Verified" : "Broken"}
               </span>
             </div>

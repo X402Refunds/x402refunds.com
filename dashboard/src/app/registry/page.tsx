@@ -35,7 +35,7 @@ export default function RegistryPage() {
                 API Docs
               </Button>
               <Button 
-                className="bg-emerald-600 hover:bg-emerald-500"
+                className="bg-blue-600 hover:bg-blue-500"
                 onClick={() => window.location.href = '/sign-in'}
               >
                 <FileText className="mr-2 h-4 w-4" />
@@ -76,7 +76,7 @@ export default function RegistryPage() {
           <div className="flex gap-4 justify-center">
               <Button 
                 size="lg" 
-              className="bg-emerald-600 hover:bg-emerald-500"
+              className="bg-blue-600 hover:bg-blue-500"
               onClick={() => window.location.href = '/docs'}
             >
               View Documentation

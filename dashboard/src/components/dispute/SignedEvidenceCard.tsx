@@ -63,7 +63,7 @@ export function SignedEvidenceCard({ signedEvidence, description }: SignedEviden
   };
 
   const getStatusColor = (status: number) => {
-    if (status >= 200 && status < 300) return "text-emerald-600";
+    if (status >= 200 && status < 300) return "text-blue-600";
     if (status >= 400 && status < 500) return "text-amber-600";
     if (status >= 500) return "text-red-600";
     return "text-slate-600";
@@ -86,7 +86,7 @@ export function SignedEvidenceCard({ signedEvidence, description }: SignedEviden
           </div>
           <div className="flex items-center gap-2">
             {signedEvidence.signatureVerified ? (
-              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              <Badge className="bg-blue-50 text-blue-700 border-blue-200">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Verified
               </Badge>
@@ -148,7 +148,7 @@ export function SignedEvidenceCard({ signedEvidence, description }: SignedEviden
                       <div className="text-slate-300 mb-2 text-xs">
                         {Object.entries(signedEvidence.request.headers).map(([key, value]) => (
                           <div key={key}>
-                            <span className="text-green-400">{key}:</span> {String(value)}
+                            <span className="text-blue-400">{key}:</span> {String(value)}
                           </div>
                         ))}
                       </div>
@@ -214,22 +214,22 @@ export function SignedEvidenceCard({ signedEvidence, description }: SignedEviden
                       <div className="text-slate-300 mb-2 text-xs">
                         {signedEvidence.response.headers.contentType && (
                           <div>
-                            <span className="text-green-400">Content-Type:</span> {signedEvidence.response.headers.contentType}
+                            <span className="text-blue-400">Content-Type:</span> {signedEvidence.response.headers.contentType}
                           </div>
                         )}
                         {signedEvidence.response.headers.vendorDid && (
                           <div>
-                            <span className="text-green-400">X-Vendor-DID:</span> {signedEvidence.response.headers.vendorDid}
+                            <span className="text-blue-400">X-Vendor-DID:</span> {signedEvidence.response.headers.vendorDid}
                           </div>
                         )}
                         {signedEvidence.response.headers.disputeUrl && (
                           <div>
-                            <span className="text-green-400">X-Dispute-URL:</span> {signedEvidence.response.headers.disputeUrl}
+                            <span className="text-blue-400">X-Dispute-URL:</span> {signedEvidence.response.headers.disputeUrl}
                           </div>
                         )}
                         {signedEvidence.response.headers.consulateAdp && (
                           <div>
-                            <span className="text-green-400">X-Consulate-ADP:</span> {signedEvidence.response.headers.consulateAdp}
+                            <span className="text-blue-400">X-Consulate-ADP:</span> {signedEvidence.response.headers.consulateAdp}
                           </div>
                         )}
                       </div>
@@ -250,8 +250,8 @@ export function SignedEvidenceCard({ signedEvidence, description }: SignedEviden
           <div className="flex items-center gap-2 text-sm">
             {signedEvidence.signatureVerified ? (
               <>
-                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                <span className="text-emerald-700 font-medium">
+                <CheckCircle className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-700 font-medium">
                   Signature verified from {signedEvidence.vendorDid}
                 </span>
               </>

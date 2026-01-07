@@ -59,7 +59,7 @@ export function RecentDisputesFeed() {
 
   // Get status color
   const getStatusColor = (status: string) => {
-    if (status === "DECIDED") return "text-emerald-400";
+    if (status === "DECIDED") return "text-blue-400";
     if (status === "FILED") return "text-blue-400";
     return "text-slate-400";
   };

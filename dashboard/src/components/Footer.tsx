@@ -2,9 +2,9 @@
 
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-slate-400 py-12 sm:py-16 border-t-4 border-emerald-600/30 relative">
-      {/* Emerald accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50" />
+    <footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 text-slate-400 py-12 sm:py-16 border-t-4 border-blue-600/30 relative">
+      {/* Blue accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500/50 via-blue-500 to-blue-500/50" />
       
       <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
@@ -17,17 +17,17 @@ export function Footer() {
           <div>
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-emerald-400 transition-colors">Uptime</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-emerald-400 transition-colors">Documentation</button></li>
-              <li><button onClick={() => window.open('/sign-in', '_self')} className="hover:text-emerald-400 transition-colors">Merchant dashboard (optional)</button></li>
+              <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-blue-400 transition-colors">Uptime</button></li>
+              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-blue-400 transition-colors">Documentation</button></li>
+              <li><button onClick={() => window.open('/sign-in', '_self')} className="hover:text-blue-400 transition-colors">Merchant dashboard (optional)</button></li>
             </ul>
           </div>
           <div className="md:col-span-1">
             <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Company</h4>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-emerald-400 transition-colors">About</button></li>
-              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-emerald-400 transition-colors">Pricing</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-emerald-400 transition-colors">Docs</button></li>
+              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-blue-400 transition-colors">About</button></li>
+              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-blue-400 transition-colors">Pricing</button></li>
+              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-blue-400 transition-colors">Docs</button></li>
             </ul>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function Footer() {
               <span>101a Clay St PMB 201, San Francisco CA 94111</span>
             </div>
             <div>
-              Email: <a href="mailto:vivek@x402disputes.com" className="hover:text-emerald-400 transition-colors">vivek@x402disputes.com</a>
+              Email: <a href="mailto:vivek@x402disputes.com" className="hover:text-blue-400 transition-colors">vivek@x402disputes.com</a>
               <span className="mx-2">•</span>
               Founder: Vivek Kotecha
             </div>

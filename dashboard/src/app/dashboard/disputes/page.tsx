@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic"
 import { useEffect, useMemo, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
+import { anyApi } from "convex/server"
 import { useRouter } from "next/navigation"
-import { api } from "@convex/_generated/api"
 import type { Id } from "@convex/_generated/dataModel"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,11 +38,11 @@ export default function AllDisputesPage() {
   const [filter, setFilter] = useState<"all" | "waiting" | "decided">("all")
   const [nowMs, setNowMs] = useState<number>(0)
 
-  const syncUser = useMutation(api.users.syncUser)
-  const currentUser = useQuery(api.users.getCurrentUser, {})
+  const syncUser = useMutation(anyApi.users.syncUser)
+  const currentUser = useQuery(anyApi.users.getCurrentUser, {})
 
   const allOrgCases = useQuery(
-    api.cases.getOrganizationCases,
+    anyApi.cases.getOrganizationCases,
     currentUser?.organizationId ? { organizationId: currentUser.organizationId } : "skip",
   ) as OrgCase[] | undefined
 
@@ -202,7 +202,7 @@ export default function AllDisputesPage() {
                             variant="secondary"
                             className={
                               decided
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
                                 : "bg-slate-50 text-slate-700 border border-slate-200"
                             }
                           >

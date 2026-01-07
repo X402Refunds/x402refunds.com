@@ -19,11 +19,11 @@ export default function AboutPage() {
       return (
         <button
           onClick={() => setEmailRevealed(true)}
-          className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors group"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors group"
           aria-label="Click to reveal email address"
         >
           <Mail className="h-5 w-5" />
-          <span className="border-b border-emerald-600 group-hover:border-emerald-700">
+          <span className="border-b border-blue-600 group-hover:border-blue-700">
             Click to reveal email
           </span>
         </button>
@@ -35,7 +35,7 @@ export default function AboutPage() {
     return (
       <a
         href={`mailto:${emailParts[0]}@${emailParts[1]}.${emailParts[2]}`}
-        className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
         aria-label="Send email to Vivek Kotecha"
       >
         <Mail className="h-5 w-5" />
@@ -59,7 +59,7 @@ export default function AboutPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 text-sm px-4 py-1.5">
+            <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 text-sm px-4 py-1.5">
               About x402Disputes
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
@@ -84,7 +84,7 @@ export default function AboutPage() {
           <Card className="border-2 border-slate-200 shadow-lg">
             <CardHeader className="pb-6">
               <div className="flex items-start gap-4">
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-emerald-100 flex-shrink-0">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-blue-100 flex-shrink-0">
                   <Image
                     src="/vivek-headshot.jpg"
                     alt="Vivek Kotecha - Founder of x402Disputes"
@@ -176,8 +176,8 @@ export default function AboutPage() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors group"
                     >
-                      <Calendar className="h-5 w-5 text-emerald-600" />
-                      <span className="text-emerald-600 hover:text-emerald-700 font-medium">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <span className="text-blue-600 hover:text-blue-700 font-medium">
                         Schedule a Meeting
                       </span>
                     </a>
@@ -186,9 +186,9 @@ export default function AboutPage() {
               </div>
 
               {/* Response Time */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <Calendar className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-slate-700">
                       <strong className="text-slate-900">Response time:</strong> I typically respond to emails 
@@ -217,7 +217,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-slate-200">
               <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-emerald-600 mb-3">Billions</div>
+                <div className="text-4xl font-bold text-blue-600 mb-3">Billions</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   Scale Problem
                 </h3>
@@ -258,10 +258,10 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 text-white relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-emerald-500 to-green-500 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-500 to-blue-600 rounded-full blur-3xl animate-pulse" />
         </div>
 
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center relative z-10">
@@ -290,7 +290,7 @@ export default function AboutPage() {
             </Button>
             <Button 
               size="lg" 
-              className="bg-emerald-600 text-white hover:bg-emerald-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
+              className="bg-blue-600 text-white hover:bg-blue-500 text-lg px-8 h-14 font-semibold shadow-lg hover:shadow-xl transition-all"
               onClick={() => window.location.href = '/docs'}
             >
               <BookOpen className="mr-2 h-5 w-5" />
@@ -301,20 +301,20 @@ export default function AboutPage() {
           {/* Feature highlights */}
           <div className="flex flex-wrap justify-center gap-6 text-sm">
             <div className="flex items-center gap-2 text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-blue-400" />
               </div>
               <span><strong className="text-white">Free sandbox</strong> environment</span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-blue-400" />
               </div>
               <span>First <strong className="text-white">100 disputes free</strong></span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle className="h-3 w-3 text-emerald-400" />
+              <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 text-blue-400" />
               </div>
               <span><strong className="text-white">5 minute</strong> integration</span>
             </div>

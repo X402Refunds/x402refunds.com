@@ -125,7 +125,7 @@ export default function DashboardInboxPage() {
           </div>
           <div className="flex items-center gap-2">
             {isEmpty ? (
-              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200">
                 All caught up
               </Badge>
             ) : (
@@ -143,8 +143,8 @@ export default function DashboardInboxPage() {
           <Card className="border border-slate-200">
             <CardContent className="py-10">
               <div className="flex flex-col items-center text-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                <div className="h-10 w-10 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="text-lg font-semibold text-slate-950">You’re all caught up.</div>
                 <div className="text-sm text-slate-600 max-w-md">
