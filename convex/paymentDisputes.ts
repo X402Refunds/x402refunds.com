@@ -100,6 +100,7 @@ export const receivePaymentDispute = action({
       name: v.optional(v.string()),           // Merchant's business name
       merchantId: v.optional(v.string()),     // Merchant's ID in YOUR platform
       walletAddress: v.optional(v.string()),
+      merchantOrigin: v.optional(v.string()), // https origin used to fetch /.well-known/x402.json
       responseJson: v.optional(v.string()),  // X-402 response object as JSON string
     })),
 

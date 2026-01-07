@@ -322,6 +322,7 @@ export default defineSchema({
         name: v.optional(v.string()),
         merchantId: v.optional(v.string()),  // Customer's internal merchant ID
         walletAddress: v.optional(v.string()), // Blockchain wallet address if applicable
+        merchantOrigin: v.optional(v.string()), // https origin used to fetch /.well-known/x402.json
         responseJson: v.optional(v.string()), // X-402 response object as JSON string
       })),
       // Webhook notification URL
