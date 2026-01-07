@@ -28,6 +28,7 @@ This is intentionally simple:
 ### What you’re adding
 1) A `/.well-known/x402.json` file (public, on your domain)
 2) (Optional) A `Link` header (for discoverability)
+3) (Optional) Refund credits (for one-click refunds from email)
 
 After that, disputes can reach you by email.
 
