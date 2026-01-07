@@ -1,3 +1,13 @@
+const BASE_EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+
+export function baseAddressToCaip10(address: string): string {
+  const raw = (address || "").trim();
+  if (!BASE_EVM_ADDRESS_RE.test(raw)) {
+    throw new Error("Invalid Base address");
+  }
+  return `eip155:8453:${raw.toLowerCase()}`;
+}
+
 function isEvmAddress(addr: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(addr);
 }

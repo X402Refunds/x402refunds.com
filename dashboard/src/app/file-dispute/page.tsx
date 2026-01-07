@@ -14,18 +14,12 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { baseAddressToCaip10 } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402disputes.com";
 
-const BASE_CAIP10_RE = /^eip155:8453:0x[a-fA-F0-9]{40}$/;
+const BASE_EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const BASE_TX_RE = /^0x[a-fA-F0-9]{64}$/;
-
-function parseEvidenceLinks(s: string): string[] {
-  return s
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-}
 
 function parseJsonOrThrow(label: string, s: string | undefined) {
   const t = (s || "").trim();
@@ -39,11 +33,10 @@ function parseJsonOrThrow(label: string, s: string | undefined) {
 
 const formSchema = z
   .object({
-    merchant: z.string().min(5, "Required"),
+    merchantAddress: z.string().min(5, "Required"),
     merchantApiUrl: z.string().url("Must be a valid URL"),
     txHash: z.string().min(10, "Required"),
     description: z.string().min(10, "Min 10 chars").max(500, "Max 500 chars"),
-    evidenceLinks: z.string().default(""),
 
     // Advanced (optional)
     requestMethod: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("POST"),
@@ -55,11 +48,11 @@ const formSchema = z
   })
   .superRefine((v, ctx) => {
     // Base only (for now)
-    if (!BASE_CAIP10_RE.test(v.merchant.trim())) {
+    if (!BASE_EVM_ADDRESS_RE.test(v.merchantAddress.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["merchant"],
-        message: "Merchant must be Base CAIP-10: eip155:8453:0x<40hex>",
+        path: ["merchantAddress"],
+        message: "Merchant address must be a Base address: 0x + 40 hex chars",
       });
     }
     if (!BASE_TX_RE.test(v.txHash.trim())) {
@@ -134,11 +127,10 @@ export default function FileDisputePage() {
   } = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      merchant: "",
+      merchantAddress: "",
       merchantApiUrl: "",
       txHash: "",
       description: "",
-      evidenceLinks: "",
 
       requestMethod: "POST",
       requestHeadersJson: "",
@@ -154,8 +146,9 @@ export default function FileDisputePage() {
     setFileResult(null);
     setSubmitting(true);
     try {
-      const evidenceLinks = parseEvidenceLinks(values.evidenceLinks ?? "");
-      const evidenceUrls = [...uploadedEvidenceUrls, ...evidenceLinks];
+      const merchantAddress = values.merchantAddress.trim();
+      const merchant = baseAddressToCaip10(merchantAddress);
+      const evidenceUrls = [...uploadedEvidenceUrls];
 
       const requestHeaders = parseJsonOrThrow("Request headers", values.requestHeadersJson);
       const requestBody = parseJsonOrThrow("Request body", values.requestBodyJson);
@@ -185,7 +178,7 @@ export default function FileDisputePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchant: values.merchant,
+          merchant,
           merchantApiUrl: values.merchantApiUrl,
           txHash: values.txHash,
           description: values.description,
@@ -213,9 +206,15 @@ export default function FileDisputePage() {
     try {
       const urls: string[] = [];
       for (const f of Array.from(files)) {
+        if (f.size > 10 * 1024 * 1024) throw new Error("Image too large (max 10MB)");
+        const type = (f.type || "").toLowerCase();
+        if (type !== "image/png" && type !== "image/jpeg") {
+          throw new Error("Only PNG or JPG images are supported");
+        }
+
         const up = await fetch(`${API_BASE}/v1/evidence/upload`, {
           method: "POST",
-          headers: { "Content-Type": f.type || "application/octet-stream" },
+          headers: { "Content-Type": type },
           body: f,
         });
         const out = await up.json().catch(() => ({}));
@@ -295,13 +294,15 @@ export default function FileDisputePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="merchant">Merchant (CAIP-10)</Label>
-                <Input id="merchant" placeholder="eip155:8453:0x..." {...register("merchant")} />
-                {errors.merchant ? <div className="text-xs text-destructive">{errors.merchant.message}</div> : null}
+                <Label htmlFor="merchantAddress">Merchant wallet address</Label>
+                <div className="text-xs text-muted-foreground">Blockchain: Base</div>
+                <Input id="merchantAddress" placeholder="0x..." {...register("merchantAddress")} />
+                {errors.merchantAddress ? <div className="text-xs text-destructive">{errors.merchantAddress.message}</div> : null}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="merchantApiUrl">Merchant API URL (https)</Label>
+                <Label htmlFor="merchantApiUrl">API URL you paid for</Label>
+                <div className="text-xs text-muted-foreground">Paste the exact URL you called when the payment happened.</div>
                 <Input id="merchantApiUrl" placeholder="https://api.merchant.com/v1/..." {...register("merchantApiUrl")} />
                 {errors.merchantApiUrl ? <div className="text-xs text-destructive">{errors.merchantApiUrl.message}</div> : null}
               </div>
@@ -327,20 +328,30 @@ export default function FileDisputePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Evidence (optional)</CardTitle>
+              <CardTitle>Provide Evidence (optional)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload files</Label>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  onChange={(e) => void uploadEvidenceFiles(e.target.files)}
-                  disabled={uploading || submitting || formSubmitting}
-                />
-                <div className="text-xs text-muted-foreground">Max 10MB per file. Stored as evidence URLs.</div>
-              </div>
+              <input
+                ref={fileInputRef}
+                className="hidden"
+                type="file"
+                accept="image/png,image/jpeg"
+                multiple
+                onChange={(e) => void uploadEvidenceFiles(e.target.files)}
+                disabled={uploading || submitting || formSubmitting}
+              />
+
+              <button
+                type="button"
+                disabled={uploading || submitting || formSubmitting}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-lg border-2 border-dashed border-border bg-card/30 px-6 py-10 text-center transition-colors hover:bg-muted/30 disabled:opacity-60"
+              >
+                <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
+                  <div className="text-sm font-medium text-foreground">Click to upload</div>
+                  <div className="text-xs text-muted-foreground">PNG, JPG up to 10MB</div>
+                </div>
+              </button>
 
               {uploadedEvidenceUrls.length > 0 ? (
                 <div className="space-y-2">
@@ -351,11 +362,6 @@ export default function FileDisputePage() {
                   </Button>
                 </div>
               ) : null}
-
-              <div className="space-y-2">
-                <Label htmlFor="evidenceLinks">Evidence links (one per line)</Label>
-                <Textarea id="evidenceLinks" placeholder="https://…\nhttps://…" {...register("evidenceLinks")} />
-              </div>
             </CardContent>
           </Card>
 
