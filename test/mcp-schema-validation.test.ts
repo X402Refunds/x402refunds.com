@@ -49,6 +49,12 @@ describe("MCP Tool Schema Validation", () => {
       expect(required).not.toContain("fromAddress");
       expect(required).not.toContain("toAddress");
     });
+
+    it("should support optional evidenceUrls", () => {
+      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
+      expect(disputeTool).toBeDefined();
+      expect(disputeTool?.inputSchema.properties.evidenceUrls).toBeDefined();
+    });
   });
 
   // Note: consulate_submit_evidence tool was removed - evidence is included in dispute filing

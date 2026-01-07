@@ -5,6 +5,8 @@ import { httpAction } from "./_generated/server";
 // runtime-correct while avoiding type-level recursion during dashboard type-check.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { api, internal } = require("./_generated/api") as any;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 
 const http = httpRouter();
 
@@ -53,6 +55,9 @@ http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler })
 http.route({ path: "/v1/merchant/balance", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/notification-status", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/resend", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/evidence/upload-url", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/evidence/upload", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/evidence/file", method: "OPTIONS", handler: optionsHandler });
 // NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
 // Use static paths with query/body for ID-based operations.
 http.route({ path: "/v1/dispute", method: "OPTIONS", handler: optionsHandler });
@@ -654,46 +659,43 @@ http.route({
                 const defendant = verify.recipientAddress;
                 const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
                 
-                // Build payment dispute args
-                const paymentDisputeArgs: any = {
-                  transactionHash: parameters.transactionHash,
-                  blockchain: parameters.blockchain,
-                  recipientAddress: parameters.recipientAddress,
-                  sourceTransferLogIndex: verify.logIndex,
-                  disputeReason: "quality_issue",
+                const merchantCaip10 =
+                  parameters.blockchain === "base"
+                    ? `eip155:8453:${String(parameters.recipientAddress).toLowerCase()}`
+                    : `solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:${String(parameters.recipientAddress)}`;
+                const merchantApiUrl = typeof parameters.request?.url === "string" ? parameters.request.url : "";
+
+                const filed = await (fileCanonicalDispute as any)(ctx, {
+                  merchant: merchantCaip10,
+                  merchantApiUrl,
+                  txHash: parameters.transactionHash,
                   description: parameters.description,
-                  evidenceUrls: [],
                   callbackUrl: parameters.callbackUrl,
-                  plaintiffMetadata: { 
-                    walletAddress: plaintiff,
-                    requestJson: JSON.stringify(parameters.request)
-                  },
-                  defendantMetadata: { 
-                    walletAddress: defendant,
-                    responseJson: JSON.stringify(parameters.response)
-                  }
-                };
-                
-                // Check for defendant's organization
-                const defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet as any, {
-                  walletAddress: defendant
+                  merchantX402MetadataUrl: parameters.merchantX402MetadataUrl,
+                  sourceTransferLogIndex: verify.logIndex,
+                  evidenceUrls: Array.isArray(parameters.evidenceUrls) ? parameters.evidenceUrls : [],
+                  request: parameters.request,
+                  response: parameters.response,
                 });
-                
-                if (defendantAgent?.organizationId) {
-                  paymentDisputeArgs.reviewerOrganizationId = defendantAgent.organizationId;
+
+                if (!filed?.ok) {
+                  invokeData = {
+                    success: false,
+                    error: {
+                      code: filed?.code || "FAILED",
+                      message: filed?.message || "Failed to file dispute",
+                      field: filed?.field,
+                    }
+                  };
+                  break;
                 }
-                
-                // File the dispute
-                const result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
-                
+
                 invokeData = {
                   success: true,
                   disputeType: "PAYMENT",
-                  caseId: result.caseId,
-                  paymentDisputeId: result.paymentDisputeId,
-                  status: result.status,
-                  isMicroDispute: result.isMicroDispute,
-                  disputeFee: result.fee,
+                  caseId: filed.caseId,
+                  status: filed.status || "received",
+                  disputeFee: filed.disputeFee,
                   
                   // Transaction verification - extracted from blockchain
                   transactionVerification: {
@@ -710,12 +712,11 @@ http.route({
                     }
                   },
                   
-                  humanReviewRequired: result.humanReviewRequired,
-                  estimatedResolutionTime: result.estimatedResolutionTime,
+                  humanReviewRequired: true,
                   message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
-                  trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
+                  trackingUrl: filed.trackingUrl,
+                  evidenceUrls: filed.evidenceUrls || [],
                   nextSteps: [
-                    "AI analyzes dispute + provides recommendation",
                     "Merchant reviews in dashboard",
                     "Resolution within 10 business days (Regulation E)"
                   ]
@@ -1481,6 +1482,43 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json().catch(() => ({} as any));
+
+    // === Canonical merchant-first filing (x402 style) ===
+    // Required: merchant (CAIP-10), merchantApiUrl (https), txHash, description.
+    // Optional: evidenceUrls[], callbackUrl, merchantX402MetadataUrl.
+    const merchantCanonical = typeof body?.merchant === "string" ? body.merchant : "";
+    const merchantApiUrl = typeof body?.merchantApiUrl === "string" ? body.merchantApiUrl : "";
+    const txHashCanonical = typeof body?.txHash === "string" ? body.txHash : "";
+    const descriptionCanonical = typeof body?.description === "string" ? body.description : "";
+    const evidenceUrlsCanonical = Array.isArray(body?.evidenceUrls) ? body.evidenceUrls : undefined;
+    const callbackUrlCanonical = typeof body?.callbackUrl === "string" ? body.callbackUrl : undefined;
+    const merchantX402MetadataUrlCanonical =
+      typeof body?.merchantX402MetadataUrl === "string" ? body.merchantX402MetadataUrl : undefined;
+    const requestCanonical = body?.request;
+    const responseCanonical = body?.response;
+
+    const hasCanonical =
+      merchantCanonical.trim() &&
+      merchantApiUrl.trim() &&
+      txHashCanonical.trim() &&
+      descriptionCanonical.trim();
+
+    if (hasCanonical) {
+      const res = await fileCanonicalDispute(ctx, {
+        merchant: merchantCanonical,
+        merchantApiUrl,
+        txHash: txHashCanonical,
+        description: descriptionCanonical,
+        evidenceUrls: evidenceUrlsCanonical,
+        callbackUrl: callbackUrlCanonical,
+        merchantX402MetadataUrl: merchantX402MetadataUrlCanonical,
+        request: requestCanonical,
+        response: responseCanonical,
+      });
+      if (!res.ok) return jsonError(400, { ok: false, code: res.code, message: res.message, field: res.field });
+      return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+    }
+
     const buyer = typeof body?.buyer === "string" ? body.buyer : "buyer:anonymous";
     const merchant = typeof body?.merchant === "string" ? body.merchant : "";
     const merchantOriginRaw = typeof body?.merchantOrigin === "string" ? body.merchantOrigin : "";
@@ -1535,6 +1573,80 @@ http.route({
     if (!created?.ok) return jsonError(400, created);
 
     return new Response(JSON.stringify({ ok: true, disputeId: created.disputeId }), { status: 200, headers: corsHeaders });
+  }),
+});
+
+// === Evidence upload (v1) ===
+// This supports the human /file-dispute page. Upload returns a stable URL that can be stored in evidenceUrls.
+
+// POST /v1/evidence/upload-url (compat shim)
+// For now, returns a concrete upload endpoint path. (We don't expose storage.generateUploadUrl directly.)
+http.route({
+  path: "/v1/evidence/upload-url",
+  method: "POST",
+  handler: httpAction(async () => {
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        uploadUrl: "https://api.x402disputes.com/v1/evidence/upload",
+        note: "POST the raw file bytes to uploadUrl with Content-Type set to the file mime type.",
+      }),
+      { status: 200, headers: corsHeaders },
+    );
+  }),
+});
+
+// POST /v1/evidence/upload
+// Accepts raw file bytes and stores to Convex file storage.
+http.route({
+  path: "/v1/evidence/upload",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const contentType = request.headers.get("content-type") || "application/octet-stream";
+      const blob = await request.blob();
+      if (!blob || blob.size <= 0) {
+        return jsonError(400, { ok: false, code: "EMPTY_FILE", message: "No file content provided" });
+      }
+      // Basic safety cap: 10MB
+      if (blob.size > 10 * 1024 * 1024) {
+        return jsonError(400, { ok: false, code: "FILE_TOO_LARGE", message: "Max file size is 10MB" });
+      }
+      const stored = new Blob([blob], { type: contentType });
+      const storageId = await ctx.storage.store(stored);
+      const evidenceUrl = `https://api.x402disputes.com/v1/evidence/file?storageId=${encodeURIComponent(String(storageId))}`;
+      return new Response(
+        JSON.stringify({ ok: true, storageId: String(storageId), url: evidenceUrl }),
+        { status: 200, headers: corsHeaders },
+      );
+    } catch (e: any) {
+      return jsonError(500, { ok: false, code: "UPLOAD_FAILED", message: e?.message || "Upload failed" });
+    }
+  }),
+});
+
+// GET /v1/evidence/file?storageId=...
+// Redirects to a signed Convex file URL.
+http.route({
+  path: "/v1/evidence/file",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const storageId = url.searchParams.get("storageId") || "";
+    if (!storageId) return jsonError(400, { ok: false, code: "MISSING_STORAGE_ID", message: "storageId is required" });
+    try {
+      const signed = await ctx.storage.getUrl(storageId as any);
+      if (!signed) return jsonError(404, { ok: false, code: "NOT_FOUND", message: "File not found" });
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          Location: signed,
+        },
+      });
+    } catch (e: any) {
+      return jsonError(400, { ok: false, code: "INVALID_STORAGE_ID", message: e?.message || "Invalid storageId" });
+    }
   }),
 });
 

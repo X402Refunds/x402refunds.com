@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-07T17:22:21.532Z
+**Auto-generated on**: 2026-01-07T19:06:06.130Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (62 files)
+### Convex Files (63 files)
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
@@ -108,6 +108,7 @@ consulate/
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
+- **canonicalDispute.ts** - Core logic
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **duplicateDispute.ts** - parseDuplicatePaymentDisputeError
@@ -358,7 +359,7 @@ Common HTTP routes exposed:
 - 74 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 62 TypeScript files with serverless functions
+- 63 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -397,5 +398,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/7/2026, 9:22:21 AM
-Files scanned: 514
+Generated: 1/7/2026, 11:06:06 AM
+Files scanned: 515

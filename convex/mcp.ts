@@ -129,6 +129,12 @@ export const MCP_TOOLS = [
             "REQUIRED. Merchant/vendor address that received USDC in this transaction. Used to deterministically select the payment transfer log.",
           examples: ["0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9"],
         },
+        evidenceUrls: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional. Evidence URLs (logs, screenshots, etc.). These will be stored as evidence manifests on the case.",
+          examples: [["https://example.com/logs/timeout.json"]],
+        },
         sourceTransferLogIndex: {
           description:
             "Optional. If the transaction contains multiple USDC transfers to the same recipient, provide the logIndex/instructionIndex to disambiguate.",
@@ -693,156 +699,48 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           });
         }
         
-        // 7. File payment dispute with blockchain-extracted details
-        // Wallet-first v1 flow (Base): store dispute under cases.metadata.v1 and trigger merchant email notifications.
-        if (parameters.blockchain === "base") {
-          // Derive merchant origin from request.url unless caller provided an override.
-          const merchantOriginRaw =
-            typeof parameters.merchantOrigin === "string" && parameters.merchantOrigin.trim()
-              ? parameters.merchantOrigin.trim()
-              : null;
-          const requestUrlRaw =
-            typeof parameters.request?.url === "string" && parameters.request.url.trim()
-              ? parameters.request.url.trim()
-              : null;
+        // 7. File payment dispute (canonical HTTP-first workflow).
+        // MCP is a thin adapter over the same canonical handler used by POST /v1/disputes.
+        const merchantCaip10 =
+          parameters.blockchain === "base"
+            ? `eip155:8453:${String(parameters.recipientAddress).toLowerCase()}`
+            : `solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:${String(parameters.recipientAddress)}`;
+        const merchantApiUrl = typeof parameters.request?.url === "string" ? parameters.request.url : "";
 
-          let merchantOrigin: string;
-          try {
-            const u = new URL(merchantOriginRaw || (requestUrlRaw as string));
-            if (u.protocol !== "https:") throw new Error("merchantOrigin must be https://");
-            merchantOrigin = u.origin;
-          } catch (e: any) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: {
-                code: "INVALID_MERCHANT_ORIGIN",
-                message: e?.message || "Unable to derive merchant origin from request.url",
-                field: "merchantOrigin",
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
+        const { fileCanonicalDispute } = await import("./lib/canonicalDispute");
+        const filed = await (fileCanonicalDispute as any)(ctx, {
+          merchant: merchantCaip10,
+          merchantApiUrl,
+          txHash: parameters.transactionHash,
+          description: parameters.description,
+          callbackUrl: parameters.callbackUrl,
+          merchantX402MetadataUrl: parameters.merchantX402MetadataUrl,
+          sourceTransferLogIndex: verify.logIndex,
+          evidenceUrls: Array.isArray(parameters.evidenceUrls) ? parameters.evidenceUrls : [],
+          request: parameters.request,
+          response: parameters.response,
+        });
 
-          const merchantX402MetadataUrl =
-            typeof parameters.merchantX402MetadataUrl === "string" && parameters.merchantX402MetadataUrl.trim()
-              ? parameters.merchantX402MetadataUrl.trim()
-              : undefined;
-
-          const merchantCaip10 = `eip155:8453:${defendant.toLowerCase()}`;
-
-          const created = await ctx.runMutation(api.pool.cases_fileWalletPaymentDispute, {
-            buyer: `wallet:${plaintiff}`,
-            merchant: merchantCaip10,
-            merchantOrigin,
-            merchantX402MetadataUrl,
-            txHash: parameters.transactionHash,
-            chain: "base",
-            amountMicrousdc: verify.amountMicrousdc,
-            reason: parameters.description,
-          });
-
-          if (!created?.ok) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: {
-                code: created?.code || "FAILED",
-                message: created?.message || "Failed to file dispute",
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-
-          const caseId = created.disputeId;
-
+        if (!filed?.ok) {
           return new Response(JSON.stringify({
-            success: true,
-            disputeType: "PAYMENT",
-            caseId,
-            status: "FILED",
-          
-          // Signature verification status
-          signatureVerification: {
-            provided: signatureProvided,
-            verified: signatureVerified,
-            message: !signatureProvided 
-              ? "No X-Signature provided. Response authenticity cannot be confirmed. Evidence strength reduced."
-              : signatureVerified
-                ? "X-Signature verified. Response authenticity confirmed."
-                : "X-Signature verification failed. Response authenticity questionable.",
-            impact: !signatureProvided || !signatureVerified
-              ? "May require additional evidence for resolution"
-              : "Strong evidence - higher confidence in verdict"
-          },
-          
-          // Transaction verification - extracted from blockchain
-          transactionVerification: {
-            source: "blockchain",
-            blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash,
-            verified: true,
-            extractedDetails: {
-              plaintiff: `${plaintiff} (extracted from blockchain)`,
-              defendant: `${defendant} (extracted from blockchain)`,
-              amount: txAmountUsd,
-              currency: txCurrency,
-              logIndex: verify.logIndex
+            success: false,
+            error: {
+              code: filed?.code || "FAILED",
+              message: filed?.message || "Failed to file dispute",
+              field: filed?.field,
             }
-          },
-          
-          evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
-          message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
-          trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${caseId}`,
-          nextSteps: [
-            signatureProvided ? null : "Consider submitting X-Signature for stronger evidence",
-            "Merchant is notified via supportEmail in /.well-known/x402.json (if published)",
-            "Merchant can review and respond"
-          ].filter(Boolean),
-          _links: {
-            self: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${caseId}`,
-            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${caseId}`,
-            v1Dispute: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/v1/dispute?id=${caseId}`,
-            submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/evidence`,
-            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${caseId}`
-          }
           }), {
+            status: 400,
             headers: { "Content-Type": "application/json" }
           });
         }
 
-        // Legacy flow (Solana): keep existing paymentDisputes pipeline (no email notifications yet).
-        const paymentDisputeArgs: any = {
-          transactionHash: parameters.transactionHash,
-          blockchain: parameters.blockchain,
-          recipientAddress: parameters.recipientAddress,
-          sourceTransferLogIndex: verify.logIndex,
-          disputeReason: "quality_issue",
-          description: parameters.description,
-          evidenceUrls: [],
-          callbackUrl: parameters.callbackUrl,
-          plaintiffMetadata: {
-            walletAddress: plaintiff,
-            requestJson: JSON.stringify(parameters.request)
-          },
-          defendantMetadata: {
-            walletAddress: defendant,
-            responseJson: JSON.stringify(parameters.response)
-          },
-        };
-
-        result = await ctx.runAction(api.paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
-
         return new Response(JSON.stringify({
           success: true,
           disputeType: "PAYMENT",
-          caseId: result.caseId,
-          paymentDisputeId: result.paymentDisputeId,
-          status: result.status,
-          isMicroDispute: result.isMicroDispute,
-          disputeFee: result.fee,
+          caseId: filed.caseId,
+          status: filed.status || "received",
+          disputeFee: filed.disputeFee,
           signatureVerification: {
             provided: signatureProvided,
             verified: signatureVerified,
@@ -869,23 +767,19 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             }
           },
           evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
-          humanReviewRequired: result.humanReviewRequired,
-          estimatedResolutionTime: result.estimatedResolutionTime,
           message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
-          trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
+          trackingUrl: filed.trackingUrl,
+          evidenceUrls: filed.evidenceUrls || [],
           nextSteps: [
             signatureProvided ? null : "Consider submitting X-Signature for stronger evidence",
-            "AI analyzes dispute + provides recommendation",
             "Merchant reviews in dashboard",
             "Resolution within 10 business days (Regulation E)"
           ].filter(Boolean),
           _links: {
-            self: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}`,
-            evidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}/evidence`,
-            timeline: `${process.env.NEXT_PUBLIC_APP_URL || 'https://x402disputes.com'}/cases/${result.caseId}#timeline`,
-            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`,
+            self: filed.trackingUrl,
+            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${filed.caseId}`,
             submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/evidence`,
-            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${result.caseId}`
+            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${filed.caseId}`
           }
         }), {
           headers: { "Content-Type": "application/json" }

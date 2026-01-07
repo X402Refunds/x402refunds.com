@@ -253,6 +253,48 @@ describe('HTTP API - Dispute Filing', () => {
       }
     });
   });
+
+  describe("POST /v1/disputes (canonical merchant-first)", () => {
+    it("should reject missing canonical fields", async () => {
+      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+          // missing merchantApiUrl, txHash, description
+        }),
+      });
+      expect([400, 404]).toContain(response.status);
+    });
+
+    it("should reject non-https merchantApiUrl", async () => {
+      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+          merchantApiUrl: "http://example.com/v1/chat",
+          txHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+          description: "API returned 500 after payment was confirmed on-chain",
+        }),
+      });
+      expect([400, 404]).toContain(response.status);
+    });
+
+    it("should reject unsupported eip155 chainId", async () => {
+      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant: "eip155:1:0x0000000000000000000000000000000000000001",
+          merchantApiUrl: "https://example.com/v1/chat",
+          txHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+          description: "API returned 500 after payment was confirmed on-chain",
+        }),
+      });
+      expect([400, 404]).toContain(response.status);
+    });
+  });
 });
 
 describe('HTTP API - Case Status', () => {

@@ -37,6 +37,7 @@ import type * as http from "../http.js";
 import type * as judges from "../judges.js";
 import type * as lib_blockchain from "../lib/blockchain.js";
 import type * as lib_caip10 from "../lib/caip10.js";
+import type * as lib_canonicalDispute from "../lib/canonicalDispute.js";
 import type * as lib_coinbase from "../lib/coinbase.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_duplicateDispute from "../lib/duplicateDispute.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   judges: typeof judges;
   "lib/blockchain": typeof lib_blockchain;
   "lib/caip10": typeof lib_caip10;
+  "lib/canonicalDispute": typeof lib_canonicalDispute;
   "lib/coinbase": typeof lib_coinbase;
   "lib/crypto": typeof lib_crypto;
   "lib/duplicateDispute": typeof lib_duplicateDispute;
