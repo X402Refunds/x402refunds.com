@@ -607,40 +607,15 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       });
     }
     
-    // STEP 3: Ensure payment is settled on-chain BEFORE delivering output.
-    // - If already settled, verify by tx hash.
-    // - Else, call /settle then verify by the returned tx hash.
+    // STEP 3: Ensure payment is settled via facilitator BEFORE delivering output.
+    // We do NOT gate delivery on immediate on-chain indexing/verification. In practice,
+    // blockchain verification can lag even when the facilitator reports success.
     console.log(
-      `💰 Step 3: Ensuring payment is settled on-chain via facilitator${alreadySettledTxHash ? " (already settled)" : ""}`,
+      `💰 Step 3: Ensuring payment is settled via facilitator${alreadySettledTxHash ? " (already settled)" : ""}`,
     );
 
     if (alreadySettledTxHash) {
-      // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
-      const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
-        blockchain: "base",
-        transactionHash: alreadySettledTxHash,
-        expectedToAddress: DEMO_AGENTS_WALLET,
-      });
-
-      if (!txResult.success) {
-        const errorDetails = "error" in txResult ? txResult.error : "Unknown error";
-        return new Response(
-          JSON.stringify({
-            error: "Payment was reported settled, but could not be verified on-chain",
-            details: errorDetails,
-            transactionHash: alreadySettledTxHash,
-          }),
-          {
-            status: 402,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          },
-        );
-      }
-
-      // Settled + verified; deliver below.
+      // Already-settled per facilitator; deliver below.
     } else {
     
       // Call facilitator to settle payment
@@ -730,38 +705,12 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
 
       console.log(`✅ Settlement succeeded! Transaction: ${settledTxHash}`);
 
-      // Verify settlement on-chain before delivering.
-      // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
-      const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
-        blockchain: "base",
-        transactionHash: settledTxHash,
-        expectedToAddress: DEMO_AGENTS_WALLET,
-      });
-
-      if (!txResult.success) {
-        const errorDetails = "error" in txResult ? txResult.error : "Unknown error";
-        return new Response(
-          JSON.stringify({
-            error: "Settlement transaction could not be verified on-chain",
-            details: errorDetails,
-            transactionHash: settledTxHash,
-          }),
-          {
-            status: 402,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          },
-        );
-      }
-      
       // Encode settlement response for X-PAYMENT-RESPONSE header (v1 protocol)
       const paymentResponseB64 = btoa(JSON.stringify(settleData));
       // Generate real image URL using Pollinations AI
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
       
-      // Deliver after settlement verification.
+      // Deliver after facilitator settlement.
       return new Response(JSON.stringify({
         success: true,
         data: {
@@ -788,7 +737,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       });
     }
     
-    // If we reached here, the payment was already settled and verified on-chain.
+    // If we reached here, the facilitator reported the payment was already settled.
     console.log(`✅ Step 4: Generating image and returning 200 OK (already settled)`);
 
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(body.prompt)}?width=1024&height=1024&nologo=true`;
