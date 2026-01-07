@@ -25,7 +25,7 @@ This is intentionally simple:
 
 ## Integration Guide for Merchants
 
-### What you’re adding (2 copy/pastes)
+### What you’re adding
 1) A `/.well-known/x402.json` file (public, on your domain)
 2) (Optional) A `Link` header (for discoverability)
 
@@ -50,12 +50,12 @@ Minimal example:
 ```
 
 What matters:
-- `merchant`: your Base wallet in CAIP-10
+- `merchant`: your wallet address in CAIP-10 format
 - `supportEmail`: where disputes should be delivered
 - `paymentDisputeUrl`: points to your disputes feed
 
 ### Step 2 — Add a Link header
-This is optional. It helps AI agents automatically discover that your API supports disputes.
+This is optional. It helps AI agents automatically discover that your API supports disputes. Disputes will still work without it.
 
 If you skip it, disputes still work (buyers can still file; you’ll still receive disputes by email).
 
@@ -81,16 +81,39 @@ Quick reminder:
 ### Timing (typical)
 - Resolution: fast for micro disputes; up to 10 business days max (Reg E).
 
-### HTTP (default)
+### MCP (default for agents / LLMs)
 
-There are two ways to file:
-- Manual: use the web form
-- Programmatic: call the HTTP API
+If you’re an LLM agent, connect via MCP:
+- MCP server: `https://api.x402disputes.com/mcp`
 
-Manual (humans):
+Then file a dispute using the tool `x402_file_dispute`.
+
+Copy/paste prompt:
+
+```txt
+Use x402Disputes MCP to file a payment dispute after a paid x402 request had a bad or unsatisfactory result.
+
+Call tool: x402_file_dispute
+Include:
+- description: what happened (short and specific)
+- transactionHash: 0x...
+- blockchain: base
+- recipientAddress: 0x... (the merchant wallet that received the payment)
+```
+
+Tip: the MCP tool supports Base and Solana. The manual form is Base-only.
+
+Check status (copy/paste prompt):
+
+```txt
+Use x402Disputes MCP to check dispute status for caseId: ...
+```
+
+### Manual (humans)
 - Open: `/file-dispute`
 
-Programmatic (HTTP):
+### HTTP (alternative)
+
 Send a JSON body to `POST /v1/disputes`:
 
 ```bash
@@ -100,43 +123,9 @@ curl -sS https://api.x402disputes.com/v1/disputes \
     "merchant": "eip155:8453:0xYourMerchantWallet",
     "merchantApiUrl": "https://api.merchant.com/v1/endpoint-you-called",
     "txHash": "0xYourBaseTxHash",
-    "description": "Payment succeeded, then the API returned 500.",
-    "evidenceUrls": ["https://example.com/logs/timeout.json"]
+    "description": "Payment succeeded, then the output was wrong / unsatisfactory.",
+    "evidenceUrls": ["https://example.com/screenshot.png"]
   }'
-```
-
-Response includes `caseId` and `trackingUrl`.
-
-Check status:
-
-```bash
-curl -sS https://api.x402disputes.com/cases/<caseId>
-```
-
-### MCP (for LLMs)
-
-If you’re an LLM agent, connect via MCP:
-- MCP server: `https://api.x402disputes.com/mcp`
-
-File a dispute using the tool `x402_file_dispute`.
-
-Copy/paste prompt:
-
-```txt
-Use x402Disputes MCP to file an X-402 payment dispute:
-- description: API timed out after payment
-- request: POST https://merchant.com/v1/resource
-- response: 504 {"error":"timeout"}
-- transactionHash: 0x...
-- blockchain: base
-```
-
-Tip: the MCP tool supports Base and Solana. The manual form is Base-only.
-
-Check status (copy/paste prompt):
-
-```txt
-Use x402Disputes MCP to check dispute status for caseId: ...
 ```
 
 
