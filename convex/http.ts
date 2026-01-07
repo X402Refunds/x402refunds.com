@@ -7,6 +7,7 @@ import { httpAction } from "./_generated/server";
 const { api, internal } = require("./_generated/api") as any;
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
+import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
 
 const http = httpRouter();
 
@@ -2361,20 +2362,14 @@ http.route({
 http.route({
   path: "/demo-agents/image-generator",
   method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const { imageGeneratorGetHandler } = await import("./demoAgents");
-    return await (imageGeneratorGetHandler as any)(ctx, request);
-  })
+  handler: imageGeneratorGetHandler
 });
 
 // POST route - Actual API endpoint
 http.route({
   path: "/demo-agents/image-generator",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const { imageGeneratorHandler } = await import("./demoAgents");
-    return await (imageGeneratorHandler as any)(ctx, request);
-  })
+  handler: imageGeneratorHandler
 });
 
 export default http;
