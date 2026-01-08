@@ -480,6 +480,61 @@ describe("Refund System - Integration Tests", () => {
     expect(bal?.availableBalance).toBeCloseTo(1 - (0.25 + 0.05), 6);
   });
 
+  it("backfillRefundPendingCases: dryRun counts missing refunds for decided refund-eligible PAYMENT cases", async () => {
+    const txHash = "0x" + "d".repeat(64);
+    const recipient = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x1830DAdb0A16eb569B5f8526AADDF47ce85aC8e0",
+        defendant: recipient.toLowerCase(),
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: Date.now(),
+        description: "Test payment dispute (backfill dryRun)",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 10000,
+        decidedAt: Date.now(),
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: Date.now(),
+        paymentSourceChain: "base",
+        paymentSourceTxHash: txHash,
+        paymentDetails: {
+          transactionId: txHash,
+          transactionHash: txHash,
+          blockchain: "base",
+          amountMicrousdc: 10000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 1,
+          disputeReason: "other",
+          regulationEDeadline: Date.now() + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+          defendantMetadata: {
+            merchantId: `eip155:8453:${recipient.toLowerCase()}`,
+            walletAddress: recipient,
+          },
+        },
+      });
+    });
+
+    const res = await t.mutation(internal.refunds.backfillRefundPendingCases, { limit: 200, dryRun: true });
+    expect(res.scanned).toBeGreaterThan(0);
+    expect(res.missingRefund).toBeGreaterThanOrEqual(1);
+
+    // Ensure no refund was created during dryRun.
+    const refund = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+        .first();
+    });
+    expect(refund).toBeNull();
+  });
+
   it("should skip refund if amount exceeds threshold", async () => {
     // Set threshold at $50
     await t.run(async (ctx) => {

@@ -684,6 +684,99 @@ export const insertWalletFirstRefundTransaction = internalMutation({
   },
 });
 
+/**
+ * Backfill/refire refunds for PAYMENT cases that should have been refunded but are missing/stuck.
+ *
+ * - If no refund exists: schedule executeAutomatedRefund(force=true) to create + send.
+ * - If refund exists and is PENDING_SEND: schedule sendPendingRefund.
+ * - If refund exists and failed in a retryable way: schedule createRefundAttempt (uses retry logic).
+ *
+ * Pagination is required to avoid timeouts.
+ */
+export const backfillRefundPendingCases = internalMutation({
+  args: {
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+    dryRun: v.optional(v.boolean()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    scanned: number;
+    missingRefund: number;
+    pendingSend: number;
+    retryableFailed: number;
+    scheduled: number;
+    cursor: string | null;
+    isDone: boolean;
+  }> => {
+    const limit = Math.max(1, Math.min(args.limit ?? 200, 1000));
+    const dryRun = Boolean(args.dryRun);
+
+    const pageRes = await ctx.db
+      .query("cases")
+      .withIndex("by_type", (q) => q.eq("type", "PAYMENT"))
+      .order("asc")
+      .paginate({ cursor: args.cursor ?? null, numItems: limit });
+
+    let missingRefund = 0;
+    let pendingSend = 0;
+    let retryableFailed = 0;
+    let scheduled = 0;
+
+    for (const c of pageRes.page as any[]) {
+      if (c.status !== "DECIDED") continue;
+      if (c.finalVerdict !== "CONSUMER_WINS" && c.finalVerdict !== "PARTIAL_REFUND") continue;
+
+      const refund: any = await ctx.runQuery(internal.refunds.getRefundStatus, { caseId: c._id });
+      if (!refund) {
+        missingRefund += 1;
+        if (!dryRun) {
+          await ctx.scheduler.runAfter(0, internal.refunds.executeAutomatedRefund as any, {
+            caseId: c._id,
+            force: true,
+          });
+          scheduled += 1;
+        }
+        continue;
+      }
+
+      if (refund.status === "PENDING_SEND") {
+        pendingSend += 1;
+        if (!dryRun) {
+          await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: refund._id });
+          scheduled += 1;
+        }
+        continue;
+      }
+
+      const retryableCoinbaseFailure =
+        refund.provider === "coinbase" &&
+        (refund.status === "FAILED" || refund.status === "COINBASE_DISABLED") &&
+        (refund.failureCode === "COINBASE_SEND_FAILED" || refund.failureCode === "COINBASE_DISABLED");
+
+      if (retryableCoinbaseFailure) {
+        retryableFailed += 1;
+        if (!dryRun) {
+          await ctx.scheduler.runAfter(0, internal.refunds.createRefundAttempt as any, { caseId: c._id });
+          scheduled += 1;
+        }
+      }
+    }
+
+    return {
+      scanned: pageRes.page.length,
+      missingRefund,
+      pendingSend,
+      retryableFailed,
+      scheduled,
+      cursor: pageRes.continueCursor,
+      isDone: pageRes.isDone,
+    };
+  },
+});
+
 export const getRefundTransaction = internalQuery({
   args: { refundId: v.id("refundTransactions") },
   handler: async (ctx, args) => {
