@@ -231,9 +231,12 @@ http.route({
       `You will now receive dispute emails for this origin.\n`;
 
     // If this verification was triggered by a dispute, send a separate "Dispute received" email now.
+    // IMPORTANT: only do this for the *first* successful confirmation to avoid duplicates from
+    // email link prefetchers / scanners / double-clicks.
     try {
       const caseId = typeof res.caseId === "string" ? res.caseId : "";
-      if (caseId) {
+      const newlyConfirmed = Boolean((res as any).newlyConfirmed);
+      if (caseId && newlyConfirmed) {
         await ctx.scheduler.runAfter(
           0,
           (internal as any).merchantNotifications.notifyMerchantDisputeFiled,

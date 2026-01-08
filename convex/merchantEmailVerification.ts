@@ -117,7 +117,17 @@ export const confirmVerificationToken = internalMutation({
   handler: async (
     ctx,
     args,
-  ): Promise<{ ok: boolean; merchant?: string; origin?: string; supportEmail?: string; caseId?: string; reason?: string }> => {
+  ): Promise<{
+    ok: boolean;
+    // True only if this call actually transitioned the token from unconfirmed -> confirmed.
+    // Used to prevent duplicate follow-up emails when verification links are pre-fetched/clicked multiple times.
+    newlyConfirmed?: boolean;
+    merchant?: string;
+    origin?: string;
+    supportEmail?: string;
+    caseId?: string;
+    reason?: string;
+  }> => {
     const now = Date.now();
     const rec = await ctx.db
       .query("merchantEmailVerificationTokens")
@@ -127,6 +137,7 @@ export const confirmVerificationToken = internalMutation({
     if (rec.confirmedAt) {
       return {
         ok: true,
+        newlyConfirmed: false,
         merchant: rec.merchant,
         origin: rec.origin,
         supportEmail: rec.supportEmail,
@@ -162,6 +173,7 @@ export const confirmVerificationToken = internalMutation({
 
     return {
       ok: true,
+      newlyConfirmed: true,
       merchant: rec.merchant,
       origin: rec.origin,
       supportEmail: rec.supportEmail,
