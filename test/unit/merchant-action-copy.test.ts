@@ -30,5 +30,18 @@ describe("merchant action copy (unit)", () => {
     expect(text).not.toContain("basescan.org/tx/");
     expect(text).not.toContain("x402disputes.com/cases/");
   });
+
+  it("refund flow: no tx yet uses proactive Basescan wording", () => {
+    const text = buildMerchantActionCopy({
+      isReject: false,
+      caseId: "jd780r2cdjf90h1tg4qenqyzyn7ysb0r",
+      refundScheduled: true,
+      refundStatus: "PROCESSING",
+      refundTxHash: null,
+      explorerUrl: null,
+    });
+
+    expect(text).toContain("Track refund on Basescan (link will appear once the transaction is submitted).");
+  });
 });
 

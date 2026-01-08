@@ -37,7 +37,7 @@ export function buildMerchantActionCopy(input: MerchantActionCopyInput): string 
     lines.push("Track refund on Basescan:");
     lines.push(`- ${proofUrl}`);
   } else {
-    lines.push("Track refund on Basescan once the transaction hash is available.");
+    lines.push("Track refund on Basescan (link will appear once the transaction is submitted).");
   }
 
   lines.push("");
