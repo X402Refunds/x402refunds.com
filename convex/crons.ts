@@ -36,7 +36,7 @@ crons.interval(
 // Sweep executed refunds and notify merchants (wallet-first email notifications)
 crons.interval(
   "refund executed merchant email sweep",
-  { minutes: 1 },
+  { minutes: 30 },
   internalAny.crons.sweepRefundExecutedEmails,
   {}
 );

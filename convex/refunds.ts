@@ -582,6 +582,13 @@ export const sendPendingRefund = internalAction({
       explorerUrl: send.explorerUrl,
     });
 
+    // Send merchant notification immediately (best-effort). This is idempotent via
+    // refundTransactions.merchantRefundExecutedEmailSentAt to avoid duplicate emails.
+    await ctx.scheduler.runAfter(0, internal.merchantNotifications.notifyMerchantRefundExecuted as any, {
+      caseId: refund.caseId,
+      refundId: args.refundId,
+    });
+
     return { status: "EXECUTED", refundId: args.refundId };
   },
 });
