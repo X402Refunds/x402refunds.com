@@ -331,7 +331,8 @@ export const deriveUsdcMerchantFromTxHashBase = action({
           return null;
         }
 
-        if (amountRaw < 0n) return null;
+        // Avoid BigInt literals (e.g. `0n`) so this file type-checks under lower TS targets too.
+        if (amountRaw < BigInt(0)) return null;
         if (amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
           // Avoid unsafe integer conversion; this endpoint is intended for typical small payments.
           return null;

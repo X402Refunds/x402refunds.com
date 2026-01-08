@@ -31,6 +31,7 @@ export default function TopupPage() {
   const { data: walletClient } = useWalletClient();
 
   const didPrefill = useRef(false);
+  const didPrefillAmount = useRef(false);
   const [merchantAddress, setMerchantAddress] = useState("");
   const [caseId, setCaseId] = useState<string>("");
   const [prefilledEmail, setPrefilledEmail] = useState<string>("");
@@ -64,7 +65,7 @@ export default function TopupPage() {
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prefill from email links: /topup?merchant=...&caseId=...
+    // Prefill from email links: /topup?merchant=...&caseId=...&amount=...
     if (didPrefill.current) return;
     didPrefill.current = true;
     try {
@@ -72,12 +73,24 @@ export default function TopupPage() {
       const merchantFromQuery = url.searchParams.get("merchant");
       const caseFromQuery = url.searchParams.get("caseId") || url.searchParams.get("case") || "";
       const emailFromQuery = url.searchParams.get("email") || "";
+      const amountFromQuery = url.searchParams.get("amount") || url.searchParams.get("amountUsdc") || "";
       if (merchantFromQuery) setMerchantAddress((prev) => (prev.trim() ? prev : merchantFromQuery));
       if (caseFromQuery) setCaseId((prev) => (prev ? prev : caseFromQuery));
       if (emailFromQuery) setPrefilledEmail((prev) => (prev ? prev : emailFromQuery));
+      if (amountFromQuery) {
+        const normalized = amountFromQuery.trim();
+        if (normalized) {
+          // Only prefill if user hasn't already typed and the query parses as USDC.
+          if (!amountUsdc.trim() && parseUsdcToMicros(normalized)) {
+            setAmountUsdc(normalized);
+            didPrefillAmount.current = true;
+          }
+        }
+      }
     } catch {
       // Ignore
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBalance = async (merchant: string) => {
@@ -163,6 +176,28 @@ export default function TopupPage() {
   const requiredUsdc = typeof notificationRequiredUsdc === "number" ? notificationRequiredUsdc : null;
   const hasEnoughForActions =
     typeof notificationHasSufficientCredits === "boolean" ? notificationHasSufficientCredits : null;
+
+  // UX: If we know the required credits for a dispute and the merchant's current credits,
+  // prefill the top-up amount with the missing delta (without overriding user input).
+  useEffect(() => {
+    if (didPrefillAmount.current) return;
+    if (amountUsdc.trim()) return; // user typed (or query param already filled)
+    if (typeof requiredUsdc !== "number") return;
+    const available = typeof availableUsdc === "number" ? availableUsdc : 0;
+    const deficit = requiredUsdc - available;
+    if (!(deficit > 0)) return;
+
+    const clamped = Math.min(deficit, 10);
+    // Keep up to 6 decimals (USDC precision) and strip trailing zeros for cleanliness.
+    const formatted = clamped
+      .toFixed(6)
+      .replace(/\.?0+$/, "");
+
+    if (!formatted) return;
+    if (!parseUsdcToMicros(formatted)) return;
+    setAmountUsdc(formatted);
+    didPrefillAmount.current = true;
+  }, [amountUsdc, availableUsdc, requiredUsdc]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
