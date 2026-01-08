@@ -14,6 +14,15 @@ function isCoinbaseRefundsEnabled(): boolean {
   return process.env.COINBASE_REFUNDS_ENABLED === "true";
 }
 
+function toBaseMerchantCaip10(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const s = value.trim();
+  if (!s) return null;
+  if (s.includes(":")) return s; // assume already CAIP-10
+  if (/^0x[a-fA-F0-9]{40}$/.test(s)) return `eip155:8453:${s.toLowerCase()}`;
+  return null;
+}
+
 async function backfillCaseDecisionFromRefund(
   ctx: { db: any },
   caseId: Id<"cases">,
@@ -305,9 +314,6 @@ export const createRefundAttempt = internalAction({
     if (dispute.finalVerdict !== "CONSUMER_WINS" && dispute.finalVerdict !== "PARTIAL_REFUND") {
       return { status: "NOT_APPLICABLE", reason: "Verdict not CONSUMER_WINS" };
     }
-    if (!dispute.reviewerOrganizationId) {
-      return { status: "NO_REVIEWER_ORG", reason: "Dispute is not assigned to an organization" };
-    }
 
     const pd = dispute.paymentDetails;
     const sourceChain = pd?.blockchain;
@@ -391,21 +397,106 @@ export const createRefundAttempt = internalAction({
     }
 
     const logIndex = typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex;
-    const created = await ctx.runMutation(internal.refunds.createRefundAttemptRecord, {
-      caseId: args.caseId,
-      organizationId: dispute.reviewerOrganizationId,
+
+    // Idempotency: if a refund already exists for this exact source transfer, surface it.
+    const existingBySource = await ctx.runQuery(internal.refunds.getRefundBySourceTriplet as any, {
       sourceChain,
       sourceTxHash,
       sourceTransferLogIndex: logIndex,
-      amountMicrousdc: refundAmountMicrousdc,
-      refundToAddress: verify.payerAddress,
     });
-
-    if (created.status === "PENDING_SEND" && isCoinbaseRefundsEnabled()) {
-      await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: created.refundId });
+    if (existingBySource) {
+      return { status: "ALREADY_EXISTS", refundId: existingBySource._id };
     }
 
-    return created;
+    // Preferred flow: org-scoped refund credits (dashboard customers).
+    if (dispute.reviewerOrganizationId) {
+      const created = await ctx.runMutation(internal.refunds.createRefundAttemptRecord, {
+        caseId: args.caseId,
+        organizationId: dispute.reviewerOrganizationId,
+        sourceChain,
+        sourceTxHash,
+        sourceTransferLogIndex: logIndex,
+        amountMicrousdc: refundAmountMicrousdc,
+        refundToAddress: verify.payerAddress,
+      });
+
+      if (created.status === "PENDING_SEND" && isCoinbaseRefundsEnabled()) {
+        await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: created.refundId });
+      }
+
+      return created;
+    }
+
+    // Fallback flow: wallet-first merchant balances (email link approvals / non-org merchants).
+    const merchantCaip10 =
+      toBaseMerchantCaip10(pd?.defendantMetadata?.merchantId) ||
+      toBaseMerchantCaip10(pd?.defendantMetadata?.walletAddress) ||
+      toBaseMerchantCaip10(dispute.defendant) ||
+      (recipientAddress ? `eip155:8453:${recipientAddress}` : null);
+
+    if (!merchantCaip10) {
+      return {
+        status: "MISSING_PAYMENT_DETAILS",
+        reason: "Missing merchant CAIP-10 identity (paymentDetails.defendantMetadata.merchantId)",
+      };
+    }
+
+    const disputeFeeUsdc =
+      typeof pd?.disputeFee === "number" && Number.isFinite(pd.disputeFee) ? pd.disputeFee : 0;
+    const feeMicrousdc = Math.max(0, Math.round(disputeFeeUsdc * 1_000_000));
+    const requiredMicrousdc = refundAmountMicrousdc + feeMicrousdc;
+    const requiredUsdc = requiredMicrousdc / 1_000_000;
+    const refundUsdc = refundAmountMicrousdc / 1_000_000;
+
+    // IMPORTANT: email-link approvals already debit merchantBalances at click time.
+    // Avoid double-debiting on the subsequent refund worker run.
+    const predebitedByEmailLink = dispute.humanOverrideReason === "Approved via email link";
+
+    if (!predebitedByEmailLink) {
+      const bal: any = await ctx.runQuery(internal.refunds.getMerchantBalanceByWalletCurrency as any, {
+        walletAddress: merchantCaip10,
+        currency: "USDC",
+      });
+      const availableUsdc = typeof bal?.availableBalance === "number" ? bal.availableBalance : 0;
+      if (!bal || availableUsdc < requiredUsdc) {
+        const inserted = await ctx.runMutation(internal.refunds.insertWalletFirstRefundTransaction as any, {
+          caseId: args.caseId,
+          sourceChain,
+          sourceTxHash,
+          sourceTransferLogIndex: logIndex,
+          refundAmountMicrousdc,
+          refundToAddress: verify.payerAddress,
+          status: "INSUFFICIENT_CREDITS",
+          failureCode: "INSUFFICIENT_CREDITS",
+          failureReason: "Insufficient refund credits to cover refund + fee",
+        });
+        return { status: "INSUFFICIENT_CREDITS", refundId: inserted.refundId };
+      }
+      await ctx.runMutation(internal.refunds.adjustMerchantBalanceForRefund as any, {
+        walletAddress: merchantCaip10,
+        currency: "USDC",
+        deltaAvailableUsdc: -requiredUsdc,
+        deltaTotalRefundedUsdc: refundUsdc,
+        setLastRefundAt: true,
+      });
+    }
+
+    const inserted = await ctx.runMutation(internal.refunds.insertWalletFirstRefundTransaction as any, {
+      caseId: args.caseId,
+      sourceChain,
+      sourceTxHash,
+      sourceTransferLogIndex: logIndex,
+      refundAmountMicrousdc,
+      refundToAddress: verify.payerAddress,
+      status: "PENDING_SEND",
+    });
+    const refundId = inserted.refundId;
+
+    if (isCoinbaseRefundsEnabled()) {
+      await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId });
+    }
+
+    return { status: "PENDING_SEND", refundId };
   },
 });
 
@@ -420,12 +511,12 @@ export const sendPendingRefund = internalAction({
     if (refund.status !== "PENDING_SEND") return { status: "SKIPPED" };
 
     const dispute: any = await ctx.runQuery(api.cases.getCaseById, { caseId: refund.caseId });
-    if (!dispute || !dispute.reviewerOrganizationId) {
+    if (!dispute) {
       await ctx.runMutation(internal.refunds.markRefundFailed, {
         refundId: args.refundId,
         status: "FAILED",
-        failureCode: "NO_REVIEWER_ORG",
-        failureReason: "Case missing reviewerOrganizationId at send time",
+        failureCode: "NO_CASE",
+        failureReason: "Case missing at send time",
       });
       return { status: "FAILED" };
     }
@@ -439,14 +530,48 @@ export const sendPendingRefund = internalAction({
     });
 
     if (!send.ok) {
-      await ctx.runMutation(internal.refunds.rollbackAndFailRefund, {
-        refundId: args.refundId,
-        organizationId: dispute.reviewerOrganizationId,
-        amountMicrousdc,
-        status: send.code === "COINBASE_DISABLED" ? "COINBASE_DISABLED" : "FAILED",
-        failureCode: send.code,
-        failureReason: send.message,
-      });
+      if (dispute.reviewerOrganizationId) {
+        await ctx.runMutation(internal.refunds.rollbackAndFailRefund, {
+          refundId: args.refundId,
+          organizationId: dispute.reviewerOrganizationId,
+          amountMicrousdc,
+          status: send.code === "COINBASE_DISABLED" ? "COINBASE_DISABLED" : "FAILED",
+          failureCode: send.code,
+          failureReason: send.message,
+        });
+      } else {
+        // Wallet-first fallback: roll back merchantBalances when we debited without an org.
+        const pd = dispute.paymentDetails || {};
+        const merchantCaip10 =
+          toBaseMerchantCaip10(pd?.defendantMetadata?.merchantId) ||
+          toBaseMerchantCaip10(pd?.defendantMetadata?.walletAddress) ||
+          toBaseMerchantCaip10(dispute.defendant) ||
+          (typeof pd?.defendantMetadata?.walletAddress === "string" ? `eip155:8453:${String(pd.defendantMetadata.walletAddress).toLowerCase()}` : null);
+
+        const disputeFeeUsdc =
+          typeof pd?.disputeFee === "number" && Number.isFinite(pd.disputeFee) ? pd.disputeFee : 0;
+        const feeMicrousdc = Math.max(0, Math.round(disputeFeeUsdc * 1_000_000));
+        const requiredMicrousdc = amountMicrousdc + feeMicrousdc;
+        const requiredUsdc = requiredMicrousdc / 1_000_000;
+        const refundUsdc = amountMicrousdc / 1_000_000;
+
+        if (merchantCaip10) {
+          await ctx.runMutation(internal.refunds.adjustMerchantBalanceForRefund as any, {
+            walletAddress: merchantCaip10,
+            currency: "USDC",
+            deltaAvailableUsdc: requiredUsdc,
+            deltaTotalRefundedUsdc: -refundUsdc,
+            setLastRefundAt: false,
+          });
+        }
+
+        await ctx.runMutation(internal.refunds.markRefundFailed, {
+          refundId: args.refundId,
+          status: send.code === "COINBASE_DISABLED" ? "COINBASE_DISABLED" : "FAILED",
+          failureCode: send.code,
+          failureReason: send.message,
+        });
+      }
       return { status: "FAILED", code: send.code };
     }
 
@@ -458,6 +583,104 @@ export const sendPendingRefund = internalAction({
     });
 
     return { status: "EXECUTED", refundId: args.refundId };
+  },
+});
+
+// ---- Wallet-first helpers (used from internal actions via ctx.runQuery/ctx.runMutation) ----
+
+export const getRefundBySourceTriplet = internalQuery({
+  args: {
+    sourceChain: v.union(v.literal("base"), v.literal("solana")),
+    sourceTxHash: v.string(),
+    sourceTransferLogIndex: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("refundTransactions")
+      .withIndex("by_source_triplet", (q: any) =>
+        q.eq("sourceChain", args.sourceChain).eq("sourceTxHash", args.sourceTxHash).eq("sourceTransferLogIndex", args.sourceTransferLogIndex),
+      )
+      .first();
+  },
+});
+
+export const getMerchantBalanceByWalletCurrency = internalQuery({
+  args: { walletAddress: v.string(), currency: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("merchantBalances")
+      .withIndex("by_wallet_currency", (q: any) => q.eq("walletAddress", args.walletAddress).eq("currency", args.currency))
+      .first();
+  },
+});
+
+export const adjustMerchantBalanceForRefund = internalMutation({
+  args: {
+    walletAddress: v.string(),
+    currency: v.string(),
+    deltaAvailableUsdc: v.number(),
+    deltaTotalRefundedUsdc: v.number(),
+    setLastRefundAt: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const bal: any = await ctx.db
+      .query("merchantBalances")
+      .withIndex("by_wallet_currency", (q: any) => q.eq("walletAddress", args.walletAddress).eq("currency", args.currency))
+      .first();
+    if (!bal?._id) return { ok: false as const, code: "NO_BALANCE" as const };
+
+    const now = Date.now();
+    const nextAvailable = (typeof bal.availableBalance === "number" ? bal.availableBalance : 0) + args.deltaAvailableUsdc;
+    const nextTotalRefunded = (typeof bal.totalRefunded === "number" ? bal.totalRefunded : 0) + args.deltaTotalRefundedUsdc;
+    await ctx.db.patch(bal._id, {
+      availableBalance: Math.max(0, nextAvailable),
+      totalRefunded: Math.max(0, nextTotalRefunded),
+      ...(args.setLastRefundAt ? { lastRefundAt: now } : {}),
+      updatedAt: now,
+    });
+    return { ok: true as const };
+  },
+});
+
+export const insertWalletFirstRefundTransaction = internalMutation({
+  args: {
+    caseId: v.id("cases"),
+    sourceChain: v.union(v.literal("base"), v.literal("solana")),
+    sourceTxHash: v.string(),
+    sourceTransferLogIndex: v.number(),
+    refundAmountMicrousdc: v.number(),
+    refundToAddress: v.string(),
+    status: v.union(
+      v.literal("PENDING_SEND"),
+      v.literal("INSUFFICIENT_CREDITS"),
+      v.literal("FAILED"),
+      v.literal("COINBASE_DISABLED"),
+    ),
+    failureCode: v.optional(v.string()),
+    failureReason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const refundUsdc = args.refundAmountMicrousdc / 1_000_000;
+    const refundId = await ctx.db.insert("refundTransactions", {
+      caseId: args.caseId,
+      fromWallet: "platform",
+      toWallet: args.refundToAddress,
+      amount: refundUsdc,
+      currency: "USDC",
+      blockchain: args.sourceChain,
+      status: args.status as any,
+      createdAt: Date.now(),
+      sourceChain: args.sourceChain,
+      sourceTxHash: args.sourceTxHash,
+      sourceTransferLogIndex: args.sourceTransferLogIndex,
+      amountMicrousdc: args.refundAmountMicrousdc,
+      refundToAddress: args.refundToAddress,
+      provider: "coinbase",
+      failureCode: args.failureCode,
+      failureReason: args.failureReason,
+      errorMessage: args.failureReason,
+    } as any);
+    return { refundId };
   },
 });
 

@@ -398,6 +398,88 @@ describe("Refund System - Integration Tests", () => {
     expect(refund).toBeNull();
   });
 
+  it("payment disputes: should create a refund record even when reviewerOrganizationId is missing (wallet-first merchantBalances flow)", async () => {
+    const txHash = "0x" + "c".repeat(64);
+    const recipient = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+    const merchantCaip10 = `eip155:8453:${recipient.toLowerCase()}`;
+
+    // Seed merchant balance for wallet-first flow (covers refund + fee).
+    await t.run(async (ctx) => {
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchantCaip10,
+        currency: "USDC",
+        availableBalance: 1, // 1 USDC
+        lockedBalance: 0,
+        totalDeposited: 1,
+        totalRefunded: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x1830DAdb0A16eb569B5f8526AADDF47ce85aC8e0",
+        defendant: recipient.toLowerCase(),
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: Date.now(),
+        description: "Test payment dispute (wallet-first)",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 250000,
+        decidedAt: Date.now(),
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: Date.now(),
+        paymentSourceChain: "base",
+        paymentSourceTxHash: txHash,
+        paymentDetails: {
+          transactionId: txHash,
+          transactionHash: txHash,
+          blockchain: "base",
+          amountMicrousdc: 250000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 7,
+          disputeReason: "other",
+          regulationEDeadline: Date.now() + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+          defendantMetadata: {
+            merchantId: merchantCaip10,
+            walletAddress: recipient,
+          },
+        },
+      });
+    });
+
+    const res = await t.action(internal.refunds.createRefundAttempt, { caseId });
+    expect(res.status).toBeDefined();
+
+    const refund = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+        .first();
+    });
+
+    expect(refund).toBeDefined();
+    expect(refund?.status).toBe("PENDING_SEND");
+    // In vitest/mock mode, verifyUsdcTransferByRecipient returns a deterministic payerAddress.
+    expect(refund?.refundToAddress).toBe("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+
+    // Ensure we debited merchantBalances by (refund + fee).
+    const bal = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantBalances")
+        .withIndex("by_wallet_currency", (q: any) => q.eq("walletAddress", merchantCaip10).eq("currency", "USDC"))
+        .first();
+    });
+    expect(bal).toBeDefined();
+    expect(bal?.availableBalance).toBeCloseTo(1 - (0.25 + 0.05), 6);
+  });
+
   it("should skip refund if amount exceeds threshold", async () => {
     // Set threshold at $50
     await t.run(async (ctx) => {
