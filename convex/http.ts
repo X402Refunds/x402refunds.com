@@ -6,6 +6,7 @@ import { httpAction } from "./_generated/server";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { api, internal } = require("./_generated/api") as any;
 import { buildMerchantActionCopy } from "./lib/merchantActionCopy";
+import { buildMerchantActionErrorCopy } from "./lib/merchantActionErrorCopy";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
@@ -337,18 +338,17 @@ http.route({
     if (!res?.ok) {
       const message = typeof res?.message === "string" ? res.message : "Action failed";
       const code = typeof res?.code === "string" ? res.code : "ERROR";
-      if (code === "INSUFFICIENT_CREDITS") {
-        const body =
-          `Refund not sent yet — insufficient refund credits.\n\n` +
-          `Top up refund credits here:\n` +
-          `- https://x402disputes.com/topup\n\n` +
-          `After topping up, click the email link again.\n`;
-        return new Response(body, {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
-        });
+      // Try to include case id if we can resolve the token record.
+      let caseId: string | null = null;
+      try {
+        const tokenRec = await (ctx.runQuery as any)((internal as any).merchantEmailActions.getToken, { token });
+        if (tokenRec?.caseId) caseId = String(tokenRec.caseId);
+      } catch {
+        caseId = null;
       }
-      return new Response(`${code}: ${message}`, {
+
+      const body = buildMerchantActionErrorCopy({ code, message, caseId });
+      return new Response(body, {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
       });
