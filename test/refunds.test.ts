@@ -277,6 +277,127 @@ describe("Refund System - Integration Tests", () => {
     expect(result.reason).toBe("Auto-refund not enabled");
   });
 
+  it("payment disputes: refund-to-source should use stored recipient + logIndex to derive payer (not amount-only)", async () => {
+    const organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Refund-to-source org",
+        createdAt: Date.now(),
+      });
+    });
+
+    const txHash = "0x" + "a".repeat(64);
+    const recipient = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x1830DAdb0A16eb569B5f8526AADDF47ce85aC8e0",
+        defendant: `eip155:8453:${recipient}`,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: Date.now(),
+        description: "Test payment dispute",
+        amount: 0.25,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 250000,
+        decidedAt: Date.now(),
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: Date.now(),
+        reviewerOrganizationId: organizationId,
+        paymentSourceChain: "base",
+        paymentSourceTxHash: txHash,
+        paymentDetails: {
+          transactionId: txHash,
+          transactionHash: txHash,
+          blockchain: "base",
+          amountMicrousdc: 250000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 7,
+          disputeReason: "other",
+          regulationEDeadline: Date.now() + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+          defendantMetadata: {
+            walletAddress: recipient,
+          },
+        },
+      });
+    });
+
+    const res = await t.action(internal.refunds.createRefundAttempt, { caseId });
+    expect(res.status).toBeDefined();
+
+    const refund = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+        .first();
+    });
+
+    // In vitest/mock mode, verifyUsdcTransferByRecipient returns a deterministic payerAddress.
+    expect(refund).toBeDefined();
+    expect(refund?.refundToAddress).toBe("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+    expect(refund?.toWallet).toBe("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+    expect(refund?.sourceTransferLogIndex).toBe(7);
+  });
+
+  it("payment disputes: should refuse refund-to-source if recipient walletAddress is missing (prevents wrong-wallet refunds)", async () => {
+    const organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Refund-to-source org (missing recipient)",
+        createdAt: Date.now(),
+      });
+    });
+
+    const txHash = "0x" + "b".repeat(64);
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x1830DAdb0A16eb569B5f8526AADDF47ce85aC8e0",
+        defendant: "",
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: Date.now(),
+        description: "Test payment dispute (missing recipient)",
+        amount: 0.25,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 250000,
+        decidedAt: Date.now(),
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: Date.now(),
+        reviewerOrganizationId: organizationId,
+        paymentSourceChain: "base",
+        paymentSourceTxHash: txHash,
+        paymentDetails: {
+          transactionId: txHash,
+          transactionHash: txHash,
+          blockchain: "base",
+          amountMicrousdc: 250000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 1,
+          disputeReason: "other",
+          regulationEDeadline: Date.now() + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+        },
+      });
+    });
+
+    const res = await t.action(internal.refunds.createRefundAttempt, { caseId });
+    expect(res.status).toBe("MISSING_PAYMENT_DETAILS");
+
+    const refund = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("refundTransactions")
+        .withIndex("by_case", (q: any) => q.eq("caseId", caseId))
+        .first();
+    });
+    expect(refund).toBeNull();
+  });
+
   it("should skip refund if amount exceeds threshold", async () => {
     // Set threshold at $50
     await t.run(async (ctx) => {

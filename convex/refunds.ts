@@ -315,10 +315,25 @@ export const createRefundAttempt = internalAction({
     const paymentAmountMicrousdc = pd?.amountMicrousdc;
     const refundAmountMicrousdc = dispute.finalRefundAmountMicrousdc;
 
-    if (!sourceChain || !sourceTxHash || typeof paymentAmountMicrousdc !== "number") {
+    // NOTE: For refund-to-source we MUST be able to deterministically identify the original USDC Transfer
+    // within the tx. Verifying by amount alone can mis-match if a tx contains multiple USDC transfers of
+    // the same amount, leading to refunds being sent to the wrong wallet.
+    const recipientAddressRaw: string | undefined =
+      pd?.defendantMetadata?.walletAddress ||
+      (typeof dispute.defendant === "string" && dispute.defendant.length > 0
+        ? extractAddress(dispute.defendant)
+        : undefined);
+
+    const recipientAddress =
+      typeof recipientAddressRaw === "string" && recipientAddressRaw.length > 0
+        ? recipientAddressRaw.toLowerCase()
+        : undefined;
+
+    if (!sourceChain || !sourceTxHash || typeof paymentAmountMicrousdc !== "number" || !recipientAddress) {
       return {
         status: "MISSING_PAYMENT_DETAILS",
-        reason: "Missing verified paymentDetails (blockchain, transactionHash, amountMicrousdc)",
+        reason:
+          "Missing verified paymentDetails (blockchain, transactionHash, amountMicrousdc, recipient walletAddress)",
       };
     }
     if (typeof refundAmountMicrousdc !== "number" || !Number.isFinite(refundAmountMicrousdc) || refundAmountMicrousdc <= 0) {
@@ -334,10 +349,11 @@ export const createRefundAttempt = internalAction({
       };
     }
 
-    const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
+    const verify = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByRecipient, {
       blockchain: sourceChain,
       transactionHash: sourceTxHash,
-      expectedAmountMicrousdc: paymentAmountMicrousdc,
+      recipientAddress,
+      sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : undefined,
     });
 
     if (!verify.ok) {
@@ -358,6 +374,20 @@ export const createRefundAttempt = internalAction({
         failureReason: verify.message,
       });
       return { status, refundId: inserted.refundId };
+    }
+
+    if (verify.amountMicrousdc !== paymentAmountMicrousdc) {
+      const inserted = await ctx.runMutation(internal.refunds.insertRefundFailure, {
+        caseId: args.caseId,
+        sourceChain,
+        sourceTxHash,
+        sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex,
+        amountMicrousdc: paymentAmountMicrousdc,
+        status: "INVALID_PROOF",
+        failureCode: "AMOUNT_MISMATCH",
+        failureReason: `Verified amount (${verify.amountMicrousdc}) did not match expected (${paymentAmountMicrousdc})`,
+      });
+      return { status: "INVALID_PROOF", refundId: inserted.refundId };
     }
 
     const logIndex = typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex;
