@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { useAccount, useWalletClient } from "wagmi";
 import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
+import { Loader2 } from "lucide-react";
 const API_BASE = "https://api.x402disputes.com";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
 const MIN_TOPUP_MICROUSDC = BigInt(10_000); // $0.01
@@ -34,7 +35,6 @@ export default function TopupPage() {
   const didPrefillAmount = useRef(false);
   const [merchantAddress, setMerchantAddress] = useState("");
   const [caseId, setCaseId] = useState<string>("");
-  const [prefilledEmail, setPrefilledEmail] = useState<string>("");
   const [actionToken, setActionToken] = useState<string>("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
@@ -58,10 +58,7 @@ export default function TopupPage() {
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [balanceMicros, setBalanceMicros] = useState<string | null>(null);
 
-  const [notificationEmail, setNotificationEmail] = useState<string | null>(null);
-  const [notificationVerified, setNotificationVerified] = useState<boolean | null>(null);
   const [notificationRequiredUsdc, setNotificationRequiredUsdc] = useState<number | null>(null);
-  const [notificationHasSufficientCredits, setNotificationHasSufficientCredits] = useState<boolean | null>(null);
 
   const [completionStatus, setCompletionStatus] = useState<"idle" | "waiting" | "done" | "error">("idle");
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
@@ -74,12 +71,10 @@ export default function TopupPage() {
       const url = new URL(window.location.href);
       const merchantFromQuery = url.searchParams.get("merchant");
       const caseFromQuery = url.searchParams.get("caseId") || url.searchParams.get("case") || "";
-      const emailFromQuery = url.searchParams.get("email") || "";
       const actionTokenFromQuery = url.searchParams.get("actionToken") || url.searchParams.get("token") || "";
       const amountFromQuery = url.searchParams.get("amount") || url.searchParams.get("amountUsdc") || "";
       if (merchantFromQuery) setMerchantAddress((prev) => (prev.trim() ? prev : merchantFromQuery));
       if (caseFromQuery) setCaseId((prev) => (prev ? prev : caseFromQuery));
-      if (emailFromQuery) setPrefilledEmail((prev) => (prev ? prev : emailFromQuery));
       if (actionTokenFromQuery) setActionToken((prev) => (prev ? prev : actionTokenFromQuery));
       if (amountFromQuery) {
         const normalized = amountFromQuery.trim();
@@ -129,10 +124,7 @@ export default function TopupPage() {
   // If we have a dispute case, fetch notification status (email + verification + required credits).
   useEffect(() => {
     if (!caseId) {
-      setNotificationEmail(null);
-      setNotificationVerified(null);
       setNotificationRequiredUsdc(null);
-      setNotificationHasSufficientCredits(null);
       return;
     }
     void (async () => {
@@ -142,12 +134,7 @@ export default function TopupPage() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data?.ok) return;
-        setNotificationEmail(typeof data.supportEmail === "string" ? data.supportEmail : null);
-        setNotificationVerified(typeof data.verified === "boolean" ? data.verified : null);
         setNotificationRequiredUsdc(typeof data.requiredUsdc === "number" ? data.requiredUsdc : null);
-        setNotificationHasSufficientCredits(
-          typeof data.hasSufficientCredits === "boolean" ? data.hasSufficientCredits : null,
-        );
       } catch {
         // ignore
       }
@@ -223,8 +210,6 @@ export default function TopupPage() {
   const availableUsdc =
     balanceStatus === "success" && balanceMicros ? Number(balanceMicros) / 1_000_000 : null;
   const requiredUsdc = typeof notificationRequiredUsdc === "number" ? notificationRequiredUsdc : null;
-  const hasEnoughForActions =
-    typeof notificationHasSufficientCredits === "boolean" ? notificationHasSufficientCredits : null;
 
   // UX: If we know the required credits for a dispute and the merchant's current credits,
   // prefill the top-up amount with the missing delta (without overriding user input).
@@ -264,8 +249,7 @@ export default function TopupPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Top up balance</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-end">
           <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
             {status === "idle"
               ? "Ready"
@@ -293,7 +277,7 @@ export default function TopupPage() {
             )}
             {merchantCaip10 && (
               <div className="text-sm">
-                <div className="text-xs text-muted-foreground">Refund credits</div>
+                <div className="text-xs text-muted-foreground">Refund credit balance</div>
                 <div className="font-medium text-foreground">
                   {balanceStatus === "loading"
                     ? "Loading…"
@@ -307,62 +291,18 @@ export default function TopupPage() {
             )}
           </div>
 
-          {caseId && (
-            <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-1">
-              <div className="text-sm font-medium text-foreground">For dispute {caseId.slice(0, 8)}…</div>
-              {typeof requiredUsdc === "number" ? (
-                <div className="text-xs text-muted-foreground">
-                  One-click actions require at least <code className="font-mono">{requiredUsdc.toFixed(6)} USDC</code>{" "}
-                  (refund + dispute fee).
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground">
-                  This page can also be used for manual top-ups (no dispute action selected).
-                </div>
-              )}
-              {typeof hasEnoughForActions === "boolean" && (
-                <div className="text-xs">
-                  {hasEnoughForActions ? (
-                    <span className="text-foreground">
-                      Status: <span className="font-medium">Enough credits</span>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      Status: <span className="font-medium text-foreground">Not enough credits yet</span> — top up a
-                      bit more to enable approve/reject links.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div className="pt-2 text-xs text-muted-foreground space-y-1">
-                <div>
-                  Notifications sent to:{" "}
-                  <code className="font-mono">
-                    {notificationEmail || prefilledEmail || "from /.well-known/x402.json"}
-                  </code>
-                </div>
-                {prefilledEmail && notificationEmail && prefilledEmail !== notificationEmail && (
-                  <div>
-                    Note: link email differs from x402.json. Using <code className="font-mono">{notificationEmail}</code>.
-                  </div>
-                )}
-                {typeof notificationVerified === "boolean" && (
-                  <div>
-                    Email verification:{" "}
-                    <span className="font-medium text-foreground">{notificationVerified ? "Verified" : "Not verified"}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {caseId && completionStatus !== "idle" && (
             <div className={completionStatus === "done" ? "rounded-lg border border-border bg-muted/20 p-3 text-sm text-foreground" : "rounded-lg border border-border bg-muted/20 p-3 text-sm text-muted-foreground"}>
-              {completionMessage ||
-                (completionStatus === "waiting"
-                  ? "Top-up submitted — finalizing your action now…"
-                  : "Top-up submitted — processing…")}
+              <div className="flex items-center gap-2">
+                {completionStatus === "waiting" && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>
+                  {completionStatus === "waiting"
+                    ? "Top-up received — starting the refund…"
+                    : completionStatus === "done"
+                      ? "All set — refund is processing. We’ll email you when it’s processed. You can close this page."
+                      : completionMessage || "Top-up submitted — processing…"}
+                </span>
+              </div>
               <div className="mt-2">
                 <a
                   className="text-xs underline text-muted-foreground"
