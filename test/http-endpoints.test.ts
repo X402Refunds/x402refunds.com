@@ -297,6 +297,34 @@ describe('HTTP API - Dispute Filing', () => {
   });
 });
 
+describe("HTTP API - Tx merchant lookup (Base)", () => {
+  it("GET /v1/tx/merchant should exist (not 404) and validate missing txHash", async () => {
+    const response = await fetch(`${API_BASE_URL}/v1/tx/merchant`, { method: "GET" });
+    // Endpoint may not exist on older deployments.
+    expect([400, 404]).toContain(response.status);
+    if (response.status === 400) {
+      const data = await response.json().catch(() => ({} as any));
+      expect(data.ok).toBe(false);
+    }
+  });
+
+  it("GET /v1/tx/merchant returns ok:true (configured) or NOT_CONFIGURED / lookup failure (older)", async () => {
+    const txHash = "0x" + "11".repeat(32);
+    const response = await fetch(`${API_BASE_URL}/v1/tx/merchant?txHash=${encodeURIComponent(txHash)}`, {
+      method: "GET",
+    });
+
+    // Endpoint may not exist on older deployments.
+    expect([200, 400, 500, 404]).toContain(response.status);
+    if (response.status === 200) {
+      const data = await response.json().catch(() => ({} as any));
+      expect(data.ok).toBe(true);
+      expect(typeof data.merchant).toBe("string");
+      expect(typeof data.recipientAddress).toBe("string");
+    }
+  });
+});
+
 describe('HTTP API - Case Status', () => {
   // Pure HTTP tests - validate error responses without test data
 

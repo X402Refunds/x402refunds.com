@@ -48,7 +48,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
         body: { error: "Internal Server Error" }
       },
       transactionHash: `0x${timestamp}abc123`,
-      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
+      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
       blockchain: "base"
     });
     
@@ -76,7 +76,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123",
-      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
+      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
       blockchain: "polygon" // ❌ Invalid - not supported
     });
     
@@ -112,7 +112,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
       transactionHash: "0xabc123def456",
-      recipientAddress: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
+      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
       blockchain: "base",
       dryRun: true  // ← Validation only
     });

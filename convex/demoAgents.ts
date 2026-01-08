@@ -4,7 +4,7 @@
  * Working X-402 demo agent that accepts 0.01 USDC payments on Base
  * and returns real image URLs via Pollinations AI.
  * 
- * Shared wallet: 0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9
+ * Shared wallet: 0x96BDBD233d4ABC11E7C77c45CAE14194332E7381
  * Price: 0.01 USDC (10000 wei, 6 decimals)
  * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
  * 
@@ -35,7 +35,8 @@ import { api } from "./_generated/api";
 import { v } from "convex/values";
 
 // Shared wallet for all demo agents
-const DEMO_AGENTS_WALLET = process.env.DEMO_AGENTS_WALLET || "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9";
+const DEMO_AGENTS_WALLET =
+  process.env.DEMO_AGENTS_WALLET || "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
 
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";

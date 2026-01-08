@@ -187,6 +187,212 @@ export const verifyUsdcTransferByRecipient = action({
   },
 });
 
+type DeriveMerchantCandidates = Array<{
+  tokenContract: string;
+  payerAddress: string;
+  recipientAddress: string;
+  amountMicrousdc: number;
+  amountUsdc: string;
+  logIndex: number;
+}>;
+
+/**
+ * Derive the merchant recipient for a Base USDC payment tx hash (no recipient provided).
+ *
+ * This is intended for the human `/file-dispute` UX to avoid manual merchant wallet entry.
+ * If the tx contains multiple USDC Transfer logs, we return MULTI_MATCH so the caller can decide
+ * how to disambiguate (or prompt the user).
+ */
+export const deriveUsdcMerchantFromTxHashBase = action({
+  args: {
+    transactionHash: v.string(),
+  },
+  handler: async (
+    _ctx,
+    args,
+  ): Promise<
+    | {
+        ok: true;
+        blockchain: "base";
+        transactionHash: string;
+        payerAddress: string;
+        recipientAddress: string;
+        amountMicrousdc: number;
+        amountUsdc: string;
+        logIndex: number;
+        tokenContract?: string;
+      }
+    | {
+        ok: false;
+        blockchain: "base";
+        transactionHash: string;
+        code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NOT_CONFIGURED" | "UNSUPPORTED";
+        message: string;
+        candidates?: DeriveMerchantCandidates;
+      }
+  > => {
+    const tx = (args.transactionHash || "").trim();
+    if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "UNSUPPORTED",
+        message: "transactionHash must be a Base tx hash: 0x + 64 hex chars",
+      };
+    }
+
+    const mockMode =
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST === "true" ||
+      process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+
+    if (mockMode) {
+      return {
+        ok: true,
+        blockchain: "base",
+        transactionHash: tx,
+        payerAddress: "0x742d35cc6634c0532925a3b844bc9e7595f0beb0",
+        recipientAddress: "0x9876543210987654321098765432109876543210",
+        amountMicrousdc: 250000,
+        amountUsdc: formatMicrosToUsdc(250000),
+        logIndex: 0,
+      };
+    }
+
+    const alchemyKey = process.env.ALCHEMY_API_KEY;
+    if (!alchemyKey) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "NOT_CONFIGURED",
+        message: "ALCHEMY_API_KEY is not configured (required to verify Base tx hashes)",
+      };
+    }
+
+    const rpcUrl = `${RPC_ENDPOINTS.base}/${alchemyKey}`;
+
+    const receiptResp = await fetch(rpcUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        id: 1,
+        jsonrpc: "2.0",
+        method: "eth_getTransactionReceipt",
+        params: [tx],
+      }),
+    });
+
+    const receiptData = await receiptResp.json().catch(() => null);
+    if (!receiptData || receiptData.error) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "TX_NOT_FOUND",
+        message: receiptData?.error?.message || "Transaction receipt not found",
+      };
+    }
+
+    const receipt = receiptData.result;
+    if (!receipt) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "TX_NOT_FOUND",
+        message: "Transaction receipt not found",
+      };
+    }
+
+    const logs: any[] = Array.isArray(receipt.logs) ? receipt.logs : [];
+
+    const candidates: DeriveMerchantCandidates = (Array.isArray(logs) ? logs : [])
+      .map((log): DeriveMerchantCandidates[number] | null => {
+        const tokenContract = String(log?.address || "").toLowerCase();
+        if (!BASE_USDC_CONTRACT_ALLOWLIST.has(tokenContract)) return null;
+
+        const topics = Array.isArray(log?.topics) ? log.topics : [];
+        if (topics.length < 3) return null;
+        if (String(topics[0] || "").toLowerCase() !== ERC20_TRANSFER_TOPIC0) return null;
+
+        const payerAddress = topicToAddress(String(topics[1] || ""));
+        const recipientAddress = topicToAddress(String(topics[2] || ""));
+
+        const dataHex = String(log?.data || "0x0");
+        let amountRaw: bigint;
+        try {
+          amountRaw = BigInt(dataHex);
+        } catch {
+          return null;
+        }
+
+        if (amountRaw < 0n) return null;
+        if (amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+          // Avoid unsafe integer conversion; this endpoint is intended for typical small payments.
+          return null;
+        }
+
+        const amountMicrousdc = Number(amountRaw);
+
+        const logIndex =
+          typeof log?.logIndex === "string" && String(log.logIndex).startsWith("0x")
+            ? parseInt(String(log.logIndex), 16)
+            : Number.isFinite(Number(log?.logIndex))
+              ? Number(log.logIndex)
+              : 0;
+
+        return {
+          tokenContract,
+          payerAddress,
+          recipientAddress,
+          amountMicrousdc,
+          amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+          logIndex,
+        };
+      })
+      .filter((x): x is DeriveMerchantCandidates[number] => Boolean(x));
+
+    if (candidates.length === 0) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "NO_MATCH",
+        message: "No accepted USDC Transfer event found in transaction receipt",
+      };
+    }
+
+    if (candidates.length !== 1) {
+      return {
+        ok: false,
+        blockchain: "base",
+        transactionHash: tx,
+        code: "MULTI_MATCH",
+        message: `Multiple USDC Transfer events found in transaction receipt (${candidates.length}).`,
+        candidates: candidates.slice(0, 25),
+      };
+    }
+
+    const match = candidates[0]!;
+    return {
+      ok: true,
+      blockchain: "base",
+      transactionHash: tx,
+      payerAddress: match.payerAddress,
+      recipientAddress: match.recipientAddress,
+      amountMicrousdc: match.amountMicrousdc,
+      amountUsdc: match.amountUsdc,
+      logIndex: match.logIndex,
+      tokenContract: match.tokenContract,
+    };
+  },
+});
+
 /**
  * Find matching ERC-20 Transfer logs in a receipt. This is AA-safe: it does NOT rely on tx.to.
  */

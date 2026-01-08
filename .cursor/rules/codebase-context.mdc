@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-08T02:47:37.770Z
+**Auto-generated on**: 2026-01-08T11:43:47.918Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -106,7 +106,7 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
+- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
 - **canonicalDispute.ts** - Core logic
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
@@ -194,7 +194,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (58 test files)
+### Test Suites (59 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -243,6 +243,7 @@ Common HTTP routes exposed:
 - test/unit/payment-dispute-defendant-metadata.test.ts
 - test/unit/purge-nonpayment-cases.test.ts
 - test/unit/regulation-e-compliance.test.ts
+- test/unit/tx-merchant-lookup.test.ts
 - test/unit/v1-wallet-first-disputes.test.ts
 - test/unit/vector-similarity.test.ts
 - test/unit/webhooks.test.ts
@@ -374,7 +375,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 58 test files using Vitest
+- 59 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -407,5 +408,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/7/2026, 6:47:37 PM
-Files scanned: 526
+Generated: 1/8/2026, 3:43:47 AM
+Files scanned: 527

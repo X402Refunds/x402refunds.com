@@ -127,7 +127,7 @@ export const MCP_TOOLS = [
           type: "string",
           description:
             "REQUIRED. Merchant/vendor address that received USDC in this transaction. Used to deterministically select the payment transfer log.",
-          examples: ["0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9"],
+          examples: ["0x96BDBD233d4ABC11E7C77c45CAE14194332E7381"],
         },
         evidenceUrls: {
           type: "array",
@@ -850,7 +850,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
             amount: "0.01",
             currency: "USDC",
             network: "base",
-            recipient: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
+            recipient: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
             protocol: "X-402"
           },
           instructions: {

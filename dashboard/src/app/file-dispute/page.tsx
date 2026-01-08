@@ -14,11 +14,9 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { baseAddressToCaip10 } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402disputes.com";
 
-const BASE_EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const BASE_TX_RE = /^0x[a-fA-F0-9]{64}$/;
 
 function parseJsonOrThrow(label: string, s: string | undefined) {
@@ -33,7 +31,6 @@ function parseJsonOrThrow(label: string, s: string | undefined) {
 
 const formSchema = z
   .object({
-    merchantAddress: z.string().min(5, "Required"),
     merchantApiUrl: z.string().url("Must be a valid URL"),
     txHash: z.string().min(10, "Required"),
     description: z.string().min(10, "Min 10 chars").max(500, "Max 500 chars"),
@@ -48,13 +45,6 @@ const formSchema = z
   })
   .superRefine((v, ctx) => {
     // Base only (for now)
-    if (!BASE_EVM_ADDRESS_RE.test(v.merchantAddress.trim())) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["merchantAddress"],
-        message: "Merchant address must be a Base address: 0x + 40 hex chars",
-      });
-    }
     if (!BASE_TX_RE.test(v.txHash.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -127,7 +117,6 @@ export default function FileDisputePage() {
   } = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      merchantAddress: "",
       merchantApiUrl: "",
       txHash: "",
       description: "",
@@ -146,9 +135,33 @@ export default function FileDisputePage() {
     setFileResult(null);
     setSubmitting(true);
     try {
-      const merchantAddress = values.merchantAddress.trim();
-      const merchant = baseAddressToCaip10(merchantAddress);
       const evidenceUrls = [...uploadedEvidenceUrls];
+
+      // Derive merchant from the on-chain USDC transfer recipient (Base)
+      const lookup = await fetch(
+        `${API_BASE}/v1/tx/merchant?txHash=${encodeURIComponent(values.txHash.trim())}`,
+        { method: "GET" },
+      );
+      const lookupRaw = await lookup.text().catch(() => "");
+      let lookupData: unknown = null;
+      try {
+        lookupData = lookupRaw ? (JSON.parse(lookupRaw) as unknown) : null;
+      } catch {
+        lookupData = null;
+      }
+      const lookupObj =
+        lookupData && typeof lookupData === "object" ? (lookupData as Record<string, unknown>) : null;
+      const lookupOk = lookupObj?.ok === true;
+      if (!lookup.ok || !lookupOk) {
+        const msg =
+          typeof lookupObj?.message === "string"
+            ? lookupObj.message
+            : lookupRaw || `Failed to derive merchant (${lookup.status})`;
+        throw new Error(msg);
+      }
+      const merchant =
+        typeof lookupObj?.merchant === "string" ? String(lookupObj.merchant) : "";
+      if (!merchant) throw new Error("Failed to derive merchant from transaction hash");
 
       const requestHeaders = parseJsonOrThrow("Request headers", values.requestHeadersJson);
       const requestBody = parseJsonOrThrow("Request body", values.requestBodyJson);
@@ -317,13 +330,6 @@ export default function FileDisputePage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="merchantAddress">Merchant wallet address</Label>
-                <div className="text-xs text-muted-foreground">Blockchain: Base</div>
-                <Input id="merchantAddress" placeholder="0x..." {...register("merchantAddress")} />
-                {errors.merchantAddress ? <div className="text-xs text-destructive">{errors.merchantAddress.message}</div> : null}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="merchantApiUrl">API URL you paid for</Label>
                 <div className="text-xs text-muted-foreground">Paste the exact URL you called when the payment happened.</div>

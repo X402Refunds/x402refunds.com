@@ -55,6 +55,7 @@ http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHa
 // Wallet-first v1 endpoints (no signup, no API keys)
 http.route({ path: "/v1/topup", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/tx/merchant", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/balance", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/notification-status", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/resend", method: "OPTIONS", handler: optionsHandler });
@@ -170,7 +171,7 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     void ctx;
     const baseOrigin = new URL(request.url).origin;
-    const demoWallet = "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9";
+    const demoWallet = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
     const merchant = `eip155:8453:${demoWallet.toLowerCase()}`;
     const disputeUrl = `${baseOrigin}/v1/disputes?merchant=${merchant}`;
     const supportEmail =
@@ -774,7 +775,7 @@ http.route({
                     amount: "0.01",
                     currency: "USDC",
                     network: "base",
-                    recipient: "0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9",
+                    recipient: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
                     protocol: "X-402"
                   },
                   instructions: {
@@ -1238,6 +1239,45 @@ function base64EncodeJson(obj: unknown): string {
 function jsonError(status: number, payload: unknown) {
   return new Response(JSON.stringify(payload), { status, headers: corsHeaders });
     }
+
+// GET /v1/tx/merchant?txHash=0x...
+// Derive the merchant recipient (CAIP-10) from an on-chain Base USDC transfer in the tx receipt.
+http.route({
+  path: "/v1/tx/merchant",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const txHash = (url.searchParams.get("txHash") || "").trim();
+
+    if (!txHash) {
+      return jsonError(400, { ok: false, code: "MISSING_TX_HASH", message: "txHash is required" });
+    }
+
+    const derived: any = await ctx.runAction((api as any).lib.blockchain.deriveUsdcMerchantFromTxHashBase, {
+      transactionHash: txHash,
+    });
+
+    if (!derived?.ok) {
+      const status = derived?.code === "NOT_CONFIGURED" ? 500 : 400;
+      return jsonError(status, { ok: false, ...derived });
+    }
+
+    const recipientAddress = String(derived.recipientAddress || "").toLowerCase();
+    const merchant = `eip155:8453:${recipientAddress}`;
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        merchant,
+        recipientAddress,
+        payerAddress: String(derived.payerAddress || "").toLowerCase(),
+        amountMicrousdc: derived.amountMicrousdc,
+        sourceTransferLogIndex: derived.logIndex,
+      }),
+      { status: 200, headers: corsHeaders },
+    );
+  }),
+});
 
 // GET /v1/merchant/balance?merchant=eip155:8453:0x...
 http.route({
@@ -2339,7 +2379,7 @@ http.route({
  * 
  * Purpose: Demonstrate X-402 signature-based payment flow
  * Payment: 0.01 USDC on BASE via X-402 protocol
- * Wallet: 0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9
+ * Wallet: 0x96BDBD233d4ABC11E7C77c45CAE14194332E7381
  * Facilitator: mcpay.tech (no auth required)
  * Behavior: Verifies payment signature, generates image, returns 200 OK with image URL
  */

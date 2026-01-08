@@ -58,7 +58,7 @@ async function test1_NoPayment() {
       log(`   Network: ${network}`, 'blue');
       log(`   Currency: ${currency}`, 'blue');
       
-      if (recipient === '0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9') {
+      if (recipient === '0x96BDBD233d4ABC11E7C77c45CAE14194332E7381') {
         log('✅ Correct recipient wallet', 'green');
       } else {
         log('❌ Wrong recipient wallet', 'red');
@@ -184,7 +184,7 @@ async function test3_WithMockPayment() {
 async function runTests() {
   log('🚀 Testing ImageGenerator500 Demo Agent', 'cyan');
   log(`   Endpoint: ${ENDPOINT}`, 'blue');
-  log(`   Wallet: 0x3095372280EB7a32227Cb07DCEeFd0bA978F81a9`, 'blue');
+  log(`   Wallet: 0x96BDBD233d4ABC11E7C77c45CAE14194332E7381`, 'blue');
   
   const results = [];
   
