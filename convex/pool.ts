@@ -294,6 +294,13 @@ export const topup_finalizeFromTxHash = internalAction({
       return { ok: false, txHash: args.txHash, reason: "NOT_CONFIGURED" };
     }
 
+    // Normalize merchant once so downstream comparisons don't fail due to checksum casing.
+    const parsedMerchant = parseCaip10Eip155(args.merchant);
+    if (!parsedMerchant.ok) {
+      // Credit mutation will also reject invalid merchant, but return a clear error early.
+      return { ok: false, txHash: args.txHash, reason: parsedMerchant.code };
+    }
+
     // Retry for up to ~30s (indexing / propagation lag is common).
     const maxAttempts = 12;
     let verified: any = null;
@@ -317,7 +324,7 @@ export const topup_finalizeFromTxHash = internalAction({
     }
 
     const credited = await ctx.runMutation((api as any).pool.topup_creditMerchantBalanceFromTx, {
-      merchant: args.merchant,
+      merchant: parsedMerchant.normalized,
       blockchain: "base",
       txHash: args.txHash,
       sourceTransferLogIndex: verified.logIndex,
@@ -334,7 +341,14 @@ export const topup_finalizeFromTxHash = internalAction({
     if (args.caseId) {
       try {
         const caseData: any = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId: args.caseId });
-        if (caseData && String(caseData.defendant || "") === String(args.merchant)) {
+        const defendantRaw = String(caseData?.defendant || "");
+        const parsedDefendant = parseCaip10Eip155(defendantRaw);
+        const sameMerchant =
+          parsedDefendant.ok
+            ? parsedDefendant.normalized === parsedMerchant.normalized
+            : defendantRaw.trim().toLowerCase() === parsedMerchant.normalized.toLowerCase();
+
+        if (caseData && sameMerchant) {
           await (ctx.runAction as any)((internal as any).merchantNotifications.notifyMerchantDisputeFiled, {
             caseId: args.caseId,
           });
