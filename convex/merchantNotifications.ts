@@ -311,7 +311,8 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     const requiredMicrousdc =
       typeof paymentAmountMicrousdc === "number" ? paymentAmountMicrousdc + disputeFeeMicrousdc : undefined;
 
-    // Only show action links if the merchant has enough refund credits to cover (refund + fee).
+    // Determine whether the merchant has enough refund credits to cover (full refund + fee).
+    // Even if not, we still generate one-click action tokens; approve links will route through /topup.
     const balance =
       typeof requiredMicrousdc === "number"
         ? await (ctx.runQuery as any)(api.pool.getMerchantUsdcBalanceMicrousdc, { merchant: expectedMerchant })
@@ -322,20 +323,30 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       typeof balance.availableMicrousdc === "number" &&
       balance.availableMicrousdc >= requiredMicrousdc;
 
-    const actions = hasSufficientCredits
-      ? await (ctx.runMutation as any)(api.merchantEmailActions.createActionTokensForCase, {
-          caseId: args.caseId,
-          merchant: expectedMerchant,
-          origin: merchantOrigin,
-          supportEmail: String(supportEmail),
-          paymentAmountMicrousdc: paymentAmountMicrousdc as number,
-        })
-      : null;
-
     const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
     const topupUrl = `https://x402disputes.com/topup?merchant=${encodeURIComponent(
       expectedMerchant,
     )}&caseId=${encodeURIComponent(String(args.caseId))}&email=${encodeURIComponent(String(supportEmail))}`;
+
+    // Always generate action tokens when we can determine the payment amount.
+    // Fallback to metadata-derived amount if paymentDetails is missing (older wallet-first cases).
+    const tokenPaymentAmountMicrousdc =
+      typeof paymentAmountMicrousdc === "number"
+        ? paymentAmountMicrousdc
+        : typeof amountMicrousdc === "number"
+          ? Math.round(amountMicrousdc)
+          : undefined;
+
+    const actions =
+      typeof tokenPaymentAmountMicrousdc === "number" && tokenPaymentAmountMicrousdc > 0
+        ? await (ctx.runMutation as any)(api.merchantEmailActions.createActionTokensForCase, {
+            caseId: args.caseId,
+            merchant: expectedMerchant,
+            origin: merchantOrigin,
+            supportEmail: String(supportEmail),
+            paymentAmountMicrousdc: tokenPaymentAmountMicrousdc,
+          })
+        : null;
 
     const text = buildMerchantDisputeEmailText({
       caseId: String(args.caseId),
@@ -345,11 +356,16 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       chain,
       actions: actions
         ? {
-            approveFullUrl: `${baseActionUrl}${encodeURIComponent(String(actions.approveFull))}`,
-            approvePartialUrl: `${baseActionUrl}${encodeURIComponent(String(actions.approvePartial))}`,
+            approveFullUrl: hasSufficientCredits
+              ? `${baseActionUrl}${encodeURIComponent(String(actions.approveFull))}`
+              : `${topupUrl}&actionToken=${encodeURIComponent(String(actions.approveFull))}`,
+            approvePartialUrl: hasSufficientCredits
+              ? `${baseActionUrl}${encodeURIComponent(String(actions.approvePartial))}`
+              : `${topupUrl}&actionToken=${encodeURIComponent(String(actions.approvePartial))}`,
             rejectUrl: `${baseActionUrl}${encodeURIComponent(String(actions.reject))}`,
           }
         : undefined,
+      // If we couldn't generate action tokens (missing amount), fall back to the existing top-up guidance.
       topup: actions ? undefined : { url: topupUrl, requiredMicrousdc },
     });
 

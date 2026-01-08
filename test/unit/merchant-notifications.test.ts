@@ -188,7 +188,7 @@ describe("merchant notifications (unit)", () => {
     expect(typeof tokens[0].token).toBe("string");
   });
 
-  it("when credits are insufficient, dispute email includes a top-up link and does not include action links", async () => {
+  it("when credits are insufficient, dispute email includes 3 action links and routes approve links through top-up", async () => {
     const prevResendKey = process.env.RESEND_API_KEY;
     const prevEmailFrom = process.env.EMAIL_FROM;
     process.env.RESEND_API_KEY = "test_key";
@@ -263,18 +263,21 @@ describe("merchant notifications (unit)", () => {
     expect(typeof resendPayload?.text).toBe("string");
     const text = String(resendPayload.text);
 
-    // No one-click action links when credits are insufficient/unknown.
-    expect(text).not.toContain("Approve full refund:");
-    expect(text).not.toContain("Approve partial refund");
-    expect(text).not.toContain("Reject dispute:");
+    // Should include action links.
+    expect(text).toContain("Approve full refund:");
+    expect(text).toContain("Approve partial refund");
+    expect(text).toContain("Reject dispute:");
 
-    // Should include a top-up link prefilled with merchant + caseId.
-    expect(text).toContain("Top up refund credits");
+    // Approve links should route through top-up with actionToken.
     expect(text).toContain(
       `https://x402disputes.com/topup?merchant=${encodeURIComponent(merchantCaip10)}&caseId=${encodeURIComponent(
         String(caseId),
       )}&email=${encodeURIComponent(supportEmail)}`,
     );
+    expect(text).toContain("&actionToken=");
+
+    // Reject should remain a one-click action link.
+    expect(text).toContain("https://api.x402disputes.com/v1/merchant/action?token=");
 
     process.env.RESEND_API_KEY = prevResendKey;
     process.env.EMAIL_FROM = prevEmailFrom;

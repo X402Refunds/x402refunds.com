@@ -287,6 +287,7 @@ export const topup_finalizeFromTxHash = internalAction({
     txHash: v.string(),
     expectedAmountMicrousdc: v.number(),
     caseId: v.optional(v.id("cases")),
+    actionToken: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; txHash: string; credited?: boolean; reason?: string }> => {
     const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
@@ -337,24 +338,15 @@ export const topup_finalizeFromTxHash = internalAction({
       return { ok: false, txHash: args.txHash, reason: String(credited?.code || "CREDIT_FAILED") };
     }
 
-    // After credits land, re-notify merchant for the specific case so action links can appear.
-    if (args.caseId) {
+    // If this top-up was triggered from an approve link, automatically apply the decision now.
+    // This prevents a second “action links” email and makes refunds one-click.
+    if (typeof args.actionToken === "string" && args.actionToken.trim()) {
       try {
-        const caseData: any = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId: args.caseId });
-        const defendantRaw = String(caseData?.defendant || "");
-        const parsedDefendant = parseCaip10Eip155(defendantRaw);
-        const sameMerchant =
-          parsedDefendant.ok
-            ? parsedDefendant.normalized === parsedMerchant.normalized
-            : defendantRaw.trim().toLowerCase() === parsedMerchant.normalized.toLowerCase();
-
-        if (caseData && sameMerchant) {
-          await (ctx.runAction as any)((internal as any).merchantNotifications.notifyMerchantDisputeFiled, {
-            caseId: args.caseId,
-          });
-        }
+        await (ctx.runMutation as any)((internal as any).merchantEmailActions.applyDecisionFromToken, {
+          token: args.actionToken.trim(),
+        });
       } catch {
-        // Never fail credit finalization due to notification follow-up.
+        // Never fail credit finalization due to decision follow-up.
       }
     }
 

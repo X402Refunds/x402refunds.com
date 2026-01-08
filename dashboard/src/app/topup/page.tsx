@@ -35,6 +35,7 @@ export default function TopupPage() {
   const [merchantAddress, setMerchantAddress] = useState("");
   const [caseId, setCaseId] = useState<string>("");
   const [prefilledEmail, setPrefilledEmail] = useState<string>("");
+  const [actionToken, setActionToken] = useState<string>("");
   const [amountUsdc, setAmountUsdc] = useState("");
   const amountMicros = useMemo(() => parseUsdcToMicros(amountUsdc), [amountUsdc]);
   const amountMicrosBig = useMemo(() => {
@@ -61,8 +62,9 @@ export default function TopupPage() {
   const [notificationVerified, setNotificationVerified] = useState<boolean | null>(null);
   const [notificationRequiredUsdc, setNotificationRequiredUsdc] = useState<number | null>(null);
   const [notificationHasSufficientCredits, setNotificationHasSufficientCredits] = useState<boolean | null>(null);
-  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  const [completionStatus, setCompletionStatus] = useState<"idle" | "waiting" | "done" | "error">("idle");
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...&amount=...
@@ -73,10 +75,12 @@ export default function TopupPage() {
       const merchantFromQuery = url.searchParams.get("merchant");
       const caseFromQuery = url.searchParams.get("caseId") || url.searchParams.get("case") || "";
       const emailFromQuery = url.searchParams.get("email") || "";
+      const actionTokenFromQuery = url.searchParams.get("actionToken") || url.searchParams.get("token") || "";
       const amountFromQuery = url.searchParams.get("amount") || url.searchParams.get("amountUsdc") || "";
       if (merchantFromQuery) setMerchantAddress((prev) => (prev.trim() ? prev : merchantFromQuery));
       if (caseFromQuery) setCaseId((prev) => (prev ? prev : caseFromQuery));
       if (emailFromQuery) setPrefilledEmail((prev) => (prev ? prev : emailFromQuery));
+      if (actionTokenFromQuery) setActionToken((prev) => (prev ? prev : actionTokenFromQuery));
       if (amountFromQuery) {
         const normalized = amountFromQuery.trim();
         if (normalized) {
@@ -150,6 +154,51 @@ export default function TopupPage() {
     })();
   }, [caseId]);
 
+  // After submitting a top-up for a dispute action, poll the case until it is decided.
+  useEffect(() => {
+    if (!caseId || !txHash || !actionToken.trim()) return;
+    let stopped = false;
+    let attempts = 0;
+    const maxAttempts = 30; // ~60s at 2s interval
+    setCompletionStatus("waiting");
+    setCompletionMessage(null);
+
+    const interval = setInterval(() => {
+      if (stopped) return;
+      attempts += 1;
+      void (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/v1/dispute?id=${encodeURIComponent(caseId)}`, { method: "GET" });
+          const data = await res.json().catch(() => ({}));
+          const status = String(data?.dispute?.status || "");
+          if (res.ok && data?.ok && status === "DECIDED") {
+            stopped = true;
+            clearInterval(interval);
+            setCompletionStatus("done");
+            setCompletionMessage("All set — refund is processing.");
+          } else if (attempts >= maxAttempts) {
+            stopped = true;
+            clearInterval(interval);
+            setCompletionStatus("error");
+            setCompletionMessage("Top-up submitted, but the dispute is still processing. Please check the case page.");
+          }
+        } catch {
+          if (attempts >= maxAttempts) {
+            stopped = true;
+            clearInterval(interval);
+            setCompletionStatus("error");
+            setCompletionMessage("Top-up submitted, but we couldn't confirm completion yet. Please check the case page.");
+          }
+        }
+      })();
+    }, 2000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [actionToken, caseId, txHash]);
+
   // After submitting a top-up, auto-refresh credits for a short time (no user action).
   useEffect(() => {
     if (!merchantCaip10 || !txHash) return;
@@ -208,7 +257,7 @@ export default function TopupPage() {
         </p>
         {caseId && (
           <p className="text-sm text-muted-foreground">
-            After you top up, we&apos;ll re-send one-click actions for case{" "}
+            After you top up, we&apos;ll automatically complete your selected action for case{" "}
             <code className="font-mono">{caseId}</code>.
           </p>
         )}
@@ -268,15 +317,14 @@ export default function TopupPage() {
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground">
-                  We’ll email one-click actions after your credits are sufficient.
+                  This page can also be used for manual top-ups (no dispute action selected).
                 </div>
               )}
               {typeof hasEnoughForActions === "boolean" && (
                 <div className="text-xs">
                   {hasEnoughForActions ? (
                     <span className="text-foreground">
-                      Status: <span className="font-medium">Enough credits</span> — you should receive approve/reject
-                      links by email.
+                      Status: <span className="font-medium">Enough credits</span>
                     </span>
                   ) : (
                     <span className="text-muted-foreground">
@@ -306,47 +354,22 @@ export default function TopupPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
 
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={resendStatus === "sending"}
-                  onClick={async () => {
-                    setResendStatus("sending");
-                    setResendMessage(null);
-                    try {
-                      const res = await fetch(`${API_BASE}/v1/merchant/resend`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ caseId }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok || !data?.ok) {
-                        const msg =
-                          typeof data?.message === "string"
-                            ? data.message
-                            : typeof data?.code === "string"
-                              ? data.code
-                              : `Failed: ${res.status}`;
-                        throw new Error(msg);
-                      }
-                      setResendStatus("sent");
-                      setResendMessage("Sent. Check inbox/spam.");
-                    } catch (e: unknown) {
-                      setResendStatus("error");
-                      setResendMessage(e instanceof Error ? e.message : String(e));
-                    }
-                  }}
+          {caseId && completionStatus !== "idle" && (
+            <div className={completionStatus === "done" ? "rounded-lg border border-border bg-muted/20 p-3 text-sm text-foreground" : "rounded-lg border border-border bg-muted/20 p-3 text-sm text-muted-foreground"}>
+              {completionMessage ||
+                (completionStatus === "waiting"
+                  ? "Top-up submitted — finalizing your action now…"
+                  : "Top-up submitted — processing…")}
+              <div className="mt-2">
+                <a
+                  className="text-xs underline text-muted-foreground"
+                  href={`/cases/${encodeURIComponent(caseId)}`}
                 >
-                  Resend email
-                </Button>
-                {resendMessage && (
-                  <div className={resendStatus === "error" ? "text-xs text-destructive mt-2" : "text-xs text-muted-foreground mt-2"}>
-                    {resendMessage}
-                  </div>
-                )}
+                  View case
+                </a>
               </div>
             </div>
           )}
@@ -395,6 +418,8 @@ export default function TopupPage() {
               setError(null);
               setTxHash(null);
               setEstimatedNewBalanceUsdc(null);
+              setCompletionStatus("idle");
+              setCompletionMessage(null);
               setStatus("processing");
               try {
                 if (!merchantCaip10) throw new Error(merchantNormalized.error || "Merchant wallet is required");
@@ -413,6 +438,7 @@ export default function TopupPage() {
                     amountMicrousdc: amountMicros,
                     currency: "USDC",
                     caseId: caseId || undefined,
+                    actionToken: actionToken || undefined,
                   }),
                 });
                 if (res.status !== 402) {
@@ -442,6 +468,7 @@ export default function TopupPage() {
                     amountMicrousdc: amountMicros,
                     currency: "USDC",
                     caseId: caseId || undefined,
+                    actionToken: actionToken || undefined,
                   }),
                 });
 

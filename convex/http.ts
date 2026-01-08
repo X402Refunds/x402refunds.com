@@ -1317,6 +1317,7 @@ http.route({
     const currency = typeof body?.currency === "string" ? body.currency : "USDC";
     const amountMicrousdcRaw = body?.amountMicrousdc;
     const caseId = typeof body?.caseId === "string" ? body.caseId : "";
+    const actionToken = typeof body?.actionToken === "string" ? body.actionToken : "";
 
     if (!merchant || typeof merchant !== "string") {
       return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
@@ -1412,6 +1413,7 @@ http.route({
             txHash: txHashHeader,
             expectedAmountMicrousdc: amountMicrousdc,
             caseId: caseId ? (caseId as any) : undefined,
+            actionToken: actionToken ? actionToken : undefined,
           },
         );
       } catch {
@@ -1483,6 +1485,7 @@ http.route({
           txHash,
           expectedAmountMicrousdc: amountMicrousdc,
           caseId: caseId ? (caseId as any) : undefined,
+          actionToken: actionToken ? actionToken : undefined,
         },
       );
     } catch {
