@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { CopyableField } from "@/components/case-detail/CopyableField";
 import { EthereumAddressLink } from "@/components/ethereum/ethereum-address-link";
 import { getTransactionExplorerUrl, getExplorerName } from "@/lib/ethereum";
+import { getPaymentExplorerUrl, getPublicCaseBadge, getPublicCaseHeadline, getRefundExplorerUrl } from "@/lib/caseTracking";
 
 // AI Reasoning Parser
 interface ParsedSection {
@@ -102,18 +103,6 @@ export default function PublicCaseTrackingPage() {
     return new Date(timestamp).toLocaleString();
   };
 
-  // Helper function to get status description
-  const getStatusDescription = (status: string) => {
-    const descriptions: Record<string, string> = {
-      "FILED": "Your dispute has been filed and is under review",
-      "AUTORULED": "Your dispute has been automatically resolved",
-      "PANELED": "Your dispute is being reviewed by our panel",
-      "DECIDED": "A final decision has been reached",
-      "CLOSED": "This case is now closed"
-    };
-    return descriptions[status] || "Processing your dispute";
-  };
-
   if (!caseDetails) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
@@ -136,25 +125,23 @@ export default function PublicCaseTrackingPage() {
     );
   }
 
-  const statusColors: Record<string, string> = {
-    "FILED": "bg-blue-50 text-blue-700 border-blue-200",
-    "DECIDED": "bg-blue-50 text-blue-700 border-blue-200",
-    "DISMISSED": "bg-slate-50 text-slate-700 border-slate-200",
-    "APPEALED": "bg-blue-50 text-blue-700 border-blue-200",
-    "AUTORULED": "bg-purple-50 text-purple-700 border-purple-200",
-    "PANELED": "bg-amber-50 text-amber-700 border-amber-200",
-    "CLOSED": "bg-slate-50 text-slate-700 border-slate-200"
-  };
-  const statusColor = statusColors[caseDetails.status] || "bg-slate-50 text-slate-700 border-slate-200";
+  const badgeLabel = getPublicCaseBadge(caseDetails, refund);
+  const headline = getPublicCaseHeadline(caseDetails, refund);
+  const refundStatus = refund && typeof (refund as { status?: unknown }).status === "string" ? String((refund as { status: string }).status) : null;
+  const isRefundVerdict = caseDetails.finalVerdict === "CONSUMER_WINS" || caseDetails.finalVerdict === "PARTIAL_REFUND";
+  const refundExplorerUrl = getRefundExplorerUrl(refund);
+  const paymentExplorerUrl = getPaymentExplorerUrl(caseDetails);
 
-  const refundStatus =
-    refund && typeof refund.status === "string" ? String(refund.status) : null;
-  const isRefundVerdict =
-    caseDetails.finalVerdict === "CONSUMER_WINS" || caseDetails.finalVerdict === "PARTIAL_REFUND";
-  const refundExplorerUrl =
-    refund && "explorerUrl" in refund && typeof refund.explorerUrl === "string"
-      ? refund.explorerUrl
-      : null;
+  const badgeColors: Record<string, string> = {
+    "In review": "bg-blue-50 text-blue-700 border-blue-200",
+    "Processing": "bg-blue-50 text-blue-700 border-blue-200",
+    "Decided": "bg-blue-50 text-blue-700 border-blue-200",
+    "Refunding": "bg-blue-50 text-blue-700 border-blue-200",
+    "Refunded": "bg-blue-50 text-blue-700 border-blue-200",
+    "Refund failed": "bg-red-50 text-red-700 border-red-200",
+    "Closed": "bg-slate-50 text-slate-700 border-slate-200",
+  };
+  const badgeColor = badgeColors[badgeLabel] || "bg-slate-50 text-slate-700 border-slate-200";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
@@ -196,19 +183,11 @@ export default function PublicCaseTrackingPage() {
                 <div>
                   <CardTitle className="text-2xl">Case Status</CardTitle>
                   <CardDescription className="mt-2">
-                    {caseDetails.status === "DECIDED" && isRefundVerdict
-                      ? refundStatus === "EXECUTED"
-                        ? "Decision reached — refund sent on-chain."
-                        : "Decision reached — refund is being processed."
-                      : getStatusDescription(caseDetails.status)}
+                    {headline}
                   </CardDescription>
                 </div>
-                <Badge className={`${statusColor} border-2 px-4 py-2 text-base font-semibold`}>
-                  {caseDetails.status === "DECIDED" && isRefundVerdict
-                    ? refundStatus === "EXECUTED"
-                      ? "REFUNDED"
-                      : "REFUNDING"
-                    : caseDetails.status}
+                <Badge className={`${badgeColor} border-2 px-4 py-2 text-base font-semibold`}>
+                  {badgeLabel}
                 </Badge>
               </div>
             </CardHeader>
@@ -226,6 +205,26 @@ export default function PublicCaseTrackingPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Payment tx tracking (Base) */}
+              {paymentExplorerUrl && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600 mb-1">Original payment</p>
+                      <p className="text-sm text-slate-900">Track the original payment on Basescan.</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => window.open(paymentExplorerUrl, "_blank")}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      View payment on Basescan
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Refund status (only for refunding decisions) */}
               {caseDetails.status === "DECIDED" && isRefundVerdict && (
@@ -248,29 +247,9 @@ export default function PublicCaseTrackingPage() {
                         onClick={() => window.open(refundExplorerUrl, "_blank")}
                       >
                         <ExternalLink className="h-4 w-4" />
-                        View on Basescan
+                        View refund on Basescan
                       </Button>
                     )}
-                  </div>
-                </div>
-              )}
-
-              {/* Dashboard Link - for merchants to resolve disputes */}
-              {paymentDispute && !["DECIDED", "CLOSED"].includes(caseDetails.status) && (
-                <div className="mt-6 pt-6 border-t">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-blue-900 mb-2">
-                      Are you the merchant?
-                    </p>
-                    <p className="text-sm text-blue-700 mb-3">
-                      Review AI analysis and resolve this dispute in your dashboard.
-                    </p>
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => window.location.href = `/dashboard/disputes/${caseId}`}
-                    >
-                      Go to Dashboard to Resolve
-                    </Button>
                   </div>
                 </div>
               )}
