@@ -44,6 +44,7 @@ import type * as lib_duplicateDispute from "../lib/duplicateDispute.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_merchantActionCopy from "../lib/merchantActionCopy.js";
 import type * as lib_merchantActionErrorCopy from "../lib/merchantActionErrorCopy.js";
+import type * as lib_merchantRefundEmailCopy from "../lib/merchantRefundEmailCopy.js";
 import type * as lib_openrouter from "../lib/openrouter.js";
 import type * as lib_solana from "../lib/solana.js";
 import type * as lib_usdc from "../lib/usdc.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   "lib/email": typeof lib_email;
   "lib/merchantActionCopy": typeof lib_merchantActionCopy;
   "lib/merchantActionErrorCopy": typeof lib_merchantActionErrorCopy;
+  "lib/merchantRefundEmailCopy": typeof lib_merchantRefundEmailCopy;
   "lib/openrouter": typeof lib_openrouter;
   "lib/solana": typeof lib_solana;
   "lib/usdc": typeof lib_usdc;

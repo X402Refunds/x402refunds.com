@@ -9,9 +9,11 @@ import { internalAction, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import * as apiMod from "./_generated/api.js";
 import { sendEmail } from "./lib/email";
+import { buildMerchantRefundExecutedEmailCopy } from "./lib/merchantRefundEmailCopy";
 
 // Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
 const api: any = (apiMod as any).api;
+const internalApi: any = (apiMod as any).internal;
 
 type X402Metadata = {
   x402disputes?: {
@@ -482,6 +484,109 @@ export const getNotificationStatusForCase: any = internalAction({
       requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
       hasSufficientCredits,
     };
+  },
+});
+
+export const markRefundExecutedEmailSent: any = internalMutation({
+  args: { refundId: v.id("refundTransactions"), sentTo: v.string() },
+  handler: async (ctx: any, args: any) => {
+    const now = Date.now();
+    await ctx.db.patch(args.refundId, {
+      merchantRefundExecutedEmailSentAt: now,
+      merchantRefundExecutedEmailSentTo: String(args.sentTo || ""),
+    });
+    return { ok: true };
+  },
+});
+
+export const notifyMerchantRefundExecuted: any = internalAction({
+  args: { caseId: v.id("cases"), refundId: v.id("refundTransactions") },
+  handler: async (ctx: any, args: { caseId: any; refundId: any }): Promise<any> => {
+    const refund: any = await (ctx.runQuery as any)(internalApi.refunds.getRefundTransaction, {
+      refundId: args.refundId,
+    });
+    if (!refund) return { ok: false, emailed: false, reason: "REFUND_NOT_FOUND" };
+    if (String(refund.caseId) !== String(args.caseId)) return { ok: false, emailed: false, reason: "CASE_REFUND_MISMATCH" };
+    if (refund.status !== "EXECUTED") return { ok: true, emailed: false, reason: "REFUND_NOT_EXECUTED" };
+    if (typeof refund.merchantRefundExecutedEmailSentAt === "number") return { ok: true, emailed: false, reason: "ALREADY_SENT" };
+
+    // NOTE: Cast runQuery to any to avoid excessively-deep type instantiations from generated Convex query types.
+    const caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
+    if (!caseData) return { ok: false, emailed: false, reason: "CASE_NOT_FOUND" };
+
+    const merchantRaw = String(caseData.defendant || "");
+    const v1 = caseData?.metadata?.v1 || {};
+
+    const paymentDetails = caseData?.paymentDetails;
+    const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
+    const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
+
+    // Wallet-first stores merchantOrigin in metadata.v1. Legacy payment disputes store requestJson in paymentDetails.*.
+    const merchantOriginFromV1 = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOriginFromPayment = deriveMerchantOriginFromRequestJson(
+      typeof paymentRequestJson === "string" ? paymentRequestJson : undefined,
+    );
+    const merchantOrigin = merchantOriginFromV1 || merchantOriginFromPayment || "";
+    const overrideUrl = typeof v1?.merchantX402MetadataUrl === "string" ? v1.merchantX402MetadataUrl : undefined;
+    if (!merchantOrigin && !overrideUrl) return { ok: true, emailed: false, reason: "NO_MERCHANT_ORIGIN" };
+
+    const metadataUrl = overrideUrl || new URL("/.well-known/x402.json", merchantOrigin).toString();
+    const fetched = await fetchX402Json(metadataUrl);
+    if (!fetched.ok) return { ok: true, emailed: false, reason: fetched.code };
+
+    const expectedMerchant =
+      paymentChain === "base" || merchantRaw.startsWith("eip155:")
+        ? normalizeMerchantIdForBase(merchantRaw)
+        : null;
+    if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
+
+    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
+    if (!jsonMerchant || jsonMerchant !== expectedMerchant) return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
+
+    const supportEmail = fetched.data?.x402disputes?.supportEmail;
+    if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {
+      return { ok: true, emailed: false, reason: "MISSING_SUPPORT_EMAIL" };
+    }
+
+    // Only send ongoing emails after verification for this (merchant, origin).
+    const verified = await (ctx.runQuery as any)(internalApi.merchantEmailVerification.getVerification, {
+      merchant: expectedMerchant,
+      origin: merchantOrigin,
+      supportEmail: String(supportEmail),
+    });
+    if (!verified) return { ok: true, emailed: false, reason: "AWAITING_EMAIL_VERIFICATION" };
+
+    const amountMicrousdc =
+      typeof refund.amountMicrousdc === "number"
+        ? Math.round(refund.amountMicrousdc)
+        : typeof refund.amount === "number"
+          ? Math.round(refund.amount * 1_000_000)
+          : null;
+
+    const subject = `Refund processed (${String(args.caseId).slice(0, 8)})`;
+    const text = buildMerchantRefundExecutedEmailCopy({
+      caseId: String(args.caseId),
+      amountMicrousdc,
+      explorerUrl: typeof refund.explorerUrl === "string" ? refund.explorerUrl : null,
+      refundTxHash: typeof refund.refundTxHash === "string" ? refund.refundTxHash : null,
+      trackingUrl: `https://x402disputes.com/cases/${encodeURIComponent(String(args.caseId))}`,
+    });
+
+    const sent = await sendEmail({
+      to: String(supportEmail),
+      subject,
+      text,
+      replyTo: String(supportEmail),
+    });
+    if (!sent.ok) return { ok: true, emailed: false, reason: sent.code, details: sent.message };
+
+    await (ctx.runMutation as any)(internalApi.merchantNotifications.markRefundExecutedEmailSent, {
+      refundId: args.refundId,
+      sentTo: String(supportEmail),
+    });
+
+    return { ok: true, emailed: true };
   },
 });
 

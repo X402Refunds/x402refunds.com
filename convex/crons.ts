@@ -33,6 +33,14 @@ crons.interval(
   {}
 );
 
+// Sweep executed refunds and notify merchants (wallet-first email notifications)
+crons.interval(
+  "refund executed merchant email sweep",
+  { minutes: 1 },
+  internalAny.crons.sweepRefundExecutedEmails,
+  {}
+);
+
 // =================================================================
 // EVIDENCE RETENTION & CLEANUP CRONS
 // =================================================================
@@ -280,6 +288,37 @@ export const updateSystemStatsCache = internalMutation({
       return { success: false, reason: error.message };
     }
   }
+});
+
+// Best-effort sweeper: find EXECUTED refunds that haven't triggered a merchant email yet,
+// and schedule `merchantNotifications.notifyMerchantRefundExecuted`.
+export const sweepRefundExecutedEmails = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const lookbackMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    const executed = await ctx.db
+      .query("refundTransactions")
+      .withIndex("by_status", (q) => q.eq("status", "EXECUTED"))
+      .order("desc")
+      .take(100);
+
+    let scheduled = 0;
+    for (const r of executed) {
+      if (typeof r.merchantRefundExecutedEmailSentAt === "number") continue;
+      if (!r.caseId) continue;
+      if (typeof r.executedAt === "number" && now - r.executedAt > lookbackMs) continue;
+
+      await ctx.scheduler.runAfter(0, internalAny.merchantNotifications.notifyMerchantRefundExecuted as any, {
+        caseId: r.caseId,
+        refundId: r._id,
+      });
+      scheduled += 1;
+    }
+
+    return { ok: true, scanned: executed.length, scheduled };
+  },
 });
 
 // Manual trigger for demo dispute generation (can be called from frontend)

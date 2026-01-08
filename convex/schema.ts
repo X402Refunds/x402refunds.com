@@ -693,6 +693,9 @@ export default defineSchema({
     providerTransferId: v.optional(v.string()),
     refundTxHash: v.optional(v.string()),
     explorerUrl: v.optional(v.string()),
+    // Best-effort: avoid duplicate notifications for the same refund execution.
+    merchantRefundExecutedEmailSentAt: v.optional(v.number()),
+    merchantRefundExecutedEmailSentTo: v.optional(v.string()),
     failureCode: v.optional(v.string()),
     failureReason: v.optional(v.string()),
   })
