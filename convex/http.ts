@@ -5,6 +5,7 @@ import { httpAction } from "./_generated/server";
 // runtime-correct while avoiding type-level recursion during dashboard type-check.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { api, internal } = require("./_generated/api") as any;
+import { buildMerchantActionCopy } from "./lib/merchantActionCopy";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
@@ -356,40 +357,21 @@ http.route({
     const caseUrl = `https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(res.caseId)}`;
     const trackingUrl = `https://x402disputes.com/cases/${encodeURIComponent(res.caseId)}`;
 
-    const bodyLines: string[] = [];
     const isReject = String(res.verdict) === "MERCHANT_WINS";
-    bodyLines.push(isReject ? "All set — dispute rejected." : "All set — refund is being processed.");
-    bodyLines.push("");
-    bodyLines.push(`Case: ${res.caseId}`);
-    bodyLines.push(`Decision: ${res.verdict}`);
-    bodyLines.push("");
+    let refund: any = null;
     if (res.refundScheduled) {
       // Best-effort: if the refund already executed quickly, show the on-chain proof right here.
-      const refund = await ctx.runQuery((api as any).refunds.getRefundStatus, { caseId: res.caseId as any });
-      if (refund?.status === "EXECUTED") {
-        bodyLines.push("Refund: sent on-chain.");
-        const proofUrl =
-          typeof refund.explorerUrl === "string" && refund.explorerUrl
-            ? refund.explorerUrl
-            : typeof refund.refundTxHash === "string" && refund.refundTxHash
-              ? `https://basescan.org/tx/${refund.refundTxHash}`
-              : "";
-        if (proofUrl) bodyLines.push(`On-chain proof: ${proofUrl}`);
-      } else if (refund?.status) {
-        bodyLines.push(`Refund: processing (${String(refund.status)})`);
-      } else {
-        bodyLines.push("Refund: processing now.");
-      }
-      bodyLines.push("You can track progress on the case page below.");
-    } else {
-      bodyLines.push("Refund: not applicable for this decision.");
+      refund = await ctx.runQuery((api as any).refunds.getRefundStatus, { caseId: res.caseId as any });
     }
-    bodyLines.push("");
-    bodyLines.push("Track this case:");
-    bodyLines.push(`- Case tracking: ${trackingUrl}`);
-    bodyLines.push("");
 
-    const body = bodyLines.join("\n");
+    const body = buildMerchantActionCopy({
+      isReject,
+      caseId: String(res.caseId),
+      refundScheduled: Boolean(res.refundScheduled),
+      refundStatus: typeof refund?.status === "string" ? refund.status : null,
+      explorerUrl: typeof refund?.explorerUrl === "string" ? refund.explorerUrl : null,
+      refundTxHash: typeof refund?.refundTxHash === "string" ? refund.refundTxHash : null,
+    });
     return new Response(body, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
