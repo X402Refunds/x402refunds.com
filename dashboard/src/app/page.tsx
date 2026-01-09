@@ -141,16 +141,13 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Plug-and-play disputes + refunds
+                Issue refunds
                 <br />
-                <span>
-                  for{" "}
-                  <span className="text-blue-600">x402 payments.</span>
-                </span>
+                <span className="text-blue-600">for x402 payments.</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                No signup. Copy/paste <span className="font-mono">/.well-known/x402.json</span> + a Link header.
+                Disputes arrive by email—issue refunds in one click.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
