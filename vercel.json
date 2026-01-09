@@ -6,10 +6,10 @@
   "outputDirectory": "dashboard/.next",
   "build": {
     "env": {
-      "NEXT_PUBLIC_CONVEX_URL": "https://api.x402disputes.com"
+      "NEXT_PUBLIC_CONVEX_URL": "https://api.x402refunds.com"
     }
   },
   "env": {
-    "NEXT_PUBLIC_CONVEX_URL": "https://api.x402disputes.com"
+    "NEXT_PUBLIC_CONVEX_URL": "https://api.x402refunds.com"
   }
 }

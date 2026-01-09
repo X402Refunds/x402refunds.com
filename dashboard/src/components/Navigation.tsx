@@ -115,7 +115,7 @@ export function Navigation({ currentPage }: NavigationProps) {
               className="hidden md:flex"
               size="sm"
             >
-              Enable disputes (no signup required)
+              Enable refunds (no signup required)
             </Button>
 
             {/* Mobile Menu */}
@@ -136,7 +136,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     className="w-full justify-start"
                     variant="default"
                   >
-                    Enable disputes (no signup required)
+                    Enable refunds (no signup required)
                   </Button>
 
                   <Button

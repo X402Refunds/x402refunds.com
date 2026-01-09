@@ -153,7 +153,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Refund requests by email
+                  Get refund requests by email
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />

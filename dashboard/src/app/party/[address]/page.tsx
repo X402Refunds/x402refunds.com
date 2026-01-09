@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation"
 import { useQuery } from "convex/react"
-import { api } from "@convex/_generated/api"
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { DisputeRow } from "@/components/registry/DisputeRow"
@@ -10,11 +9,29 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, User, Scale, TrendingUp } from "lucide-react"
 
+// NOTE: Avoid importing Convex generated `api` types here; TS can hit "excessively deep" instantiation.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const api: any = require("@convex/_generated/api").api
+
+type PartyCaseRow = {
+  _id: string
+  plaintiff?: string | null
+  defendant?: string | null
+  amount?: number | null
+  currency?: string | null
+  status?: string | null
+  filedAt?: number | null
+}
+
 export default function PartyPage() {
   const params = useParams()
   const address = decodeURIComponent(params.address as string)
   
-  const cases = useQuery(api.cases.getCasesByParty, { party: address })
+  // NOTE: Convex `useQuery` inference can trigger TS "excessively deep" instantiation on some routes.
+  // We only need a small subset of fields here, so we keep the type local and explicit.
+  const cases = useQuery(api.cases.getCasesByParty, { party: address }) as
+    | PartyCaseRow[]
+    | undefined
   
   if (cases === undefined) {
     return (
@@ -99,14 +116,14 @@ export default function PartyPage() {
               <Badge variant="secondary">{asPlaintiff.length}</Badge>
             </div>
             <div className="space-y-2">
-              {asPlaintiff.map((case_: { _id: string; plaintiff?: string | null; defendant?: string | null; amount?: number | null; currency?: string; status?: string | null; filedAt?: number | null }) => (
+              {asPlaintiff.map((case_) => (
                 <DisputeRow
                   key={case_._id}
                   caseId={case_._id}
                   plaintiff={case_.plaintiff ?? 'Unknown'}
                   defendant={case_.defendant ?? 'Unknown'}
-                  amount={case_.amount}
-                  currency={case_.currency}
+                  amount={case_.amount ?? undefined}
+                  currency={case_.currency ?? undefined}
                   status={case_.status ?? 'FILED'}
                   filedAt={case_.filedAt ?? 0}
                 />
@@ -123,14 +140,14 @@ export default function PartyPage() {
               <Badge variant="secondary">{asDefendant.length}</Badge>
             </div>
             <div className="space-y-2">
-              {asDefendant.map((case_: { _id: string; plaintiff?: string | null; defendant?: string | null; amount?: number | null; currency?: string; status?: string | null; filedAt?: number | null }) => (
+              {asDefendant.map((case_) => (
                 <DisputeRow
                   key={case_._id}
                   caseId={case_._id}
                   plaintiff={case_.plaintiff ?? 'Unknown'}
                   defendant={case_.defendant ?? 'Unknown'}
-                  amount={case_.amount}
-                  currency={case_.currency}
+                  amount={case_.amount ?? undefined}
+                  currency={case_.currency ?? undefined}
                   status={case_.status ?? 'FILED'}
                   filedAt={case_.filedAt ?? 0}
                 />
