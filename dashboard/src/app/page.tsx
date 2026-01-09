@@ -147,7 +147,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Disputes arrive by email—issue refunds in one click.
+                Few lines to enable refunds. No signup required.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -164,6 +164,27 @@ export default function HomePage() {
                   Refund status you can verify
                 </li>
               </ul>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+                  onClick={() => {
+                    const el = document.getElementById("enable")
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }}
+                >
+                  Enable refunds
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
+                  onClick={() => (window.location.href = "/topup")}
+                >
+                  Top up credits
+                </Button>
+              </div>
 
               <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
             </div>
@@ -186,10 +207,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Plug-and-play disputes. No signup required.
+              How refunds work for x402 disputes
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Copy/paste the snippets below. Disputes arrive by email. Optional: add refund credits for automatic refunds.
+              Disputes come in by email. You review the request. If you approve, we send the refund and show a verifiable status.
             </p>
           </div>
 
