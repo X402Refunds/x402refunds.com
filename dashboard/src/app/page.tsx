@@ -207,10 +207,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              How refunds work for x402 disputes
+              Few lines to enable refunds
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Disputes come in by email. You review the request. If you approve, we send the refund and show a verifiable status.
+              No signup required.
             </p>
           </div>
 
