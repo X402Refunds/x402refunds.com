@@ -231,7 +231,7 @@ export default function HomePage() {
                       </span>
                     </>
                   }
-                  description="This is your public dispute policy + support email."
+                  description="Your refund policy + support email."
                 >
                   <div className="space-y-4">
                     <CopyBlock
@@ -248,10 +248,10 @@ export default function HomePage() {
                 </SetupStepCard>
 
                 <SetupStepCard
-                  title="Step 2 — Receive disputes by email"
+                  title="Step 2 — Get refund requests by email"
                   description={
                     <>
-                      When a dispute is filed, we email the{" "}
+                      When a refund request is filed, we email the{" "}
                       <span className="font-mono">supportEmail</span> from your{" "}
                       <span className="font-mono">/.well-known/x402.json</span>.
                     </>
