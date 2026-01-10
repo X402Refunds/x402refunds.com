@@ -1,51 +1,83 @@
 "use client"
 
+import { Github, Twitter } from "lucide-react"
+
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 text-slate-400 py-12 sm:py-16 border-t-4 border-blue-600/30 relative">
-      {/* Blue accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500/50 via-blue-500 to-blue-500/50" />
-      
-      <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
-          <div>
-            <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">X402Refunds</h3>
-            <p className="text-sm sm:text-base leading-relaxed">
-              Permissionless refund requests for X-402 payments. Request refunds, review them, and track status.
-            </p>
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="space-y-2">
+            <div className="text-base font-semibold text-slate-950">x402refunds</div>
+            <div className="text-sm text-slate-600">
+              Refund requests for paid APIs. Email-first, minimal setup.
+            </div>
+            <div className="pt-2 text-sm text-slate-600">
+              101 Clay St #201, SF, CA 94501
+            </div>
           </div>
+
           <div>
-            <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Platform</h4>
-            <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/uptime', '_self')} className="hover:text-blue-400 transition-colors">Uptime</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-blue-400 transition-colors">Documentation</button></li>
-              <li><button onClick={() => window.open('/sign-in', '_self')} className="hover:text-blue-400 transition-colors">Merchant dashboard (optional)</button></li>
+            <div className="text-sm font-semibold text-slate-950">Product</div>
+            <ul className="mt-3 space-y-2 text-sm text-slate-600">
+              <li>
+                <a className="hover:text-slate-900" href="/docs">Docs</a>
+              </li>
+              <li>
+                <a className="hover:text-slate-900" href="/topup">Top up</a>
+              </li>
+              <li>
+                <a className="hover:text-slate-900" href="/check-balance">Check balance</a>
+              </li>
             </ul>
           </div>
-          <div className="md:col-span-1">
-            <h4 className="text-white text-base font-medium mb-3 sm:mb-4">Company</h4>
-            <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base">
-              <li><button onClick={() => window.open('/about', '_self')} className="hover:text-blue-400 transition-colors">About</button></li>
-              <li><button onClick={() => window.open('/pricing', '_self')} className="hover:text-blue-400 transition-colors">Pricing</button></li>
-              <li><button onClick={() => window.open('/docs', '_self')} className="hover:text-blue-400 transition-colors">Docs</button></li>
+
+          <div>
+            <div className="text-sm font-semibold text-slate-950">Links</div>
+            <ul className="mt-3 space-y-2 text-sm text-slate-600">
+              <li>
+                <a
+                  className="inline-flex items-center gap-2 hover:text-slate-900"
+                  href="https://github.com/x402disputes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </a>
+              </li>
+              <li>
+                <a
+                  className="inline-flex items-center gap-2 hover:text-slate-900"
+                  href="https://x.com/x402refunds"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Twitter className="h-4 w-4" />
+                  x402refunds
+                </a>
+              </li>
+              <li>
+                <a
+                  className="inline-flex items-center gap-2 hover:text-slate-900"
+                  href="https://x.com/vbkotecha"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Twitter className="h-4 w-4" />
+                  vbkotecha
+                </a>
+              </li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10">
-          <div className="text-center text-xs sm:text-sm space-y-2">
-            <div>
-              <span className="text-white font-semibold">X402Refunds, Inc.</span>
-              <span className="mx-2">•</span>
-              <span>101a Clay St PMB 201, San Francisco CA 94111</span>
-            </div>
-            <div>
-              Email: <a href="mailto:vivek@x402refunds.com" className="hover:text-blue-400 transition-colors">vivek@x402refunds.com</a>
-              <span className="mx-2">•</span>
-              Founder: Vivek Kotecha
-            </div>
-            <div className="pt-4">
-              &copy; 2026 X402Refunds. All rights reserved.
-            </div>
+
+        <div className="mt-10 flex flex-col gap-2 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <div>&copy; 2026 x402refunds</div>
+          <div className="text-slate-500">
+            <a className="hover:text-slate-700" href="mailto:vivek@x402refunds.com">
+              vivek@x402refunds.com
+            </a>
           </div>
         </div>
       </div>

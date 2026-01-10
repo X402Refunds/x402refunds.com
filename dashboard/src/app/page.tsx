@@ -5,7 +5,16 @@ import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
 import { CopyButton } from "@/components/ui/copy-button"
-import { ChevronRight, CreditCard } from "lucide-react"
+import {
+  ChevronRight,
+  CreditCard,
+  Mail,
+  ShieldCheck,
+  BadgeCheck,
+  Search,
+  Zap,
+  Sparkles,
+} from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -19,7 +28,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-blue-800">
               <CreditCard className="h-3.5 w-3.5" />
               FOR PAID APIs
-            </div>
+              </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
               Enable refund requests
@@ -29,7 +38,7 @@ export default function HomePage() {
               
             <p className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto">
               Add one file. Refund requests land in your email.
-            </p>
+              </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700 mx-auto w-fit text-left">
                 <li className="flex gap-2">
@@ -55,7 +64,7 @@ export default function HomePage() {
                     el?.scrollIntoView({ behavior: "smooth", block: "start" })
                   }}
                 >
-                Get started
+                Get started →
                 </Button>
                 <Button
                   size="lg"
@@ -198,32 +207,121 @@ export default function HomePage() {
 
       {/* (Removed) WHAT YOU GET */}
 
-      {/* FINAL CTA */}
-      <section className="bg-slate-950">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
-          <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-            <h2 className="text-3xl sm:text-4xl font-bold">Need help?</h2>
-            <p className="mt-2 text-slate-300">
-              Read the docs or top up credits for one‑click refunds.
+      {/* WHAT YOU GET */}
+      <section className="bg-slate-50 border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
+              What you get
+            </h2>
+            <p className="mt-3 text-slate-600">
+              A lightweight refund-requests inbox for paid APIs—without building a dashboard.
             </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                onClick={() => (window.location.href = "/docs")}
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">Email-first</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Refund requests land in your email. No account required.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">One-click decisions</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Approve, deny, or partial refund from the email link.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <BadgeCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">Shareable proof</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    A public status page for “was it refunded?” checks.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">On-chain verification</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    We verify the USDC payment on-chain (Base/Solana supported).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <Search className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">Discoverability (optional)</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Add one Link header so agent clients can auto-discover refunds support.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-950">Automated refunds (optional)</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Top up credits so approved requests can refund automatically.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+              onClick={() => (window.location.href = "/docs")}
             >
-                View docs
+              View docs
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
-              className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
-                onClick={() => (window.location.href = "/topup")}
+              className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
+              onClick={() => (window.location.href = "/topup")}
             >
-                Top up credits
+              Top up credits
             </Button>
-            </div>
-            </div>
+          </div>
         </div>
       </section>
 

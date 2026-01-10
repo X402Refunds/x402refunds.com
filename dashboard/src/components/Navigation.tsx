@@ -144,7 +144,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     className="w-full justify-start"
                     variant="default"
                   >
-                    Get started
+                    Get started →
                   </Button>
 
                   <Button
