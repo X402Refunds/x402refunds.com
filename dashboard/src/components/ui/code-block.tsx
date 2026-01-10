@@ -54,10 +54,12 @@ export function CodeBlock(props: {
   language?: string;
   title?: string;
   copyLabel?: string;
+  variant?: "minimal" | "card";
   className?: string;
 }) {
   const codeEl = useRef<HTMLElement | null>(null);
   const language = useMemo(() => normalizeLanguage(props.language), [props.language]);
+  const variant = props.variant ?? "minimal";
 
   useEffect(() => {
     let cancelled = false;
@@ -77,8 +79,13 @@ export function CodeBlock(props: {
   }, [language, props.code]);
 
   return (
-    <div className={cn("rounded-xl border border-border bg-card", props.className)}>
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-background/60 px-3 py-2">
+    <div
+      className={cn(
+        variant === "card" ? "rounded-xl border border-border bg-card" : "bg-transparent",
+        props.className,
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
         <div className="min-w-0 text-xs font-medium text-muted-foreground">
           {props.title ? (
             <span className="font-mono text-foreground">{props.title}</span>
@@ -91,7 +98,7 @@ export function CodeBlock(props: {
 
       <pre
         className={cn(
-          "prism-code m-0 overflow-x-auto bg-muted/50 p-3 text-[13px] leading-6",
+          "prism-code m-0 overflow-x-auto rounded-xl bg-muted/40 px-4 py-3 text-[13px] leading-6",
           `language-${language}`,
         )}
       >

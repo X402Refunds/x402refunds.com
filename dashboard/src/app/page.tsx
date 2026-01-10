@@ -219,8 +219,9 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
-                    We email you at <span className="font-mono">supportEmail</span>.
+                  <div className="text-sm text-foreground">
+                    You’ll receive refund requests at{" "}
+                    <span className="font-mono">supportEmail</span>.
                   </div>
                 </div>
 
@@ -237,7 +238,7 @@ export default function HomePage() {
 
                   <a
                     href="/topup"
-                    className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                    className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
                   >
                     Top up refund credits →
                   </a>
