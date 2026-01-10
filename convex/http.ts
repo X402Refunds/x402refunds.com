@@ -182,14 +182,8 @@ http.route({
     return new Response(
       JSON.stringify({
         x402refunds: {
-          merchant,
           refundRequestUrl: refundUrl,
           supportEmail,
-          terms: {
-            refundWindowDays: 7,
-            evidenceWindowDays: 7,
-            currency: "USDC",
-          },
         },
       }),
       { headers: corsHeaders },

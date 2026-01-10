@@ -3,9 +3,9 @@
 ## Integration Guide for Merchants
 
 ### What you’re adding
-1) A `/.well-known/x402.json` file (public, on your domain)
-2) (Optional) Refund credits (for one-click refunds from email)
-3) (Optional) A `Link` header (for discoverability)
+1) A `/.well-known/x402.json` file
+2) Add refund credits `optional`
+3) Add a `Link` header `optional`
 
 After that, refund requests can reach you by email.
 
