@@ -31,6 +31,11 @@ export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
+  // Avoid React hydration mismatch (#418) by ensuring any wallet-dependent UI
+  // only renders after the component is mounted on the client.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const didPrefill = useRef(false);
   const didPrefillAmount = useRef(false);
   const [merchantAddress, setMerchantAddress] = useState("");
@@ -62,6 +67,8 @@ export default function TopupPage() {
 
   const [completionStatus, setCompletionStatus] = useState<"idle" | "waiting" | "done" | "error">("idle");
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
+
+  const walletReady = mounted && isConnected && !!address && !!walletClient;
 
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...&amount=...
@@ -367,7 +374,7 @@ export default function TopupPage() {
                 if (!amountMicrosBig) throw new Error("Enter an amount");
                 if (overMax) throw new Error("Max top up is $10 USDC");
                 if (underMin) throw new Error("Minimum top up is $0.01 USDC");
-                if (!isConnected || !walletClient || !address) throw new Error("Connect a wallet to pay");
+                if (!walletReady) throw new Error("Connect a wallet to pay");
 
                 // 1) request payment requirements (402)
                 const res = await fetch(`${API_BASE}/v1/topup`, {

@@ -1,14 +1,24 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import { useConnect, useAccount, useDisconnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { truncateAddress } from '@/lib/ethereum';
 import { Wallet } from 'lucide-react';
 
 export function ConnectWalletButton() {
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- flip after hydration to avoid SSR/client markup mismatch when wagmi connectors appear only in the browser
+  useEffect(() => setMounted(true), []);
+
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+
+  // Prevent hydration mismatches:
+  // - On the server, we intentionally use an SSR-safe wagmi config (no connectors).
+  // - On the client, connectors become available, which would change the rendered HTML.
+  if (!mounted) return null;
 
   if (isConnected && address) {
     return (
