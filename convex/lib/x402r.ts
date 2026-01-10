@@ -174,7 +174,7 @@ export const createEscrow = action({
 
 /**
  * Resolve dispute and release escrow funds
- * Called by x402disputes.com arbiter after merchant decision
+ * Called by x402refunds.com arbiter after merchant decision
  * 
  * Includes safety checks:
  * - Gas price must be acceptable

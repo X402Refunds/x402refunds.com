@@ -1,5 +1,5 @@
-# Robots.txt for Consulate - Agentic Dispute Arbitration
-# https://x402disputes.com
+# Robots.txt for X402Refunds - x402 Payment Disputes & Refunds
+# https://x402refunds.com
 
 # Default rule for all bots
 User-agent: *
@@ -69,10 +69,10 @@ Allow: /api/
 Disallow: /dashboard/settings/
 
 # Sitemap location
-Sitemap: https://x402disputes.com/sitemap.xml
+Sitemap: https://x402refunds.com/sitemap.xml
 
 # Additional resources
-# AI policy: https://x402disputes.com/ai.txt
-# LLM context: https://x402disputes.com/llms.txt
-# Security: https://x402disputes.com/security.txt
-# Humans: https://x402disputes.com/humans.txt
+# AI policy: https://x402refunds.com/ai.txt
+# LLM context: https://x402refunds.com/llms.txt
+# Security: https://x402refunds.com/security.txt
+# Humans: https://x402refunds.com/humans.txt

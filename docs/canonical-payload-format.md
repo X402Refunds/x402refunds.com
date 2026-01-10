@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document defines the **exact payload format** that seller agents MUST use when signing transaction evidence for dispute resolution.
+This document defines the **exact payload format** that seller agents MUST use when signing transaction evidence for refund requests.
 
 **Why this matters:** The payload string must be **byte-for-byte identical** between what seller signs and what buyer forwards. Any formatting differences will cause signature verification to fail.
 
@@ -140,7 +140,7 @@ function createSignedEvidence(request, response, paymentInfo) {
   return {
     'X-Payload': base64Encode(payload),
     'X-Signature': base64Encode(signature),
-    'X-Dispute-URL': `https://api.x402disputes.com/disputes/claim?vendor=${sellerDid}`
+    'X-Dispute-URL': `https://api.x402refunds.com/disputes/claim?vendor=${sellerDid}`
   };
 }
 ```
@@ -149,7 +149,7 @@ function createSignedEvidence(request, response, paymentInfo) {
 
 ## Verification Process
 
-**Consulate's verification:**
+**X402Refunds verification:**
 ```javascript
 // 1. Decode evidencePayload (base64 → string)
 const payloadString = base64Decode(evidencePayload);
@@ -231,8 +231,8 @@ const stillValid = ed25519.verify(tampered, signature, publicKey);
 
 ## Support
 
-Questions about this format? Contact: support@x402disputes.com
+Questions about this format? Contact: support@x402refunds.com
 
 **Protocol:** Agentic Dispute Protocol (ADP)  
-**Repository:** https://github.com/consulatehq/agentic-dispute-protocol
+**Repository:** https://github.com/x402disputes/x402-disputes
 

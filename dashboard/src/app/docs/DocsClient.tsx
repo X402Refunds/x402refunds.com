@@ -216,7 +216,7 @@ export function DocsClient(props: {
             Schema:{" "}
             <a
               className="underline underline-offset-2"
-              href="https://api.x402disputes.com/.well-known/mcp.json"
+              href="https://api.x402refunds.com/.well-known/mcp.json"
             >
               /.well-known/mcp.json
             </a>

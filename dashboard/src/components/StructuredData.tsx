@@ -2,25 +2,25 @@ export function OrganizationStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "x402Disputes",
-    "url": "https://www.x402disputes.com",
-    "logo": "https://www.x402disputes.com/x402disputes-logo-square.svg",
-    "description": "Automated dispute resolution for AI agents. Resolve enterprise AI service agreements and SLA violations in minutes, not months.",
+    "name": "X402Refunds",
+    "url": "https://x402refunds.com",
+    "logo": "https://x402refunds.com/x-favicon.svg",
+    "description": "Payment refund requests for X-402 payments. Request, review, and process refunds with a simple dashboard + API.",
     "foundingDate": "2024",
     "founder": {
       "@type": "Person",
       "name": "Vivek Kotecha"
     },
     "sameAs": [
-      "https://github.com/x402disputes"
+      "https://github.com/x402refunds"
     ],
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "Customer Service",
-      "url": "https://www.x402disputes.com"
+      "url": "https://x402refunds.com"
     },
     "areaServed": "Worldwide",
-    "serviceType": "Agentic Dispute Arbitration",
+    "serviceType": "Payment Refund Requests",
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
@@ -40,12 +40,12 @@ export function WebSiteStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "x402Disputes",
-    "url": "https://www.x402disputes.com",
-    "description": "Automated dispute resolution for AI agents",
+    "name": "X402Refunds",
+    "url": "https://x402refunds.com",
+    "description": "Payment refund requests for X-402 payments",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://www.x402disputes.com/demo/?search={search_term_string}",
+      "target": "https://x402refunds.com/demo/?search={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   }
@@ -62,11 +62,11 @@ export function ServiceStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "serviceType": "Agentic Dispute Arbitration",
+    "serviceType": "Payment Refund Requests",
     "provider": {
       "@type": "Organization",
-      "name": "x402Disputes",
-      "url": "https://www.x402disputes.com"
+      "name": "X402Refunds",
+      "url": "https://x402refunds.com"
     },
     "areaServed": "Worldwide",
     "hasOfferCatalog": {
@@ -77,24 +77,24 @@ export function ServiceStructuredData() {
           "@type": "Offer",
           "itemOffered": {
             "@type": "Service",
-            "name": "Automated Arbitration",
-            "description": "Fast automated dispute resolution for AI service agreements"
+            "name": "Refund Requests",
+            "description": "Request, review, and process payment refunds for X-402 payments"
           }
         },
         {
           "@type": "Offer",
           "itemOffered": {
             "@type": "Service",
-            "name": "SLA Monitoring",
-            "description": "Real-time monitoring and enforcement of service level agreements"
+            "name": "Refund Status Tracking",
+            "description": "Track refund request status and outcomes"
           }
         },
         {
           "@type": "Offer",
           "itemOffered": {
             "@type": "Service",
-            "name": "Evidence Management",
-            "description": "Automated collection and validation of dispute evidence"
+            "name": "Refund Evidence",
+            "description": "Attach supporting context to refund requests (logs, receipts, transaction details)"
           }
         }
       ]
@@ -120,7 +120,7 @@ export function SoftwareApplicationStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "x402Disputes AI Agent Platform",
+    "name": "X402Refunds AI Agent Platform",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -134,12 +134,11 @@ export function SoftwareApplicationStructuredData() {
       "ratingCount": "47"
     },
     "featureList": [
-      "Automated Dispute Resolution",
-      "AI Agent Identity Management",
-      "SLA Monitoring and Enforcement",
-      "Real-time Arbitration",
-      "Evidence Collection and Validation",
-      "Enterprise API Access"
+      "Refund Request Intake",
+      "Refund Review Workflow",
+      "Refund Status Tracking",
+      "Evidence Attachments",
+      "API Access"
     ]
   }
 
@@ -178,42 +177,42 @@ export function FAQStructuredData() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "How fast does x402Disputes resolve disputes?",
+        "name": "How fast does X402Refunds process refund requests?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "x402Disputes resolves AI agent disputes in an average of 2.4 minutes, compared to traditional legal processes that can take 4-8 weeks."
+          "text": "X402Refunds processes refund requests quickly with a streamlined workflow and a clear status trail."
         }
       },
       {
         "@type": "Question",
-        "name": "What types of disputes can x402Disputes handle?",
+        "name": "What types of refund requests can X402Refunds handle?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "x402Disputes handles SLA violations, API downtime disputes, performance breaches, and service agreement violations between AI agents and service providers."
+          "text": "X402Refunds supports refund requests tied to X-402 payments, including cases like timeouts, errors, or non-delivery after payment."
         }
       },
       {
         "@type": "Question",
-        "name": "How much does x402Disputes cost?",
+        "name": "How much does X402Refunds cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "x402Disputes charges a $0.05 flat fee per dispute. Simple, transparent pricing."
+          "text": "X402Refunds charges a $0.05 flat fee per refund request. Simple, transparent pricing."
         }
       },
       {
         "@type": "Question",
-        "name": "Is x402Disputes available 24/7?",
+        "name": "Is X402Refunds available 24/7 for refund requests?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes, x402Disputes operates as a fully automated system with 24/7 availability for dispute resolution, evidence submission, and case tracking."
+          "text": "Yes, X402Refunds is available 24/7 for submitting and tracking refund requests."
         }
       },
       {
         "@type": "Question",
-        "name": "How does automated arbitration work?",
+        "name": "How does the refund request workflow work?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "x402Disputes automatically collects evidence (logs, metrics, SLA data), validates claims against service agreements, and executes resolutions (credits, refunds, penalties) without manual intervention."
+          "text": "X402Refunds collects the request details, links it to the underlying payment proof, and provides a clear workflow for review and processing."
         }
       }
     ]

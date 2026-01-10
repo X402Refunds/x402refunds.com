@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "com.x402disputes/x402-disputes",
-  "title": "x402disputes.com - Permissionless X-402 Dispute Resolution",
-  "description": "Permissionless dispute filing for X-402 USDC payments on Base and Solana. Agents file disputes directly. Dispute and refund data written on-chain.",
+  "name": "com.x402refunds/x402-refunds",
+  "title": "x402refunds.com - Permissionless X-402 Refund Requests",
+  "description": "Permissionless refund requests for X-402 USDC payments on Base and Solana. Agents submit refund requests directly. Status is trackable via API and MCP.",
   "version": "3.0.0",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://api.x402disputes.com",
+      "url": "https://api.x402refunds.com",
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer token authentication using x402disputes API keys (starts with csk_live_ or csk_test_)",
+          "description": "Bearer token authentication using X402Refunds API keys (starts with csk_live_ or csk_test_)",
           "isRequired": false,
           "isSecret": true
         }
@@ -19,12 +19,12 @@
     }
   ],
   "documentation": {
-    "quickstart": "https://www.x402disputes.com/docs",
-    "api": "https://www.x402disputes.com/docs",
-    "protocol": "https://github.com/x402disputes/x402-dispute-protocol"
+    "quickstart": "https://x402refunds.com/docs",
+    "api": "https://x402refunds.com/docs",
+    "protocol": "https://github.com/x402refunds/x402-refund-protocol"
   },
   "support": {
-    "email": "support@x402disputes.com",
-    "github": "https://github.com/x402disputes/x402-disputes/issues"
+    "email": "support@x402refunds.com",
+    "github": "https://github.com/x402refunds/x402refunds.com/issues"
   }
 }

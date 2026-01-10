@@ -216,7 +216,7 @@ it('should create agent with test markers', async () => {
 - ✅ **DO** add `isTestData: true` to all test data
 - ✅ **DO** use `testRunId: Date.now()` for batch tracking
 - ✅ **DO** rely on global cleanup in `test/setup.ts`
-- ❌ **DON'T** test against production (`perceptive-lyrebird-89` or `api.x402disputes.com`)
+- ❌ **DON'T** test against production (`perceptive-lyrebird-89` or `api.x402refunds.com`)
 - ❌ **DON'T** leave test data behind (check with `node scripts/cleanup-all-test-data.js --dry-run`)
 
 ## Test Debugging

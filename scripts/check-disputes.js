@@ -2,7 +2,7 @@
 
 import { ConvexHttpClient } from "convex/browser";
 
-const CONVEX_URL = process.env.CONVEX_URL || "https://api.x402disputes.com";
+const CONVEX_URL = process.env.CONVEX_URL || "https://api.x402refunds.com";
 const client = new ConvexHttpClient(CONVEX_URL);
 
 async function checkDisputes() {

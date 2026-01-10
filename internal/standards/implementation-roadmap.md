@@ -31,7 +31,7 @@ Establish technical and legal foundations for legitimacy.
 - ✅ **Week 1-2**: Write Consulate Arbitration Rules v1.0
   - Status: ✅ COMPLETE (drafted 10/9/2025)
   - Location: `docs/standards/consulate-arbitration-rules-v1.0.md`
-  - Action: Publish to x402disputes.com/rules/v1.0
+  - Action: Publish to x402refunds.com/rules/v1.0
 
 - ✅ **Week 3-4**: Convert IETF Internet-Draft to XML format
   - Status: 🔄 IN PROGRESS (outline drafted)
@@ -138,7 +138,7 @@ Prove the protocol works in practice through reference implementations and pilot
 - Publish SDKs:
   - **JavaScript/TypeScript**: `npm install @consulate/arbitration-sdk`
   - **Python**: `pip install consulate-arbitration`
-- Docs live at: https://www.x402disputes.com/docs
+- Docs live at: https://x402refunds.com/docs
 
 #### Month 6-7: Test Suite
 - Build protocol compliance test suite
@@ -181,7 +181,7 @@ Prove the protocol works in practice through reference implementations and pilot
 ### Track 3: Ecosystem Growth
 
 #### Month 4-6: Developer Adoption
-- Developer documentation site: https://developers.x402disputes.com
+- Developer documentation site: https://developers.x402refunds.com
 - Tutorial: "Build an arbitration-aware AI agent in 30 minutes"
 - Hackathon: "Decentralized Justice" (online, $50K prize pool)
 
@@ -418,12 +418,12 @@ Ensure long-term protocol governance and continuous improvement.
 
 ## Next Immediate Actions (This Week)
 
-1. ✅ **Publish Arbitration Rules** to x402disputes.com/rules/v1.0
+1. ✅ **Publish Arbitration Rules** to x402refunds.com/rules/v1.0
 2. **Convert IETF draft to XML** using xml2rfc tool
 3. **Create IETF Datatracker account**
 4. **Recruit 4 W3C Community Group co-founders**
 5. **Draft academic paper outline** (20-30 pages)
-6. **Keep docs simple**: serve a single Markdown page at https://www.x402disputes.com/docs
+6. **Keep docs simple**: serve a single Markdown page at https://x402refunds.com/docs
 7. **Announce standards initiative** on Twitter/X and LinkedIn
 
 ---

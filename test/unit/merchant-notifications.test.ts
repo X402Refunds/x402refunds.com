@@ -24,9 +24,9 @@ describe("merchant notifications (unit)", () => {
       if (u.includes("/.well-known/x402.json")) {
         return new Response(
           JSON.stringify({
-            x402disputes: {
+            x402refunds: {
               merchant: "eip155:8453:0x0000000000000000000000000000000000000002",
-              supportEmail: "disputes@merchant.com",
+              supportEmail: "refunds@merchant.com",
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -66,9 +66,9 @@ describe("merchant notifications (unit)", () => {
       if (u === "https://merchant.example/.well-known/x402.json") {
         return new Response(
           JSON.stringify({
-            x402disputes: {
+            x402refunds: {
               merchant: merchantCaip10,
-              supportEmail: "disputes@merchant.com",
+              supportEmail: "refunds@merchant.com",
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -125,7 +125,7 @@ describe("merchant notifications (unit)", () => {
       if (u === "https://merchant2.example/.well-known/x402.json") {
         return new Response(
           JSON.stringify({
-            x402disputes: { merchant: merchantCaip10, supportEmail: "disputes@merchant.com" },
+            x402refunds: { merchant: merchantCaip10, supportEmail: "refunds@merchant.com" },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
@@ -177,14 +177,14 @@ describe("merchant notifications (unit)", () => {
           q
             .eq("merchant", merchantCaip10)
             .eq("origin", "https://merchant2.example")
-            .eq("supportEmail", "disputes@merchant.com"),
+            .eq("supportEmail", "refunds@merchant.com"),
         )
         .collect();
     });
     expect(tokens.length).toBe(1);
     expect(tokens[0].merchant).toBe(merchantCaip10);
     expect(tokens[0].origin).toBe("https://merchant2.example");
-    expect(tokens[0].supportEmail).toBe("disputes@merchant.com");
+    expect(tokens[0].supportEmail).toBe("refunds@merchant.com");
     expect(typeof tokens[0].token).toBe("string");
   });
 
@@ -192,12 +192,12 @@ describe("merchant notifications (unit)", () => {
     const prevResendKey = process.env.RESEND_API_KEY;
     const prevEmailFrom = process.env.EMAIL_FROM;
     process.env.RESEND_API_KEY = "test_key";
-    process.env.EMAIL_FROM = "disputes@x402disputes.com";
+    process.env.EMAIL_FROM = "refunds@x402refunds.com";
 
     const merchantAddress = "0x00000000000000000000000000000000000000aa";
     const merchantCaip10 = `eip155:8453:${merchantAddress}`;
     const origin = "https://merchant-lowbalance.example";
-    const supportEmail = "disputes@merchant.com";
+    const supportEmail = "refunds@merchant.com";
 
     let resendPayload: any = null;
     globalThis.fetch = vi.fn(async (url: any, init?: any) => {
@@ -205,7 +205,7 @@ describe("merchant notifications (unit)", () => {
       if (u === `${origin}/.well-known/x402.json`) {
         return new Response(
           JSON.stringify({
-            x402disputes: { merchant: merchantCaip10, supportEmail },
+            x402refunds: { merchant: merchantCaip10, supportEmail },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
@@ -270,14 +270,14 @@ describe("merchant notifications (unit)", () => {
 
     // Approve links should route through top-up with actionToken.
     expect(text).toContain(
-      `https://x402disputes.com/topup?merchant=${encodeURIComponent(merchantCaip10)}&caseId=${encodeURIComponent(
+      `https://x402refunds.com/topup?merchant=${encodeURIComponent(merchantCaip10)}&caseId=${encodeURIComponent(
         String(caseId),
       )}&email=${encodeURIComponent(supportEmail)}`,
     );
     expect(text).toContain("&actionToken=");
 
     // Reject should remain a one-click action link.
-    expect(text).toContain("https://api.x402disputes.com/v1/merchant/action?token=");
+    expect(text).toContain("https://api.x402refunds.com/v1/merchant/action?token=");
 
     process.env.RESEND_API_KEY = prevResendKey;
     process.env.EMAIL_FROM = prevEmailFrom;

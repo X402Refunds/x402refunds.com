@@ -54,7 +54,7 @@ http.route({ path: "/sla/status/:agentDid", method: "OPTIONS", handler: optionsH
 http.route({ path: "/api/custody/:caseId", method: "OPTIONS", handler: optionsHandler });
 // Wallet-first v1 endpoints (no signup, no API keys)
 http.route({ path: "/v1/topup", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/v1/disputes", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/refunds", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/tx/merchant", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/balance", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/v1/merchant/notification-status", method: "OPTIONS", handler: optionsHandler });
@@ -64,7 +64,7 @@ http.route({ path: "/v1/evidence/upload", method: "OPTIONS", handler: optionsHan
 http.route({ path: "/v1/evidence/file", method: "OPTIONS", handler: optionsHandler });
 // NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
 // Use static paths with query/body for ID-based operations.
-http.route({ path: "/v1/dispute", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/v1/refund", method: "OPTIONS", handler: optionsHandler });
 // Demo agents for dispute testing
 http.route({ path: "/demo-agents/image-generator", method: "OPTIONS", handler: optionsHandler });
 
@@ -74,7 +74,7 @@ http.route({
   method: "GET",
   handler: httpAction(async () => {
     return new Response(JSON.stringify({
-      service: "x402disputes.com - Permissionless X-402 Dispute Resolution",
+      service: "x402refunds.com - Permissionless X-402 Refund Requests",
       version: "1.0.0",
       status: "operational",
       endpoints: {
@@ -92,10 +92,10 @@ http.route({
         discovery: "/agents/discover",
         capabilities: "/agents/capabilities",
 
-        // Evidence & disputes
+        // Evidence & refunds
         evidence: "/evidence/submit",
-        disputes: "/disputes/file",
-        dispute_status: "/disputes/:disputeId/status",
+        refunds: "/v1/refunds",
+        refund_status: "/cases/:caseId",
 
         // Notifications & webhooks
         webhooks: "/webhooks/register",
@@ -109,16 +109,16 @@ http.route({
         sla_report: "/sla/report",
         sla_status: "/sla/status/:agentDid"
       },
-      documentation: "https://www.x402disputes.com/docs",
+      documentation: "https://x402refunds.com/docs",
       protocol: {
-        name: "X-402 Dispute Protocol",
-        repository: "https://github.com/x402disputes/x402-dispute-protocol",
-        ietf_draft: "draft-kotecha-x402-dispute-protocol"
+        name: "X-402 Refund Requests",
+        repository: "https://github.com/x402refunds/x402-refund-protocol",
+        ietf_draft: "draft-kotecha-x402-refund-protocol"
       },
       integration: {
-        mcp: "Add x402disputes MCP server to your agent - file disputes directly",
-        sdk: "https://github.com/x402disputes/agent-sdk",
-        examples: "https://github.com/x402disputes/integration-examples"
+        mcp: "Add the X402Refunds MCP server to your agent - submit refund requests directly",
+        sdk: "https://github.com/x402refunds/agent-sdk",
+        examples: "https://github.com/x402refunds/integration-examples"
       },
       timestamp: Date.now()
     }), {
@@ -135,7 +135,7 @@ http.route({
     return new Response(JSON.stringify({ 
       status: "healthy", 
       timestamp: Date.now(),
-      service: "x402disputes" 
+      service: "x402refunds" 
     }), {
       headers: {
         ...corsHeaders,
@@ -173,7 +173,7 @@ http.route({
     const baseOrigin = new URL(request.url).origin;
     const demoWallet = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
     const merchant = `eip155:8453:${demoWallet.toLowerCase()}`;
-    const disputeUrl = `${baseOrigin}/v1/disputes?merchant=${merchant}`;
+    const refundUrl = `${baseOrigin}/v1/refunds?merchant=${merchant}`;
     const supportEmail =
       process.env.DEMO_AGENTS_SUPPORT_EMAIL ||
       process.env.SUPPORT_EMAIL ||
@@ -181,9 +181,9 @@ http.route({
 
     return new Response(
       JSON.stringify({
-        x402disputes: {
+        x402refunds: {
           merchant,
-          paymentDisputeUrl: disputeUrl,
+          refundRequestUrl: refundUrl,
           supportEmail,
           terms: {
             refundWindowDays: 7,
@@ -324,7 +324,7 @@ http.route({
   }),
 });
 
-// One-click dispute actions from email (approve/refund/reject)
+// One-click actions from email (approve/refund/reject)
 http.route({
   path: "/v1/merchant/action",
   method: "GET",
@@ -358,8 +358,8 @@ http.route({
       });
     }
 
-    const caseUrl = `https://api.x402disputes.com/v1/dispute?id=${encodeURIComponent(res.caseId)}`;
-    const trackingUrl = `https://x402disputes.com/cases/${encodeURIComponent(res.caseId)}`;
+    const caseUrl = `https://api.x402refunds.com/v1/refund?id=${encodeURIComponent(res.caseId)}`;
+    const trackingUrl = `https://x402refunds.com/cases/${encodeURIComponent(res.caseId)}`;
 
     const isReject = String(res.verdict) === "MERCHANT_WINS";
     let refund: any = null;
@@ -482,7 +482,7 @@ http.route({
                 }
               },
               serverInfo: {
-                name: "x402disputes.com",
+                name: "x402refunds.com",
                 version: "2.0.0"
               }
             }
@@ -549,7 +549,7 @@ http.route({
           try {
             // Route to appropriate handler based on tool name
             switch (toolName) {
-              case "x402_file_dispute": {
+              case "x402_request_refund": {
                 // Call payment dispute handler directly
                 const parameters = toolArgs || {};
                 
@@ -562,7 +562,7 @@ http.route({
                     success: false,
                     error: {
                       code: "MISSING_REQUIRED_FIELDS",
-                      message: "Missing required fields for dispute filing",
+                      message: "Missing required fields for refund request",
                       required: ["description", "request", "response", "transactionHash", "blockchain", "recipientAddress"]
                     }
                   };
@@ -595,7 +595,7 @@ http.route({
                       field: "blockchain",
                       received: parameters.blockchain,
                       expected: "base or solana",
-                      suggestion: "X-402 disputes only accept USDC payments on Base and Solana chains."
+                      suggestion: "X-402 refund requests only accept USDC payments on Base and Solana chains."
                     }
                   };
                   break;
@@ -700,7 +700,7 @@ http.route({
                   },
                   
                   humanReviewRequired: true,
-                  message: `X-402 payment dispute filed. All transaction details verified from blockchain.`,
+                  message: `X-402 refund request submitted. All transaction details verified from blockchain.`,
                   trackingUrl: filed.trackingUrl,
                   evidenceUrls: filed.evidenceUrls || [],
                   nextSteps: [
@@ -711,7 +711,7 @@ http.route({
                 break;
               }
               
-              case "x402_list_my_cases": {
+              case "x402_list_my_refund_requests": {
                 const parameters = toolArgs || {};
                 const cases = await ctx.runQuery(api.cases.getCasesByParty, {
                   party: parameters.walletAddress
@@ -730,7 +730,7 @@ http.route({
                 break;
               }
               
-              case "x402_check_case_status": {
+              case "x402_check_refund_status": {
                 const parameters = toolArgs || {};
                 const caseData = await ctx.runQuery(internal.cases.getCase, {
                   caseId: parameters.caseId as any
@@ -783,11 +783,11 @@ http.route({
                   },
                   instructions: {
                     step_1: "This endpoint uses X-402 signature-based payment with facilitator",
-                    step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator with X-PAYMENT header",
+                    step_2: "Call: POST https://api.x402refunds.com/demo-agents/image-generator with X-PAYMENT header",
                     step_3: "Receive 200 OK with generated image URL from Pollinations AI",
                     note: "Payment signature will be verified and settled via mcpay.tech facilitator"
                   },
-                  endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
+                  endpoint: "https://api.x402refunds.com/demo-agents/image-generator",
                   prompt: parameters.prompt,
                   size: parameters.size || "1024x1024",
                   model: parameters.model || "stable-diffusion-xl",
@@ -827,17 +827,17 @@ http.route({
               let textOutput = "";
               
               // Format based on tool type
-              if (toolName === "x402_file_dispute") {
-                textOutput = `✅ Dispute Received Successfully!\n\n` +
+              if (toolName === "x402_request_refund") {
+                textOutput = `✅ Refund request submitted!\n\n` +
                   `📋 Case ID: ${invokeData.caseId}\n` +
                   `💰 Fee: $${invokeData.disputeFee}\n` +
                   `⏱️  Status: ${invokeData.status}\n` +
                   `🔗 Track: ${invokeData.trackingUrl}\n\n` +
                   `Next Steps:\n${invokeData.nextSteps?.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n') || 'N/A'}`;
-              } else if (toolName === "x402_list_my_cases") {
+              } else if (toolName === "x402_list_my_refund_requests") {
                 const cases = invokeData.cases || [];
-                textOutput = `📊 Cases for ${invokeData.walletAddress}\n\n` +
-                  `Total: ${invokeData.totalCases} cases\n\n` +
+                textOutput = `📊 Refund requests for ${invokeData.walletAddress}\n\n` +
+                  `Total: ${invokeData.totalCases} requests\n\n` +
                   cases.slice(0, 10).map((c: any, i: number) => 
                     `${i + 1}. ${c._id || c.caseId || 'Unknown'}\n` +
                     `   Status: ${c.status}\n` +
@@ -862,9 +862,9 @@ http.route({
                   `2. ${invokeData.instructions.step_2}\n` +
                   `3. ${invokeData.instructions.step_3}\n\n` +
                   `💡 ${invokeData.use_case}`;
-              } else if (toolName === "x402_check_case_status") {
+              } else if (toolName === "x402_check_refund_status") {
                 const caseData = invokeData.case;
-                textOutput = `📋 Case Status\n\n` +
+                textOutput = `📋 Refund request status\n\n` +
                   `Case ID: ${caseData?._id || caseData?.caseId || 'N/A'}\n` +
                   `Status: ${caseData?.status || 'N/A'}\n` +
                   `Type: ${caseData?.type || 'N/A'}\n` +
@@ -982,8 +982,8 @@ http.route({
         jurisdiction: "Global",
         description: "Automated AI vendor dispute resolution platform",
         contact: {
-          email: "support@x402disputes.com",
-          website: "https://x402disputes.com"
+          email: "support@x402refunds.com",
+          website: "https://x402refunds.com"
         }
       },
       protocolVersion: "1.0",
@@ -1025,7 +1025,7 @@ http.route({
         checkStatus: "/cases/:caseId",
         custody: "/api/custody/:caseId",
         neutrals: "/.well-known/adp/neutrals",
-        documentation: "https://www.x402disputes.com/docs"
+        documentation: "https://x402refunds.com/docs"
       },
       fees: {
         currency: "USD",
@@ -1505,9 +1505,9 @@ http.route({
   }),
 });
 
-// POST /v1/disputes
+// POST /v1/refunds
 http.route({
-  path: "/v1/disputes",
+  path: "/v1/refunds",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json().catch(() => ({} as any));
@@ -1605,7 +1605,7 @@ http.route({
       });
     if (!created?.ok) return jsonError(400, created);
 
-    return new Response(JSON.stringify({ ok: true, disputeId: created.disputeId }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true, caseId: created.disputeId }), { status: 200, headers: corsHeaders });
   }),
 });
 
@@ -1621,7 +1621,7 @@ http.route({
     return new Response(
       JSON.stringify({
         ok: true,
-        uploadUrl: "https://api.x402disputes.com/v1/evidence/upload",
+        uploadUrl: "https://api.x402refunds.com/v1/evidence/upload",
         note: "POST the raw file bytes to uploadUrl with Content-Type set to the file mime type.",
       }),
       { status: 200, headers: corsHeaders },
@@ -1647,7 +1647,7 @@ http.route({
       }
       const stored = new Blob([blob], { type: contentType });
       const storageId = await ctx.storage.store(stored);
-      const evidenceUrl = `https://api.x402disputes.com/v1/evidence/file?storageId=${encodeURIComponent(String(storageId))}`;
+      const evidenceUrl = `https://api.x402refunds.com/v1/evidence/file?storageId=${encodeURIComponent(String(storageId))}`;
       return new Response(
         JSON.stringify({ ok: true, storageId: String(storageId), url: evidenceUrl }),
         { status: 200, headers: corsHeaders },
@@ -1683,9 +1683,9 @@ http.route({
   }),
 });
 
-// GET /v1/disputes?merchant=<caip10>
+// GET /v1/refunds?merchant=<caip10>
 http.route({
-  path: "/v1/disputes",
+  path: "/v1/refunds",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
@@ -1697,13 +1697,16 @@ http.route({
       limit,
       });
     if (!res?.ok) return jsonError(400, res);
-    return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
+    return new Response(
+      JSON.stringify({ ok: true, refundRequests: res.disputes }),
+      { status: 200, headers: corsHeaders },
+    );
   }),
 });
 
-// GET /v1/dispute?id=<caseId>
+// GET /v1/refund?id=<caseId>
 http.route({
-  path: "/v1/dispute",
+  path: "/v1/refund",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
@@ -1728,7 +1731,7 @@ http.route({
       refund = null;
     }
 
-    return new Response(JSON.stringify({ ok: true, dispute: row, refund }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true, refundRequest: row, refund }), { status: 200, headers: corsHeaders });
   }),
 });
 

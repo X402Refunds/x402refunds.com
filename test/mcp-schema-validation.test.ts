@@ -11,25 +11,25 @@ import { MCP_TOOLS } from "../convex/mcp";
 describe("MCP Tool Schema Validation", () => {
   // Note: consulate_register_agent tool was removed - registration now via HTTP endpoint
 
-  describe("x402_file_dispute", () => {
+  describe("x402_request_refund", () => {
     it("should have blockchain enum (base, solana only - USDC chains)", () => {
-      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
-      expect(disputeTool).toBeDefined();
+      const refundTool = MCP_TOOLS.find(t => t.name === "x402_request_refund");
+      expect(refundTool).toBeDefined();
 
       // X-402 simplified schema - blockchain enum restricted to USDC-supported chains
-      expect(disputeTool?.inputSchema.properties.blockchain.enum).toBeDefined();
-      expect(disputeTool?.inputSchema.properties.blockchain.enum).toEqual(['base', 'solana']);
+      expect(refundTool?.inputSchema.properties.blockchain.enum).toBeDefined();
+      expect(refundTool?.inputSchema.properties.blockchain.enum).toEqual(['base', 'solana']);
       
       // Plaintiff/defendant no longer in schema (extracted from blockchain)
-      expect(disputeTool?.inputSchema.properties.plaintiff).toBeUndefined();
-      expect(disputeTool?.inputSchema.properties.defendant).toBeUndefined();
+      expect(refundTool?.inputSchema.properties.plaintiff).toBeUndefined();
+      expect(refundTool?.inputSchema.properties.defendant).toBeUndefined();
     });
 
     it("should have required fields matching X-402 simplified schema", () => {
-      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
-      expect(disputeTool).toBeDefined();
+      const refundTool = MCP_TOOLS.find(t => t.name === "x402_request_refund");
+      expect(refundTool).toBeDefined();
 
-      const required = disputeTool?.inputSchema.required;
+      const required = refundTool?.inputSchema.required;
       // X-402 simplified (7 required fields - plaintiff/defendant extracted from blockchain)
       expect(required).toContain("description");
       expect(required).toContain("request");  // Object
@@ -51,17 +51,17 @@ describe("MCP Tool Schema Validation", () => {
     });
 
     it("should support optional evidenceUrls", () => {
-      const disputeTool = MCP_TOOLS.find(t => t.name === "x402_file_dispute");
-      expect(disputeTool).toBeDefined();
-      expect(disputeTool?.inputSchema.properties.evidenceUrls).toBeDefined();
+      const refundTool = MCP_TOOLS.find(t => t.name === "x402_request_refund");
+      expect(refundTool).toBeDefined();
+      expect(refundTool?.inputSchema.properties.evidenceUrls).toBeDefined();
     });
   });
 
   // Note: consulate_submit_evidence tool was removed - evidence is included in dispute filing
 
-  describe("x402_check_case_status", () => {
+  describe("x402_check_refund_status", () => {
     it("should have required fields", () => {
-      const statusTool = MCP_TOOLS.find(t => t.name === "x402_check_case_status");
+      const statusTool = MCP_TOOLS.find(t => t.name === "x402_check_refund_status");
       expect(statusTool).toBeDefined();
 
       const required = statusTool?.inputSchema.required;
@@ -69,9 +69,9 @@ describe("MCP Tool Schema Validation", () => {
     });
   });
 
-  describe("x402_list_my_cases", () => {
+  describe("x402_list_my_refund_requests", () => {
     it("should have status enum matching backend case statuses", () => {
-      const listTool = MCP_TOOLS.find(t => t.name === "x402_list_my_cases");
+      const listTool = MCP_TOOLS.find(t => t.name === "x402_list_my_refund_requests");
       expect(listTool).toBeDefined();
 
       const statusEnum = listTool?.inputSchema.properties.status.enum;
@@ -112,9 +112,9 @@ describe("MCP Tool Schema Validation", () => {
       expect(MCP_TOOLS.length).toBe(4);
 
       const expectedTools = [
-        "x402_file_dispute",
-        "x402_list_my_cases",
-        "x402_check_case_status",
+        "x402_request_refund",
+        "x402_list_my_refund_requests",
+        "x402_check_refund_status",
         "demo_image_generator"
       ];
 

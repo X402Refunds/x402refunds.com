@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
-const API_BASE = "https://api.x402disputes.com";
+const API_BASE = "https://api.x402refunds.com";
 
 const BASE_TX_RE = /^0x[a-fA-F0-9]{64}$/;
 
@@ -130,7 +130,7 @@ export default function FileDisputePage() {
     },
   });
 
-  const submitDispute = handleSubmit(async (values) => {
+  const submitRefundRequest = handleSubmit(async (values) => {
     setApiError(null);
     setFileResult(null);
     setSubmitting(true);
@@ -187,7 +187,7 @@ export default function FileDisputePage() {
             }
           : undefined;
 
-      const res = await fetch(`${API_BASE}/v1/disputes`, {
+      const res = await fetch(`${API_BASE}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -234,7 +234,7 @@ export default function FileDisputePage() {
       const msg = e instanceof Error ? e.message : String(e);
       setApiError(
         msg === "Failed to fetch"
-          ? "Network error. If you received an email, the dispute may have been filed already. Check your inbox/spam and avoid filing duplicates."
+          ? "Network error. If you received an email, the refund request may have been filed already. Check your inbox/spam and avoid submitting duplicates."
           : msg,
       );
     } finally {
@@ -279,7 +279,7 @@ export default function FileDisputePage() {
 
       <main className="mx-auto max-w-4xl px-4 py-10 space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">File a Dispute</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Request a refund</h1>
           <p className="text-sm text-muted-foreground">Base only (USDC). One submission.</p>
         </div>
 
@@ -287,7 +287,7 @@ export default function FileDisputePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2">
-                <span>{fileResult.created === false ? "Already filed" : "Dispute filed"}</span>
+                <span>{fileResult.created === false ? "Already filed" : "Refund request filed"}</span>
                 <Badge>{fileResult.created === false ? "Existing" : "Success"}</Badge>
               </CardTitle>
             </CardHeader>
@@ -324,7 +324,7 @@ export default function FileDisputePage() {
         ) : null}
 
         {fileResult?.caseId ? null : (
-        <form className="space-y-6" onSubmit={submitDispute}>
+        <form className="space-y-6" onSubmit={submitRefundRequest}>
           <Card>
             <CardHeader>
               <CardTitle>Details</CardTitle>
@@ -472,7 +472,7 @@ export default function FileDisputePage() {
 
           <div className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" disabled={uploading || submitting || formSubmitting}>
-              {submitting ? "Filing…" : "File dispute"}
+              {submitting ? "Submitting…" : "Submit refund request"}
             </Button>
             <Button
               type="button"

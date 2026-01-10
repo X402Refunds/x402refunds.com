@@ -42,7 +42,7 @@ export function buildMerchantRefundExecutedEmailCopy(
   lines.push("");
   lines.push("Note: on-chain confirmations can take a minute.");
   lines.push("");
-  lines.push("Sent by x402disputes.com");
+  lines.push("Sent by x402refunds.com");
 
   return lines.join("\n");
 }

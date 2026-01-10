@@ -27,7 +27,7 @@ describe("canonical dispute (unit): duplicates", () => {
     expect(res.ok).toBe(true);
     if (res.ok) {
       expect(res.caseId).toBe(existingCaseId);
-      expect(res.trackingUrl).toBe(`https://x402disputes.com/cases/${existingCaseId}`);
+      expect(res.trackingUrl).toBe(`https://x402refunds.com/cases/${existingCaseId}`);
       expect(res.status).toBe("received");
       expect(res.created).toBe(false);
       expect(res.duplicate).toBe(true);

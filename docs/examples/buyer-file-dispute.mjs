@@ -1,11 +1,11 @@
 /**
- * Buyer: file a dispute (no API keys).
+ * Buyer: submit a refund request (no API keys).
  *
  * Usage:
  *   node docs/examples/buyer-file-dispute.mjs
  */
 
-const API_BASE = process.env.X402DISPUTES_API_BASE || "https://api.x402disputes.com";
+const API_BASE = process.env.X402REFUNDS_API_BASE || "https://api.x402refunds.com";
 
 const merchant = process.env.MERCHANT || "eip155:8453:0x0000000000000000000000000000000000000001";
 const buyer = process.env.BUYER || "buyer:anonymous";
@@ -21,7 +21,7 @@ const payload = {
   evidenceUrlOrHash: "https://example.com/logs/timeout.json",
 };
 
-const res = await fetch(`${API_BASE}/v1/disputes`, {
+const res = await fetch(`${API_BASE}/v1/refunds`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(payload),

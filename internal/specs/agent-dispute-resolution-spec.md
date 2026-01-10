@@ -432,7 +432,7 @@ POST   /webhooks/register         // Register callback URL
 
 ```javascript
 // When customer files dispute on payment platform
-const dispute = await fetch('https://api.x402disputes.com/api/payment-disputes', {
+const dispute = await fetch('https://api.x402refunds.com/api/payment-disputes', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

@@ -38,7 +38,7 @@ afterAll(async () => {
   // Clean up test data from live environments (dev/preview)
   // Don't clean production to avoid accidents
   const API_BASE_URL = process.env.API_BASE_URL || 'https://youthful-orca-358.convex.site';
-  const IS_PRODUCTION = API_BASE_URL.includes('x402disputes.com') || API_BASE_URL.includes('perceptive-lyrebird-89');
+  const IS_PRODUCTION = API_BASE_URL.includes('x402refunds.com') || API_BASE_URL.includes('perceptive-lyrebird-89');
   
   if (!IS_PRODUCTION) {
     try {

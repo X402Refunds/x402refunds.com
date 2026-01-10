@@ -1,13 +1,13 @@
-Contact: mailto:security@x402disputes.com
+Contact: mailto:security@x402refunds.com
 Expires: 2025-12-31T23:59:59.000Z
 Preferred-Languages: en
-Canonical: https://x402disputes.com/.well-known/security.txt
-Policy: https://x402disputes.com/security-policy
-Acknowledgments: https://x402disputes.com/security-acknowledgments
+Canonical: https://x402refunds.com/.well-known/security.txt
+Policy: https://x402refunds.com/security-policy
+Acknowledgments: https://x402refunds.com/security-acknowledgments
 
 # Security Disclosure
 
-If you discover a security vulnerability, please email security@x402disputes.com
+If you discover a security vulnerability, please email security@x402refunds.com
 with details of the vulnerability, steps to reproduce, and any relevant information.
 
 We appreciate responsible disclosure and will respond within 48 hours.

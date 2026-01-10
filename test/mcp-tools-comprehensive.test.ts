@@ -5,9 +5,9 @@ import { API_BASE_URL } from './fixtures';
  * Comprehensive MCP Tools Test Suite - HTTP Endpoint Testing
  *
  * Tests all 3 MCP server tools via HTTP endpoints:
- * 1. x402_file_dispute - File X-402 payment disputes (ultra-minimal schema)
- * 2. x402_list_my_cases - List cases for an Ethereum address
- * 3. x402_check_case_status - Check case status
+ * 1. x402_request_refund - Submit X-402 payment refund requests (ultra-minimal schema)
+ * 2. x402_list_my_refund_requests - List refund requests for an Ethereum address
+ * 3. x402_check_refund_status - Check refund request status
  *
  * IMPORTANT: These tests use real HTTP endpoints, not in-memory convex-test.
  * This ensures we're testing the actual MCP protocol implementation.
@@ -19,7 +19,7 @@ import { API_BASE_URL } from './fixtures';
  * - Permissionless: Can file against any Ethereum address
  */
 
-describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
+describe('MCP Tools - Comprehensive HTTP Test Suite (X-402 Refund Requests)', () => {
   let testCaseId: string;
   const testBuyerAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0';
   const testSellerAddress = '0x9876543210987654321098765432109876543210';
@@ -41,10 +41,10 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     return { response, data };
   }
 
-  describe('1. x402_file_dispute (X-402 Ultra-Minimal)', () => {
-    it('should file X-402 payment dispute with blockchain extraction', async () => {
+  describe('1. x402_request_refund (X-402 Ultra-Minimal)', () => {
+    it('should submit X-402 refund request with blockchain extraction', async () => {
       const timestamp = Date.now();
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         description: 'API returned 500 error after payment was confirmed on-chain',
         request: {
           method: 'POST',
@@ -72,13 +72,13 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         testCaseId = data.caseId;
       } else {
         // Expected in test env if blockchain query fails or address mismatch
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH', 'MCP_TOOL_NOT_FOUND']).toContain(data.error?.code);
+        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH']).toContain(data.error?.code);
       }
     }, 30000);
 
     it('should extract plaintiff from blockchain (no validation needed)', async () => {
       // Plaintiff is now extracted from blockchain, so invalid plaintiff field is ignored
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         description: 'API timeout after payment',
         request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
         response: { status: 500, body: { error: 'timeout' } },
@@ -99,7 +99,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should extract defendant from blockchain (no validation needed)', async () => {
       // Defendant is now extracted from blockchain, so invalid defendant field is ignored
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         description: 'API timeout after payment',
         request: { method: 'POST', url: 'https://api.test.com/v1/chat' },
         response: { status: 500, body: { error: 'timeout' } },
@@ -119,7 +119,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     }, 30000);
 
     it('should validate required fields', async () => {
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         // Missing required fields
         plaintiff: testBuyerAddress
       });
@@ -131,11 +131,11 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should support dryRun mode for validation', async () => {
       const timestamp = Date.now();
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
-        description: 'Test dispute for dryRun validation',
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${testSellerAddress}`,
+        description: 'Test refund request for dryRun validation',
         request: { method: 'POST', url: 'https://api.test.com' },
         response: { status: 500 },
         transactionHash: `0x${timestamp.toString(16)}`,
@@ -157,10 +157,10 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should validate blockchain enum', async () => {
-      const { response, data } = await invokeMcpTool('x402_file_dispute', {
+      const { response, data } = await invokeMcpTool('x402_request_refund', {
         plaintiff: testBuyerAddress,
         defendant: testSellerAddress,
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${testSellerAddress}`,
         description: 'Test',
         request: {},
         response: {},
@@ -181,16 +181,16 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
   });
 
-  describe('2. x402_check_case_status', () => {
-    it('should get case status', async () => {
+  describe('2. x402_check_refund_status', () => {
+    it('should get refund request status', async () => {
       // First create a case if we don't have one
       if (!testCaseId) {
         const timestamp = Date.now();
-        const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
+        const { data: disputeData } = await invokeMcpTool('x402_request_refund', {
           plaintiff: testBuyerAddress,
           defendant: testSellerAddress,
-          disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${testSellerAddress}`,
-          description: 'Test case for status check',
+          disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${testSellerAddress}`,
+          description: 'Test refund request for status check',
           request: { method: 'POST', url: 'https://api.test.com' },
           response: { status: 500 },
           transactionHash: `0x${timestamp.toString(16)}`,
@@ -208,7 +208,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
         testCaseId = 'k17test123456789012345678901234567890';
       }
 
-      const { response, data } = await invokeMcpTool('x402_check_case_status', {
+      const { response, data } = await invokeMcpTool('x402_check_refund_status', {
         caseId: testCaseId
       });
 
@@ -223,7 +223,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
     it('should return error for non-existent case', async () => {
       const fakeCaseId = 'k17xm47xm47xm47xm47xm47xm47xm4';
-      const { response, data } = await invokeMcpTool('x402_check_case_status', {
+      const { response, data } = await invokeMcpTool('x402_check_refund_status', {
         caseId: fakeCaseId
       });
 
@@ -236,11 +236,11 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
   });
 
-  describe('3. x402_list_my_cases', () => {
+  describe('3. x402_list_my_refund_requests', () => {
     it('should list cases for an Ethereum address', async () => {
       // Note: This requires the address to have cases filed
       // In test environment, may return empty array or validation error
-      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_refund_requests', {
         walletAddress: testBuyerAddress // Using ERC-8004 Ethereum wallet address
       });
 
@@ -253,7 +253,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should filter by status', async () => {
-      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_refund_requests', {
         walletAddress: testBuyerAddress,
         status: 'FILED'
       });
@@ -267,7 +267,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
     });
 
     it('should return all statuses when status is "all"', async () => {
-      const { response, data } = await invokeMcpTool('x402_list_my_cases', {
+      const { response, data } = await invokeMcpTool('x402_list_my_refund_requests', {
         walletAddress: testBuyerAddress,
         status: 'all'
       });
@@ -287,10 +287,10 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       const sellerAddress = `0x${(timestamp + 1).toString(16).padStart(40, '0')}`;
 
       // 1. File dispute
-      const { data: disputeData } = await invokeMcpTool('x402_file_dispute', {
+      const { data: disputeData } = await invokeMcpTool('x402_request_refund', {
         plaintiff: buyerAddress,
         defendant: sellerAddress,
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${sellerAddress}`,
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${sellerAddress}`,
         description: 'X-402 integration test dispute',
         request: {
           method: 'POST',
@@ -321,7 +321,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
 
       // 2. Check case status (if case was created)
       if (disputeData.caseId) {
-      const { data: statusData } = await invokeMcpTool('x402_check_case_status', {
+      const { data: statusData } = await invokeMcpTool('x402_check_refund_status', {
           caseId: disputeData.caseId
       });
 
@@ -331,7 +331,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402)', () => {
       }
 
       // 3. List cases for buyer
-      const { data: casesData } = await invokeMcpTool('x402_list_my_cases', {
+      const { data: casesData } = await invokeMcpTool('x402_list_my_refund_requests', {
         walletAddress: buyerAddress
       });
 

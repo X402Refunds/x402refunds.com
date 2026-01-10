@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://consulatehq.com',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://x402refunds.com',
   generateRobotsTxt: false, // We're using app/robots.ts instead
   generateIndexSitemap: false,
   exclude: [

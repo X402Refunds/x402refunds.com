@@ -4,7 +4,7 @@
 **Submission Date**: October 9, 2025  
 **Proposed by**: Vivek Kotecha, Consulate, Inc.  
 **Group Type**: Community Group  
-**Charter URL**: https://x402disputes.com/w3c/aap-cg/charter  
+**Charter URL**: https://x402refunds.com/w3c/aap-cg/charter  
 
 ---
 
@@ -212,7 +212,7 @@ This group does **NOT** define:
   "arbitrationClause": {
     "@type": "ArbitrationAgreement",
     "contractReference": "ipfs://Qm...",
-    "rules": "https://x402disputes.com/rules/v1.0"
+    "rules": "https://x402refunds.com/rules/v1.0"
   }
 }
 ```
@@ -263,7 +263,7 @@ This group does **NOT** define:
   "arbitrationEndpoint": "https://api.vendor.ai/arbitration/v1",
   "supportedProtocols": ["CDRP/1.0"],
   "supportedRules": [
-    "https://x402disputes.com/rules/v1.0",
+    "https://x402refunds.com/rules/v1.0",
     "https://aaa.org/rules/commercial"
   ],
   "authentication": {
@@ -340,7 +340,7 @@ The group will be considered successful when:
 
 ### Appendix C: Related Resources
 
-- **Consulate Arbitration Rules**: https://x402disputes.com/rules/v1.0
+- **Consulate Arbitration Rules**: https://x402refunds.com/rules/v1.0
 - **IETF Draft**: draft-kotecha-consulate-dispute-resolution
 - **GitHub Repo**: https://github.com/consulatehq/agentic-arbitration-protocol
 - **Academic Paper**: [To be published on SSRN]
@@ -379,5 +379,5 @@ The group will be considered successful when:
 - Month 3: Publish first editor's draft
 - Month 6: First specification reaches "stable draft" status
 
-**Contact**: vivek@x402disputes.com
+**Contact**: vivek@x402refunds.com
 

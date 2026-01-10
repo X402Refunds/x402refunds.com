@@ -295,7 +295,7 @@ Create integration guides:
 When filing a dispute, add `useX402rEscrow: true`:
 
 ```javascript
-fetch('https://api.x402disputes.com/api/disputes/payment', {
+fetch('https://api.x402refunds.com/api/disputes/payment', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -331,7 +331,7 @@ fetch('https://api.x402disputes.com/api/disputes/payment', {
 - [ ] Write buyer guide
 - [ ] Update API documentation
 - [ ] Create video tutorial
-- [ ] Add to x402disputes.com docs
+- [ ] Add to x402refunds.com docs
 
 **Time**: 6-8 hours
 

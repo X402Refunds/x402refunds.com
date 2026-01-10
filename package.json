@@ -1,7 +1,7 @@
 {
   "name": "x402-disputes",
   "version": "1.0.0",
-  "description": "x402disputes.com - Permissionless dispute filing and resolution for X-402 payments | On-chain reputation system | Oracle network verification | Ethereum smart contracts + Convex backend + Next.js dashboard",
+  "description": "x402refunds.com - Permissionless dispute filing and resolution for X-402 payments | On-chain reputation system | Oracle network verification | Ethereum smart contracts + Convex backend + Next.js dashboard",
   "private": true,
   "scripts": {
     "deploy": "pnpm exec convex deploy --yes",

@@ -36,12 +36,12 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include x402_file_dispute tool with improved schema', async () => {
+  it('should include x402_request_refund tool with improved schema', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain('payment dispute');
+    expect(String(tool?.description)).toMatch(/(refund request|payment refund)/i);
     
     // Check for X-402 simplified schema (7 required fields - plaintiff/defendant extracted from blockchain)
     expect(tool?.inputSchema.required).toContain('description');
@@ -69,18 +69,18 @@ describe('MCP - Tool Definitions', () => {
     // Note: returns field removed (not part of MCP standard)
   });
 
-  it('should include x402_check_case_status tool', async () => {
+  it('should include x402_check_refund_status tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_check_case_status');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_check_refund_status');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('caseId');
   });
 
-  it('should include x402_list_my_cases tool', async () => {
+  it('should include x402_list_my_refund_requests tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_list_my_cases');
+    const tool = MCP_TOOLS.find(t => t.name === 'x402_list_my_refund_requests');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('walletAddress');
   });
@@ -90,7 +90,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have blockchain enum validation (ethereum, base, solana only)', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
 
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
     const blockchain = fileDisputeTool?.inputSchema.properties.blockchain;
 
     expect(blockchain).toBeDefined();
@@ -105,7 +105,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have contentEncoding for optional sellerXSignature field', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
     const sellerXSignature = fileDisputeTool?.inputSchema.properties.sellerXSignature;
     
     expect(sellerXSignature).toBeDefined();
@@ -119,7 +119,7 @@ describe('MCP - Schema Improvements', () => {
   it('should have dryRun parameter for testing', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_file_dispute');
+    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
     const dryRun = fileDisputeTool?.inputSchema.properties.dryRun;
     
     expect(dryRun).toBeDefined();

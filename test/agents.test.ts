@@ -52,8 +52,8 @@ describe('Agent Registration & Reputation - MVP', () => {
       expect(result.agentId).toBeDefined();
       expect(result.did).toBeDefined();
       expect(result.did).toMatch(/^did:agent:test-organization-\d+$/);
-      if (result.disputeUrl) {
-      expect(result.disputeUrl).toContain('/v1/disputes?merchant=');
+      if (result.refundUrl) {
+      expect(result.refundUrl).toContain('/v1/refunds?merchant=');
       }
       expect(result.publicKey).toBe(testPublicKey);
 

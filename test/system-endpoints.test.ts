@@ -22,7 +22,7 @@ describe('System - Health & Info', () => {
       const data = await response.json();
       expect(data.status).toBe('healthy');
       expect(data.timestamp).toBeGreaterThan(0);
-      expect(data.service).toBe('x402disputes');
+      expect(String(data.service)).toBe('x402refunds');
     });
 
     it('should respond quickly', async () => {
@@ -60,7 +60,7 @@ describe('System - Health & Info', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toContain('x402disputes');
+      expect(String(data.service)).toBe('x402refunds.com - Permissionless X-402 Refund Requests');
       expect(data.version).toBeDefined();
       expect(data.status).toBe('operational');
       expect(data.endpoints).toBeDefined();
@@ -74,7 +74,7 @@ describe('System - Health & Info', () => {
       expect(endpoints.health).toBeDefined();
       expect(endpoints.register).toBeDefined();
       expect(endpoints.evidence).toBeDefined();
-      expect(endpoints.disputes).toBeDefined();
+      expect(endpoints.refunds).toBeDefined();
       expect(endpoints.sla_report).toBeDefined();
       expect(endpoints.live_feed).toBeDefined();
     });

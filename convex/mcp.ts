@@ -1,11 +1,10 @@
 /**
  * MCP (Model Context Protocol) Server Implementation
  * 
- * This exposes Consulate's dispute resolution capabilities as MCP tools
+ * This exposes X402Refunds refund-request capabilities as MCP tools
  * that any MCP-compatible agent (Claude, ChatGPT, etc.) can discover and invoke.
  * 
- * Implements the Agentic Dispute Protocol (ADP) for standardized dispute resolution.
- * Protocol: https://github.com/consulatehq/agentic-dispute-protocol
+ * Implements MCP tools for submitting and tracking X-402 payment refund requests.
  * 
  * Integration experience:
  * 1. Agent discovers tools via /.well-known/mcp.json
@@ -77,8 +76,8 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
  */
 export const MCP_TOOLS = [
   {
-    name: "x402_file_dispute",
-    description: "File X-402 payment dispute for API service failures. USDC payments on Base and Solana only. Permissionless filing with blockchain transaction verification. Plaintiff/defendant are extracted from chain; amount is provided by the caller and must match a USDC Transfer in the transaction.",
+    name: "x402_request_refund",
+    description: "Submit an X-402 payment refund request for API service failures. USDC payments on Base and Solana only. Permissionless requests with blockchain transaction verification. Plaintiff/defendant are extracted from chain; amount is provided by the caller and must match a USDC Transfer in the transaction.",
     inputSchema: {
       type: "object",
       properties: {
@@ -178,8 +177,8 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "x402_list_my_cases",
-    description: "List all X-402 payment dispute cases where you are a party (plaintiff or defendant). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
+    name: "x402_list_my_refund_requests",
+    description: "List all X-402 refund requests where you are a party (payer or recipient). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
     inputSchema: {
       type: "object",
       properties: {
@@ -202,8 +201,8 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "x402_check_case_status",
-    description: "Check the current status of a dispute case following ADP protocol. Returns case status, evidence, and resolution details.",
+    name: "x402_check_refund_status",
+    description: "Check the current status of a refund request. Returns request status, evidence, and outcome details.",
     inputSchema: {
       type: "object",
       properties: {
@@ -218,7 +217,7 @@ export const MCP_TOOLS = [
   {
     name: "demo_image_generator",
     description:
-      "Demo X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be disputed via x402_file_dispute.",
+      "Demo X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be used to submit a refund request via x402_request_refund.",
     inputSchema: {
       type: "object",
       properties: {
@@ -250,7 +249,7 @@ export const MCP_TOOLS = [
  * Returns available tools that agents can invoke
  * 
  * Called by: MCP clients during initialization
- * Example: curl https://x402disputes.com/.well-known/mcp.json
+ * Example: curl https://api.x402refunds.com/.well-known/mcp.json
  */
 export const mcpDiscovery = httpAction(async (ctx, request) => {
   // NOTE: Unit tests assert `MCP_TOOLS` only lists USDC chains (base, solana).
@@ -258,7 +257,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
   // the broader enum (ethereum, base, solana). To keep backward compatibility and satisfy
   // both sets, we widen the enum *only in the HTTP manifest*.
   const discoveryTools = MCP_TOOLS.map((tool) => {
-    if (tool.name !== "x402_file_dispute") return tool;
+    if (tool.name !== "x402_request_refund") return tool;
     const inputSchema: any = tool.inputSchema;
     if (!inputSchema?.properties?.blockchain) return tool;
     return {
@@ -280,16 +279,16 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "2.0.0",
     server: {
-      name: "x402disputes.com - Permissionless X-402 Dispute Resolution",
+      name: "x402refunds.com - Permissionless X-402 Refund Requests",
       version: "2.0.0",
-      description: "Permissionless dispute filing for X-402 USDC payment protocol. Base and Solana only. Agents file disputes directly. Dispute and refund data written on-chain.",
+      description: "Permissionless refund requests for X-402 USDC payments. Base and Solana only. Agents submit refund requests directly. Refund status is trackable via API.",
       
       payment_details: {
         format: "All transaction details extracted from blockchain",
         note: "Agent only provides USDC transaction hash. We query blockchain to extract plaintiff, defendant, and amount. Only USDC on Base and Solana supported."
       },
       
-      dispute_types: "Payment disputes only (USDC on Base and Solana)",
+      dispute_types: "Refund requests only (USDC on Base and Solana)",
       
       evidence_requirements: {
         required_from_agent: [
@@ -317,10 +316,10 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       },
       
       pricing: {
-        flat_fee: "$0.05 per dispute (paid by merchant; free for filers)"
+        flat_fee: "$0.05 per refund request"
       },
-      resolution_time: "< 10 minutes avg, 10 business days max (Regulation E)",
-      url: "https://api.x402disputes.com"
+      resolution_time: "Varies by merchant and request type",
+      url: "https://api.x402refunds.com"
     },
     tools: discoveryTools,
     authentication: {
@@ -333,7 +332,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
         how_it_works: [
           "1. Register agent with Ed25519 public key via /agents/register",
           "2. Sign transactions/evidence with your private key",
-          "3. x402disputes verifies signatures using registered public key",
+          "3. X402Refunds verifies signatures using registered public key",
           "4. This ensures tamper-proof evidence and non-repudiation"
         ],
         signature_headers: {
@@ -345,8 +344,8 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
       },
       note: "MCP endpoints are publicly accessible. Agent identity is verified via Ed25519 signatures on signed evidence, not API keys."
     },
-    documentation: "https://www.x402disputes.com/docs",
-    support: "support@x402disputes.com"
+    documentation: "https://x402refunds.com/docs",
+    support: "support@x402refunds.com"
   }), {
     headers: {
       "Content-Type": "application/json",
@@ -360,7 +359,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
  * Handles actual tool calls from MCP clients
  * 
  * Route: POST /mcp/invoke
- * Body: { tool: "x402_file_dispute", parameters: {...} }
+ * Body: { tool: "x402_request_refund", parameters: {...} }
  * 
  * Authentication: Ed25519 signatures (REQUIRED)
  * Required headers:
@@ -374,8 +373,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
 
-    // Public tools (no auth required): check_case_status
-    const publicTools = ['x402_check_case_status'];
+    // Public tools (no auth required): check_refund_status
+    const publicTools = ['x402_check_refund_status'];
     const isPublicTool = publicTools.includes(tool);
 
     // For now, no authentication required for MCP tools
@@ -395,8 +394,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     let result;
     
     switch (tool) {
-      case "x402_file_dispute":
-        // X-402 PAYMENT DISPUTE HANDLER
+      case "x402_request_refund":
+        // X-402 REFUND REQUEST HANDLER
         // Extracts all transaction details (plaintiff, defendant, amount, currency) from blockchain
         // Blockchain is the single source of truth
         
@@ -607,7 +606,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           }
         };
         
-        // 5. Check if defendant agent exists (permissionless dispute filing)
+        // 5. Check if defendant agent exists (permissionless refund requests)
         let defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
           walletAddress: defendant 
         });
@@ -700,7 +699,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         }
         
         // 7. File payment dispute (canonical HTTP-first workflow).
-        // MCP is a thin adapter over the same canonical handler used by POST /v1/disputes.
+        // MCP is a thin adapter over the same canonical handler used by POST /v1/refunds.
         const merchantCaip10 =
           parameters.blockchain === "base"
             ? `eip155:8453:${String(parameters.recipientAddress).toLowerCase()}`
@@ -781,16 +780,16 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           ].filter(Boolean),
           _links: {
             self: filed.trackingUrl,
-            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${filed.caseId}`,
-            submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/evidence`,
-            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402disputes.com'}/cases/${filed.caseId}`
+            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/cases/${filed.caseId}`,
+            submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/evidence`,
+            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/cases/${filed.caseId}`
           }
         }), {
           headers: { "Content-Type": "application/json" }
         });
         break;
         
-      case "x402_check_case_status":
+      case "x402_check_refund_status":
         // @ts-ignore - avoid TS instantiation depth issues in downstream packages
         result = await (ctx.runQuery as any)(internal.cases.getCase, {
           caseId: parameters.caseId as any
@@ -855,22 +854,22 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           },
           instructions: {
             step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-            step_2: "Call: POST https://api.x402disputes.com/demo-agents/image-generator",
-            step_3: "After receiving 500 error, use x402_file_dispute to file a dispute",
+            step_2: "Call: POST https://api.x402refunds.com/demo-agents/image-generator",
+            step_3: "After receiving 500 error, use x402_request_refund to submit a refund request",
             coinbase_mcp: "Install: npx @coinbase/payments-mcp"
           },
-          endpoint: "https://api.x402disputes.com/demo-agents/image-generator",
+          endpoint: "https://api.x402refunds.com/demo-agents/image-generator",
           prompt: parameters.prompt,
           size: parameters.size || "1024x1024",
           model: parameters.model || "stable-diffusion-xl",
           expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
-          use_case: "Perfect for testing X-402 dispute filing workflow"
+          use_case: "Perfect for testing X-402 refund request workflow"
         }), {
           headers: { "Content-Type": "application/json" }
         });
         break;
         
-      case "x402_list_my_cases":
+      case "x402_list_my_refund_requests":
         // Validate Ethereum address format
         if (!parameters.walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(parameters.walletAddress)) {
           return new Response(JSON.stringify({

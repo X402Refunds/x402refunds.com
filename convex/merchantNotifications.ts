@@ -16,9 +16,10 @@ const api: any = (apiMod as any).api;
 const internalApi: any = (apiMod as any).internal;
 
 type X402Metadata = {
-  x402disputes?: {
+  x402refunds?: {
     merchant?: string;
     supportEmail?: string;
+    refundRequestUrl?: string;
   };
 };
 
@@ -79,7 +80,7 @@ async function fetchX402Json(urlString: string): Promise<{ ok: true; data: X402M
       method: "GET",
       headers: {
         Accept: "application/json",
-        "User-Agent": "x402Disputes/1.0 (+https://x402disputes.com)",
+        "User-Agent": "X402Refunds/1.0 (+https://x402refunds.com)",
       },
       signal: AbortSignal.timeout(10_000),
     });
@@ -151,7 +152,7 @@ function buildMerchantDisputeEmailText(params: {
     lines.push("");
   }
 
-  lines.push("Sent by x402disputes.com");
+  lines.push("Sent by x402refunds.com");
   return lines.join("\n");
 }
 
@@ -175,7 +176,7 @@ function buildMerchantVerificationEmailText(params: {
   lines.push("");
   lines.push("After you verify, we will email you the dispute details and one-click actions.");
   lines.push("");
-  lines.push("Sent by x402disputes.com");
+  lines.push("Sent by x402refunds.com");
   return lines.join("\n");
 }
 
@@ -213,14 +214,14 @@ export const notifyMerchantDisputeFiled: any = internalAction({
         : null;
     if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
 
-    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
     const jsonMerchant =
       typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
     if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
       return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
     }
 
-    const supportEmail = fetched.data?.x402disputes?.supportEmail;
+    const supportEmail = fetched.data?.x402refunds?.supportEmail;
     if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {
       return { ok: true, emailed: false, reason: "MISSING_SUPPORT_EMAIL" };
     }
@@ -275,7 +276,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
         return { ok: true, emailed: false, reason: "AWAITING_EMAIL_VERIFICATION" };
       }
 
-      const confirmUrl = `https://api.x402disputes.com/v1/merchant/verify-email?token=${encodeURIComponent(
+      const confirmUrl = `https://api.x402refunds.com/v1/merchant/verify-email?token=${encodeURIComponent(
         String(tokenRes.token),
       )}`;
 
@@ -323,8 +324,8 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       typeof balance.availableMicrousdc === "number" &&
       balance.availableMicrousdc >= requiredMicrousdc;
 
-    const baseActionUrl = "https://api.x402disputes.com/v1/merchant/action?token=";
-    const topupUrl = `https://x402disputes.com/topup?merchant=${encodeURIComponent(
+    const baseActionUrl = "https://api.x402refunds.com/v1/merchant/action?token=";
+    const topupUrl = `https://x402refunds.com/topup?merchant=${encodeURIComponent(
       expectedMerchant,
     )}&caseId=${encodeURIComponent(String(args.caseId))}&email=${encodeURIComponent(String(supportEmail))}`;
 
@@ -464,7 +465,7 @@ export const getNotificationStatusForCase: any = internalAction({
       };
     }
 
-    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
     const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
     if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
       return {
@@ -480,7 +481,7 @@ export const getNotificationStatusForCase: any = internalAction({
       };
     }
 
-    const supportEmail = fetched.data?.x402disputes?.supportEmail;
+    const supportEmail = fetched.data?.x402refunds?.supportEmail;
     const email = supportEmail && isLikelyEmailAddress(String(supportEmail)) ? String(supportEmail) : null;
     const verified: any = email
       ? await (ctx.runQuery as any)(api.merchantEmailVerification.getVerification, {
@@ -556,11 +557,11 @@ export const notifyMerchantRefundExecuted: any = internalAction({
         : null;
     if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
 
-    const jsonMerchantRaw = fetched.data?.x402disputes?.merchant;
+    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
     const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
     if (!jsonMerchant || jsonMerchant !== expectedMerchant) return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
 
-    const supportEmail = fetched.data?.x402disputes?.supportEmail;
+    const supportEmail = fetched.data?.x402refunds?.supportEmail;
     if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {
       return { ok: true, emailed: false, reason: "MISSING_SUPPORT_EMAIL" };
     }
@@ -586,7 +587,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
       amountMicrousdc,
       explorerUrl: typeof refund.explorerUrl === "string" ? refund.explorerUrl : null,
       refundTxHash: typeof refund.refundTxHash === "string" ? refund.refundTxHash : null,
-      trackingUrl: `https://x402disputes.com/cases/${encodeURIComponent(String(args.caseId))}`,
+      trackingUrl: `https://x402refunds.com/cases/${encodeURIComponent(String(args.caseId))}`,
     });
 
     const sent = await sendEmail({

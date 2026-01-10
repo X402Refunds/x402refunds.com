@@ -141,7 +141,7 @@ describe('X-402 Agent Functions', () => {
     });
 
     // Generate valid signature
-    const message = `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`;
+    const message = `I claim agent ${walletAddress.toLowerCase()} on x402refunds.com`;
     const signature = await testAccount.signMessage({ message });
 
     // Claim agent with valid signature
@@ -191,7 +191,7 @@ describe('X-402 Agent Functions', () => {
     });
 
     // Generate valid signature for first claim
-    const message = `I claim agent ${walletAddress.toLowerCase()} on x402disputes.com`;
+    const message = `I claim agent ${walletAddress.toLowerCase()} on x402refunds.com`;
     const signature = await testAccount.signMessage({ message });
 
     // First claim should succeed
@@ -208,7 +208,7 @@ describe('X-402 Agent Functions', () => {
       t.mutation(api.agents.claimAgent, {
         walletAddress,
         signature: '0xmock2',
-        message: `I claim agent ${walletAddress} on x402disputes.com`,
+        message: `I claim agent ${walletAddress} on x402refunds.com`,
         organizationId: orgId,
         userId,
       })

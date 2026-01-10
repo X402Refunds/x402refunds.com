@@ -1,6 +1,6 @@
 # Claude Desktop Setup Guide
 
-Complete guide to integrating Consulate's MCP server with Claude Desktop on macOS.
+Complete guide to integrating X402Refunds' MCP server with Claude Desktop on macOS.
 
 **Last Updated**: 2025-10-27
 
@@ -8,14 +8,11 @@ Complete guide to integrating Consulate's MCP server with Claude Desktop on macO
 
 ## Overview
 
-This guide shows you how to add Consulate's dispute resolution tools directly to Claude Desktop. Once configured, you'll be able to:
+This guide shows you how to add X402Refunds' refund-request tools directly to Claude Desktop. Once configured, you'll be able to:
 
-- Register agents with Consulate
-- File disputes for SLA breaches
-- Submit evidence to cases
-- Check case status
-- Monitor SLA compliance
-- Look up agent DIDs
+- Submit refund requests tied to X-402 payments
+- Attach supporting evidence (optional)
+- Check refund request status
 
 All without leaving Claude Desktop.
 
@@ -40,12 +37,12 @@ node --version
 - Download from: [https://nodejs.org/](https://nodejs.org/)
 - Or with Homebrew: `brew install node`
 
-### 3. Consulate API Key (Optional)
+### 3. X402Refunds API Key (Optional)
 
-**Note**: API keys are **optional** for MCP access. The MCP endpoints are publicly accessible. Authentication happens via Ed25519 signatures at the evidence/dispute level, not API keys.
+**Note**: API keys are **optional** for MCP access. The MCP endpoints are publicly accessible.
 
 If you want to use an API key (for organization-scoped features):
-1. Sign in to [Consulate Dashboard](https://x402disputes.com)
+1. Sign in to [X402Refunds Dashboard](https://x402refunds.com)
 2. Navigate to **Settings → API Keys**
 3. Click **Generate New API Key**
 4. Copy the key (starts with `csk_live_` for production)
@@ -59,7 +56,7 @@ If you want to use an API key (for organization-scoped features):
 ### One-Command Installation
 
 ```bash
-cd /path/to/consulate
+cd /path/to/x402refunds
 ./scripts/install-mcp-server.sh
 ```
 
@@ -72,7 +69,7 @@ cd /path/to/consulate
 1. Validates your API key format (if provided)
 2. Finds your Claude Desktop config location
 3. Backs up existing config (if any)
-4. Adds Consulate MCP server to config
+4. Adds X402Refunds MCP server to config
 5. Tests the proxy script
 6. Shows you next steps
 
@@ -81,7 +78,7 @@ cd /path/to/consulate
 **After installation:**
 1. Restart Claude Desktop app
 2. Open a new conversation
-3. Consulate tools are automatically available
+3. X402Refunds tools are automatically available
 
 ---
 
@@ -106,14 +103,14 @@ Open the config file in your editor:
 nano ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
-Add the Consulate MCP server (or merge with existing config):
+Add the X402Refunds MCP server (or merge with existing config):
 
 ```json
 {
   "mcpServers": {
-    "x402Disputes": {
+    "x402refunds": {
       "command": "node",
-      "args": ["/absolute/path/to/consulate/scripts/claude-desktop-mcp-proxy.js"],
+      "args": ["/absolute/path/to/x402refunds/scripts/claude-desktop-mcp-proxy.js"],
       "env": {}
     }
   }
@@ -124,7 +121,7 @@ Add the Consulate MCP server (or merge with existing config):
 
 **Note**: You can use either `"consulate"` or `"x402Disputes"` as the server name - both work. The name is just an identifier in Claude Desktop.
 
-**IMPORTANT**: Replace `/absolute/path/to/consulate` with your actual Consulate directory path.
+**IMPORTANT**: Replace `/absolute/path/to/x402refunds` with your actual repo directory path.
 
 ### 3. Make Proxy Script Executable
 
@@ -150,55 +147,25 @@ Quit Claude Desktop completely (Cmd+Q), then relaunch it.
 
 ## Available Tools
 
-Once configured, Claude Desktop will have access to these Consulate tools:
+Once configured, Claude Desktop will have access to these X402Refunds tools.
 
-### 1. **consulate_register_agent**
-Register your agent with Consulate to participate in dispute resolution.
+**Tool naming is strict** (no aliases, no legacy):
+- `x402_request_refund`
+- `x402_check_refund_status`
+- `x402_list_my_refund_requests`
+- `demo_image_generator`
 
-**Example usage in Claude:**
-> "Register my agent 'acme-api-monitor' as an ai_provider with Consulate"
+### 1) `x402_request_refund`
+Submit a refund request tied to an X-402 USDC payment (Base or Solana). Plaintiff/defendant/amount are derived from chain; you provide the tx hash + merchant recipient address.
 
-### 2. **consulate_file_dispute**
-File a dispute for SLA breaches, contract violations, or service quality issues.
+### 2) `x402_check_refund_status`
+Check the status of a refund request by case ID.
 
-**Example usage in Claude:**
-> "File a dispute against OpenAI for API downtime exceeding our 99.9% SLA"
+### 3) `x402_list_my_refund_requests`
+List refund requests for a wallet address.
 
-### 3. **consulate_submit_evidence**
-Submit cryptographic evidence to support a case.
-
-**Example usage in Claude:**
-> "Submit API logs from https://logs.acme.com/downtime.json to case k12345..."
-
-### 4. **x402_check_case_status**
-Check the current status of a dispute case.
-
-**Example usage in Claude:**
-> "What's the status of case k12345...?"
-
-### 5. **x402_list_my_cases**
-List all X-402 payment dispute cases where you're a party (plaintiff or defendant). Uses your Ethereum wallet address (ERC-8004) as identity.
-
-**Example usage in Claude:**
-> "Show me all my active disputes for wallet 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
-
-### 6. **consulate_get_sla_status**
-Check your SLA compliance status and any active violations.
-
-**Example usage in Claude:**
-> "Check my SLA status for agent did:agent:acme-prod-1234"
-
-### 7. **consulate_lookup_agent**
-Find an agent's DID by organization name, domain, or service name.
-
-**Example usage in Claude:**
-> "Look up OpenAI's agent DID"
-
-### 8. **consulate_request_vendor_registration**
-Request that Consulate register a vendor that isn't in the system yet.
-
-**Example usage in Claude:**
-> "Request that Consulate register NewAI as a vendor"
+### 4) `demo_image_generator`
+Returns instructions + an endpoint to reproduce a paid X-402 call for testing.
 
 ---
 
@@ -206,7 +173,7 @@ Request that Consulate register a vendor that isn't in the system yet.
 
 ### Tools Not Appearing
 
-**Symptom**: Claude Desktop doesn't show Consulate tools
+**Symptom**: Claude Desktop doesn't show X402Refunds tools
 
 **Solutions**:
 1. Check that you completely quit (Cmd+Q) and relaunched Claude Desktop
@@ -220,7 +187,7 @@ Request that Consulate register a vendor that isn't in the system yet.
 
 **Solutions**:
 1. Verify API key starts with `csk_live_` or `csk_test_`
-2. Check API key is active in Consulate dashboard (Settings → API Keys)
+2. Check API key is active in the dashboard (Settings → API Keys)
 3. Ensure no extra spaces or quotes around key in config
 4. Regenerate key if needed (old key will be revoked)
 
@@ -307,7 +274,7 @@ Press Ctrl+D to exit.
 
 ### Multiple Environments
 
-You can configure multiple Consulate servers:
+You can configure multiple MCP servers:
 
 ```json
 {
@@ -353,7 +320,7 @@ Each API key is scoped to your organization:
 ### 3. Revoking Keys
 
 If a key is compromised:
-1. Go to Consulate dashboard → Settings → API Keys
+1. Go to the dashboard → Settings → API Keys
 2. Click "Revoke" on the compromised key
 3. Generate a new key
 4. Update your Claude Desktop config with new key
@@ -363,7 +330,7 @@ If a key is compromised:
 
 ## Uninstalling
 
-To remove Consulate from Claude Desktop:
+To remove X402Refunds from Claude Desktop:
 
 ### 1. Edit Config
 
@@ -386,7 +353,7 @@ Quit (Cmd+Q) and relaunch.
 
 ### 3. Optional: Remove Proxy Script
 
-If you want to completely remove Consulate:
+If you want to completely remove X402Refunds:
 
 ```bash
 cd /path/to/consulate
@@ -401,24 +368,23 @@ rm scripts/install-mcp-server.sh
 ### Workflow 1: Register Agent & File Dispute
 
 ```
-User: Register my agent "acme-api-monitor" as an ai_consumer with Consulate
+User: Submit a refund request for an X-402 payment via X402Refunds
 
-Claude: [Calls consulate_register_agent]
+Claude: [Calls x402_request_refund]
         ✓ Agent registered successfully
         DID: did:agent:acme-api-monitor-1730000000
 
 User: File a dispute against OpenAI for 45 minutes of API downtime
       exceeding our 99.9% SLA
 
-Claude: [Calls consulate_lookup_agent to find OpenAI's DID]
-        [Calls consulate_file_dispute]
+Claude: [Calls x402_request_refund]
         ✓ Dispute filed successfully
         Case ID: k12345...
         Estimated resolution: 72 hours
 
 User: Submit evidence from https://logs.acme.com/downtime.json
 
-Claude: [Calls consulate_submit_evidence]
+Claude: [Optional: attaches evidenceUrls to x402_request_refund]
         ✓ Evidence submitted successfully
         Status: pending_verification
 ```
@@ -428,7 +394,7 @@ Claude: [Calls consulate_submit_evidence]
 ```
 User: Check my SLA status
 
-Claude: [Calls consulate_get_sla_status]
+Claude: [Calls x402_check_refund_status]
 
         SLA Status Report:
         • Current Standing: GOOD
@@ -444,7 +410,7 @@ Claude: [Calls consulate_get_sla_status]
 ```
 User: What's the status of case k12345...?
 
-Claude: [Calls consulate_check_case_status]
+Claude: [Calls x402_check_refund_status]
 
         Case Status:
         • Status: IN_DELIBERATION
@@ -480,7 +446,7 @@ The proxy script supports these environment variables:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `CONSULATE_API_KEY` | Your API key (required) | - |
-| `CONSULATE_API_URL` | API endpoint | `https://api.x402disputes.com` |
+| `CONSULATE_API_URL` | API endpoint | `https://api.x402refunds.com` |
 | `CONSULATE_DEBUG` | Enable debug logging | `false` |
 
 ---
@@ -520,17 +486,17 @@ Use test keys for development and learning. Use production keys only for real di
 ## Support
 
 ### Documentation
-- Docs: [https://www.x402disputes.com/docs](https://www.x402disputes.com/docs)
+- Docs: [https://x402refunds.com/docs](https://x402refunds.com/docs)
 - Agentic Dispute Protocol: [https://github.com/consulatehq/agentic-dispute-protocol](https://github.com/consulatehq/agentic-dispute-protocol)
 
 ### Help & Support
-- Email: support@x402disputes.com
+- Email: support@x402refunds.com
 - GitHub Issues: [https://github.com/consulatehq/consulate/issues](https://github.com/consulatehq/consulate/issues)
 - Community Discord: [https://discord.gg/consulate](https://discord.gg/consulate)
 
 ### Emergency Support
 For urgent issues (active disputes, SLA breaches):
-- Email: urgent@x402disputes.com (monitored 24/7)
+- Email: urgent@x402refunds.com (monitored 24/7)
 - Include: Case ID, agent DID, and issue description
 
 ---
@@ -547,4 +513,4 @@ For urgent issues (active disputes, SLA breaches):
 
 **Last Updated**: 2025-10-27
 **Version**: 1.0.0
-**Feedback**: docs@x402disputes.com
+**Feedback**: docs@x402refunds.com

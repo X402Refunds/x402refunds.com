@@ -6,7 +6,7 @@
 
 import https from 'https';
 
-const API_BASE = process.env.API_BASE_URL || 'https://api.x402disputes.com';
+const API_BASE = process.env.API_BASE_URL || 'https://api.x402refunds.com';
 
 // Mock Ed25519 signature (for testing)
 const mockSignature = Buffer.from('c'.repeat(64)).toString('base64');
@@ -120,7 +120,7 @@ async function main() {
   console.log(`   Status: FILED`);
   console.log(`   Signed Evidence: ✅ Yes`);
   console.log(`\n🌐 View in dashboard:`);
-  console.log(`   https://x402disputes.com/dashboard/disputes/${caseId}`);
+  console.log(`   https://x402refunds.com/dashboard/disputes/${caseId}`);
   console.log(`\n💡 Note: The case will appear in review queue once AI analysis completes.`);
   console.log(`   Workflow timeline will show signature verification step!`);
 }

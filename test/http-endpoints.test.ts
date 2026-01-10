@@ -9,7 +9,7 @@ import { cleanupTestDataDirect } from './fixtures/test-cleanup-helper';
  * - POST /evidence
  * - POST /api/disputes/agent (formerly /disputes)
  * - GET /cases/:caseId
- * - Wallet-first: POST /v1/topup, POST /v1/disputes
+ * - Wallet-first: POST /v1/topup, POST /v1/refunds
  * - Public registry: GET /live/feed
  *
  * IMPORTANT: These are pure HTTP tests that validate error responses and input validation.
@@ -194,9 +194,9 @@ describe('HTTP API - Dispute Filing', () => {
     });
   });
 
-  describe("POST /v1/disputes (wallet-first)", () => {
+  describe("POST /v1/refunds (wallet-first)", () => {
     it("should reject missing merchant", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -205,12 +205,11 @@ describe('HTTP API - Dispute Filing', () => {
         }),
       });
 
-      // Endpoint may not exist on older deployments.
-      expect([400, 404]).toContain(response.status);
+      expect(response.status).toBe(400);
     });
 
     it("should reject missing merchantOrigin", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -222,17 +221,11 @@ describe('HTTP API - Dispute Filing', () => {
         }),
       });
 
-      // Endpoint may not exist (404) or may not yet validate merchantOrigin (200) on older deployments.
-      // Once deployed with this change, it should return 400.
-      expect([400, 404, 200]).toContain(response.status);
-      if (response.status === 200) {
-        const data = await response.json().catch(() => ({} as any));
-        expect(data.ok).toBe(true);
-      }
+      expect(response.status).toBe(400);
     });
 
     it("should accept a minimal wallet-first dispute", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -244,19 +237,16 @@ describe('HTTP API - Dispute Filing', () => {
         }),
       });
 
-      // Endpoint may not exist on older deployments.
-      expect([200, 404]).toContain(response.status);
-      if (response.status === 200) {
-        const data = await response.json();
-        expect(data.ok).toBe(true);
-        expect(data.disputeId).toBeDefined();
-      }
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.ok).toBe(true);
+      expect(data.caseId).toBeDefined();
     });
   });
 
-  describe("POST /v1/disputes (canonical merchant-first)", () => {
+  describe("POST /v1/refunds (canonical merchant-first)", () => {
     it("should reject missing canonical fields", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -264,11 +254,11 @@ describe('HTTP API - Dispute Filing', () => {
           // missing merchantApiUrl, txHash, description
         }),
       });
-      expect([400, 404]).toContain(response.status);
+      expect(response.status).toBe(400);
     });
 
     it("should reject non-https merchantApiUrl", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -278,11 +268,11 @@ describe('HTTP API - Dispute Filing', () => {
           description: "API returned 500 after payment was confirmed on-chain",
         }),
       });
-      expect([400, 404]).toContain(response.status);
+      expect(response.status).toBe(400);
     });
 
     it("should reject unsupported eip155 chainId", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -292,7 +282,7 @@ describe('HTTP API - Dispute Filing', () => {
           description: "API returned 500 after payment was confirmed on-chain",
         }),
       });
-      expect([400, 404]).toContain(response.status);
+      expect(response.status).toBe(400);
     });
   });
 });

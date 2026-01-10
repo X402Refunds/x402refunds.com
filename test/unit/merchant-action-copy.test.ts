@@ -12,7 +12,7 @@ describe("merchant action copy (unit)", () => {
     });
 
     expect(text).not.toContain("Decision:");
-    expect(text).not.toContain("x402disputes.com/cases/");
+    expect(text).not.toContain("x402refunds.com/cases/");
     expect(text).toContain("Track refund on Basescan:");
     expect(text).toContain("basescan.org/tx/");
   });
@@ -28,7 +28,7 @@ describe("merchant action copy (unit)", () => {
     expect(text).toContain("Case:");
     expect(text).not.toContain("Track refund on Basescan:");
     expect(text).not.toContain("basescan.org/tx/");
-    expect(text).not.toContain("x402disputes.com/cases/");
+    expect(text).not.toContain("x402refunds.com/cases/");
   });
 
   it("refund flow: no tx yet uses proactive Basescan wording", () => {

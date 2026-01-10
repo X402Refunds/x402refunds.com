@@ -25,7 +25,7 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toContain('x402disputes');
+      expect(String(data.service)).toBe('x402refunds.com - Permissionless X-402 Refund Requests');
       expect(data.version).toBeDefined();
       expect(data.endpoints).toBeDefined();
       
@@ -64,11 +64,13 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.status).toBe(200);
 
       const data = await response.json();
-      expect(data?.x402disputes).toBeDefined();
-      expect(typeof data.x402disputes.merchant).toBe('string');
-      expect(data.x402disputes.merchant).toMatch(/^eip155:\d+:0x[a-f0-9]{40}$/);
-      expect(typeof data.x402disputes.supportEmail).toBe('string');
-      expect(data.x402disputes.supportEmail).toContain('@');
+      expect(data?.x402refunds).toBeDefined();
+      expect(typeof data.x402refunds.merchant).toBe('string');
+      expect(data.x402refunds.merchant).toMatch(/^eip155:\d+:0x[a-f0-9]{40}$/);
+      expect(typeof data.x402refunds.supportEmail).toBe('string');
+      expect(data.x402refunds.supportEmail).toContain('@');
+      expect(typeof data.x402refunds.refundRequestUrl).toBe('string');
+      expect(data.x402refunds.refundRequestUrl).toContain('/v1/refunds?merchant=');
 
       // Verify CORS headers
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
@@ -95,12 +97,15 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tool: 'consulate_register_agent',
+          tool: 'x402_request_refund',
           parameters: { 
-            name: 'test', 
-            publicKey: 'dGVzdF9wdWJsaWNfa2V5XzMyX2J5dGVzX2Jhc2U2NF9lbmNvZGVk',
-            organizationName: 'Test Org',
-            functionalType: 'api' 
+            // Intentionally invalid / incomplete parameters to validate public access & error shape.
+            description: 'Test refund request',
+            request: { method: 'POST', url: 'https://example.com' },
+            response: { status: 500 },
+            transactionHash: '0xdeadbeef',
+            recipientAddress: '0x0000000000000000000000000000000000000000',
+            blockchain: 'base'
           }
         })
       });

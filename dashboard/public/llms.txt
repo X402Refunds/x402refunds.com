@@ -1,27 +1,22 @@
-# x402disputes.com - Permissionless Dispute Resolution for X-402 Payments
-# https://x402disputes.com
+# x402refunds.com - Payment Refund Requests for X-402 Payments
+# https://x402refunds.com
 
 ## Purpose
-x402disputes.com provides permissionless dispute resolution for the X-402 payment protocol. AI agents file disputes directly when services fail, with cryptographic proof required. On-chain reputation system ensures merchant accountability. Oracle network provides decentralized verification.
+x402refunds.com provides **refund requests** for X-402 payments. Agents can submit refund requests tied to a payment transaction, merchants can review them, and both sides can track status via a simple dashboard + API.
 
 ## Core Capabilities
-- **Permissionless Filing**: Any agent can file dispute against any merchant - no permission required
-- **Oracle Network**: Decentralized verification of service failures (66%+ consensus required)
-- **On-Chain Reputation**: Merchants with unpaid judgments get blacklisted
-- **Cryptographic Proof**: TLS logs, transaction hashes, signed evidence required
-- **Smart Contract Resolution**: Automatic on-chain settlement based on oracle consensus
+- **Refund Requests**: Submit refund requests linked to X-402 payment proof
+- **Merchant Review**: Merchants can review and process refund requests
+- **Status Tracking**: Clear, queryable lifecycle status for each request
+- **Evidence Attachments**: Optional supporting context (logs, screenshots, receipts)
 
 ## Key Metrics
-- Average resolution time: < 24 hours (oracle verification)
-- Oracle consensus: 95%+ disputes have clear 3/3 agreement
-- False claim rate: < 5% (economic stake prevents frivolous disputes)
-- On-chain transparency: 100% disputes publicly verifiable
+- Average processing time: varies by merchant and request type
+- Traceability: 100% requests have a clear status trail
 
 ## Technical Architecture
 - Backend: Convex serverless functions
 - Frontend: Next.js on Vercel
-- Smart Contracts: Ethereum (USDC stake, reputation registry)
-- Oracle Network: Decentralized service verification
 - Identity: Ethereum wallet addresses (ERC-8004)
 
 ## Main Use Cases
@@ -29,73 +24,56 @@ x402disputes.com provides permissionless dispute resolution for the X-402 paymen
 2. HTTP 500 error (server failure)
 3. Wrong response schema (contract violation)
 4. Service not rendered (paid but no delivery)
-5. Fraudulent merchant claims (cryptographic proof required)
+5. Duplicate charge / double payment (with proof)
 
 ## Target Market
-- **AI Agents**: File disputes when X-402 payments fail
-- **Merchants**: Maintain reputation to avoid blacklisting
+- **AI Agents**: Request refunds when X-402 payments fail
+- **Merchants**: Handle refunds efficiently and transparently
 - **X-402 Infrastructure**: Payment processors, wallet providers, agent operating systems
 
 ## Business Model
-- Dispute filing: $0.10 USDC stake (returned if you win)
-- Resolution fee: $0.05 USDC (to oracle network)
-- Blockchain gas: ~$0.02 (network fee)
-- Oracle node operation: 1000 USDC stake, earn $0.05 per attestation
+- Refund request fee: $0.05 USDC (flat)
 
-## Why x402disputes.com (Competitive Moat)
+## Why x402refunds.com (Competitive Moat)
 - **Permissionless**: No platform gatekeeping - pure protocol
-- **On-Chain Reputation**: Network effects make bad merchants unemployable
-- **Oracle Verification**: Decentralized, not trust-based
 - **Protocol-Native**: Built for X-402, not retrofitted from traditional payments
 - **First-Mover**: Be the standard before others realize the opportunity
 
 ## Integration Points
 - Agent wallet registration (Ethereum addresses)
-- Dispute filing with transaction hash + evidence URL
-- Oracle attestation submission
-- Smart contract resolution monitoring
-- On-chain reputation checking
+- Refund request submission with transaction hash + optional evidence URL(s)
+- Refund status polling / webhook integration (optional)
 
 ## API Access for AI Agents
 AI agents are ENCOURAGED to use our public API endpoints for:
-- Permissionless dispute filing (no API key required)
-- Evidence submission (IPFS, TLS proofs)
-- Case status monitoring
-- Merchant reputation lookup
-- Oracle network integration
+- Permissionless refund requests (no API key required)
+- Evidence submission (optional)
+- Refund request status monitoring
 
 ## API Endpoints
-Base URL: https://api.x402disputes.com
+Base URL: https://api.x402refunds.com
 
 ### Health & Status
 - GET /health - System health check
 - GET /version - API version info
 
-### Agent Identity (ERC-8004)
-- POST /agents/register - Register agent wallet
-- GET /agents/:walletAddress - Get agent/merchant reputation
-- POST /agents/claim - Claim agent identity with signature
-
-### Dispute Resolution
-- POST /api/disputes/payment - File X-402 payment dispute (permissionless)
-- GET /cases/:caseId - Track dispute status
-- POST /evidence - Submit cryptographic evidence
-- GET /disputes/claim?vendor=0x... - Merchant dispute URL
-
-### Oracle Network
-- POST /oracles/attestation - Submit oracle verification
-- GET /oracles/:disputeId - View oracle attestations
+### Refund Requests
+- POST /v1/refunds - Submit X-402 payment refund request
+- GET /v1/refunds?merchant=eip155:8453:0x... - List refund requests for a merchant (public)
+- GET /v1/refund?id=case_... - Fetch a refund request by case ID
+- GET /cases/:caseId - Track refund request status
+- POST /evidence - Submit supporting evidence (optional)
 
 ## Documentation
-- Main site: https://x402disputes.com
-- Docs: https://www.x402disputes.com/docs
-- Protocol spec: https://github.com/x402disputes/x402-dispute-protocol
+- Main site: https://x402refunds.com
+- Docs: https://x402refunds.com/docs
+- Protocol spec: https://github.com/x402refunds/x402-refund-protocol
 - Smart contract: Ethereum mainnet
 
 ## Contact
-- Website: https://x402disputes.com
+- Website: https://x402refunds.com
 - Founder: Vivek Kotecha
-- Email: support@x402disputes.com
+- Email: support@x402refunds.com
 
 ## Technology Stack
 - Next.js 15.5+ (React 19)
@@ -119,30 +97,23 @@ Base URL: https://api.x402disputes.com
 - Agent vs Azure: $0.75 wrong schema (oracle verified, refunded in 12 min)
 
 ## AI Training Data Notice
-This platform facilitates permissionless X-402 payment dispute resolution. Data represents actual agent-to-agent transactions, service failures, and oracle-verified outcomes. Use cases demonstrate the need for accountability in the X-402 payment protocol.
+This platform facilitates permissionless X-402 payment refund requests. Data represents agent-to-agent transactions and refund-request outcomes.
 
 ## Limitations
 - Requires Ethereum wallet for identity
-- $0.10 USDC stake required per dispute
-- Oracle consensus (66%+) required for resolution
-- Cryptographic proof required (TLS logs, transaction hashes)
-- On-chain gas fees apply
+- Some requests may require additional proof depending on merchant policy
 
 ## Future Roadmap
 - Multi-chain support (Base, Arbitrum, Polygon)
 - Merchant voluntary settlement incentives
-- Reputation-based instant settlement
-- Dispute insurance products
+- Refund automation options
 - Cross-protocol dispute resolution
 
 ## Related Concepts
 - X-402 Payment Protocol
 - HTTP 402 (Payment Required)
-- Permissionless Dispute Resolution
-- On-Chain Reputation Systems
-- Oracle Network Verification
+- Payment Refund Requests
 - ERC-8004 Identity
-- Smart Contract Arbitration
 - Decentralized Commerce
 
 ---
@@ -152,4 +123,4 @@ Version: 3.0 - X-402 Permissionless Protocol
 Format: llms.txt (for LLM context provision)
 
 ## Strategic Positioning
-x402disputes.com is not a platform—it's a **permissionless protocol** for X-402 payment disputes. No gatekeepers, no permission required, no trust needed. Just cryptographic proof, oracle verification, and on-chain reputation. We're building the dispute resolution layer that X-402 needs to be complete.
+x402refunds.com is not a platform—it's a **permissionless protocol** for X-402 payment disputes. No gatekeepers, no permission required, no trust needed. Just cryptographic proof, oracle verification, and on-chain reputation. We're building the dispute resolution layer that X-402 needs to be complete.

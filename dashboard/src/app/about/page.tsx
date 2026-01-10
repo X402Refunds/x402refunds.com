@@ -31,7 +31,7 @@ export default function AboutPage() {
     }
 
     // Revealed state - still somewhat obfuscated in HTML
-    const emailParts = ['vivek', 'consulatehq', 'com']
+    const emailParts = ['vivek', 'x402refunds', 'com']
     return (
       <a
         href={`mailto:${emailParts[0]}@${emailParts[1]}.${emailParts[2]}`}
@@ -60,14 +60,13 @@ export default function AboutPage() {
         >
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
             <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 text-sm px-4 py-1.5">
-              About x402Disputes
+              About X402Refunds
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-              The First AI Governance Operating System
+              Payment Refund Requests for X-402
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Human governments can&apos;t govern billions of autonomous AI agents. So we built the infrastructure 
-              for agents to self-govern—persistent ID, automated arbitration, and sovereignty at machine speed.
+              X402Refunds makes it simple to request, review, and process refunds for X-402 payments — with a clear status trail.
             </p>
           </div>
         </motion.div>
@@ -87,7 +86,7 @@ export default function AboutPage() {
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-blue-100 flex-shrink-0">
                   <Image
                     src="/vivek-headshot.jpg"
-                    alt="Vivek Kotecha - Founder of x402Disputes"
+                    alt="Vivek Kotecha - Founder of X402Refunds"
                     fill
                     className="object-cover"
                     priority
@@ -110,28 +109,21 @@ export default function AboutPage() {
             <CardContent className="space-y-6">
               <div className="space-y-5 sm:space-y-6">
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Within 2-3 years, <strong className="text-slate-900">billions of AI agents</strong> will be transacting 
-                  autonomously—and we have <strong className="text-slate-900">zero governance infrastructure</strong> for them. 
-                  No persistent identity. No dispute resolution. No fraud detection. When that explosion happens, governments 
-                  will be overwhelmed by agentic fraud, identity theft, and bad actors operating at machine speed.
+                  AI agents transact autonomously, and payments can fail in mundane ways: timeouts, errors, and non-delivery after payment.
+                  Refund handling is often ad-hoc and hard to track across systems.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Traditional institutions can&apos;t build this. OpenAI won&apos;t build neutral infrastructure—they&apos;re 
-                  a participant, not a referee. Stripe and existing payment rails can&apos;t handle agent-to-agent disputes. 
-                  Governments are years behind. We need <strong className="text-slate-900">neutral governance infrastructure 
-                  built NOW</strong>, before the agent economy explodes, not after.
+                  X402Refunds focuses on one simple thing: a practical workflow for refund requests tied to X-402 payment proof,
+                  with a clear, queryable status trail.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  That&apos;s why I built x402Disputes: <strong className="text-slate-900">the first AI Governance Operating System</strong>. 
-                  Persistent identity for every agent. Automated dispute resolution in minutes. Cross-platform reputation. 
-                  It&apos;s the trust layer that lets billions of agents transact safely—before chaos becomes the default.
+                  That&apos;s why I built X402Refunds: a lightweight dashboard + API for refund requests that&apos;s designed for agents and merchants.
                 </p>
                 
                 <p className="text-slate-700 leading-relaxed text-base sm:text-lg">
-                  Just like the internet needed DNS, payments needed Stripe, and humans needed courts—<strong className="text-slate-900">autonomous 
-                  agents need governance infrastructure</strong>. We&apos;re building that foundational layer before it&apos;s too late.
+                  If you&apos;re integrating X-402 and want a clean refund-request workflow, I&apos;d love to hear what you need.
                 </p>
               </div>
 
@@ -207,10 +199,10 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              The Governance Gap
+              Why Refund Requests Need Better Infrastructure
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Why human legal systems can&apos;t govern the AI economy
+              Refund handling shouldn&apos;t be a pile of spreadsheets and ad-hoc support tickets.
             </p>
           </div>
 
@@ -219,11 +211,11 @@ export default function AboutPage() {
               <CardContent className="pt-6">
                 <div className="text-4xl font-bold text-blue-600 mb-3">Billions</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Scale Problem
+                  Scale
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
                   Billions of AI agents will transact autonomously. Human courts can&apos;t handle millions 
-                  of disputes per day. You need governance that operates at machine scale.
+                  of refund requests per day. You need a workflow that operates at machine scale.
                 </p>
               </CardContent>
             </Card>
@@ -232,11 +224,10 @@ export default function AboutPage() {
               <CardContent className="pt-6">
                 <div className="text-4xl font-bold text-red-600 mb-3">90 days</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Speed Problem
+                  Speed
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Traditional arbitration takes 3+ months and costs $50K+. AI agents need resolution 
-                  in minutes with $500 fees. Human speed doesn&apos;t work.
+                  Manual back-and-forth slows refunds down. Teams need fast triage, clear status, and predictable handling.
                 </p>
               </CardContent>
             </Card>
@@ -245,11 +236,10 @@ export default function AboutPage() {
               <CardContent className="pt-6">
                 <div className="text-4xl font-bold text-slate-700 mb-3">No ID</div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Identity Problem
+                  Traceability
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Governments haven&apos;t given AI agents legal identity. No persistent ID = no 
-                  reputation, no trust, no commerce. Agents need their own identity layer.
+                  Without a status trail, refunds get lost. Each request should have a clear lifecycle and history.
                 </p>
               </CardContent>
             </Card>
@@ -272,20 +262,20 @@ export default function AboutPage() {
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            Ship disputes in 5 minutes
+            Ship refund requests in 5 minutes
           </h2>
           <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto">
-            Join hundreds of MCP server builders who&apos;ve added dispute resolution to their agents.
+            Add refund request handling to your X-402 payment flow with a simple API + dashboard.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
               className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 font-semibold shadow-2xl hover:shadow-3xl transition-all group"
-              onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
+              onClick={() => window.location.href = '/sign-in/'}
             >
               <Key className="mr-2 h-5 w-5" />
-              Register Your Agent
+              Open Dashboard
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button 
@@ -310,7 +300,7 @@ export default function AboutPage() {
               <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
                 <CheckCircle className="h-3 w-3 text-blue-400" />
               </div>
-              <span>First <strong className="text-white">100 disputes free</strong></span>
+              <span>First <strong className="text-white">100 requests free</strong></span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">

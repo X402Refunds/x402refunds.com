@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pitch Deck | x402Disputes",
     description: "x402Disputes - Dispute Resolution for AI Agents",
-    url: "https://x402disputes.com/pitch-deck",
+    url: "https://x402refunds.com/pitch-deck",
   },
 };
 

@@ -1,17 +1,17 @@
-# Publishing Consulate to MCP Registry
+# Publishing X402Refunds to MCP Registry
 
-This guide explains how Consulate's MCP server is published to the official MCP directory.
+This guide explains how X402Refunds' MCP server is published to the official MCP directory.
 
 ## Overview
 
-Consulate uses **automated GitHub Actions** to publish to the MCP registry whenever version tags are pushed or manually triggered.
+X402Refunds can be published to the MCP registry whenever version tags are pushed or manually triggered.
 
 ## Current Setup
 
 - **Automated Publishing**: GitHub Actions workflow (`.github/workflows/publish-mcp.yml`)
 - **Server Metadata**: `server.json` (MCP registry format)
 - **Authentication**: GitHub OIDC (no secrets required)
-- **Namespace**: `io.github.vbkotecha/consulate`
+- **Namespace**: `com.x402refunds/x402-refunds` (see `server.json`)
 
 ## How It Works
 
@@ -45,9 +45,9 @@ You can also trigger manually from GitHub Actions UI:
 
 The `server.json` file defines:
 
-- **Name**: `io.github.vbkotecha/consulate`
+- **Name**: `com.x402refunds/x402-refunds`
 - **Type**: Remote HTTP server (`streamable-http`)
-- **URL**: `https://api.x402disputes.com`
+- **URL**: `https://api.x402refunds.com`
 - **Endpoints**:
   - Discovery: `/.well-known/mcp.json`
   - Invoke: `/mcp/invoke`
@@ -104,8 +104,8 @@ Check `server.json` structure:
 
 ### Endpoints Not Accessible
 
-- Verify `https://api.x402disputes.com/.well-known/mcp.json` returns 200
-- Verify `https://api.x402disputes.com/mcp/invoke` returns 401 (auth required), not 404
+- Verify `https://api.x402refunds.com/.well-known/mcp.json` returns 200
+- Verify `https://api.x402refunds.com/mcp/invoke` returns 401 (auth required), not 404
 
 ### Publication Not Appearing
 

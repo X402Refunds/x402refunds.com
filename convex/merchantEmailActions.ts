@@ -175,7 +175,7 @@ export const applyDecisionFromToken = internalMutation({
         return {
           ok: false,
           code: "INSUFFICIENT_CREDITS",
-          message: "Insufficient refund credits to cover refund + fee. Top up at https://x402disputes.com/topup and try again.",
+          message: "Insufficient refund credits to cover refund + fee. Top up at https://x402refunds.com/topup and try again.",
         };
       }
 

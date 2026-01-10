@@ -15,7 +15,7 @@ This simplifies management and allows you to track all test payments in one plac
 
 ### ImageGenerator500
 
-**Endpoint:** `POST https://api.x402disputes.com/demo-agents/image-generator-500`
+**Endpoint:** `POST https://api.x402refunds.com/demo-agents/image-generator-500`
 
 **Behavior:**
 - Validates image generation requests (requires `prompt` field)
@@ -61,7 +61,7 @@ This simplifies management and allows you to track all test payments in one plac
 
 **Step 1: Call the agent without payment**
 ```bash
-curl -X POST https://api.x402disputes.com/demo-agents/image-generator-500 \
+curl -X POST https://api.x402refunds.com/demo-agents/image-generator-500 \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "a dog playing in the park",
@@ -112,7 +112,7 @@ This tests:
 ## API Specification
 
 ### Endpoint
-`POST https://api.x402disputes.com/demo-agents/image-generator-500`
+`POST https://api.x402refunds.com/demo-agents/image-generator-500`
 
 ### Request Headers
 ```
@@ -251,8 +251,8 @@ All will use the same wallet: `0x49AF4074577EA313C5053cbB7560AC39e34b05E8`
 
 For issues or questions:
 - GitHub: https://github.com/consulatehq/consulate
-- Docs: https://www.x402disputes.com/docs
-- Email: support@x402disputes.com
+- Docs: https://x402refunds.com/docs
+- Email: support@x402refunds.com
 
 ## License
 

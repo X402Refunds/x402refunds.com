@@ -101,13 +101,15 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.x402disputes.com https://clerk.www.x402disputes.com https://analytics.ahrefs.com",
+              // Note: Clerk custom domains must be explicitly allowlisted here.
+              // We allow both apex and www variants to avoid CSP breakage if Clerk is configured with clerk.www.*
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.x402refunds.com https://clerk.www.x402refunds.com https://analytics.ahrefs.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: https://www.google-analytics.com https://img.clerk.com https://image.pollinations.ai",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://api.x402disputes.com https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://*.clerk.accounts.dev https://clerk.x402disputes.com https://clerk.www.x402disputes.com wss://*.convex.cloud https://*.convex.cloud https://analytics.ahrefs.com https://pulse.walletconnect.org https://api.web3modal.org https://*.walletconnect.com https://*.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://*.coinbase.com https://rpc.walletconnect.org",
+              "connect-src 'self' https://api.x402refunds.com https://perceptive-lyrebird-89.convex.cloud wss://perceptive-lyrebird-89.convex.cloud https://www.google-analytics.com https://*.clerk.accounts.dev https://clerk.x402refunds.com https://clerk.www.x402refunds.com wss://*.convex.cloud https://*.convex.cloud https://analytics.ahrefs.com https://pulse.walletconnect.org https://api.web3modal.org https://*.walletconnect.com https://*.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://*.coinbase.com https://rpc.walletconnect.org",
               "worker-src 'self' blob:",
-              "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.x402disputes.com https://clerk.www.x402disputes.com",
+              "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.x402refunds.com https://clerk.www.x402refunds.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

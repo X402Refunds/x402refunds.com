@@ -1,11 +1,11 @@
 /**
- * X-402 Payment Dispute E2E Tests
+ * X-402 Refund Request E2E Tests
  * 
  * Tests the ultra-minimal X-402 schema with:
  * - Ethereum addresses as canonical identities
  * - Blockchain query for payment verification
  * - Request/response objects (no base64 encoding)
- * - Permissionless dispute filing (unclaimed agent creation)
+ * - Permissionless refund requests (unclaimed agent creation)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -30,11 +30,11 @@ async function invokeMcpTool(toolName: string, parameters: any) {
   return { response, data };
 }
 
-describe('X-402 Ultra-Minimal Dispute Schema', () => {
-  it('should file dispute with blockchain extraction (no plaintiff/defendant needed)', async () => {
+describe('X-402 Ultra-Minimal Refund Request Schema', () => {
+  it('should submit refund request with blockchain extraction (no plaintiff/defendant needed)', async () => {
     const timestamp = Date.now();
     
-    const { response, data } = await invokeMcpTool('x402_file_dispute', {
+    const { response, data } = await invokeMcpTool('x402_request_refund', {
       description: "API returned 500 error after payment was confirmed on-chain",
       request: {
         method: "POST",
@@ -52,7 +52,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
       blockchain: "base"
     });
     
-    console.log("📥 X-402 dispute response:", JSON.stringify(data, null, 2));
+    console.log("📥 X-402 refund request response:", JSON.stringify(data, null, 2));
     
     // Note: Will fail in test if blockchain query not mocked
     // Expected behavior: either success or TRANSACTION_NOT_FOUND
@@ -62,16 +62,16 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     if (data.success) {
       expect(data.caseId).toBeDefined();
       expect(data.trackingUrl).toContain('/cases/');
-      console.log("✅ Dispute filed successfully!");
+      console.log("✅ Refund request submitted successfully!");
     } else {
       // Accept either TRANSACTION_NOT_FOUND or MCP_INTERNAL_ERROR (schema validation issues in test env)
-      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error.code);
       console.log(`⚠️  Expected failure: ${data.error.code} - ${data.error.message?.substring(0, 100)}`);
     }
   });
 
   it('should validate blockchain enum (only base, solana)', async () => {
-    const { data } = await invokeMcpTool('x402_file_dispute', {
+    const { data } = await invokeMcpTool('x402_request_refund', {
       description: "Testing blockchain validation",
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },
@@ -81,7 +81,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     });
     
     expect(data.success).toBe(false);
-    expect(['UNSUPPORTED_BLOCKCHAIN', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    expect(['UNSUPPORTED_BLOCKCHAIN']).toContain(data.error.code);
     if (data.error.field) {
       expect(data.error.field).toBe('blockchain');
     }
@@ -93,7 +93,7 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
   });
 
   it('should validate required fields', async () => {
-    const { data } = await invokeMcpTool('x402_file_dispute', {
+    const { data } = await invokeMcpTool('x402_request_refund', {
       // Missing all required fields
     });
     
@@ -101,13 +101,13 @@ describe('X-402 Ultra-Minimal Dispute Schema', () => {
     expect(data.error).toBeDefined();
     
     // Should fail with missing required field error
-    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_RECIPIENT_ADDRESS', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION', 'MCP_TOOL_NOT_FOUND']).toContain(data.error.code);
+    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_RECIPIENT_ADDRESS', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION']).toContain(data.error.code);
     
     console.log("✅ Required field validation works:", data.error.code);
   });
 
   it('should support dryRun mode', async () => {
-    const { data } = await invokeMcpTool('x402_file_dispute', {
+    const { data } = await invokeMcpTool('x402_request_refund', {
       description: "Testing dryRun validation mode",
       request: { method: "POST", url: "https://api.seller.com" },
       response: { status: 500, body: { error: "test" } },

@@ -1,14 +1,12 @@
 {
-  "x402Version": 1,
-  "disputes": {
-    "protocol": "x402disputes",
-    "version": "1",
+  "x402refunds": {
     "merchant": "eip155:8453:0xyourmerchantaddress",
-    "disputeUrl": "https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xyourmerchantaddress",
-    "termsUrl": "https://merchant.example/refunds",
+    "supportEmail": "refunds@yourdomain.com",
+    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xyourmerchantaddress",
     "terms": {
-      "refundWindowSeconds": 604800,
-      "disputeFilingWindowSeconds": 604800
+      "refundWindowDays": 7,
+      "evidenceWindowDays": 7,
+      "currency": "USDC"
     }
   }
 }

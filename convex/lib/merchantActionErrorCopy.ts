@@ -49,7 +49,7 @@ export function buildMerchantActionErrorCopy(input: MerchantActionErrorInput): s
     lines.push("There’s nothing else to do here.");
   } else if (code === "INSUFFICIENT_CREDITS") {
     lines.push("Top up refund credits here:");
-    lines.push("- https://x402disputes.com/topup");
+    lines.push("- https://x402refunds.com/topup");
     lines.push("");
     lines.push("After topping up, use the most recent dispute email again.");
   } else {

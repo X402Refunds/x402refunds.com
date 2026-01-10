@@ -9,11 +9,11 @@ import schema from '../convex/schema';
  * These tests validate the HTTP API layer on top of Convex functions.
  * Tests use convex-test for data setup, then test HTTP endpoints.
  * 
- * To run against production: API_BASE_URL=https://api.x402disputes.com pnpm test:run test/api.test.ts
+ * To run against production: API_BASE_URL=https://api.x402refunds.com pnpm test:run test/api.test.ts
  * To run against local: API_BASE_URL=http://localhost:3000 pnpm test:run test/api.test.ts
  */
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402disputes.com';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402refunds.com';
 const USE_LIVE_API = !!process.env.API_BASE_URL;
 
 describe('Consulate HTTP API - Core System', () => {
@@ -23,7 +23,7 @@ describe('Consulate HTTP API - Core System', () => {
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.service).toBe("x402disputes.com - Permissionless X-402 Dispute Resolution");
+      expect(String(data.service)).toBe("x402refunds.com - Permissionless X-402 Refund Requests");
       expect(data.version).toBeDefined();
       expect(data.status).toBe("operational");
       expect(data.endpoints).toBeDefined();
@@ -36,7 +36,7 @@ describe('Consulate HTTP API - Core System', () => {
       
       const data = await response.json();
       expect(data.status).toBe("healthy");
-      expect(data.service).toBe("x402disputes");
+      expect(String(data.service)).toBe("x402refunds");
       expect(data.timestamp).toBeDefined();
     });
 
@@ -428,7 +428,7 @@ describe('Consulate HTTP API - Real-Time Monitoring', () => {
 
 describe('Consulate HTTP API - Error Handling', () => {
   it('should return 400/500 for malformed JSON', async () => {
-    const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{'
@@ -439,7 +439,7 @@ describe('Consulate HTTP API - Error Handling', () => {
   });
 
   it('should return 400 for missing required fields', async () => {
-    const response = await fetch(`${API_BASE_URL}/v1/disputes`, {
+    const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ buyer: 'buyer:test' })

@@ -195,7 +195,7 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
       return {
         ok: true,
         caseId,
-        trackingUrl: `https://x402disputes.com/cases/${caseId}`,
+        trackingUrl: `https://x402refunds.com/cases/${caseId}`,
         created: false,
         duplicate: true,
         evidenceUrls,
@@ -206,7 +206,7 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
   }
 
   const caseId = typeof result?.caseId === "string" ? result.caseId : "";
-  const trackingUrl = `https://x402disputes.com/cases/${caseId}`;
+  const trackingUrl = `https://x402refunds.com/cases/${caseId}`;
   if (!caseId) return { ok: false, code: "INTERNAL_ERROR", message: "Failed to create case" };
 
   return {

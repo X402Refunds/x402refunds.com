@@ -28,7 +28,7 @@ export function ClaimAgentDialog({ agent, open, onClose, onSuccess, organization
   const { signMessageAsync } = useSignMessage();
   const [isLoading, setIsLoading] = useState(false);
 
-  const challengeMessage = `I claim agent ${agent.walletAddress.toLowerCase()} on x402disputes.com`;
+  const challengeMessage = `I claim agent ${agent.walletAddress.toLowerCase()} on x402refunds.com`;
 
   const handleClaim = async () => {
     if (!address) {

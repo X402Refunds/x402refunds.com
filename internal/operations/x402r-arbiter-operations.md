@@ -2,13 +2,13 @@
 
 **Last Updated**: 2025-12-22
 
-This guide covers the operation and management of the x402r escrow arbitration integration in x402disputes.com.
+This guide covers the operation and management of the x402r escrow arbitration integration in x402refunds.com.
 
 ---
 
 ## Overview
 
-x402disputes.com now functions as an arbiter for the x402r escrow protocol. This integration allows the platform to:
+x402refunds.com now functions as an arbiter for the x402r escrow protocol. This integration allows the platform to:
 
 1. Receive dispute notifications from x402r escrow contracts
 2. Analyze disputes using existing AI infrastructure
@@ -344,10 +344,10 @@ await ctx.db.patch(caseId, {
 
 ```bash
 # Health check (should return 200)
-curl https://api.x402disputes.com/health
+curl https://api.x402refunds.com/health
 
 # Webhook test (feature flag off, should return 503)
-curl -X POST https://api.x402disputes.com/x402r/dispute \
+curl -X POST https://api.x402refunds.com/x402r/dispute \
   -H "Content-Type: application/json" \
   -d '{"escrowAddress":"0xTest"}'
 ```

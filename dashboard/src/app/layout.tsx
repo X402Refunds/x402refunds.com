@@ -31,28 +31,25 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "x402Disputes - x402 Payment Disputes & Refunds",
-    template: "%s | x402Disputes"
+    default: "X402Refunds - x402 Payment Refund Requests",
+    template: "%s | X402Refunds"
   },
-  description: "Handle x402 payment disputes and send refunds. A simple dashboard + API to review disputes, make decisions, and track case status.",
+  description: "Request, review, and process x402 payment refunds. A simple dashboard + API to manage refund requests and track status.",
   keywords: [
     "x402",
     "x402 payments",
-    "payment disputes",
-    "dispute resolution",
     "refunds",
+    "payment refunds",
+    "refund requests",
     "payment refunds",
     "AI agent payments",
     "agent payments",
-    "x402 dispute registry",
-    "x402 dispute resolution",
-    "payment dispute API",
     "refund API",
-    "dispute dashboard"
+    "refund dashboard"
   ],
-  authors: [{ name: "Vivek Kotecha", url: "https://www.x402disputes.com" }],
+  authors: [{ name: "Vivek Kotecha", url: "https://x402refunds.com" }],
   creator: "Vivek Kotecha",
-  publisher: "x402Disputes",
+  publisher: "X402Refunds",
   robots: {
     index: true,
     follow: true,
@@ -65,32 +62,32 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  metadataBase: new URL('https://www.x402disputes.com'),
+  metadataBase: new URL('https://x402refunds.com'),
   alternates: {
-    canonical: 'https://www.x402disputes.com/',
+    canonical: 'https://x402refunds.com/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://www.x402disputes.com/',
-    siteName: 'x402Disputes',
-    title: 'x402Disputes - x402 Payment Disputes & Refunds',
-    description: 'Handle x402 payment disputes and send refunds. Review disputes, make decisions, and track status in one place.',
+    url: 'https://x402refunds.com/',
+    siteName: 'X402Refunds',
+    title: 'X402Refunds - x402 Payment Refund Requests',
+    description: 'Request, review, and process x402 payment refunds. Track refund status in one place.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'x402Disputes - x402 Payment Disputes & Refunds',
+        alt: 'X402Refunds - x402 Payment Refund Requests',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@x402disputes',
-    creator: '@x402disputes',
-    title: 'x402Disputes - x402 Payment Disputes & Refunds',
-    description: 'Handle x402 payment disputes and send refunds. Simple dashboard + API.',
+    site: '@x402refunds',
+    creator: '@x402refunds',
+    title: 'X402Refunds - x402 Payment Refund Requests',
+    description: 'Request, review, and process x402 payment refunds. Simple dashboard + API.',
     images: ['/opengraph-image'],
   },
   verification: {
@@ -103,7 +100,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title': 'x402Disputes',
+    'apple-mobile-web-app-title': 'X402Refunds',
   },
 };
 
@@ -158,28 +155,6 @@ export default function RootLayout({
           
           {/* Ahrefs Analytics */}
           <script src="https://analytics.ahrefs.com/analytics.js" data-key="t8J3APG0cO6rucq4JUwaWw" async></script>
-          
-          {/* Clerk Custom Domain Detection Script */}
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                // Detect if Clerk is trying to use custom domain and warn
-                window.addEventListener('error', function(e) {
-                  if (e.message && e.message.includes('clerk.x402disputes.com')) {
-                    console.error(
-                      '%c⚠️ Clerk Custom Domain Issue Detected',
-                      'color: red; font-weight: bold; font-size: 14px;'
-                    );
-                    console.error(
-                      'Clerk is configured to use clerk.x402disputes.com but this domain has SSL issues.\\n' +
-                      'SOLUTION: Go to Clerk Dashboard → Domains → Delete clerk.x402disputes.com\\n' +
-                      'Clerk will automatically fall back to *.clerk.accounts.dev'
-                    );
-                  }
-                }, true);
-              `,
-            }}
-          />
         </head>
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}

@@ -157,8 +157,8 @@ export const joinAgent = mutation({
         agentId, 
         did: agentDid,
         walletAddress: normalizedWalletAddress,
-        disputeUrl: normalizedWalletAddress
-          ? `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(normalizedWalletAddress.toLowerCase())}`
+        refundUrl: normalizedWalletAddress
+          ? `https://api.x402refunds.com/v1/refunds?merchant=${encodeURIComponent(normalizedWalletAddress.toLowerCase())}`
           : undefined,
         organizationName: args.organizationName,
         publicKey: args.publicKey,
@@ -793,7 +793,7 @@ export const registerAgentManual = mutation({
         agentId,
         did: agentDid,
         walletAddress: normalizedWalletAddress,
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(normalizedWalletAddress)}`,
+        refundUrl: `https://api.x402refunds.com/v1/refunds?merchant=${encodeURIComponent(normalizedWalletAddress)}`,
         organizationName: orgName,
         publicKey: args.publicKey,
         hasOpenApiSpec: !!args.openApiSpec,

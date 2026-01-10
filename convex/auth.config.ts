@@ -12,7 +12,7 @@ import { AuthConfig } from "convex/server";
  * - JWT Template named "convex" exists in Clerk Dashboard → JWT Templates
  * - Template has "aud": "convex" in the claims
  */
-const clerkDomain = process.env.CLERK_JWT_ISSUER_DOMAIN || "https://clerk.x402disputes.com";
+const clerkDomain = process.env.CLERK_JWT_ISSUER_DOMAIN || "https://clerk.x402refunds.com";
 
 // Ensure the domain doesn't have a trailing slash
 const normalizedDomain = clerkDomain.replace(/\/$/, "");

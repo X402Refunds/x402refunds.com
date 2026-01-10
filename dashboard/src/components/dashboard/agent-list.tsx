@@ -126,7 +126,7 @@ export function AgentList({ agents }: AgentListProps) {
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Dispute URL</TableHead>
+              <TableHead>Refund URL</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -153,13 +153,13 @@ export function AgentList({ agents }: AgentListProps) {
                 <TableCell className="font-mono text-xs">
                   {agent.walletAddress ? (
                     <a 
-                      href={`https://api.x402disputes.com/v1/disputes?merchant=${encodeURIComponent(agent.walletAddress)}`}
+                      href={`https://api.x402refunds.com/v1/refunds?merchant=${encodeURIComponent(agent.walletAddress)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
-                      title={`Disputes URL: https://api.x402disputes.com/v1/disputes?merchant=${agent.walletAddress}`}
+                      title={`Refund requests URL: https://api.x402refunds.com/v1/refunds?merchant=${agent.walletAddress}`}
                     >
-                      /v1/disputes?merchant={agent.walletAddress.slice(0, 20)}...
+                      /v1/refunds?merchant={agent.walletAddress.slice(0, 20)}...
                     </a>
                   ) : (
                     <span className="text-muted-foreground">No wallet address</span>

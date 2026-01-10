@@ -1,25 +1,25 @@
-# x402 Disputes & Refunds
+# x402 Refund Requests
 
 ## Overview
 
-**What this does**: post-transaction disputes + refunds for x402 payments.
+**What this does**: post-transaction refund requests for X-402 payments.
 
 **The problem**: AI agents pay for APIs and digital goods. Sometimes the result is wrong, low-quality, or never arrives.
 
-If someone pays you and your x402 API fails (timeout, 500, bad output), they can file a dispute.
+If someone pays you and your X-402 API fails (timeout, 500, bad output), they can submit a refund request.
 
-It’s also for “the API worked, but the output/product was bad or unsatisfactory.”
+It’s also for “the API worked, but the output/product was bad or unsatisfactory” (refund requested).
 
 You do **not** need to build:
 - chargebacks
-- a dispute inbox
-- dispute tracking pages
+- a refund inbox
+- refund tracking pages
 - “did you refund?” status pages
 
-**What you get**: disputes sent straight to your email, plus the ability to **refund / deny / partial refund**.
+**What you get**: refund requests sent straight to your email, plus the ability to **refund / deny / partial refund**.
 
 This is intentionally simple:
-- disputes are permissionless
+- refund requests are permissionless
 - the payment is verified on-chain
 - you decide the outcome (optional: add refund credits to automate refunds)
 
@@ -30,69 +30,69 @@ This is intentionally simple:
 2) (Optional) A `Link` header (for discoverability)
 3) (Optional) Refund credits (for one-click refunds from email)
 
-After that, disputes can reach you by email.
+After that, refund requests can reach you by email.
 
 ### Step 1 — Publish `/.well-known/x402.json`
 Put this at: `https://YOUR_DOMAIN/.well-known/x402.json`
 
 Example (live):
-- [`https://api.x402disputes.com/.well-known/x402.json`](https://api.x402disputes.com/.well-known/x402.json)
+- [`https://api.x402refunds.com/.well-known/x402.json`](https://api.x402refunds.com/.well-known/x402.json)
 
 Minimal example:
 
 ```json
 {
-  "x402disputes": {
+  "x402refunds": {
     "merchant": "eip155:8453:0xYourMerchantWallet",
-    "supportEmail": "disputes@yourdomain.com",
-    "paymentDisputeUrl": "https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet"
+    "supportEmail": "refunds@yourdomain.com",
+    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYourMerchantWallet"
   }
 }
 ```
 
 What matters:
 - `merchant`: your wallet address in CAIP-10 format
-- `supportEmail`: where disputes should be delivered
-- `paymentDisputeUrl`: points to your disputes feed
+- `supportEmail`: where refund requests should be delivered
+- `refundRequestUrl`: points to your refund-request feed
 
 ### Step 2 — Add a Link header
-This is optional. It helps AI agents automatically discover that your API supports disputes. Disputes will still work without it.
+This is optional. It helps AI agents automatically discover that your API supports refund requests. Refund requests will still work without it.
 
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
-Link: <https://api.x402disputes.com/v1/disputes?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-dispute"; type="application/json"
+Link: <https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-refund"; type="application/json"
 ```
 
 ### Step 3 — Add refund credits (optional)
-If you want one-click refunds from the dispute email, add refund credits:
+If you want one-click refunds from the refund request email, add refund credits:
 - Top up here: [`/topup`](/topup)
 - Check balance here: [`/check-balance`](/check-balance)
 
-## File Disputes as a Buyer Agent
+## Submit Refund Requests as a Buyer Agent
 
-If you paid a merchant via x402 and something went wrong, you can file a dispute.
+If you paid a merchant via X-402 and something went wrong, you can submit a refund request.
 
 Quick reminder:
 - **Filing is free for the filer** (merchant pays the processing fee).
 - We verify the payment **on-chain** (USDC transfer).
 
 ### Timing (typical)
-- Resolution: fast for micro disputes; up to 10 business days max (Reg E).
+- Processing: fast for micro payments; varies by merchant and request type.
 
 ### MCP (default for agents / LLMs)
 
 If you’re an LLM agent, connect via MCP:
-- MCP server: `https://api.x402disputes.com/mcp`
+- MCP server: `https://api.x402refunds.com/mcp`
 
-Then file a dispute using the tool `x402_file_dispute`.
+Then submit a refund request using the tool `x402_request_refund`.
 
 Copy/paste prompt:
 
 ```txt
-Use x402Disputes MCP to file a payment dispute after a paid x402 request had a bad or unsatisfactory result.
+Use X402Refunds MCP to submit a payment refund request after a paid X-402 request had a bad or unsatisfactory result.
 
-Call tool: x402_file_dispute
+Call tool: x402_request_refund
 Include:
 - description: what happened (short and specific)
 - transactionHash: 0x...
@@ -105,7 +105,7 @@ Tip: the MCP tool supports Base and Solana. The manual form is Base-only.
 Check status (copy/paste prompt):
 
 ```txt
-Use x402Disputes MCP to check dispute status for caseId: ...
+Use X402Refunds MCP to check refund request status for caseId: ...
 ```
 
 ### Manual (humans)
@@ -113,10 +113,10 @@ Use x402Disputes MCP to check dispute status for caseId: ...
 
 ### HTTP (alternative)
 
-Send a JSON body to `POST /v1/disputes`:
+Send a JSON body to `POST /v1/refunds`:
 
 ```bash
-curl -sS https://api.x402disputes.com/v1/disputes \
+curl -sS https://api.x402refunds.com/v1/refunds \
   -H "Content-Type: application/json" \
   -d '{
     "merchant": "eip155:8453:0xYourMerchantWallet",

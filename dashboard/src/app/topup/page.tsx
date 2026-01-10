@@ -12,7 +12,7 @@ import { useAccount, useWalletClient } from "wagmi";
 import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 import { Loader2 } from "lucide-react";
-const API_BASE = "https://api.x402disputes.com";
+const API_BASE = "https://api.x402refunds.com";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
 const MIN_TOPUP_MICROUSDC = BigInt(10_000); // $0.01
 
@@ -121,7 +121,7 @@ export default function TopupPage() {
     void fetchBalance(merchantCaip10);
   }, [merchantCaip10]);
 
-  // If we have a dispute case, fetch notification status (email + verification + required credits).
+  // If we have a case id, fetch notification status (email + verification + required credits).
   useEffect(() => {
     if (!caseId) {
       setNotificationRequiredUsdc(null);
@@ -141,7 +141,7 @@ export default function TopupPage() {
     })();
   }, [caseId]);
 
-  // After submitting a top-up for a dispute action, poll the case until it is decided.
+  // After submitting a top-up for an action, poll the case until it is finalized.
   useEffect(() => {
     if (!caseId || !txHash || !actionToken.trim()) return;
     let stopped = false;
@@ -155,9 +155,9 @@ export default function TopupPage() {
       attempts += 1;
       void (async () => {
         try {
-          const res = await fetch(`${API_BASE}/v1/dispute?id=${encodeURIComponent(caseId)}`, { method: "GET" });
+          const res = await fetch(`${API_BASE}/v1/refund?id=${encodeURIComponent(caseId)}`, { method: "GET" });
           const data = await res.json().catch(() => ({}));
-          const status = String(data?.dispute?.status || "");
+          const status = String(data?.refundRequest?.status || "");
           if (res.ok && data?.ok && status === "DECIDED") {
             stopped = true;
             clearInterval(interval);
@@ -167,7 +167,7 @@ export default function TopupPage() {
             stopped = true;
             clearInterval(interval);
             setCompletionStatus("error");
-            setCompletionMessage("Top-up submitted, but the dispute is still processing. Please check the case page.");
+            setCompletionMessage("Top-up submitted, but the case is still processing. Please check the case page.");
           }
         } catch {
           if (attempts >= maxAttempts) {

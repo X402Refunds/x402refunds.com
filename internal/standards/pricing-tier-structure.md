@@ -250,7 +250,7 @@ For enterprises that anticipate **high volume** of disputes, offer **subscriptio
 ## Fee Transparency and Trust
 
 ### Public Fee Schedule
-- All fees published at: https://x402disputes.com/pricing
+- All fees published at: https://x402refunds.com/pricing
 - No hidden costs
 - Fee calculator tool: enter claim value → see exact cost
 
@@ -329,7 +329,7 @@ Every case invoice shows:
 ### Week 1-2: Technical
 - ✅ Add pricing tiers to Convex schema
 - ✅ Implement fee calculation logic
-- ✅ Build fee calculator widget for x402disputes.com/pricing
+- ✅ Build fee calculator widget for x402refunds.com/pricing
 
 ### Week 3-4: Legal
 - ✅ Review fee structure with legal counsel (ensure no usury issues)
@@ -337,7 +337,7 @@ Every case invoice shows:
 - ✅ Update arbitration agreement template to include fee schedule
 
 ### Week 5-6: Marketing
-- ✅ Publish pricing page on x402disputes.com
+- ✅ Publish pricing page on x402refunds.com
 - ✅ Create comparison chart (Consulate vs. AAA/JAMS/ICC)
 - ✅ Write blog post: "Why AI Arbitration is 90% Cheaper"
 
@@ -376,7 +376,7 @@ A: Consulate doesn't enforce awards (that's a court's job). However, we:
 ## Next Steps
 
 1. **Review with legal counsel**: Ensure fee structure complies with arbitration law
-2. **Build fee calculator**: Widget on x402disputes.com/pricing
+2. **Build fee calculator**: Widget on x402refunds.com/pricing
 3. **Update schema**: Add `pricingTier`, `feeAmount` to `cases` table
 4. **Implement billing**: Integrate Stripe for payment processing
 5. **Launch pricing page**: Publish publicly within 2 weeks

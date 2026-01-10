@@ -11,7 +11,7 @@
  *   node scripts/test-image-generator-500.js
  */
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402disputes.com';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402refunds.com';
 const ENDPOINT = `${API_BASE_URL}/demo-agents/image-generator-500`;
 
 // ANSI color codes

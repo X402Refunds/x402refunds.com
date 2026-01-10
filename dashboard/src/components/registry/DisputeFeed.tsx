@@ -28,7 +28,7 @@ export function DisputeFeed({ filter = "all", searchQuery, limit = 20 }: Dispute
   const [error, setError] = useState<string | null>(null)
   const [rows, setRows] = useState<RegistryCase[]>([])
 
-  const API_BASE = "https://api.x402disputes.com"
+  const API_BASE = "https://api.x402refunds.com"
 
   useEffect(() => {
     let cancelled = false

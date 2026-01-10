@@ -154,7 +154,7 @@ TOTAL: $750/month (15x increase!)
 $100M × 6% APY = $6M/year passive income
 
 2% dispute rate = 2M disputes/year
-20% use x402disputes.com = 400K disputes
+20% use x402refunds.com = 400K disputes
 400K × $0.05 = $20K/year
 
 Premium features = $50K+/year
@@ -290,7 +290,7 @@ vercel deploy --prod
 ✅ Using existing contracts saved 4-5 weeks
 ✅ viem library made integration easy
 ✅ Base Sepolia has cheap gas for testing
-✅ x402disputes.com backend 95% reusable
+✅ x402refunds.com backend 95% reusable
 
 ### What to Watch
 ⚠️ Gas costs on mainnet (optimize batching)

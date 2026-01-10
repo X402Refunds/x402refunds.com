@@ -42,7 +42,7 @@ export default function PricingPage() {
               Choose Your Platform Tier
             </h1>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              All plans include AI resolution + your review queue. Per-dispute fees apply separately.
+              All plans include refund request intake + your review queue. Per-request fees apply separately.
             </p>
           </motion.div>
 
@@ -74,7 +74,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white"
-                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
+                  onClick={() => window.location.href = '/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -85,13 +85,13 @@ export default function PricingPage() {
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      Basic AI judge + human review queue
+                      Refund request review queue
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      Precedent learning from your decisions
+                      Clear status trail for each request
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -109,7 +109,7 @@ export default function PricingPage() {
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      Resolution in &lt; 10 minutes
+                      Fast processing for straightforward requests
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -120,7 +120,7 @@ export default function PricingPage() {
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      <strong className="text-slate-900 dark:text-slate-100">No disputes included.</strong> Pay per-dispute fees separately.
+                      <strong className="text-slate-900 dark:text-slate-100">No requests included.</strong> Pay per-refund-request fees separately.
                     </p>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className="w-full"
-                  onClick={() => window.location.href = 'https://www.x402disputes.com/sign-in/'}
+                  onClick={() => window.location.href = '/sign-in/'}
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -194,7 +194,7 @@ export default function PricingPage() {
                   <div className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      Resolution in &lt; 10 minutes
+                      Fast processing for straightforward requests
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -205,7 +205,7 @@ export default function PricingPage() {
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      <strong className="text-slate-900 dark:text-slate-100">No disputes included.</strong> Pay per-dispute fees separately.
+                      <strong className="text-slate-900 dark:text-slate-100">No requests included.</strong> Pay per-refund-request fees separately.
                     </p>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ export default function PricingPage() {
                   size="lg"
                   variant="outline"
                   className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50"
-                  onClick={() => window.location.href = 'mailto:sales@x402disputes.com'}
+                  onClick={() => window.location.href = 'mailto:sales@x402refunds.com'}
                 >
                   Contact Sales
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -281,7 +281,7 @@ export default function PricingPage() {
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      <strong className="text-slate-900 dark:text-slate-100">Volume discounts:</strong> 40-70% off per-dispute fees at 100K+ disputes/month
+                      <strong className="text-slate-900 dark:text-slate-100">Volume discounts:</strong> Available for high request volume (contact sales)
                     </p>
                   </div>
                 </div>
@@ -292,18 +292,18 @@ export default function PricingPage() {
         </motion.div>
       </section>
 
-      {/* Per-Dispute Fees */}
+      {/* Per-Request Fees */}
       <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge variant="outline" className="mb-4 bg-white dark:bg-slate-900">
-              Resolution Pricing
+              Request Pricing
             </Badge>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-              Per-Dispute Resolution Fees
+              Per-Refund-Request Fees
             </h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Paid separately, in addition to platform access. Simple flat pricing for all disputes.
+              Paid separately, in addition to platform access. Simple flat pricing for all refund requests.
             </p>
           </div>
 
@@ -311,9 +311,9 @@ export default function PricingPage() {
             {/* Flat Fee Card */}
             <Card className="border-4 border-blue-600 shadow-xl bg-white dark:bg-slate-900 w-full max-w-md">
               <CardHeader className="pb-6 text-center">
-                <Badge className="mb-4 bg-blue-50 text-blue-700 border-blue-200 mx-auto w-fit">All Disputes</Badge>
+                <Badge className="mb-4 bg-blue-50 text-blue-700 border-blue-200 mx-auto w-fit">All Requests</Badge>
                 <CardTitle className="text-6xl font-bold text-slate-900 dark:text-slate-100 mb-2">$0.05</CardTitle>
-                <p className="text-lg text-slate-600 dark:text-slate-400">per dispute</p>
+                <p className="text-lg text-slate-600 dark:text-slate-400">per refund request</p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -329,25 +329,25 @@ export default function PricingPage() {
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Direct agent filing (permissionless)
+                        Direct refund requests (permissionless)
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Cryptographic evidence verification
+                        Optional supporting evidence
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Regulation E compliant
+                        Clear audit trail
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Full chain of custody tracking
+                        Status tracking from request → outcome
                       </span>
                     </div>
                   </div>
@@ -358,7 +358,7 @@ export default function PricingPage() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Example: A $0.50 transaction dispute costs <strong>$0.05</strong>. A $500 transaction also costs <strong>$0.05</strong>. Simple.
+              Example: A $0.50 transaction refund request costs <strong>$0.05</strong>. A $500 transaction also costs <strong>$0.05</strong>. Simple.
             </p>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function PricingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">How It Works</h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Three simple steps from dispute to resolution. Your team stays in control.
+              Three simple steps from request to outcome. Your team stays in control.
             </p>
           </div>
 
@@ -379,10 +379,9 @@ export default function PricingPage() {
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Webhook className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">1. Disputes Come In</h3>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">1. Refund Requests Come In</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Via API or dashboard. From ACP, ATXP, or any payment protocol.
-                Regulation E compliant from day one.
+                Via API or dashboard. From your payment flow, webhook, or internal tooling.
               </p>
             </div>
 
@@ -392,8 +391,7 @@ export default function PricingPage() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">2. Evidence Review</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Cryptographic proof verified. Transaction hashes validated. Evidence analyzed.
-                Disputes resolved based on proof.
+                Transaction hashes validated. Supporting evidence reviewed when provided.
               </p>
             </div>
 
@@ -401,10 +399,9 @@ export default function PricingPage() {
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">3. Resolution & Settlement</h3>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">3. Approval & Processing</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Complex or low-confidence cases routed to YOUR team. You have the
-                context. You make the final call. AI learns from you.
+                Your team approves or rejects the request. Track processing status and outcomes.
               </p>
             </div>
           </div>
@@ -419,7 +416,7 @@ export default function PricingPage() {
               ROI Calculator
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
-              See how much you save vs traditional dispute resolution
+              See how much you save vs manual refund handling
             </p>
           </div>
 
@@ -430,17 +427,17 @@ export default function PricingPage() {
                   <th className="text-left py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Feature</th>
                   <th className="py-6 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-wide">
-                      x402Disputes
+                      X402Refunds
                     </div>
                   </th>
-                  <th className="py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Traditional Arbitration</th>
+                  <th className="py-6 px-6 text-slate-900 dark:text-slate-100 font-semibold">Manual Refund Handling</th>
                 </tr>
               </thead>
               <tbody>
-                {/* Cost per dispute */}
+                {/* Cost per request */}
                 <tr className="border-b border-slate-200 dark:border-slate-800">
                   <td className="py-5 px-6">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">Cost per dispute</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Cost per request</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Average handling cost</div>
                   </td>
                   <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
@@ -454,11 +451,11 @@ export default function PricingPage() {
                   </td>
                 </tr>
 
-                {/* Resolution time */}
+                {/* Processing time */}
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                   <td className="py-5 px-6">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">Resolution time</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Time to final decision</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Processing time</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Time to outcome</div>
                   </td>
                   <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
@@ -467,15 +464,15 @@ export default function PricingPage() {
                     </div>
                   </td>
                   <td className="py-5 px-6 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">14-30 days</span>
+                    <span className="text-slate-600 dark:text-slate-400">Depends on your process</span>
                   </td>
                 </tr>
 
                 {/* Your team stays in control */}
                 <tr className="border-b border-slate-200 dark:border-slate-800">
                   <td className="py-5 px-6">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">Your team makes decisions</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Final authority on edge cases</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Your team stays in control</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Approve or reject requests</div>
                   </td>
                   <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
@@ -487,20 +484,20 @@ export default function PricingPage() {
                   </td>
                 </tr>
 
-                {/* Regulation E compliance */}
+                {/* Audit trail */}
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                   <td className="py-5 px-6">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">Regulation E compliance</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Consumer protection built-in</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">Audit trail</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Status + decision history</div>
                   </td>
                   <td className="py-5 px-8 bg-blue-50 dark:bg-blue-950 border-l-4 border-r-4 border-blue-600">
                     <div className="flex items-center justify-center">
                       <Check className="h-7 w-7 text-blue-600 mr-2 flex-shrink-0" />
-                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Automated</span>
+                      <span className="font-bold text-lg text-slate-900 dark:text-slate-100">Built-in</span>
                     </div>
                   </td>
                   <td className="py-5 px-6 text-center">
-                    <span className="text-slate-600 dark:text-slate-400">Varies</span>
+                    <span className="text-slate-600 dark:text-slate-400">Inconsistent</span>
                   </td>
                 </tr>
 
@@ -540,7 +537,7 @@ export default function PricingPage() {
                 {/* Total cost comparison */}
                 <tr className="bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-700">
                   <td className="py-6 px-6">
-                    <div className="font-bold text-slate-900 dark:text-slate-100">10,000 disputes/month</div>
+                    <div className="font-bold text-slate-900 dark:text-slate-100">10,000 requests/month</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Total monthly cost</div>
                   </td>
                   <td className="py-6 px-8 bg-blue-100 dark:bg-blue-900 border-l-4 border-r-4 border-blue-600">
@@ -569,13 +566,10 @@ export default function PricingPage() {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
               <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
-                Who makes the final decision on disputes?
+                Who makes the final decision on refund requests?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                YOU do. Your team reviews all cases that need human judgment (typically 5%).
-                x402Disputes provides AI recommendations based on historical patterns, but you have
-                the final say. This is the <strong>Infrastructure Model</strong> - we provide tools,
-                you make decisions.
+                You do. Your team reviews requests and makes the final call.
               </AccordionContent>
             </AccordionItem>
 
@@ -584,9 +578,8 @@ export default function PricingPage() {
                 What&apos;s included in the platform fee?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                The platform fee ($0 or $249/month) covers: API access, review queue dashboard, team collaboration,
-                precedent AI and support. Dispute resolution fees are separate - a flat $0.05 per dispute
-                regardless of transaction amount.
+                The platform fee covers API access, the refund request review queue, team collaboration, and support.
+                Refund request fees are separate: a flat $0.05 per request regardless of transaction amount.
               </AccordionContent>
             </AccordionItem>
 
@@ -595,21 +588,16 @@ export default function PricingPage() {
                 How does the AI learn from my decisions?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                When you approve or override AI recommendations, we feed that back into the pattern
-                matching system. Over time, the AI learns your preferences, industry nuances, and
-                edge cases specific to your business. Your overrides become training data that
-                improves accuracy for YOUR disputes.
+                Over time, we can incorporate your review outcomes to improve suggestions and triage for your workflow.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-4">
               <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
-                Is this Regulation E compliant?
+                Do you support compliance workflows?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                Yes. x402Disputes provides the workflow, logging, and timeline management required by
-                Regulation E. YOU remain the decision-maker (as required by law for consumer
-                protection), we just make the process automated, compliant, and trackable.
+                We provide workflow, logging, and a clear audit trail. You remain the decision-maker.
               </AccordionContent>
             </AccordionItem>
 
@@ -618,28 +606,17 @@ export default function PricingPage() {
                 What&apos;s the difference between Starter and Growth?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                Growth adds <strong>custom terms and conditions knowledge base</strong> (judges use your T&amp;C for decisions),
-                <strong>privacy policy judgments</strong> (privacy-focused dispute resolution), advanced analytics, and more team members (15 vs 5).
-                Both have the same per-dispute fees and resolution time.
+                Growth adds advanced analytics, exports, and more team members (15 vs 5).
+                Both have the same per-refund-request fee.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-6">
               <AccordionTrigger className="text-left font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600">
-                Is this compatible with the Agentic Dispute Protocol (ADP)?
+                Is this compatible with X-402 payments?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
-                Yes, 100% ADP-compliant. All disputes maintain cryptographic chain of custody, evidence
-                follows the ADP Evidence Message format, and rulings use the ADP Award Message structure.
-                Learn more at{" "}
-                <a
-                  href="https://github.com/consulatehq/agentic-dispute-protocol"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  github.com/consulatehq/agentic-dispute-protocol
-                </a>
+                Yes. Refund requests are tied to X-402 payment proof (e.g. transaction hashes) and are trackable via API.
               </AccordionContent>
             </AccordionItem>
 
@@ -649,8 +626,8 @@ export default function PricingPage() {
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Absolutely. We have native support for both Agentic Commerce Protocol (ACP) and ATXP.
-                Configure the integration in your payment processor, and disputes will flow
-                automatically. API documentation available in the dashboard.
+                Configure the integration in your payment processor, and refund requests will flow automatically.
+                API documentation is available in the dashboard.
               </AccordionContent>
             </AccordionItem>
           </Accordion>

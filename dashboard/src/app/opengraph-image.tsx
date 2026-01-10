@@ -4,7 +4,7 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'edge';
 
 // Image metadata
-export const alt = 'x402Disputes - Automated Dispute Resolution for AI Agents';
+export const alt = 'X402Refunds - x402 Payment Refund Requests';
 export const size = {
   width: 1200,
   height: 630,
@@ -73,7 +73,7 @@ export default async function Image() {
               letterSpacing: '-0.02em',
             }}
           >
-            x402Disputes
+            X402Refunds
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default async function Image() {
             whiteSpace: 'nowrap',
           }}
         >
-          Resolve AI Agent Disputes
+          Request Payment Refunds
         </h1>
 
         {/* URL instead of subtitle */}
@@ -106,7 +106,7 @@ export default async function Image() {
             fontWeight: '500',
           }}
         >
-          x402disputes.com
+          x402refunds.com
         </p>
 
         {/* Accent bar - bottom */}

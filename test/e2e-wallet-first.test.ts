@@ -4,12 +4,12 @@ import { API_BASE_URL } from "./fixtures";
 /**
  * E2E: Wallet-first v1 API
  *
- * These tests MUST hit a deployed HTTP API (convex.site or api.x402disputes.com),
+ * These tests MUST hit a deployed HTTP API (convex.site or api.x402refunds.com),
  * and are intended to catch "route not deployed" failures (404).
  */
 
 function isDeployedHttpBase(url: string) {
-  return url.includes(".convex.site") || url.includes("x402disputes.com");
+  return url.includes(".convex.site") || url.includes("x402refunds.com");
 }
 
 describe("E2E: wallet-first /v1/* endpoints", () => {
@@ -19,10 +19,10 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
     return;
   }
 
-  it("POST /v1/disputes should exist (not 404) and validate missing merchant", async () => {
+  it("POST /v1/refunds should exist (not 404) and validate missing merchant", async () => {
     if (!isDeployedHttpBase(API_BASE_URL)) return;
 
-    const res = await fetch(`${API_BASE_URL}/v1/disputes`, {
+    const res = await fetch(`${API_BASE_URL}/v1/refunds`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,12 +37,12 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
     expect(body.ok).toBe(false);
   });
 
-  it("E2E: buyer can file dispute → merchant can list → buyer can fetch by id", async () => {
+  it("E2E: buyer can file refund request → merchant can list → buyer can fetch by id", async () => {
     if (!isDeployedHttpBase(API_BASE_URL)) return;
 
     const merchant = "eip155:8453:0x0000000000000000000000000000000000000001";
 
-    const create = await fetch(`${API_BASE_URL}/v1/disputes`, {
+    const create = await fetch(`${API_BASE_URL}/v1/refunds`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -60,26 +60,26 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
     expect(create.status).toBe(200);
     const created = await create.json();
     expect(created.ok).toBe(true);
-    expect(typeof created.disputeId).toBe("string");
+    expect(typeof created.caseId).toBe("string");
 
-    const list = await fetch(`${API_BASE_URL}/v1/disputes?merchant=${encodeURIComponent(merchant)}&limit=50`, {
+    const list = await fetch(`${API_BASE_URL}/v1/refunds?merchant=${encodeURIComponent(merchant)}&limit=50`, {
       method: "GET",
     });
     expect(list.status).not.toBe(404);
     expect(list.status).toBe(200);
     const listed = await list.json();
     expect(listed.ok).toBe(true);
-    expect(Array.isArray(listed.disputes)).toBe(true);
-    expect(listed.disputes.some((d: any) => d?._id === created.disputeId)).toBe(true);
+    expect(Array.isArray(listed.refundRequests)).toBe(true);
+    expect(listed.refundRequests.some((d: any) => d?._id === created.caseId)).toBe(true);
 
-    const getById = await fetch(`${API_BASE_URL}/v1/dispute?id=${encodeURIComponent(created.disputeId)}`, {
+    const getById = await fetch(`${API_BASE_URL}/v1/refund?id=${encodeURIComponent(created.caseId)}`, {
       method: "GET",
     });
     expect(getById.status).not.toBe(404);
     expect(getById.status).toBe(200);
     const got = await getById.json();
     expect(got.ok).toBe(true);
-    expect(got.dispute?._id).toBe(created.disputeId);
+    expect(got.refundRequest?._id).toBe(created.caseId);
   });
 
   it("POST /v1/topup should exist (not 404) and validate missing merchant", async () => {

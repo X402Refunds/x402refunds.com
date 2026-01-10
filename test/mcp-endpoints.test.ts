@@ -41,13 +41,10 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(manifest.server.name).toBe('x402disputes.com - Permissionless X-402 Dispute Resolution');
-      expect(manifest.server.dispute_types).toContain('Payment disputes only');
+      expect(String(manifest.server.name)).toBe('x402refunds.com - Permissionless X-402 Refund Requests');
+      expect(String(manifest.server.dispute_types)).toContain('Refund requests only');
       expect(manifest.server.pricing).toBeDefined();
-      // Backward compatible during rollout (deployed API may lag local code)
-      expect(String(manifest.server.pricing.flat_fee)).toMatch(
-        /^\$0\.05 per dispute(\s*\(paid by merchant; free for filers\))?$/
-      );
+      expect(String(manifest.server.pricing.flat_fee)).toBe('$0.05 per refund request');
     });
 
     it('should list X-402 MCP tools (plus demo)', async () => {
@@ -56,16 +53,16 @@ describe('MCP Protocol - Tool Discovery', () => {
       
       const toolNames = manifest.tools.map((t: any) => t.name);
       const expectedTools = [
-        "x402_file_dispute",
-        "x402_list_my_cases",
-        "x402_check_case_status"
+        "x402_request_refund",
+        "x402_list_my_refund_requests",
+        "x402_check_refund_status"
       ];
       const expectedOptionalTools = [
         "demo_image_generator",
       ];
       
       expect(manifest.tools.length).toBe(4);
-      // Check for the core X-402 tools
+      // Check for the core X-402 refund tools
       for (const expectedTool of expectedTools) {
         expect(toolNames).toContain(expectedTool);
       }
@@ -152,7 +149,8 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
       expect(data.result).toBeDefined();
       expect(data.result.protocolVersion).toBe('2024-11-05');
       expect(data.result.serverInfo).toBeDefined();
-      expect(data.result.serverInfo.name).toBe('x402disputes.com');
+      // Backward compatible: deployed API may lag local code during rollout
+      expect(String(data.result.serverInfo.name)).toBe('x402refunds.com');
       expect(data.result.capabilities).toBeDefined();
       expect(data.result.capabilities.tools).toBeDefined();
     });
@@ -194,7 +192,7 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
           id: 3,
           method: 'tools/call',
           params: {
-            name: 'x402_check_case_status',
+            name: 'x402_check_refund_status',
             arguments: {
               caseId: 'invalid-case-id-for-format-test'
             }
@@ -276,7 +274,7 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'x402_file_dispute', // Using x402_file_dispute instead of non-existent register tool
+          tool: 'x402_request_refund', // Using x402_request_refund instead of non-existent register tool
           parameters: {
             name: 'Test Agent',
             publicKey: testPublicKey,
@@ -304,7 +302,7 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'x402_check_case_status',
+          tool: 'x402_check_refund_status',
           parameters: { caseId: 'test-case-id' },
         }),
       });

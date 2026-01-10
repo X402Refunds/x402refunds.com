@@ -135,9 +135,9 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
-                x402Disputes
+                X402Refunds
                 <span className="mx-2 text-slate-300">•</span>
-                Payment disputes & refunds
+                Payment refund requests
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
@@ -193,7 +193,7 @@ export default function HomePage() {
               <ResponsiveLandingScreenshot
                 desktopSrc={ALL_DISPUTES_DESKTOP_SRC}
                 mobileSrc={ALL_DISPUTES_MOBILE_SRC}
-                alt="All disputes dashboard view"
+                alt="All refund requests dashboard view"
                 priority
               />
               <div className="mt-2 text-xs text-slate-500">Illustration (AI-generated)</div>
@@ -216,9 +216,9 @@ export default function HomePage() {
 
           {(() => {
             const merchant = "eip155:8453:0xYourMerchantWallet"
-            const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${merchant}`
-            const linkHeader = `Link: <${disputeUrl}>; rel=\"payment-dispute\"; type=\"application/json\"`
-            const wellKnown = `{\n  \"x402disputes\": {\n    \"merchant\": \"${merchant}\",\n    \"paymentDisputeUrl\": \"${disputeUrl}\",\n    \"supportEmail\": \"disputes@yourdomain.com\",\n    \"terms\": {\n      \"refundWindowDays\": 7,\n      \"evidenceWindowDays\": 7,\n      \"currency\": \"USDC\"\n    }\n  }\n}`
+            const refundUrl = `https://api.x402refunds.com/v1/refunds?merchant=${merchant}`
+            const linkHeader = `Link: <${refundUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
+            const wellKnown = `{\n  \"x402refunds\": {\n    \"merchant\": \"${merchant}\",\n    \"refundRequestUrl\": \"${refundUrl}\",\n    \"supportEmail\": \"refunds@yourdomain.com\",\n    \"terms\": {\n      \"refundWindowDays\": 7,\n      \"evidenceWindowDays\": 7,\n      \"currency\": \"USDC\"\n    }\n  }\n}`
 
             return (
               <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
@@ -264,7 +264,7 @@ export default function HomePage() {
 
                 <SetupStepCard
                   title="Step 3 — Top up refund credits (optional)"
-                  description="Optional: add USDC so approved disputes can refund automatically."
+                  description="Optional: add USDC so approved requests can refund automatically."
                 >
                   <a
                     href="/topup"
@@ -285,7 +285,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div className="space-y-3">
               <h3 className="text-2xl font-bold text-slate-950">Inbox</h3>
-              <p className="text-slate-600">Your place to review disputes. Calm when there’s nothing to do.</p>
+              <p className="text-slate-600">Your place to review refund requests. Calm when there’s nothing to do.</p>
               <ul className="text-sm text-slate-700 space-y-1">
                 <li>- “All caught up” when empty</li>
                 <li>- One click to jump into review</li>
@@ -303,7 +303,7 @@ export default function HomePage() {
             <ResponsiveLandingScreenshot
               desktopSrc={DISPUTE_STATUS_DESKTOP_SRC}
               mobileSrc={DISPUTE_STATUS_MOBILE_SRC}
-              alt="Dispute detail showing refund status and resolution"
+              alt="Refund request detail showing refund status"
             />
             <div className="space-y-3">
               <h3 className="text-2xl font-bold text-slate-950">Refund status</h3>
@@ -322,7 +322,7 @@ export default function HomePage() {
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
           <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-            <h2 className="text-3xl sm:text-4xl font-bold">Enable disputes in minutes.</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold">Enable refund requests in minutes.</h2>
             <p className="mt-2 text-slate-300">Plug-and-play. No signup. Top up and add one header.</p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Button 
@@ -333,7 +333,7 @@ export default function HomePage() {
                   el?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }}
             >
-                Enable disputes
+                Enable refund requests
             </Button>
             <Button 
               size="lg" 

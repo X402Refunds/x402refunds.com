@@ -13,15 +13,15 @@ import schema from '../convex/schema';
  * 4. Case Status Tracking
  * 5. Resolution & Reputation Updates
  * 
- * Tests hit api.x402disputes.com when API_BASE_URL is set to production
+ * Tests hit api.x402refunds.com when API_BASE_URL is set to production
  * 
  * Usage:
  * - Local testing: pnpm test:run test/e2e-flow.test.ts
- * - Production testing: API_BASE_URL=https://api.x402disputes.com pnpm test:run test/e2e-flow.test.ts
+ * - Production testing: API_BASE_URL=https://api.x402refunds.com pnpm test:run test/e2e-flow.test.ts
  */
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402disputes.com';
-const USE_LIVE_API = API_BASE_URL.includes('x402disputes.com') || API_BASE_URL.includes('convex.site');
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.x402refunds.com';
+const USE_LIVE_API = API_BASE_URL.includes('x402refunds.com') || API_BASE_URL.includes('convex.site');
 
 
 describe('E2E: Evidence Submission Scenarios', () => {
@@ -1365,7 +1365,7 @@ describe('E2E: Production API Smoke Tests', () => {
     expect(response.status).toBe(200);
     
     const data = await response.json();
-    expect(data.service).toBe('x402disputes.com - Permissionless X-402 Dispute Resolution');
+    expect(String(data.service)).toBe('x402refunds.com - Permissionless X-402 Refund Requests');
     expect(data.endpoints).toBeDefined();
   });
 

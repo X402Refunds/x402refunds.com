@@ -9,9 +9,9 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10">
           <div>
-            <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">x402Disputes</h3>
+            <h3 className="text-white text-base sm:text-lg font-semibold mb-3 sm:mb-4">X402Refunds</h3>
             <p className="text-sm sm:text-base leading-relaxed">
-              Permissionless dispute filing and resolution for X-402 payments. Agents file disputes directly. On-chain reputation.
+              Permissionless refund requests for X-402 payments. Request refunds, review them, and track status.
             </p>
           </div>
           <div>
@@ -34,17 +34,17 @@ export function Footer() {
         <div className="border-t border-slate-800 mt-10 sm:mt-12 pt-8 sm:pt-10">
           <div className="text-center text-xs sm:text-sm space-y-2">
             <div>
-              <span className="text-white font-semibold">x402Disputes, Inc.</span>
+              <span className="text-white font-semibold">X402Refunds, Inc.</span>
               <span className="mx-2">•</span>
               <span>101a Clay St PMB 201, San Francisco CA 94111</span>
             </div>
             <div>
-              Email: <a href="mailto:vivek@x402disputes.com" className="hover:text-blue-400 transition-colors">vivek@x402disputes.com</a>
+              Email: <a href="mailto:vivek@x402refunds.com" className="hover:text-blue-400 transition-colors">vivek@x402refunds.com</a>
               <span className="mx-2">•</span>
               Founder: Vivek Kotecha
             </div>
             <div className="pt-4">
-              &copy; 2025 x402Disputes. All rights reserved.
+              &copy; 2026 X402Refunds. All rights reserved.
             </div>
           </div>
         </div>

@@ -165,8 +165,8 @@ describe("Signed Evidence Workflow", () => {
       status: 500,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
-        consulateAdp: "https://api.x402disputes.com/.well-known/adp",
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`,
+        consulateAdp: "https://api.x402refunds.com/.well-known/adp",
         vendorDid: vendor.did,
       },
       body: JSON.stringify({
@@ -385,8 +385,8 @@ describe("Signed Evidence Workflow", () => {
       status: 200,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
-        consulateAdp: "https://api.x402disputes.com/.well-known/adp",
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`,
+        consulateAdp: "https://api.x402refunds.com/.well-known/adp",
         vendorDid: vendor.did,
       },
       body: JSON.stringify({
@@ -474,8 +474,8 @@ describe("Signed Evidence Workflow", () => {
       status: 503,
       headers: {
         contentType: "application/json",
-        disputeUrl: `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`,
-        consulateAdp: "https://api.x402disputes.com/.well-known/adp",
+        disputeUrl: `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`,
+        consulateAdp: "https://api.x402refunds.com/.well-known/adp",
         vendorDid: vendor.did,
       },
       body: JSON.stringify({
@@ -557,13 +557,13 @@ describe("Signed Evidence Workflow", () => {
     };
     
     // Seller includes dispute URL in SIGNED headers
-    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
+    const disputeUrl = `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`;
     const response = {
       status: 500,
       headers: {
         contentType: "application/json",
         disputeUrl: disputeUrl,
-        consulateAdp: "https://api.x402disputes.com/.well-known/adp",
+        consulateAdp: "https://api.x402refunds.com/.well-known/adp",
         vendorDid: vendor.did,
       },
       body: '{"error": "Server error"}',
@@ -605,7 +605,7 @@ describe("Signed Evidence Workflow", () => {
     // Verify dispute URL is in signed evidence
     expect(caseData?.signedEvidence?.response.headers?.disputeUrl).toBe(disputeUrl);
     expect(caseData?.signedEvidence?.response.headers?.vendorDid).toBe(vendor.did);
-    expect(caseData?.signedEvidence?.response.headers?.consulateAdp).toBe("https://api.x402disputes.com/.well-known/adp");
+    expect(caseData?.signedEvidence?.response.headers?.consulateAdp).toBe("https://api.x402refunds.com/.well-known/adp");
     
     console.log("✅ Dispute URL verified in signed headers");
     console.log("   - Dispute URL:", disputeUrl);
@@ -615,7 +615,7 @@ describe("Signed Evidence Workflow", () => {
 
   it("should extract vendor DID from dispute URL query parameter", async () => {
     const vendorDid = "did:agent:openai-inc-12345";
-    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendorDid}`;
+    const disputeUrl = `https://api.x402refunds.com/v1/disputes?merchant=${vendorDid}`;
     
     // Parse URL to extract vendor DID
     const url = new URL(disputeUrl);
@@ -642,7 +642,7 @@ describe("Signed Evidence Workflow", () => {
     });
     
     // Seller provides dispute URL in response headers
-    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
+    const disputeUrl = `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`;
     
     const request = {
       method: "POST",
@@ -710,7 +710,7 @@ describe("Signed Evidence Workflow", () => {
     });
     
     // Seller's dispute URL from signed headers
-    const disputeUrl = `https://api.x402disputes.com/v1/disputes?merchant=${vendor.did}`;
+    const disputeUrl = `https://api.x402refunds.com/v1/disputes?merchant=${vendor.did}`;
     
     const request = {
       method: "POST",

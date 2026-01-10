@@ -12,7 +12,7 @@
  *   MERCHANT=eip155:8453:0x... AMOUNT_MICROUSDC=10000 node docs/examples/topup-flow.mjs
  */
 
-const API_BASE = process.env.X402DISPUTES_API_BASE || "https://api.x402disputes.com";
+const API_BASE = process.env.X402DISPUTES_API_BASE || "https://api.x402refunds.com";
 const merchant = process.env.MERCHANT || "eip155:8453:0x0000000000000000000000000000000000000001";
 const amountMicrousdc = process.env.AMOUNT_MICROUSDC || "10000";
 

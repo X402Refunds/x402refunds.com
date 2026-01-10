@@ -20,7 +20,7 @@ export default function TestDemoAgentPage() {
   const [model, setModel] = useState('stable-diffusion-xl');
   const [showPaywall, setShowPaywall] = useState(false);
 
-  const API_URL = 'https://api.x402disputes.com/demo-agents/image-generator';
+  const API_URL = 'https://api.x402refunds.com/demo-agents/image-generator';
 
   return (
     <div className="min-h-screen bg-background p-8">

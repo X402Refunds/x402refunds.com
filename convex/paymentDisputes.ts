@@ -48,7 +48,7 @@ import type { Id } from "./_generated/dataModel";
  *
  * 1. Agent calls OpenAI API, pays 0.25 USDC via X-402
  * 2. Request times out after 30s (no response)
- * 3. Agent files dispute on x402disputes.com:
+ * 3. Agent files dispute on x402refunds.com:
  *    - plaintiff: 0xAgentWalletAddress (buyer)
  *    - defendant: 0xOpenAIWalletAddress (merchant)
  *    - transactionHash: 0x... (blockchain proof)

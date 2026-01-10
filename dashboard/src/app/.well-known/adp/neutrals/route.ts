@@ -35,7 +35,7 @@ export async function GET() {
         biasAudit: {
           lastAudit: "2025-01-15",
           auditedBy: "Independent AI Auditors Inc.",
-          report: "https://x402disputes.com/audits/bias-2025-q1.pdf",
+          report: "https://x402refunds.com/audits/bias-2025-q1.pdf",
           score: 98.5
         },
         fees: {
@@ -45,8 +45,8 @@ export async function GET() {
           currency: "USD"
         },
         contact: {
-          email: "disputes@x402disputes.com",
-          endpoint: "https://api.x402disputes.com"
+          email: "disputes@x402refunds.com",
+          endpoint: "https://api.x402refunds.com"
         }
       }
     ],

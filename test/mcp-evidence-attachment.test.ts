@@ -88,7 +88,7 @@ describe("MCP Evidence Attachment", () => {
         signer: testAgent.did,
         model: {
           provider: "mcp_tool",
-          name: "x402_file_dispute",
+          name: "x402_request_refund",
           version: "1.0.0",
         },
       });
@@ -121,7 +121,7 @@ describe("MCP Evidence Attachment", () => {
       expect(evidence.uri).toBe(evidenceUrls[i]);
       expect(evidence.agentDid).toBe(testAgent.did);
       expect(evidence.model.provider).toBe("mcp_tool");
-      expect(evidence.model.name).toBe("x402_file_dispute");
+      expect(evidence.model.name).toBe("x402_request_refund");
     }
 
     console.log("✅ Evidence manifests created and attached to case");
@@ -176,7 +176,7 @@ describe("MCP Evidence Attachment", () => {
         signer: testAgent.did,
         model: {
           provider: "mcp_tool",
-          name: "x402_file_dispute",
+          name: "x402_request_refund",
           version: "1.0.0",
         },
       });

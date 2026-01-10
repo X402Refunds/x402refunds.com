@@ -47,7 +47,7 @@ Check Cursor settings for MCP server configuration.
 First, verify the API works without payment:
 
 ```bash
-curl -X POST https://api.x402disputes.com/demo-agents/image-generator-500 \
+curl -X POST https://api.x402refunds.com/demo-agents/image-generator-500 \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "a dog playing in the park",
@@ -79,7 +79,7 @@ Now use an AI agent with Coinbase Payments MCP installed:
 
 **Prompt to AI Agent:**
 ```
-Call the ImageGenerator500 API at https://api.x402disputes.com/demo-agents/image-generator-500 
+Call the ImageGenerator500 API at https://api.x402refunds.com/demo-agents/image-generator-500 
 to generate an image with the prompt "a dog playing in the park"
 ```
 
@@ -156,8 +156,8 @@ but received a 500 error instead of the image.
 
 1. **Agent uses x402disputes MCP** to file dispute:
    ```
-   POST https://api.x402disputes.com/mcp/invoke
-   Tool: x402_file_dispute
+   POST https://api.x402refunds.com/mcp/invoke
+   Tool: x402_request_refund
    Parameters:
    - transactionHash: <from previous payment>
    - blockchain: "base"
@@ -191,7 +191,7 @@ Details:
 - Amount: $0.01 USDC
 - Issue: API returned 500 error after payment
 
-Track your case: https://x402disputes.com/cases/k1234567890abcdef
+Track your case: https://x402refunds.com/cases/k1234567890abcdef
 ```
 
 ### Test 4: Check Dispute Status
@@ -249,7 +249,7 @@ You should see incoming 0.01 USDC transaction.
 
 Visit the tracking URL provided by the agent:
 ```
-https://x402disputes.com/cases/YOUR_CASE_ID
+https://x402refunds.com/cases/YOUR_CASE_ID
 ```
 
 Should show:
@@ -337,16 +337,16 @@ Once this works:
 ## Resources
 
 - **Coinbase Payments MCP:** https://www.coinbase.com/developer-platform/discover/launches/payments-mcp
-- **Docs:** https://www.x402disputes.com/docs
+- **Docs:** https://x402refunds.com/docs
 - **BASE Network:** https://base.org
 - **Demo Agent Docs:** /demo-agents/README.md
-- **API:** https://api.x402disputes.com
+- **API:** https://api.x402refunds.com
 
 ## Support
 
 Issues or questions:
 - GitHub: https://github.com/consulatehq/consulate/issues
-- Email: support@x402disputes.com
+- Email: support@x402refunds.com
 - Discord: https://discord.gg/x402disputes
 
 

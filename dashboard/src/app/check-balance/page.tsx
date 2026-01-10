@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CopyableField } from "@/components/case-detail/CopyableField";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 
-const API_BASE = "https://api.x402disputes.com";
+const API_BASE = "https://api.x402refunds.com";
 
 export default function CheckBalancePage() {
   const [merchant, setMerchant] = useState("");
