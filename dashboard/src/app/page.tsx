@@ -156,10 +156,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Enable refund requests in one file
+              Enable refund requests with one file
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Paste this template at `/.well-known/x402.json`, then replace `supportEmail` + your merchant wallet.
+              Publish `/.well-known/x402.json`, then set `supportEmail` + your merchant wallet.
             </p>
           </div>
 
@@ -181,13 +181,11 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Add{" "}
-                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                        /.well-known/x402.json
-                      </span>
+                      Template:{" "}
+                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">/.well-known/x402.json</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Copy/paste this file. Refund requests will start arriving by email.
+                      Edit the two fields, then deploy.
                     </div>
                   </div>
 
