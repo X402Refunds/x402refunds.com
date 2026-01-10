@@ -30,9 +30,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-5xl rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-12 sm:py-16">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
               <h1 className="text-5xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
-                Turn on refunds
-                <span className="mt-4 block text-[0.9em] font-semibold text-blue-600">
-                  for AI payments.
+                Turn on{" "}
+                <span className="text-blue-600">refunds</span>
+                <span className="mt-4 block text-[0.9em] font-semibold text-slate-950">
+                  for <span className="text-blue-600">AI payments.</span>
                 </span>
               </h1>
               
