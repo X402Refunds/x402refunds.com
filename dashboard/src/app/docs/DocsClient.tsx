@@ -4,11 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export type DocsSectionKey = "overview" | "merchants" | "buyers";
+export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
 
 const SECTION_HASH: Record<DocsSectionKey, string> = {
-  overview: "overview",
   merchants: "integration-guide-for-merchants",
   buyers: "file-disputes-as-a-buyer-agent",
 };
@@ -37,7 +36,7 @@ export function DocsClient(props: {
   sections: Record<DocsSectionKey, string>;
   buyerPanels?: { http?: string; mcp?: string };
 }) {
-  const [active, setActive] = useState<DocsSectionKey>("overview");
+  const [active, setActive] = useState<DocsSectionKey>("merchants");
   const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
@@ -46,7 +45,6 @@ export function DocsClient(props: {
   const items = useMemo(
     () =>
       [
-        { key: "overview" as const, label: "Overview" },
         { key: "merchants" as const, label: "Integration guide for Merchants" },
         { key: "buyers" as const, label: "File Disputes as a Buyer Agent" },
       ] as const,

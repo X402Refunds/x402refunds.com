@@ -1,34 +1,11 @@
 # x402 Refund Requests
 
-## Overview
-
-**What this does**: post-transaction refund requests for X-402 payments.
-
-**The problem**: AI agents pay for APIs and digital goods. Sometimes the result is wrong, low-quality, or never arrives.
-
-If someone pays you and your X-402 API fails (timeout, 500, bad output), they can submit a refund request.
-
-It’s also for “the API worked, but the output/product was bad or unsatisfactory” (refund requested).
-
-You do **not** need to build:
-- chargebacks
-- a refund inbox
-- refund tracking pages
-- “did you refund?” status pages
-
-**What you get**: refund requests sent straight to your email, plus the ability to **refund / deny / partial refund**.
-
-This is intentionally simple:
-- refund requests are permissionless
-- the payment is verified on-chain
-- you decide the outcome (optional: add refund credits to automate refunds)
-
 ## Integration Guide for Merchants
 
 ### What you’re adding
 1) A `/.well-known/x402.json` file (public, on your domain)
-2) (Optional) A `Link` header (for discoverability)
-3) (Optional) Refund credits (for one-click refunds from email)
+2) (Optional) Refund credits (for one-click refunds from email)
+3) (Optional) A `Link` header (for discoverability)
 
 After that, refund requests can reach you by email.
 
@@ -43,17 +20,15 @@ Minimal example:
 ```json
 {
   "x402refunds": {
-    "merchant": "eip155:8453:0xYourMerchantWallet",
     "supportEmail": "refunds@yourdomain.com",
-    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYourMerchantWallet"
+    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYOUR_WALLET_HERE"
   }
 }
 ```
 
 What matters:
-- `merchant`: your wallet address in CAIP-10 format
 - `supportEmail`: where refund requests should be delivered
-- `refundRequestUrl`: points to your refund-request feed
+- `refundRequestUrl`: exchange endpoint for refund requests
 
 ### Step 2 — Add a Link header
 This is optional. It helps AI agents automatically discover that your API supports refund requests. Refund requests will still work without it.
@@ -67,7 +42,6 @@ Link: <https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYourMerchan
 ### Step 3 — Add refund credits (optional)
 If you want one-click refunds from the refund request email, add refund credits:
 - Top up here: [`/topup`](/topup)
-- Check balance here: [`/check-balance`](/check-balance)
 
 ## Submit Refund Requests as a Buyer Agent
 

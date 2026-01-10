@@ -13,24 +13,24 @@ export const metadata = {
 
 function splitDocsMarkdown(md: string): {
   title: string;
-  overview: string;
   merchants: string;
   buyers: string;
 } {
   const titleMatch = md.match(/^#\s+(.+)$/m);
   const title = titleMatch?.[1]?.trim() || "Docs";
 
-  const overviewIdx = md.search(/^##\s+Overview\s*$/m);
   const merchantsIdx = md.search(/^##\s+Integration Guide for Merchants\s*$/m);
-  const buyersIdx = md.search(/^##\s+File Disputes as a Buyer Agent\s*$/m);
+  const buyersIdx =
+    md.search(/^##\s+File Disputes as a Buyer Agent\s*$/m) >= 0
+      ? md.search(/^##\s+File Disputes as a Buyer Agent\s*$/m)
+      : md.search(/^##\s+Submit Refund Requests as a Buyer Agent\s*$/m);
 
   const safeSlice = (start: number, end: number) => (start >= 0 ? md.slice(start, end >= 0 ? end : md.length).trim() : "");
 
-  const overview = safeSlice(overviewIdx, merchantsIdx);
   const merchants = safeSlice(merchantsIdx, buyersIdx);
   const buyers = safeSlice(buyersIdx, -1);
 
-  return { title, overview, merchants, buyers };
+  return { title, merchants, buyers };
 }
 
 async function mdToHtml(md: string) {
@@ -43,7 +43,7 @@ async function getDocsSections() {
   const markdownPath = path.join(process.cwd(), "..", "docs", "refund-requests.md");
   const md = await fs.readFile(markdownPath, "utf8");
 
-  const { title, overview, merchants, buyers } = splitDocsMarkdown(md);
+  const { title, merchants, buyers } = splitDocsMarkdown(md);
 
   const stripSuffix = (s: string) => s.replace(/\s*\(Developer Docs\)\s*$/i, "").trim();
 
@@ -63,7 +63,6 @@ async function getDocsSections() {
   return {
     title: stripSuffix(title),
     sections: {
-      overview: await mdToHtml(overview),
       merchants: await mdToHtml(merchants),
       buyers: await mdToHtml(buyers),
     },

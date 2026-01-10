@@ -70,9 +70,6 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              That’s it.
-            </p>
           </div>
 
           {(() => {
@@ -101,9 +98,6 @@ export default function HomePage() {
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         0xYOUR_WALLET_HERE
                       </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      That’s it.
                     </div>
                   </div>
 
