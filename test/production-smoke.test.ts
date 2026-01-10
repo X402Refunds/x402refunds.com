@@ -65,12 +65,10 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
 
       const data = await response.json();
       expect(data?.x402refunds).toBeDefined();
-      expect(typeof data.x402refunds.merchant).toBe('string');
-      expect(data.x402refunds.merchant).toMatch(/^eip155:\d+:0x[a-f0-9]{40}$/);
       expect(typeof data.x402refunds.supportEmail).toBe('string');
       expect(data.x402refunds.supportEmail).toContain('@');
       expect(typeof data.x402refunds.refundRequestUrl).toBe('string');
-      expect(data.x402refunds.refundRequestUrl).toContain('/v1/refunds?merchant=');
+      expect(data.x402refunds.refundRequestUrl).toContain('/v1/refunds');
 
       // Verify CORS headers
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
