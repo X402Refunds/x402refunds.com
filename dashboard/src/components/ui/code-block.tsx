@@ -59,6 +59,8 @@ export function CodeBlock(props: {
   variant?: "minimal" | "card";
   copyUi?: "icon" | "button";
   clickToCopy?: boolean;
+  header?: "caption" | "none";
+  copyPlacement?: "header" | "overlay";
   className?: string;
 }) {
   const codeEl = useRef<HTMLElement | null>(null);
@@ -66,6 +68,8 @@ export function CodeBlock(props: {
   const variant = props.variant ?? "minimal";
   const copyUi = props.copyUi ?? "icon";
   const clickToCopy = props.clickToCopy ?? false;
+  const header = props.header ?? "caption";
+  const copyPlacement = props.copyPlacement ?? "header";
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -102,35 +106,39 @@ export function CodeBlock(props: {
         props.className,
       )}
     >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="min-w-0 text-xs font-medium text-muted-foreground">
-          {props.title ? (
-            <span className="font-mono text-foreground">{props.title}</span>
-          ) : (
-            <span className="font-mono">{language}</span>
-          )}
+      {header === "caption" ? (
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="min-w-0 text-xs font-medium text-muted-foreground">
+            {props.title ? (
+              <span className="font-mono text-foreground">{props.title}</span>
+            ) : (
+              <span className="font-mono">{language}</span>
+            )}
+          </div>
+          {copyPlacement === "header" ? (
+            copyUi === "button" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2"
+                onClick={async () => {
+                  await doCopy();
+                }}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            ) : (
+              <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
+            )
+          ) : null}
         </div>
-        {copyUi === "button" ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-2"
-            onClick={async () => {
-              await doCopy();
-            }}
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied" : "Copy"}
-          </Button>
-        ) : (
-          <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
-        )}
-      </div>
+      ) : null}
 
       <pre
         className={cn(
-          "prism-code m-0 overflow-x-auto rounded-xl bg-muted/40 px-4 py-3 text-[13px] leading-6",
+          "prism-code relative m-0 overflow-x-auto rounded-xl bg-muted/40 px-4 py-3 text-[13px] leading-6",
           clickToCopy ? "cursor-pointer transition-colors hover:bg-muted/55" : "",
           `language-${language}`,
         )}
@@ -154,6 +162,11 @@ export function CodeBlock(props: {
             : undefined
         }
       >
+        {copyPlacement === "overlay" ? (
+          <div className="absolute right-2 top-2 z-10">
+            <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
+          </div>
+        ) : null}
         <code
           ref={(el) => {
             codeEl.current = el;

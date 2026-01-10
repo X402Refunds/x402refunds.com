@@ -180,75 +180,71 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      1) Add{" "}
+                      Add{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         /.well-known/x402.json
                       </span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      This tells us where to email refund requests and where your refund feed lives.
+                      Copy/paste this file. Refund requests will start arriving by email.
                     </div>
                   </div>
 
                   <CodeBlock
                     language="json"
-                    title="/.well-known/x402.json"
                     code={wellKnown}
                     copyLabel="Copied /.well-known/x402.json"
-                    copyUi="button"
+                    header="none"
+                    copyPlacement="overlay"
                     clickToCopy
                   />
                 </div>
 
                 {/* Step 2 (confirmation + optional) */}
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      2) You’ll get refund requests by email
+                      You’ll get refund requests by email
                     </div>
                     <div className="text-sm text-muted-foreground">
                       We email <span className="font-mono">supportEmail</span> from that file. No signup required.
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="text-xs font-medium tracking-wide text-muted-foreground">
-                      OPTIONAL
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-foreground">
-                        Discoverability for agent clients
-                      </div>
-                      <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                        <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
-                          {linkHeader}
-                        </code>
-                        {/* Use the CodeBlock's built-in CopyButton style elsewhere; here keep it compact */}
-                        <div className="shrink-0">
-                          <CopyButton value={linkHeader} label="Copied Link header" />
+                  <details className="group">
+                    <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground hover:text-foreground">
+                      Optional: discoverability + one‑click refunds
+                    </summary>
+                    <div className="mt-3 space-y-4">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-foreground">Discoverability header</div>
+                        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                          <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
+                            {linkHeader}
+                          </code>
+                          <div className="shrink-0">
+                            <CopyButton value={linkHeader} label="Copied Link header" />
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Return this on paid responses so clients can auto-discover refunds support.
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        Return this header on every paid response so clients can auto-discover refunds support.
-                      </div>
-                    </div>
 
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-foreground">
-                        One‑click refunds from email
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-foreground">One‑click refunds</div>
+                        <div className="text-sm text-muted-foreground">
+                          Top up credits to enable one‑click refunds from email.
+                        </div>
+                        <a
+                          href="/topup"
+                          className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                        >
+                          Top up refund credits →
+                        </a>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Top up credits to enable one‑click refunds (optional).
-                      </div>
-                      <a
-                        href="/topup"
-                        className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
-                      >
-                        Top up refund credits →
-                      </a>
                     </div>
-                  </div>
+                  </details>
                 </div>
               </div>
             )
