@@ -7,7 +7,6 @@ import { CodeBlock } from "@/components/ui/code-block"
 import { CopyButton } from "@/components/ui/copy-button"
 import {
   ChevronRight,
-  CreditCard,
   Mail,
   ShieldCheck,
   BadgeCheck,
@@ -23,43 +22,19 @@ export default function HomePage() {
 
       {/* HERO */}
       <section className="border-b border-slate-200 bg-gradient-to-b from-blue-50/80 via-white to-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="mx-auto max-w-5xl rounded-[28px] border border-slate-200 bg-white shadow-sm px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
-            <div className="mx-auto flex max-w-3xl flex-col items-center space-y-6 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-blue-800">
-                <CreditCard className="h-3.5 w-3.5" />
-                FOR PAID APIs
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Enable refund requests
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-12">
+          <div className="mx-auto max-w-5xl rounded-[28px] border border-slate-200 bg-white shadow-sm px-6 py-12 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
+            <div className="mx-auto flex max-w-4xl flex-col items-center space-y-8 text-center">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-slate-950">
+                Enable refunds
                 <br />
                 <span className="text-blue-600">for x402 payments.</span>
               </h1>
 
-              <p className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto">
-                Add one file. Refund requests land in your email.
-              </p>
-
-              <ul className="space-y-2 text-sm sm:text-base text-slate-700 mx-auto w-fit text-left">
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Get refund requests by email
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  One-click refund / deny / partial refund
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Shareable proof of refund
-                </li>
-              </ul>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-12"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-12 h-12"
                   onClick={() => {
                     const el = document.getElementById("enable")
                     el?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -68,17 +43,13 @@ export default function HomePage() {
                   Get started →
                 </Button>
               </div>
-
-              <p className="text-xs text-slate-500 pt-2">
-                Built for x402 payments. Works with HTTP + MCP.
-              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ENABLE DISPUTES (PLUG AND PLAY) */}
-      <section id="enable" className="border-b border-slate-200 bg-white">
+      <section id="enable" className="border-b border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
@@ -107,13 +78,14 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Add{" "}
+                      Publish this file on your domain:{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                        /.well-known/x402.json
+                        https://YOUR_DOMAIN/.well-known/x402.json
                       </span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Copy/paste this file at `/.well-known/x402.json`, replace `supportEmail` + your merchant wallet.
+                      Example:{" "}
+                      <span className="font-mono">https://api.yourcompany.com/.well-known/x402.json</span>
                     </div>
                   </div>
 
@@ -121,7 +93,8 @@ export default function HomePage() {
                     language="json"
                     code={wellKnown}
                     copyLabel="Copied /.well-known/x402.json"
-                    header="none"
+                    header="caption"
+                    title="/.well-known/x402.json"
                     copyPlacement="overlay"
                     clickToCopy
                   />
@@ -145,7 +118,7 @@ export default function HomePage() {
                         Optional extras
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        discoverability · one‑click refunds
+                        one‑click refunds · discoverability
                       </span>
                     </summary>
 
@@ -302,14 +275,14 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              size="lg"
+              <Button 
+                size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
               onClick={() => (window.location.href = "/docs")}
             >
               View docs →
             </Button>
-          </div>
+            </div>
         </div>
       </section>
 
