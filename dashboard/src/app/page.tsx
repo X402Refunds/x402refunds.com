@@ -27,12 +27,11 @@ export default function HomePage() {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-white px-7 py-12 sm:px-14 sm:py-16 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)]">
+          <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-white px-7 py-14 sm:px-14 sm:py-20 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)]">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-slate-950">
+              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight leading-[0.95] text-slate-950">
                 Turn on refunds
-                <br />
-                <span className="text-blue-600">for x402 payments.</span>
+                <span className="mt-3 block text-blue-600">for x402 payments.</span>
               </h1>
 
               <p className="mt-5 text-lg sm:text-xl text-slate-600 max-w-2xl">
