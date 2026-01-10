@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-10T03:48:45.780Z
+**Auto-generated on**: 2026-01-10T04:33:46.472Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -163,7 +163,7 @@ Common HTTP routes exposed:
 
 ## ⚛️ Frontend Components
 
-### React Components (74 components)
+### React Components (75 components)
 - AnimatedGrid
 - CodeExampleCard
 - Footer
@@ -185,7 +185,7 @@ Common HTTP routes exposed:
 - PartiesCard
 - PaymentProofCard
 
-... and 54 more
+... and 55 more
 
 ### Component Categories
 - **Layout**: Header, Footer, Navigation
@@ -304,11 +304,11 @@ Common HTTP routes exposed:
 ### Public Documentation (7 files)
 - docs/canonical-payload-format.md
 - docs/claude-desktop-setup.md
-- docs/disputes.md
 - docs/mcp-advertising-guide.md
 - docs/mcp-directory-publishing.md
 - docs/mcp-dns-setup.md
 - docs/mcp-publishing-guide.md
+- docs/refund-requests.md
 
 
 ### Internal Documentation (36 files)
@@ -370,7 +370,7 @@ Common HTTP routes exposed:
 - favicon.ico, favicon-192.png, favicon-512.png, apple-touch-icon.png
 
 **React Components**: Look in `dashboard/src/components/`
-- 74 components organized by feature
+- 75 components organized by feature
 
 **Backend Logic**: Look in `convex/`
 - 66 TypeScript files with serverless functions
@@ -412,5 +412,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/9/2026, 7:48:45 PM
-Files scanned: 531
+Generated: 1/9/2026, 8:33:46 PM
+Files scanned: 533

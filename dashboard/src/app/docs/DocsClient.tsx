@@ -123,6 +123,11 @@ export function DocsClient(props: {
 
       pre.appendChild(btn);
     }
+
+    // 3) PrismJS highlight (client-side) for any fenced code blocks.
+    // remark-html renders fenced code as: <pre><code class="language-xxx">...</code></pre>
+    // We keep this lightweight by only loading Prism + a small set of languages.
+    highlightCodeBlocksWithPrism(root);
   };
 
   useEffect(() => {
@@ -245,6 +250,64 @@ function createCopyButton(onClick: () => void) {
 function extractCode(pre: HTMLPreElement) {
   const code = pre.querySelector("code");
   return (code?.textContent ?? pre.textContent ?? "").trim();
+}
+
+type Prism = (typeof import("prismjs"))["default"];
+let prismPromise: Promise<Prism> | null = null;
+async function getPrism() {
+  if (!prismPromise) {
+    prismPromise = (async () => {
+      const mod = await import("prismjs");
+      const Prism = mod.default;
+      if (!Prism) throw new Error("Prism failed to load");
+      // Languages used in docs today
+      await Promise.allSettled([
+        import("prismjs/components/prism-json"),
+        import("prismjs/components/prism-bash"),
+      ]);
+      return Prism;
+    })();
+  }
+  return prismPromise;
+}
+
+function normalizeLanguageClass(cls: string) {
+  // Prism uses "text"; markdown commonly uses "txt"
+  if (cls === "language-txt") return "language-text";
+  if (cls === "language-shell" || cls === "language-sh") return "language-bash";
+  return cls;
+}
+
+function highlightCodeBlocksWithPrism(root: HTMLDivElement) {
+  const codeNodes = Array.from(
+    root.querySelectorAll('pre > code[class*="language-"]'),
+  ) as HTMLElement[];
+  if (codeNodes.length === 0) return;
+
+  // Fire and forget; render remains usable even if Prism fails.
+  void (async () => {
+    try {
+      const Prism = await getPrism();
+      for (const code of codeNodes) {
+        // Ensure the <pre> has the same language class so Prism theme selectors apply
+        const pre = code.parentElement as HTMLPreElement | null;
+        if (!pre) continue;
+
+        const langClass = Array.from(code.classList).find((c) => c.startsWith("language-")) || "language-text";
+        const normalized = normalizeLanguageClass(langClass);
+        if (normalized !== langClass) {
+          code.classList.remove(langClass);
+          code.classList.add(normalized);
+        }
+        if (!pre.classList.contains(normalized)) pre.classList.add(normalized);
+        pre.classList.add("prism-code");
+
+        Prism.highlightElement(code);
+      }
+    } catch {
+      // no-op
+    }
+  })();
 }
 
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "convex/react"
-import { api } from "@convex/_generated/api"
+import { makeFunctionReference } from "convex/server"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,22 +16,29 @@ import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402
 import type { Doc } from "@convex/_generated/dataModel"
 
 export default function BillingPage() {
-  const currentUser = useQuery(api.users.getCurrentUser, {})
+  // Avoid importing the generated Convex `api` in this page (TS2589: deep instantiation).
+  // These string-based references are safe at runtime and keep the page type-checkable.
+  const qGetCurrentUser = makeFunctionReference<"query">("users:getCurrentUser")
+  const qGetOrgRefundCreditsSummary = makeFunctionReference<"query">("refundCredits:getOrgRefundCreditsSummary")
+  const qListTopUpRequests = makeFunctionReference<"query">("refundCredits:listTopUpRequests")
+  const qGetPlatformDepositAddress = makeFunctionReference<"query">("refundCredits:getPlatformDepositAddress")
+
+  const currentUser = useQuery(qGetCurrentUser, {}) as Doc<"users"> | null | undefined
   const orgId = currentUser?.organizationId
   const { address, isConnected } = useAccount()
   const { data: walletClient } = useWalletClient()
 
   const credits = useQuery(
-    api.refundCredits.getOrgRefundCreditsSummary,
+    qGetOrgRefundCreditsSummary,
     orgId ? { organizationId: orgId } : "skip",
   )
 
   const topUps = useQuery(
-    api.refundCredits.listTopUpRequests,
+    qListTopUpRequests,
     orgId ? { organizationId: orgId } : "skip",
   )
 
-  const deposit = useQuery(api.refundCredits.getPlatformDepositAddress, {})
+  const deposit = useQuery(qGetPlatformDepositAddress, {})
 
   const [amount, setAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)

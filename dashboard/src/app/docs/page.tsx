@@ -40,7 +40,7 @@ async function mdToHtml(md: string) {
 
 async function getDocsSections() {
   // Next.js app runs with cwd at `dashboard/`, so go up one directory.
-  const markdownPath = path.join(process.cwd(), "..", "docs", "disputes.md");
+  const markdownPath = path.join(process.cwd(), "..", "docs", "refund-requests.md");
   const md = await fs.readFile(markdownPath, "utf8");
 
   const { title, overview, merchants, buyers } = splitDocsMarkdown(md);

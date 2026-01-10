@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "prismjs/themes/prism.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -273,13 +274,13 @@
   }
 
   .markdown pre {
-    background: rgb(15 23 42); /* slate-900 for strong contrast */
-    border: 1px solid rgb(51 65 85); /* slate-700 */
+    background: rgb(var(--muted));
+    border: 1px solid rgb(var(--border));
     border-radius: 0.75rem;
     padding: 2.75rem 1rem 1rem; /* space for copy button */
     overflow-x: auto;
     margin: 1rem 0;
-    color: rgb(248 250 252); /* slate-50 */
+    color: rgb(var(--foreground));
     position: relative;
   }
 
@@ -296,9 +297,9 @@
     height: 2rem;
     width: 2rem;
     border-radius: 0.5rem;
-    border: 1px solid rgb(51 65 85);
-    background: rgba(15, 23, 42, 0.6);
-    color: rgb(226 232 240);
+    border: 1px solid rgb(var(--border));
+    background: rgba(255, 255, 255, 0.8);
+    color: rgb(var(--muted-foreground));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -307,9 +308,32 @@
   }
 
   .markdown .code-copy-btn:hover {
-    background: rgba(15, 23, 42, 0.9);
-    border-color: rgb(71 85 105);
-    color: rgb(248 250 252);
+    background: rgba(255, 255, 255, 1);
+    border-color: rgb(var(--ring));
+    color: rgb(var(--foreground));
+  }
+
+  /* Prism theme tweaks: keep it light + match our design tokens */
+  .markdown pre[class*="language-"],
+  .markdown code[class*="language-"] {
+    background: transparent;
+    color: inherit;
+    text-shadow: none;
+  }
+
+  .markdown pre.prism-code {
+    background: rgb(var(--muted));
+  }
+
+  /* Non-markdown Prism blocks (e.g. landing page) */
+  pre.prism-code[class*="language-"],
+  code[class*="language-"] {
+    text-shadow: none;
+  }
+
+  pre.prism-code[class*="language-"] {
+    background: rgb(var(--muted));
+    margin: 0;
   }
 
   .markdown .mermaid-diagram {
