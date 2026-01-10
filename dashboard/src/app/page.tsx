@@ -76,7 +76,7 @@ export default function HomePage() {
           </div>
 
           {(() => {
-            const merchant = "eip155:8453:0xYourMerchantWallet"
+            const merchant = "eip155:8453:0xYOUR_WALLET_HERE"
             const refundUrl = `https://api.x402refunds.com/v1/refunds?merchant=${merchant}`
             const linkHeader = `Link: <${refundUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
             const wellKnownObj = {
@@ -93,13 +93,21 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Add{" "}
+                      Create{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                        /.well-known/x402.json
+                        https://YOUR_DOMAIN/.well-known/x402.json
                       </span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Copy/paste this file at `/.well-known/x402.json`, replace `supportEmail` + your merchant wallet.
+                      Copy/paste this file, and replace{" "}
+                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
+                        supportEmail
+                      </span>{" "}
+                      +{" "}
+                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
+                        0xYOUR_WALLET_HERE
+                      </span>
+                      .
                     </div>
                   </div>
 
