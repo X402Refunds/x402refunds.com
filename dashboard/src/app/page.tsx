@@ -89,13 +89,13 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Issue refunds
+                Refund requests
                 <br />
                 <span className="text-blue-600">for x402 payments.</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Few lines to enable refunds. No signup required.
+                Paste a template. Set your support email + merchant wallet. Get refund requests by email.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700">
@@ -155,10 +155,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Few lines to enable refunds
+              Enable refund requests in one file
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              No signup required.
+              Paste this template at `/.well-known/x402.json`, then replace `supportEmail` + your merchant wallet.
             </p>
           </div>
 
