@@ -4,7 +4,6 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
-import { Card } from "@/components/ui/card"
 import Image from "next/image"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
@@ -175,78 +174,74 @@ export default function HomePage() {
             const wellKnown = JSON.stringify(wellKnownObj, null, 2)
 
             return (
-              <div className="mt-10 max-w-5xl mx-auto grid items-start gap-4 lg:grid-cols-3">
-                <Card className="overflow-hidden rounded-2xl border-border/60 bg-card py-0 shadow-sm">
-                  <div className="px-5 py-4">
-                    <div className="text-sm font-semibold text-foreground leading-snug break-words">
+              <div className="mt-10 max-w-6xl mx-auto grid items-start gap-8 lg:grid-cols-3">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">
                       Step 1 — Publish{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         /.well-known/x402.json
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       Your refund policy + support email.
                     </div>
                   </div>
 
-                  <div className="border-t border-border/60 bg-background px-5 py-4 space-y-4">
-                    <CodeBlock
-                      language="json"
-                      title="/.well-known/x402.json"
-                      code={wellKnown}
-                      copyLabel="Copied /.well-known/x402.json"
-                    />
+                  <CodeBlock
+                    language="json"
+                    title="/.well-known/x402.json"
+                    code={wellKnown}
+                    copyLabel="Copied /.well-known/x402.json"
+                  />
 
-                    <div className="text-xs text-muted-foreground">
-                      Optional: return this <span className="font-mono">Link</span> header on every paid response for discoverability.
-                    </div>
-
-                    <CodeBlock
-                      language="text"
-                      title="Link header"
-                      code={linkHeader}
-                      copyLabel="Copied Link header"
-                    />
+                  <div className="text-xs text-muted-foreground">
+                    Optional: return this <span className="font-mono">Link</span> header on every paid response for discoverability.
                   </div>
-                </Card>
 
-                <Card className="overflow-hidden rounded-2xl border-border/60 bg-card py-0 shadow-sm">
-                  <div className="px-5 py-4">
-                    <div className="text-sm font-semibold text-foreground leading-snug break-words">
+                  <CodeBlock
+                    language="text"
+                    title="Link header"
+                    code={linkHeader}
+                    copyLabel="Copied Link header"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">
                       Step 2 — Get refund requests by email
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       When a refund request is filed, we email the{" "}
                       <span className="font-mono">supportEmail</span> from your{" "}
                       <span className="font-mono">/.well-known/x402.json</span>.
                     </div>
                   </div>
-                  <div className="border-t border-border/60 bg-background px-5 py-4">
-                    <div className="text-sm text-foreground">
-                      We email you at <span className="font-mono">supportEmail</span>.
-                    </div>
-                  </div>
-                </Card>
 
-                <Card className="overflow-hidden rounded-2xl border-border/60 bg-card py-0 shadow-sm">
-                  <div className="px-5 py-4">
-                    <div className="text-sm font-semibold text-foreground leading-snug break-words">
+                  <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
+                    We email you at <span className="font-mono">supportEmail</span>.
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">
                       Step 3 — Top up refund credits{" "}
                       <span className="text-muted-foreground">(optional)</span>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Optional: add USDC so approved requests can refund automatically.
+                    <div className="text-sm text-muted-foreground">
+                      Add USDC so approved requests can refund automatically.
                     </div>
                   </div>
-                  <div className="border-t border-border/60 bg-background px-5 py-4">
-                    <a
-                      href="/topup"
-                      className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-                    >
-                      Top up refund credits →
-                    </a>
-                  </div>
-                </Card>
+
+                  <a
+                    href="/topup"
+                    className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    Top up refund credits →
+                  </a>
+                </div>
               </div>
             )
           })()}
