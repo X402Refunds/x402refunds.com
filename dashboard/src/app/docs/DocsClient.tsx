@@ -183,24 +183,14 @@ export function DocsClient(props: {
                 <div className="flex gap-2 mb-4">
                   <Button
                     type="button"
-                    variant="ghost"
-                    className={
-                      buyerMode === "http"
-                        ? "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-900"
-                        : "text-slate-600 hover:text-slate-900"
-                    }
+                    variant={buyerMode === "http" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("http")}
                   >
                     HTTP
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
-                    className={
-                      buyerMode === "mcp"
-                        ? "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-900"
-                        : "text-slate-600 hover:text-slate-900"
-                    }
+                    variant={buyerMode === "mcp" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("mcp")}
                   >
                     MCP (default)

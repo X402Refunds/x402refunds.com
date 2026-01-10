@@ -267,9 +267,8 @@
     font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       "Liberation Mono", "Courier New", monospace;
     font-size: 0.925em;
-    background: rgba(241, 245, 249, 0.75); /* slate-100-ish, softer than --muted */
-    color: rgb(var(--muted-foreground));
-    border: 1px solid rgba(148, 163, 184, 0.35); /* slate-400-ish */
+    background: rgb(var(--muted));
+    color: rgb(var(--foreground));
     padding: 0.15rem 0.35rem;
     border-radius: 0.375rem;
   }
