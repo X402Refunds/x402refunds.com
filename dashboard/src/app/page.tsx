@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
 import { CopyButton } from "@/components/ui/copy-button"
 import Image from "next/image"
+import { ChevronRight } from "lucide-react"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
 // holding onto older `/public` assets after swaps.
@@ -211,36 +212,48 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <details className="group">
-                    <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground hover:text-foreground">
-                      Optional: discoverability + one‑click refunds
+                  <details className="group optional-details">
+                    <summary className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+                      <span className="flex items-center gap-2">
+                        <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+                        Optional extras
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        discoverability · one‑click refunds
+                      </span>
                     </summary>
-                    <div className="mt-3 space-y-4">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium text-foreground">Discoverability header</div>
-                        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                          <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
-                            {linkHeader}
-                          </code>
-                          <div className="shrink-0">
-                            <CopyButton value={linkHeader} label="Copied Link header" />
+
+                    <div className="mt-3 space-y-2 rounded-xl bg-muted/30 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground">
+                            Copy Link header
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Add to paid responses for agent auto‑discovery.
                           </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Return this on paid responses so clients can auto-discover refunds support.
+                        <div className="shrink-0">
+                          <CopyButton value={linkHeader} label="Copied Link header" />
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium text-foreground">One‑click refunds</div>
-                        <div className="text-sm text-muted-foreground">
-                          Top up credits to enable one‑click refunds from email.
+                      <div className="h-px bg-border/60" />
+
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground">
+                            Enable one‑click refunds
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Top up credits so approvals can refund automatically.
+                          </div>
                         </div>
                         <a
                           href="/topup"
-                          className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                          className="shrink-0 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
                         >
-                          Top up refund credits →
+                          Top up →
                         </a>
                       </div>
                     </div>
