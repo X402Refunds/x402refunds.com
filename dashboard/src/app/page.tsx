@@ -24,12 +24,12 @@ export default function HomePage() {
       <section className="relative border-b border-slate-200 bg-gradient-to-b from-blue-50/70 via-white to-white">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute left-1/2 top-[-120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-300/30 blur-3xl" />
-              </div>
+        </div>
 
-        <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-white px-7 py-14 sm:px-14 sm:py-20 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)]">
+        <div className="relative mx-auto max-w-7xl px-5 pb-14 pt-10 sm:px-6 sm:pb-18 sm:pt-14 lg:px-8">
+          <div className="mx-auto max-w-5xl rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-12 sm:py-16">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-semibold tracking-tight leading-[1.0] text-slate-950">
+              <h1 className="text-5xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
                 Turn on refunds
                 <span className="mt-4 block text-[0.9em] font-semibold text-blue-600">
                   for AI payments.
@@ -40,25 +40,25 @@ export default function HomePage() {
                 Add one file. Refund requests land in your email.
               </p>
 
-              <div className="mt-6 text-sm sm:text-base text-slate-600">
+              <div className="mt-5 text-sm text-slate-600 sm:text-base">
                 Email-first · One-click approve/deny/partial · Shareable proof
               </div>
 
-                <Button
-                  size="lg"
-                className="mt-9 h-14 px-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg shadow-lg shadow-blue-600/25"
-                  onClick={() => {
-                    const el = document.getElementById("enable")
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }}
-                >
+              <Button
+                size="lg"
+                className="mt-8 h-14 rounded-full bg-blue-600 px-12 text-base text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 sm:text-lg"
+                onClick={() => {
+                  const el = document.getElementById("enable")
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+              >
                 Get started →
-                </Button>
+              </Button>
 
               <p className="mt-6 text-xs text-slate-500">
                 Built for x402 payments. Works with HTTP + MCP.
               </p>
-              </div>
+            </div>
           </div>
         </div>
       </section>
