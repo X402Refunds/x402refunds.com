@@ -7,7 +7,6 @@ import { CodeBlock } from "@/components/ui/code-block"
 import { CopyButton } from "@/components/ui/copy-button"
 import {
   ChevronRight,
-  CreditCard,
   Mail,
   ShieldCheck,
   BadgeCheck,
@@ -26,11 +25,6 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="mx-auto max-w-5xl rounded-[28px] border border-slate-200 bg-white shadow-sm px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
             <div className="mx-auto flex max-w-3xl flex-col items-center space-y-6 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-blue-800">
-                <CreditCard className="h-3.5 w-3.5" />
-                FOR PAID APIs
-              </div>
-
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
                 Enable refund requests
                 <br />
@@ -78,8 +72,8 @@ export default function HomePage() {
       </section>
 
       {/* ENABLE DISPUTES (PLUG AND PLAY) */}
-      <section id="enable" className="border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <section id="enable" className="border-b border-slate-200 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
@@ -102,7 +96,7 @@ export default function HomePage() {
             const wellKnown = JSON.stringify(wellKnownObj, null, 2)
 
             return (
-              <div className="mt-10 max-w-6xl mx-auto grid items-start gap-10 lg:grid-cols-2">
+              <div className="mt-12 max-w-7xl mx-auto grid items-start gap-10 lg:grid-cols-2">
                 {/* Step 1 (primary) */}
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -121,7 +115,8 @@ export default function HomePage() {
                     language="json"
                     code={wellKnown}
                     copyLabel="Copied /.well-known/x402.json"
-                    header="none"
+                    header="caption"
+                    title="/.well-known/x402.json"
                     copyPlacement="overlay"
                     clickToCopy
                   />
@@ -145,7 +140,7 @@ export default function HomePage() {
                         Optional extras
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        discoverability · one‑click refunds
+                        one‑click refunds · discoverability
                       </span>
                     </summary>
 
@@ -215,8 +210,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Mail className="h-5 w-5" />
@@ -230,7 +225,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Zap className="h-5 w-5" />
@@ -244,7 +239,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <BadgeCheck className="h-5 w-5" />
@@ -258,7 +253,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <ShieldCheck className="h-5 w-5" />
@@ -272,7 +267,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Search className="h-5 w-5" />
@@ -286,7 +281,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Sparkles className="h-5 w-5" />
