@@ -90,7 +90,10 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Copy this file. Replace{" "}
+                      Copy this file.
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Replace{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         supportEmail
                       </span>{" "}
