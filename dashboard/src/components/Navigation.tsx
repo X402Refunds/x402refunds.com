@@ -125,13 +125,6 @@ export function Navigation({ currentPage }: NavigationProps) {
             >
               Top up
             </Button>
-            <Button
-              onClick={() => handleAnchor("#enable")}
-              className="hidden md:flex"
-              size="sm"
-            >
-              Setup
-            </Button>
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -151,7 +144,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     className="w-full justify-start"
                     variant="default"
                   >
-                    Setup refund requests
+                    Get started
                   </Button>
 
                   <Button

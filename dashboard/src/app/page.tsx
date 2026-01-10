@@ -55,7 +55,7 @@ export default function HomePage() {
                     el?.scrollIntoView({ behavior: "smooth", block: "start" })
                   }}
                 >
-                Set up refund requests
+                Get started
                 </Button>
                 <Button
                   size="lg"
@@ -80,7 +80,7 @@ export default function HomePage() {
               Takes 10 seconds.
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Paste this template at `/.well-known/x402.json`, then replace `supportEmail` + your merchant wallet.
+              Then you’re live.
             </p>
           </div>
 
@@ -202,18 +202,17 @@ export default function HomePage() {
       <section className="bg-slate-950">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-white">
           <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-            <h2 className="text-3xl sm:text-4xl font-bold">Enable refund requests in minutes.</h2>
-            <p className="mt-2 text-slate-300">Plug-and-play. No signup. Top up and add one header.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold">Need help?</h2>
+            <p className="mt-2 text-slate-300">
+              Read the docs or top up credits for one‑click refunds.
+            </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Button 
                 size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                onClick={() => {
-                  const el = document.getElementById("enable")
-                  el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+                onClick={() => (window.location.href = "/docs")}
             >
-                Enable refund requests
+                View docs
             </Button>
             <Button 
               size="lg" 
@@ -221,7 +220,7 @@ export default function HomePage() {
               className="border-white/30 bg-transparent text-white hover:bg-white/10 px-7 h-12"
                 onClick={() => (window.location.href = "/topup")}
             >
-                Top up refund credits
+                Top up credits
             </Button>
             </div>
             </div>
