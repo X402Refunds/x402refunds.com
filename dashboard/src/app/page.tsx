@@ -71,7 +71,7 @@ export default function HomePage() {
               Takes 10 seconds.
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Then you’re live.
+              That’s it.
             </p>
           </div>
 
@@ -93,13 +93,7 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Create{" "}
-                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                        https://YOUR_DOMAIN/.well-known/x402.json
-                      </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Copy/paste this file, and replace{" "}
+                      Copy this file. Replace{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         supportEmail
                       </span>{" "}
@@ -107,7 +101,9 @@ export default function HomePage() {
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         0xYOUR_WALLET_HERE
                       </span>
-                      .
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      That’s it.
                     </div>
                   </div>
 
@@ -116,7 +112,7 @@ export default function HomePage() {
                     code={wellKnown}
                     copyLabel="Copied /.well-known/x402.json"
                     header="caption"
-                    title="/.well-known/x402.json"
+                    title="https://YOUR_DOMAIN/.well-known/x402.json"
                     copyPlacement="overlay"
                     clickToCopy
                   />
