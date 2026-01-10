@@ -32,7 +32,7 @@ export default function TopupPage() {
   const { data: walletClient } = useWalletClient();
 
   // Avoid React hydration mismatch (#418) by ensuring any wallet-dependent UI
-  // only renders after the component is mounted on the client.
+  // (and other browser-initialized state) only renders after the component is mounted on the client.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -239,6 +239,16 @@ export default function TopupPage() {
     setAmountUsdc(formatted);
     didPrefillAmount.current = true;
   }, [amountUsdc, availableUsdc, requiredUsdc]);
+
+  // Prevent SSR/client markup divergence entirely by rendering a stable placeholder until mounted.
+  // This avoids hydration issues across browsers/extensions that may mutate DOM or wallet state eagerly.
+  if (!mounted) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
