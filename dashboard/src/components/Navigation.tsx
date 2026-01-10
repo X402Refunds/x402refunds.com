@@ -116,13 +116,21 @@ export function Navigation({ currentPage }: NavigationProps) {
           
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* Primary CTA - Desktop */}
+            {/* Desktop quick actions */}
+            <Button
+              onClick={() => handleNavigation("/topup")}
+              variant="outline"
+              className="hidden md:flex"
+              size="sm"
+            >
+              Top up
+            </Button>
             <Button
               onClick={() => handleAnchor("#enable")}
               className="hidden md:flex"
               size="sm"
             >
-              Enable refunds (no signup required)
+              Setup
             </Button>
 
             {/* Mobile Menu */}
@@ -143,7 +151,15 @@ export function Navigation({ currentPage }: NavigationProps) {
                     className="w-full justify-start"
                     variant="default"
                   >
-                    Enable refunds (no signup required)
+                    Setup refund requests
+                  </Button>
+
+                  <Button
+                    onClick={() => handleNavigation("/topup")}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    Top up credits
                   </Button>
 
                   <Button

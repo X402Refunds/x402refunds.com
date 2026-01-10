@@ -10,8 +10,6 @@ import { ChevronRight } from "lucide-react"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
 // holding onto older `/public` assets after swaps.
-const ALL_DISPUTES_DESKTOP_SRC = "/landing/all-disputes-2025-12-31.png"
-const ALL_DISPUTES_MOBILE_SRC = "/landing/all-disputes-mobile-2025-12-31.png"
 const INBOX_EMPTY_DESKTOP_SRC = "/landing/inbox-empty-2025-12-31.png"
 const INBOX_EMPTY_MOBILE_SRC = "/landing/inbox-empty-mobile-2025-12-31.png"
 const DISPUTE_STATUS_DESKTOP_SRC = "/landing/dispute-status-2025-12-31.png"
@@ -81,72 +79,58 @@ export default function HomePage() {
       {/* HERO */}
       <section className="border-b border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
-                X402Refunds
-                <span className="mx-2 text-slate-300">•</span>
-                Payment refund requests
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-                Refund requests
-                <br />
-                <span className="text-blue-600">for x402 payments.</span>
-              </h1>
-              
-              <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
-                Paste a template. Set your support email + merchant wallet. Get refund requests by email.
-              </p>
-
-              <ul className="space-y-2 text-sm sm:text-base text-slate-700">
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Get refund requests by email
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  One-click refund / deny / partial refund
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                  Shareable proof of refund
-                </li>
-              </ul>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
-                  onClick={() => {
-                    const el = document.getElementById("enable")
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }}
-                >
-                  Enable refunds
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
-                  onClick={() => (window.location.href = "/topup")}
-                >
-                  Top up credits
-                </Button>
-              </div>
-
-              <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
+          <div className="max-w-3xl space-y-6">
+            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-blue-800">
+              FOR MERCHANTS
             </div>
 
-              <div>
-              <ResponsiveLandingScreenshot
-                desktopSrc={ALL_DISPUTES_DESKTOP_SRC}
-                mobileSrc={ALL_DISPUTES_MOBILE_SRC}
-                alt="All refund requests dashboard view"
-                priority
-              />
-              <div className="mt-2 text-xs text-slate-500">Illustration (AI-generated)</div>
-              </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
+              Enable refund requests
+              <br />
+              <span className="text-blue-600">for x402 payments.</span>
+            </h1>
+              
+            <p className="text-lg sm:text-xl text-slate-600 max-w-xl">
+              Paste a template. Set your support email + merchant wallet. Get refund requests by email.
+            </p>
+
+            <ul className="space-y-2 text-sm sm:text-base text-slate-700">
+              <li className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                Get refund requests by email
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                One-click refund / deny / partial refund
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                Shareable proof of refund
+              </li>
+            </ul>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+                onClick={() => {
+                  const el = document.getElementById("enable")
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+              >
+                Set up refund requests
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
+                onClick={() => (window.location.href = "/topup")}
+              >
+                Top up credits
+              </Button>
+            </div>
+
+            <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
           </div>
         </div>
       </section>
