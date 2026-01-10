@@ -54,7 +54,14 @@ export function Navigation({ currentPage }: NavigationProps) {
                 onClick={() => window.location.href = '/'}
                 className="text-lg sm:text-2xl font-bold text-slate-950 hover:text-blue-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
               >
-                X402|Refunds
+                <span className="inline-flex items-center">
+                  <span className="tracking-tight">X402</span>
+                  <span
+                    aria-hidden
+                    className="mx-2 h-5 w-px bg-slate-300 sm:h-6"
+                  />
+                  <span className="font-semibold tracking-tight">Refunds</span>
+                </span>
               </button>
             </div>
             
