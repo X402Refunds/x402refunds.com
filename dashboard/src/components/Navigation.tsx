@@ -54,7 +54,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 onClick={() => window.location.href = '/'}
                 className="text-lg sm:text-2xl font-bold text-slate-950 hover:text-blue-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-lg px-2 py-1"
               >
-                x402Disputes
+                X402|Refunds
               </button>
             </div>
             
