@@ -24,16 +24,18 @@ export default function HomePage() {
       <section className="relative border-b border-slate-200 bg-gradient-to-b from-blue-50/70 via-white to-white">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute left-1/2 top-[-120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-300/30 blur-3xl" />
-        </div>
+              </div>
 
         <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-white px-7 py-14 sm:px-14 sm:py-20 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)]">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight leading-[0.95] text-slate-950">
+              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-semibold tracking-tight leading-[1.0] text-slate-950">
                 Turn on refunds
-                <span className="mt-3 block text-blue-600">for x402 payments.</span>
+                <span className="mt-4 block text-[0.9em] font-semibold text-blue-600">
+                  for x402 payments.
+                </span>
               </h1>
-
+              
               <p className="mt-5 text-lg sm:text-xl text-slate-600 max-w-2xl">
                 Add one file. Refund requests land in your email.
               </p>
@@ -42,21 +44,21 @@ export default function HomePage() {
                 Email-first · One-click approve/deny/partial · Shareable proof
               </div>
 
-              <Button
-                size="lg"
+                <Button
+                  size="lg"
                 className="mt-9 h-14 px-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg shadow-lg shadow-blue-600/25"
-                onClick={() => {
-                  const el = document.getElementById("enable")
-                  el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }}
-              >
+                  onClick={() => {
+                    const el = document.getElementById("enable")
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }}
+                >
                 Get started →
-              </Button>
+                </Button>
 
               <p className="mt-6 text-xs text-slate-500">
                 Built for x402 payments. Works with HTTP + MCP.
               </p>
-            </div>
+              </div>
           </div>
         </div>
       </section>
@@ -287,14 +289,14 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              size="lg"
+              <Button 
+                size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
               onClick={() => (window.location.href = "/docs")}
             >
               View docs →
             </Button>
-          </div>
+            </div>
         </div>
       </section>
 
