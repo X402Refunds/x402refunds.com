@@ -156,8 +156,13 @@ export function DocsClient(props: {
               <Button
                 key={item.key}
                 type="button"
-                variant={active === item.key ? "secondary" : "ghost"}
-                className="justify-start md:w-full"
+                variant="ghost"
+                className={[
+                  "justify-start md:w-full",
+                  active === item.key
+                    ? "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900",
+                ].join(" ")}
                 onClick={() => {
                   setActive(item.key);
                   setHashForKey(item.key);
@@ -178,14 +183,24 @@ export function DocsClient(props: {
                 <div className="flex gap-2 mb-4">
                   <Button
                     type="button"
-                    variant={buyerMode === "http" ? "secondary" : "ghost"}
+                    variant="ghost"
+                    className={
+                      buyerMode === "http"
+                        ? "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-900"
+                        : "text-slate-600 hover:text-slate-900"
+                    }
                     onClick={() => setBuyerMode("http")}
                   >
                     HTTP
                   </Button>
                   <Button
                     type="button"
-                    variant={buyerMode === "mcp" ? "secondary" : "ghost"}
+                    variant="ghost"
+                    className={
+                      buyerMode === "mcp"
+                        ? "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-900"
+                        : "text-slate-600 hover:text-slate-900"
+                    }
                     onClick={() => setBuyerMode("mcp")}
                   >
                     MCP (default)
