@@ -32,7 +32,7 @@ export default function HomePage() {
               <h1 className="text-5xl sm:text-6xl lg:text-8xl font-semibold tracking-tight leading-[1.0] text-slate-950">
                 Turn on refunds
                 <span className="mt-4 block text-[0.9em] font-semibold text-blue-600">
-                  for x402 payments.
+                  for AI payments.
                 </span>
               </h1>
               
