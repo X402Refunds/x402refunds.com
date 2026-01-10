@@ -26,7 +26,7 @@ export default function HomePage() {
           <div className="absolute left-1/2 top-[-120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-300/30 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-5 pb-14 pt-10 sm:px-6 sm:pb-18 sm:pt-14 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-6 sm:px-6 sm:pb-14 sm:pt-10 lg:px-8">
           <div className="mx-auto max-w-5xl rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-12 sm:py-16">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
               <h1 className="text-5xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
