@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Button } from "@/components/ui/button";
+import { Check, Copy } from "lucide-react";
 
 type Prism = (typeof import("prismjs"))["default"];
 
@@ -55,11 +57,16 @@ export function CodeBlock(props: {
   title?: string;
   copyLabel?: string;
   variant?: "minimal" | "card";
+  copyUi?: "icon" | "button";
+  clickToCopy?: boolean;
   className?: string;
 }) {
   const codeEl = useRef<HTMLElement | null>(null);
   const language = useMemo(() => normalizeLanguage(props.language), [props.language]);
   const variant = props.variant ?? "minimal";
+  const copyUi = props.copyUi ?? "icon";
+  const clickToCopy = props.clickToCopy ?? false;
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +85,16 @@ export function CodeBlock(props: {
     };
   }, [language, props.code]);
 
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(props.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // CopyButton handles errors with toast; for click-to-copy we silently no-op.
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -93,14 +110,49 @@ export function CodeBlock(props: {
             <span className="font-mono">{language}</span>
           )}
         </div>
-        <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
+        {copyUi === "button" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-2"
+            onClick={async () => {
+              await doCopy();
+            }}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        ) : (
+          <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
+        )}
       </div>
 
       <pre
         className={cn(
           "prism-code m-0 overflow-x-auto rounded-xl bg-muted/40 px-4 py-3 text-[13px] leading-6",
+          clickToCopy ? "cursor-pointer transition-colors hover:bg-muted/55" : "",
           `language-${language}`,
         )}
+        role={clickToCopy ? "button" : undefined}
+        tabIndex={clickToCopy ? 0 : undefined}
+        aria-label={clickToCopy ? "Copy code" : undefined}
+        onClick={
+          clickToCopy
+            ? async () => {
+                await doCopy();
+              }
+            : undefined
+        }
+        onKeyDown={
+          clickToCopy
+            ? async (e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                await doCopy();
+              }
+            : undefined
+        }
       >
         <code
           ref={(el) => {

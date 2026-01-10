@@ -4,6 +4,7 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
+import { CopyButton } from "@/components/ui/copy-button"
 import Image from "next/image"
 
 // NOTE: We use versioned filenames for landing screenshots to avoid CDN/optimizer caches
@@ -174,17 +175,18 @@ export default function HomePage() {
             const wellKnown = JSON.stringify(wellKnownObj, null, 2)
 
             return (
-              <div className="mt-10 max-w-6xl mx-auto grid items-start gap-8 lg:grid-cols-3">
+              <div className="mt-10 max-w-6xl mx-auto grid items-start gap-10 lg:grid-cols-2">
+                {/* Step 1 (primary) */}
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Step 1 — Publish{" "}
+                      1) Add{" "}
                       <span className="font-mono rounded bg-muted px-1.5 py-0.5">
                         /.well-known/x402.json
                       </span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Your refund policy + support email.
+                      This tells us where to email refund requests and where your refund feed lives.
                     </div>
                   </div>
 
@@ -193,55 +195,60 @@ export default function HomePage() {
                     title="/.well-known/x402.json"
                     code={wellKnown}
                     copyLabel="Copied /.well-known/x402.json"
-                  />
-
-                  <div className="text-xs text-muted-foreground">
-                    Optional: return this <span className="font-mono">Link</span> header on every paid response for discoverability.
-                  </div>
-
-                  <CodeBlock
-                    language="text"
-                    title="Link header"
-                    code={linkHeader}
-                    copyLabel="Copied Link header"
+                    copyUi="button"
+                    clickToCopy
                   />
                 </div>
 
-                <div className="space-y-4">
+                {/* Step 2 (confirmation + optional) */}
+                <div className="space-y-6">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Step 2 — Get refund requests by email
+                      2) You’ll get refund requests by email
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      When a refund request is filed, we email the{" "}
-                      <span className="font-mono">supportEmail</span> from your{" "}
-                      <span className="font-mono">/.well-known/x402.json</span>.
+                      We email <span className="font-mono">supportEmail</span> from that file. No signup required.
                     </div>
                   </div>
 
-                  <div className="text-sm text-foreground">
-                    You’ll receive refund requests at{" "}
-                    <span className="font-mono">supportEmail</span>.
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-foreground">
-                      Step 3 — Top up refund credits{" "}
-                      <span className="text-muted-foreground">(optional)</span>
+                  <div className="space-y-3">
+                    <div className="text-xs font-medium tracking-wide text-muted-foreground">
+                      OPTIONAL
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Add USDC so approved requests can refund automatically.
+
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-foreground">
+                        Discoverability for agent clients
+                      </div>
+                      <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                        <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
+                          {linkHeader}
+                        </code>
+                        {/* Use the CodeBlock's built-in CopyButton style elsewhere; here keep it compact */}
+                        <div className="shrink-0">
+                          <CopyButton value={linkHeader} label="Copied Link header" />
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Return this header on every paid response so clients can auto-discover refunds support.
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-foreground">
+                        One‑click refunds from email
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Top up credits to enable one‑click refunds (optional).
+                      </div>
+                      <a
+                        href="/topup"
+                        className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                      >
+                        Top up refund credits →
+                      </a>
                     </div>
                   </div>
-
-                  <a
-                    href="/topup"
-                    className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
-                  >
-                    Top up refund credits →
-                  </a>
                 </div>
               </div>
             )
