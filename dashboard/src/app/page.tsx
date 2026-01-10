@@ -22,22 +22,23 @@ export default function HomePage() {
       <Navigation currentPage="home" />
 
       {/* HERO */}
-      <section className="border-b border-slate-200 bg-white">
+      <section className="border-b border-slate-200 bg-gradient-to-b from-blue-50/80 via-white to-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="mx-auto flex max-w-3xl flex-col items-center space-y-6 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-blue-800">
-              <CreditCard className="h-3.5 w-3.5" />
-              FOR PAID APIs
+          <div className="mx-auto max-w-5xl rounded-[28px] border border-slate-200 bg-white shadow-sm px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+            <div className="mx-auto flex max-w-3xl flex-col items-center space-y-6 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-blue-800">
+                <CreditCard className="h-3.5 w-3.5" />
+                FOR PAID APIs
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
-              Enable refund requests
+                Enable refund requests
                 <br />
                 <span className="text-blue-600">for x402 payments.</span>
               </h1>
-              
-            <p className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto">
-              Add one file. Refund requests land in your email.
+
+              <p className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto">
+                Add one file. Refund requests land in your email.
               </p>
 
               <ul className="space-y-2 text-sm sm:text-base text-slate-700 mx-auto w-fit text-left">
@@ -58,25 +59,20 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
                 <Button
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-12"
                   onClick={() => {
                     const el = document.getElementById("enable")
                     el?.scrollIntoView({ behavior: "smooth", block: "start" })
                   }}
                 >
-                Get started →
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
-                  onClick={() => (window.location.href = "/topup")}
-                >
-                  Top up credits
+                  Get started →
                 </Button>
               </div>
 
-              <p className="text-xs text-slate-500 pt-2">Built for x402 payments. Works with HTTP + MCP.</p>
+              <p className="text-xs text-slate-500 pt-2">
+                Built for x402 payments. Works with HTTP + MCP.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -209,7 +205,7 @@ export default function HomePage() {
 
       {/* WHAT YOU GET */}
       <section className="bg-slate-50 border-y border-slate-200">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
               What you get
@@ -219,8 +215,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Mail className="h-5 w-5" />
@@ -234,7 +230,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Zap className="h-5 w-5" />
@@ -248,7 +244,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <BadgeCheck className="h-5 w-5" />
@@ -262,7 +258,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <ShieldCheck className="h-5 w-5" />
@@ -276,7 +272,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Search className="h-5 w-5" />
@@ -290,7 +286,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 rounded-lg bg-blue-50 p-2 text-blue-700">
                   <Sparkles className="h-5 w-5" />
@@ -305,21 +301,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 h-12"
               onClick={() => (window.location.href = "/docs")}
             >
-              View docs
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-slate-200 bg-white text-slate-900 hover:bg-slate-50 px-7 h-12"
-              onClick={() => (window.location.href = "/topup")}
-            >
-              Top up credits
+              View docs →
             </Button>
           </div>
         </div>
