@@ -182,7 +182,7 @@ export default function HomePage() {
                 <div className="flex justify-center">
                   <Button
                     size="lg"
-                    className="h-12 px-8"
+                    className="h-14 rounded-full bg-blue-600 px-12 text-base text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 sm:text-lg"
                     onClick={() => {
                       const el = document.getElementById("ai-prompt")
                       el?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -207,16 +207,6 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 max-w-3xl mx-auto space-y-3">
-            <Button
-              size="lg"
-              className="w-full h-14 text-base"
-              onClick={async () => {
-                await navigator.clipboard.writeText(aiPrompt)
-              }}
-            >
-              Copy prompt
-            </Button>
-
             <CodeBlock
               language="txt"
               code={aiPrompt}
