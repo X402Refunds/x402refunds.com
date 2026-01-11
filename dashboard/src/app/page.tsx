@@ -182,7 +182,8 @@ export default function HomePage() {
                 <div className="flex justify-center">
                   <Button
                     size="lg"
-                    className="h-14 rounded-full bg-blue-600 px-12 text-base text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 sm:text-lg"
+                    variant="outline"
+                    className="h-12 rounded-full border-slate-300 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
                     onClick={() => {
                       const el = document.getElementById("ai-prompt")
                       el?.scrollIntoView({ behavior: "smooth", block: "start" })
