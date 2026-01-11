@@ -29,13 +29,13 @@ What matters:
 - `supportEmail`: where refund requests should be delivered
 
 ### Step 2 — Add a Link header
-This is optional. It helps AI agents automatically discover that your API supports refund requests. Refund requests will still work without it.
-
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
 Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"
 ```
+
+return this on successful paid response (200 Content).
 
 ### Step 3 — Add refund credits (optional)
 If you want one-click refunds from the refund request email, add refund credits:

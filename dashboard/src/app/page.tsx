@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
 import { CopyButton } from "@/components/ui/copy-button"
 import {
-  ChevronRight,
   Mail,
   ShieldCheck,
   BadgeCheck,
@@ -109,6 +108,20 @@ export default function HomePage() {
                     copyPlacement="overlay"
                     clickToCopy
                   />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                      <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
+                        {linkHeader}
+                      </code>
+                      <div className="shrink-0">
+                        <CopyButton value={linkHeader} label="Copied Link header" />
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      return this on successful paid response (200 Content).
+                    </div>
+                  </div>
                 </div>
 
                 {/* Step 2 (confirmation + optional) */}
@@ -122,62 +135,22 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <details className="group optional-details">
-                    <summary className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-                      <span className="flex items-center gap-2">
-                        <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
-                        Optional extras
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        one‑click refunds · discoverability
-                      </span>
-                    </summary>
-
-                    <div className="mt-3 space-y-2 rounded-xl bg-muted/30 p-3">
-                      {/* 1) One-click refunds first */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground">
-                            Enable one‑click refunds
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Top up credits so approvals can refund automatically.
-                          </div>
-                        </div>
-                  <a
-                    href="/topup"
-                          className="shrink-0 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
-                  >
-                          Top up →
-                  </a>
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/30 p-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground">
+                        Optional: one‑click refunds
                       </div>
-
-                      <div className="h-px bg-border/60" />
-
-                      {/* 2) Discoverability second + show the actual header (truncated) */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-foreground">
-                              Let agents auto‑discover refund requests
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Add this <span className="font-mono">Link</span> header on paid responses.
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                          <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
-                            {linkHeader}
-                          </code>
-                          <div className="shrink-0">
-                            <CopyButton value={linkHeader} label="Copied Link header" />
-                          </div>
-                        </div>
+                      <div className="text-xs text-muted-foreground">
+                        Top up credits so approvals can refund automatically.
                       </div>
                     </div>
-                  </details>
+                    <a
+                      href="/topup"
+                      className="shrink-0 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                    >
+                      Top up →
+                    </a>
+                  </div>
                 </div>
               </div>
             )

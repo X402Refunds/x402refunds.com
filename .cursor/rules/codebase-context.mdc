@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-11T04:16:59.404Z
+**Auto-generated on**: 2026-01-11T04:31:44.695Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -415,5 +415,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/10/2026, 8:16:59 PM
+Generated: 1/10/2026, 8:31:44 PM
 Files scanned: 536
