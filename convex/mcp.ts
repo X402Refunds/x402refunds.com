@@ -159,14 +159,6 @@ export const MCP_TOOLS = [
             "Optional. HTTPS origin of the merchant API (e.g. https://api.merchant.com). If omitted, we derive it from request.url.",
           examples: ["https://api.merchant.com"]
         },
-        merchantX402MetadataUrl: {
-          type: "string",
-          format: "uri",
-          pattern: "^https://",
-          description:
-            "Optional. Full URL to the merchant's /.well-known/x402.json. Overrides merchantOrigin-based discovery.",
-          examples: ["https://api.merchant.com/.well-known/x402.json"]
-        },
         dryRun: {
           type: "boolean",
           default: false,
@@ -713,7 +705,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           txHash: parameters.transactionHash,
           description: parameters.description,
           callbackUrl: parameters.callbackUrl,
-          merchantX402MetadataUrl: parameters.merchantX402MetadataUrl,
           sourceTransferLogIndex: verify.logIndex,
           evidenceUrls: Array.isArray(parameters.evidenceUrls) ? parameters.evidenceUrls : [],
           request: parameters.request,

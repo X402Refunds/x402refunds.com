@@ -3,30 +3,21 @@
 ## Integration Guide for Merchants
 
 ### What you’re adding
-1) A `/.well-known/x402.json` file
+1) A `PAYMENT-SUPPORT-EMAIL` header on your 402 responses
 2) Add refund credits `optional`
 3) Add a `Link` header
 
 After that, refund requests can reach you by email.
 
-### Step 1 — Publish `/.well-known/x402.json`
-Put this at: `https://YOUR_DOMAIN/.well-known/x402.json`
+### Step 1 — Add `PAYMENT-SUPPORT-EMAIL` on your 402 responses
+Include this header on your **`402 Payment Required`** responses for paywalled endpoints:
 
-Example (live):
-- [`https://api.x402refunds.com/.well-known/x402.json`](https://api.x402refunds.com/.well-known/x402.json)
-
-Minimal example:
-
-```json
-{
-  "x402refunds": {
-    "supportEmail": "refunds@yourdomain.com"
-  }
-}
+```txt
+PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com
 ```
 
 What matters:
-- `supportEmail`: where refund requests should be delivered
+- `PAYMENT-SUPPORT-EMAIL`: where refund requests should be delivered
 
 ### Step 2 — Add a Link header
 Include this header in your normal successful response (the `200 OK` you return after a paid request):

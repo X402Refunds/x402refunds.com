@@ -96,7 +96,7 @@ export const cases_fileWalletPaymentDispute = mutation({
     blockchain: v.union(v.literal("base"), v.literal("solana")),
     transactionHash: v.string(),
     sellerEndpointUrl: v.string(),
-    origin: v.string(), // https origin used to fetch /.well-known/x402.json
+    origin: v.string(), // https origin of sellerEndpointUrl
     payer: v.string(), // CAIP-10 (derived from chain)
     merchant: v.string(), // CAIP-10 (derived from chain)
     amountMicrousdc: v.number(),
@@ -107,6 +107,8 @@ export const cases_fileWalletPaymentDispute = mutation({
     endpointPayToCandidates: v.optional(v.array(v.string())),
     endpointPayToMatch: v.optional(v.boolean()),
     endpointPayToMismatch: v.optional(v.boolean()),
+    // Best-effort: extracted from sellerEndpointUrl 402 response header PAYMENT-SUPPORT-EMAIL.
+    paymentSupportEmail: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ ok: true; disputeId: Id<"cases"> } | { ok: false; code: string; message: string }> => {
     const parsedMerchant = parseCaip10Any(args.merchant);
@@ -139,6 +141,14 @@ export const cases_fileWalletPaymentDispute = mutation({
 
     const now = Date.now();
 
+    const paymentSupportEmailRaw = typeof args.paymentSupportEmail === "string" ? args.paymentSupportEmail.trim() : "";
+    const paymentSupportEmail =
+      paymentSupportEmailRaw.length >= 3 &&
+      paymentSupportEmailRaw.length <= 320 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentSupportEmailRaw)
+        ? paymentSupportEmailRaw
+        : undefined;
+
     const disputeId = await ctx.db.insert("cases", {
       plaintiff: parsedPayer.normalized,
       defendant: parsedMerchant.normalized,
@@ -165,6 +175,7 @@ export const cases_fileWalletPaymentDispute = mutation({
           endpointPayToCandidates: Array.isArray(args.endpointPayToCandidates) ? args.endpointPayToCandidates : undefined,
           endpointPayToMatch: typeof args.endpointPayToMatch === "boolean" ? args.endpointPayToMatch : undefined,
           endpointPayToMismatch: typeof args.endpointPayToMismatch === "boolean" ? args.endpointPayToMismatch : undefined,
+          paymentSupportEmail,
         },
       },
       createdAt: now,

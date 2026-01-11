@@ -18,7 +18,7 @@ describe("merchant notifications (unit)", () => {
   });
 
   it("does not email when endpoint payTo corroboration is missing", async () => {
-    // Nothing should fetch x402.json if we fail the endpoint payTo safety gate.
+    // Nothing should send email if we fail the endpoint payTo safety gate.
     globalThis.fetch = vi.fn(async (url: any) => {
       throw new Error(`Unexpected fetch: ${String(url)}`);
     }) as any;
@@ -51,21 +51,10 @@ describe("merchant notifications (unit)", () => {
     const merchantAddress = "0x0000000000000000000000000000000000000001";
     const merchantCaip10 = `eip155:8453:${merchantAddress}`;
 
-    // Mock only the well-known fetch; email adapter should short-circuit with EMAIL_NOT_CONFIGURED
-    // (no RESEND_API_KEY/EMAIL_FROM in unit test env).
+    // No network calls expected in this unit env: email adapter should short-circuit with EMAIL_NOT_CONFIGURED
+    // (no RESEND_API_KEY/EMAIL_FROM).
     globalThis.fetch = vi.fn(async (url: any) => {
-      const u = String(url);
-      if (u === "https://merchant.example/.well-known/x402.json") {
-        return new Response(
-          JSON.stringify({
-            x402refunds: {
-              supportEmail: "refunds@merchant.com",
-            },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`Unexpected fetch: ${u}`);
+      throw new Error(`Unexpected fetch: ${String(url)}`);
     }) as any;
 
     const now = Date.now();
@@ -81,7 +70,13 @@ describe("merchant notifications (unit)", () => {
         currency: "USDC",
         evidenceIds: [],
         createdAt: now,
-        metadata: { v1: { endpointPayToMatch: true } },
+        metadata: {
+          v1: {
+            endpointPayToMatch: true,
+            merchantOrigin: "https://merchant.example",
+            paymentSupportEmail: "refunds@merchant.com",
+          },
+        },
         paymentDetails: {
           transactionId: "tx_test",
           transactionHash: "0x" + "11".repeat(32),
@@ -111,18 +106,9 @@ describe("merchant notifications (unit)", () => {
     const merchantAddress = "0x0000000000000000000000000000000000000003";
     const merchantCaip10 = `eip155:8453:${merchantAddress}`;
 
-    // x402.json fetch should succeed; email sending will be blocked in tests (no RESEND_API_KEY/EMAIL_FROM)
+    // No network calls expected in this unit env: email sending will be blocked (no RESEND_API_KEY/EMAIL_FROM)
     globalThis.fetch = vi.fn(async (url: any) => {
-      const u = String(url);
-      if (u === "https://merchant2.example/.well-known/x402.json") {
-        return new Response(
-          JSON.stringify({
-            x402refunds: { supportEmail: "refunds@merchant.com" },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`Unexpected fetch: ${u}`);
+      throw new Error(`Unexpected fetch: ${String(url)}`);
     }) as any;
 
     const now = Date.now();
@@ -138,7 +124,13 @@ describe("merchant notifications (unit)", () => {
         currency: "USDC",
         evidenceIds: [],
         createdAt: now,
-        metadata: { v1: { endpointPayToMatch: true } },
+        metadata: {
+          v1: {
+            endpointPayToMatch: true,
+            merchantOrigin: "https://merchant2.example",
+            paymentSupportEmail: "refunds@merchant.com",
+          },
+        },
         paymentDetails: {
           transactionId: "tx_test",
           transactionHash: "0x" + "11".repeat(32),
@@ -195,14 +187,6 @@ describe("merchant notifications (unit)", () => {
     let resendPayload: any = null;
     globalThis.fetch = vi.fn(async (url: any, init?: any) => {
       const u = String(url);
-      if (u === `${origin}/.well-known/x402.json`) {
-        return new Response(
-          JSON.stringify({
-            x402refunds: { supportEmail },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        );
-      }
       if (u === "https://api.resend.com/emails") {
         resendPayload = JSON.parse(String(init?.body || "{}"));
         return new Response(JSON.stringify({ id: "email_123" }), {
@@ -239,6 +223,7 @@ describe("merchant notifications (unit)", () => {
         metadata: {
           v1: {
             merchantOrigin: origin,
+            paymentSupportEmail: supportEmail,
             amountMicrousdc: 10_000,
             description: "api_timeout",
             transactionHash: "0x" + "11".repeat(32),

@@ -57,20 +57,8 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       expect(response.headers.get('access-control-allow-origin')).toBe('*');
     }, 15000); // 15s test timeout
 
-    it('GET /.well-known/x402.json - Merchant x402 metadata', async () => {
-      const response = await fetch(`${API_BASE_URL}/.well-known/x402.json`, {
-        signal: AbortSignal.timeout(8000)
-      });
-      expect(response.status).toBe(200);
-
-      const data = await response.json();
-      expect(data?.x402refunds).toBeDefined();
-      expect(typeof data.x402refunds.supportEmail).toBe('string');
-      expect(data.x402refunds.supportEmail).toContain('@');
-
-      // Verify CORS headers
-      expect(response.headers.get('access-control-allow-origin')).toBe('*');
-    }, 15000);
+    // NOTE: /.well-known/x402.json has been removed. Merchant notification email is discovered
+    // from PAYMENT-SUPPORT-EMAIL on the seller's 402 response instead.
   });
 
   describe('MCP Endpoints', () => {

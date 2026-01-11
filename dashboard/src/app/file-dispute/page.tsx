@@ -137,32 +137,6 @@ export default function FileDisputePage() {
     try {
       const evidenceUrls = [...uploadedEvidenceUrls];
 
-      // Derive merchant from the on-chain USDC transfer recipient (Base)
-      const lookup = await fetch(
-        `${API_BASE}/v1/tx/merchant?txHash=${encodeURIComponent(values.txHash.trim())}`,
-        { method: "GET" },
-      );
-      const lookupRaw = await lookup.text().catch(() => "");
-      let lookupData: unknown = null;
-      try {
-        lookupData = lookupRaw ? (JSON.parse(lookupRaw) as unknown) : null;
-      } catch {
-        lookupData = null;
-      }
-      const lookupObj =
-        lookupData && typeof lookupData === "object" ? (lookupData as Record<string, unknown>) : null;
-      const lookupOk = lookupObj?.ok === true;
-      if (!lookup.ok || !lookupOk) {
-        const msg =
-          typeof lookupObj?.message === "string"
-            ? lookupObj.message
-            : lookupRaw || `Failed to derive merchant (${lookup.status})`;
-        throw new Error(msg);
-      }
-      const merchant =
-        typeof lookupObj?.merchant === "string" ? String(lookupObj.merchant) : "";
-      if (!merchant) throw new Error("Failed to derive merchant from transaction hash");
-
       const requestHeaders = parseJsonOrThrow("Request headers", values.requestHeadersJson);
       const requestBody = parseJsonOrThrow("Request body", values.requestBodyJson);
       const responseHeaders = parseJsonOrThrow("Response headers", values.responseHeadersJson);
@@ -191,9 +165,9 @@ export default function FileDisputePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchant,
-          merchantApiUrl: values.merchantApiUrl,
-          txHash: values.txHash,
+          blockchain: "base",
+          transactionHash: values.txHash.trim(),
+          sellerEndpointUrl: values.merchantApiUrl.trim(),
           description: values.description,
           evidenceUrls,
           ...(request ? { request } : {}),

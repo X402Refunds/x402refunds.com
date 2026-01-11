@@ -19,12 +19,10 @@ export default function HomePage() {
     "",
     "Do these steps exactly:",
     "",
-    "1) Publish /.well-known/x402.json on the seller origin",
-    "   - Path: https://YOUR_DOMAIN/.well-known/x402.json",
-    "   - Publicly accessible (no auth).",
-    "   - JSON body:",
-    '     { "x402refunds": { "supportEmail": "refunds@yourdomain.com" } }',
-    "   - supportEmail must be the email the owner wants to receive refund requests at.",
+    "1) Add PAYMENT-SUPPORT-EMAIL on your 402 Payment Required responses",
+    "   - For every endpoint that is paywalled / requires X-402 payment, when returning 402, include:",
+    '     PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com',
+    "   - PAYMENT-SUPPORT-EMAIL must be the email the owner wants to receive refund requests at.",
     "",
     "2) Add a Link header on every successful paid response (HTTP 200)",
     "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
@@ -35,7 +33,7 @@ export default function HomePage() {
     "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
     "",
     "Important:",
-    "If you do not know the correct supportEmail, ask your owner for it. Do not guess.",
+    "If you do not know the correct PAYMENT-SUPPORT-EMAIL, ask your owner for it. Do not guess.",
   ].join("\n")
 
   return (
@@ -62,7 +60,7 @@ export default function HomePage() {
               </h1>
               
               <p className="mt-5 text-lg sm:text-xl text-slate-600 max-w-2xl">
-                Add one file. Refund requests land in your email.
+                Add one header. Refund requests land in your email.
               </p>
 
               <div className="mt-5 text-sm text-slate-600 sm:text-base">
@@ -100,12 +98,7 @@ export default function HomePage() {
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
             const linkHeader = `Link: <${filingUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
-            const wellKnownObj = {
-              x402refunds: {
-                supportEmail: "refunds@yourdomain.com",
-              },
-            }
-            const wellKnown = JSON.stringify(wellKnownObj, null, 2)
+            const supportEmailHeader = `PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com`
 
             return (
               <div className="mt-12 max-w-7xl mx-auto space-y-10">
@@ -114,22 +107,22 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        1) Copy this file.
+                        1) Add this header to your 402 responses.
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Replace{" "}
                         <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                          supportEmail
+                          refunds@yourdomain.com
                         </span>
                       </div>
                     </div>
 
                     <CodeBlock
-                      language="json"
-                      code={wellKnown}
-                      copyLabel="Copied /.well-known/x402.json"
+                      language="txt"
+                      code={supportEmailHeader}
+                      copyLabel="Copied PAYMENT-SUPPORT-EMAIL header"
                       header="caption"
-                      title="https://YOUR_DOMAIN/.well-known/x402.json"
+                      title="402 Payment Required response header"
                       copyPlacement="overlay"
                       clickToCopy
                     />
@@ -160,7 +153,7 @@ export default function HomePage() {
                         You’ll get refund requests by email
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        We email <span className="font-mono">supportEmail</span> from that file. No signup required.
+                        We email <span className="font-mono">PAYMENT-SUPPORT-EMAIL</span> from your 402 response. No signup required.
                       </div>
                     </div>
 

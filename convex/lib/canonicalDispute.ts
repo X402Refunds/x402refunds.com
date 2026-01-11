@@ -65,7 +65,6 @@ export type CanonicalDisputeInput = {
   description: string;
   evidenceUrls?: string[];
   callbackUrl?: string;
-  merchantX402MetadataUrl?: string;
   sourceTransferLogIndex?: number;
   // If caller has better evidence (MCP tool), pass it through:
   request?: unknown;
@@ -126,10 +125,6 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
       : [];
 
   const callbackUrl = typeof input.callbackUrl === "string" && input.callbackUrl.trim() ? input.callbackUrl.trim() : undefined;
-  const merchantX402MetadataUrl =
-    typeof input.merchantX402MetadataUrl === "string" && input.merchantX402MetadataUrl.trim()
-      ? input.merchantX402MetadataUrl.trim()
-      : undefined;
 
   // Synthesize minimal request/response unless caller provides better evidence.
   const requestObj =
@@ -168,7 +163,6 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
       responseJson: JSON.stringify(responseObj),
       merchantId: derived.merchantCaip10,
       merchantOrigin,
-      merchantX402MetadataUrl,
     },
   };
 

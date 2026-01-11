@@ -40,7 +40,6 @@ const optionsHandler = httpAction(async () => {
 http.route({ path: "/", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/health", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/version", method: "OPTIONS", handler: optionsHandler });
-http.route({ path: "/.well-known/x402.json", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/.well-known/mcp.json", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp/invoke", method: "OPTIONS", handler: optionsHandler });
 http.route({ path: "/mcp", method: "OPTIONS", handler: optionsHandler });
@@ -161,30 +160,6 @@ http.route({
       headers: corsHeaders,
     });
   })
-});
-
-// Merchant x402 metadata (demo-friendly)
-// Merchants publish this file on THEIR domain. For the built-in demo agent, we serve it here
-// so Claude Desktop can exercise the full "Link header → dispute → email" flow.
-http.route({
-  path: "/.well-known/x402.json",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    void ctx;
-    const supportEmail =
-      process.env.DEMO_AGENTS_SUPPORT_EMAIL ||
-      process.env.SUPPORT_EMAIL ||
-      "vbkotecha@gmail.com";
-
-    return new Response(
-      JSON.stringify({
-        x402refunds: {
-          supportEmail,
-        },
-      }),
-      { headers: corsHeaders },
-    );
-  }),
 });
 
 // Merchant email verification (no-signup notifications)
@@ -648,7 +623,6 @@ http.route({
                   txHash: parameters.transactionHash,
                   description: parameters.description,
                   callbackUrl: parameters.callbackUrl,
-                  merchantX402MetadataUrl: parameters.merchantX402MetadataUrl,
                   sourceTransferLogIndex: verify.logIndex,
                   evidenceUrls: Array.isArray(parameters.evidenceUrls) ? parameters.evidenceUrls : [],
                   request: parameters.request,
@@ -1663,6 +1637,7 @@ http.route({
     let endpointPayToCandidates: string[] | undefined = undefined;
     let endpointPayToMatch: boolean | undefined = undefined;
     let endpointPayToMismatch: boolean | undefined = undefined;
+    let paymentSupportEmail: string | undefined = undefined;
     try {
       const res = await fetch(sellerEndpointUrl, {
         method: "GET",
@@ -1670,6 +1645,14 @@ http.route({
         signal: AbortSignal.timeout(5_000),
       });
       if (res.status === 402) {
+        // Merchant contact discovery: seller must provide PAYMENT-SUPPORT-EMAIL on the 402 response.
+        // No fallback to /.well-known/x402.json (removed).
+        const header = res.headers.get("PAYMENT-SUPPORT-EMAIL");
+        const maybeEmail = typeof header === "string" ? header.trim() : "";
+        if (maybeEmail.length >= 3 && maybeEmail.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(maybeEmail)) {
+          paymentSupportEmail = maybeEmail;
+        }
+
         const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
         const bodyText = await res.text().catch(() => null);
         const parsed = parseX402PayTo({
@@ -1703,6 +1686,7 @@ http.route({
       endpointPayToCandidates,
       endpointPayToMatch,
       endpointPayToMismatch,
+      paymentSupportEmail,
       });
     if (!created?.ok) return jsonError(400, created);
 

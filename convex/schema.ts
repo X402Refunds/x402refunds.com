@@ -89,7 +89,6 @@ export default defineSchema({
     // NEW: X-402 identity fields
     walletAddress: v.optional(v.string()), // CAIP-10 format (e.g., "solana:5eykt:..." or legacy "0x...")
     endpoint: v.optional(v.string()), // API endpoint URL
-    x402MetadataUrl: v.optional(v.string()), // .well-known/x402.json location
     claimedAt: v.optional(v.number()), // When agent was claimed by owner
     claimedByUserId: v.optional(v.id("users")), // Who claimed it
     
