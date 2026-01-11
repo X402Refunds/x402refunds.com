@@ -33,6 +33,9 @@ export default function HomePage() {
     "",
     "3) Deploy the change to production",
     "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
+    "",
+    "Important:",
+    "If you do not know the correct supportEmail, ask your owner for it. Do not guess.",
   ].join("\n")
 
   return (
@@ -203,7 +206,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Copy AI prompt
+              AI prompt
             </h2>
           </div>
 
