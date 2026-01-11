@@ -33,7 +33,8 @@ export default function HomePage() {
                 Turn on{" "}
                 <span className="text-blue-600">refunds</span>
                 <span className="mt-4 block text-[0.9em] font-semibold text-slate-950">
-                  for <span className="text-blue-600">AI payments.</span>
+                  <span className="font-medium text-slate-500">for</span>{" "}
+                  <span className="text-blue-600">AI payments.</span>
                 </span>
               </h1>
               
