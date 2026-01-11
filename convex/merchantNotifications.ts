@@ -2,7 +2,7 @@
  * Merchant notification pipeline for wallet-first disputes (v1).
  *
  * Goal: No-signup notifications. If the merchant publishes /.well-known/x402.json
- * and it strictly matches the merchant wallet in the dispute, we email supportEmail.
+ * we discover a supportEmail and require per-wallet email verification for (origin, wallet, supportEmail).
  */
 
 import { internalAction, internalMutation } from "./_generated/server";
@@ -17,13 +17,11 @@ const internalApi: any = (apiMod as any).internal;
 
 type X402Metadata = {
   x402refunds?: {
-    merchant?: string;
     supportEmail?: string;
-    refundRequestUrl?: string;
   };
 };
 
-function normalizeMerchantIdForBase(input: string): string | null {
+function normalizeMerchantId(input: string): string | null {
   const s = input.trim();
   if (!s) return null;
   if (/^eip155:\d+:0x[a-fA-F0-9]{40}$/.test(s)) {
@@ -31,7 +29,8 @@ function normalizeMerchantIdForBase(input: string): string | null {
     if (!m) return null;
     return `eip155:${m[1]}:${m[2].toLowerCase()}`;
   }
-  if (/^0x[a-fA-F0-9]{40}$/.test(s)) return `eip155:8453:${s.toLowerCase()}`;
+  if (/^0x[a-fA-F0-9]{40}$/.test(s)) return `eip155:8453:${s.toLowerCase()}`; // legacy Base-only input
+  if (/^solana:[^:]+:[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(s)) return s;
   return null;
 }
 
@@ -191,6 +190,12 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     const buyer = String(caseData.plaintiff || "");
     const v1 = caseData?.metadata?.v1 || {};
 
+    // Safety gate: only email if we were able to corroborate origin ⇄ wallet via seller endpoint payTo.
+    // This prevents spam if a filer supplies an unrelated origin.
+    if (v1?.endpointPayToMatch !== true) {
+      return { ok: true, emailed: false, reason: "ENDPOINT_PAYTO_UNVERIFIED" };
+    }
+
     const paymentDetails = caseData?.paymentDetails;
     const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
     const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
@@ -208,18 +213,8 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     const fetched = await fetchX402Json(metadataUrl);
     if (!fetched.ok) return { ok: true, emailed: false, reason: fetched.code };
 
-    const expectedMerchant =
-      paymentChain === "base" || merchantRaw.startsWith("eip155:")
-        ? normalizeMerchantIdForBase(merchantRaw)
-        : null;
+    const expectedMerchant = normalizeMerchantId(merchantRaw);
     if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
-
-    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
-    const jsonMerchant =
-      typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
-    if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
-      return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
-    }
 
     const supportEmail = fetched.data?.x402refunds?.supportEmail;
     if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {
@@ -243,20 +238,20 @@ export const notifyMerchantDisputeFiled: any = internalAction({
             : undefined;
 
     const reason =
-      typeof v1?.reason === "string"
-        ? v1.reason
+      typeof v1?.description === "string"
+        ? v1.description
         : typeof caseData?.description === "string"
           ? caseData.description
           : undefined;
     const txHash =
-      typeof v1?.txHash === "string"
-        ? v1.txHash
+      typeof v1?.transactionHash === "string"
+        ? v1.transactionHash
         : typeof paymentDetails?.transactionHash === "string"
           ? paymentDetails.transactionHash
           : undefined;
     const chain =
-      typeof v1?.chain === "string"
-        ? v1.chain
+      typeof v1?.blockchain === "string"
+        ? v1.blockchain
         : typeof paymentChain === "string"
           ? paymentChain
           : undefined;
@@ -400,7 +395,6 @@ export const getNotificationStatusForCase: any = internalAction({
 
     const paymentDetails = caseData?.paymentDetails;
     const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
-    const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
 
     const merchantOriginFromV1 = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
     const merchantOriginFromPayment = deriveMerchantOriginFromRequestJson(
@@ -409,10 +403,7 @@ export const getNotificationStatusForCase: any = internalAction({
     const merchantOrigin = merchantOriginFromV1 || merchantOriginFromPayment || "";
     const overrideUrl = typeof v1?.merchantX402MetadataUrl === "string" ? v1.merchantX402MetadataUrl : undefined;
 
-    const expectedMerchant =
-      paymentChain === "base" || merchantRaw.startsWith("eip155:")
-        ? normalizeMerchantIdForBase(merchantRaw)
-        : null;
+    const expectedMerchant = normalizeMerchantId(merchantRaw);
     if (!expectedMerchant) return { ok: false, reason: "UNSUPPORTED_MERCHANT_ID" };
 
     // Compute required credits (refund + dispute fee).
@@ -462,22 +453,6 @@ export const getNotificationStatusForCase: any = internalAction({
         requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
         hasSufficientCredits,
         reason: fetched.code,
-      };
-    }
-
-    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
-    const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
-    if (!jsonMerchant || jsonMerchant !== expectedMerchant) {
-      return {
-        ok: true,
-        merchant: expectedMerchant,
-        origin: merchantOrigin || null,
-        supportEmail: null,
-        verified: false,
-        requiredMicrousdc,
-        requiredUsdc: typeof requiredMicrousdc === "number" ? requiredMicrousdc / 1_000_000 : null,
-        hasSufficientCredits,
-        reason: "MERCHANT_MISMATCH",
       };
     }
 
@@ -534,9 +509,12 @@ export const notifyMerchantRefundExecuted: any = internalAction({
     const merchantRaw = String(caseData.defendant || "");
     const v1 = caseData?.metadata?.v1 || {};
 
+    if (v1?.endpointPayToMatch !== true) {
+      return { ok: true, emailed: false, reason: "ENDPOINT_PAYTO_UNVERIFIED" };
+    }
+
     const paymentDetails = caseData?.paymentDetails;
     const paymentRequestJson = paymentDetails?.plaintiffMetadata?.requestJson;
-    const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
 
     // Wallet-first stores merchantOrigin in metadata.v1. Legacy payment disputes store requestJson in paymentDetails.*.
     const merchantOriginFromV1 = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
@@ -551,15 +529,8 @@ export const notifyMerchantRefundExecuted: any = internalAction({
     const fetched = await fetchX402Json(metadataUrl);
     if (!fetched.ok) return { ok: true, emailed: false, reason: fetched.code };
 
-    const expectedMerchant =
-      paymentChain === "base" || merchantRaw.startsWith("eip155:")
-        ? normalizeMerchantIdForBase(merchantRaw)
-        : null;
+    const expectedMerchant = normalizeMerchantId(merchantRaw);
     if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
-
-    const jsonMerchantRaw = fetched.data?.x402refunds?.merchant;
-    const jsonMerchant = typeof jsonMerchantRaw === "string" ? normalizeMerchantIdForBase(jsonMerchantRaw) : null;
-    if (!jsonMerchant || jsonMerchant !== expectedMerchant) return { ok: true, emailed: false, reason: "MERCHANT_MISMATCH" };
 
     const supportEmail = fetched.data?.x402refunds?.supportEmail;
     if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {

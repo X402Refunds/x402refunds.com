@@ -1,39 +1,72 @@
 /**
  * Wallet-first dispute + refund pool (v1).
  *
- * Public API vocabulary:
- * - buyer, merchant
- *
- * Internal storage (legacy schema):
- * - cases.plaintiff = buyer
- * - cases.defendant = merchant (CAIP-10)
- *
- * Pool-specific status is stored in cases.metadata.poolStatus so we don't widen the
- * cases.status enum during the MVP.
+ * HARD CUTOVER (txHash-first):
+ * - Dispute filing identifies the merchant by the on-chain USDC recipient (Base/Solana).
+ * - The buyer provides `sellerEndpointUrl` so we can derive an https origin for merchant email
+ *   discovery via `/.well-known/x402.json`.
+ * - `/.well-known/x402.json` is treated as *contact only* (supportEmail), not a wallet registry.
  */
 
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
-import { api, internal } from "./_generated/api";
+import * as apiMod from "./_generated/api.js";
 
-type ChainRef = "base";
+// Avoid TS2589 (excessively deep type instantiation) in downstream TypeScript configs (notably dashboard)
+// by importing generated API as JS and treating it as `any`.
+const api: any = (apiMod as any).api;
+const internal: any = (apiMod as any).internal;
 
-type Caip10Parsed =
+type Caip10ParsedAny =
+  | { ok: true; namespace: "eip155"; chainId: number; address: `0x${string}`; normalized: string }
+  | { ok: true; namespace: "solana"; chainId: string; address: string; normalized: string }
+  | { ok: false; code: string; message: string };
+
+function parseCaip10Any(input: string): Caip10ParsedAny {
+  const raw = input.trim();
+  if (!raw) return { ok: false, code: "INVALID_CAIP10", message: "CAIP-10 is required" };
+
+  const evm = raw.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
+  if (evm) {
+    const chainId = Number(evm[1]);
+    if (!Number.isSafeInteger(chainId) || chainId <= 0) {
+      return { ok: false, code: "INVALID_CHAIN_ID", message: "chainId must be a positive integer" };
+    }
+    const address = evm[2].toLowerCase() as `0x${string}`;
+    return { ok: true, namespace: "eip155", chainId, address, normalized: `eip155:${chainId}:${address}` };
+  }
+
+  const sol = raw.match(/^solana:([^:]+):([1-9A-HJ-NP-Za-km-z]{32,64})$/);
+  if (sol) {
+    const chainId = sol[1];
+    const address = sol[2];
+    return { ok: true, namespace: "solana", chainId, address, normalized: `solana:${chainId}:${address}` };
+  }
+
+  return {
+    ok: false,
+    code: "INVALID_CAIP10",
+    message: "Expected CAIP-10 eip155:<chainId>:0x<40hex> or solana:<chainRef>:<base58Address>",
+  };
+}
+
+type Caip10ParsedEip155 =
   | { ok: true; namespace: "eip155"; chainId: number; address: `0x${string}`; normalized: string }
   | { ok: false; code: string; message: string };
 
-function parseCaip10Eip155(input: string): Caip10Parsed {
-  const raw = input.trim();
-  const m = raw.match(/^eip155:(\d+):(0x[a-fA-F0-9]{40})$/);
-  if (!m) return { ok: false, code: "INVALID_CAIP10", message: "Expected CAIP-10 eip155:<chainId>:0x<40hex>" };
-  const chainId = Number(m[1]);
-  if (!Number.isSafeInteger(chainId) || chainId <= 0) {
-    return { ok: false, code: "INVALID_CHAIN_ID", message: "chainId must be a positive integer" };
+function parseCaip10Eip155(input: string): Caip10ParsedEip155 {
+  const parsed = parseCaip10Any(input);
+  if (!parsed.ok) return parsed;
+  if (parsed.namespace !== "eip155") {
+    return {
+      ok: false,
+      code: "INVALID_CAIP10",
+      message: "Expected CAIP-10 eip155:<chainId>:0x<40hex>",
+    };
   }
-  const address = m[2].toLowerCase() as `0x${string}`;
-  return { ok: true, namespace: "eip155", chainId, address, normalized: `eip155:${chainId}:${address}` };
+  return parsed;
 }
 
 function parseMicros(input: unknown): { ok: true; microusdc: number } | { ok: false; code: string; message: string } {
@@ -60,63 +93,78 @@ function poolStatus(
 
 export const cases_fileWalletPaymentDispute = mutation({
   args: {
-    buyer: v.string(),
-    merchant: v.string(), // CAIP-10 eip155
-    merchantOrigin: v.string(), // https origin used to fetch /.well-known/x402.json
-    merchantX402MetadataUrl: v.optional(v.string()), // optional override for x402.json url
-    txHash: v.optional(v.string()),
-    chain: v.optional(v.union(v.literal("base"))),
-    amountMicrousdc: v.optional(v.any()),
-    reason: v.optional(v.string()),
-    evidenceUrlOrHash: v.optional(v.string()),
-    agentId: v.optional(v.string()),
-    txId: v.optional(v.string()),
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
+    transactionHash: v.string(),
+    sellerEndpointUrl: v.string(),
+    origin: v.string(), // https origin used to fetch /.well-known/x402.json
+    payer: v.string(), // CAIP-10 (derived from chain)
+    merchant: v.string(), // CAIP-10 (derived from chain)
+    amountMicrousdc: v.number(),
+    sourceTransferLogIndex: v.number(),
+    description: v.string(),
+    evidenceUrls: v.optional(v.array(v.string())),
+    // Best-effort corroboration from sellerEndpointUrl 402 parsing
+    endpointPayToCandidates: v.optional(v.array(v.string())),
+    endpointPayToMatch: v.optional(v.boolean()),
+    endpointPayToMismatch: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{ ok: true; disputeId: Id<"cases"> } | { ok: false; code: string; message: string }> => {
-    const parsedMerchant = parseCaip10Eip155(args.merchant);
+    const parsedMerchant = parseCaip10Any(args.merchant);
     if (!parsedMerchant.ok) return parsedMerchant;
 
-    const buyer = (args.buyer || "").trim();
-    if (!buyer) return { ok: false, code: "INVALID_BUYER", message: "buyer is required" };
+    const parsedPayer = parseCaip10Any(args.payer);
+    if (!parsedPayer.ok) return parsedPayer;
 
-    const merchantOrigin = (args.merchantOrigin || "").trim();
-    if (!merchantOrigin) return { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: "merchantOrigin is required" };
-    if (!merchantOrigin.startsWith("https://")) {
-      return { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: "merchantOrigin must be an https:// origin" };
+    const sellerEndpointUrl = (args.sellerEndpointUrl || "").trim();
+    if (!sellerEndpointUrl) return { ok: false, code: "INVALID_SELLER_ENDPOINT_URL", message: "sellerEndpointUrl is required" };
+
+    const origin = (args.origin || "").trim();
+    if (!origin) return { ok: false, code: "INVALID_ORIGIN", message: "origin is required" };
+    if (!origin.startsWith("https://")) {
+      return { ok: false, code: "INVALID_ORIGIN", message: "origin must be an https:// origin" };
     }
 
-    const merchantX402MetadataUrl =
-      typeof args.merchantX402MetadataUrl === "string" && args.merchantX402MetadataUrl.trim()
-        ? args.merchantX402MetadataUrl.trim()
-        : undefined;
+    const txHash = (args.transactionHash || "").trim();
+    if (!txHash) return { ok: false, code: "INVALID_TRANSACTION_HASH", message: "transactionHash is required" };
+
+    const description = (args.description || "").trim();
+    if (!description) return { ok: false, code: "INVALID_DESCRIPTION", message: "description is required" };
+
+    if (!Number.isSafeInteger(args.amountMicrousdc) || args.amountMicrousdc <= 0) {
+      return { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc must be a positive integer" };
+    }
+    if (!Number.isSafeInteger(args.sourceTransferLogIndex) || args.sourceTransferLogIndex < 0) {
+      return { ok: false, code: "INVALID_LOG_INDEX", message: "sourceTransferLogIndex must be a non-negative integer" };
+    }
 
     const now = Date.now();
-    const amountParsed = args.amountMicrousdc !== undefined ? parseMicros(args.amountMicrousdc) : null;
 
     const disputeId = await ctx.db.insert("cases", {
-      plaintiff: buyer,
+      plaintiff: parsedPayer.normalized,
       defendant: parsedMerchant.normalized,
       status: "FILED",
       type: "PAYMENT",
       filedAt: now,
-      description: args.reason || "Payment dispute",
-      amount: amountParsed?.ok ? amountParsed.microusdc / 1_000_000 : undefined,
+      description,
+      amount: args.amountMicrousdc / 1_000_000,
       currency: "USDC",
       evidenceIds: [],
       metadata: {
         poolStatus: "FILED",
         v1: {
-          buyer,
+          sellerEndpointUrl,
+          merchantOrigin: origin,
+          payer: parsedPayer.normalized,
           merchant: parsedMerchant.normalized,
-          merchantOrigin,
-          merchantX402MetadataUrl,
-          agentId: args.agentId,
-          txId: args.txId,
-          txHash: args.txHash,
-          chain: args.chain,
-          amountMicrousdc: amountParsed?.ok ? amountParsed.microusdc : undefined,
-          reason: args.reason,
-          evidenceUrlOrHash: args.evidenceUrlOrHash,
+          blockchain: args.blockchain,
+          transactionHash: txHash,
+          amountMicrousdc: args.amountMicrousdc,
+          sourceTransferLogIndex: args.sourceTransferLogIndex,
+          description,
+          evidenceUrls: Array.isArray(args.evidenceUrls) ? args.evidenceUrls : undefined,
+          endpointPayToCandidates: Array.isArray(args.endpointPayToCandidates) ? args.endpointPayToCandidates : undefined,
+          endpointPayToMatch: typeof args.endpointPayToMatch === "boolean" ? args.endpointPayToMatch : undefined,
+          endpointPayToMismatch: typeof args.endpointPayToMismatch === "boolean" ? args.endpointPayToMismatch : undefined,
         },
       },
       createdAt: now,
@@ -142,7 +190,7 @@ export const cases_fileWalletPaymentDispute = mutation({
 export const getMerchantUsdcBalanceMicrousdc = internalQuery({
   args: { merchant: v.string() }, // CAIP-10 eip155
   handler: async (ctx, args): Promise<{ ok: boolean; availableMicrousdc?: number }> => {
-    const parsed = parseCaip10Eip155(args.merchant);
+    const parsed = parseCaip10Any(args.merchant);
     if (!parsed.ok) return { ok: false };
     const row: any = await ctx.db
       .query("merchantBalances")
@@ -159,7 +207,7 @@ export const getMerchantUsdcBalanceMicrousdc = internalQuery({
 export const cases_listWalletDisputesByMerchant = query({
   args: { merchant: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const parsedMerchant = parseCaip10Eip155(args.merchant);
+    const parsedMerchant = parseCaip10Any(args.merchant);
     if (!parsedMerchant.ok) return { ok: false as const, code: parsedMerchant.code, message: parsedMerchant.message };
 
     const limit = Math.max(1, Math.min(args.limit ?? 50, 200));
@@ -190,7 +238,7 @@ export const topup_creditMerchantBalanceFromTx = mutation({
     | { ok: true; creditedMicrousdc: number; newBalanceMicrousdc: number }
     | { ok: false; code: string; message: string }
   > => {
-    const parsedMerchant = parseCaip10Eip155(args.merchant);
+    const parsedMerchant = parseCaip10Any(args.merchant);
     if (!parsedMerchant.ok) return parsedMerchant;
 
     if (!/^0x[a-fA-F0-9]{64}$/.test(args.txHash)) {

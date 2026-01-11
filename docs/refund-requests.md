@@ -20,15 +20,13 @@ Minimal example:
 ```json
 {
   "x402refunds": {
-    "supportEmail": "refunds@yourdomain.com",
-    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYOUR_WALLET_HERE"
+    "supportEmail": "refunds@yourdomain.com"
   }
 }
 ```
 
 What matters:
 - `supportEmail`: where refund requests should be delivered
-- `refundRequestUrl`: exchange endpoint for refund requests
 
 ### Step 2 — Add a Link header
 This is optional. It helps AI agents automatically discover that your API supports refund requests. Refund requests will still work without it.
@@ -36,7 +34,7 @@ This is optional. It helps AI agents automatically discover that your API suppor
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
-Link: <https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xYourMerchantWallet>; rel="payment-refund"; type="application/json"
+Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"
 ```
 
 ### Step 3 — Add refund credits (optional)
@@ -93,11 +91,12 @@ Send a JSON body to `POST /v1/refunds`:
 curl -sS https://api.x402refunds.com/v1/refunds \
   -H "Content-Type: application/json" \
   -d '{
-    "merchant": "eip155:8453:0xYourMerchantWallet",
-    "merchantApiUrl": "https://api.merchant.com/v1/endpoint-you-called",
-    "txHash": "0xYourBaseTxHash",
+    "blockchain": "base",
+    "transactionHash": "0xYourBaseTxHash",
+    "sellerEndpointUrl": "https://api.merchant.com/v1/endpoint-you-called",
     "description": "Payment succeeded, then the output was wrong / unsatisfactory.",
-    "evidenceUrls": ["https://example.com/screenshot.png"]
+    "evidenceUrls": ["https://example.com/screenshot.png"],
+    "sourceTransferLogIndex": 0
   }'
 ```
 

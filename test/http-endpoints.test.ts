@@ -194,95 +194,50 @@ describe('HTTP API - Dispute Filing', () => {
     });
   });
 
-  describe("POST /v1/refunds (wallet-first)", () => {
-    it("should reject missing merchant", async () => {
+  describe("POST /v1/refunds (txHash-first)", () => {
+    it("should reject missing blockchain", async () => {
       const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          buyer: "buyer:anonymous",
-          // missing merchant
-        }),
-      });
-
-      expect(response.status).toBe(400);
-    });
-
-    it("should reject missing merchantOrigin", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buyer: "buyer:test",
-          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
-          reason: "api_timeout",
-          amountMicrousdc: "10000",
-          // missing merchantOrigin
-        }),
-      });
-
-      expect(response.status).toBe(400);
-    });
-
-    it("should accept a minimal wallet-first dispute", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buyer: "buyer:test",
-          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
-          merchantOrigin: "https://localhost",
-          reason: "api_timeout",
-          amountMicrousdc: "10000",
-        }),
-      });
-
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data.ok).toBe(true);
-      expect(data.caseId).toBeDefined();
-    });
-  });
-
-  describe("POST /v1/refunds (canonical merchant-first)", () => {
-    it("should reject missing canonical fields", async () => {
-      const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
-          // missing merchantApiUrl, txHash, description
+          transactionHash: "0x" + "11".repeat(32),
+          sellerEndpointUrl: "https://merchant.example/v1/paid",
+          description: "api_timeout",
         }),
       });
       expect(response.status).toBe(400);
     });
 
-    it("should reject non-https merchantApiUrl", async () => {
+    it("should reject origin-only sellerEndpointUrl", async () => {
       const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
-          merchantApiUrl: "http://example.com/v1/chat",
-          txHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-          description: "API returned 500 after payment was confirmed on-chain",
+          blockchain: "base",
+          transactionHash: "0x" + "11".repeat(32),
+          sellerEndpointUrl: "https://merchant.example",
+          description: "api_timeout",
         }),
       });
       expect(response.status).toBe(400);
     });
 
-    it("should reject unsupported eip155 chainId", async () => {
+    it("should return a structured error for unknown tx hashes (or ok:true if mocked)", async () => {
       const response = await fetch(`${API_BASE_URL}/v1/refunds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchant: "eip155:1:0x0000000000000000000000000000000000000001",
-          merchantApiUrl: "https://example.com/v1/chat",
-          txHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-          description: "API returned 500 after payment was confirmed on-chain",
+          blockchain: "base",
+          transactionHash: "0x" + "11".repeat(32),
+          sellerEndpointUrl: "https://merchant.example/v1/paid",
+          description: "api_timeout",
         }),
       });
-      expect(response.status).toBe(400);
+
+      // Depending on environment config (mock mode / chain config), this may be ok:true or an onchain error.
+      expect([200, 400, 500]).toContain(response.status);
+      const data = await response.json().catch(() => ({} as any));
+      expect(typeof data.ok).toBe("boolean");
     });
   });
 });

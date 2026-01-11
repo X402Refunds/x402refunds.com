@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-10T19:29:13.880Z
+**Auto-generated on**: 2026-01-11T04:16:59.404Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (66 files)
+### Convex Files (67 files)
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
@@ -106,7 +106,7 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
+- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, deriveUsdcMerchantFromTxHashSolana, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
 - **canonicalDispute.ts** - Core logic
 - **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
@@ -119,6 +119,7 @@ consulate/
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
 - **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
+- **x402PayTo.ts** - parseX402PayTo
 - **x402r.ts** - createEscrow, resolveDispute, getEscrowBalance
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
@@ -195,7 +196,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (62 test files)
+### Test Suites (64 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -231,6 +232,7 @@ Common HTTP routes exposed:
 - test/unit/aa-usdc-transfer-logs.test.ts
 - test/unit/base-caip10-mapping.test.ts
 - test/unit/batch-processing.test.ts
+- test/unit/blockchain-derive-merchant.test.ts
 - test/unit/caip10-sanity-checks.test.ts
 - test/unit/canonical-dispute-created.test.ts
 - test/unit/canonical-dispute-duplicate.test.ts
@@ -252,6 +254,7 @@ Common HTTP routes exposed:
 - test/unit/vector-similarity.test.ts
 - test/unit/webhooks.test.ts
 - test/unit/x402-payment-header-decode.test.ts
+- test/unit/x402-payto-parser.test.ts
 - test/unit/x402-topup-requirements.test.ts
 - test/unit/x402-v2-client-helpers.test.ts
 - test/users.test.ts
@@ -373,13 +376,13 @@ Common HTTP routes exposed:
 - 75 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 66 TypeScript files with serverless functions
+- 67 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 62 test files using Vitest
+- 64 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -412,5 +415,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/10/2026, 11:29:13 AM
-Files scanned: 533
+Generated: 1/10/2026, 8:16:59 PM
+Files scanned: 536

@@ -58,7 +58,7 @@ Base URL: https://api.x402refunds.com
 - GET /version - API version info
 
 ### Refund Requests
-- POST /v1/refunds - Submit X-402 payment refund request
+- POST /v1/refunds - Submit X-402 payment refund request (requires blockchain, transactionHash, sellerEndpointUrl, description)
 - GET /v1/refunds?merchant=eip155:8453:0x... - List refund requests for a merchant (public)
 - GET /v1/refund?id=case_... - Fetch a refund request by case ID
 - GET /cases/:caseId - Track refund request status

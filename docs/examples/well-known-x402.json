@@ -1,8 +1,6 @@
 {
   "x402refunds": {
-    "merchant": "eip155:8453:0xyourmerchantaddress",
     "supportEmail": "refunds@yourdomain.com",
-    "refundRequestUrl": "https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0xyourmerchantaddress",
     "terms": {
       "refundWindowDays": 7,
       "evidenceWindowDays": 7,

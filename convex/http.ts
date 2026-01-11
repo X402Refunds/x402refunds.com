@@ -10,6 +10,7 @@ import { buildMerchantActionErrorCopy } from "./lib/merchantActionErrorCopy";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
+import { parseX402PayTo } from "./lib/x402PayTo";
 
 const http = httpRouter();
 
@@ -170,10 +171,6 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     void ctx;
-    const baseOrigin = new URL(request.url).origin;
-    const demoWallet = "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
-    const merchant = `eip155:8453:${demoWallet.toLowerCase()}`;
-    const refundUrl = `${baseOrigin}/v1/refunds?merchant=${merchant}`;
     const supportEmail =
       process.env.DEMO_AGENTS_SUPPORT_EMAIL ||
       process.env.SUPPORT_EMAIL ||
@@ -182,7 +179,6 @@ http.route({
     return new Response(
       JSON.stringify({
         x402refunds: {
-          refundRequestUrl: refundUrl,
           supportEmail,
         },
       }),
@@ -1506,100 +1502,221 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const body = await request.json().catch(() => ({} as any));
 
-    // === Canonical merchant-first filing (x402 style) ===
-    // Required: merchant (CAIP-10), merchantApiUrl (https), txHash, description.
-    // Optional: evidenceUrls[], callbackUrl, merchantX402MetadataUrl.
-    const merchantCanonical = typeof body?.merchant === "string" ? body.merchant : "";
-    const merchantApiUrl = typeof body?.merchantApiUrl === "string" ? body.merchantApiUrl : "";
-    const txHashCanonical = typeof body?.txHash === "string" ? body.txHash : "";
-    const descriptionCanonical = typeof body?.description === "string" ? body.description : "";
-    const evidenceUrlsCanonical = Array.isArray(body?.evidenceUrls) ? body.evidenceUrls : undefined;
-    const callbackUrlCanonical = typeof body?.callbackUrl === "string" ? body.callbackUrl : undefined;
-    const merchantX402MetadataUrlCanonical =
-      typeof body?.merchantX402MetadataUrl === "string" ? body.merchantX402MetadataUrl : undefined;
-    const requestCanonical = body?.request;
-    const responseCanonical = body?.response;
-
-    const hasCanonical =
-      merchantCanonical.trim() &&
-      merchantApiUrl.trim() &&
-      txHashCanonical.trim() &&
-      descriptionCanonical.trim();
-
-    if (hasCanonical) {
-      try {
-        const res = await fileCanonicalDispute(ctx, {
-          merchant: merchantCanonical,
-          merchantApiUrl,
-          txHash: txHashCanonical,
-          description: descriptionCanonical,
-          evidenceUrls: evidenceUrlsCanonical,
-          callbackUrl: callbackUrlCanonical,
-          merchantX402MetadataUrl: merchantX402MetadataUrlCanonical,
-          request: requestCanonical,
-          response: responseCanonical,
-        });
-        if (!res.ok) return jsonError(400, { ok: false, code: res.code, message: res.message, field: res.field });
-        return new Response(JSON.stringify(res), { status: 200, headers: corsHeaders });
-      } catch (e: any) {
-        return jsonError(500, { ok: false, code: "INTERNAL_ERROR", message: e?.message || "Internal error" });
-      }
+    // === HARD CUTOVER: txHash-first filing (no backwards compatibility) ===
+    const blockchainRaw = typeof body?.blockchain === "string" ? body.blockchain : "";
+    const blockchain = blockchainRaw === "base" || blockchainRaw === "solana" ? blockchainRaw : "";
+    if (!blockchain) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "blockchain", message: 'blockchain must be "base" or "solana"' });
     }
 
-    const buyer = typeof body?.buyer === "string" ? body.buyer : "buyer:anonymous";
-    const merchant = typeof body?.merchant === "string" ? body.merchant : "";
-    const merchantOriginRaw = typeof body?.merchantOrigin === "string" ? body.merchantOrigin : "";
-    const merchantX402MetadataUrlRaw =
-      typeof body?.merchantX402MetadataUrl === "string" ? body.merchantX402MetadataUrl : undefined;
-    const txHash = typeof body?.txHash === "string" ? body.txHash : undefined;
-    const chain = typeof body?.chain === "string" ? body.chain : undefined;
-    const amountMicrousdc = body?.amountMicrousdc;
-    const reason = typeof body?.reason === "string" ? body.reason : undefined;
-    const evidenceUrlOrHash = typeof body?.evidenceUrlOrHash === "string" ? body.evidenceUrlOrHash : undefined;
-    const agentId = typeof body?.agentId === "string" ? body.agentId : undefined;
-    const txId = typeof body?.txId === "string" ? body.txId : undefined;
-
-    if (!merchant) return jsonError(400, { ok: false, code: "MISSING_MERCHANT", message: "merchant (CAIP-10) is required" });
-    if (!merchantOriginRaw) {
-      return jsonError(400, { ok: false, code: "MISSING_MERCHANT_ORIGIN", message: "merchantOrigin (https origin) is required" });
+    const transactionHash = typeof body?.transactionHash === "string" ? body.transactionHash.trim() : "";
+    if (!transactionHash) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "transactionHash is required" });
+    }
+    if (blockchain === "base" && !/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "Base transactionHash must be 0x + 64 hex chars" });
+    }
+    if (blockchain === "solana" && !/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(transactionHash)) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "Solana transactionHash must be a base58 signature" });
     }
 
-    let merchantOrigin: string;
+    const sellerEndpointUrlRaw = typeof body?.sellerEndpointUrl === "string" ? body.sellerEndpointUrl.trim() : "";
+    if (!sellerEndpointUrlRaw) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "sellerEndpointUrl", message: "sellerEndpointUrl is required" });
+    }
+    let sellerEndpointUrl: string;
+    let origin: string;
     try {
-      const u = new URL(merchantOriginRaw);
-      if (u.protocol !== "https:") throw new Error("merchantOrigin must be https://");
-      merchantOrigin = u.origin;
-    } catch (e: any) {
-      return jsonError(400, { ok: false, code: "INVALID_MERCHANT_ORIGIN", message: e?.message || "Invalid merchantOrigin URL" });
+      const u = new URL(sellerEndpointUrlRaw);
+      if (u.protocol !== "https:") throw new Error("sellerEndpointUrl must be https://");
+      if (!u.pathname || u.pathname === "/") throw new Error("sellerEndpointUrl must include a path (not just origin)");
+      sellerEndpointUrl = u.toString();
+      origin = u.origin;
+      } catch (e: any) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "sellerEndpointUrl", message: e?.message || "Invalid sellerEndpointUrl" });
     }
 
-    let merchantX402MetadataUrl: string | undefined = undefined;
-    if (merchantX402MetadataUrlRaw) {
-      try {
-        const u = new URL(merchantX402MetadataUrlRaw);
-        if (u.protocol !== "https:") throw new Error("merchantX402MetadataUrl must be https://");
-        merchantX402MetadataUrl = u.toString();
-      } catch (e: any) {
-        return jsonError(400, { ok: false, code: "INVALID_MERCHANT_X402_METADATA_URL", message: e?.message || "Invalid merchantX402MetadataUrl URL" });
+    const description = typeof body?.description === "string" ? body.description.trim() : "";
+    if (!description) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "description", message: "description is required" });
+    }
+
+    const evidenceUrls =
+      Array.isArray(body?.evidenceUrls) && body.evidenceUrls.every((x: any) => typeof x === "string")
+        ? (body.evidenceUrls as string[])
+        : undefined;
+
+    const sourceTransferLogIndex =
+      typeof body?.sourceTransferLogIndex === "number" && Number.isFinite(body.sourceTransferLogIndex)
+        ? Math.trunc(body.sourceTransferLogIndex)
+        : undefined;
+
+    // === Chain verification: derive merchant recipient from tx hash (canonical identity) ===
+    let derived: any = null;
+    if (blockchain === "base") {
+      derived = await ctx.runAction((api as any).lib.blockchain.deriveUsdcMerchantFromTxHashBase, {
+        transactionHash,
+      });
+      if (!derived?.ok) {
+        if (derived?.code === "MULTI_MATCH") {
+          const candidates = Array.isArray(derived?.candidates) ? derived.candidates : [];
+          if (typeof sourceTransferLogIndex !== "number") {
+            return jsonError(400, {
+              ok: false,
+              blockchain,
+              transactionHash,
+              code: "MULTI_MATCH",
+              message: "Multiple USDC transfers found. Provide sourceTransferLogIndex to disambiguate.",
+              candidates,
+            });
+          }
+          const picked = candidates.find((c: any) => Number(c?.logIndex) === sourceTransferLogIndex);
+          if (!picked) {
+            return jsonError(400, {
+              ok: false,
+              blockchain,
+              transactionHash,
+              code: "NO_MATCH_LOG_INDEX",
+              message: `No USDC transfer matched sourceTransferLogIndex=${sourceTransferLogIndex}`,
+              candidates,
+            });
+          }
+          derived = {
+            ok: true,
+            blockchain: "base",
+            transactionHash,
+            payerAddress: picked.payerAddress,
+            recipientAddress: picked.recipientAddress,
+            amountMicrousdc: picked.amountMicrousdc,
+            amountUsdc: picked.amountUsdc,
+            logIndex: picked.logIndex,
+            tokenContract: picked.tokenContract,
+          };
+        } else {
+          const status = derived?.code === "NOT_CONFIGURED" ? 500 : 400;
+          return jsonError(status, { ok: false, ...derived });
+        }
       }
+    } else {
+      derived = await ctx.runAction((api as any).lib.blockchain.deriveUsdcMerchantFromTxHashSolana, {
+        transactionHash,
+      });
+      if (!derived?.ok) {
+        if (derived?.code === "MULTI_MATCH") {
+          const candidates = Array.isArray(derived?.candidates) ? derived.candidates : [];
+          if (typeof sourceTransferLogIndex !== "number") {
+            return jsonError(400, {
+              ok: false,
+              blockchain,
+              transactionHash,
+              code: "MULTI_MATCH",
+              message: "Multiple USDC transfers found. Provide sourceTransferLogIndex to disambiguate.",
+              candidates,
+            });
+          }
+          const picked = candidates.find((c: any) => Number(c?.logIndex) === sourceTransferLogIndex);
+          if (!picked) {
+            return jsonError(400, {
+              ok: false,
+              blockchain,
+              transactionHash,
+              code: "NO_MATCH_LOG_INDEX",
+              message: `No USDC transfer matched sourceTransferLogIndex=${sourceTransferLogIndex}`,
+              candidates,
+            });
+          }
+          derived = {
+            ok: true,
+            blockchain: "solana",
+            transactionHash,
+            payerAddress: picked.payerAddress,
+            recipientAddress: picked.recipientAddress,
+            amountMicrousdc: picked.amountMicrousdc,
+            amountUsdc: picked.amountUsdc,
+            logIndex: picked.logIndex,
+            tokenContract: picked.tokenContract,
+          };
+        } else {
+          return jsonError(400, { ok: false, ...derived });
+        }
+      }
+    }
+
+    const payerAddressRaw = String(derived?.payerAddress || "");
+    const recipientAddressRaw = String(derived?.recipientAddress || "");
+    const payerAddress = blockchain === "base" ? payerAddressRaw.toLowerCase() : payerAddressRaw;
+    const recipientAddress = blockchain === "base" ? recipientAddressRaw.toLowerCase() : recipientAddressRaw;
+    const amountMicrousdc = Number(derived?.amountMicrousdc);
+    const logIndex = Number(derived?.logIndex);
+
+    if (!payerAddress || !recipientAddress || !Number.isFinite(amountMicrousdc) || !Number.isFinite(logIndex)) {
+      return jsonError(500, { ok: false, code: "INTERNAL_ERROR", message: "Chain verification returned incomplete data" });
+    }
+
+    const SOLANA_MAINNET_CHAINREF = "5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf";
+    const payer =
+      blockchain === "base" ? `eip155:8453:${payerAddress}` : `solana:${SOLANA_MAINNET_CHAINREF}:${payerAddress}`;
+    const merchant =
+      blockchain === "base" ? `eip155:8453:${recipientAddress}` : `solana:${SOLANA_MAINNET_CHAINREF}:${recipientAddress}`;
+
+    // === Best-effort seller endpoint corroboration (does NOT block filing) ===
+    let endpointPayToCandidates: string[] | undefined = undefined;
+    let endpointPayToMatch: boolean | undefined = undefined;
+    let endpointPayToMismatch: boolean | undefined = undefined;
+    try {
+      const res = await fetch(sellerEndpointUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.status === 402) {
+        const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
+        const bodyText = await res.text().catch(() => null);
+        const parsed = parseX402PayTo({
+          status: res.status,
+          paymentRequiredHeader,
+          bodyText,
+        });
+        if (parsed.ok) {
+          endpointPayToCandidates = parsed.payToCandidates;
+          endpointPayToMatch = parsed.payToCandidates.some((x) =>
+            blockchain === "base" ? x.toLowerCase() === recipientAddress : x === recipientAddress,
+          );
+          endpointPayToMismatch = !endpointPayToMatch;
+        }
+      }
+    } catch {
+      // Never block filing based on endpoint fetch/parse failures.
     }
 
     const created = await (ctx.runMutation as any)((api as any).pool.cases_fileWalletPaymentDispute, {
-      buyer,
+      blockchain,
+      transactionHash,
+      sellerEndpointUrl,
+      origin,
+      payer,
       merchant,
-      merchantOrigin,
-      merchantX402MetadataUrl,
-      txHash,
-      chain: chain === "base" ? "base" : undefined,
       amountMicrousdc,
-      reason,
-      evidenceUrlOrHash,
-      agentId,
-      txId,
+      sourceTransferLogIndex: logIndex,
+      description,
+      evidenceUrls,
+      endpointPayToCandidates,
+      endpointPayToMatch,
+      endpointPayToMismatch,
       });
     if (!created?.ok) return jsonError(400, created);
 
-    return new Response(JSON.stringify({ ok: true, caseId: created.disputeId }), { status: 200, headers: corsHeaders });
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        caseId: created.disputeId,
+        blockchain,
+        transactionHash,
+        merchant,
+        recipientAddress,
+      }),
+      { status: 200, headers: corsHeaders },
+    );
   }),
 });
 

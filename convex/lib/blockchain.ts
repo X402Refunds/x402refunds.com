@@ -395,6 +395,182 @@ export const deriveUsdcMerchantFromTxHashBase = action({
 });
 
 /**
+ * Derive the merchant recipient for a Solana USDC payment tx signature (no recipient provided).
+ *
+ * If the tx contains multiple USDC transfers, we return MULTI_MATCH so the caller can decide
+ * how to disambiguate (or prompt the user for sourceTransferLogIndex).
+ */
+export const deriveUsdcMerchantFromTxHashSolana = action({
+  args: {
+    transactionHash: v.string(), // Solana signature (base58)
+  },
+  handler: async (
+    _ctx,
+    args,
+  ): Promise<
+    | {
+        ok: true;
+        blockchain: "solana";
+        transactionHash: string;
+        payerAddress: string;
+        recipientAddress: string;
+        amountMicrousdc: number;
+        amountUsdc: string;
+        logIndex: number;
+        tokenContract?: string;
+      }
+    | {
+        ok: false;
+        blockchain: "solana";
+        transactionHash: string;
+        code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NOT_CONFIGURED" | "UNSUPPORTED";
+        message: string;
+        candidates?: DeriveMerchantCandidates;
+      }
+  > => {
+    const sig = (args.transactionHash || "").trim();
+    // Solana signatures are base58; length varies but typically ~88.
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(sig)) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "UNSUPPORTED",
+        message: "transactionHash must be a Solana signature (base58)",
+      };
+    }
+
+    const mockMode =
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST === "true" ||
+      process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+    if (mockMode) {
+      return {
+        ok: true,
+        blockchain: "solana",
+        transactionHash: sig,
+        payerAddress: "7rQpJf5cVj7yZ2m3Hk9fK3s8gGv8kGkE3nRZQGq8n6cF",
+        recipientAddress: "9bUo8p2jGqTgq9r2p7z5q4w7y7z8e5h5b2m1n3p4q6r8",
+        amountMicrousdc: 250000,
+        amountUsdc: formatMicrosToUsdc(250000),
+        logIndex: 0,
+        tokenContract: USDC_CONTRACTS.solana,
+      };
+    }
+
+    const resp = await fetch(RPC_ENDPOINTS.solana, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 21,
+        method: "getTransaction",
+        params: [
+          sig,
+          {
+            encoding: "jsonParsed",
+            maxSupportedTransactionVersion: 0,
+          },
+        ],
+      }),
+    });
+
+    const data = await resp.json().catch(() => null);
+    if (!data || data.error || !data.result) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "TX_NOT_FOUND",
+        message: data?.error?.message || "Transaction not found",
+      };
+    }
+
+    const instructions = data.result.transaction?.message?.instructions || [];
+    const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
+
+    for (let i = 0; i < instructions.length; i++) {
+      const ix = instructions[i];
+      if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
+      const info = ix.parsed?.info;
+      if (!info) continue;
+      if (info?.mint !== USDC_CONTRACTS.solana) continue;
+
+      const to = (info.destination || "").toString();
+      const from = (info.source || info.authority || "").toString();
+      if (!to || !from) continue;
+
+      const amountStr = info.amount || info.tokenAmount?.amount;
+      const decimals = info.decimals || info.tokenAmount?.decimals || 6;
+      if (decimals !== 6) continue;
+      try {
+        const amountRaw = BigInt(String(amountStr));
+        matches.push({ ixIndex: i, from, to, amountRaw });
+      } catch {
+        continue;
+      }
+    }
+
+    if (matches.length === 0) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "NOT_USDC",
+        message: `No USDC (mint ${USDC_CONTRACTS.solana}) transfer found in transaction`,
+      };
+    }
+
+    if (matches.length > 1) {
+      const candidates: DeriveMerchantCandidates = [];
+      for (const m of matches) {
+        if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
+        const amountMicrousdc = Number(m.amountRaw);
+        candidates.push({
+          tokenContract: USDC_CONTRACTS.solana,
+          payerAddress: m.from,
+          recipientAddress: m.to,
+          amountMicrousdc,
+          amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+          logIndex: m.ixIndex,
+        });
+      }
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "MULTI_MATCH",
+        message: "Multiple USDC transfers found. Provide sourceTransferLogIndex to disambiguate.",
+        candidates,
+      };
+    }
+
+    const m = matches[0];
+    if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "UNSUPPORTED",
+        message: "USDC amount exceeds safe integer range",
+      };
+    }
+    const amountMicrousdc = Number(m.amountRaw);
+    return {
+      ok: true,
+      blockchain: "solana",
+      transactionHash: sig,
+      payerAddress: m.from,
+      recipientAddress: m.to,
+      amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+      logIndex: m.ixIndex,
+      tokenContract: USDC_CONTRACTS.solana,
+    };
+  },
+});
+
+/**
  * Find matching ERC-20 Transfer logs in a receipt. This is AA-safe: it does NOT rely on tx.to.
  */
 export function findErc20TransferMatches(args: {

@@ -17,31 +17,23 @@ describe("merchant notifications (unit)", () => {
     vi.restoreAllMocks();
   });
 
-  it("does not email when x402.json merchant does not match case merchant (strict match)", async () => {
-    // Mock x402.json fetch response (Resend is not expected to be called)
+  it("does not email when endpoint payTo corroboration is missing", async () => {
+    // Nothing should fetch x402.json if we fail the endpoint payTo safety gate.
     globalThis.fetch = vi.fn(async (url: any) => {
-      const u = String(url);
-      if (u.includes("/.well-known/x402.json")) {
-        return new Response(
-          JSON.stringify({
-            x402refunds: {
-              merchant: "eip155:8453:0x0000000000000000000000000000000000000002",
-              supportEmail: "refunds@merchant.com",
-            },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      }
-      // If anything tries to call Resend, fail the test.
-      throw new Error(`Unexpected fetch: ${u}`);
+      throw new Error(`Unexpected fetch: ${String(url)}`);
     }) as any;
 
     const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
-      buyer: "buyer:test",
+      blockchain: "base",
+      transactionHash: "0x" + "00".repeat(32),
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
       merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
-      merchantOrigin: "https://merchant.example",
-      reason: "api_timeout",
-      amountMicrousdc: "10000",
+      amountMicrousdc: 10_000,
+      sourceTransferLogIndex: 0,
+      description: "api_timeout",
+      // endpointPayToMatch intentionally omitted/falsey
     });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
@@ -52,7 +44,7 @@ describe("merchant notifications (unit)", () => {
 
     expect(res.ok).toBe(true);
     expect(res.emailed).toBe(false);
-    expect(res.reason).toBe("MERCHANT_MISMATCH");
+    expect(res.reason).toBe("ENDPOINT_PAYTO_UNVERIFIED");
   });
 
   it("derives merchantOrigin from paymentDetails.plaintiffMetadata.requestJson and reaches email adapter", async () => {
@@ -67,7 +59,6 @@ describe("merchant notifications (unit)", () => {
         return new Response(
           JSON.stringify({
             x402refunds: {
-              merchant: merchantCaip10,
               supportEmail: "refunds@merchant.com",
             },
           }),
@@ -90,6 +81,7 @@ describe("merchant notifications (unit)", () => {
         currency: "USDC",
         evidenceIds: [],
         createdAt: now,
+        metadata: { v1: { endpointPayToMatch: true } },
         paymentDetails: {
           transactionId: "tx_test",
           transactionHash: "0x" + "11".repeat(32),
@@ -125,7 +117,7 @@ describe("merchant notifications (unit)", () => {
       if (u === "https://merchant2.example/.well-known/x402.json") {
         return new Response(
           JSON.stringify({
-            x402refunds: { merchant: merchantCaip10, supportEmail: "refunds@merchant.com" },
+            x402refunds: { supportEmail: "refunds@merchant.com" },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
@@ -146,6 +138,7 @@ describe("merchant notifications (unit)", () => {
         currency: "USDC",
         evidenceIds: [],
         createdAt: now,
+        metadata: { v1: { endpointPayToMatch: true } },
         paymentDetails: {
           transactionId: "tx_test",
           transactionHash: "0x" + "11".repeat(32),
@@ -205,7 +198,7 @@ describe("merchant notifications (unit)", () => {
       if (u === `${origin}/.well-known/x402.json`) {
         return new Response(
           JSON.stringify({
-            x402refunds: { merchant: merchantCaip10, supportEmail },
+            x402refunds: { supportEmail },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
@@ -247,9 +240,10 @@ describe("merchant notifications (unit)", () => {
           v1: {
             merchantOrigin: origin,
             amountMicrousdc: 10_000,
-            reason: "api_timeout",
-            txHash: "0x" + "11".repeat(32),
-            chain: "base",
+            description: "api_timeout",
+            transactionHash: "0x" + "11".repeat(32),
+            blockchain: "base",
+            endpointPayToMatch: true,
           },
         },
       } as any);
