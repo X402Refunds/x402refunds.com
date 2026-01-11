@@ -4,7 +4,6 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
-import { CopyButton } from "@/components/ui/copy-button"
 import {
   Mail,
   ShieldCheck,
@@ -15,6 +14,27 @@ import {
 } from "lucide-react"
 
 export default function HomePage() {
+  const aiPrompt = [
+    "You are integrating x402refunds.com into a paid (X-402) API.",
+    "",
+    "Do these steps exactly:",
+    "",
+    "1) Publish /.well-known/x402.json on the seller origin",
+    "   - Path: https://YOUR_DOMAIN/.well-known/x402.json",
+    "   - Publicly accessible (no auth).",
+    "   - JSON body:",
+    '     { "x402refunds": { "supportEmail": "refunds@yourdomain.com" } }',
+    "   - supportEmail must be the email the owner wants to receive refund requests at.",
+    "",
+    "2) Add a Link header on every successful paid response (HTTP 200)",
+    "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
+    '     Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"',
+    "   - Do not add this header to 402 responses; only to successful paid 200 responses.",
+    "",
+    "3) Deploy the change to production",
+    "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
+  ].join("\n")
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation currentPage="home" />
@@ -76,26 +96,6 @@ export default function HomePage() {
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
             const linkHeader = `Link: <${filingUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
-            const aiPrompt = [
-              "You are integrating x402refunds.com into a paid (X-402) API.",
-              "",
-              "Do these steps exactly:",
-              "",
-              "1) Publish /.well-known/x402.json on the seller origin",
-              '   - Path: https://YOUR_DOMAIN/.well-known/x402.json',
-              "   - Publicly accessible (no auth).",
-              "   - JSON body:",
-              '     { "x402refunds": { "supportEmail": "refunds@yourdomain.com" } }',
-              "   - supportEmail must be the email the owner wants to receive refund requests at.",
-              "",
-              "2) Add a Link header on every successful paid response (HTTP 200)",
-              "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
-              '     Link: <https://api.x402refunds.com/v1/refunds>; rel=\"payment-refund\"; type=\"application/json\"',
-              "   - Do not add this header to 402 responses; only to successful paid 200 responses.",
-              "",
-              "3) Deploy the change to production",
-              "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
-            ].join("\n")
             const wellKnownObj = {
               x402refunds: {
                 supportEmail: "refunds@yourdomain.com",
@@ -146,23 +146,6 @@ export default function HomePage() {
                       return this on successful paid response (200 Content).
                     </div>
                   </div>
-
-                  <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-                    <div className="text-sm font-semibold text-foreground">
-                      Want an AI to do it?
-                    </div>
-                    <CodeBlock
-                      language="txt"
-                      code={aiPrompt}
-                      copyLabel="Copied AI prompt"
-                      header="none"
-                      copyPlacement="overlay"
-                      className="rounded-xl"
-                    />
-                    <div className="flex items-center justify-end">
-                      <CopyButton value={aiPrompt} label="Copied AI prompt" />
-                    </div>
-                  </div>
                 </div>
 
                 {/* Step 2 (confirmation + optional) */}
@@ -196,6 +179,48 @@ export default function HomePage() {
               </div>
             )
           })()}
+        </div>
+      </section>
+
+      {/* AI PROMPT */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Copy AI prompt
+            </h2>
+          </div>
+
+          <div className="mt-10 max-w-3xl mx-auto">
+            <details className="group">
+              <summary className="list-none [&::-webkit-details-marker]:hidden flex justify-center">
+                <Button size="lg" className="h-12 px-8">
+                  Get AI prompt (copy/paste)
+                </Button>
+              </summary>
+
+              <div className="mt-6 space-y-3">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-base"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(aiPrompt)
+                  }}
+                >
+                  Copy prompt
+                </Button>
+
+                <CodeBlock
+                  language="txt"
+                  code={aiPrompt}
+                  copyLabel="Copied AI prompt"
+                  header="none"
+                  copyPlacement="overlay"
+                  clickToCopy
+                />
+              </div>
+            </details>
+          </div>
         </div>
       </section>
 
