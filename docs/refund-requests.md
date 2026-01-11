@@ -5,7 +5,7 @@
 ### What you’re adding
 1) A `/.well-known/x402.json` file
 2) Add refund credits `optional`
-3) Add a `Link` header `optional`
+3) Add a `Link` header
 
 After that, refund requests can reach you by email.
 

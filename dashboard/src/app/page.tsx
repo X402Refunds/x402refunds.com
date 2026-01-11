@@ -76,6 +76,26 @@ export default function HomePage() {
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
             const linkHeader = `Link: <${filingUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
+            const aiPrompt = [
+              "You are integrating x402refunds.com into a paid (X-402) API.",
+              "",
+              "Do these steps exactly:",
+              "",
+              "1) Publish /.well-known/x402.json on the seller origin",
+              '   - Path: https://YOUR_DOMAIN/.well-known/x402.json',
+              "   - Publicly accessible (no auth).",
+              "   - JSON body:",
+              '     { "x402refunds": { "supportEmail": "refunds@yourdomain.com" } }',
+              "   - supportEmail must be the email the owner wants to receive refund requests at.",
+              "",
+              "2) Add a Link header on every successful paid response (HTTP 200)",
+              "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
+              '     Link: <https://api.x402refunds.com/v1/refunds>; rel=\"payment-refund\"; type=\"application/json\"',
+              "   - Do not add this header to 402 responses; only to successful paid 200 responses.",
+              "",
+              "3) Deploy the change to production",
+              "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
+            ].join("\n")
             const wellKnownObj = {
               x402refunds: {
                 supportEmail: "refunds@yourdomain.com",
@@ -89,7 +109,7 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">
-                      Copy this file.
+                      1) Copy this file.
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Replace{" "}
@@ -110,16 +130,37 @@ export default function HomePage() {
                   />
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
-                      <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
-                        {linkHeader}
-                      </code>
-                      <div className="shrink-0">
-                        <CopyButton value={linkHeader} label="Copied Link header" />
-                      </div>
+                    <div className="text-sm font-semibold text-foreground">
+                      2) Add this header.
                     </div>
+
+                    <CodeBlock
+                      language="txt"
+                      code={linkHeader}
+                      copyLabel="Copied Link header"
+                      header="none"
+                      copyPlacement="overlay"
+                      clickToCopy
+                    />
                     <div className="text-sm text-muted-foreground">
                       return this on successful paid response (200 Content).
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+                    <div className="text-sm font-semibold text-foreground">
+                      Want an AI to do it?
+                    </div>
+                    <CodeBlock
+                      language="txt"
+                      code={aiPrompt}
+                      copyLabel="Copied AI prompt"
+                      header="none"
+                      copyPlacement="overlay"
+                      className="rounded-xl"
+                    />
+                    <div className="flex items-center justify-end">
+                      <CopyButton value={aiPrompt} label="Copied AI prompt" />
                     </div>
                   </div>
                 </div>
@@ -235,7 +276,7 @@ export default function HomePage() {
                   <Search className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-950">Discoverability (optional)</div>
+                  <div className="font-semibold text-slate-950">Discoverability</div>
                   <div className="mt-1 text-sm text-slate-600">
                     Add one Link header so agent clients can auto-discover refunds support.
                   </div>
