@@ -217,6 +217,7 @@ export default function HomePage() {
               copyLabel="Copied AI prompt"
               header="none"
               copyPlacement="overlay"
+              copyOverlayClassName="scale-125 origin-top-right"
               clickToCopy
             />
           </div>

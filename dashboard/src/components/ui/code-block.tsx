@@ -61,6 +61,7 @@ export function CodeBlock(props: {
   clickToCopy?: boolean;
   header?: "caption" | "none";
   copyPlacement?: "header" | "overlay";
+  copyOverlayClassName?: string;
   className?: string;
 }) {
   const codeEl = useRef<HTMLElement | null>(null);
@@ -163,7 +164,7 @@ export function CodeBlock(props: {
         }
       >
         {copyPlacement === "overlay" ? (
-          <div className="absolute right-2 top-2 z-10">
+          <div className={cn("absolute right-2 top-2 z-10", props.copyOverlayClassName)}>
             <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
           </div>
         ) : null}
