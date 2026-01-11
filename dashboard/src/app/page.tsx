@@ -51,9 +51,10 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-7xl flex-col px-5 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:min-h-[calc(100svh-4rem)] lg:px-8">
           <div className="mx-auto w-full rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-14 sm:py-16">
             <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-              <h1 className="text-5xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
-                Turn on{" "}
-                <span className="text-blue-600">refunds</span>
+              <h1 className="text-4xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
+                <span className="block whitespace-nowrap">
+                  Turn on <span className="text-blue-600">refunds</span>
+                </span>
                 <span className="mt-4 block text-[0.9em] font-semibold text-slate-950">
                   <span className="font-medium text-slate-500">for</span>{" "}
                   <span className="text-blue-600">AI payments.</span>
