@@ -1,5 +1,5 @@
 /**
- * Buyer: submit a refund request (no API keys).
+ * Buyer (human or agent): submit a refund request (no API keys).
  *
  * Usage:
  *   node docs/examples/buyer-file-dispute.mjs
@@ -7,18 +7,20 @@
 
 const API_BASE = process.env.X402REFUNDS_API_BASE || "https://api.x402refunds.com";
 
-const merchant = process.env.MERCHANT || "eip155:8453:0x0000000000000000000000000000000000000001";
-const buyer = process.env.BUYER || "buyer:anonymous";
-const txHash = process.env.TX_HASH || "0x0000000000000000000000000000000000000000000000000000000000000000";
+const transactionHash =
+  process.env.TRANSACTION_HASH ||
+  process.env.TX_HASH ||
+  "0x" + "00".repeat(32);
+const sellerEndpointUrl =
+  process.env.SELLER_ENDPOINT_URL ||
+  "https://merchant.example/v1/paid-endpoint";
 
 const payload = {
-  buyer,
-  merchant,
-  txHash,
-  chain: "base",
-  amountMicrousdc: "10000",
-  reason: "service_not_rendered",
-  evidenceUrlOrHash: "https://example.com/logs/timeout.json",
+  blockchain: "base",
+  transactionHash,
+  sellerEndpointUrl,
+  description: "Payment succeeded, then the API request timed out.",
+  evidenceUrls: ["https://example.com/logs/timeout.json"],
 };
 
 const res = await fetch(`${API_BASE}/v1/refunds`, {

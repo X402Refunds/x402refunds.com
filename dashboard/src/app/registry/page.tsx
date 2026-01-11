@@ -36,10 +36,10 @@ export default function RegistryPage() {
               </Button>
               <Button 
                 className="bg-blue-600 hover:bg-blue-500"
-                onClick={() => window.location.href = '/file-dispute'}
+                onClick={() => window.location.href = '/request-refund'}
               >
                 <FileText className="mr-2 h-4 w-4" />
-                File Dispute
+                Request refund
               </Button>
             </div>
           </div>

@@ -9,7 +9,7 @@ type Mermaid = (typeof import("mermaid"))["default"];
 
 const SECTION_HASH: Record<DocsSectionKey, string> = {
   merchants: "integration-guide-for-merchants",
-  buyers: "file-disputes-as-a-buyer-agent",
+  buyers: "submit-refund-requests-as-a-buyer-agent",
 };
 
 function keyFromHash(hash: string): DocsSectionKey | null {
@@ -46,7 +46,7 @@ export function DocsClient(props: {
     () =>
       [
         { key: "merchants" as const, label: "Integration guide for Merchants" },
-        { key: "buyers" as const, label: "File Disputes as a Buyer Agent" },
+        { key: "buyers" as const, label: "Request Refunds as a Buyer Agent" },
       ] as const,
     [],
   );

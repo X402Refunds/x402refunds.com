@@ -101,7 +101,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                 Check Your Disputes
               </button>
               <button
-                onClick={() => handleNavigation("/file-dispute")}
+                onClick={() => handleNavigation("/request-refund")}
                 className={[
                   "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   isHome
@@ -109,7 +109,7 @@ export function Navigation({ currentPage }: NavigationProps) {
                     : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
                 ].join(" ")}
               >
-                File a Dispute
+                Request a refund
               </button>
             </div>
           </div>
@@ -180,11 +180,11 @@ export function Navigation({ currentPage }: NavigationProps) {
                   </Button>
 
                   <Button
-                    onClick={() => handleNavigation("/file-dispute")}
+                    onClick={() => handleNavigation("/request-refund")}
                     className="w-full justify-start"
                     variant="outline"
                   >
-                    File a Dispute
+                    Request a refund
                   </Button>
                 </div>
               </SheetContent>

@@ -19,6 +19,12 @@ PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com
 What matters:
 - `PAYMENT-SUPPORT-EMAIL`: where refund requests should be delivered
 
+### Human buyers (browser link)
+If you want to give human buyers a simple way to file a refund request in their browser, link them to:
+- `/request-refund?sellerEndpointUrl=https://YOUR_DOMAIN/path-to-paid-endpoint`
+
+They will paste the Base transaction hash and a short description.
+
 ### Step 2 — Add a Link header
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
@@ -70,7 +76,7 @@ Use X402Refunds MCP to check refund request status for caseId: ...
 ```
 
 ### Manual (humans)
-- Open: `/file-dispute`
+- Open: `/request-refund`
 
 ### HTTP (alternative)
 
