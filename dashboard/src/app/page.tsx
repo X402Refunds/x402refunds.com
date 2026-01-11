@@ -104,77 +104,92 @@ export default function HomePage() {
             const wellKnown = JSON.stringify(wellKnownObj, null, 2)
 
             return (
-              <div className="mt-12 max-w-7xl mx-auto grid items-start gap-10 lg:grid-cols-2">
-                {/* Step 1 (primary) */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-foreground">
-                      1) Copy this file.
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Replace{" "}
-                      <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                        supportEmail
-                      </span>
-                    </div>
-                  </div>
-
-                  <CodeBlock
-                    language="json"
-                    code={wellKnown}
-                    copyLabel="Copied /.well-known/x402.json"
-                    header="caption"
-                    title="https://YOUR_DOMAIN/.well-known/x402.json"
-                    copyPlacement="overlay"
-                    clickToCopy
-                  />
-
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-foreground">
-                      2) Add this header.
+              <div className="mt-12 max-w-7xl mx-auto space-y-10">
+                <div className="grid items-start gap-10 lg:grid-cols-2">
+                  {/* Step 1 (primary) */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold text-foreground">
+                        1) Copy this file.
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Replace{" "}
+                        <span className="font-mono rounded bg-muted px-1.5 py-0.5">
+                          supportEmail
+                        </span>
+                      </div>
                     </div>
 
                     <CodeBlock
-                      language="txt"
-                      code={linkHeader}
-                      copyLabel="Copied Link header"
-                      header="none"
+                      language="json"
+                      code={wellKnown}
+                      copyLabel="Copied /.well-known/x402.json"
+                      header="caption"
+                      title="https://YOUR_DOMAIN/.well-known/x402.json"
                       copyPlacement="overlay"
                       clickToCopy
                     />
-                    <div className="text-sm text-muted-foreground">
-                      return this on successful paid response (200 Content).
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold text-foreground">
+                        2) Add this header.
+                      </div>
+
+                      <CodeBlock
+                        language="txt"
+                        code={linkHeader}
+                        copyLabel="Copied Link header"
+                        header="none"
+                        copyPlacement="overlay"
+                        clickToCopy
+                      />
+                      <div className="text-sm text-muted-foreground">
+                        return this on successful paid response (200 Content).
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2 (confirmation + optional) */}
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold text-foreground">
+                        You’ll get refund requests by email
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        We email <span className="font-mono">supportEmail</span> from that file. No signup required.
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/30 p-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground">
+                          Optional: one‑click refunds
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Top up credits so approvals can refund automatically.
+                        </div>
+                      </div>
+                      <a
+                        href="/topup"
+                        className="shrink-0 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                      >
+                        Top up →
+                      </a>
                     </div>
                   </div>
                 </div>
 
-                {/* Step 2 (confirmation + optional) */}
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-foreground">
-                      You’ll get refund requests by email
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      We email <span className="font-mono">supportEmail</span> from that file. No signup required.
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/30 p-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-foreground">
-                        Optional: one‑click refunds
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Top up credits so approvals can refund automatically.
-                      </div>
-                    </div>
-                    <a
-                      href="/topup"
-                      className="shrink-0 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
-                    >
-                      Top up →
-                    </a>
-                  </div>
+                <div className="flex justify-center">
+                  <Button
+                    size="lg"
+                    className="h-12 px-8"
+                    onClick={() => {
+                      const el = document.getElementById("ai-prompt")
+                      el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }}
+                  >
+                    Get AI prompt (copy/paste)
+                  </Button>
                 </div>
               </div>
             )
@@ -183,7 +198,7 @@ export default function HomePage() {
       </section>
 
       {/* AI PROMPT */}
-      <section className="border-b border-slate-200 bg-white">
+      <section id="ai-prompt" className="border-b border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
@@ -191,35 +206,25 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="mt-10 max-w-3xl mx-auto">
-            <details className="group">
-              <summary className="list-none [&::-webkit-details-marker]:hidden flex justify-center">
-                <Button size="lg" className="h-12 px-8">
-                  Get AI prompt (copy/paste)
-                </Button>
-              </summary>
+          <div className="mt-10 max-w-3xl mx-auto space-y-3">
+            <Button
+              size="lg"
+              className="w-full h-14 text-base"
+              onClick={async () => {
+                await navigator.clipboard.writeText(aiPrompt)
+              }}
+            >
+              Copy prompt
+            </Button>
 
-              <div className="mt-6 space-y-3">
-                <Button
-                  size="lg"
-                  className="w-full h-14 text-base"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(aiPrompt)
-                  }}
-                >
-                  Copy prompt
-                </Button>
-
-                <CodeBlock
-                  language="txt"
-                  code={aiPrompt}
-                  copyLabel="Copied AI prompt"
-                  header="none"
-                  copyPlacement="overlay"
-                  clickToCopy
-                />
-              </div>
-            </details>
+            <CodeBlock
+              language="txt"
+              code={aiPrompt}
+              copyLabel="Copied AI prompt"
+              header="none"
+              copyPlacement="overlay"
+              clickToCopy
+            />
           </div>
         </div>
       </section>
