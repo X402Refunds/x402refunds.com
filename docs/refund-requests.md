@@ -35,8 +35,6 @@ Include this header in your normal successful response (the `200 OK` you return 
 Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"
 ```
 
-return this on successful paid response (200 Content).
-
 ### Step 3 — Add refund credits (optional)
 If you want one-click refunds from the refund request email, add refund credits:
 - Top up here: [`/topup`](/topup)
