@@ -96,7 +96,7 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <h2 className="mt-2 text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+            <h2 className="mt-2 text-xl sm:text-2xl font-semibold tracking-tight text-muted-foreground">
               Add two headers. That&apos;s it.
             </h2>
           </div>
@@ -113,7 +113,7 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        1) Add refund email header (GET + POST).
+                        1) Add refund email header.
                       </div>
                     </div>
 
@@ -122,14 +122,14 @@ export default function HomePage() {
                       code={refundContactHeader}
                       copyLabel="Copied refund contact Link header"
                       header="caption"
-                      title="Paid endpoint response header (GET + POST)"
+                      title="Paid endpoint response header"
                       copyPlacement="overlay"
                       clickToCopy
                     />
 
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        2) Add refund URL header (200 OK).
+                        2) Add refund URL header.
                       </div>
 
                       <CodeBlock
@@ -175,8 +175,7 @@ export default function HomePage() {
 
                 <div className="flex justify-center">
                   <div
-                    className="inline-flex rounded-full p-[2px] motion-reduce:animate-none animate-[spin_8s_linear_infinite]
-                    bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]"
+                    className="inline-flex rounded-full p-[2px] bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]"
                   >
                     <Button
                       size="lg"
