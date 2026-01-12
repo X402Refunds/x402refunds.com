@@ -38,15 +38,24 @@ import { v } from "convex/values";
 const DEMO_AGENTS_WALLET =
   process.env.DEMO_AGENTS_WALLET || "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
 
+// Refund contact email the demo agent wants to receive refund requests at (exposed via Link on 402).
+const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
+  process.env.DEMO_AGENTS_REFUND_CONTACT_EMAIL || "refunds@x402refunds.com";
+
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-function buildDisputeLinkHeader(requestUrl: string) {
+function buildRefundRequestLinkHeader(requestUrl: string) {
   const origin = new URL(requestUrl).origin;
-  const merchant = `eip155:8453:${DEMO_AGENTS_WALLET.toLowerCase()}`;
-  const disputeUrl = `${origin}/v1/disputes?merchant=${merchant}`;
-  const link = `<${disputeUrl}>; rel="payment-dispute"; type="application/json"`;
-  return { merchant, disputeUrl, link };
+  const refundRequestUrl = `${origin}/v1/refunds`;
+  const link = `<${refundRequestUrl}>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"`;
+  return { refundRequestUrl, link };
+}
+
+function buildRefundContactLinkHeader(): string {
+  // Support bare email targets per our merchant integration doc:
+  // Link: <refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
+  return `<${DEMO_AGENTS_REFUND_CONTACT_EMAIL}>; rel="https://x402refunds.com/rel/refund-contact"`;
 }
 
 /**
@@ -150,7 +159,8 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
  */
 export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   console.log(`📨 POST request received`);
-  const dispute = buildDisputeLinkHeader(request.url);
+  const refundRequest = buildRefundRequestLinkHeader(request.url);
+  const refundContactLink = buildRefundContactLinkHeader();
   
   // Parse request body first (needed for validation later)
   let body: any = {};
@@ -249,7 +259,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+        "Link": refundContactLink,
       }
     });
   }
@@ -370,6 +381,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
+        "Access-Control-Expose-Headers": "Link",
+        "Link": refundRequest.link,
       }
     });
   }
@@ -387,7 +400,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+        "Link": refundContactLink,
       }
     });
   }
@@ -473,6 +487,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Link",
+            "Link": refundContactLink,
           },
         },
       );
@@ -490,7 +506,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         status: 402,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Link",
+          "Link": refundContactLink,
         }
       });
     }
@@ -577,6 +595,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Link",
+            "Link": refundContactLink,
           },
         }
       );
@@ -646,6 +666,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              "Access-Control-Expose-Headers": "Link",
+              "Link": refundContactLink,
             },
           },
         );
@@ -676,6 +698,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              "Access-Control-Expose-Headers": "Link",
+              "Link": refundContactLink,
             },
           },
         );
@@ -733,7 +757,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
           "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
           "X-PAYMENT-RESPONSE": paymentResponseB64,
-          "Link": dispute.link,
+          "Link": refundRequest.link,
         }
       });
     }
@@ -770,7 +794,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
           "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
-          "Link": dispute.link,
+          "Link": refundRequest.link,
         },
       },
     );
@@ -791,7 +815,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "X-PAYMENT, X-402-Transaction-Hash, Content-Type",
-        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE"
+        "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE, Link",
+        "Link": refundRequest.link,
       }
     });
   }
