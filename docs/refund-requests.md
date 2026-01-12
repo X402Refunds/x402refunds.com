@@ -35,6 +35,7 @@ https://api.x402refunds.com/mcp
 ```
 
 **Request a refund:**
+
 Call tool `x402_request_refund` with:
 - `blockchain`: "base" or "solana"
 - `transactionHash`: USDC transfer tx hash
@@ -49,6 +50,7 @@ Use the MCP tool x402_request_refund to submit a refund request for an X-402 pay
 ```
 
 **Check status:**
+
 Call tool `x402_check_refund_status` with `caseId` (from refund request response).
 
 AI prompt (copy/paste):

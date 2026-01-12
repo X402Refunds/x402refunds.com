@@ -218,6 +218,55 @@ export function DocsClient(props: {
               </div>
             ) : (
               <div ref={contentRef} id={SECTION_HASH[active]}>
+                {active === "merchants" && (
+                  <div className="mb-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 rounded-full border-slate-300 bg-white px-6 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                      onClick={async () => {
+                        const aiPrompt = [
+                          "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
+                          "",
+                          "Do these steps exactly (end-to-end):",
+                          "",
+                          "0) Find every X-402 paywalled endpoint in this repo",
+                          "   - Identify all routes/handlers that can return HTTP 402 Payment Required for X-402.",
+                          "   - These are the endpoints we mean by \"paid endpoints\" (exclude payment/signature/facilitator plumbing endpoints).",
+                          "",
+                          "1) Add a Link header with your refund email (refund contact) to ALL paywalled endpoints",
+                          "   - Add this on every response those endpoints produce: both 200 and 402.",
+                          "   - Apply it to every method used (GET, POST, etc.).",
+                          '     Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"',
+                          "   - The <...> target should be mailto:refunds@yourdomain.com",
+                          "   - This must be the email the owner wants to receive refund requests at.",
+                          "",
+                          "2) Add a Link header advertising the refund-request filing URL on paid 200 responses",
+                          "   - On every paywalled endpoint, when returning 200 OK after a paid request, include:",
+                          '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
+                          "   - Return this on successful paid 200 responses only.",
+                          "",
+                          "3) Deploy + test (required)",
+                          "   - Deploy to production.",
+                          "   - Test at least one paywalled endpoint:",
+                          "     - Unpaid request => 402 response MUST include the refund-contact Link header.",
+                          "     - Paid request => 200 response MUST include refund-contact + refund-request Link headers.",
+                          "",
+                          "Important:",
+                          "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
+                        ].join("\n");
+                        try {
+                          await navigator.clipboard.writeText(aiPrompt);
+                          // Visual feedback - could enhance with toast notification
+                        } catch {
+                          // Fallback if clipboard API fails
+                        }
+                      }}
+                    >
+                      Copy AI prompt
+                    </Button>
+                  </div>
+                )}
                 <article
                   className="markdown"
                   dangerouslySetInnerHTML={{ __html: props.sections[active] }}
