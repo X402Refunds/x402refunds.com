@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-12T01:27:08.214Z
+**Auto-generated on**: 2026-01-12T03:22:14.964Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -89,7 +89,7 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet, migrateAgentWalletsToCaip10
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, backfillPaymentSourceTx, migratePaymentCasesToWalletFirstV1, runMigratePaymentCasesToWalletFirstV1, purgeNonPaymentCasesAndOrphans, runPurgeNonPaymentCasesAndOrphans, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, listLiveFeedCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, normalizeCaseIdFromString, getCaseByIdFromString, backfillPaymentSourceTx, migratePaymentCasesToWalletFirstV1, runMigratePaymentCasesToWalletFirstV1, purgeNonPaymentCasesAndOrphans, runPurgeNonPaymentCasesAndOrphans, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, listLiveFeedCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes, analyzeDatabase, deleteAllAgentsExceptOne, deleteMockData, deleteLargeAmountCases, deleteZeroAmountCases, cleanupOrphanedRecords
 - **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -103,7 +103,7 @@ consulate/
 - **events.ts** - getDisputeActivityEvents, getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getOrganizationEvents, getOrganizationStats, getApiKeyEvents
 - **cleanup.ts** - redactPersonalData, archiveToCloudStorage, deleteOldEvidence, deleteOldSupportData, deleteOldPaymentEvidence, optimizeStorage
 - **webFetcher.ts** - fetchWebContent, checkApiHealth, analyzeImage
-- **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
+- **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByCaseIdFromString, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
 - **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, deriveUsdcMerchantFromTxHashSolana, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
@@ -417,5 +417,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/11/2026, 5:27:08 PM
+Generated: 1/11/2026, 7:22:14 PM
 Files scanned: 538

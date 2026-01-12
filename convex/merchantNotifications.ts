@@ -132,6 +132,9 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     // Safety gate: only email if we were able to corroborate origin ⇄ wallet via seller endpoint payTo.
     // This prevents spam if a filer supplies an unrelated origin.
     if (v1?.endpointPayToMatch !== true) {
+      console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (ENDPOINT_PAYTO_UNVERIFIED)", {
+        caseId: String(args.caseId),
+      });
       return { ok: true, emailed: false, reason: "ENDPOINT_PAYTO_UNVERIFIED" };
     }
 
@@ -139,13 +142,27 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
 
     const merchantOrigin = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
-    if (!merchantOrigin) return { ok: true, emailed: false, reason: "NO_MERCHANT_ORIGIN" };
+    if (!merchantOrigin) {
+      console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (NO_MERCHANT_ORIGIN)", {
+        caseId: String(args.caseId),
+      });
+      return { ok: true, emailed: false, reason: "NO_MERCHANT_ORIGIN" };
+    }
 
     const expectedMerchant = normalizeMerchantId(merchantRaw);
-    if (!expectedMerchant) return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
+    if (!expectedMerchant) {
+      console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (UNSUPPORTED_MERCHANT_ID)", {
+        caseId: String(args.caseId),
+        merchant: merchantRaw,
+      });
+      return { ok: true, emailed: false, reason: "UNSUPPORTED_MERCHANT_ID" };
+    }
 
     const supportEmail = typeof v1?.paymentSupportEmail === "string" ? v1.paymentSupportEmail : "";
     if (!supportEmail || !isLikelyEmailAddress(String(supportEmail))) {
+      console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (MISSING_SUPPORT_EMAIL)", {
+        caseId: String(args.caseId),
+      });
       return { ok: true, emailed: false, reason: "MISSING_SUPPORT_EMAIL" };
     }
 
@@ -196,6 +213,12 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       );
 
       if (!tokenRes?.shouldSend) {
+        console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (AWAITING_EMAIL_VERIFICATION)", {
+          caseId: String(args.caseId),
+          merchant: expectedMerchant,
+          origin: merchantOrigin,
+          supportEmail: String(supportEmail),
+        });
         return { ok: true, emailed: false, reason: "AWAITING_EMAIL_VERIFICATION" };
       }
 
@@ -219,9 +242,18 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       });
 
       if (!sent.ok) {
+        console.warn("merchantNotifications:notifyMerchantDisputeFiled: verification email failed", {
+          caseId: String(args.caseId),
+          code: sent.code,
+          message: sent.message,
+        });
         return { ok: true, emailed: false, reason: sent.code, details: sent.message };
       }
 
+      console.info("merchantNotifications:notifyMerchantDisputeFiled: verification email sent", {
+        caseId: String(args.caseId),
+        to: String(supportEmail),
+      });
       return { ok: true, emailed: true, reason: "EMAIL_VERIFICATION_SENT" };
     }
 
@@ -301,9 +333,18 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     });
 
     if (!sent.ok) {
+      console.warn("merchantNotifications:notifyMerchantDisputeFiled: dispute email failed", {
+        caseId: String(args.caseId),
+        code: sent.code,
+        message: sent.message,
+      });
       return { ok: true, emailed: false, reason: sent.code, details: sent.message };
     }
 
+    console.info("merchantNotifications:notifyMerchantDisputeFiled: dispute email sent", {
+      caseId: String(args.caseId),
+      to: String(supportEmail),
+    });
     return { ok: true, emailed: true };
   },
 });

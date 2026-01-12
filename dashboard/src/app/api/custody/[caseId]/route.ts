@@ -13,23 +13,28 @@ export async function GET(
 ) {
   try {
     const { caseId } = params;
+    const normalized = await fetchQuery(api.cases.normalizeCaseIdFromString, { caseId: String(caseId || "") });
+    const normalizedCaseId = (normalized?.caseId ?? null) as Id<"cases"> | null;
+    if (!normalizedCaseId) {
+      return NextResponse.json({ error: "Invalid case id", caseId }, { status: 400 });
+    }
 
     // Get case data
-    const caseData = await fetchQuery(api.cases.getCasePublic, { caseId: caseId as Id<'cases'> });
+    const caseData = await fetchQuery(api.cases.getCasePublic, { caseId: normalizedCaseId });
 
     if (!caseData) {
       return NextResponse.json(
-        { error: 'Case not found', caseId },
+        { error: "Case not found", caseId: normalizedCaseId },
         { status: 404 }
       );
     }
 
     // Get evidence for the case
-    const evidence = await fetchQuery(api.evidence.getEvidenceByCaseId, { caseId: caseId as Id<'cases'> });
+    const evidence = await fetchQuery(api.evidence.getEvidenceByCaseId, { caseId: normalizedCaseId });
 
     // Build custody chain
     const custodyChain = {
-      caseId,
+      caseId: normalizedCaseId,
       case: {
         filed: caseData.filedAt,
         plaintiff: caseData.plaintiff,

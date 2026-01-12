@@ -292,6 +292,14 @@ describe('Case Filing & Management - MVP', () => {
       expect(case_?.status).toBe('DECIDED');
     });
 
+    it("should normalize case id from string", async () => {
+      const ok = await t.query(api.cases.normalizeCaseIdFromString, { caseId: String(caseId) });
+      expect(ok?.caseId).toBe(caseId);
+
+      const bad = await t.query(api.cases.normalizeCaseIdFromString, { caseId: "not-a-real-case-id" });
+      expect(bad?.caseId).toBeNull();
+    });
+
     it('should throw error when updating ruling for non-existent case', async () => {
       // Try to update a case that was never created by using db.get with bad ID
       // This will test the error path in updateCaseRuling

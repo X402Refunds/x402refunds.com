@@ -295,6 +295,33 @@ export const getEvidenceByCaseId = query({
   },
 });
 
+/**
+ * Safe evidence lookup by untrusted case id string. Returns [] instead of throwing.
+ * Useful for public pages where the URL param is not guaranteed to be a valid cases id.
+ */
+export const getEvidenceByCaseIdFromString = query({
+  args: { caseId: v.string() },
+  handler: async (ctx, args) => {
+    const raw = String(args.caseId || "").trim();
+    if (!raw) return [];
+    const normalized = await ctx.db.normalizeId("cases", raw);
+    if (!normalized) return [];
+    const evidenceManifests = await ctx.db
+      .query("evidenceManifests")
+      .withIndex("by_case", (q) => q.eq("caseId", normalized))
+      .collect();
+    return await Promise.all(
+      evidenceManifests.map(async (manifest) => ({
+        ...manifest,
+        submittedBy: manifest.agentDid,
+        submittedAt: manifest.ts,
+        type: "general",
+        data: null,
+      })),
+    );
+  },
+});
+
 export const getEvidenceByAgent = query({
   args: { agentDid: v.string() },
   handler: async (ctx, args) => {

@@ -84,17 +84,19 @@ function cleanMarkdown(text: string): string {
 
 export default function PublicCaseTrackingPage() {
   const params = useParams();
-  const caseId = params.id as Id<"cases">;
+  const rawCaseId = String(params.id ?? "");
+  const normalized = useQuery(anyApi.cases.normalizeCaseIdFromString, { caseId: rawCaseId });
+  const caseId = (normalized?.caseId ?? null) as Id<"cases"> | null;
 
   // Fetch case details (public endpoint - no auth required)
-  const caseDetails = useQuery(anyApi.cases.getCaseById, { caseId });
-  const caseEvidence = useQuery(anyApi.evidence.getEvidenceByCaseId, { caseId });
-  const refund = useQuery(anyApi.refunds.getRefundStatus, caseDetails ? { caseId } : "skip");
+  const caseDetails = useQuery(anyApi.cases.getCaseByIdFromString, { caseId: rawCaseId });
+  const caseEvidence = useQuery(anyApi.evidence.getEvidenceByCaseIdFromString, { caseId: rawCaseId });
+  const refund = useQuery(anyApi.refunds.getRefundStatus, caseId ? { caseId } : "skip");
 
   // Fetch payment dispute data if this is a payment dispute case
   const paymentDispute = useQuery(
     anyApi.paymentDisputes.getPaymentDisputeByCaseId,
-    caseDetails ? { caseId } : "skip"
+    caseId ? { caseId } : "skip"
   );
 
 
@@ -103,7 +105,8 @@ export default function PublicCaseTrackingPage() {
     return new Date(timestamp).toLocaleString();
   };
 
-  if (!caseDetails) {
+  // Loading normalization + case lookup
+  if (normalized === undefined || caseDetails === undefined) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
         <div className="container max-w-4xl mx-auto py-12 px-4">
@@ -118,6 +121,41 @@ export default function PublicCaseTrackingPage() {
           <Card>
             <CardContent className="py-8">
               <p className="text-center text-muted-foreground">Loading case details...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Invalid / unknown case id
+  if (!caseId || !caseDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+        <div className="container max-w-4xl mx-auto py-12 px-4">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-slate-900">x402Disputes</h1>
+            </div>
+            <p className="text-sm text-slate-600">Case Tracking</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Case not found</CardTitle>
+              <CardDescription>
+                This link doesn&apos;t look like a valid case ID for this environment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Provided ID: <code className="font-mono text-foreground">{rawCaseId || "(empty)"}</code>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                If you copied this ID from an email or another environment, try opening the tracking link again from the
+                original source.
+              </div>
             </CardContent>
           </Card>
         </div>

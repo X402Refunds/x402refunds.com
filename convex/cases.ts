@@ -297,6 +297,35 @@ export const getCaseById = query({
 });
 
 /**
+ * Normalize an untrusted case id string to a typed `Id<"cases">` (or null).
+ * This avoids ArgumentValidationError when clients receive ids from other systems/environments.
+ */
+export const normalizeCaseIdFromString = query({
+  args: { caseId: v.string() },
+  handler: async (ctx, args): Promise<{ caseId: any | null }> => {
+    const raw = String(args.caseId || "").trim();
+    if (!raw) return { caseId: null };
+    const normalized = await ctx.db.normalizeId("cases", raw);
+    return { caseId: normalized ?? null };
+  },
+});
+
+/**
+ * Safe get-by-id that accepts an untrusted string. Returns null instead of throwing.
+ * Prefer this for public pages where the URL param cannot be trusted.
+ */
+export const getCaseByIdFromString = query({
+  args: { caseId: v.string() },
+  handler: async (ctx, args) => {
+    const raw = String(args.caseId || "").trim();
+    if (!raw) return null;
+    const normalized = await ctx.db.normalizeId("cases", raw);
+    if (!normalized) return null;
+    return await ctx.db.get(normalized);
+  },
+});
+
+/**
  * One-time migration/backfill:
  * Populate paymentSourceChain/paymentSourceTxHash for historical PAYMENT cases
  * from paymentDetails.blockchain/transactionHash when present.
