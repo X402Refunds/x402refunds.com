@@ -103,10 +103,7 @@ export default function HomePage() {
         <div className={`${containerClass} ${sectionYClass}`}>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Takes 10 seconds.
-            </h2>
-            <h2 className="mt-2 text-sm font-medium tracking-tight text-muted-foreground">
-              Add two headers. That&apos;s it.
+              Add two headers. Takes 10 seconds.
             </h2>
           </div>
 
