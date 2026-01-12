@@ -19,21 +19,22 @@ export default function HomePage() {
     "",
     "Do these steps exactly:",
     "",
-    "1) Add PAYMENT-SUPPORT-EMAIL on your 402 Payment Required responses",
+    "1) Add a Link header on your 402 Payment Required responses (refund contact)",
     "   - For every endpoint that is paywalled / requires X-402 payment, when returning 402, include:",
-    '     PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com',
-    "   - PAYMENT-SUPPORT-EMAIL must be the email the owner wants to receive refund requests at.",
+    '     Link: <refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"',
+    "   - The <...> target may also be mailto:refunds@yourdomain.com",
+    "   - This must be the email the owner wants to receive refund requests at.",
     "",
     "2) Add a Link header on every successful paid response (HTTP 200)",
     "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
-    '     Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"',
+    '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
     "   - Do not add this header to 402 responses; only to successful paid 200 responses.",
     "",
     "3) Deploy the change to production",
-    "   - Confirm that both the /.well-known/x402.json route and the Link header are live in prod.",
+    "   - Confirm the Link header(s) are live in prod.",
     "",
     "Important:",
-    "If you do not know the correct PAYMENT-SUPPORT-EMAIL, ask your owner for it. Do not guess.",
+    "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
   ].join("\n")
 
   return (
@@ -97,8 +98,8 @@ export default function HomePage() {
 
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
-            const linkHeader = `Link: <${filingUrl}>; rel=\"payment-refund\"; type=\"application/json\"`
-            const supportEmailHeader = `PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com`
+            const linkHeader = `Link: <${filingUrl}>; rel=\"https://x402refunds.com/rel/refund-request\"; type=\"application/json\"`
+            const refundContactHeader = `Link: <refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"`
 
             return (
               <div className="mt-12 max-w-7xl mx-auto space-y-10">
@@ -119,8 +120,8 @@ export default function HomePage() {
 
                     <CodeBlock
                       language="txt"
-                      code={supportEmailHeader}
-                      copyLabel="Copied PAYMENT-SUPPORT-EMAIL header"
+                      code={refundContactHeader}
+                      copyLabel="Copied refund contact Link header"
                       header="caption"
                       title="402 Payment Required response header"
                       copyPlacement="overlay"
@@ -153,7 +154,7 @@ export default function HomePage() {
                         You’ll get refund requests by email
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        We email <span className="font-mono">PAYMENT-SUPPORT-EMAIL</span> from your 402 response. No signup required.
+                        We email the address from your 402 <span className="font-mono">Link</span> refund-contact header. No signup required.
                       </div>
                     </div>
 

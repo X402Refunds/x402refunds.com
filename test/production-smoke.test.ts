@@ -58,7 +58,7 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
     }, 15000); // 15s test timeout
 
     // NOTE: /.well-known/x402.json has been removed. Merchant notification email is discovered
-    // from PAYMENT-SUPPORT-EMAIL on the seller's 402 response instead.
+    // from the seller's 402 Link refund-contact rel instead.
   });
 
   describe('MCP Endpoints', () => {

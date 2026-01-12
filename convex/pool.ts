@@ -107,7 +107,7 @@ export const cases_fileWalletPaymentDispute = mutation({
     endpointPayToCandidates: v.optional(v.array(v.string())),
     endpointPayToMatch: v.optional(v.boolean()),
     endpointPayToMismatch: v.optional(v.boolean()),
-    // Best-effort: extracted from sellerEndpointUrl 402 response header PAYMENT-SUPPORT-EMAIL.
+    // Best-effort: extracted from sellerEndpointUrl 402 response Link header refund-contact rel.
     paymentSupportEmail: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ ok: true; disputeId: Id<"cases"> } | { ok: false; code: string; message: string }> => {

@@ -1,2 +1,2 @@
-Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"
+Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"
 

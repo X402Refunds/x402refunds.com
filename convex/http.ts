@@ -11,6 +11,7 @@ import { buildMerchantActionErrorCopy } from "./lib/merchantActionErrorCopy";
 const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
 import { parseX402PayTo } from "./lib/x402PayTo";
+import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
 
 const http = httpRouter();
 
@@ -1645,13 +1646,13 @@ http.route({
         signal: AbortSignal.timeout(5_000),
       });
       if (res.status === 402) {
-        // Merchant contact discovery: seller must provide PAYMENT-SUPPORT-EMAIL on the 402 response.
-        // No fallback to /.well-known/x402.json (removed).
-        const header = res.headers.get("PAYMENT-SUPPORT-EMAIL");
-        const maybeEmail = typeof header === "string" ? header.trim() : "";
-        if (maybeEmail.length >= 3 && maybeEmail.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(maybeEmail)) {
-          paymentSupportEmail = maybeEmail;
-        }
+        // Merchant refund contact discovery (no legacy):
+        // seller must include `Link: <mailto:refunds@merchant.com>; rel="https://x402refunds.com/rel/refund-contact"`
+        // or `Link: <refunds@merchant.com>; rel="https://x402refunds.com/rel/refund-contact"` on the 402 response.
+        const link = res.headers.get("Link") || "";
+        const uri = findLinkByRel(link, "https://x402refunds.com/rel/refund-contact");
+        const email = uri ? parseRefundContactEmailFromLinkUri(uri) : null;
+        if (email) paymentSupportEmail = email;
 
         const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
         const bodyText = await res.text().catch(() => null);

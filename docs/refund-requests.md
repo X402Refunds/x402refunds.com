@@ -3,21 +3,22 @@
 ## Integration Guide for Merchants
 
 ### What you’re adding
-1) A `PAYMENT-SUPPORT-EMAIL` header on your 402 responses
+1) A `Link` header on your 402 responses advertising your refund contact email
 2) Add refund credits `optional`
 3) Add a `Link` header
 
 After that, refund requests can reach you by email.
 
-### Step 1 — Add `PAYMENT-SUPPORT-EMAIL` on your 402 responses
+### Step 1 — Add a `Link` header on your 402 responses (refund contact)
 Include this header on your **`402 Payment Required`** responses for paywalled endpoints:
 
 ```txt
-PAYMENT-SUPPORT-EMAIL: refunds@yourdomain.com
+Link: <refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
 ```
 
 What matters:
-- `PAYMENT-SUPPORT-EMAIL`: where refund requests should be delivered
+- The `<...>` target may also be `mailto:refunds@yourdomain.com`
+- The email should be the address you want to receive refund requests at
 
 ### Human buyers (browser link)
 If you want to give human buyers a simple way to file a refund request in their browser, link them to:
@@ -29,7 +30,7 @@ They will paste the Base transaction hash and a short description.
 Include this header in your normal successful response (the `200 OK` you return after a paid request):
 
 ```txt
-Link: <https://api.x402refunds.com/v1/refunds>; rel="payment-refund"; type="application/json"
+Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"
 ```
 
 ### Step 3 — Add refund credits (optional)

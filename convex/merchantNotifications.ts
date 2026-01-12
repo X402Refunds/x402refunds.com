@@ -2,7 +2,7 @@
  * Merchant notification pipeline for wallet-first disputes (v1).
  *
  * Goal: No-signup notifications. We discover the merchant notification email from the seller's
- * `PAYMENT-SUPPORT-EMAIL` header on the sellerEndpointUrl 402 response, store it on the case,
+ * `Link` header (refund-contact rel) on the sellerEndpointUrl 402 response, store it on the case,
  * and require per-wallet email verification for (origin, wallet, supportEmail).
  */
 

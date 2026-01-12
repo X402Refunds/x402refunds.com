@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-11T22:35:32.573Z
+**Auto-generated on**: 2026-01-12T00:35:24.524Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (67 files)
+### Convex Files (68 files)
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
@@ -113,6 +113,7 @@ consulate/
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **duplicateDispute.ts** - parseDuplicatePaymentDisputeError
 - **email.ts** - Core logic
+- **linkHeader.ts** - parseLinkHeader, findLinkByRel, parseRefundContactEmailFromLinkUri
 - **merchantActionCopy.ts** - buildMerchantActionCopy
 - **merchantActionErrorCopy.ts** - buildMerchantActionErrorCopy
 - **merchantRefundEmailCopy.ts** - buildMerchantRefundExecutedEmailCopy
@@ -196,7 +197,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (64 test files)
+### Test Suites (65 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -238,6 +239,7 @@ Common HTTP routes exposed:
 - test/unit/canonical-dispute-duplicate.test.ts
 - test/unit/case-tracking.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
+- test/unit/link-header-parser.test.ts
 - test/unit/merchant-action-copy.test.ts
 - test/unit/merchant-action-error-copy.test.ts
 - test/unit/merchant-email-actions.test.ts
@@ -376,13 +378,13 @@ Common HTTP routes exposed:
 - 75 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 67 TypeScript files with serverless functions
+- 68 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 64 test files using Vitest
+- 65 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -415,5 +417,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/11/2026, 2:35:32 PM
-Files scanned: 535
+Generated: 1/11/2026, 4:35:24 PM
+Files scanned: 538
