@@ -103,7 +103,7 @@ export default function HomePage() {
         <div className={`${containerClass} ${sectionYClass}`}>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Add two headers. Takes 10 seconds.
+              Add two refund headers.
             </h2>
           </div>
 
