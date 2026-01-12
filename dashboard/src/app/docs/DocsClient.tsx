@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
@@ -44,9 +45,11 @@ export function DocsClient(props: {
 }) {
   const [active, setActive] = useState<DocsSectionKey>("merchants");
   const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
+  const [copied, setCopied] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLDivElement | null>(null);
 
   const items = useMemo(
     () =>
@@ -142,6 +145,15 @@ export function DocsClient(props: {
   useEffect(() => {
     if (active !== "buyers") {
       enhanceRenderedHtml(contentRef.current);
+      // Insert button after the first h2 heading for merchants section
+      if (active === "merchants" && contentRef.current && buttonRef.current) {
+        const article = contentRef.current.querySelector("article.markdown");
+        const firstH2 = article?.querySelector("h2");
+        if (firstH2 && buttonRef.current && buttonRef.current.parentNode) {
+          // Move button to appear right after the h2
+          firstH2.insertAdjacentElement("afterend", buttonRef.current);
+        }
+      }
       return;
     }
     if (buyerMode === "http") {
@@ -218,14 +230,18 @@ export function DocsClient(props: {
               </div>
             ) : (
               <div ref={contentRef} id={SECTION_HASH[active]}>
+                <article
+                  className="markdown"
+                  dangerouslySetInnerHTML={{ __html: props.sections[active] }}
+                />
                 {active === "merchants" && (
-                  <div className="mb-6 flex justify-center">
+                  <div ref={buttonRef} className="mb-6 flex justify-center">
                     <div className="inline-flex rounded-full p-[2px] bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]">
                       <Button
                         size="lg"
                         variant="outline"
                         type="button"
-                        className="h-12 rounded-full border-0 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
+                        className="h-12 rounded-full border-0 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900 relative"
                         onClick={async () => {
                           const aiPrompt = [
                             "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
@@ -259,21 +275,25 @@ export function DocsClient(props: {
                           ].join("\n");
                           try {
                             await navigator.clipboard.writeText(aiPrompt);
-                            // Visual feedback - could enhance with toast notification
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
                           } catch {
                             // Fallback if clipboard API fails
                           }
                         }}
                       >
-                        Copy AI prompt
+                        {copied ? (
+                          <span className="flex items-center gap-2">
+                            <Check className="h-5 w-5" />
+                            Copied!
+                          </span>
+                        ) : (
+                          "Copy AI prompt"
+                        )}
                       </Button>
                     </div>
                   </div>
                 )}
-                <article
-                  className="markdown"
-                  dangerouslySetInnerHTML={{ __html: props.sections[active] }}
-                />
               </div>
             )}
           </div>
