@@ -367,7 +367,27 @@ export const refreshMerchantContactForCase: any = internalAction({
     const meta: any = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
     const v1: any = meta?.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
 
-    const sellerEndpointUrl = typeof v1?.sellerEndpointUrl === "string" ? String(v1.sellerEndpointUrl).trim() : "";
+    // Prefer wallet-first metadata, but fall back to requestJson for payment-dispute cases.
+    let sellerEndpointUrl =
+      typeof v1?.sellerEndpointUrl === "string" ? String(v1.sellerEndpointUrl).trim() : "";
+
+    if (!sellerEndpointUrl) {
+      const reqJson = caseData?.paymentDetails?.plaintiffMetadata?.requestJson;
+      if (typeof reqJson === "string" && reqJson.trim()) {
+        try {
+          const parsed = JSON.parse(reqJson) as any;
+          const url = typeof parsed?.url === "string" ? String(parsed.url).trim() : "";
+          if (url && url.startsWith("https://")) {
+            // Keep parity with /v1/refunds validation: require a path, not just an origin.
+            const u = new URL(url);
+            if (u.pathname && u.pathname !== "/") sellerEndpointUrl = u.toString();
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     if (!sellerEndpointUrl) return { ok: false, reason: "NO_SELLER_ENDPOINT_URL" };
 
     let origin: string | null = null;
@@ -436,6 +456,7 @@ export const refreshMerchantContactForCase: any = internalAction({
 
     // Patch metadata.v1 with what we learned (never delete existing fields).
     const nextV1: any = { ...v1 };
+    if (sellerEndpointUrl) nextV1.sellerEndpointUrl = sellerEndpointUrl;
     if (origin) nextV1.merchantOrigin = origin;
     if (paymentSupportEmail) nextV1.paymentSupportEmail = paymentSupportEmail;
     if (endpointPayToCandidates) nextV1.endpointPayToCandidates = endpointPayToCandidates;
