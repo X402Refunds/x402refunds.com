@@ -63,7 +63,7 @@ export default function HomePage() {
               </h1>
               
               <p className="mt-5 text-lg sm:text-xl text-slate-600 max-w-2xl">
-                Add one header. Refund requests land in your email.
+                Add two headers. Refund requests land in your email.
               </p>
 
               <div className="mt-5 text-sm text-slate-600 sm:text-base">
@@ -104,7 +104,7 @@ export default function HomePage() {
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
             const linkHeader = `Link: <${filingUrl}>; rel=\"https://x402refunds.com/rel/refund-request\"; type=\"application/json\"`
-            const refundContactHeader = `Link: <refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"`
+            const refundContactHeader = `Link: <mailto:refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"`
 
             return (
               <div className="mt-12 max-w-7xl mx-auto space-y-10">
@@ -122,7 +122,7 @@ export default function HomePage() {
                       code={refundContactHeader}
                       copyLabel="Copied refund contact Link header"
                       header="caption"
-                      title="402 Payment Required response header"
+                      title="Paid endpoint response header (GET + POST)"
                       copyPlacement="overlay"
                       clickToCopy
                     />

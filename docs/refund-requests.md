@@ -3,7 +3,7 @@
 ## Integration Guide for Merchants
 
 ### What you’re adding
-1) A `Link` header on your **402** responses advertising your **refund contact email**
+1) A `Link` header on your paid endpoint responses (**200/402**) advertising your **refund contact email**
 2) A `Link` header on your **successful paid 200** responses advertising the **refund request endpoint**
 3) (Optional) Refund credits for one-click refunds
 
