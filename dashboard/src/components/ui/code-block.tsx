@@ -56,6 +56,7 @@ export function CodeBlock(props: {
   language?: string;
   title?: string;
   copyLabel?: string;
+  showCopy?: boolean;
   variant?: "minimal" | "card";
   copyUi?: "icon" | "button";
   clickToCopy?: boolean;
@@ -71,6 +72,7 @@ export function CodeBlock(props: {
   const clickToCopy = props.clickToCopy ?? false;
   const header = props.header ?? "caption";
   const copyPlacement = props.copyPlacement ?? "header";
+  const showCopy = props.showCopy ?? true;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -117,7 +119,8 @@ export function CodeBlock(props: {
             )}
           </div>
           {copyPlacement === "header" ? (
-            copyUi === "button" ? (
+            showCopy ? (
+              copyUi === "button" ? (
               <Button
                 type="button"
                 variant="outline"
@@ -130,9 +133,10 @@ export function CodeBlock(props: {
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 {copied ? "Copied" : "Copy"}
               </Button>
-            ) : (
-              <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
-            )
+              ) : (
+                <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
+              )
+            ) : null
           ) : null}
         </div>
       ) : null}
@@ -163,7 +167,7 @@ export function CodeBlock(props: {
             : undefined
         }
       >
-        {copyPlacement === "overlay" ? (
+        {copyPlacement === "overlay" && showCopy ? (
           <div className={cn("absolute right-2 top-2 z-10", props.copyOverlayClassName)}>
             <CopyButton value={props.code} label={props.copyLabel || "Copied"} />
           </div>

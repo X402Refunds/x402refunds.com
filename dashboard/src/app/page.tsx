@@ -15,25 +15,31 @@ import {
 
 export default function HomePage() {
   const aiPrompt = [
-    "You are integrating x402refunds.com into a paid (X-402) API.",
+    "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
     "",
-    "Do these steps exactly:",
+    "Do these steps exactly (end-to-end):",
     "",
-    "1) Add a Link header with your refund email (refund contact)",
-    "   - Apply this across your repo: every paid X-402 endpoint should follow this format.",
-    "   - On the PAID API endpoints themselves (not payment/signature/facilitator endpoints): include this on both GET and POST.",
-    "   - Return it on both 200 (discovery/success) and 402 (payment required).",
+    "0) Find every X-402 paywalled endpoint in this repo",
+    "   - Identify all routes/handlers that can return HTTP 402 Payment Required for X-402.",
+    "   - These are the endpoints we mean by “paid endpoints” (exclude payment/signature/facilitator plumbing endpoints).",
+    "",
+    "1) Add a Link header with your refund email (refund contact) to ALL paywalled endpoints",
+    "   - Add this on every response those endpoints produce: both 200 and 402.",
+    "   - Apply it to every method used (GET, POST, etc.).",
     '     Link: <mailto:refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"',
     "   - The <...> target should be mailto:refunds@yourdomain.com",
     "   - This must be the email the owner wants to receive refund requests at.",
     "",
-    "2) Add a Link header advertising the refund-request filing URL (HTTP 200)",
-    "   - For every paid X-402 endpoint in your repo, when returning 200 OK, include:",
+    "2) Add a Link header advertising the refund-request filing URL on paid 200 responses",
+    "   - On every paywalled endpoint, when returning 200 OK after a paid request, include:",
     '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
-    "   - Return this on successful paid 200 responses.",
+    "   - Return this on successful paid 200 responses only.",
     "",
-    "3) Deploy the change to production",
-    "   - Confirm the Link header(s) are live in prod.",
+    "3) Deploy + test (required)",
+    "   - Deploy to production.",
+    "   - Test at least one paywalled endpoint:",
+    "     - Unpaid request => 402 response MUST include the refund-contact Link header.",
+    "     - Paid request => 200 response MUST include refund-contact + refund-request Link headers.",
     "",
     "Important:",
     "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
@@ -93,10 +99,10 @@ export default function HomePage() {
       <section id="enable" className="border-b border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <h2 className="mt-2 text-xl sm:text-2xl font-semibold tracking-tight text-muted-foreground">
+            <h2 className="mt-2 text-base sm:text-xl font-semibold tracking-tight text-muted-foreground">
               Add two headers. That&apos;s it.
             </h2>
           </div>
@@ -120,11 +126,10 @@ export default function HomePage() {
                     <CodeBlock
                       language="txt"
                       code={refundContactHeader}
-                      copyLabel="Copied refund contact Link header"
                       header="caption"
                       title="Paid endpoint response header"
                       copyPlacement="overlay"
-                      clickToCopy
+                      showCopy={false}
                     />
 
                     <div className="space-y-2">
@@ -135,10 +140,9 @@ export default function HomePage() {
                       <CodeBlock
                         language="txt"
                         code={linkHeader}
-                        copyLabel="Copied Link header"
                         header="none"
                         copyPlacement="overlay"
-                        clickToCopy
+                        showCopy={false}
                       />
                     </div>
                   </div>

@@ -10,7 +10,7 @@
 After steps 1–2, refund requests can reach you by email.
 
 ### Step 1 — Add a `Link` header with your refund email (refund contact)
-Include this header on your paid endpoint responses (GET + POST). Return it on both 200 and 402. Use `mailto:` as the Link target:
+Do this across your repo on every X-402 paywalled endpoint. Include this header on your paid endpoint responses (GET + POST). Return it on both 200 and 402. Use `mailto:` as the Link target:
 
 ```txt
 Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
