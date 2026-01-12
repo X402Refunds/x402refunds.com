@@ -1,6 +1,6 @@
 # x402 Refund Requests
 
-## Integration Guide for Merchants
+## Integration Guide for Sellers
 
 ### What you’re adding
 1) A `Link` header on your paid endpoint responses (**200/402**) advertising your **refund contact email**

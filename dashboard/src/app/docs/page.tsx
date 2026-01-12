@@ -20,11 +20,11 @@ function splitDocsMarkdown(md: string): {
   const titleMatch = md.match(/^#\s+(.+)$/m);
   const title = titleMatch?.[1]?.trim() || "Docs";
 
-  const merchantsIdx = md.search(/^##\s+Integration Guide for Merchants\s*$/m);
+  const merchantsIdx = md.search(/^##\s+Integration Guide for Sellers\s*$/m);
   const buyersIdx =
-    md.search(/^##\s+File Disputes as a Buyer Agent\s*$/m) >= 0
-      ? md.search(/^##\s+File Disputes as a Buyer Agent\s*$/m)
-      : md.search(/^##\s+Submit Refund Requests as a Buyer Agent\s*$/m);
+    md.search(/^##\s+File Disputes as a Buyer\s*$/m) >= 0
+      ? md.search(/^##\s+File Disputes as a Buyer\s*$/m)
+      : md.search(/^##\s+Submit Refund Requests as a Buyer\s*$/m);
 
   const safeSlice = (start: number, end: number) => (start >= 0 ? md.slice(start, end >= 0 ? end : md.length).trim() : "");
 

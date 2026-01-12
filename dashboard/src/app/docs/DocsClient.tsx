@@ -8,14 +8,21 @@ export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
 
 const SECTION_HASH: Record<DocsSectionKey, string> = {
-  merchants: "integration-guide-for-merchants",
-  buyers: "submit-refund-requests-as-a-buyer-agent",
+  merchants: "integration-guide-for-sellers",
+  buyers: "submit-refund-requests-as-a-buyer",
+};
+
+const LEGACY_SECTION_HASH: Partial<Record<DocsSectionKey, string[]>> = {
+  merchants: ["integration-guide-for-merchants"],
+  buyers: ["submit-refund-requests-as-a-buyer-agent"],
 };
 
 function keyFromHash(hash: string): DocsSectionKey | null {
   const h = (hash || "").replace(/^#/, "").trim().toLowerCase();
   for (const [key, slug] of Object.entries(SECTION_HASH) as Array<[DocsSectionKey, string]>) {
     if (h === slug) return key;
+    const legacy = LEGACY_SECTION_HASH[key] || [];
+    if (legacy.includes(h)) return key;
   }
   return null;
 }
@@ -45,8 +52,8 @@ export function DocsClient(props: {
   const items = useMemo(
     () =>
       [
-        { key: "merchants" as const, label: "Integration guide for Merchants" },
-        { key: "buyers" as const, label: "Request Refunds as a Buyer Agent" },
+        { key: "merchants" as const, label: "Integration guide for Sellers" },
+        { key: "buyers" as const, label: "Request refunds as a buyer" },
       ] as const,
     [],
   );

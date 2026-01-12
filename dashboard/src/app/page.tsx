@@ -98,7 +98,7 @@ export default function HomePage() {
 
       {/* ENABLE DISPUTES (PLUG AND PLAY) */}
       <Section id="enable" className="border-b border-slate-200 bg-slate-50">
-        <SectionHeading title="Add two refund headers." />
+        <SectionHeading title="Sellers: add two refund headers." />
 
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
