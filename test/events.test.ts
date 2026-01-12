@@ -442,24 +442,36 @@ describe('Organization Events - Infrastructure Model', () => {
       });
     });
 
-    // File a payment dispute with this org as reviewer (Infrastructure Model pattern)
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_org_events_test",
-      transactionHash: "0xmock_org_events_test",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "consumer:alice@example.com", // Not an agent in our system
-      defendant: "merchant:shop@example.com", // Not an agent in our system
-      recipientAddress: "merchant:shop@example.com",
-      disputeReason: "service_not_rendered",
-      description: "Test dispute for organization events",
-      reviewerOrganizationId: orgId, // THIS org reviews this dispute
+    // Create merchant agent wallet mapping so wallet-first disputes assign this org as reviewer.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("agents", {
+        did: `did:test:merchant-agent-${Date.now()}`,
+        ownerDid: `did:test:owner-${Date.now()}`,
+        status: "active",
+        createdAt: Date.now(),
+        organizationId: orgId,
+        walletAddress: "eip155:8453:0x0000000000000000000000000000000000000001",
+      });
     });
+
+    // File a wallet-first payment dispute (org is reviewer via merchant wallet match)
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: "0xmock_org_events_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: dispute for organization events",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
     // Verify reviewerOrganizationId was stored on the case
     const caseData = await t.run(async (ctx) => {
-      return await ctx.db.get(result.caseId);
+      return await ctx.db.get(result.disputeId);
     });
     expect(caseData.reviewerOrganizationId).toBe(orgId);
 
@@ -471,14 +483,14 @@ describe('Organization Events - Infrastructure Model', () => {
 
     // Verify the dispute event appears in org's feed
     const disputeEvents = orgEvents.filter(e => 
-      e.type === "DISPUTE_FILED" && e.caseId === result.caseId
+      e.type === "DISPUTE_FILED" && e.caseId === result.disputeId
     );
 
     expect(disputeEvents.length).toBeGreaterThan(0);
-    expect(disputeEvents[0].caseId).toBe(result.caseId);
+    expect(disputeEvents[0].caseId).toBe(result.disputeId);
     
     console.log(`✅ Organization event feed correctly shows disputes where org is reviewer`);
-    console.log(`   Dispute: ${result.caseId}`);
+    console.log(`   Dispute: ${result.disputeId}`);
     console.log(`   Events found: ${disputeEvents.length}`);
     console.log(`   reviewerOrganizationId correctly set: ${caseData.reviewerOrganizationId}`);
   });
@@ -555,19 +567,31 @@ describe('Organization Events - Infrastructure Model', () => {
     const agentDisputeId = agentDisputeResult.caseId;
 
     // Type 2: File payment dispute where org is reviewer
-    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: `txn_multi_${timestamp}`,
-      transactionHash: `0xmock_multi_${timestamp}`,
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "consumer:bob@example.com",
-      defendant: "merchant:vendor@example.com",
-      recipientAddress: "merchant:vendor@example.com",
-      disputeReason: "amount_incorrect",
-      description: "Payment dispute for multi-role test",
-      reviewerOrganizationId: orgId, // Org reviews this one
+    // Create merchant agent wallet mapping so wallet-first disputes assign this org as reviewer.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("agents", {
+        did: `did:test:merchant-agent-${Date.now()}`,
+        ownerDid: `did:test:owner-${Date.now()}`,
+        status: "active",
+        createdAt: Date.now(),
+        organizationId: orgId,
+        walletAddress: "eip155:8453:0x0000000000000000000000000000000000000001",
+      });
     });
+
+    const paymentDisputeResult = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: `0xmock_multi_${timestamp}`,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Payment dispute for multi-role test",
+    });
+    expect(paymentDisputeResult.ok).toBe(true);
+    if (!paymentDisputeResult.ok) return;
 
     // Get organization events
     const orgEvents = await t.query(api.events.getOrganizationEvents, {
@@ -577,7 +601,7 @@ describe('Organization Events - Infrastructure Model', () => {
 
     // Should include BOTH disputes
     const agentDisputeEvents = orgEvents.filter(e => e.caseId === agentDisputeId);
-    const paymentDisputeEvents = orgEvents.filter(e => e.caseId === paymentDisputeResult.caseId);
+    const paymentDisputeEvents = orgEvents.filter(e => e.caseId === paymentDisputeResult.disputeId);
 
     expect(agentDisputeEvents.length).toBeGreaterThan(0);
     expect(paymentDisputeEvents.length).toBeGreaterThan(0);
@@ -603,24 +627,35 @@ describe('Organization Events - Infrastructure Model', () => {
       });
     });
 
-    // File payment dispute with reviewerOrganizationId (what MCP should do with API key)
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: `txn_mcp_${timestamp}`,
-      transactionHash: `0xmock_mcp_${timestamp}`,
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "consumer:user@example.com",
-      defendant: "merchant:vendor@example.com",
-      recipientAddress: "merchant:vendor@example.com",
-      disputeReason: "api_timeout",
-      description: "MCP filed dispute test",
-      reviewerOrganizationId: orgId, // CRITICAL: Must be set from API key
+    // Create merchant agent wallet mapping so wallet-first disputes assign this org as reviewer.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("agents", {
+        did: `did:test:merchant-agent-${Date.now()}`,
+        ownerDid: `did:test:owner-${Date.now()}`,
+        status: "active",
+        createdAt: Date.now(),
+        organizationId: orgId,
+        walletAddress: "eip155:8453:0x0000000000000000000000000000000000000001",
+      });
     });
+
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: `0xmock_mcp_${timestamp}`,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: MCP filed dispute",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
     // Verify reviewerOrganizationId was stored
     const caseData = await t.run(async (ctx) => {
-      return await ctx.db.get(result.caseId);
+      return await ctx.db.get(result.disputeId);
     });
     expect(caseData.reviewerOrganizationId).toBe(orgId);
 
@@ -630,11 +665,11 @@ describe('Organization Events - Infrastructure Model', () => {
       limit: 50,
     });
 
-    const disputeEvents = orgEvents.filter(e => e.caseId === result.caseId);
+    const disputeEvents = orgEvents.filter(e => e.caseId === result.disputeId);
     expect(disputeEvents.length).toBeGreaterThan(0);
 
     console.log(`✅ MCP payment dispute with reviewerOrganizationId appears in org feed`);
-    console.log(`   Case: ${result.caseId}`);
+    console.log(`   Case: ${result.disputeId}`);
     console.log(`   Org ID: ${orgId}`);
     console.log(`   Events in feed: ${disputeEvents.length}`);
   });

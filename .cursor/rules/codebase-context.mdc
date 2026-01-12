@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-12T04:47:18.544Z
+**Auto-generated on**: 2026-01-12T15:57:33.448Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -129,8 +129,8 @@ consulate/
 - **merchantNotifications.ts** - notifyMerchantDisputeFiled, refreshMerchantContactForCase, _patchCaseMetadataV1, getNotificationStatusForCase, markRefundExecutedEmailSent, notifyMerchantRefundExecuted, throttleResendForCase
 - **migrations.ts** - runCaseTypeCounts, runDeleteSpecificCases, runNotifyMerchantDisputeFiled
 - **notifications.ts** - sendRuling
-- **paymentDisputes.ts** - receivePaymentDispute, createPaymentDisputeCase, findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
-- **pool.ts** - cases_fileWalletPaymentDispute, getMerchantUsdcBalanceMicrousdc, cases_listWalletDisputesByMerchant, topup_creditMerchantBalanceFromTx, topup_finalizeFromTxHash, arbiter_resolveDispute
+- **paymentDisputes.ts** - findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
+- **pool.ts** - cases_fileWalletPaymentDispute, cases_getWalletPaymentDisputeBySourceTx, getMerchantUsdcBalanceMicrousdc, cases_listWalletDisputesByMerchant, topup_creditMerchantBalanceFromTx, topup_finalizeFromTxHash, arbiter_resolveDispute
 - **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, applyVerifiedTopUp, submitTopUpAndAutoApply, getPlatformDepositAddress, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
 - **refunds.ts** - executeAutomatedRefund, createRefundAttempt, sendPendingRefund, getRefundBySourceTriplet, getMerchantBalanceByWalletCurrency, adjustMerchantBalanceForRefund, insertWalletFirstRefundTransaction, backfillRefundPendingCases, getRefundTransaction, insertRefundFailure, createRefundAttemptRecord, retryRefundForCase, markRefundFailed, rollbackAndFailRefund, markRefundExecuted, executeOnChain, getRefundStatus, executeX402rRelease, manualApproveRefund
 - **rulings.ts** - finalizeRuling, getRulingByCaseId
@@ -417,5 +417,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/11/2026, 8:47:18 PM
+Generated: 1/12/2026, 7:57:33 AM
 Files scanned: 538

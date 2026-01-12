@@ -13,6 +13,8 @@ import { api } from "../../convex/_generated/api";
 describe("Regulation E Compliance", () => {
   let t: any;
   let testOrgId: any;
+  const payer = "eip155:8453:0x00000000000000000000000000000000000000aa";
+  const merchant = "eip155:8453:0x0000000000000000000000000000000000000001";
 
   beforeEach(async () => {
     console.log("🧪 Setting up Regulation E compliance test environment...");
@@ -38,28 +40,37 @@ describe("Regulation E Compliance", () => {
         createdAt: Date.now(),
       });
     });
+
+    // Merchant agent wallet → reviewer org assignment for wallet-first disputes.
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("agents", {
+        did: `did:test:merchant-agent-${Date.now()}`,
+        ownerDid: `did:test:owner-${Date.now()}`,
+        status: "active",
+        createdAt: Date.now(),
+        organizationId: testOrgId,
+        walletAddress: merchant,
+      });
+    });
   });
 
   it("should set 10 business day deadline on dispute creation", async () => {
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "rege_001",
-      transactionHash: "0xmock_rege_001",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "unauthorized",
-      description: "Unauthorized transaction on customer account",
+      transactionHash: "0xmock_rege_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Unauthorized transaction on customer account",
       evidenceUrls: ["https://evidence.example.com/unauth.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
-    const dispute = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result.paymentDisputeId);
-    });
-
+    const dispute = await t.run(async (ctx: any) => ctx.db.get(created.disputeId));
     expect(dispute.regulationEDeadline).toBeDefined();
 
     const now = Date.now();
@@ -79,20 +90,19 @@ describe("Regulation E Compliance", () => {
   it("should resolve micro-disputes within 5 minutes (well under 10 business days)", async () => {
     const startTime = Date.now();
 
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "fast_resolve_001",
-      transactionHash: "0xmock_fast_resolve_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_fast",
-      defendant: "merchant_fast",
-      recipientAddress: "merchant_fast",
-      disputeReason: "api_timeout",
-      description: "API timeout - clear SLA violation",
+      transactionHash: "0xmock_fast_resolve_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 50_000,
+      sourceTransferLogIndex: 0,
+      description: "test: API timeout - clear SLA violation",
       evidenceUrls: ["https://evidence.example.com/fast.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
 
     // Wait for AI processing
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -107,45 +117,47 @@ describe("Regulation E Compliance", () => {
   });
 
   it("should track Regulation E compliance status", async () => {
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "compliance_001",
-      transactionHash: "0xmock_compliance_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_comp",
-      defendant: "merchant_comp",
-      recipientAddress: "merchant_comp",
-      disputeReason: "service_not_rendered",
-      description: "Service not delivered as promised",
+      transactionHash: "0xmock_compliance_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Service not delivered as promised",
       evidenceUrls: ["https://evidence.example.com/comp.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    expect(result.regulationECompliant).toBe(true);
+    const row = await t.run(async (ctx: any) => ctx.db.get(result.disputeId));
+    expect(row.regulationEDeadline).toBeDefined();
+    expect(row.regulationEDeadline).toBeGreaterThan(Date.now());
 
     console.log("✅ Regulation E compliance status tracked");
   });
 
   it("should flag disputes approaching Regulation E deadline", async () => {
     // Create dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "approaching_deadline_001",
-      transactionHash: "0xmock_approaching_deadline_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_deadline",
-      defendant: "merchant_deadline",
-      recipientAddress: "merchant_deadline",
-      disputeReason: "fraud", // High-risk, likely needs review
-      description: "Suspected fraudulent transaction",
+      transactionHash: "0xmock_approaching_deadline_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Suspected fraudulent transaction",
       evidenceUrls: ["https://evidence.example.com/fraud.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
     const dispute = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result.paymentDisputeId);
+      return await ctx.db.get(result.disputeId);
     });
 
     const now = Date.now();
@@ -162,49 +174,45 @@ describe("Regulation E Compliance", () => {
     // Create 10 micro-disputes
     const disputes = [];
     for (let i = 0; i < 10; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `auto_resolve_${i}`,
-        transactionHash: `0xmock_auto_resolve_${i}`,
+      const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
         blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 3}`,
-        recipientAddress: `merchant_${i % 3}`,
-        disputeReason: "api_timeout",
-        description: "API timeout dispute",
+        transactionHash: `0xmock_auto_resolve_${i}`,
+        sellerEndpointUrl: "https://merchant.example/v1/paid",
+        origin: "https://merchant.example",
+        payer,
+        merchant,
+        amountMicrousdc: 50_000,
+        sourceTransferLogIndex: 0,
+        description: `test: API timeout dispute ${i}`,
         evidenceUrls: [`https://evidence.example.com/auto_${i}.json`],
-        reviewerOrganizationId: testOrgId,
       });
       disputes.push(result);
     }
 
-    // All micro-disputes should be auto-eligible to meet deadline
-    const autoEligible = disputes.filter(d => d.autoResolveEligible).length;
-    const autoEligibleRate = autoEligible / disputes.length;
-
-    expect(autoEligibleRate).toBeGreaterThan(0.9); // At least 90% auto-eligible
-
-    console.log(`✅ Auto-resolve eligibility: ${autoEligible}/${disputes.length} (${(autoEligibleRate * 100).toFixed(1)}%)`);
+    // In wallet-first flow, micro disputes should not require human review by default.
+    const rows = await Promise.all(
+      disputes.filter((d: any) => d?.ok).map((d: any) => t.run(async (ctx: any) => ctx.db.get(d.disputeId))),
+    );
+    const okRows = rows.filter(Boolean);
+    expect(okRows.length).toBeGreaterThan(0);
+    expect(okRows.every((r: any) => r.humanReviewRequired === false)).toBe(true);
   });
 
   it("should provide provisional credit tracking (future feature)", async () => {
     // Regulation E may require provisional credit within 1 business day
     // while investigation continues up to 10 days
 
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "provisional_001",
-      transactionHash: "0xmock_provisional_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_provisional",
-      defendant: "merchant_provisional",
-      recipientAddress: "merchant_provisional",
-      disputeReason: "unauthorized",
-      description: "Unauthorized transaction requiring provisional credit",
+      transactionHash: "0xmock_provisional_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Unauthorized transaction requiring provisional credit",
       evidenceUrls: ["https://evidence.example.com/prov.json"],
-      reviewerOrganizationId: testOrgId,
     });
 
     // TODO: Implement provisional credit tracking
@@ -216,33 +224,31 @@ describe("Regulation E Compliance", () => {
     // expect(dispute.provisionalCreditDeadline).toBeDefined();
 
     console.log("⚠️  Provisional credit tracking not yet implemented - placeholder test");
-    expect(result.caseId).toBeDefined();
+    expect(result.disputeId).toBeDefined();
   });
 
   it("should maintain complete investigation records for Regulation E audit", async () => {
     // Create dispute with full evidence trail
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "audit_trail_001",
-      transactionHash: "0xmock_audit_trail_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_audit",
-      defendant: "merchant_audit",
-      recipientAddress: "merchant_audit",
-      disputeReason: "service_not_rendered",
-      description: "Complete audit trail test",
+      transactionHash: "0xmock_audit_trail_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: Complete audit trail",
       evidenceUrls: [
         "https://evidence.example.com/audit1.json",
         "https://evidence.example.com/audit2.json",
         "https://evidence.example.com/audit3.json",
       ],
-      reviewerOrganizationId: testOrgId,
     });
 
     // Verify case has evidence
     const caseData = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result.caseId);
+      return await ctx.db.get(result.disputeId);
     });
 
     expect(caseData.evidenceIds).toBeDefined();
@@ -250,7 +256,7 @@ describe("Regulation E Compliance", () => {
 
     // Verify ADP custody chain
     const custodyVerification = await t.query(api.custody.verifyCustodyChain, {
-      caseId: result.caseId,
+      caseId: result.disputeId,
     });
 
     expect(custodyVerification.totalEvents).toBeGreaterThan(0);
@@ -262,20 +268,19 @@ describe("Regulation E Compliance", () => {
     // Some transactions may be exempt from Regulation E
     // (e.g., business-to-business transactions)
 
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "b2b_exempt_001",
-      transactionHash: "0xmock_b2b_exempt_001",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "business_customer",
-      defendant: "business_merchant",
-      recipientAddress: "business_merchant",
-      disputeReason: "service_not_rendered",
-      description: "B2B transaction dispute (may be Regulation E exempt)",
+      transactionHash: "0xmock_b2b_exempt_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: B2B transaction dispute (may be Regulation E exempt)",
       evidenceUrls: ["https://evidence.example.com/b2b.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
 
     // TODO: Implement Regulation E exemption logic
     // const dispute = await t.run(async (ctx: any) => {
@@ -285,7 +290,7 @@ describe("Regulation E Compliance", () => {
     // expect(dispute.regulationEExempt).toBeDefined();
 
     console.log("⚠️  Regulation E exemption logic not yet implemented - placeholder test");
-    expect(result.caseId).toBeDefined();
+    expect(result.disputeId).toBeDefined();
   });
 
   it("should measure compliance with 10 business day deadline across batch", async () => {
@@ -295,19 +300,17 @@ describe("Regulation E Compliance", () => {
 
     // Create batch of disputes
     for (let i = 0; i < batchSize; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `batch_compliance_${i}`,
-        transactionHash: `0xmock_batch_compliance_${i}`,
+      const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
         blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 10}`,
-        recipientAddress: `merchant_${i % 10}`,
-        disputeReason: i % 2 === 0 ? "api_timeout" : "service_not_rendered",
-        description: `Batch compliance test ${i}`,
+        transactionHash: `0xmock_batch_compliance_${i}`,
+        sellerEndpointUrl: "https://merchant.example/v1/paid",
+        origin: "https://merchant.example",
+        payer,
+        merchant,
+        amountMicrousdc: 250_000,
+        sourceTransferLogIndex: 0,
+        description: `test: Batch compliance test ${i}`,
         evidenceUrls: [`https://evidence.example.com/batch_${i}.json`],
-        reviewerOrganizationId: testOrgId,
       });
       disputes.push(result);
     }
@@ -315,15 +318,17 @@ describe("Regulation E Compliance", () => {
     const totalProcessingTime = Date.now() - startTime;
     const avgProcessingTime = totalProcessingTime / batchSize;
 
-    // All should be Regulation E compliant
-    const compliantCount = disputes.filter(d => d.regulationECompliant).length;
-    const complianceRate = compliantCount / batchSize;
-
-    expect(complianceRate).toBe(1.0); // 100% compliance
+    // All should have a Regulation E deadline set in the future.
+    const rows = await Promise.all(
+      disputes.filter((d: any) => d?.ok).map((d: any) => t.run(async (ctx: any) => ctx.db.get(d.disputeId))),
+    );
+    const okRows = rows.filter(Boolean);
+    expect(okRows.length).toBe(batchSize);
+    expect(okRows.every((r: any) => typeof r.regulationEDeadline === "number" && r.regulationEDeadline > Date.now())).toBe(true);
 
     console.log(`\n📊 Regulation E Compliance Metrics:`);
     console.log(`   Total disputes: ${batchSize}`);
-    console.log(`   Compliant: ${compliantCount} (${(complianceRate * 100).toFixed(1)}%)`);
+    console.log(`   Compliant: ${okRows.length} (100.0%)`);
     console.log(`   Avg processing time: ${avgProcessingTime.toFixed(2)}ms`);
     console.log(`   Total batch time: ${totalProcessingTime}ms`);
     console.log(`   Regulation E deadline: 10 business days (864,000,000ms)`);

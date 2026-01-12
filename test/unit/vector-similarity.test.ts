@@ -16,6 +16,22 @@ import { api } from "../../convex/_generated/api";
 describe("Vector Similarity for Precedent Matching", () => {
   let t: any;
   let testOrgId: any;
+  const payer = "eip155:8453:0x00000000000000000000000000000000000000aa";
+  const merchant = "eip155:8453:0x0000000000000000000000000000000000000001";
+
+  async function file(txHash: string, description: string) {
+    return await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: txHash,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description,
+    });
+  }
 
   beforeEach(async () => {
     console.log("🧪 Setting up vector similarity test environment...");
@@ -44,85 +60,31 @@ describe("Vector Similarity for Precedent Matching", () => {
   });
 
   it("should store vector embeddings in paymentDisputes table", async () => {
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "vector_test_001",
-      transactionHash: "0xmock_vector_test_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "api_timeout",
-      description: "API call timed out after 30 seconds, customer charged $0.50",
-      evidenceUrls: ["https://evidence.example.com/timeout.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const result = await file("0xmock_vector_test_001", "test: vector embedding placeholder");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const paymentDispute = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result.paymentDisputeId);
-    });
+    const paymentDispute = await t.run(async (ctx: any) => ctx.db.get(result.disputeId));
 
     // Verify schema supports vector field (optional field in schema)
     expect(paymentDispute).toBeDefined();
 
-    // aiRulingVector is optional and may be undefined until vector embeddings are implemented
-    if (paymentDispute.aiRulingVector !== undefined) {
-      expect(Array.isArray(paymentDispute.aiRulingVector)).toBe(true);
-      console.log("✅ Payment dispute created with vector embedding:", paymentDispute.aiRulingVector.length, "dimensions");
-    } else {
-      console.log("⚠️  Payment dispute created - vector embeddings not yet populated (feature in development)");
-    }
+    // NOTE: Vector embeddings are not currently stored on cases; this is a placeholder for future work.
+    console.log("⚠️  Vector embeddings not yet implemented - placeholder test");
   });
 
   it("should find semantically similar disputes (when implemented)", async () => {
     // Create first dispute: "API timeout"
-    const dispute1 = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "sem_001",
-      transactionHash: "0xmock_sem_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_1",
-      defendant: "merchant_1",
-      recipientAddress: "merchant_1",
-      disputeReason: "api_timeout",
-      description: "API call timed out after 30 seconds",
-      evidenceUrls: ["https://evidence.example.com/timeout1.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const dispute1 = await file("0xmock_sem_001", "test: API call timed out after 30 seconds");
+    expect(dispute1.ok).toBe(true);
 
     // Create second dispute: "Request timeout" (semantically similar)
-    const dispute2 = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "sem_002",
-      transactionHash: "0xmock_sem_002",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_2",
-      defendant: "merchant_2",
-      recipientAddress: "merchant_2",
-      disputeReason: "api_timeout",
-      description: "Request exceeded maximum wait time of 30s",
-      evidenceUrls: ["https://evidence.example.com/timeout2.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const dispute2 = await file("0xmock_sem_002", "test: Request exceeded maximum wait time of 30s");
+    expect(dispute2.ok).toBe(true);
 
     // Create third dispute: "Duplicate charge" (semantically different)
-    const dispute3 = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "sem_003",
-      transactionHash: "0xmock_sem_003",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_3",
-      defendant: "merchant_3",
-      recipientAddress: "merchant_3",
-      disputeReason: "duplicate_charge",
-      description: "Charged twice for same transaction",
-      evidenceUrls: ["https://evidence.example.com/dup.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const dispute3 = await file("0xmock_sem_003", "test: Charged twice for same transaction");
+    expect(dispute3.ok).toBe(true);
 
     // TODO: When vector search is implemented, this should find dispute1 and dispute2 as similar
     // const similarDisputes = await t.query(api.paymentDisputes.findSimilarByVector, {
@@ -140,20 +102,8 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should weight similarity by human confirmation rate", async () => {
     // Create disputes with human confirmation data
-    const confirmedDispute = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "conf_001",
-      transactionHash: "0xmock_conf_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_1",
-      defendant: "merchant_1",
-      recipientAddress: "merchant_1",
-      disputeReason: "service_not_rendered",
-      description: "Service promised but not delivered",
-      evidenceUrls: ["https://evidence.example.com/conf1.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const confirmedDispute = await file("0xmock_conf_001", "test: Service promised but not delivered");
+    expect(confirmedDispute.ok).toBe(true);
 
     // TODO: Implement precedent tracking with humanConfirmed flag
     // const precedent = await t.run(async (ctx: any) => {
@@ -175,27 +125,15 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should handle novel dispute types without exact precedents", async () => {
     // Create a novel dispute type (no precedents)
-    const novelDispute = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "novel_001",
-      transactionHash: "0xmock_novel_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_novel",
-      defendant: "merchant_novel",
-      recipientAddress: "merchant_novel",
-      disputeReason: "quality_issue",
-      description: "AI output quality significantly below agreed threshold",
-      evidenceUrls: ["https://evidence.example.com/novel.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const novelDispute = await file("0xmock_novel_001", "test: Novel dispute type placeholder");
+    expect(novelDispute.ok).toBe(true);
 
     // For novel disputes, system should:
     // 1. Flag for human review (low confidence)
     // 2. Still attempt to find semantically similar disputes
     // 3. Use general patterns as fallback
 
-    expect(novelDispute.humanReviewRequired).toBeDefined();
+    // Placeholder: novel disputes may require human review once confidence scoring is implemented.
 
     console.log("⚠️  Novel dispute handling not fully implemented - placeholder test");
     expect(true).toBe(true); // Placeholder
@@ -203,20 +141,8 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should update vector embeddings when dispute details change", async () => {
     // Create initial dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "update_001",
-      transactionHash: "0xmock_update_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_update",
-      defendant: "merchant_update",
-      recipientAddress: "merchant_update",
-      disputeReason: "api_timeout",
-      description: "Initial description",
-      evidenceUrls: ["https://evidence.example.com/update.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const result = await file("0xmock_update_001", "test: Initial description");
+    expect(result.ok).toBe(true);
 
     // TODO: Implement vector update when description changes
     // await t.mutation(api.paymentDisputes.updateDisputeDescription, {
@@ -238,21 +164,9 @@ describe("Vector Similarity for Precedent Matching", () => {
     // Create 100 disputes for performance testing
     const disputeIds = [];
     for (let i = 0; i < 100; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `perf_vec_${i}`,
-        transactionHash: `0xmock_perf_vec_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 10}`,
-        recipientAddress: `merchant_${i % 10}`,
-        disputeReason: i % 2 === 0 ? "api_timeout" : "service_not_rendered",
-        description: `Performance test dispute ${i}`,
-        evidenceUrls: [`https://evidence.example.com/perf_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
-      disputeIds.push(result.paymentDisputeId);
+      const created = await file(`0xmock_perf_vec_${i}`, `test: Performance test dispute ${i}`);
+      expect(created.ok).toBe(true);
+      if (created.ok) disputeIds.push(created.disputeId);
     }
 
     // TODO: Measure vector search performance
@@ -273,20 +187,8 @@ describe("Vector Similarity for Precedent Matching", () => {
 
   it("should create precedent embeddings from resolved disputes", async () => {
     // Create and resolve dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "precedent_001",
-      transactionHash: "0xmock_precedent_001",
-      blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_prec",
-      defendant: "merchant_prec",
-      recipientAddress: "merchant_prec",
-      disputeReason: "duplicate_charge",
-      description: "Customer charged twice for same API call due to retry logic bug",
-      evidenceUrls: ["https://evidence.example.com/prec.json"],
-      reviewerOrganizationId: testOrgId,
-    });
+    const result = await file("0xmock_precedent_001", "test: Customer charged twice due to retry bug");
+    expect(result.ok).toBe(true);
 
     // TODO: After resolution, create precedent with embedding
     // await t.mutation(api.paymentDisputes.createPrecedent, {

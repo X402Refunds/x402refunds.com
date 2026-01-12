@@ -169,6 +169,52 @@ export function validateCustodyChain(chain: any) {
   return true;
 }
 
+// -----------------------------------------------------------------------------
+// Wallet-first (canonical) HTTP helpers
+// -----------------------------------------------------------------------------
+
+type WalletFirstRefundCreateArgs = {
+  blockchain?: "base" | "solana";
+  transactionHash: string;
+  sellerEndpointUrl: string;
+  description: string;
+  evidenceUrls?: string[];
+  sourceTransferLogIndex?: number;
+};
+
+export async function httpPostV1Refunds(args: WalletFirstRefundCreateArgs): Promise<{
+  status: number;
+  json: any;
+}> {
+  const base = process.env.API_BASE_URL || "https://youthful-orca-358.convex.site";
+  const res = await fetch(`${base}/v1/refunds`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      blockchain: args.blockchain ?? "base",
+      transactionHash: args.transactionHash,
+      sellerEndpointUrl: args.sellerEndpointUrl,
+      description: args.description,
+      evidenceUrls: Array.isArray(args.evidenceUrls) ? args.evidenceUrls : [],
+      ...(typeof args.sourceTransferLogIndex === "number" ? { sourceTransferLogIndex: args.sourceTransferLogIndex } : {}),
+    }),
+  });
+  const json = await res.json().catch(() => ({}));
+  return { status: res.status, json };
+}
+
+export async function httpGetV1Refund(caseId: string): Promise<{
+  status: number;
+  json: any;
+}> {
+  const base = process.env.API_BASE_URL || "https://youthful-orca-358.convex.site";
+  const res = await fetch(`${base}/v1/refund?id=${encodeURIComponent(caseId)}`, {
+    method: "GET",
+  });
+  const json = await res.json().catch(() => ({}));
+  return { status: res.status, json };
+}
+
 /**
  * Create test event
  */

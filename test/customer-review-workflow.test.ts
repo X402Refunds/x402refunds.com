@@ -96,27 +96,44 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         createdAt: Date.now(),
       });
     });
+
+    // Create a merchant agent record with a wallet address so wallet-first filing can
+    // auto-assign reviewerOrganizationId via agent wallet match.
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("agents", {
+        did: `did:test:merchant-agent-${Date.now()}`,
+        ownerDid: `did:test:owner-${Date.now()}`,
+        name: "Test Merchant Agent",
+        organizationName: "Test Merchant Co",
+        organizationId: testOrgId,
+        status: "active",
+        createdAt: Date.now(),
+        walletAddress: "eip155:8453:0x0000000000000000000000000000000000000001",
+      });
+    });
   });
 
   it("should route low-confidence disputes to customer review queue", async () => {
     // Generate dispute with low confidence (needs human review)
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_low_conf_001",
-      transactionHash: "0xmock_low_conf_001",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_wallet_abc",
-      defendant: "merchant_agent_xyz",
-      recipientAddress: "merchant_agent_xyz",
-      disputeReason: "fraud", // High-risk reason → low confidence
-      description: "Suspected fraudulent transaction",
-      reviewerEmail: "reviewer@testmerchant.com",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_low_conf_001",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 1_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: low-confidence dispute",
     });
-    
-    expect(result.humanReviewRequired).toBe(true);
-    // Amount is now derived from chain (mocked in tests), so micro/non-micro is not meaningful here.
+
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const disputeRow = await t.query(api.paymentDisputes.getPaymentDispute, {
+      paymentDisputeId: created.disputeId,
+    });
+    expect(disputeRow.humanReviewRequired).toBe(true);
     
     // Check it appears in customer's review queue
     const queue = await t.query(api.paymentDisputes.getCustomerReviewQueue, {
@@ -124,36 +141,36 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     });
     
     expect(queue.length).toBeGreaterThan(0);
-    const dispute = queue.find((d: any) => d.transactionId === "txn_low_conf_001");
+    const dispute = queue.find((d: any) => d.paymentDetails?.transactionHash === "0xmock_low_conf_001");
     expect(dispute).toBeDefined();
     expect(dispute.reviewerOrganizationId).toBe(testOrgId);
   });
 
   it("should allow customer to approve AI recommendation", async () => {
     // Create dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_approve_test",
-      transactionHash: "0xmock_approve_test",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "fraud",
-      description: "Test dispute",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_approve_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: approve-ai dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
     
     // Wait for AI processing
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // In convex-test, workflows/AI don't run; seed a stored AI recommendation so APPROVE_AI is valid.
-    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
+    await seedAiRecommendation(created.disputeId, "CONSUMER_WINS");
     
     // Customer approves AI decision
     const review = await t.mutation(api.paymentDisputes.customerReview, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
       finalVerdict: "CONSUMER_WINS",
@@ -164,7 +181,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
     // Verify dispute is marked as reviewed
     const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
     });
 
     expect(dispute.humanReviewedAt).toBeDefined();
@@ -174,26 +191,26 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should allow customer to override AI recommendation", async () => {
     // Create dispute where AI will recommend CONSUMER_WINS
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_override_test",
-      transactionHash: "0xmock_override_test",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "service_not_rendered",
-      description: "Test dispute - AI will recommend CONSUMER_WINS",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_override_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: override-ai dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
     // Wait for AI processing
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Customer overrides to MERCHANT_WINS (has context AI doesn't)
     const review = await t.mutation(api.paymentDisputes.customerReview, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
       reviewerUserId: testUserId,
       decision: "OVERRIDE",
       finalVerdict: "MERCHANT_WINS",
@@ -205,7 +222,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
     // Verify override was recorded
     const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
     });
 
     expect(dispute.humanAgreesWithAI).toBe(false);
@@ -215,19 +232,19 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should prevent unauthorized users from reviewing other organization's disputes", async () => {
     // Create dispute for Org A
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_auth_test",
-      transactionHash: "0xmock_auth_test",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "fraud",
-      description: "Test dispute",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_auth_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: auth dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
     
     // Create user from different organization (Org B)
     const otherOrgId = await t.run(async (ctx: any) => {
@@ -253,7 +270,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     // Attempt to review (should fail)
     await expect(
       t.mutation(api.paymentDisputes.customerReview, {
-        paymentDisputeId: result.paymentDisputeId,
+        paymentDisputeId: created.disputeId,
         reviewerUserId: unauthorizedUserId,
         decision: "APPROVE_AI",
         finalVerdict: "CONSUMER_WINS",
@@ -266,24 +283,23 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
     // Generate 100 disputes
     for (let i = 0; i < 100; i++) {
-      const amount = Math.random() < 0.9 ? 0.05 : 0.25;
-      const reasons = ["api_timeout", "service_not_rendered", "quality_issue"] as const;
-
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `txn_batch_${i}`,
-        transactionHash: `0xmock_batch_${i}`,
+      const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
         blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ATXP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 5}`,
-        recipientAddress: `merchant_${i % 5}`,
-        disputeReason: reasons[i % reasons.length],
-        description: "Batch test dispute",
-        reviewerOrganizationId: testOrgId,
+        transactionHash: `0xmock_batch_${i}`,
+        sellerEndpointUrl: "https://merchant.example/v1/paid",
+        origin: "https://merchant.example",
+        payer: `eip155:8453:0x00000000000000000000000000000000000000${(10 + (i % 10)).toString(16).padStart(2, "0")}`,
+        merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        amountMicrousdc: 1_500_000,
+        sourceTransferLogIndex: 0,
+        description: `test: batch dispute ${i}`,
       });
 
-      if (result.humanReviewRequired) {
+      expect(created.ok).toBe(true);
+      if (!created.ok) continue;
+
+      const row = await t.query(api.paymentDisputes.getPaymentDispute, { paymentDisputeId: created.disputeId });
+      if (row.humanReviewRequired) {
         needsReview++;
       }
     }
@@ -296,26 +312,26 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should maintain ADP custody chain after customer review", async () => {
     // Create and review dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_custody_test",
-      transactionHash: "0xmock_custody_test",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "fraud",
-      description: "Custody chain test",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_custody_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: custody chain dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
     // Seed AI recommendation so APPROVE_AI is valid in convex-test.
-    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
+    await seedAiRecommendation(created.disputeId, "CONSUMER_WINS");
     
     // Customer reviews
     await t.mutation(api.paymentDisputes.customerReview, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
       finalVerdict: "CONSUMER_WINS",
@@ -323,11 +339,11 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
     
     // Verify custody chain
     const dispute = await t.query(api.paymentDisputes.getPaymentDispute, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
     });
     
     const custodyVerification = await t.query(api.custody.verifyCustodyChain, {
-      caseId: result.paymentDisputeId, // paymentDisputeId IS the caseId
+      caseId: created.disputeId, // disputeId IS the caseId
     });
     
     expect(custodyVerification.totalEvents).toBeGreaterThan(0);
@@ -343,26 +359,26 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
 
   it("should create ADP-compliant ruling format", async () => {
     // Create and review dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_ruling_test",
-      transactionHash: "0xmock_ruling_test",
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "fraud",
-      description: "Ruling format test",
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_ruling_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: ruling format dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
     // Seed AI recommendation so APPROVE_AI is valid in convex-test.
-    await seedAiRecommendation(result.paymentDisputeId, "CONSUMER_WINS");
+    await seedAiRecommendation(created.disputeId, "CONSUMER_WINS");
     
     // Customer reviews
     const review = await t.mutation(api.paymentDisputes.customerReview, {
-      paymentDisputeId: result.paymentDisputeId,
+      paymentDisputeId: created.disputeId,
       reviewerUserId: testUserId,
       decision: "APPROVE_AI",
       finalVerdict: "CONSUMER_WINS",

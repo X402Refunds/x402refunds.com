@@ -172,35 +172,27 @@ export const generatePaymentDisputeDemo = internalMutation({
         return { success: false, reason: "Demo generation disabled (MOCK_BLOCKCHAIN_QUERIES != true)" };
       }
 
-      // Create the payment dispute
-      const result: any = await ctx.runMutation(internal.paymentDisputes.createPaymentDisputeCase as any, {
-        transactionId,
-        transactionHash: `0xmock_${transactionId}`,
+      // Create the payment dispute using the canonical wallet-first path.
+      const payerAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0".toLowerCase();
+      const recipientAddress = "0x9876543210987654321098765432109876543210".toLowerCase();
+      const txHash = `0xmock_${transactionId}`;
+      const result: any = await ctx.runMutation((api as any).pool.cases_fileWalletPaymentDispute, {
         blockchain: "base",
-        amount: amount.toFixed(2),
-        amountUnit: "usdc",
+        transactionHash: txHash,
+        sellerEndpointUrl: "https://merchant.example/v1/paid",
+        origin: "https://merchant.example",
+        payer: `eip155:8453:${payerAddress}`,
+        merchant: `eip155:8453:${recipientAddress}`,
         amountMicrousdc: Math.round(amount * 1_000_000),
-        amountUsdc: amount,
-        currency: "USDC",
-        paymentProtocol: "demo",
-        plaintiff: `consumer:${consumer.toLowerCase()}@demo.com`,
-        defendant: `merchant:${merchant.toLowerCase()}@demo.com`,
-        disputeReason: reason as any,
+        sourceTransferLogIndex: 0,
         description: descriptions[reason] || `Dispute regarding transaction ${transactionId}`,
         evidenceUrls: [],
-        callbackUrl: undefined,
-        reviewerEmail: undefined,
-        reviewerOrganizationId: undefined,
-        sourceTransferLogIndex: 0,
-        payerAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        recipientAddress: "0x9876543210987654321098765432109876543210",
-        disputeFee: 0.05,
       });
 
       console.log(`✅ Payment dispute created: $${amount.toFixed(2)} - ${reason}`);
       console.log(`   Consumer: ${consumer} vs Merchant: ${merchant}`);
       console.log(`   Transaction: ${transactionId}`);
-      console.log(`   Fee: $${result.fee.toFixed(2)}`);
+      console.log(`   CaseId: ${result?.disputeId || "unknown"}`);
 
       return { success: true, ...result };
 

@@ -101,65 +101,49 @@ describe('Workflow Integration', () => {
   });
 
   it('should trigger micro dispute workflow for <$1 payment disputes', async () => {
-    // Payment disputes should use receivePaymentDispute, not fileDispute
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: `txn_micro_${timestamp}`,
-      transactionHash: `0xmock_micro_${timestamp}`,
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: 'USDC',
-      paymentProtocol: 'ACP',
-      plaintiff: `consumer:test-${timestamp}@example.com`,
-      defendant: `merchant:test-${timestamp}@example.com`,
-      recipientAddress: `merchant:test-${timestamp}@example.com`,
-      disputeReason: 'api_timeout',
-      description: 'Micro payment dispute test',
+      transactionHash: `0xmock_micro_${timestamp}`,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 50_000,
+      sourceTransferLogIndex: 0,
+      description: "test: micro payment dispute",
     });
-
-    expect(paymentDisputeResult).toBeDefined();
-    expect(paymentDisputeResult.caseId).toBeDefined();
-    
-    // Check that workflow was started (may be undefined in test mode)
-    // WorkflowId is optional in test mode when workflow component isn't registered
-    if (paymentDisputeResult.workflowId) {
-      expect(paymentDisputeResult.workflowId).toBeDefined();
-      expect(paymentDisputeResult.status).toBe('processing');
-    }
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
     // Verify case was created
-    const case_ = await t.query(api.cases.getCaseById, { caseId: paymentDisputeResult.caseId });
+    const case_ = await t.query(api.cases.getCaseById, { caseId: created.disputeId });
     expect(case_).toBeDefined();
     expect(case_?.type).toBe('PAYMENT');
     expect(case_?.status).toBe('FILED');
+    expect(case_?.humanReviewRequired).toBe(false);
   });
 
   it('should trigger payment dispute workflow for >=$1 payment disputes', async () => {
-    // Payment disputes should use receivePaymentDispute, not fileDispute
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: `txn_standard_${timestamp}`,
-      transactionHash: `0xmock_standard_${timestamp}`,
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: 'USDC',
-      paymentProtocol: 'ACP',
-      plaintiff: `consumer:test-${timestamp}@example.com`,
-      defendant: `merchant:test-${timestamp}@example.com`,
-      recipientAddress: `merchant:test-${timestamp}@example.com`,
-      disputeReason: 'quality_issue',
-      description: 'Standard payment dispute test',
+      transactionHash: `0xmock_standard_${timestamp}`,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 2_500_000,
+      sourceTransferLogIndex: 0,
+      description: "test: standard payment dispute",
     });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
 
-    expect(paymentDisputeResult).toBeDefined();
-    expect(paymentDisputeResult.caseId).toBeDefined();
-    // WorkflowId is optional in test mode when workflow component isn't registered
-    if (paymentDisputeResult.workflowId) {
-      expect(paymentDisputeResult.workflowId).toBeDefined();
-      expect(paymentDisputeResult.status).toBe('processing');
-    }
-
-    const case_ = await t.query(api.cases.getCaseById, { caseId: paymentDisputeResult.caseId });
+    const case_ = await t.query(api.cases.getCaseById, { caseId: created.disputeId });
     expect(case_).toBeDefined();
     expect(case_?.type).toBe('PAYMENT');
+    expect(case_?.humanReviewRequired).toBe(true);
   });
 
   it('should trigger general dispute workflow for non-payment disputes', async () => {
@@ -189,21 +173,22 @@ describe('Workflow Integration', () => {
   it('should set retention policy based on dispute type', async () => {
     // Payment dispute - should have payment retention policy
     const timestamp = Date.now();
-    const paymentDisputeResult = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: `txn_retention_${timestamp}`,
-      transactionHash: `0xmock_retention_${timestamp}`,
+    const paymentDisputeResult = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: 'USDC',
-      paymentProtocol: 'ACP',
-      plaintiff: `consumer:test-${timestamp}@example.com`,
-      defendant: `merchant:test-${timestamp}@example.com`,
-      recipientAddress: `merchant:test-${timestamp}@example.com`,
-      disputeReason: 'amount_incorrect',
-      description: 'Payment retention test',
+      transactionHash: `0xmock_retention_${timestamp}`,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: payment retention",
     });
+    expect(paymentDisputeResult.ok).toBe(true);
+    if (!paymentDisputeResult.ok) return;
 
     const paymentCaseData = await t.query(api.cases.getCaseById, {
-      caseId: paymentDisputeResult.caseId,
+      caseId: paymentDisputeResult.disputeId,
     });
     expect(paymentCaseData?.retentionPolicy).toBe('payment');
 

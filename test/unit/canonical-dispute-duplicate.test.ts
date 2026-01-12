@@ -2,17 +2,15 @@ import { describe, it, expect } from "vitest";
 import { fileCanonicalDispute } from "../../convex/lib/canonicalDispute";
 
 describe("canonical dispute (unit): duplicates", () => {
-  it("returns ok=true with existing caseId when receivePaymentDispute throws DUPLICATE_PAYMENT_DISPUTE", async () => {
+  it("returns ok=true with existing caseId when a case already exists for (chain, txHash)", async () => {
     const existingCaseId = "k123";
     const ctx: any = {
-      runQuery: async () => null,
+      runQuery: async () => ({ _id: existingCaseId, status: "FILED" }),
       runAction: async () => {
-        throw new Error(
-          `DUPLICATE_PAYMENT_DISPUTE:${JSON.stringify({
-            existingCaseId,
-            status: "received",
-          })}`,
-        );
+        throw new Error("should not verify on duplicate");
+      },
+      runMutation: async () => {
+        throw new Error("should not create on duplicate");
       },
     };
 
@@ -28,7 +26,7 @@ describe("canonical dispute (unit): duplicates", () => {
     if (res.ok) {
       expect(res.caseId).toBe(existingCaseId);
       expect(res.trackingUrl).toBe(`https://x402refunds.com/cases/${existingCaseId}`);
-      expect(res.status).toBe("received");
+      expect(res.status).toBe("FILED");
       expect(res.created).toBe(false);
       expect(res.duplicate).toBe(true);
     }

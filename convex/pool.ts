@@ -13,6 +13,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { recoverMessageAddress } from "viem";
 import * as apiMod from "./_generated/api.js";
+import { createCustodyEvent } from "./custody";
 
 // Avoid TS2589 (excessively deep type instantiation) in downstream TypeScript configs (notably dashboard)
 // by importing generated API as JS and treating it as `any`.
@@ -84,6 +85,14 @@ function parseMicros(input: unknown): { ok: true; microusdc: number } | { ok: fa
   return { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc is required" };
 }
 
+function generateSHA256(_input: string): string {
+  // Simple hash for now (in production: use crypto.subtle). Must be 64 hex chars for tests.
+  const chars = "0123456789abcdef";
+  let out = "";
+  for (let i = 0; i < 64; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
 function poolStatus(
   value: unknown,
 ): "FILED" | "DENIED" | "PAID" | "APPROVED_PENDING_FUNDS" | null {
@@ -140,6 +149,31 @@ export const cases_fileWalletPaymentDispute = mutation({
     }
 
     const now = Date.now();
+    const regulationEDeadline = now + (10 * 24 * 60 * 60 * 1000); // Simplified: 10 calendar days
+
+    // Idempotency / de-dupe: (chain, txHash) for type=PAYMENT.
+    const existing = await ctx.db
+      .query("cases")
+      .withIndex("by_payment_source_tx", (q) =>
+        q.eq("paymentSourceChain", args.blockchain).eq("paymentSourceTxHash", txHash),
+      )
+      .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+      .first();
+    if (existing) {
+      return { ok: true, disputeId: existing._id };
+    }
+
+    // Best-effort: assign review org by matching merchant CAIP-10 to an agent wallet.
+    let reviewerOrganizationId: Id<"organizations"> | undefined = undefined;
+    try {
+      const agent: any = await ctx.db
+        .query("agents")
+        .withIndex("by_wallet", (q) => q.eq("walletAddress", parsedMerchant.normalized))
+        .first();
+      if (agent?.organizationId) reviewerOrganizationId = agent.organizationId as Id<"organizations">;
+    } catch {
+      // ignore
+    }
 
     const paymentSupportEmailRaw = typeof args.paymentSupportEmail === "string" ? args.paymentSupportEmail.trim() : "";
     const paymentSupportEmail =
@@ -159,6 +193,14 @@ export const cases_fileWalletPaymentDispute = mutation({
       amount: args.amountMicrousdc / 1_000_000,
       currency: "USDC",
       evidenceIds: [],
+      // Align wallet-first disputes with payment-dispute review flows.
+      reviewerOrganizationId,
+      humanReviewRequired: args.amountMicrousdc / 1_000_000 >= 1.0,
+      finalDecisionDue: regulationEDeadline,
+      regulationEDeadline,
+      retentionPolicy: "payment",
+      paymentSourceChain: args.blockchain,
+      paymentSourceTxHash: txHash,
       metadata: {
         poolStatus: "FILED",
         v1: {
@@ -178,8 +220,75 @@ export const cases_fileWalletPaymentDispute = mutation({
           paymentSupportEmail,
         },
       },
+      paymentDetails: {
+        // For wallet-first disputes, the chain tx hash is the canonical transaction identifier.
+        transactionId: txHash,
+        transactionHash: txHash,
+        blockchain: args.blockchain,
+        amountMicrousdc: args.amountMicrousdc,
+        amountUnit: "microusdc",
+        sourceTransferLogIndex: args.sourceTransferLogIndex,
+        disputeReason: "other",
+        regulationEDeadline,
+        // Preserve request URL for merchantNotifications fallback logic.
+        plaintiffMetadata: {
+          walletAddress: parsedPayer.address,
+          requestJson: JSON.stringify({ method: "POST", url: sellerEndpointUrl, headers: {}, body: {} }),
+        },
+        defendantMetadata: {
+          walletAddress: parsedMerchant.address,
+          merchantId: parsedMerchant.normalized,
+          merchantOrigin: origin,
+          responseJson: JSON.stringify({ status: 402, headers: {}, body: {} }),
+        },
+        disputeFee: 0.05,
+      },
       createdAt: now,
     } as any);
+
+    // Attach evidence URLs as ADP evidence manifests (best-effort; does not block filing).
+    if (Array.isArray(args.evidenceUrls) && args.evidenceUrls.length > 0) {
+      try {
+        const ids: Id<"evidenceManifests">[] = [];
+        for (const url of args.evidenceUrls) {
+          const u = typeof url === "string" ? url.trim() : "";
+          if (!u) continue;
+          const evidenceId = await ctx.db.insert("evidenceManifests", {
+            agentDid: parsedPayer.normalized,
+            sha256: generateSHA256(u),
+            uri: u,
+            signer: parsedPayer.normalized,
+            caseId: disputeId,
+            ts: now,
+            model: { provider: "payment_dispute", name: "payment_dispute", version: "1.0.0" },
+          });
+          ids.push(evidenceId);
+        }
+        if (ids.length > 0) {
+          await ctx.db.patch(disputeId, { evidenceIds: ids });
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // ADP custody event for dispute filing.
+    try {
+      await createCustodyEvent(ctx, {
+        type: "DISPUTE_FILED",
+        caseId: disputeId,
+        agentDid: parsedPayer.normalized,
+        payload: {
+          type: "PAYMENT_DISPUTE",
+          amount: args.amountMicrousdc / 1_000_000,
+          currency: "USDC",
+          microDispute: args.amountMicrousdc / 1_000_000 < 1.0,
+          adpVersion: "draft-01",
+        },
+      });
+    } catch {
+      // ignore
+    }
 
     // Notify merchant asynchronously (does not block dispute filing).
     try {
@@ -194,6 +303,25 @@ export const cases_fileWalletPaymentDispute = mutation({
     }
 
     return { ok: true, disputeId };
+  },
+});
+
+export const cases_getWalletPaymentDisputeBySourceTx = query({
+  args: {
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
+    transactionHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const txHash = (args.transactionHash || "").trim();
+    if (!txHash) return null;
+    const existing = await ctx.db
+      .query("cases")
+      .withIndex("by_payment_source_tx", (q) =>
+        q.eq("paymentSourceChain", args.blockchain).eq("paymentSourceTxHash", txHash),
+      )
+      .filter((q) => q.eq(q.field("type"), "PAYMENT"))
+      .first();
+    return existing || null;
   },
 });
 

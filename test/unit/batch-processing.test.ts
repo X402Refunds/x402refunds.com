@@ -13,6 +13,27 @@ import { api } from "../../convex/_generated/api";
 describe("Batch Processing for Micro-Disputes", () => {
   let t: any;
   let testOrgId: any;
+  const merchant = "eip155:8453:0x0000000000000000000000000000000000000001";
+
+  function payerFor(i: number) {
+    const hex = (10 + (i % 240)).toString(16).padStart(2, "0");
+    return `eip155:8453:0x00000000000000000000000000000000000000${hex}`;
+  }
+
+  async function file(i: number, txHash: string, amountMicrousdc: number, description: string, evidenceUrl?: string) {
+    return await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: txHash,
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: payerFor(i),
+      merchant,
+      amountMicrousdc,
+      sourceTransferLogIndex: 0,
+      description,
+      evidenceUrls: evidenceUrl ? [evidenceUrl] : [],
+    });
+  }
 
   beforeEach(async () => {
     console.log("🧪 Setting up batch processing test environment...");
@@ -44,7 +65,7 @@ describe("Batch Processing for Micro-Disputes", () => {
   it("should process 100 similar micro-disputes with batch efficiency (Option 3: All require review)", async () => {
     const disputeReasons = ["api_timeout", "service_not_rendered", "quality_issue"] as const;
     const batchSize = 100;
-    const results = [];
+    const results: any[] = [];
 
     console.log(`📦 Processing batch of ${batchSize} micro-disputes...`);
     const startTime = Date.now();
@@ -53,20 +74,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     for (let i = 0; i < batchSize; i++) {
       const reason = disputeReasons[i % disputeReasons.length];
 
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `batch_txn_${i}`,
-        transactionHash: `0xmock_batch_txn_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 10}`, // 10 merchants, many customers
-        recipientAddress: `merchant_${i % 10}`,
-        disputeReason: reason,
-        description: `Batch test dispute #${i}: ${reason}`,
-        evidenceUrls: [`https://evidence.example.com/batch_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_batch_txn_${i}`,
+        1_500_000,
+        `test: Batch dispute #${i}: ${reason}`,
+        `https://evidence.example.com/batch_${i}.json`,
+      );
 
       results.push(result);
     }
@@ -74,11 +88,15 @@ describe("Batch Processing for Micro-Disputes", () => {
     const processingTime = Date.now() - startTime;
     console.log(`✅ Batch processed in ${processingTime}ms (${(processingTime / batchSize).toFixed(2)}ms per dispute)`);
 
-    // Verify Option 3 behavior: ALL disputes require human review
-    const needsReview = results.filter(r => r.humanReviewRequired).length;
+    // Verify all disputes require human review (amount >= $1)
+    const rows = await Promise.all(
+      results.filter((r) => r?.ok).map((r) => t.run(async (ctx: any) => ctx.db.get(r.disputeId))),
+    );
+    const okRows = rows.filter(Boolean);
+    expect(okRows.length).toBe(batchSize);
+    const needsReview = okRows.filter((r: any) => r.humanReviewRequired).length;
     const reviewRate = needsReview / batchSize;
-
-    expect(reviewRate).toBe(1.0); // 100% require review (Option 3)
+    expect(reviewRate).toBe(1.0);
     expect(processingTime).toBeLessThan(30000); // Under 30 seconds for 100 disputes
 
     console.log(`📊 Batch Results (Option 3 - Human-in-the-Loop):`);
@@ -91,60 +109,46 @@ describe("Batch Processing for Micro-Disputes", () => {
     // Create 10 API timeout disputes with similar amounts
     const timeoutDisputes = [];
     for (let i = 0; i < 10; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `timeout_txn_${i}`,
-        transactionHash: `0xmock_timeout_txn_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ATXP",
-        plaintiff: `customer_${i}`,
-        defendant: "slow_merchant_123", // Same merchant
-        recipientAddress: "slow_merchant_123",
-        disputeReason: "api_timeout",
-        description: "API call timed out after 30s, charged but no response",
-        evidenceUrls: [`https://logs.example.com/timeout_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_timeout_txn_${i}`,
+        50_000,
+        "test: API call timed out after 30s, charged but no response",
+        `https://logs.example.com/timeout_${i}.json`,
+      );
       timeoutDisputes.push(result);
     }
 
-    // All should be treated similarly (same pattern)
-    const allMicroDisputes = timeoutDisputes.every(d => d.isMicroDispute);
-    const allAutoEligible = timeoutDisputes.every(d => d.autoResolveEligible);
-
-    expect(allMicroDisputes).toBe(true);
-    expect(allAutoEligible).toBe(true);
+    const rows = await Promise.all(
+      timeoutDisputes.filter((r: any) => r?.ok).map((r: any) => t.run(async (ctx: any) => ctx.db.get(r.disputeId))),
+    );
+    const okRows = rows.filter(Boolean);
+    expect(okRows.length).toBe(10);
+    expect(okRows.every((r: any) => r.amount < 1.0)).toBe(true);
+    expect(okRows.every((r: any) => r.humanReviewRequired === false)).toBe(true);
 
     console.log(`✅ Pattern recognition: All 10 API timeout disputes recognized as similar pattern`);
   });
 
   it("should handle high-volume merchant patterns", async () => {
-    const problematicMerchant = "merchant_high_volume_disputes";
     const disputeCount = 50;
     const results = [];
 
     // Create 50 disputes against same merchant
     for (let i = 0; i < disputeCount; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `high_volume_txn_${i}`,
-        transactionHash: `0xmock_high_volume_txn_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: problematicMerchant,
-        recipientAddress: problematicMerchant,
-        disputeReason: i % 2 === 0 ? "service_not_rendered" : "quality_issue",
-        description: `Dispute against high-volume merchant #${i}`,
-        evidenceUrls: [`https://evidence.example.com/hv_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_high_volume_txn_${i}`,
+        50_000,
+        `test: Dispute against high-volume merchant #${i}`,
+        `https://evidence.example.com/hv_${i}.json`,
+      );
       results.push(result);
     }
 
     // Verify all were processed
     expect(results.length).toBe(disputeCount);
-    expect(results.every(r => r.status === "received")).toBe(true);
+    expect(results.every((r: any) => r.ok === true)).toBe(true);
 
     console.log(`✅ High-volume merchant pattern: Processed ${disputeCount} disputes`);
   });
@@ -153,46 +157,31 @@ describe("Batch Processing for Micro-Disputes", () => {
     // First wave: Create precedents
     const precedentResults = [];
     for (let i = 0; i < 5; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `precedent_txn_${i}`,
-        transactionHash: `0xmock_precedent_txn_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: "merchant_abc",
-        recipientAddress: "merchant_abc",
-        disputeReason: "duplicate_charge",
-        description: "Charged twice for same API call",
-        evidenceUrls: [`https://evidence.example.com/dup_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_precedent_txn_${i}`,
+        50_000,
+        "test: Charged twice for same API call",
+        `https://evidence.example.com/dup_${i}.json`,
+      );
       precedentResults.push(result);
     }
 
     // Second wave: Similar disputes should reference precedents
     const similarResults = [];
     for (let i = 5; i < 10; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `similar_txn_${i}`,
-        transactionHash: `0xmock_similar_txn_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: "merchant_abc",
-        recipientAddress: "merchant_abc",
-        disputeReason: "duplicate_charge",
-        description: "Charged twice for same API call",
-        evidenceUrls: [`https://evidence.example.com/dup_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_similar_txn_${i}`,
+        50_000,
+        "test: Charged twice for same API call",
+        `https://evidence.example.com/dup_${i}.json`,
+      );
       similarResults.push(result);
     }
 
-    // All should be auto-eligible (consistent pattern)
-    expect(precedentResults.every(r => r.autoResolveEligible)).toBe(true);
-    expect(similarResults.every(r => r.autoResolveEligible)).toBe(true);
+    expect(precedentResults.every((r: any) => r.ok === true)).toBe(true);
+    expect(similarResults.every((r: any) => r.ok === true)).toBe(true);
 
     console.log(`✅ Precedent consistency: 5 precedents established, 5 similar disputes auto-resolved`);
   });
@@ -205,20 +194,14 @@ describe("Batch Processing for Micro-Disputes", () => {
       const startTime = Date.now();
 
       for (let i = 0; i < size; i++) {
-        await t.action(api.paymentDisputes.receivePaymentDispute, {
-          transactionId: `perf_txn_${size}_${i}`,
-          transactionHash: `0xmock_perf_${size}_${i}`,
-          blockchain: "base",
-          currency: "USDC",
-          paymentProtocol: "ATXP",
-          plaintiff: `customer_${i}`,
-          defendant: `merchant_${i % 5}`,
-          recipientAddress: `merchant_${i % 5}`,
-          disputeReason: "api_timeout",
-          description: `Performance test dispute ${i}`,
-          evidenceUrls: [`https://evidence.example.com/perf_${i}.json`],
-          reviewerOrganizationId: testOrgId,
-        });
+        const r = await file(
+          i,
+          `0xmock_perf_${size}_${i}`,
+          50_000,
+          `test: Performance test dispute ${i}`,
+          `https://evidence.example.com/perf_${i}.json`,
+        );
+        expect(r.ok).toBe(true);
       }
 
       const totalTime = Date.now() - startTime;
@@ -253,20 +236,13 @@ describe("Batch Processing for Micro-Disputes", () => {
     const batchPromises = Array.from({ length: concurrentBatches }, async (_, batchIndex) => {
       const batchResults = [];
       for (let i = 0; i < disputesPerBatch; i++) {
-        const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-          transactionId: `concurrent_batch${batchIndex}_txn_${i}`,
-          transactionHash: `0xmock_concurrent_${batchIndex}_${i}`,
-          blockchain: "base",
-          currency: "USDC",
-          paymentProtocol: "ACP",
-          plaintiff: `customer_${batchIndex}_${i}`,
-          defendant: `merchant_${batchIndex}`,
-          recipientAddress: `merchant_${batchIndex}`,
-          disputeReason: "api_timeout",
-          description: `Concurrent batch ${batchIndex} dispute ${i}`,
-          evidenceUrls: [`https://evidence.example.com/conc_${batchIndex}_${i}.json`],
-          reviewerOrganizationId: testOrgId,
-        });
+        const result = await file(
+          batchIndex * disputesPerBatch + i,
+          `0xmock_concurrent_${batchIndex}_${i}`,
+          50_000,
+          `test: Concurrent batch ${batchIndex} dispute ${i}`,
+          `https://evidence.example.com/conc_${batchIndex}_${i}.json`,
+        );
         batchResults.push(result);
       }
       return batchResults;
@@ -286,49 +262,40 @@ describe("Batch Processing for Micro-Disputes", () => {
   it("should identify and flag anomalous patterns in batch", async () => {
     // Create normal pattern (90 disputes)
     for (let i = 0; i < 90; i++) {
-      await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `normal_txn_${i}`,
-        transactionHash: `0xmock_normal_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: `customer_${i}`,
-        defendant: `merchant_${i % 10}`,
-        recipientAddress: `merchant_${i % 10}`,
-        disputeReason: "api_timeout",
-        description: "Normal API timeout dispute",
-        evidenceUrls: [`https://evidence.example.com/normal_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const r = await file(
+        i,
+        `0xmock_normal_${i}`,
+        50_000,
+        "test: Normal API timeout dispute",
+        `https://evidence.example.com/normal_${i}.json`,
+      );
+      expect(r.ok).toBe(true);
     }
 
     // Create anomaly (10 disputes with unusual characteristics)
     const anomalyResults = [];
     for (let i = 90; i < 100; i++) {
-      const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-        transactionId: `anomaly_txn_${i}`,
-        transactionHash: `0xmock_anomaly_${i}`,
-        blockchain: "base",
-        currency: "USDC",
-        paymentProtocol: "ACP",
-        plaintiff: "suspicious_customer_999", // Same customer
-        defendant: `merchant_${i % 10}`,
-        recipientAddress: `merchant_${i % 10}`,
-        disputeReason: "fraud", // High-risk reason
-        description: "Suspicious fraud claim",
-        evidenceUrls: [`https://evidence.example.com/anomaly_${i}.json`],
-        reviewerOrganizationId: testOrgId,
-      });
+      const result = await file(
+        i,
+        `0xmock_anomaly_${i}`,
+        2_500_000,
+        "test: Suspicious fraud claim",
+        `https://evidence.example.com/anomaly_${i}.json`,
+      );
       anomalyResults.push(result);
     }
 
     // Anomalies should require human review
-    const anomaliesNeedReview = anomalyResults.filter(r => r.humanReviewRequired).length;
-    const anomalyReviewRate = anomaliesNeedReview / anomalyResults.length;
+    const rows = await Promise.all(
+      anomalyResults.filter((r: any) => r?.ok).map((r: any) => t.run(async (ctx: any) => ctx.db.get(r.disputeId))),
+    );
+    const okRows = rows.filter(Boolean);
+    const anomaliesNeedReview = okRows.filter((r: any) => r.humanReviewRequired).length;
+    const anomalyReviewRate = anomaliesNeedReview / okRows.length;
 
     // Note: Anomaly detection is currently based on AI confidence thresholds
     // In production, additional fraud pattern detection would flag more cases
-    expect(anomalyReviewRate).toBeGreaterThanOrEqual(0); // Any flagged is good
+    expect(anomalyReviewRate).toBe(1.0); // amount >= $1 → all require review
 
     if (anomalyReviewRate > 0) {
       console.log(`✅ Anomaly detection: ${anomaliesNeedReview}/${anomalyResults.length} anomalies flagged for review (${(anomalyReviewRate * 100).toFixed(1)}%)`);

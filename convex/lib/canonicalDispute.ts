@@ -1,7 +1,6 @@
 // Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
 import * as apiMod from "../_generated/api.js";
 const api: any = (apiMod as any).api;
-import { parseDuplicatePaymentDisputeError } from "./duplicateDispute";
 
 const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 
@@ -103,6 +102,7 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
   try {
     const u = new URL(merchantApiUrlRaw);
     if (u.protocol !== "https:") throw new Error("merchantApiUrl must be https://");
+    if (!u.pathname || u.pathname === "/") throw new Error("merchantApiUrl must include a path (not just origin)");
     merchantOrigin = u.origin;
   } catch (e: any) {
     return { ok: false, code: "INVALID_MERCHANT_API_URL", message: e?.message || "Invalid merchantApiUrl", field: "merchantApiUrl" };
@@ -124,68 +124,14 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
       ? input.evidenceUrls.filter((u) => typeof u === "string" && u.trim()).map((u) => u.trim())
       : [];
 
-  const callbackUrl = typeof input.callbackUrl === "string" && input.callbackUrl.trim() ? input.callbackUrl.trim() : undefined;
-
-  // Synthesize minimal request/response unless caller provides better evidence.
-  const requestObj =
-    input.request && typeof input.request === "object"
-      ? input.request
-      : {
-          method: "POST",
-          url: merchantApiUrlRaw,
-          headers: {},
-          body: {},
-        };
-
-  const responseObj =
-    input.response && typeof input.response === "object"
-      ? input.response
-      : {
-          status: 500,
-          headers: {},
-          body: {},
-        };
-
-  const paymentDisputeArgs: any = {
-    transactionHash: txHash,
-    blockchain: derived.blockchain,
-    recipientAddress: derived.recipientAddress,
-    sourceTransferLogIndex: typeof input.sourceTransferLogIndex === "number" ? input.sourceTransferLogIndex : undefined,
-    disputeReason: "other",
-    description,
-    evidenceUrls,
-    callbackUrl,
-    // Used by merchantNotifications to derive merchant origin from requestJson.
-    plaintiffMetadata: {
-      requestJson: JSON.stringify(requestObj),
-    },
-    defendantMetadata: {
-      responseJson: JSON.stringify(responseObj),
-      merchantId: derived.merchantCaip10,
-      merchantOrigin,
-    },
-  };
-
-  // Try to assign to the merchant’s org for review (best-effort).
+  // Check for existing case by (chain, txHash) (idempotency/duplicate reporting).
   try {
-    const defendantAgent = await ctx.runQuery((api as any).agents.getAgentByWallet as any, {
-      walletAddress: derived.recipientAddress,
+    const existing = await ctx.runQuery((api as any).pool.cases_getWalletPaymentDisputeBySourceTx as any, {
+      blockchain: derived.blockchain,
+      transactionHash: txHash,
     });
-    if (defendantAgent?.organizationId) {
-      paymentDisputeArgs.reviewerOrganizationId = defendantAgent.organizationId;
-    }
-  } catch {
-    // ignore
-  }
-
-  let result: any = null;
-  try {
-    result = await ctx.runAction((api as any).paymentDisputes.receivePaymentDispute, paymentDisputeArgs);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : String(e);
-    const dup = parseDuplicatePaymentDisputeError(message);
-    if (dup?.existingCaseId) {
-      const caseId = String(dup.existingCaseId);
+    if (existing?._id) {
+      const caseId = String(existing._id);
       return {
         ok: true,
         caseId,
@@ -193,25 +139,68 @@ export async function fileCanonicalDispute(ctx: any, input: CanonicalDisputeInpu
         created: false,
         duplicate: true,
         evidenceUrls,
-        status: typeof dup.status === "string" ? dup.status : undefined,
+        status: typeof existing?.status === "string" ? existing.status : undefined,
       };
     }
-    return { ok: false, code: "INTAKE_FAILED", message };
+  } catch {
+    // ignore
   }
 
-  const caseId = typeof result?.caseId === "string" ? result.caseId : "";
-  const trackingUrl = `https://x402refunds.com/cases/${caseId}`;
-  if (!caseId) return { ok: false, code: "INTERNAL_ERROR", message: "Failed to create case" };
+  // Verify the USDC transfer to the merchant recipient (wallet-first).
+  const verified = await ctx.runAction((api as any).lib.blockchain.verifyUsdcTransferByRecipient as any, {
+    blockchain: derived.blockchain,
+    transactionHash: txHash,
+    recipientAddress: derived.recipientAddress,
+    sourceTransferLogIndex: typeof input.sourceTransferLogIndex === "number" ? input.sourceTransferLogIndex : undefined,
+  });
+  if (!verified?.ok) {
+    return {
+      ok: false,
+      code: typeof verified?.code === "string" ? verified.code : "VERIFICATION_FAILED",
+      message: typeof verified?.message === "string" ? verified.message : "Failed to verify USDC transfer",
+    };
+  }
 
+  const payerAddressRaw = String(verified.payerAddress || "");
+  const payerAddress = derived.blockchain === "base" ? payerAddressRaw.toLowerCase() : payerAddressRaw;
+  const amountMicrousdc = Number(verified.amountMicrousdc);
+  const logIndex = Number(verified.logIndex);
+
+  const payerCaip10 =
+    derived.blockchain === "base"
+      ? `eip155:8453:${payerAddress}`
+      : `solana:${parsedMerchant.chainId}:${payerAddress}`;
+
+  const created = await ctx.runMutation((api as any).pool.cases_fileWalletPaymentDispute as any, {
+    blockchain: derived.blockchain,
+    transactionHash: txHash,
+    sellerEndpointUrl: merchantApiUrlRaw,
+    origin: merchantOrigin,
+    payer: payerCaip10,
+    merchant: derived.merchantCaip10,
+    amountMicrousdc,
+    sourceTransferLogIndex: logIndex,
+    description,
+    evidenceUrls,
+  });
+
+  if (!created?.ok || !created?.disputeId) {
+    return {
+      ok: false,
+      code: typeof created?.code === "string" ? created.code : "INTAKE_FAILED",
+      message: typeof created?.message === "string" ? created.message : "Failed to file dispute",
+    };
+  }
+
+  const caseId = String(created.disputeId);
   return {
     ok: true,
     caseId,
-    trackingUrl,
+    trackingUrl: `https://x402refunds.com/cases/${caseId}`,
     created: true,
     duplicate: false,
     evidenceUrls,
-    disputeFee: typeof result?.fee === "number" ? result.fee : undefined,
-    status: typeof result?.status === "string" ? result.status : undefined,
+    status: "FILED",
   };
 }
 

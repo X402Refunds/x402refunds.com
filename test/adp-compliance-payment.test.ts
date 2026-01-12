@@ -11,6 +11,8 @@ import { api } from "../convex/_generated/api";
 describe("ADP Compliance - Payment Disputes", () => {
   let t: any;
   let testOrgId: any;
+  const payer = "eip155:8453:0x00000000000000000000000000000000000000aa";
+  const merchant = "eip155:8453:0x0000000000000000000000000000000000000001";
 
   beforeEach(async () => {
     console.log("🧪 Setting up ADP compliance test environment...");
@@ -41,27 +43,24 @@ describe("ADP Compliance - Payment Disputes", () => {
   });
 
   it("should generate SHA-256 hashes for evidence (ADP Evidence Message)", async () => {
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_sha256_test",
-      transactionHash: "0xmock_sha256_test",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "api_timeout",
-      description: "SHA-256 test",
-      evidenceUrls: [
-        "https://evidence.example.com/test1.json",
-        "https://evidence.example.com/test2.json",
-      ],
-      reviewerOrganizationId: testOrgId,
+      transactionHash: "0xmock_sha256_test",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: SHA-256 evidence manifests",
+      evidenceUrls: ["https://evidence.example.com/test1.json", "https://evidence.example.com/test2.json"],
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     
     // Get case and evidence
     const caseData = await t.run(async (ctx: any) => {
-      return await ctx.db.get(result.caseId);
+      return await ctx.db.get(result.disputeId);
     });
     
     expect(caseData.evidenceIds.length).toBe(2);
@@ -88,26 +87,26 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should maintain custody chain with sequenceNumber and previousEventHash", async () => {
     // Create dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_custody_chain",
-      transactionHash: "0xmock_custody_chain",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "api_timeout",
-      description: "Custody chain test",
+      transactionHash: "0xmock_custody_chain",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: custody chain",
       evidenceUrls: ["https://evidence.example.com/test.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     
     // Get events for this case
     const events = await t.run(async (ctx: any) => {
       return await ctx.db
         .query("events")
-        .withIndex("by_case_sequence", (q: any) => q.eq("caseId", result.caseId))
+        .withIndex("by_case_sequence", (q: any) => q.eq("caseId", result.disputeId))
         .order("asc")
         .collect();
     });
@@ -140,19 +139,20 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should create rulings in ADP Award Message format", async () => {
     // Create micro-dispute (auto-resolves)
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_award_format",
-      transactionHash: "0xmock_award_format",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ACP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "api_timeout",
-      description: "Award format test",
+      transactionHash: "0xmock_award_format",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 50_000,
+      sourceTransferLogIndex: 0,
+      description: "test: award format",
       evidenceUrls: ["https://evidence.example.com/test.json"],
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     
     // Wait for auto-resolution (scheduler needs time)
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -161,7 +161,7 @@ describe("ADP Compliance - Payment Disputes", () => {
     const ruling = await t.run(async (ctx: any) => {
       return await ctx.db
         .query("rulings")
-        .withIndex("by_case", (q: any) => q.eq("caseId", result.caseId))
+        .withIndex("by_case", (q: any) => q.eq("caseId", result.disputeId))
         .first();
     });
     
@@ -173,7 +173,7 @@ describe("ADP Compliance - Payment Disputes", () => {
     
     // Verify ADP Award Message format (per RulingSchema)
     expect(ruling).toBeDefined();
-    expect(ruling.caseId).toBe(result.caseId);
+    expect(ruling.caseId).toBe(result.disputeId);
     expect(ruling.verdict).toMatch(/^(UPHELD|DISMISSED|SPLIT|NEED_PANEL)$/);
     expect(ruling.code).toBeDefined();
     expect(ruling.reasons).toBeDefined();
@@ -187,27 +187,27 @@ describe("ADP Compliance - Payment Disputes", () => {
 
   it("should verify complete custody chain integrity", async () => {
     // Create and process dispute
-    const result = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionId: "txn_chain_integrity",
-      transactionHash: "0xmock_chain_integrity",
+    const result = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      currency: "USDC",
-      paymentProtocol: "ATXP",
-      plaintiff: "customer_abc",
-      defendant: "merchant_xyz",
-      recipientAddress: "merchant_xyz",
-      disputeReason: "service_not_rendered",
-      description: "Chain integrity test",
+      transactionHash: "0xmock_chain_integrity",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer,
+      merchant,
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: chain integrity",
       evidenceUrls: ["https://evidence.example.com/test.json"],
-      reviewerOrganizationId: testOrgId,
     });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     
     // Wait for auto-resolution (scheduler needs time)
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Verify custody chain using ADP verification function
     const verification = await t.query(api.custody.verifyCustodyChain, {
-      caseId: result.caseId,
+      caseId: result.disputeId,
     });
     
     expect(verification.totalEvents).toBeGreaterThan(0);

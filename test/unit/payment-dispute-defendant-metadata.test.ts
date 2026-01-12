@@ -11,25 +11,26 @@ describe("payment disputes (unit): defendantMetadata merchantOrigin", () => {
     t = convexTest(schema, modules);
   });
 
-  it("receivePaymentDispute accepts defendantMetadata.merchantOrigin", async () => {
-    const res = await t.action(api.paymentDisputes.receivePaymentDispute, {
-      transactionHash: "0x" + "11".repeat(32),
+  it("wallet-first filing stores merchantOrigin on paymentDetails.defendantMetadata", async () => {
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
       blockchain: "base",
-      recipientAddress: "0x0000000000000000000000000000000000000001",
-      description: "Testing schema: allow merchantOrigin in defendantMetadata",
-      // Keep minimal but include the field that previously failed validation.
-      defendantMetadata: {
-        merchantOrigin: "https://merchant.example",
-        responseJson: JSON.stringify({ status: 500, body: { error: "Internal Server Error" } }),
-      },
-      plaintiffMetadata: {
-        requestJson: JSON.stringify({ method: "POST", url: "https://merchant.example/v1/chat" }),
-      },
+      transactionHash: "0x" + "11".repeat(32),
+      sellerEndpointUrl: "https://merchant.example/v1/chat",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: store merchantOrigin in defendantMetadata",
       evidenceUrls: [],
     });
 
-    expect(res).toBeTruthy();
-    expect(typeof res.caseId).toBe("string");
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const row = await t.run(async (ctx: any) => ctx.db.get(created.disputeId));
+    expect(row).toBeTruthy();
+    expect(row.paymentDetails?.defendantMetadata?.merchantOrigin).toBe("https://merchant.example");
   });
 });
 
