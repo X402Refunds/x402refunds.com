@@ -46,5 +46,23 @@ Body:
 }
 ```
 
+Check status:
+
+```txt
+GET https://api.x402refunds.com/v1/refund?id=<caseId>
+```
+
 ### MCP
-Use the MCP tool to submit a refund request with the same fields (chain, tx hash, recipient address, description, evidence URLs).
+MCP server URL:
+
+```txt
+https://api.x402refunds.com/mcp
+```
+
+Schema (tools + input parameters):
+
+```txt
+https://api.x402refunds.com/.well-known/mcp.json
+```
+
+Call tool: `x402_request_refund` (same fields as HTTP).

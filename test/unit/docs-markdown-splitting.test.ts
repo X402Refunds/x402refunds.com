@@ -28,7 +28,10 @@ describe("docs/refund-requests.md splitter", () => {
     expect(mcpMd.length).toBeGreaterThan(0);
 
     expect(httpMd).toContain("POST https://api.x402refunds.com/v1/refunds");
+    expect(httpMd).toContain("GET https://api.x402refunds.com/v1/refund?id=<caseId>");
     expect(mcpMd.toLowerCase()).toContain("mcp");
+    expect(mcpMd).toContain("https://api.x402refunds.com/.well-known/mcp.json");
+    expect(mcpMd).toContain("x402_request_refund");
   });
 });
 
