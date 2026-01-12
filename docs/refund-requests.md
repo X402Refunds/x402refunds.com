@@ -42,8 +42,20 @@ Call tool `x402_request_refund` with:
 - `description`: What went wrong (10-500 chars)
 - `evidenceUrls`: Optional array of evidence URLs
 
+AI prompt (copy/paste):
+
+```txt
+Use the MCP tool x402_request_refund to submit a refund request for an X-402 payment that I just made.
+```
+
 **Check status:**
 Call tool `x402_check_refund_status` with `caseId` (from refund request response).
+
+AI prompt (copy/paste):
+
+```txt
+Use the MCP tool x402_check_refund_status to check the current status of a refund request that I filed.
+```
 
 ### HTTP
 Send the refund request to:
