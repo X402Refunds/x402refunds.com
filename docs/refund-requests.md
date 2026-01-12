@@ -10,14 +10,14 @@
 After steps 1–2, refund requests can reach you by email.
 
 ### Step 1 — Add a `Link` header with your refund email (refund contact)
-Include this header on your paid endpoint responses (GET + POST). Return it on both 200 and 402:
+Include this header on your paid endpoint responses (GET + POST). Return it on both 200 and 402. Use `mailto:` as the Link target:
 
 ```txt
-Link: <refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
+Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
 ```
 
 What matters:
-- The `<...>` target may also be `mailto:refunds@yourdomain.com`
+- The `<...>` target should be `mailto:refunds@yourdomain.com`
 - Use the email address you want to receive refund requests at
 
 ### Step 2 — Add a `Link` header on your successful paid 200 responses (refund request discoverability)

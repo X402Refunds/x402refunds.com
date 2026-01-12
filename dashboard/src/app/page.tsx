@@ -20,14 +20,15 @@ export default function HomePage() {
     "Do these steps exactly:",
     "",
     "1) Add a Link header with your refund email (refund contact)",
-    "   - On your PAID API endpoint (not payment/signature/facilitator endpoints): include this on both GET and POST.",
+    "   - Apply this across your repo: every paid X-402 endpoint should follow this format.",
+    "   - On the PAID API endpoints themselves (not payment/signature/facilitator endpoints): include this on both GET and POST.",
     "   - Return it on both 200 (discovery/success) and 402 (payment required).",
-    '     Link: <refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"',
-    "   - The <...> target may also be mailto:refunds@yourdomain.com",
+    '     Link: <mailto:refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"',
+    "   - The <...> target should be mailto:refunds@yourdomain.com",
     "   - This must be the email the owner wants to receive refund requests at.",
     "",
     "2) Add a Link header advertising the refund-request filing URL (HTTP 200)",
-    "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
+    "   - For every paid X-402 endpoint in your repo, when returning 200 OK, include:",
     '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
     "   - Return this on successful paid 200 responses.",
     "",
@@ -95,9 +96,9 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Add two headers.
-            </p>
+            <h2 className="mt-2 text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Add two headers. That&apos;s it.
+            </h2>
           </div>
 
           {(() => {
@@ -112,7 +113,7 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        1) Add this header: refund email (GET + POST).
+                        1) Add refund email header (GET + POST).
                       </div>
                     </div>
 
@@ -128,7 +129,7 @@ export default function HomePage() {
 
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        2) Add this header: refund URL (200 OK).
+                        2) Add refund URL header (200 OK).
                       </div>
 
                       <CodeBlock
@@ -173,20 +174,14 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex justify-center">
-                  <div className="relative inline-flex">
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -inset-[3px] rounded-full opacity-50 blur-[8px] motion-reduce:animate-none animate-[spin_8s_linear_infinite]
-                      bg-[conic-gradient(from_180deg_at_50%_50%,#60a5fa,#a78bfa,#f472b6,#fbbf24,#34d399,#60a5fa)]"
-                    />
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -inset-[1px] rounded-full bg-slate-50"
-                    />
+                  <div
+                    className="inline-flex rounded-full p-[2px] motion-reduce:animate-none animate-[spin_8s_linear_infinite]
+                    bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]"
+                  >
                     <Button
                       size="lg"
                       variant="outline"
-                      className="relative z-10 h-12 rounded-full border-slate-300 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
+                      className="h-12 rounded-full border-0 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
                       onClick={() => {
                         const el = document.getElementById("ai-prompt")
                         el?.scrollIntoView({ behavior: "smooth", block: "start" })
