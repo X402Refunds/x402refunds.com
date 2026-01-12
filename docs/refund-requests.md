@@ -9,8 +9,8 @@
 
 After steps 1–2, refund requests can reach you by email.
 
-### Step 1 — Add a `Link` header on your 402 responses (refund contact)
-Include this header on your **`402 Payment Required`** responses for paywalled endpoints:
+### Step 1 — Add a `Link` header with your refund email (refund contact)
+Include this header on your paid endpoint responses (GET + POST). Return it on both 200 and 402:
 
 ```txt
 Link: <refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"

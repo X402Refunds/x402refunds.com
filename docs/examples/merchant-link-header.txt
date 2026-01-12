@@ -1,2 +1,3 @@
+Link: <refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"
 Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"
 

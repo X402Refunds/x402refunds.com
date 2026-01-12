@@ -19,16 +19,17 @@ export default function HomePage() {
     "",
     "Do these steps exactly:",
     "",
-    "1) Add a Link header on your 402 Payment Required responses (refund contact)",
-    "   - For every endpoint that is paywalled / requires X-402 payment, when returning 402, include:",
+    "1) Add a Link header with your refund email (refund contact)",
+    "   - On your PAID API endpoint (not payment/signature/facilitator endpoints): include this on both GET and POST.",
+    "   - Return it on both 200 (discovery/success) and 402 (payment required).",
     '     Link: <refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"',
     "   - The <...> target may also be mailto:refunds@yourdomain.com",
     "   - This must be the email the owner wants to receive refund requests at.",
     "",
-    "2) Add a Link header on every successful paid response (HTTP 200)",
+    "2) Add a Link header advertising the refund-request filing URL (HTTP 200)",
     "   - For every endpoint that is paywalled / requires X-402 payment, when returning 200 OK, include:",
     '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
-    "   - Do not add this header to 402 responses; only to successful paid 200 responses.",
+    "   - Return this on successful paid 200 responses.",
     "",
     "3) Deploy the change to production",
     "   - Confirm the Link header(s) are live in prod.",
@@ -94,6 +95,9 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Add two headers.
+            </p>
           </div>
 
           {(() => {
@@ -108,13 +112,7 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        1) Add this header to your 402 responses.
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Replace{" "}
-                        <span className="font-mono rounded bg-muted px-1.5 py-0.5">
-                          refunds@yourdomain.com
-                        </span>
+                        1) Add this header: refund email (GET + POST).
                       </div>
                     </div>
 
@@ -130,7 +128,7 @@ export default function HomePage() {
 
                     <div className="space-y-2">
                       <div className="text-sm font-semibold text-foreground">
-                        2) Add this header.
+                        2) Add this header: refund URL (200 OK).
                       </div>
 
                       <CodeBlock
@@ -141,9 +139,6 @@ export default function HomePage() {
                         copyPlacement="overlay"
                         clickToCopy
                       />
-                      <div className="text-sm text-muted-foreground">
-                        return this on successful paid response (200 Content).
-                      </div>
                     </div>
                   </div>
 
@@ -178,17 +173,28 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex justify-center">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-12 rounded-full border-slate-300 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
-                    onClick={() => {
-                      const el = document.getElementById("ai-prompt")
-                      el?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }}
-                  >
-                    Get AI prompt (copy/paste)
-                  </Button>
+                  <div className="relative inline-flex">
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -inset-[3px] rounded-full opacity-50 blur-[8px] motion-reduce:animate-none animate-[spin_8s_linear_infinite]
+                      bg-[conic-gradient(from_180deg_at_50%_50%,#60a5fa,#a78bfa,#f472b6,#fbbf24,#34d399,#60a5fa)]"
+                    />
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -inset-[1px] rounded-full bg-slate-50"
+                    />
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="relative z-10 h-12 rounded-full border-slate-300 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900"
+                      onClick={() => {
+                        const el = document.getElementById("ai-prompt")
+                        el?.scrollIntoView({ behavior: "smooth", block: "start" })
+                      }}
+                    >
+                      Get AI prompt (copy/paste)
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
@@ -201,7 +207,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              IDE prompt (Cursor/Windsurf)
+              IDE prompt (Cursor/Claude Code)
             </h2>
           </div>
 
