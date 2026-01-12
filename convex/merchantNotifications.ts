@@ -11,6 +11,8 @@ import { v } from "convex/values";
 import * as apiMod from "./_generated/api.js";
 import { sendEmail } from "./lib/email";
 import { buildMerchantRefundExecutedEmailCopy } from "./lib/merchantRefundEmailCopy";
+import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
+import { parseX402PayTo } from "./lib/x402PayTo";
 
 // Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
 const api: any = (apiMod as any).api;
@@ -346,6 +348,130 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       to: String(supportEmail),
     });
     return { ok: true, emailed: true };
+  },
+});
+
+/**
+ * Best-effort: refresh case.metadata.v1.{merchantOrigin,paymentSupportEmail,endpointPayTo*}
+ * by probing the sellerEndpointUrl. Useful for demo agents (GET=200, POST w/out payment=402)
+ * and for older cases that were filed before we improved discovery.
+ *
+ * Never throws; never blocks callers.
+ */
+export const refreshMerchantContactForCase: any = internalAction({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx: any, args: { caseId: any }): Promise<any> => {
+    const caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
+    if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
+
+    const meta: any = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+    const v1: any = meta?.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
+
+    const sellerEndpointUrl = typeof v1?.sellerEndpointUrl === "string" ? String(v1.sellerEndpointUrl).trim() : "";
+    if (!sellerEndpointUrl) return { ok: false, reason: "NO_SELLER_ENDPOINT_URL" };
+
+    let origin: string | null = null;
+    try {
+      origin = new URL(sellerEndpointUrl).origin;
+    } catch {
+      origin = null;
+    }
+
+    const recipientAddress =
+      typeof caseData?.paymentDetails?.transactionHash === "string" ? null : null; // unused; keep for future
+    void recipientAddress;
+
+    let paymentSupportEmail: string | undefined = undefined;
+    let endpointPayToCandidates: string[] | undefined = undefined;
+    let endpointPayToMatch: boolean | undefined = undefined;
+    let endpointPayToMismatch: boolean | undefined = undefined;
+
+    const merchantRaw = String(caseData.defendant || "");
+    const expectedMerchant = normalizeMerchantId(merchantRaw);
+    // If we can't normalize merchant, we can still store origin + supportEmail for status UX.
+
+    const parseContact = (res: Response) => {
+      const link = res.headers.get("Link") || "";
+      const uri = findLinkByRel(link, "https://x402refunds.com/rel/refund-contact");
+      const email = uri ? parseRefundContactEmailFromLinkUri(uri) : null;
+      if (email) paymentSupportEmail = email;
+    };
+
+    const parsePayToFrom402 = async (res: Response) => {
+      if (res.status !== 402) return;
+      const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
+      const bodyText = await res.text().catch(() => null);
+      const parsed = parseX402PayTo({ status: res.status, paymentRequiredHeader, bodyText });
+      if (!parsed.ok) return;
+      endpointPayToCandidates = parsed.payToCandidates;
+      if (expectedMerchant && expectedMerchant.startsWith("eip155:")) {
+        const expectedAddr = expectedMerchant.split(":")[2] || "";
+        endpointPayToMatch = parsed.payToCandidates.some((x) => x.toLowerCase() === expectedAddr.toLowerCase());
+        endpointPayToMismatch = !endpointPayToMatch;
+      }
+    };
+
+    try {
+      const getRes = await fetch(sellerEndpointUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+      parseContact(getRes);
+      await parsePayToFrom402(getRes);
+
+      if (getRes.status !== 402) {
+        const postRes = await fetch(sellerEndpointUrl, {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: "{}",
+          signal: AbortSignal.timeout(5_000),
+        });
+        parseContact(postRes);
+        await parsePayToFrom402(postRes);
+      }
+    } catch {
+      // ignore
+    }
+
+    // Patch metadata.v1 with what we learned (never delete existing fields).
+    const nextV1: any = { ...v1 };
+    if (origin) nextV1.merchantOrigin = origin;
+    if (paymentSupportEmail) nextV1.paymentSupportEmail = paymentSupportEmail;
+    if (endpointPayToCandidates) nextV1.endpointPayToCandidates = endpointPayToCandidates;
+    if (typeof endpointPayToMatch === "boolean") nextV1.endpointPayToMatch = endpointPayToMatch;
+    if (typeof endpointPayToMismatch === "boolean") nextV1.endpointPayToMismatch = endpointPayToMismatch;
+
+    await (ctx.runMutation as any)((internalApi as any).merchantNotifications._patchCaseMetadataV1, {
+      caseId: args.caseId,
+      v1: nextV1,
+    });
+
+    return {
+      ok: true,
+      origin: origin ?? null,
+      supportEmail: paymentSupportEmail ?? null,
+      endpointPayToMatch: typeof endpointPayToMatch === "boolean" ? endpointPayToMatch : null,
+    };
+  },
+});
+
+/**
+ * Internal helper used by refreshMerchantContactForCase to patch metadata.v1 safely.
+ */
+export const _patchCaseMetadataV1: any = internalMutation({
+  args: { caseId: v.id("cases"), v1: v.any() },
+  handler: async (ctx: any, args: any) => {
+    const row: any = await ctx.db.get(args.caseId);
+    if (!row) return { ok: false, reason: "CASE_NOT_FOUND" };
+    const meta: any = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+    await ctx.db.patch(args.caseId, {
+      metadata: {
+        ...meta,
+        v1: args.v1,
+      },
+    });
+    return { ok: true };
   },
 });
 

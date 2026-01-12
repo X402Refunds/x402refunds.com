@@ -276,6 +276,15 @@ http.route({
       return jsonError(400, { ok: false, code: "INVALID_CASE_ID", message: e?.message || "Invalid caseId" });
     }
 
+    // Best-effort: refresh missing origin/supportEmail/payTo match for demo agents + older cases.
+    try {
+      await (ctx.runAction as any)((internal as any).merchantNotifications.refreshMerchantContactForCase, {
+        caseId,
+      });
+    } catch {
+      // ignore
+    }
+
     try {
       await ctx.scheduler.runAfter(
         0,
@@ -1635,25 +1644,22 @@ http.route({
       blockchain === "base" ? `eip155:8453:${recipientAddress}` : `solana:${SOLANA_MAINNET_CHAINREF}:${recipientAddress}`;
 
     // === Best-effort seller endpoint corroboration (does NOT block filing) ===
+    // Some sellers return 200 on GET (service info) but 402 on POST without payment (x402 flow),
+    // so we may need to probe both to discover refund-contact + payTo.
     let endpointPayToCandidates: string[] | undefined = undefined;
     let endpointPayToMatch: boolean | undefined = undefined;
     let endpointPayToMismatch: boolean | undefined = undefined;
     let paymentSupportEmail: string | undefined = undefined;
     try {
-      const res = await fetch(sellerEndpointUrl, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: AbortSignal.timeout(5_000),
-      });
-      if (res.status === 402) {
-        // Merchant refund contact discovery (no legacy):
-        // seller must include `Link: <mailto:refunds@merchant.com>; rel="https://x402refunds.com/rel/refund-contact"`
-        // or `Link: <refunds@merchant.com>; rel="https://x402refunds.com/rel/refund-contact"` on the 402 response.
+      const tryParseContact = (res: Response) => {
         const link = res.headers.get("Link") || "";
         const uri = findLinkByRel(link, "https://x402refunds.com/rel/refund-contact");
         const email = uri ? parseRefundContactEmailFromLinkUri(uri) : null;
         if (email) paymentSupportEmail = email;
+      };
 
+      const tryParsePayToFrom402 = async (res: Response) => {
+        if (res.status !== 402) return;
         const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
         const bodyText = await res.text().catch(() => null);
         const parsed = parseX402PayTo({
@@ -1668,6 +1674,27 @@ http.route({
           );
           endpointPayToMismatch = !endpointPayToMatch;
         }
+      };
+
+      // 1) GET probe (many sellers support GET discovery)
+      const getRes = await fetch(sellerEndpointUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+      tryParseContact(getRes);
+      await tryParsePayToFrom402(getRes);
+
+      // 2) POST probe if GET didn't yield a 402 (common for demo agents)
+      if (getRes.status !== 402) {
+        const postRes = await fetch(sellerEndpointUrl, {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: "{}",
+          signal: AbortSignal.timeout(5_000),
+        });
+        tryParseContact(postRes);
+        await tryParsePayToFrom402(postRes);
       }
     } catch {
       // Never block filing based on endpoint fetch/parse failures.

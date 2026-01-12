@@ -42,6 +42,7 @@ import type * as lib_coinbase from "../lib/coinbase.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_duplicateDispute from "../lib/duplicateDispute.js";
 import type * as lib_email from "../lib/email.js";
+import type * as lib_linkHeader from "../lib/linkHeader.js";
 import type * as lib_merchantActionCopy from "../lib/merchantActionCopy.js";
 import type * as lib_merchantActionErrorCopy from "../lib/merchantActionErrorCopy.js";
 import type * as lib_merchantRefundEmailCopy from "../lib/merchantRefundEmailCopy.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   "lib/crypto": typeof lib_crypto;
   "lib/duplicateDispute": typeof lib_duplicateDispute;
   "lib/email": typeof lib_email;
+  "lib/linkHeader": typeof lib_linkHeader;
   "lib/merchantActionCopy": typeof lib_merchantActionCopy;
   "lib/merchantActionErrorCopy": typeof lib_merchantActionErrorCopy;
   "lib/merchantRefundEmailCopy": typeof lib_merchantRefundEmailCopy;
