@@ -125,11 +125,25 @@ export const notifyMerchantDisputeFiled: any = internalAction({
   args: { caseId: v.id("cases") },
   handler: async (ctx: any, args: { caseId: any }): Promise<any> => {
     // NOTE: Cast runQuery to any to avoid excessively-deep type instantiations from generated Convex query types.
-    const caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
+    let caseData: any = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
     if (!caseData) return { ok: false, reason: "CASE_NOT_FOUND" };
 
     const merchantRaw = String(caseData.defendant || "");
-    const v1 = caseData?.metadata?.v1 || {};
+    let v1 = caseData?.metadata?.v1 || {};
+
+    // If this case wasn't filed through the wallet-first pipeline, metadata.v1 may be missing.
+    // Best-effort: attempt to refresh contact + payTo corroboration before gating.
+    if (v1?.endpointPayToMatch !== true) {
+      try {
+        await (ctx.runAction as any)((internalApi as any).merchantNotifications.refreshMerchantContactForCase, {
+          caseId: args.caseId,
+        });
+        caseData = await (ctx.runQuery as any)(api.cases.getCaseById, { caseId: args.caseId });
+        v1 = caseData?.metadata?.v1 || v1;
+      } catch {
+        // ignore
+      }
+    }
 
     // Safety gate: only email if we were able to corroborate origin ⇄ wallet via seller endpoint payTo.
     // This prevents spam if a filer supplies an unrelated origin.
