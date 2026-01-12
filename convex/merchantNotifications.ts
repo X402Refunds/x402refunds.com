@@ -410,6 +410,27 @@ export const refreshMerchantContactForCase: any = internalAction({
     const expectedMerchant = normalizeMerchantId(merchantRaw);
     // If we can't normalize merchant, we can still store origin + supportEmail for status UX.
 
+    // Special-case: our demo agents may be hosted on the same origin as the dispute service.
+    // Some serverless runtimes can restrict outbound fetch-to-self, so provide a deterministic fallback
+    // so demo disputes still trigger the notification pipeline.
+    try {
+      const u = new URL(sellerEndpointUrl);
+      if (u.origin === "https://api.x402refunds.com" && u.pathname.startsWith("/demo-agents/")) {
+        const fallbackEmail = process.env.DEMO_AGENTS_REFUND_CONTACT_EMAIL || "refunds@x402refunds.com";
+        paymentSupportEmail = fallbackEmail;
+        if (expectedMerchant && expectedMerchant.startsWith("eip155:")) {
+          const expectedAddr = expectedMerchant.split(":")[2] || "";
+          if (expectedAddr) {
+            endpointPayToCandidates = [expectedAddr];
+            endpointPayToMatch = true;
+            endpointPayToMismatch = false;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     const parseContact = (res: Response) => {
       const link = res.headers.get("Link") || "";
       const uri = findLinkByRel(link, "https://x402refunds.com/rel/refund-contact");
