@@ -99,10 +99,10 @@ export default function HomePage() {
       <section id="enable" className="border-b border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <h2 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <h2 className="mt-2 text-base sm:text-xl font-semibold tracking-tight text-muted-foreground">
+            <h2 className="mt-2 text-sm sm:text-lg font-medium tracking-tight text-muted-foreground">
               Add two headers. That&apos;s it.
             </h2>
           </div>
