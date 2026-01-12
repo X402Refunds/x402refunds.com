@@ -55,9 +55,9 @@ export default function HomePage() {
           <div className="absolute left-1/2 top-[-120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-300/30 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto flex max-w-7xl flex-col px-5 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:min-h-[calc(100svh-4rem)] lg:px-8">
+        <div className="relative mx-auto flex max-w-screen-2xl flex-col px-5 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:min-h-[calc(100svh-4rem)] lg:px-8">
           <div className="mx-auto w-full rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-14 sm:py-16">
-            <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
+            <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
               <h1 className="text-4xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
                 <span className="block whitespace-nowrap">
                   Turn on <span className="text-blue-600">refunds</span>
@@ -97,12 +97,12 @@ export default function HomePage() {
 
       {/* ENABLE DISPUTES (PLUG AND PLAY) */}
       <section id="enable" className="border-b border-slate-200 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div className="max-w-screen-2xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
               Takes 10 seconds.
             </h2>
-            <h2 className="mt-2 text-sm sm:text-lg font-medium tracking-tight text-muted-foreground">
+            <h2 className="mt-2 text-sm font-medium tracking-tight text-muted-foreground">
               Add two headers. That&apos;s it.
             </h2>
           </div>
@@ -113,7 +113,7 @@ export default function HomePage() {
             const refundContactHeader = `Link: <mailto:refunds@yourdomain.com>; rel=\"https://x402refunds.com/rel/refund-contact\"`
 
             return (
-              <div className="mt-12 max-w-7xl mx-auto space-y-10">
+              <div className="mt-12 mx-auto space-y-10">
                 <div className="grid items-start gap-10 lg:grid-cols-2">
                   {/* Step 1 (primary) */}
                   <div className="space-y-4">
@@ -126,7 +126,7 @@ export default function HomePage() {
                     <CodeBlock
                       language="txt"
                       code={refundContactHeader}
-                      header="caption"
+                      header="none"
                       copyPlacement="overlay"
                       showCopy={false}
                     />
