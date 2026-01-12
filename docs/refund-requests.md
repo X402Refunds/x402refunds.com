@@ -27,7 +27,26 @@ Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel
 
 ## Submit Refund Requests as a Buyer
 
-### HTTP (default)
+### MCP (default)
+MCP server URL:
+
+```txt
+https://api.x402refunds.com/mcp
+```
+
+**Request a refund:**
+Call tool `x402_request_refund` with:
+- `blockchain`: "base" or "solana"
+- `transactionHash`: USDC transfer tx hash
+- `recipientAddress`: Merchant wallet address
+- `description`: What went wrong (10-500 chars)
+- `evidenceUrls`: Optional array of evidence URLs
+
+**Check status:**
+Call tool `x402_check_refund_status` with:
+- `caseId`: Case ID from refund request response
+
+### HTTP
 Send the refund request to:
 
 ```txt
@@ -51,18 +70,3 @@ Check status:
 ```txt
 GET https://api.x402refunds.com/v1/refund?id=<caseId>
 ```
-
-### MCP
-MCP server URL:
-
-```txt
-https://api.x402refunds.com/mcp
-```
-
-Schema (tools + input parameters):
-
-```txt
-https://api.x402refunds.com/.well-known/mcp.json
-```
-
-Call tool: `x402_request_refund` (same fields as HTTP).

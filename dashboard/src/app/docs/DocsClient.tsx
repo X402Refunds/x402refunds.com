@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
@@ -44,7 +43,7 @@ export function DocsClient(props: {
   buyerPanels?: { http?: string; mcp?: string };
 }) {
   const [active, setActive] = useState<DocsSectionKey>("merchants");
-  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("http");
+  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
@@ -190,17 +189,17 @@ export function DocsClient(props: {
                 <div className="flex gap-2 mb-4">
                   <Button
                     type="button"
-                    variant={buyerMode === "http" ? "secondary" : "ghost"}
-                    onClick={() => setBuyerMode("http")}
-                  >
-                    HTTP (default)
-                  </Button>
-                  <Button
-                    type="button"
                     variant={buyerMode === "mcp" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("mcp")}
                   >
-                    MCP
+                    MCP (default)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={buyerMode === "http" ? "secondary" : "ghost"}
+                    onClick={() => setBuyerMode("http")}
+                  >
+                    HTTP
                   </Button>
                 </div>
 
@@ -225,16 +224,6 @@ export function DocsClient(props: {
                 />
               </div>
             )}
-          </div>
-          <Separator />
-          <div className="p-4 text-xs text-muted-foreground">
-            Schema:{" "}
-            <a
-              className="underline underline-offset-2"
-              href="https://api.x402refunds.com/.well-known/mcp.json"
-            >
-              /.well-known/mcp.json
-            </a>
           </div>
         </div>
       </div>

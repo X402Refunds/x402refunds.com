@@ -25,13 +25,13 @@ export function splitDocsMarkdown(md: string): {
 }
 
 export function splitBuyerPanels(buyersMd: string): { httpMd: string; mcpMd: string } {
-  const httpIdx = buyersMd.search(/^###\s+HTTP\s+\(default\)\s*$/m);
   const mcpIdx = buyersMd.search(/^###\s+MCP\s*(?:\(.+\))?\s*$/m);
+  const httpIdx = buyersMd.search(/^###\s+HTTP\s*$/m);
   const safeSlice = (start: number, end: number) =>
     start >= 0 ? buyersMd.slice(start, end >= 0 ? end : buyersMd.length).trim() : "";
   return {
-    httpMd: safeSlice(httpIdx, mcpIdx),
-    mcpMd: safeSlice(mcpIdx, -1),
+    mcpMd: safeSlice(mcpIdx, httpIdx),
+    httpMd: safeSlice(httpIdx, -1),
   };
 }
 
