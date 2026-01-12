@@ -44,7 +44,7 @@ export function DocsClient(props: {
   buyerPanels?: { http?: string; mcp?: string };
 }) {
   const [active, setActive] = useState<DocsSectionKey>("merchants");
-  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
+  const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("http");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
@@ -193,14 +193,14 @@ export function DocsClient(props: {
                     variant={buyerMode === "http" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("http")}
                   >
-                    HTTP
+                    HTTP (default)
                   </Button>
                   <Button
                     type="button"
                     variant={buyerMode === "mcp" ? "secondary" : "ghost"}
                     onClick={() => setBuyerMode("mcp")}
                   >
-                    MCP (default)
+                    MCP
                   </Button>
                 </div>
 
