@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
 
 export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
@@ -45,11 +44,9 @@ export function DocsClient(props: {
 }) {
   const [active, setActive] = useState<DocsSectionKey>("merchants");
   const [buyerMode, setBuyerMode] = useState<"http" | "mcp">("mcp");
-  const [copied, setCopied] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const buyerHttpRef = useRef<HTMLDivElement | null>(null);
   const buyerMcpRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLDivElement | null>(null);
 
   const items = useMemo(
     () =>
@@ -62,6 +59,87 @@ export function DocsClient(props: {
 
   const enhanceRenderedHtml = (root: HTMLDivElement | null) => {
     if (!root) return;
+
+    // 0) Insert "Copy AI prompt" button (Sellers section) directly below the first H2.
+    // NOTE: This is DOM-managed on purpose; do NOT move React nodes around inside dangerouslySetInnerHTML.
+    const article = root.querySelector("article.markdown");
+    const firstH2 = article?.querySelector("h2");
+    if (firstH2 && !article?.querySelector('[data-copy-ai-prompt="1"]')) {
+      const aiPrompt = [
+        "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
+        "",
+        "Do these steps exactly (end-to-end):",
+        "",
+        "0) Find every X-402 paywalled endpoint in this repo",
+        "   - Identify all routes/handlers that can return HTTP 402 Payment Required for X-402.",
+        '   - These are the endpoints we mean by "paid endpoints" (exclude payment/signature/facilitator plumbing endpoints).',
+        "",
+        "1) Add a Link header with your refund email (refund contact) to ALL paywalled endpoints",
+        "   - Add this on every response those endpoints produce: both 200 and 402.",
+        "   - Apply it to every method used (GET, POST, etc.).",
+        '     Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"',
+        "   - The <...> target should be mailto:refunds@yourdomain.com",
+        "   - This must be the email the owner wants to receive refund requests at.",
+        "",
+        "2) Add a Link header advertising the refund-request filing URL on paid 200 responses",
+        "   - On every paywalled endpoint, when returning 200 OK after a paid request, include:",
+        '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
+        "   - Return this on successful paid 200 responses only.",
+        "",
+        "3) Deploy + test (required)",
+        "   - Deploy to production.",
+        "   - Test at least one paywalled endpoint:",
+        "     - Unpaid request => 402 response MUST include the refund-contact Link header.",
+        "     - Paid request => 200 response MUST include refund-contact + refund-request Link headers.",
+        "",
+        "Important:",
+        "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
+      ].join("\n");
+
+      const container = document.createElement("div");
+      container.setAttribute("data-copy-ai-prompt", "1");
+      container.className = "my-6 flex justify-center";
+
+      const ring = document.createElement("div");
+      ring.className =
+        "inline-flex rounded-full p-[2px] " +
+        "bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "h-12 rounded-full border-0 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900 " +
+        "inline-flex items-center gap-2 text-base font-medium transition-colors";
+      btn.textContent = "Copy AI prompt";
+
+      const setCopiedUi = (isCopied: boolean) => {
+        if (!isCopied) {
+          btn.innerHTML = "";
+          btn.textContent = "Copy AI prompt";
+          return;
+        }
+        btn.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+          'stroke-linecap="round" stroke-linejoin="round" width="18" height="18">' +
+          '<path d="M20 6 9 17l-5-5"></path>' +
+          "</svg>" +
+          "<span>Copied!</span>";
+      };
+
+      btn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(aiPrompt);
+          setCopiedUi(true);
+          window.setTimeout(() => setCopiedUi(false), 1500);
+        } catch {
+          // no-op
+        }
+      });
+
+      ring.appendChild(btn);
+      container.appendChild(ring);
+      firstH2.insertAdjacentElement("afterend", container);
+    }
 
     // 1) Render Mermaid blocks (```mermaid) into SVGs (client-side).
     // remark-html renders fenced code as: <pre><code class="language-mermaid">...</code></pre>
@@ -145,15 +223,6 @@ export function DocsClient(props: {
   useEffect(() => {
     if (active !== "buyers") {
       enhanceRenderedHtml(contentRef.current);
-      // Insert button after the first h2 heading for merchants section
-      if (active === "merchants" && contentRef.current && buttonRef.current) {
-        const article = contentRef.current.querySelector("article.markdown");
-        const firstH2 = article?.querySelector("h2");
-        if (firstH2 && buttonRef.current && buttonRef.current.parentNode) {
-          // Move button to appear right after the h2
-          firstH2.insertAdjacentElement("afterend", buttonRef.current);
-        }
-      }
       return;
     }
     if (buyerMode === "http") {
@@ -230,70 +299,7 @@ export function DocsClient(props: {
               </div>
             ) : (
               <div ref={contentRef} id={SECTION_HASH[active]}>
-                <article
-                  className="markdown"
-                  dangerouslySetInnerHTML={{ __html: props.sections[active] }}
-                />
-                {active === "merchants" && (
-                  <div ref={buttonRef} className="mb-6 flex justify-center">
-                    <div className="inline-flex rounded-full p-[2px] bg-[conic-gradient(from_180deg_at_50%_50%,#93c5fd,#c4b5fd,#fbcfe8,#fde68a,#a7f3d0,#93c5fd)]">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        type="button"
-                        className="h-12 rounded-full border-0 bg-white/60 px-8 text-slate-700 hover:bg-white hover:text-slate-900 relative"
-                        onClick={async () => {
-                          const aiPrompt = [
-                            "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
-                            "",
-                            "Do these steps exactly (end-to-end):",
-                            "",
-                            "0) Find every X-402 paywalled endpoint in this repo",
-                            "   - Identify all routes/handlers that can return HTTP 402 Payment Required for X-402.",
-                            "   - These are the endpoints we mean by \"paid endpoints\" (exclude payment/signature/facilitator plumbing endpoints).",
-                            "",
-                            "1) Add a Link header with your refund email (refund contact) to ALL paywalled endpoints",
-                            "   - Add this on every response those endpoints produce: both 200 and 402.",
-                            "   - Apply it to every method used (GET, POST, etc.).",
-                            '     Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"',
-                            "   - The <...> target should be mailto:refunds@yourdomain.com",
-                            "   - This must be the email the owner wants to receive refund requests at.",
-                            "",
-                            "2) Add a Link header advertising the refund-request filing URL on paid 200 responses",
-                            "   - On every paywalled endpoint, when returning 200 OK after a paid request, include:",
-                            '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
-                            "   - Return this on successful paid 200 responses only.",
-                            "",
-                            "3) Deploy + test (required)",
-                            "   - Deploy to production.",
-                            "   - Test at least one paywalled endpoint:",
-                            "     - Unpaid request => 402 response MUST include the refund-contact Link header.",
-                            "     - Paid request => 200 response MUST include refund-contact + refund-request Link headers.",
-                            "",
-                            "Important:",
-                            "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
-                          ].join("\n");
-                          try {
-                            await navigator.clipboard.writeText(aiPrompt);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          } catch {
-                            // Fallback if clipboard API fails
-                          }
-                        }}
-                      >
-                        {copied ? (
-                          <span className="flex items-center gap-2">
-                            <Check className="h-5 w-5" />
-                            Copied!
-                          </span>
-                        ) : (
-                          "Copy AI prompt"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <article className="markdown" dangerouslySetInnerHTML={{ __html: props.sections[active] }} />
               </div>
             )}
           </div>
