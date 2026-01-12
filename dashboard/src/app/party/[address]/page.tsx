@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer"
 import { DisputeRow } from "@/components/registry/DisputeRow"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Container, Section } from "@/components/layout"
 import { Loader2, User, Scale, TrendingUp } from "lucide-react"
 
 // NOTE: Avoid importing Convex generated `api` types here; TS can hit "excessively deep" instantiation.
@@ -37,10 +38,12 @@ export default function PartyPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Navigation currentPage="home" />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
+        <main>
+          <Container className="py-12">
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          </Container>
         </main>
         <Footer />
       </div>
@@ -55,21 +58,20 @@ export default function PartyPage() {
       <Navigation currentPage="home" />
       
       {/* Party Header */}
-      <section className="bg-gradient-to-r from-slate-900 to-slate-800 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-4">
-            <User className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Party Details</h1>
-          </div>
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <p className="text-slate-300 text-sm mb-2">Address</p>
-            <p className="font-mono text-lg break-all">{address}</p>
-          </div>
+      <Section spacing="tight" className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+        <div className="flex items-center gap-3 mb-4">
+          <User className="h-8 w-8" />
+          <h1 className="text-3xl font-bold">Party Details</h1>
         </div>
-      </section>
+        <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+          <p className="text-slate-300 text-sm mb-2">Address</p>
+          <p className="font-mono text-lg break-all">{address}</p>
+        </div>
+      </Section>
 
       {/* Stats Overview */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section>
+        <Container className="py-12 sm:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-3">
@@ -161,6 +163,7 @@ export default function PartyPage() {
             <p className="text-slate-500">No disputes found for this address</p>
           </div>
         )}
+        </Container>
       </section>
 
       <Footer />

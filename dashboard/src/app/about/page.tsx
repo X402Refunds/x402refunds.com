@@ -9,6 +9,7 @@ import { Mail, Linkedin, Twitter, Calendar, MapPin, Key, ArrowRight, BookOpen, C
 import { useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { Section } from "@/components/layout"
 
 export default function AboutPage() {
   const [emailRevealed, setEmailRevealed] = useState(false)
@@ -51,9 +52,12 @@ export default function AboutPage() {
       <Navigation currentPage="about" />
 
       {/* Hero Section */}
-      <section className="pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12 bg-gradient-to-b from-slate-50 to-white">
-        <motion.div 
-          className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8"
+      <Section
+        spacing="none"
+        className="bg-gradient-to-b from-slate-50 to-white"
+        containerClassName="max-w-4xl pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12"
+      >
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -70,12 +74,11 @@ export default function AboutPage() {
             </p>
           </div>
         </motion.div>
-      </section>
+      </Section>
 
       {/* Founder Section */}
-      <section className="py-6 sm:py-8 lg:py-12">
-        <motion.div 
-          className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8"
+      <Section spacing="none" containerClassName="max-w-4xl py-6 sm:py-8 lg:py-12">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -192,7 +195,7 @@ export default function AboutPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </section>
+      </Section>
 
       {/* Company Mission */}
       <section className="py-8 sm:py-12 lg:py-16 bg-slate-50">

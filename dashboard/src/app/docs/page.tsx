@@ -4,6 +4,7 @@ import { remark } from "remark";
 import remarkHtml from "remark-html";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { Section } from "@/components/layout";
 import { DocsClient } from "./DocsClient";
 
 export const metadata = {
@@ -80,9 +81,9 @@ export default async function DocsPage() {
     <div className="flex flex-col min-h-screen">
       <Navigation />
       <main className="flex-1 bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-10">
+        <Section spacing="tight" containerClassName="max-w-4xl">
           <DocsClient title={title} sections={sections} buyerPanels={buyerPanels} />
-        </div>
+        </Section>
       </main>
       <Footer />
     </div>

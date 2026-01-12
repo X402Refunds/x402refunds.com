@@ -5,6 +5,7 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Section } from "@/components/layout"
 import { CheckCircle, XCircle, AlertCircle, Activity } from "lucide-react"
 
 interface SystemStatus {
@@ -107,7 +108,8 @@ export default function UptimePage() {
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/30">
       <Navigation />
       
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <main>
+        <Section spacing="tight" containerClassName="max-w-5xl">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">System Status</h1>
@@ -237,6 +239,7 @@ export default function UptimePage() {
             </a>
           </p>
         </div>
+        </Section>
       </main>
 
       <Footer />

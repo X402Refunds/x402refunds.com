@@ -4,6 +4,7 @@ import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/code-block"
+import { Container, Section, SectionHeading } from "@/components/layout"
 import {
   Mail,
   ShieldCheck,
@@ -14,9 +15,6 @@ import {
 } from "lucide-react"
 
 export default function HomePage() {
-  const containerClass = "mx-auto w-full max-w-screen-2xl px-5 sm:px-6 lg:px-8"
-  const sectionYClass = "py-16 sm:py-24"
-
   const aiPrompt = [
     "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
     "",
@@ -58,7 +56,7 @@ export default function HomePage() {
           <div className="absolute left-1/2 top-[-120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-300/30 blur-3xl" />
         </div>
 
-        <div className={`relative flex flex-col ${containerClass} ${sectionYClass}`}>
+        <Container className="relative flex flex-col py-16 sm:py-24">
           <div className="mx-auto w-full rounded-[32px] border border-slate-200 bg-white px-7 py-12 shadow-[0_25px_80px_-35px_rgba(37,99,235,0.35)] sm:px-14 sm:py-16">
             <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
               <h1 className="text-4xl font-semibold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl lg:text-8xl">
@@ -95,17 +93,12 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* ENABLE DISPUTES (PLUG AND PLAY) */}
-      <section id="enable" className="border-b border-slate-200 bg-slate-50">
-        <div className={`${containerClass} ${sectionYClass}`}>
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Add two refund headers.
-            </h2>
-          </div>
+      <Section id="enable" className="border-b border-slate-200 bg-slate-50">
+        <SectionHeading title="Add two refund headers." />
 
           {(() => {
             const filingUrl = "https://api.x402refunds.com/v1/refunds"
@@ -196,17 +189,11 @@ export default function HomePage() {
               </div>
             )
           })()}
-        </div>
-      </section>
+      </Section>
 
       {/* AI PROMPT */}
-      <section id="ai-prompt" className="border-b border-slate-200 bg-slate-50">
-        <div className={`${containerClass} ${sectionYClass}`}>
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              AI prompt (Claude Code/Cursor)
-            </h2>
-          </div>
+      <Section id="ai-prompt" className="border-b border-slate-200 bg-slate-50">
+        <SectionHeading title="AI prompt (Claude Code/Cursor)" />
 
           <div className="mt-10 max-w-3xl mx-auto space-y-3">
             <CodeBlock
@@ -219,22 +206,17 @@ export default function HomePage() {
               clickToCopy
             />
           </div>
-        </div>
-      </section>
+      </Section>
 
       {/* (Removed) WHAT YOU GET */}
 
       {/* WHAT YOU GET */}
       <section className="bg-slate-50 border-y border-slate-200">
-        <div className={`${containerClass} ${sectionYClass}`}>
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
-              What you get
-            </h2>
-            <p className="mt-3 text-slate-600">
-              A lightweight refund-requests inbox for paid APIs—without building a dashboard.
-            </p>
-          </div>
+        <Container className="py-16 sm:py-24">
+          <SectionHeading
+            title="What you get"
+            description="A lightweight refund-requests inbox for paid APIs—without building a dashboard."
+          />
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -331,7 +313,7 @@ export default function HomePage() {
               View docs →
             </Button>
             </div>
-        </div>
+        </Container>
       </section>
 
       <Footer />

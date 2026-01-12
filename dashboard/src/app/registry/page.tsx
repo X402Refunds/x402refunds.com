@@ -6,6 +6,7 @@ import { StatsBar } from "@/components/registry/StatsBar"
 import { SearchBar } from "@/components/registry/SearchBar"
 import { DisputeFeed } from "@/components/registry/DisputeFeed"
 import { Button } from "@/components/ui/button"
+import { Container, Section } from "@/components/layout"
 import { BookOpen, FileText } from "lucide-react"
 import { useState } from "react"
 
@@ -18,8 +19,10 @@ export default function RegistryPage() {
       <Navigation currentPage="registry" />
 
       {/* Minimal Hero - Just one line */}
-      <section className="bg-gradient-to-r from-slate-900 to-slate-800 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Section
+        spacing="tight"
+        className="bg-gradient-to-r from-slate-900 to-slate-800 text-white"
+      >
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Dispute Registry</h1>
@@ -43,14 +46,14 @@ export default function RegistryPage() {
               </Button>
             </div>
           </div>
-        </div>
-      </section>
+      </Section>
 
       {/* Stats Bar */}
       <StatsBar />
 
       {/* Main Content: Live Feed */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main>
+        <Container className="py-12 sm:py-16">
         <div className="space-y-4">
           <SearchBar 
             onSearchChange={setSearchQuery}
@@ -62,11 +65,12 @@ export default function RegistryPage() {
             searchQuery={searchQuery}
           />
         </div>
+        </Container>
       </main>
 
       {/* Minimal Bottom CTA */}
       <section className="py-12 bg-white border-t border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <Container className="max-w-4xl text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">
             Ready to integrate X-402 dispute resolution?
           </h2>
@@ -89,7 +93,7 @@ export default function RegistryPage() {
               Sign Up
             </Button>
           </div>
-        </div>
+        </Container>
       </section>
 
       <Footer />

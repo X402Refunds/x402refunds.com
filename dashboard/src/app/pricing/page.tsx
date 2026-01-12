@@ -15,6 +15,7 @@ import {
 import { Navigation } from "@/components/Navigation"
 import { Footer } from "@/components/Footer"
 import { motion } from "framer-motion"
+import { Section } from "@/components/layout"
 
 export default function PricingPage() {
   return (
@@ -22,9 +23,8 @@ export default function PricingPage() {
       <Navigation currentPage="pricing" />
 
       {/* Platform Access Plans */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <Section spacing="default">
         <motion.div 
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -290,7 +290,7 @@ export default function PricingPage() {
             </motion.div>
           </motion.div>
         </motion.div>
-      </section>
+      </Section>
 
       {/* Per-Request Fees */}
       <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
