@@ -201,7 +201,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
-              IDE prompt (Cursor/Claude Code)
+              AI prompt (Claude Code/Cursor)
             </h2>
           </div>
 
