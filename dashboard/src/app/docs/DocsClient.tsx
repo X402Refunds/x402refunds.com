@@ -52,7 +52,7 @@ export function DocsClient(props: {
     () =>
       [
         { key: "merchants" as const, label: "Integration guide for Sellers" },
-        { key: "buyers" as const, label: "Request refunds as a buyer" },
+        { key: "buyers" as const, label: "Request Refunds as a Buyer" },
       ] as const,
     [],
   );

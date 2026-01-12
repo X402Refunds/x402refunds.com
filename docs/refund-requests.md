@@ -43,8 +43,7 @@ Call tool `x402_request_refund` with:
 - `evidenceUrls`: Optional array of evidence URLs
 
 **Check status:**
-Call tool `x402_check_refund_status` with:
-- `caseId`: Case ID from refund request response
+Call tool `x402_check_refund_status` with `caseId` (from refund request response).
 
 ### HTTP
 Send the refund request to:
