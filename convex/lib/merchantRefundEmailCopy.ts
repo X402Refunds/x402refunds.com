@@ -11,9 +11,6 @@ export function buildMerchantRefundExecutedEmailCopy(
 ): string {
   const lines: string[] = [];
 
-  lines.push("Refund processed");
-  lines.push("");
-  lines.push(`Case ID: ${input.caseId}`);
   if (typeof input.amountMicrousdc === "number" && Number.isFinite(input.amountMicrousdc)) {
     lines.push(`Refund amount: ${(input.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
   }
@@ -43,6 +40,7 @@ export function buildMerchantRefundExecutedEmailCopy(
   lines.push("Note: on-chain confirmations can take a minute.");
   lines.push("");
   lines.push("Sent by x402refunds.com");
+  lines.push(`[Case ID: ${input.caseId}]`);
 
   return lines.join("\n");
 }

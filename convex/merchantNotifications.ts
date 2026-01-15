@@ -45,9 +45,6 @@ function buildDisputeSummaryLines(params: {
   chain?: string;
 }): string[] {
   const lines: string[] = [];
-  lines.push("Dispute received");
-  lines.push("");
-  lines.push(`Case ID: ${params.caseId}`);
   if (typeof params.amountMicrousdc === "number") {
     lines.push(`Amount: ${(params.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
   }
@@ -94,6 +91,7 @@ function buildMerchantDisputeEmailText(params: {
   }
 
   lines.push("Sent by x402refunds.com");
+  lines.push(`[Case ID: ${params.caseId}]`);
   return lines.join("\n");
 }
 
@@ -104,18 +102,14 @@ function buildMerchantVerificationEmailText(params: {
   confirmUrl: string;
 }): string {
   const lines: string[] = [];
-  lines.push("ACTION REQUIRED: VERIFY YOUR EMAIL FIRST");
-  lines.push("");
-  lines.push("Step 1 (required): verify this email so we can send dispute notifications.");
-  lines.push("");
   lines.push(`Merchant wallet: ${params.merchant}`);
   lines.push(`Merchant origin: ${params.origin}`);
   lines.push(`Notification email: ${params.supportEmail}`);
   lines.push("");
-  lines.push("Verify email:");
+  lines.push("Click to verify your email:");
   lines.push(params.confirmUrl);
   lines.push("");
-  lines.push("After you verify, we will email you the dispute details and one-click actions.");
+  lines.push("After you verify, we will email you the refund request details received for your agent.");
   lines.push("");
   lines.push("Sent by x402refunds.com");
   return lines.join("\n");
@@ -242,7 +236,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
         String(tokenRes.token),
       )}`;
 
-      const subject = `ACTION REQUIRED: Verify dispute emails (${expectedMerchant.slice(0, 18)}…)`;
+      const subject = "Action required - verify email.";
       const text = buildMerchantVerificationEmailText({
         merchant: expectedMerchant,
         origin: String(tokenRes.origin || merchantOrigin),
@@ -273,7 +267,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       return { ok: true, emailed: true, reason: "EMAIL_VERIFICATION_SENT" };
     }
 
-    const subject = `Dispute received (${String(args.caseId).slice(0, 8)})`;
+    const subject = `Refund request received [${String(args.caseId).slice(0, 8)}]`;
     const paymentAmountMicrousdc =
       typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
     const disputeFeeMicrousdc =
@@ -668,7 +662,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
           ? Math.round(refund.amount * 1_000_000)
           : null;
 
-    const subject = `Refund processed (${String(args.caseId).slice(0, 8)})`;
+    const subject = `Refund processed [${String(args.caseId).slice(0, 8)}]`;
     const text = buildMerchantRefundExecutedEmailCopy({
       caseId: String(args.caseId),
       amountMicrousdc,

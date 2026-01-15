@@ -10,7 +10,7 @@ describe("merchant refund executed email copy (unit)", () => {
       refundTxHash: "0x" + "11".repeat(32),
     });
 
-    expect(text).toContain("Refund processed");
+    expect(text).toContain("[Case ID: jd780r2cdjf90h1tg4qenqyzyn7ysb0r]");
     expect(text).toContain("Track refund on Basescan:");
     expect(text).toContain("https://basescan.org/tx/0xabc");
   });
