@@ -53,6 +53,52 @@ const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
 const DEMO_AGENTS_SOLANA_FEE_PAYER =
   process.env.DEMO_AGENTS_SOLANA_FEE_PAYER || process.env.X402_SOLANA_FEE_PAYER || "";
 
+let _cachedDexterSolanaFeePayer: { value: string; fetchedAt: number } | null = null;
+async function getDexterSolanaFeePayer(): Promise<string | null> {
+  // Cache for 10 minutes.
+  const now = Date.now();
+  if (_cachedDexterSolanaFeePayer && now - _cachedDexterSolanaFeePayer.fetchedAt < 10 * 60 * 1000) {
+    return _cachedDexterSolanaFeePayer.value || null;
+  }
+  try {
+    const resp = await fetch("https://x402.dexter.cash/supported", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!resp.ok) return null;
+    const data: any = await resp.json();
+    const kinds: any[] = Array.isArray(data?.kinds) ? data.kinds : [];
+    // Prefer v1 exact solana kind (matches our v1 `accepts` format).
+    for (const k of kinds) {
+      if (!k || typeof k !== "object") continue;
+      const scheme = String(k.scheme || "").toLowerCase();
+      const network = String(k.network || "").toLowerCase();
+      const extra = k.extra && typeof k.extra === "object" ? k.extra : null;
+      const feePayer = extra && typeof extra.feePayer === "string" ? String(extra.feePayer) : "";
+      if (scheme === "exact" && network === "solana" && feePayer) {
+        _cachedDexterSolanaFeePayer = { value: feePayer, fetchedAt: now };
+        return feePayer;
+      }
+    }
+    // Fallback: any solana exact kind (v2 CAIP network strings).
+    for (const k of kinds) {
+      if (!k || typeof k !== "object") continue;
+      const scheme = String(k.scheme || "").toLowerCase();
+      const network = String(k.network || "").toLowerCase();
+      const extra = k.extra && typeof k.extra === "object" ? k.extra : null;
+      const feePayer = extra && typeof extra.feePayer === "string" ? String(extra.feePayer) : "";
+      if (scheme === "exact" && network.includes("solana") && feePayer) {
+        _cachedDexterSolanaFeePayer = { value: feePayer, fetchedAt: now };
+        return feePayer;
+      }
+    }
+    _cachedDexterSolanaFeePayer = { value: "", fetchedAt: now };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 // USDC mint on Solana mainnet
@@ -275,6 +321,9 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       }
   };
 
+  const solanaFeePayer =
+    DEMO_AGENTS_SOLANA_FEE_PAYER || (await getDexterSolanaFeePayer()) || "";
+
   const paymentRequiredSolana = {
     scheme: "exact",
     network: "solana", // x402 v1 Solana mainnet
@@ -291,7 +340,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     extra: {
       name: "USDC",
       version: "1",
-      ...(DEMO_AGENTS_SOLANA_FEE_PAYER ? { feePayer: DEMO_AGENTS_SOLANA_FEE_PAYER } : {}),
+      ...(solanaFeePayer ? { feePayer: solanaFeePayer } : {}),
     },
   };
 

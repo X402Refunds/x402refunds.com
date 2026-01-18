@@ -73,34 +73,6 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
     return pk
   }
 
-  async function fetchDexterSolanaFeePayer(): Promise<string | null> {
-    try {
-      // Best-effort: discover feePayer from the dexter facilitator.
-      const resp = await fetch("https://x402.dexter.cash/supported", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      })
-      if (!resp.ok) return null
-      const data = (await resp.json()) as unknown
-      if (!data || typeof data !== "object") return null
-      const obj = data as Record<string, unknown>
-      const supported = obj.supported
-      if (!Array.isArray(supported)) return null
-      for (const entry of supported) {
-        if (!entry || typeof entry !== "object") continue
-        const e = entry as Record<string, unknown>
-        const network = typeof e.network === "string" ? e.network.toLowerCase() : ""
-        const scheme = typeof e.scheme === "string" ? e.scheme.toLowerCase() : ""
-        const extra = e.extra && typeof e.extra === "object" ? (e.extra as Record<string, unknown>) : null
-        const feePayer = extra && typeof extra.feePayer === "string" ? extra.feePayer : null
-        if (scheme === "exact" && network.includes("solana") && feePayer) return feePayer
-      }
-      return null
-    } catch {
-      return null
-    }
-  }
-
   async function handlePayment() {
     if (payNetwork === "solana") {
       setLoading(true)
@@ -124,19 +96,15 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
         const paymentData = await response1.json()
         const solReq = pickPaymentRequirementByNetwork(paymentData, "solana")
 
-        let feePayerRaw = (() => {
+        const feePayerRaw = (() => {
           const extra = solReq.extra
           if (!extra || typeof extra !== "object") return ""
           const feePayer = (extra as Record<string, unknown>).feePayer
           return typeof feePayer === "string" ? feePayer : ""
         })()
         if (!feePayerRaw) {
-          const discovered = await fetchDexterSolanaFeePayer()
-          if (discovered) feePayerRaw = discovered
-        }
-        if (!feePayerRaw) {
           throw new Error(
-            "Solana payments require a facilitator fee payer (missing extra.feePayer; unable to discover from facilitator).",
+            "Solana payments require a facilitator fee payer (missing extra.feePayer in 402 response). Please refresh and try again.",
           )
         }
 
