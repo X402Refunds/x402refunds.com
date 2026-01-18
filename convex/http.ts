@@ -1519,7 +1519,8 @@ http.route({
             "")
         : "";
     if (blockchain === "solana" && !solanaFeePayer) {
-      return jsonError(502, {
+      // Use 4xx so Cloudflare doesn't replace JSON with a 5xx HTML error page.
+      return jsonError(400, {
         ok: false,
         code: "FEE_PAYER_UNAVAILABLE",
         message: "Solana facilitator fee payer unavailable (set X402_SOLANA_FEE_PAYER or retry).",
@@ -1679,7 +1680,8 @@ http.route({
       extractTxHashFromFacilitatorSettleBody({ bodyText: String((settleHeaders as any)?.txHashHeader ?? "") }) ||
       extractTxHashFromFacilitatorSettleBody({ bodyText: String((settleHeaders as any)?.paymentResponse ?? "") });
     if (!txHash) {
-      return jsonError(502, {
+      // Use 4xx so Cloudflare doesn't replace JSON with a 5xx HTML error page.
+      return jsonError(400, {
         ok: false,
         code: "NO_TX_HASH",
         message: "Facilitator did not return a transaction hash",
