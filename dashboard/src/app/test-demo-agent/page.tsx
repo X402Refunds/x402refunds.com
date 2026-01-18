@@ -29,7 +29,7 @@ export default function TestDemoAgentPage() {
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold">X-402 Demo Agent Test</h1>
           <p className="text-muted-foreground">
-            Test signature-based payments with Brave Wallet - no gas fees required!
+            Test facilitated payments on Base (Brave) or Solana (Phantom) — no gas token required.
           </p>
         </div>
 
@@ -111,10 +111,11 @@ export default function TestDemoAgentPage() {
         <div className="grid md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Signature-Based Payment</CardTitle>
+              <CardTitle className="text-lg">Facilitated Payment</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
-              <p>✅ Sign message (no gas fee!)</p>
+              <p>✅ Base: sign message (no gas fee!)</p>
+              <p>✅ Solana: sign transaction (fee payer is facilitator)</p>
               <p>✅ Facilitator pays gas</p>
               <p>✅ Only need USDC</p>
               <p>✅ Instant approval</p>
