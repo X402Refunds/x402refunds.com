@@ -250,7 +250,8 @@ export const sendUsdcSolana = action({
       return { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc must be a positive integer" };
     }
 
-    const solanaNetwork = process.env.SOLANA_NETWORK === "mainnet" ? "mainnet" : "devnet";
+      // Default to mainnet in production. Devnet must be explicitly opted into.
+      const solanaNetwork = process.env.SOLANA_NETWORK === "devnet" ? "devnet" : "mainnet";
 
     try {
       // Defer SDK import until runtime so missing deps/env never break deploy.
