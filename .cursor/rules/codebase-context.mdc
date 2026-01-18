@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-18T20:58:53.402Z
+**Auto-generated on**: 2026-01-18T21:21:08.955Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -110,7 +110,7 @@ consulate/
 - **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, extractSolanaUsdcTransfersFromGetTransactionResult, deriveUsdcMerchantFromTxHashSolana, findErc20TransferMatches, getLatestSolanaBlockhash, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
 - **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10, normalizeWalletIndexKey, walletMatchKeys
 - **canonicalDispute.ts** - Core logic
-- **coinbase.ts** - getOrCreatePlatformEvmAccount, getOrCreatePlatformSolanaAccount, sendUsdcBase, sendUsdcSolana
+- **coinbase.ts** - shouldFallbackSolanaUsdcTransfer, getOrCreatePlatformEvmAccount, getOrCreatePlatformSolanaAccount, sendUsdcBase, sendUsdcSolana
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **duplicateDispute.ts** - parseDuplicatePaymentDisputeError
 - **email.ts** - Core logic
@@ -204,7 +204,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (82 test files)
+### Test Suites (83 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -250,6 +250,7 @@ Common HTTP routes exposed:
 - test/unit/canonical-dispute-created.test.ts
 - test/unit/canonical-dispute-duplicate.test.ts
 - test/unit/case-tracking.test.ts
+- test/unit/coinbase-solana-fallback.test.ts
 - test/unit/demo-agents-payto.test.ts
 - test/unit/dexter-partner-flow.test.ts
 - test/unit/docs-markdown-splitting.test.ts
@@ -408,7 +409,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 82 test files using Vitest
+- 83 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -441,5 +442,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/18/2026, 12:58:53 PM
-Files scanned: 577
+Generated: 1/18/2026, 1:21:08 PM
+Files scanned: 578
