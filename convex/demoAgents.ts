@@ -19,10 +19,10 @@
  * 4. POST with X-402-Transaction-Hash - Server verifies on blockchain
  * 5. Returns 200 OK with image URL
  * 
- * FLOW 2: Signature (Traditional X-402 clients)
+ * FLOW 2: Facilitated (website Paywall)
  * 1. GET - Returns service info and pricing (discovery)
  * 2. POST without X-PAYMENT - Returns 402 with payment requirements
- * 3. POST with X-PAYMENT - Verifies signature via mcpay.tech facilitator
+ * 3. POST with X-PAYMENT - Verifies payment via dexter.cash facilitator
  * 4. Performs work - Generates image URL
  * 5. Settles payment via facilitator
  * 6. Returns 200 OK with image URL + X-PAYMENT-RESPONSE header
@@ -48,6 +48,10 @@ const DEMO_AGENTS_SOLANA_WALLET =
 // Refund contact email the demo agent wants to receive refund requests at (exposed via Link on 402).
 const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
   process.env.DEMO_AGENTS_REFUND_CONTACT_EMAIL || "refunds@x402refunds.com";
+
+// Optional: facilitator fee payer pubkey for Solana exact scheme (gasless Solana flow).
+const DEMO_AGENTS_SOLANA_FEE_PAYER =
+  process.env.DEMO_AGENTS_SOLANA_FEE_PAYER || process.env.X402_SOLANA_FEE_PAYER || "";
 
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -275,6 +279,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     scheme: "exact",
     network: "solana", // x402 v1 Solana mainnet
     maxAmountRequired: "10000",
+    // Some facilitators expect `amount` instead of `maxAmountRequired`.
+    amount: "10000",
     asset: USDC_SOLANA_MAINNET,
     payTo: DEMO_AGENTS_SOLANA_WALLET,
     resource: request.url,
@@ -285,6 +291,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     extra: {
       name: "USDC",
       version: "1",
+      ...(DEMO_AGENTS_SOLANA_FEE_PAYER ? { feePayer: DEMO_AGENTS_SOLANA_FEE_PAYER } : {}),
     },
   };
 
@@ -295,7 +302,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     // v1 protocol: Payment requirements go in BODY only (no header)
     return new Response(JSON.stringify({
       x402Version: 1, // v1 protocol (Payments MCP doesn't support v2)
-      error: "Payment required: 0.01 USDC on Base (send transaction hash or signature)",
+      error: "Payment required: 0.01 USDC on Base or Solana (send tx hash or use facilitated X-PAYMENT)",
       accepts: [paymentRequiredBase, paymentRequiredSolana]
     }), {
       status: 402,
@@ -433,9 +440,8 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     });
   }
   
-  // FLOW 2: Signature (Traditional X-402) - Use facilitator verify/settle
-  // NOTE: This demo flow remains Base-only; Solana uses the on-chain tx-hash flow above.
-  console.log(`🔐 X-PAYMENT signature provided - using facilitator flow`);
+  // FLOW 2: Facilitated X-PAYMENT (Base EVM signature OR Solana partial tx).
+  console.log(`🔐 X-PAYMENT provided - using facilitator flow`);
   if (!xPayment) {
     return new Response(JSON.stringify({
       x402Version: 1,
@@ -463,24 +469,55 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   }
   
   try {
-    // Payment requirements for v1 protocol
-    const paymentRequirements = {
-      scheme: "exact",
-      network: "base",
-      maxAmountRequired: "10000",
-      asset: USDC_BASE_MAINNET,
-      payTo: DEMO_AGENTS_WALLET,
-      resource: request.url,
-      description: "Image generation API (demo - always returns 500 error)",
-      mimeType: "application/json",
-      maxTimeoutSeconds: 60,
-      // For EVM `exact` payments, facilitators commonly require EIP-712 domain metadata
-      // for the EIP-3009 token contract (USDC).
-      extra: {
-        name: "USD Coin",
-        version: "2",
-      },
-    };
+    const inferredNetwork =
+      typeof decodedPaymentPayload?.network === "string"
+        ? String(decodedPaymentPayload.network)
+        : typeof decodedPaymentPayload?.accepted?.network === "string"
+          ? String(decodedPaymentPayload.accepted.network)
+          : typeof decodedPaymentPayload?.payload?.transaction === "string"
+            ? "solana"
+            : "base";
+
+    const isSolana = inferredNetwork.toLowerCase().includes("solana");
+    const decodedFeePayer =
+      typeof decodedPaymentPayload?.accepted?.extra?.feePayer === "string"
+        ? String(decodedPaymentPayload.accepted.extra.feePayer)
+        : "";
+    const solanaFeePayer = decodedFeePayer || DEMO_AGENTS_SOLANA_FEE_PAYER;
+
+    const paymentRequirements = isSolana
+      ? {
+          scheme: "exact",
+          network: "solana",
+          maxAmountRequired: "10000",
+          amount: "10000",
+          asset: USDC_SOLANA_MAINNET,
+          payTo: DEMO_AGENTS_SOLANA_WALLET,
+          resource: request.url,
+          description: "Image generation API (demo - always returns 500 error)",
+          mimeType: "application/json",
+          maxTimeoutSeconds: 60,
+          extra: {
+            ...(solanaFeePayer ? { feePayer: solanaFeePayer } : {}),
+          },
+        }
+      : {
+          scheme: "exact",
+          network: "base",
+          maxAmountRequired: "10000",
+          asset: USDC_BASE_MAINNET,
+          payTo: DEMO_AGENTS_WALLET,
+          resource: request.url,
+          description: "Image generation API (demo - always returns 500 error)",
+          mimeType: "application/json",
+          maxTimeoutSeconds: 60,
+          // For EVM `exact` payments, facilitators commonly require EIP-712 domain metadata
+          // for the EIP-3009 token contract (USDC).
+          extra: {
+            name: "USD Coin",
+            version: "2",
+          },
+        };
     
     console.log(`🔍 Step 1: Verifying payment with facilitator`);
     

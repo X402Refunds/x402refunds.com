@@ -75,6 +75,13 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       const networks = (data.accepts || []).map((a: any) => a?.network).filter(Boolean);
       expect(networks).toContain('base');
       expect(networks).toContain('solana');
+
+      // For website-based Solana payments, a fee payer may be provided in extra.feePayer.
+      // Not all deployments may set it, so this is best-effort.
+      const sol = (data.accepts || []).find((a: any) => a?.network === 'solana');
+      if (sol?.extra?.feePayer) {
+        expect(typeof sol.extra.feePayer).toBe('string');
+      }
     });
   });
 

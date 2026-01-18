@@ -5,7 +5,7 @@
  * 
  * Handles payment verification and settlement via a facilitator.
  *
- * Default facilitator: `https://facilitator.mcpay.tech`
+ * Default facilitator: `https://x402.dexter.cash`
  * Override with `X402_FACILITATOR_URL`.
  *
  * NOTE: Some facilitators are strict about network identifiers (e.g. `base` vs `eip155:8453`).
@@ -185,7 +185,7 @@ export const verifyPayment = action({
     const override = process.env.X402_FACILITATOR_URL;
     const facilitatorUrls = override
       ? [override]
-      : ["https://facilitator.mcpay.tech", "https://facilitator.daydreams.systems"];
+      : ["https://x402.dexter.cash"];
     
     // Facilitators often expect `paymentPayload` as a decoded JSON object, not a base64 string.
     // Decode and normalize any envelope formats.
@@ -290,7 +290,7 @@ export const settlePayment = action({
     const override = process.env.X402_FACILITATOR_URL;
     const facilitatorUrls = override
       ? [override]
-      : ["https://facilitator.mcpay.tech", "https://facilitator.daydreams.systems"];
+      : ["https://x402.dexter.cash"];
  
     const decodedPayloadRaw = decodeXPaymentHeader(args.paymentHeader);
     const decodedPayload = normalizePaymentPayloadForFacilitator(

@@ -3,8 +3,8 @@
 /**
  * X-402 Demo Agent Test Page
  * 
- * Test the signature-based payment flow with Brave Wallet.
- * User signs a message (no gas!) and facilitator executes the payment.
+ * Test the facilitated payment flow with Brave Wallet (Base) or Phantom (Solana).
+ * User signs (message or transaction) and facilitator executes the on-chain settlement.
  */
 
 import { useState } from 'react';
@@ -127,9 +127,9 @@ export default function TestDemoAgentPage() {
             </CardHeader>
             <CardContent className="text-sm space-y-2">
               <p><strong>Protocol:</strong> X-402 v1</p>
-              <p><strong>Network:</strong> Base mainnet</p>
+              <p><strong>Network:</strong> Base or Solana</p>
               <p><strong>Price:</strong> 0.01 USDC</p>
-              <p><strong>Facilitator:</strong> mcpay.tech</p>
+              <p><strong>Facilitator:</strong> x402.dexter.cash</p>
             </CardContent>
           </Card>
         </div>

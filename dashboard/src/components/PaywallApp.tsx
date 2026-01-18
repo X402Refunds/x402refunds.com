@@ -13,10 +13,21 @@ import { useState } from 'react';
 import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getWagmiConfig } from '@/lib/wagmi';
-import { createX402PaymentSignature, parsePaymentRequirements } from '@/lib/x402-signature';
+import {
+  createX402PaymentSignature,
+  parsePaymentRequirements,
+  pickPaymentRequirementByNetwork,
+} from '@/lib/x402-signature';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PublicKey } from "@solana/web3.js"
+import {
+  createSolanaExactPaymentTransaction,
+  encodePartialSolanaTransactionBase64,
+  getSolanaProvider,
+} from "@/lib/x402-solana"
 
 interface PaywallAppProps {
   apiUrl: string;
@@ -29,6 +40,7 @@ type PaymentDetails = {
   transactionHash?: string;
   transaction?: string;
   amount?: string | number;
+  network?: string;
 };
 
 function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-diffusion-xl' }: PaywallAppProps) {
@@ -37,13 +49,179 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [payNetwork, setPayNetwork] = useState<"base" | "solana">("base");
+  const [solanaAddress, setSolanaAddress] = useState<string>("");
 
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
+  async function connectSolanaWallet(): Promise<string | null> {
+    const provider = getSolanaProvider()
+    if (!provider) {
+      setError("No Solana wallet found. Please install Phantom (or a Solana wallet that injects window.solana).")
+      return null
+    }
+    const res = await provider.connect()
+    const pk = res.publicKey?.toBase58?.() || provider.publicKey?.toBase58?.() || ""
+    if (!pk) {
+      setError("Failed to connect Solana wallet.")
+      return null
+    }
+    setSolanaAddress(pk)
+    return pk
+  }
+
+  async function fetchDexterSolanaFeePayer(): Promise<string | null> {
+    try {
+      // Best-effort: discover feePayer from the dexter facilitator.
+      const resp = await fetch("https://x402.dexter.cash/supported", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+      if (!resp.ok) return null
+      const data = (await resp.json()) as unknown
+      if (!data || typeof data !== "object") return null
+      const obj = data as Record<string, unknown>
+      const supported = obj.supported
+      if (!Array.isArray(supported)) return null
+      for (const entry of supported) {
+        if (!entry || typeof entry !== "object") continue
+        const e = entry as Record<string, unknown>
+        const network = typeof e.network === "string" ? e.network.toLowerCase() : ""
+        const scheme = typeof e.scheme === "string" ? e.scheme.toLowerCase() : ""
+        const extra = e.extra && typeof e.extra === "object" ? (e.extra as Record<string, unknown>) : null
+        const feePayer = extra && typeof extra.feePayer === "string" ? extra.feePayer : null
+        if (scheme === "exact" && network.includes("solana") && feePayer) return feePayer
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
   async function handlePayment() {
+    if (payNetwork === "solana") {
+      setLoading(true)
+      setError("")
+      setStatus("Connecting Solana wallet…")
+      try {
+        const pk = solanaAddress || (await connectSolanaWallet())
+        if (!pk) return
+
+        setStatus("Getting payment requirements…")
+        const response1 = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, size, model }),
+        })
+
+        if (response1.status !== 402) {
+          throw new Error(`Expected 402 Payment Required, got ${response1.status}`)
+        }
+
+        const paymentData = await response1.json()
+        const solReq = pickPaymentRequirementByNetwork(paymentData, "solana")
+
+        let feePayerRaw = (() => {
+          const extra = solReq.extra
+          if (!extra || typeof extra !== "object") return ""
+          const feePayer = (extra as Record<string, unknown>).feePayer
+          return typeof feePayer === "string" ? feePayer : ""
+        })()
+        if (!feePayerRaw) {
+          const discovered = await fetchDexterSolanaFeePayer()
+          if (discovered) feePayerRaw = discovered
+        }
+        if (!feePayerRaw) {
+          throw new Error(
+            "Solana payments require a facilitator fee payer (missing extra.feePayer; unable to discover from facilitator).",
+          )
+        }
+
+        const provider = getSolanaProvider()
+        if (!provider) throw new Error("Solana wallet not found.")
+
+        setStatus("Creating Solana payment transaction (fee paid by facilitator)…")
+        const payer = new PublicKey(pk)
+        const feePayer = new PublicKey(feePayerRaw)
+        const payTo = new PublicKey(solReq.payTo)
+        const mint = new PublicKey(solReq.asset)
+        const amount = BigInt(solReq.amount || solReq.maxAmountRequired)
+
+        const tx = await createSolanaExactPaymentTransaction({
+          payer,
+          feePayer,
+          payTo,
+          mint,
+          amountMicrousdc: amount,
+        })
+
+        const signed = await provider.signTransaction(tx)
+        const txB64 = encodePartialSolanaTransactionBase64(signed)
+
+        const paymentPayload = {
+          x402Version: 2,
+          scheme: solReq.scheme,
+          network: solReq.network,
+          accepted: {
+            scheme: solReq.scheme,
+            network: solReq.network,
+            amount: String(amount),
+            asset: solReq.asset,
+            payTo: solReq.payTo,
+            maxTimeoutSeconds: solReq.maxTimeoutSeconds,
+            extra: { feePayer: feePayerRaw },
+          },
+          payload: { transaction: txB64 },
+        }
+
+        const xPaymentHeader = btoa(JSON.stringify(paymentPayload))
+
+        setStatus("Submitting payment to server…")
+        const response2 = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-PAYMENT": xPaymentHeader,
+          },
+          body: JSON.stringify({ prompt, size, model }),
+        })
+
+        const result = await response2.json()
+
+        if (response2.status === 200 && result.success) {
+          setStatus("✅ Payment successful! Image generated.")
+          setImageUrl(result.data.image_url)
+          const rawPayment = result.metadata?.payment ?? result.metadata?.settlement
+          if (rawPayment && typeof rawPayment === "object") {
+            const p = rawPayment as Record<string, unknown>
+            setPaymentDetails({
+              transactionHash: typeof p.transactionHash === "string" ? p.transactionHash : undefined,
+              transaction: typeof p.transaction === "string" ? p.transaction : undefined,
+              amount:
+                typeof p.amount === "string" || typeof p.amount === "number"
+                  ? (p.amount as string | number)
+                  : undefined,
+              network: typeof p.network === "string" ? p.network : "solana",
+            })
+          } else {
+            setPaymentDetails(null)
+          }
+        } else {
+          throw new Error(result.error?.message || `Payment failed: ${response2.status}`)
+        }
+      } catch (err) {
+        console.error("Solana payment error:", err)
+        setError(err instanceof Error ? err.message : "Payment failed")
+        setStatus("")
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     if (!isConnected || !walletClient || !address) {
       // Connect wallet first
       const injected = connectors.find(c => c.id === 'injected' || c.name === 'Injected');
@@ -122,6 +300,7 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
               typeof p.amount === 'string' || typeof p.amount === 'number'
                 ? (p.amount as string | number)
                 : undefined,
+            network: typeof p.network === "string" ? p.network : "base",
           });
         } else {
           setPaymentDetails(null);
@@ -143,13 +322,39 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
       <CardHeader>
         <CardTitle>🖼️ X-402 Image Generator (Gas-Free!)</CardTitle>
         <CardDescription>
-          Pay 0.01 USDC by signing a message - no gas fees required!
+          Pay 0.01 USDC on Base (EVM signature) or Solana (partial tx). Facilitator pays gas.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v as "base" | "solana")}>
+          <TabsList className="w-full">
+            <TabsTrigger value="base" className="flex-1">Base</TabsTrigger>
+            <TabsTrigger value="solana" className="flex-1">Solana</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {/* Wallet Connection */}
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          {isConnected ? (
+          {payNetwork === "solana" ? (
+            solanaAddress ? (
+              <>
+                <div>
+                  <p className="text-sm font-medium">Connected</p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {solanaAddress.substring(0, 10)}...{solanaAddress.substring(solanaAddress.length - 8)}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setSolanaAddress("")}>
+                  Disconnect
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">Connect Phantom to continue</p>
+                <Button onClick={connectSolanaWallet}>Connect Wallet</Button>
+              </>
+            )
+          ) : isConnected ? (
             <>
               <div>
                 <p className="text-sm font-medium">Connected</p>
@@ -179,14 +384,14 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
         </div>
 
         {/* Payment Button */}
-        {isConnected && !imageUrl && (
+        {((payNetwork === "base" && isConnected) || (payNetwork === "solana" && !!solanaAddress)) && !imageUrl && (
           <Button
             onClick={handlePayment}
             disabled={loading}
             className="w-full"
             size="lg"
           >
-            {loading ? status : 'Generate Image (0.01 USDC - No Gas!)'}
+            {loading ? status : `Generate Image (0.01 USDC on ${payNetwork === "base" ? "Base" : "Solana"})`}
           </Button>
         )}
 
@@ -223,9 +428,19 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
                     <p>TX: {paymentDetails.transaction.substring(0, 20)}...</p>
                   ) : null}
                   <p>Amount: {paymentDetails.amount ?? '0.01 USDC'}</p>
-                  <p>Network: Base (facilitator paid gas)</p>
+                  <p>Network: {paymentDetails.network || "unknown"} (facilitator paid gas)</p>
                 </div>
-                {(paymentDetails.transactionHash || paymentDetails.transaction) && (
+                {(paymentDetails.transactionHash || paymentDetails.transaction) && paymentDetails.network?.includes("solana") && (
+                  <a
+                    href={`https://solscan.io/tx/${paymentDetails.transactionHash || paymentDetails.transaction}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-xs"
+                  >
+                    View on Solscan →
+                  </a>
+                )}
+                {(paymentDetails.transactionHash || paymentDetails.transaction) && !paymentDetails.network?.includes("solana") && (
                   <a
                     href={`https://basescan.org/tx/${paymentDetails.transactionHash || paymentDetails.transaction}`}
                     target="_blank"
@@ -258,15 +473,16 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
             How This Works:
           </p>
           <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200 text-xs">
-            <li>Connect your Brave Wallet (just permission, no transaction)</li>
+            <li>Select Base (Brave) or Solana (Phantom)</li>
+            <li>Connect your wallet (just permission, no transaction)</li>
             <li>Click to generate image</li>
-            <li>Brave Wallet prompts you to <strong>sign a message</strong> (NO GAS!)</li>
+            <li>Base: sign an EIP-712 message • Solana: sign a transaction (fee payer is facilitator)</li>
             <li>Your signature authorizes payment</li>
             <li>Facilitator executes the payment on-chain (facilitator pays gas)</li>
             <li>You receive your image instantly!</li>
           </ol>
           <p className="mt-2 text-xs text-blue-700 dark:text-blue-300">
-            💡 You only need USDC - no ETH for gas required!
+            💡 You only need USDC - no gas token required!
           </p>
         </div>
       </CardContent>

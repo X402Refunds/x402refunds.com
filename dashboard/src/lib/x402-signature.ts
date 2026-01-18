@@ -20,6 +20,10 @@ export interface PaymentRequirements {
   description: string;
   mimeType?: string;
   maxTimeoutSeconds?: number;
+  // Optional extra fields (facilitator-specific).
+  extra?: Record<string, unknown>;
+  // Some schemes use `amount` instead of `maxAmountRequired`.
+  amount?: string;
 }
 
 // x402 v2 Payment-Required header payload (minimal fields we consume)
@@ -271,5 +275,17 @@ export function parsePaymentRequirements(response402: { accepts?: PaymentRequire
   );
 
   return preferred || response402.accepts[0];
+}
+
+export function pickPaymentRequirementByNetwork(
+  response402: { accepts?: PaymentRequirements[] },
+  network: "base" | "solana",
+): PaymentRequirements {
+  if (!response402.accepts || response402.accepts.length === 0) {
+    throw new Error("No payment requirements found in 402 response")
+  }
+  const n = network.toLowerCase()
+  const match = response402.accepts.find((r) => String(r.network || "").toLowerCase() === n)
+  return match || response402.accepts[0]
 }
 
