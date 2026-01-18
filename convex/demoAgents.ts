@@ -127,7 +127,14 @@ function isLikelySolanaSignature(value: string): boolean {
 function buildRefundRequestLinkHeader(requestUrl: string) {
   const origin = new URL(requestUrl).origin;
   const refundRequestUrl = `${origin}/v1/refunds`;
-  const link = `<${refundRequestUrl}>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"`;
+  const refundSchemaUrl = `${origin}/v1/refunds/schema`;
+  // Single Link header can carry multiple links (comma-separated).
+  // Agents can:
+  // - follow refund-request to file
+  // - follow describedby to fetch JSON Schema and construct the right body on first try
+  const link =
+    `<${refundRequestUrl}>; rel="https://x402refunds.com/rel/refund-request"; type="application/json", ` +
+    `<${refundSchemaUrl}>; rel="describedby"; type="application/schema+json"`;
   return { refundRequestUrl, link };
 }
 
