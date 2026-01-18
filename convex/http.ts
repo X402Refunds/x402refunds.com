@@ -12,6 +12,7 @@ const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
 import { parseX402PayTo } from "./lib/x402PayTo";
 import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
+import { extractTxHashFromFacilitatorSettleBody } from "./lib/x402Settlement";
 
 const http = httpRouter();
 
@@ -1670,15 +1671,16 @@ http.route({
       return jsonError(400, { ok: false, code: "SETTLE_FAILED", facilitator: settle?.facilitator, message: settle?.body });
     }
 
-    let txHash: string | null = null;
-    try {
-      const parsed = JSON.parse(String(settle?.body ?? ""));
-      txHash = typeof parsed?.transaction === "string" ? parsed.transaction : typeof parsed?.transactionHash === "string" ? parsed.transactionHash : null;
-    } catch {
-      txHash = null;
-    }
+    const txHash = extractTxHashFromFacilitatorSettleBody({ bodyText: String(settle?.body ?? "") });
     if (!txHash) {
-      return jsonError(502, { ok: false, code: "NO_TX_HASH", message: "Facilitator did not return a transaction hash" });
+      return jsonError(502, {
+        ok: false,
+        code: "NO_TX_HASH",
+        message: "Facilitator did not return a transaction hash",
+        // Provide details for debugging without leaking the payment payload.
+        facilitator: settle?.facilitator,
+        settleBodyPrefix: String(settle?.body ?? "").slice(0, 200),
+      });
     }
 
     // Finalize credit asynchronously so this endpoint returns fast.
