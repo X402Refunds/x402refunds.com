@@ -232,19 +232,15 @@ http.route({
       return jsonError(400, { ok: false, code: "INVALID_REQUEST", message: "sellerEmail is required" });
     }
 
-    const profile = await ctx.db
-      .query("merchantProfiles")
-      .withIndex("by_notification_email", (q: any) => q.eq("notificationEmail", sellerEmail))
-      .filter((q: any) => q.eq(q.field("organizationId"), auth.organizationId))
-      .first();
-    if (!profile) {
+    const discovered: any = await (ctx.runQuery as any)((internalApi as any).merchantWallets.discoverSellerWalletsByEmailInternal, {
+      organizationId: auth.organizationId,
+      sellerEmail,
+    });
+    if (!discovered?.profile) {
       return jsonError(404, { ok: false, code: "NOT_FOUND", message: "No seller profile found for sellerEmail" });
     }
-
-    const wallets = await ctx.db
-      .query("merchantWallets")
-      .withIndex("by_profile", (q: any) => q.eq("merchantProfileId", profile._id))
-      .collect();
+    const profile = discovered.profile;
+    const wallets = Array.isArray(discovered.wallets) ? discovered.wallets : [];
 
     return new Response(
       JSON.stringify({

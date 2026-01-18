@@ -1,12 +1,14 @@
 /**
  * Demo X-402 Image Generator Agent
  * 
- * Working X-402 demo agent that accepts 0.01 USDC payments on Base
+ * Working X-402 demo agent that accepts 0.01 USDC payments on Base *or* Solana
  * and returns real image URLs via Pollinations AI.
  * 
  * Shared wallet: 0x96BDBD233d4ABC11E7C77c45CAE14194332E7381
  * Price: 0.01 USDC (10000 wei, 6 decimals)
- * Network: Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+ * Networks:
+ * - Base mainnet (USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+ * - Solana mainnet (USDC mint: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v)
  * 
  * Supports TWO payment flows:
  * 
@@ -34,9 +36,14 @@ import { httpAction, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { v } from "convex/values";
 
-// Shared wallet for all demo agents
+// Shared wallet for all demo agents (Base / EVM)
 const DEMO_AGENTS_WALLET =
   process.env.DEMO_AGENTS_WALLET || "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+
+// Shared wallet for all demo agents (Solana)
+// Default is a public address used during development; override in env for your own agent.
+const DEMO_AGENTS_SOLANA_WALLET =
+  process.env.DEMO_AGENTS_SOLANA_WALLET || "FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N";
 
 // Refund contact email the demo agent wants to receive refund requests at (exposed via Link on 402).
 const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
@@ -44,6 +51,16 @@ const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
 
 // USDC contract on Base mainnet
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+// USDC mint on Solana mainnet
+const USDC_SOLANA_MAINNET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+function isLikelySolanaSignature(value: string): boolean {
+  const s = value.trim();
+  if (!s) return false;
+  if (s.startsWith("0x")) return false;
+  // Base58-ish string (Solana signatures are base58, typically 43-88 chars)
+  return /^[1-9A-HJ-NP-Za-km-z]{32,96}$/.test(s);
+}
 
 function buildRefundRequestLinkHeader(requestUrl: string) {
   const origin = new URL(requestUrl).origin;
@@ -113,14 +130,24 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
     description: "AI image generation API powered by Pollinations AI",
     version: "1.0.0",
     x402Version: 1,
-    payment: {
-      address: DEMO_AGENTS_WALLET,
-      network: "base",
-      currency: "USDC",
-      price: "$0.01",
-      priceWei: "10000", // 0.01 USDC (6 decimals)
-      asset: USDC_BASE_MAINNET
-    },
+    payments: [
+      {
+        address: DEMO_AGENTS_WALLET,
+        network: "base",
+        currency: "USDC",
+        price: "$0.01",
+        priceWei: "10000", // 0.01 USDC (6 decimals)
+        asset: USDC_BASE_MAINNET,
+      },
+      {
+        address: DEMO_AGENTS_SOLANA_WALLET,
+        network: "solana",
+        currency: "USDC",
+        price: "$0.01",
+        priceWei: "10000", // 0.01 USDC (6 decimals)
+        asset: USDC_SOLANA_MAINNET,
+      },
+    ],
     usage: {
       endpoint: `${request.url}`,
       method: "POST",
@@ -208,7 +235,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   const runAction: any = ctx.runAction;
   
   // v1 schema format (Coinbase Payments MCP doesn't support v2)
-  const paymentRequired = {
+  const paymentRequiredBase = {
       scheme: "exact",
       network: "base", // v1 uses simple network name
       maxAmountRequired: "10000", // v1 uses maxAmountRequired
@@ -244,6 +271,23 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       }
   };
 
+  const paymentRequiredSolana = {
+    scheme: "exact",
+    network: "solana", // x402 v1 Solana mainnet
+    maxAmountRequired: "10000",
+    asset: USDC_SOLANA_MAINNET,
+    payTo: DEMO_AGENTS_SOLANA_WALLET,
+    resource: request.url,
+    description: "AI Image Generation via Pollinations",
+    mimeType: "application/json",
+    maxTimeoutSeconds: 60,
+    outputSchema: paymentRequiredBase.outputSchema,
+    extra: {
+      name: "USDC",
+      version: "1",
+    },
+  };
+
   if (!xPayment && !effectiveTxHash) {
     // Step 2: Discovery request - return 402 WITHOUT validating body
     console.log(`💰 No payment proof - returning 402 Payment Required (discovery)`);
@@ -252,7 +296,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     return new Response(JSON.stringify({
       x402Version: 1, // v1 protocol (Payments MCP doesn't support v2)
       error: "Payment required: 0.01 USDC on Base (send transaction hash or signature)",
-      accepts: [paymentRequired]
+      accepts: [paymentRequiredBase, paymentRequiredSolana]
     }), {
       status: 402,
       headers: {
@@ -283,10 +327,11 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     
     // Query blockchain directly to verify payment
     // @ts-ignore - Convex generated api types can trigger excessive instantiation depth in TS.
+    const isSolana = isLikelySolanaSignature(effectiveTxHash);
     const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
-      blockchain: "base",
+      blockchain: isSolana ? "solana" : "base",
       transactionHash: effectiveTxHash,
-      expectedToAddress: DEMO_AGENTS_WALLET
+      expectedToAddress: isSolana ? DEMO_AGENTS_SOLANA_WALLET : DEMO_AGENTS_WALLET,
     });
     
     if (!txResult.success) {
@@ -323,10 +368,11 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`   Amount: ${txResult.value} USDC`);
 
     // Defense-in-depth: ensure the USDC recipient matches our expected payTo
-    if ((txResult.toAddress || "").toLowerCase() !== DEMO_AGENTS_WALLET.toLowerCase()) {
+    const expectedTo = isSolana ? DEMO_AGENTS_SOLANA_WALLET : DEMO_AGENTS_WALLET;
+    if (String(txResult.toAddress || "") !== String(expectedTo)) {
       return new Response(JSON.stringify({
         error: "Payment recipient mismatch",
-        expectedTo: DEMO_AGENTS_WALLET,
+        expectedTo,
         actualTo: txResult.toAddress
       }), {
         status: 402,
@@ -388,12 +434,13 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
   }
   
   // FLOW 2: Signature (Traditional X-402) - Use facilitator verify/settle
+  // NOTE: This demo flow remains Base-only; Solana uses the on-chain tx-hash flow above.
   console.log(`🔐 X-PAYMENT signature provided - using facilitator flow`);
   if (!xPayment) {
     return new Response(JSON.stringify({
       x402Version: 1,
       error: "Payment required",
-      accepts: [paymentRequired]
+      accepts: [paymentRequiredBase, paymentRequiredSolana]
     }), {
       status: 402,
       headers: {

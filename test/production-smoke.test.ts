@@ -59,6 +59,23 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
 
     // NOTE: /.well-known/x402.json has been removed. Merchant notification email is discovered
     // from the seller's 402 Link refund-contact rel instead.
+
+    it('POST /demo-agents/image-generator returns 402 with Base+Solana accepts', async () => {
+      const response = await fetch(`${API_BASE_URL}/demo-agents/image-generator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      expect(response.status).toBe(402);
+      const data: any = await response.json();
+      expect(data.x402Version).toBe(1);
+      expect(Array.isArray(data.accepts)).toBe(true);
+
+      const networks = (data.accepts || []).map((a: any) => a?.network).filter(Boolean);
+      expect(networks).toContain('base');
+      expect(networks).toContain('solana');
+    });
   });
 
   describe('MCP Endpoints', () => {

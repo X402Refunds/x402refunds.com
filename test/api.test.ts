@@ -112,7 +112,8 @@ describe('Consulate HTTP API - Agent Management', () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ functionalTypes: ["general"] }),
       });
-      expect(response.status).toBe(404);
+      // Endpoint is protected by API key auth.
+      expect(response.status).toBe(401);
     });
   });
 

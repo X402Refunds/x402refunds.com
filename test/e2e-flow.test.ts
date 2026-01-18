@@ -1408,7 +1408,8 @@ describe('E2E: Production API Smoke Tests', () => {
         excludeSelf: false,
       }),
     });
-    expect(response.status).toBe(404);
+    // Endpoint is protected by API key auth.
+    expect(response.status).toBe(401);
   });
 });
 

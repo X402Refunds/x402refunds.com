@@ -110,3 +110,29 @@ export const upsertMerchantProfileAndWallet = internalMutation({
   },
 });
 
+/**
+ * For authenticated org callers (API key): discover a seller's registered wallets
+ * by their notification email, scoped to the calling org.
+ */
+export const discoverSellerWalletsByEmailInternal = internalQuery({
+  args: { organizationId: v.id("organizations"), sellerEmail: v.string() },
+  handler: async (ctx, args) => {
+    const sellerEmail = args.sellerEmail.trim();
+    if (!sellerEmail) return null;
+
+    const profile = await ctx.db
+      .query("merchantProfiles")
+      .withIndex("by_notification_email", (q) => q.eq("notificationEmail", sellerEmail))
+      .filter((q) => q.eq(q.field("organizationId"), args.organizationId))
+      .first();
+    if (!profile) return null;
+
+    const wallets = await ctx.db
+      .query("merchantWallets")
+      .withIndex("by_profile", (q) => q.eq("merchantProfileId", profile._id))
+      .collect();
+
+    return { profile, wallets };
+  },
+});
+
