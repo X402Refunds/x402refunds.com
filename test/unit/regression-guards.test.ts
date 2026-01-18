@@ -43,5 +43,23 @@ describe("Regression guards (smoke + routes)", () => {
     expect(topupPage).toContain("payload:");
     expect(topupPage).toContain("transaction:");
   });
+
+  it("landing and docs use the shared refund headers AI prompt", () => {
+    const prompt = readRepoFile("dashboard/src/lib/refundHeadersAiPrompt.ts");
+    expect(prompt).toContain("Apply the steps below to paywalled endpoints on BOTH Base and Solana.");
+    expect(prompt).toContain('rel=\\"https://x402refunds.com/rel/refund-contact\\"');
+    expect(prompt).toContain('rel=\\"https://x402refunds.com/rel/refund-request\\"');
+
+    const landing = readRepoFile("dashboard/src/app/page.tsx");
+    expect(landing).toContain('from "@/lib/refundHeadersAiPrompt"');
+    expect(landing).toContain("REFUND_HEADERS_AI_PROMPT");
+    expect(landing).not.toContain("const aiPrompt = [");
+
+    const docsClient = readRepoFile("dashboard/src/app/docs/DocsClient.tsx");
+    expect(docsClient).toContain('from "@/lib/refundHeadersAiPrompt"');
+    expect(docsClient).toContain("REFUND_HEADERS_AI_PROMPT");
+    // Avoid re-introducing a second prompt definition inside DocsClient.
+    expect(docsClient).not.toContain("const aiPrompt = [");
+  });
 });
 
