@@ -43,5 +43,11 @@ describe("Regression guards (smoke + routes)", () => {
     expect(topupPage).toContain("payload:");
     expect(topupPage).toContain("transaction:");
   });
+
+  it("refunds allowlisted self-payment exception is wired", () => {
+    const refunds = readRepoFile("convex/refunds.ts");
+    expect(refunds).toContain("allowSelfPaymentRefundToProceed");
+    expect(refunds).toContain("selfPaymentException");
+  });
 });
 

@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { extractAddress, isSolana } from "./lib/caip10";
 import { executeSolanaRefundImpl } from "./lib/solana";
+import { allowSelfPaymentRefundToProceed } from "./lib/selfPaymentException";
 import type { Id } from "./_generated/dataModel";
 
 function isCoinbaseRefundsEnabled(): boolean {
@@ -410,7 +411,20 @@ export const createRefundAttempt = internalAction({
       sourceChain === "base"
         ? payerAddr.toLowerCase() === recipientAddr.toLowerCase()
         : payerAddr === recipientAddr;
-    if (isSelfPayment) {
+    const allowSelfPayment =
+      isSelfPayment &&
+      allowSelfPaymentRefundToProceed({
+        sourceChain,
+        payerAddress: payerAddr,
+        recipientAddress: recipientAddr,
+        merchantOrigin: typeof pd?.defendantMetadata?.merchantOrigin === "string" ? pd.defendantMetadata.merchantOrigin : undefined,
+        sellerEndpointUrl:
+          typeof (dispute as any)?.metadata?.v1?.sellerEndpointUrl === "string"
+            ? (dispute as any).metadata.v1.sellerEndpointUrl
+            : undefined,
+      });
+
+    if (isSelfPayment && !allowSelfPayment) {
       const inserted = await ctx.runMutation(internal.refunds.insertRefundFailure, {
         caseId: args.caseId,
         sourceChain,
