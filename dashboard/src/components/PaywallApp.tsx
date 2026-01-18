@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect } from 'wagmi';
+import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect, useSwitchChain, useChainId } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getWagmiConfig } from '@/lib/wagmi';
 import {
@@ -56,6 +56,8 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
   const { data: walletClient } = useWalletClient();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
 
   async function connectSolanaWallet(): Promise<string | null> {
     const provider = getSolanaProvider()
@@ -243,6 +245,21 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
             `Please switch Brave Wallet to a different account/address (the payer) that holds USDC, ` +
             `then try again.`
         );
+      }
+
+      // UX guard: viem requires the requested EIP-712 chainId to match the active wallet chain.
+      // If the user is connected on Ethereum mainnet (1) but trying to pay on Base (8453),
+      // the signature flow fails with an internal error. Attempt a best-effort switch.
+      if (chainId !== 8453) {
+        try {
+          setStatus("Switching wallet network to Base…");
+          await switchChainAsync({ chainId: 8453 });
+        } catch {
+          throw new Error(
+            `Wrong network: your wallet is on chainId ${chainId}. ` +
+              `Please switch to Base (chainId 8453) in your wallet and try again.`,
+          );
+        }
       }
 
       setStatus('Creating payment signature (no gas needed)...');

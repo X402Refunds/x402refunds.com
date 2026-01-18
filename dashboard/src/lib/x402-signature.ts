@@ -65,6 +65,28 @@ export interface X402PaymentPayload {
   };
 }
 
+export function expectedEvmChainIdFromNetwork(network: string): number {
+  // v2 uses CAIP-2-like network strings: eip155:8453
+  const m = network.match(/^eip155:(\d+)$/);
+  if (m) {
+    const id = Number(m[1]);
+    if (Number.isSafeInteger(id) && id > 0) return id;
+  }
+  // legacy fallback
+  if (network === "base") return 8453;
+  return 8453;
+}
+
+function assertWalletOnExpectedChain(walletClient: WalletClient, expectedChainId: number) {
+  const active = (walletClient as unknown as { chain?: { id?: unknown } })?.chain?.id;
+  if (typeof active === "number" && active !== expectedChainId) {
+    throw new Error(
+      `Provided chainId "${expectedChainId}" must match the active chainId "${active}". ` +
+        `Please switch your wallet network to Base (chainId ${expectedChainId}) and try again.`,
+    );
+  }
+}
+
 /**
  * Create X-402 payment signature using EIP-712 typed data
  * 
@@ -79,7 +101,8 @@ export async function createX402PaymentSignature(
   // x402 exact scheme on EVM uses EIP-3009 transferWithAuthorization.
   // That means the signature is over the USDC contract's EIP-712 domain,
   // and the message shape is TransferWithAuthorization with a bytes32 nonce.
-  const chainId = requirements.network === 'base' ? 8453 : 8453;
+  const chainId = expectedEvmChainIdFromNetwork(requirements.network);
+  assertWalletOnExpectedChain(walletClient, chainId);
 
   // USDC EIP-712 domain (EIP-3009)
   const domain = {
@@ -160,15 +183,7 @@ export async function createX402PaymentSignature(
 }
 
 function chainIdFromNetwork(network: string): number {
-  // v2 uses CAIP-2-like network strings: eip155:8453
-  const m = network.match(/^eip155:(\d+)$/);
-  if (m) {
-    const id = Number(m[1]);
-    if (Number.isSafeInteger(id) && id > 0) return id;
-  }
-  // legacy fallback
-  if (network === "base") return 8453;
-  return 8453;
+  return expectedEvmChainIdFromNetwork(network);
 }
 
 export function parsePaymentRequiredHeaderV2(paymentRequiredB64: string): PaymentRequiredV2 {
