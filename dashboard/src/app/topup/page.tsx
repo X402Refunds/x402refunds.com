@@ -20,6 +20,7 @@ import {
 import {
   createSolanaExactPaymentTransaction,
   encodePartialSolanaTransactionBase64,
+  getSolanaAmountMicrousdcFromRequirement,
   getSolanaProvider,
 } from "@/lib/x402-solana";
 import { Loader2 } from "lucide-react";
@@ -594,7 +595,7 @@ export default function TopupPage() {
                     feePayer: new PublicKey(feePayer),
                     payTo: new PublicKey(String(reqV2.payTo)),
                     mint: new PublicKey(String(reqV2.asset)),
-                    amountMicrousdc: BigInt(reqV2.amount),
+                    amountMicrousdc: getSolanaAmountMicrousdcFromRequirement(reqV2),
                   });
                   const signed = await provider.signTransaction(tx);
                   const partialTx = encodePartialSolanaTransactionBase64(signed);

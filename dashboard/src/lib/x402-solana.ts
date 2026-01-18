@@ -69,3 +69,17 @@ export function encodePartialSolanaTransactionBase64(tx: Transaction): string {
   return btoa(binary)
 }
 
+/**
+ * Some endpoints return Solana requirements in an x402 v1-ish shape (only `maxAmountRequired`),
+ * while others use x402 v2 (field `amount`). Use this to safely derive the microusdc amount.
+ */
+export function getSolanaAmountMicrousdcFromRequirement(requirement: {
+  amount?: unknown
+  maxAmountRequired?: unknown
+}): bigint {
+  const raw = requirement.amount ?? requirement.maxAmountRequired
+  if (typeof raw === "string" && raw.trim()) return BigInt(raw.trim())
+  if (typeof raw === "number" && Number.isFinite(raw)) return BigInt(Math.trunc(raw))
+  throw new Error("Invalid Solana payment requirement: missing amount")
+}
+
