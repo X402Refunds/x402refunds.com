@@ -80,6 +80,7 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        blockchain: "base",
         amountMicrousdc: "10000",
         currency: "USDC",
       }),

@@ -106,6 +106,51 @@ export default defineSchema({
     .index("by_wallet", ["walletAddress"]) // NEW: Query by Ethereum address
     .index("by_test", ["isTestData"]), // NEW: Query test data for cleanup
 
+  // Marketplace + seller profiles (notification / metadata identity)
+  merchantProfiles: defineTable({
+    name: v.optional(v.string()),
+    notificationEmail: v.optional(v.string()),
+    // Optional foreign key for marketplace ownership/management
+    organizationId: v.optional(v.id("organizations")),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_notification_email", ["notificationEmail"]),
+
+  // Wallet routing: map CAIP-10 wallets to a merchant profile + liable organization
+  merchantWallets: defineTable({
+    walletCaip10: v.string(), // CAIP-10, normalized (eip155 address lowercased; solana preserved)
+    merchantProfileId: v.id("merchantProfiles"),
+    liableOrganizationId: v.id("organizations"),
+    isPrimary: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_wallet", ["walletCaip10"])
+    .index("by_profile", ["merchantProfileId"])
+    .index("by_liable_org", ["liableOrganizationId"]),
+
+  // Partner programs (marketplace-specific automation + routing)
+  partnerPrograms: defineTable({
+    liableOrganizationId: v.id("organizations"),
+    partnerKey: v.string(), // e.g. "dexter"
+    canonicalEmail: v.string(), // e.g. "refunds@dexter.cash"
+    enabled: v.boolean(),
+    autoDecideEnabled: v.boolean(),
+    autoExecuteEnabled: v.boolean(),
+    maxAutoRefundMicrousdc: v.number(), // e.g. 2 USDC = 2_000_000
+    platformOpsEmail: v.string(), // where "received" + "executed" goes (you)
+    partnerOpsEmail: v.string(), // where "processed summary" goes (partner, or override)
+    protectedEndpointsMode: v.union(v.literal("noop_true_poc")),
+    broadcastUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_org_key", ["liableOrganizationId", "partnerKey"])
+    .index("by_canonical_email", ["canonicalEmail"])
+    .index("by_enabled", ["enabled"]),
+
   // ========================================
   // CASES TABLE - SINGLE SOURCE OF TRUTH
   // ========================================
@@ -247,6 +292,8 @@ export default defineSchema({
       verdict: v.string(),      // CONSUMER_WINS, MERCHANT_WINS, PLAINTIFF_WINS, DEFENDANT_WINS
       confidence: v.number(),   // 0-1
       reasoning: v.string(),
+      // Optional: partner flows can provide a strict 2-line summary for emails/UI.
+      summary2: v.optional(v.string()),
       analyzedAt: v.number(),
       similarCases: v.array(v.id("cases")),
       tokensUsed: v.optional(v.number()),
@@ -711,7 +758,7 @@ export default defineSchema({
   // Idempotent top-ups keyed by on-chain transfer selector + merchant identity.
   merchantTopups: defineTable({
     merchant: v.string(), // CAIP-10 (e.g., "eip155:8453:0x...")
-    blockchain: v.union(v.literal("base")), // MVP: Base only
+    blockchain: v.union(v.literal("base"), v.literal("solana")), // Base + Solana
     txHash: v.string(),
     sourceTransferLogIndex: v.number(),
     amountMicrousdc: v.number(),
@@ -735,7 +782,7 @@ export default defineSchema({
   // Manual top-up requests (user-submitted tx hash + amount)
   refundTopUps: defineTable({
     organizationId: v.id("organizations"),
-    blockchain: v.union(v.literal("base")), // MVP: Base only
+    blockchain: v.union(v.literal("base"), v.literal("solana")), // Base + Solana
     txHash: v.string(),
     sourceTransferLogIndex: v.optional(v.number()),
     payerAddress: v.optional(v.string()),

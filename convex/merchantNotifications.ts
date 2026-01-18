@@ -11,6 +11,7 @@ import { v } from "convex/values";
 import * as apiMod from "./_generated/api.js";
 import { sendEmail } from "./lib/email";
 import { buildMerchantRefundExecutedEmailCopy } from "./lib/merchantRefundEmailCopy";
+import { buildPartnerProcessedSummaryEmailCopy } from "./lib/partnerProcessedSummaryEmailCopy";
 import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
 import { parseX402PayTo } from "./lib/x402PayTo";
 
@@ -35,6 +36,45 @@ function isLikelyEmailAddress(value: string): boolean {
   const s = value.trim();
   if (s.length < 3 || s.length > 320) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+async function resolveDexterPartnerProgram(ctx: any, caseData: any): Promise<any | null> {
+  const meta = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+  const partnerMeta = meta?.partner && typeof meta.partner === "object" ? meta.partner : null;
+  const partnerProgramId =
+    partnerMeta && typeof (partnerMeta as any).partnerProgramId === "string" ? String((partnerMeta as any).partnerProgramId) : "";
+
+  if (partnerProgramId) {
+    try {
+      const p = await (ctx.runQuery as any)((internalApi as any).partnerPrograms.getPartnerProgramByIdInternal, {
+        partnerProgramId,
+      });
+      if (p && String(p.partnerKey || "").toLowerCase() === "dexter" && p.enabled === true) return p;
+    } catch {
+      // ignore
+    }
+  }
+
+  // Fallback: canonical email routing (POC) — match by the refund-contact email stored on the case.
+  const v1 = meta?.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
+  const emailRaw = typeof (v1 as any)?.paymentSupportEmail === "string" ? String((v1 as any).paymentSupportEmail) : "";
+  const email = normalizeEmail(emailRaw);
+  if (!email || email !== "refunds@dexter.cash") return null;
+
+  try {
+    const p = await (ctx.runQuery as any)((internalApi as any).partnerPrograms.getPartnerProgramByCanonicalEmailInternal, {
+      canonicalEmail: email,
+    });
+    if (p && String(p.partnerKey || "").toLowerCase() === "dexter" && p.enabled === true) return p;
+  } catch {
+    // ignore
+  }
+
+  return null;
 }
 
 function buildDisputeSummaryLines(params: {
@@ -124,6 +164,83 @@ export const notifyMerchantDisputeFiled: any = internalAction({
 
     const merchantRaw = String(caseData.defendant || "");
     let v1 = caseData?.metadata?.v1 || {};
+
+    // === Dexter partner routing (POC) ===
+    // If this case is routed to Dexter by canonical refund-contact email, notify platform ops (not the canonical email).
+    // This bypasses the endpoint payTo corroboration and email verification gates (Dexter is treated as a managed partner).
+    const dexterPartner = await resolveDexterPartnerProgram(ctx, caseData);
+    if (dexterPartner) {
+      const meta: any = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+      const partnerMeta: any = meta?.partner && typeof meta.partner === "object" ? meta.partner : {};
+
+      // Idempotency: avoid duplicate "received" emails.
+      if (typeof partnerMeta?.receivedEmailSentAt === "number") {
+        return { ok: true, emailed: false, reason: "PARTNER_RECEIVED_ALREADY_SENT" };
+      }
+
+      const to = normalizeEmail(String(dexterPartner.platformOpsEmail || ""));
+      if (!to || !isLikelyEmailAddress(to)) {
+        return { ok: true, emailed: false, reason: "PARTNER_EMAIL_NOT_CONFIGURED" };
+      }
+
+      const paymentDetails = caseData?.paymentDetails;
+      const reason =
+        typeof v1?.description === "string"
+          ? v1.description
+          : typeof caseData?.description === "string"
+            ? caseData.description
+            : undefined;
+      const amountMicrousdc =
+        typeof v1?.amountMicrousdc === "number"
+          ? v1.amountMicrousdc
+          : typeof paymentDetails?.amountMicrousdc === "number"
+            ? paymentDetails.amountMicrousdc
+            : undefined;
+      const txHash =
+        typeof v1?.transactionHash === "string"
+          ? v1.transactionHash
+          : typeof paymentDetails?.transactionHash === "string"
+            ? paymentDetails.transactionHash
+            : undefined;
+      const chain =
+        typeof v1?.blockchain === "string"
+          ? v1.blockchain
+          : typeof paymentDetails?.blockchain === "string"
+            ? paymentDetails.blockchain
+            : undefined;
+
+      const subject = `Refund request received (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+      const lines: string[] = [];
+      lines.push("Dexter partner POC: dispute routed by canonical refund-contact email.");
+      lines.push(...buildDisputeSummaryLines({ caseId: String(args.caseId), reason, amountMicrousdc, txHash, chain }));
+      lines.push("");
+      lines.push("View case:");
+      lines.push(`- https://x402refunds.com/cases/${encodeURIComponent(String(args.caseId))}`);
+      lines.push("");
+      lines.push("Sent by x402refunds.com");
+      lines.push(`[Case ID: ${String(args.caseId)}]`);
+
+      const sent = await sendEmail({
+        to,
+        subject,
+        text: lines.join("\n"),
+        replyTo: to,
+      });
+      if (!sent.ok) {
+        return { ok: true, emailed: false, reason: sent.code, details: sent.message };
+      }
+
+      const now = Date.now();
+      await (ctx.runMutation as any)((internalApi as any).merchantNotifications._patchCasePartnerMetadata, {
+        caseId: args.caseId,
+        patch: {
+          receivedEmailSentAt: now,
+          receivedEmailSentTo: to,
+        },
+      });
+
+      return { ok: true, emailed: true, partner: "dexter" };
+    }
 
     // If this case wasn't filed through the wallet-first pipeline, metadata.v1 may be missing.
     // Best-effort: attempt to refresh contact + payTo corroboration before gating.
@@ -525,6 +642,26 @@ export const _patchCaseMetadataV1: any = internalMutation({
   },
 });
 
+export const _patchCasePartnerMetadata: any = internalMutation({
+  args: { caseId: v.id("cases"), patch: v.any() },
+  handler: async (ctx: any, args: any) => {
+    const row: any = await ctx.db.get(args.caseId);
+    if (!row) return { ok: false, reason: "CASE_NOT_FOUND" };
+    const meta: any = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+    const partner: any = meta.partner && typeof meta.partner === "object" ? meta.partner : {};
+    await ctx.db.patch(args.caseId, {
+      metadata: {
+        ...meta,
+        partner: {
+          ...partner,
+          ...(args.patch && typeof args.patch === "object" ? args.patch : {}),
+        },
+      },
+    });
+    return { ok: true };
+  },
+});
+
 /**
  * Status helper for the top-up page. Does NOT send email.
  */
@@ -630,6 +767,102 @@ export const notifyMerchantRefundExecuted: any = internalAction({
 
     const merchantRaw = String(caseData.defendant || "");
     const v1 = caseData?.metadata?.v1 || {};
+
+    // === Dexter partner routing (POC) ===
+    // Route refund executed notifications to platform ops, and send a separate processed summary email
+    // containing the AI decision (and on-chain proof when available).
+    const dexterPartner = await resolveDexterPartnerProgram(ctx, caseData);
+    if (dexterPartner) {
+      const meta: any = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+      const partnerMeta: any = meta?.partner && typeof meta.partner === "object" ? meta.partner : {};
+
+      const toOps = normalizeEmail(String(dexterPartner.platformOpsEmail || ""));
+      if (!toOps || !isLikelyEmailAddress(toOps)) {
+        return { ok: true, emailed: false, reason: "PARTNER_EMAIL_NOT_CONFIGURED" };
+      }
+
+      // 1) Executed email → platform ops (idempotent via refundTransactions fields).
+      const subject = `Refund processed (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+      const amountMicrousdc =
+        typeof refund.amountMicrousdc === "number"
+          ? Math.round(refund.amountMicrousdc)
+          : typeof refund.amount === "number"
+            ? Math.round(refund.amount * 1_000_000)
+            : null;
+      const executedText = buildMerchantRefundExecutedEmailCopy({
+        caseId: String(args.caseId),
+        amountMicrousdc,
+        explorerUrl: typeof refund.explorerUrl === "string" ? refund.explorerUrl : null,
+        refundTxHash: typeof refund.refundTxHash === "string" ? refund.refundTxHash : null,
+        trackingUrl: `https://x402refunds.com/cases/${encodeURIComponent(String(args.caseId))}`,
+      });
+
+      const sentExec = await sendEmail({
+        to: toOps,
+        subject,
+        text: executedText,
+        replyTo: toOps,
+      });
+      if (!sentExec.ok) return { ok: true, emailed: false, reason: sentExec.code, details: sentExec.message };
+
+      await (ctx.runMutation as any)(internalApi.merchantNotifications.markRefundExecutedEmailSent, {
+        refundId: args.refundId,
+        sentTo: toOps,
+      });
+
+      // 2) Processed summary email → partner ops (POC override for refunds@dexter.cash).
+      if (typeof partnerMeta?.processedSummaryEmailSentAt !== "number") {
+        const partnerOpsRaw = normalizeEmail(String(dexterPartner.partnerOpsEmail || ""));
+        const partnerTo =
+          partnerOpsRaw === "refunds@dexter.cash" ? "vbkotecha@gmail.com" : partnerOpsRaw;
+        if (partnerTo && isLikelyEmailAddress(partnerTo)) {
+          const aiRec: any = caseData.aiRecommendation || {};
+          const verdict =
+            typeof caseData.finalVerdict === "string" && caseData.finalVerdict
+              ? caseData.finalVerdict
+              : typeof aiRec.verdict === "string"
+                ? aiRec.verdict
+                : "UNKNOWN";
+          const summary2 =
+            typeof aiRec.summary2 === "string" && aiRec.summary2.trim()
+              ? aiRec.summary2.trim()
+              : typeof aiRec.reasoning === "string"
+                ? aiRec.reasoning.trim()
+                : "";
+
+          const processedSubject = `Refund request processed (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+          const processedText = buildPartnerProcessedSummaryEmailCopy({
+            caseId: String(args.caseId),
+            verdict,
+            summary2,
+            amountMicrousdc,
+            explorerUrl: typeof refund.explorerUrl === "string" ? refund.explorerUrl : null,
+            refundTxHash: typeof refund.refundTxHash === "string" ? refund.refundTxHash : null,
+            trackingUrl: `https://x402refunds.com/cases/${encodeURIComponent(String(args.caseId))}`,
+          });
+
+          const sentProcessed = await sendEmail({
+            to: partnerTo,
+            subject: processedSubject,
+            text: processedText,
+            replyTo: partnerTo,
+          });
+
+          if (sentProcessed.ok) {
+            const now = Date.now();
+            await (ctx.runMutation as any)((internalApi as any).merchantNotifications._patchCasePartnerMetadata, {
+              caseId: args.caseId,
+              patch: {
+                processedSummaryEmailSentAt: now,
+                processedSummaryEmailSentTo: partnerTo,
+              },
+            });
+          }
+        }
+      }
+
+      return { ok: true, emailed: true, partner: "dexter" };
+    }
 
     if (v1?.endpointPayToMatch !== true) {
       return { ok: true, emailed: false, reason: "ENDPOINT_PAYTO_UNVERIFIED" };

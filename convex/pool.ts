@@ -163,8 +163,26 @@ export const cases_fileWalletPaymentDispute = mutation({
       return { ok: true, disputeId: existing._id };
     }
 
-    // Best-effort: assign review org by matching merchant CAIP-10 to an agent wallet.
+    // Best-effort: assign review org by matching merchant CAIP-10 to a mapped wallet (marketplaces)
+    // and falling back to an agent wallet (legacy single-wallet agents).
     let reviewerOrganizationId: Id<"organizations"> | undefined = undefined;
+    let merchantWalletMapping: any = null;
+    let merchantProfile: any = null;
+    try {
+      merchantWalletMapping = await ctx.db
+        .query("merchantWallets")
+        .withIndex("by_wallet", (q) => q.eq("walletCaip10", parsedMerchant.normalized))
+        .first();
+      if (merchantWalletMapping?.liableOrganizationId) {
+        reviewerOrganizationId = merchantWalletMapping.liableOrganizationId as Id<"organizations">;
+      }
+      if (merchantWalletMapping?.merchantProfileId) {
+        merchantProfile = await ctx.db.get(merchantWalletMapping.merchantProfileId);
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       const agent: any = await ctx.db
         .query("agents")
@@ -175,13 +193,36 @@ export const cases_fileWalletPaymentDispute = mutation({
       // ignore
     }
 
-    const paymentSupportEmailRaw = typeof args.paymentSupportEmail === "string" ? args.paymentSupportEmail.trim() : "";
+    const paymentSupportEmailRawCandidate =
+      (typeof args.paymentSupportEmail === "string" && args.paymentSupportEmail.trim()
+        ? args.paymentSupportEmail.trim()
+        : (typeof merchantProfile?.notificationEmail === "string" ? merchantProfile.notificationEmail.trim() : ""));
+    const paymentSupportEmailRaw = paymentSupportEmailRawCandidate;
     const paymentSupportEmail =
       paymentSupportEmailRaw.length >= 3 &&
       paymentSupportEmailRaw.length <= 320 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentSupportEmailRaw)
-        ? paymentSupportEmailRaw
+        ? paymentSupportEmailRaw.toLowerCase()
         : undefined;
+
+    // Partner routing (Dexter POC): if the canonical refund-contact email matches an enabled partner program,
+    // route this case to that org for review/credits and stamp metadata for downstream automation.
+    let partnerProgram: any = null;
+    if (paymentSupportEmail) {
+      try {
+        partnerProgram = await ctx.db
+          .query("partnerPrograms")
+          .withIndex("by_canonical_email", (q: any) => q.eq("canonicalEmail", paymentSupportEmail))
+          .first();
+        if (partnerProgram?.enabled === true && partnerProgram?.liableOrganizationId) {
+          reviewerOrganizationId = partnerProgram.liableOrganizationId as Id<"organizations">;
+        } else {
+          partnerProgram = null;
+        }
+      } catch {
+        partnerProgram = null;
+      }
+    }
 
     const disputeId = await ctx.db.insert("cases", {
       plaintiff: parsedPayer.normalized,
@@ -203,11 +244,22 @@ export const cases_fileWalletPaymentDispute = mutation({
       paymentSourceTxHash: txHash,
       metadata: {
         poolStatus: "FILED",
+        partner:
+          partnerProgram
+            ? {
+                partnerProgramId: String(partnerProgram._id),
+                partnerKey: String(partnerProgram.partnerKey || ""),
+                canonicalEmail: String(partnerProgram.canonicalEmail || paymentSupportEmail),
+              }
+            : undefined,
         v1: {
           sellerEndpointUrl,
           merchantOrigin: origin,
           payer: parsedPayer.normalized,
           merchant: parsedMerchant.normalized,
+          merchantProfileId: merchantWalletMapping?.merchantProfileId ? String(merchantWalletMapping.merchantProfileId) : undefined,
+          merchantWalletId: merchantWalletMapping?._id ? String(merchantWalletMapping._id) : undefined,
+          liableOrganizationId: merchantWalletMapping?.liableOrganizationId ? String(merchantWalletMapping.liableOrganizationId) : undefined,
           blockchain: args.blockchain,
           transactionHash: txHash,
           amountMicrousdc: args.amountMicrousdc,
@@ -236,6 +288,7 @@ export const cases_fileWalletPaymentDispute = mutation({
           requestJson: JSON.stringify({ method: "POST", url: sellerEndpointUrl, headers: {}, body: {} }),
         },
         defendantMetadata: {
+          email: paymentSupportEmail,
           walletAddress: parsedMerchant.address,
           merchantId: parsedMerchant.normalized,
           merchantOrigin: origin,
@@ -302,6 +355,19 @@ export const cases_fileWalletPaymentDispute = mutation({
       console.warn("Failed to schedule merchant notification:", e?.message || String(e));
     }
 
+    // Dexter partner POC: auto-adjudicate (and optionally auto-execute) when enabled.
+    try {
+      if (partnerProgram?.autoDecideEnabled === true) {
+        await ctx.scheduler.runAfter(
+          0,
+          (internal as any).partners.dexterAdjudicateAndMaybeExecute,
+          { caseId: disputeId },
+        );
+      }
+    } catch (e: any) {
+      console.warn("Failed to schedule partner adjudication:", e?.message || String(e));
+    }
+
     return { ok: true, disputeId };
   },
 });
@@ -363,7 +429,7 @@ export const cases_listWalletDisputesByMerchant = query({
 export const topup_creditMerchantBalanceFromTx = mutation({
   args: {
     merchant: v.string(), // CAIP-10
-    blockchain: v.union(v.literal("base")),
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
     txHash: v.string(),
     sourceTransferLogIndex: v.number(),
     amountMicrousdc: v.number(),
@@ -380,8 +446,14 @@ export const topup_creditMerchantBalanceFromTx = mutation({
     const parsedMerchant = parseCaip10Any(args.merchant);
     if (!parsedMerchant.ok) return parsedMerchant;
 
-    if (!/^0x[a-fA-F0-9]{64}$/.test(args.txHash)) {
-      return { ok: false, code: "INVALID_TX_HASH", message: "txHash must be 0x + 64 hex chars" };
+    if (args.blockchain === "base") {
+      if (!/^0x[a-fA-F0-9]{64}$/.test(args.txHash)) {
+        return { ok: false, code: "INVALID_TX_HASH", message: "txHash must be 0x + 64 hex chars" };
+      }
+    } else {
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(args.txHash)) {
+        return { ok: false, code: "INVALID_TX_HASH", message: "txHash must be a Solana base58 signature" };
+      }
     }
     if (!Number.isSafeInteger(args.sourceTransferLogIndex) || args.sourceTransferLogIndex < 0) {
       return { ok: false, code: "INVALID_LOG_INDEX", message: "sourceTransferLogIndex must be a non-negative integer" };
@@ -413,14 +485,23 @@ export const topup_creditMerchantBalanceFromTx = mutation({
     }
 
     const now = Date.now();
+    // Preserve Solana address casing; lowercase EVM for consistency.
+    const payerAddress =
+      typeof args.payerAddress === "string" && args.payerAddress
+        ? (args.blockchain === "base" ? args.payerAddress.toLowerCase() : args.payerAddress)
+        : undefined;
+    const recipientAddress =
+      typeof args.recipientAddress === "string" && args.recipientAddress
+        ? (args.blockchain === "base" ? args.recipientAddress.toLowerCase() : args.recipientAddress)
+        : undefined;
     await ctx.db.insert("merchantTopups", {
       merchant: parsedMerchant.normalized,
       blockchain: args.blockchain,
       txHash: args.txHash,
       sourceTransferLogIndex: args.sourceTransferLogIndex,
       amountMicrousdc: args.amountMicrousdc,
-      payerAddress: args.payerAddress,
-      recipientAddress: args.recipientAddress,
+      payerAddress,
+      recipientAddress,
       createdAt: now,
     });
 
@@ -475,15 +556,20 @@ export const topup_finalizeFromTxHash = internalAction({
     expectedAmountMicrousdc: v.number(),
     caseId: v.optional(v.id("cases")),
     actionToken: v.optional(v.string()),
+    blockchain: v.optional(v.union(v.literal("base"), v.literal("solana"))),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; txHash: string; credited?: boolean; reason?: string }> => {
-    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    const blockchain: "base" | "solana" = args.blockchain === "solana" ? "solana" : "base";
+    const depositAddress =
+      blockchain === "base"
+        ? process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS
+        : process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS;
     if (!depositAddress) {
       return { ok: false, txHash: args.txHash, reason: "NOT_CONFIGURED" };
     }
 
     // Normalize merchant once so downstream comparisons don't fail due to checksum casing.
-    const parsedMerchant = parseCaip10Eip155(args.merchant);
+    const parsedMerchant = blockchain === "base" ? parseCaip10Eip155(args.merchant) : parseCaip10Any(args.merchant);
     if (!parsedMerchant.ok) {
       // Credit mutation will also reject invalid merchant, but return a clear error early.
       return { ok: false, txHash: args.txHash, reason: parsedMerchant.code };
@@ -494,7 +580,7 @@ export const topup_finalizeFromTxHash = internalAction({
     let verified: any = null;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const res = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
-        blockchain: "base",
+        blockchain,
         transactionHash: args.txHash,
         expectedAmountMicrousdc: args.expectedAmountMicrousdc,
         expectedToAddress: depositAddress,
@@ -513,7 +599,7 @@ export const topup_finalizeFromTxHash = internalAction({
 
     const credited = await ctx.runMutation((api as any).pool.topup_creditMerchantBalanceFromTx, {
       merchant: parsedMerchant.normalized,
-      blockchain: "base",
+      blockchain,
       txHash: args.txHash,
       sourceTransferLogIndex: verified.logIndex,
       amountMicrousdc: verified.amountMicrousdc,

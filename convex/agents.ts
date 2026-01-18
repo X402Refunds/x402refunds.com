@@ -158,7 +158,7 @@ export const joinAgent = mutation({
         did: agentDid,
         walletAddress: normalizedWalletAddress,
         refundUrl: normalizedWalletAddress
-          ? `https://api.x402refunds.com/v1/refunds?merchant=${encodeURIComponent(normalizedWalletAddress.toLowerCase())}`
+          ? `https://api.x402refunds.com/v1/refunds?merchant=${encodeURIComponent(normalizedWalletAddress)}`
           : undefined,
         organizationName: args.organizationName,
         publicKey: args.publicKey,

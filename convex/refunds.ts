@@ -163,7 +163,13 @@ async function executeAutomatedRefundImpl(
           : undefined;
 
     const chainOk = chain === "base" || chain === "solana";
-    const txOk = typeof txHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(txHash);
+    const txOk =
+      typeof txHash === "string" &&
+      (chain === "base"
+        ? /^0x[a-fA-F0-9]{64}$/.test(txHash)
+        : chain === "solana"
+          ? /^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(txHash)
+          : false);
     const amountOk = typeof paymentAmountMicrousdc === "number" && Number.isFinite(paymentAmountMicrousdc) && paymentAmountMicrousdc > 0;
 
     // If this payment has already been refunded-to-source (possibly from a different duplicate case),
@@ -332,7 +338,8 @@ export const createRefundAttempt = internalAction({
 
     const recipientAddress =
       typeof recipientAddressRaw === "string" && recipientAddressRaw.length > 0
-        ? recipientAddressRaw.toLowerCase()
+        ? // IMPORTANT: Solana base58 addresses are case-sensitive; do not lowercase.
+          (sourceChain === "base" ? recipientAddressRaw.toLowerCase() : recipientAddressRaw)
         : undefined;
 
     if (!sourceChain || !sourceTxHash || typeof paymentAmountMicrousdc !== "number" || !recipientAddress) {
@@ -524,10 +531,13 @@ export const sendPendingRefund = internalAction({
     const amountMicrousdc = refund.amountMicrousdc ?? Math.round((refund.amount || 0) * 1_000_000);
     const toAddress = refund.refundToAddress || refund.toWallet;
 
-    const send = await ctx.runAction(api.lib.coinbase.sendUsdcBase, {
-      toAddress,
-      amountMicrousdc,
-    });
+    const chainRaw = refund.sourceChain || refund.blockchain || dispute?.paymentDetails?.blockchain;
+    const chain = typeof chainRaw === "string" ? chainRaw.toLowerCase() : "base";
+
+    const send =
+      chain === "solana"
+        ? await ctx.runAction(api.lib.coinbase.sendUsdcSolana, { toAddress, amountMicrousdc })
+        : await ctx.runAction(api.lib.coinbase.sendUsdcBase, { toAddress, amountMicrousdc });
 
     if (!send.ok) {
       if (dispute.reviewerOrganizationId) {

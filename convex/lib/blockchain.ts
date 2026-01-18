@@ -394,6 +394,142 @@ export const deriveUsdcMerchantFromTxHashBase = action({
   },
 });
 
+type SolanaUsdcTransfer = {
+  ixIndex: number;
+  payerAddress: string; // wallet owner when available, else token account
+  recipientAddress: string; // wallet owner when available, else token account
+  payerTokenAccount: string;
+  recipientTokenAccount: string;
+  amountMicrousdc: number;
+};
+
+function solanaAccountKeysToStrings(accountKeys: any): string[] {
+  const keys = Array.isArray(accountKeys) ? accountKeys : [];
+  return keys
+    .map((k) => {
+      if (typeof k === "string") return k;
+      if (k && typeof k === "object" && typeof (k as any).pubkey === "string") return String((k as any).pubkey);
+      return "";
+    })
+    .filter((x) => typeof x === "string" && x.length > 0);
+}
+
+function solanaOwnerByTokenAccountFromMeta(txResult: any, mint: string): Map<string, string> {
+  const map = new Map<string, string>();
+  const accountKeys = solanaAccountKeysToStrings(txResult?.transaction?.message?.accountKeys);
+  const meta = txResult?.meta;
+  const balances = [
+    ...(Array.isArray(meta?.preTokenBalances) ? meta.preTokenBalances : []),
+    ...(Array.isArray(meta?.postTokenBalances) ? meta.postTokenBalances : []),
+  ];
+
+  for (const b of balances) {
+    try {
+      const m = typeof b?.mint === "string" ? b.mint : "";
+      if (m !== mint) continue;
+      const owner = typeof b?.owner === "string" ? b.owner : "";
+      const idx = typeof b?.accountIndex === "number" ? b.accountIndex : Number(b?.accountIndex);
+      if (!owner || !Number.isFinite(idx) || idx < 0) continue;
+      const tokenAcct = accountKeys[idx];
+      if (typeof tokenAcct === "string" && tokenAcct.length > 0) {
+        map.set(tokenAcct, owner);
+      }
+    } catch {
+      // ignore malformed entries
+    }
+  }
+  return map;
+}
+
+/**
+ * Extract USDC transfers from a Solana getTransaction(jsonParsed) result.
+ *
+ * IMPORTANT: SPL transfer instructions often reference token accounts. We prefer mapping
+ * token accounts -> owner wallets using meta.preTokenBalances/postTokenBalances owner fields.
+ *
+ * Exported for unit tests.
+ */
+export function extractSolanaUsdcTransfersFromGetTransactionResult(args: {
+  txResult: any;
+  usdcMint: string;
+}):
+  | { ok: true; transfers: SolanaUsdcTransfer[] }
+  | { ok: false; code: "NOT_USDC" | "UNSUPPORTED"; message: string } {
+  const txResult = args.txResult;
+  const mint = args.usdcMint;
+  if (!txResult || typeof txResult !== "object") {
+    return { ok: false, code: "UNSUPPORTED", message: "Missing transaction result" };
+  }
+
+  const instructions = txResult?.transaction?.message?.instructions;
+  if (!Array.isArray(instructions)) {
+    return { ok: false, code: "UNSUPPORTED", message: "Missing instructions" };
+  }
+
+  const ownerByTokenAccount = solanaOwnerByTokenAccountFromMeta(txResult, mint);
+
+  // Build a quick set of token accounts known to be USDC from token balance metadata.
+  const usdcTokenAccounts = new Set<string>(Array.from(ownerByTokenAccount.keys()));
+
+  const out: SolanaUsdcTransfer[] = [];
+  for (let i = 0; i < instructions.length; i++) {
+    const ix: any = instructions[i];
+    const type = ix?.parsed?.type;
+    if (type !== "transfer" && type !== "transferChecked") continue;
+    const info = ix?.parsed?.info;
+    if (!info || typeof info !== "object") continue;
+
+    const payerTokenAccount = typeof info.source === "string" ? info.source : typeof info.authority === "string" ? info.authority : "";
+    const recipientTokenAccount = typeof info.destination === "string" ? info.destination : "";
+    if (!payerTokenAccount || !recipientTokenAccount) continue;
+
+    // Prefer explicit mint when available (transferChecked); otherwise infer by token accounts.
+    const ixMint = typeof info.mint === "string" ? info.mint : "";
+    const isUsdc = ixMint === mint || usdcTokenAccounts.has(payerTokenAccount) || usdcTokenAccounts.has(recipientTokenAccount);
+    if (!isUsdc) continue;
+
+    const decimals = typeof info.decimals === "number"
+      ? info.decimals
+      : typeof info?.tokenAmount?.decimals === "number"
+        ? info.tokenAmount.decimals
+        : 6;
+    if (decimals !== 6) continue;
+
+    const amountStr = info.amount ?? info?.tokenAmount?.amount;
+    let amountRaw: bigint;
+    try {
+      amountRaw = BigInt(String(amountStr));
+    } catch {
+      continue;
+    }
+    if (amountRaw < BigInt(0) || amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
+    const amountMicrousdc = Number(amountRaw);
+    if (!Number.isSafeInteger(amountMicrousdc) || amountMicrousdc <= 0) continue;
+
+    const payerOwner = ownerByTokenAccount.get(payerTokenAccount) || payerTokenAccount;
+    const recipientOwner = ownerByTokenAccount.get(recipientTokenAccount) || recipientTokenAccount;
+
+    out.push({
+      ixIndex: i,
+      payerAddress: payerOwner,
+      recipientAddress: recipientOwner,
+      payerTokenAccount,
+      recipientTokenAccount,
+      amountMicrousdc,
+    });
+  }
+
+  if (out.length === 0) {
+    return {
+      ok: false,
+      code: "NOT_USDC",
+      message: `No USDC (mint ${mint}) transfer found in transaction`,
+    };
+  }
+
+  return { ok: true, transfers: out };
+}
+
 /**
  * Derive the merchant recipient for a Solana USDC payment tx signature (no recipient provided).
  *
@@ -458,7 +594,18 @@ export const deriveUsdcMerchantFromTxHashSolana = action({
       };
     }
 
-    const resp = await fetch(RPC_ENDPOINTS.solana, {
+    const solRpc = getSolanaRpcUrl();
+    if (!solRpc.ok) {
+      return {
+        ok: false,
+        blockchain: "solana",
+        transactionHash: sig,
+        code: "NOT_CONFIGURED",
+        message: solRpc.message,
+      };
+    }
+
+    const resp = await fetch(solRpc.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -486,55 +633,30 @@ export const deriveUsdcMerchantFromTxHashSolana = action({
       };
     }
 
-    const instructions = data.result.transaction?.message?.instructions || [];
-    const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
+    const extracted = extractSolanaUsdcTransfersFromGetTransactionResult({
+      txResult: data.result,
+      usdcMint: USDC_CONTRACTS.solana,
+    });
 
-    for (let i = 0; i < instructions.length; i++) {
-      const ix = instructions[i];
-      if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
-      const info = ix.parsed?.info;
-      if (!info) continue;
-      if (info?.mint !== USDC_CONTRACTS.solana) continue;
-
-      const to = (info.destination || "").toString();
-      const from = (info.source || info.authority || "").toString();
-      if (!to || !from) continue;
-
-      const amountStr = info.amount || info.tokenAmount?.amount;
-      const decimals = info.decimals || info.tokenAmount?.decimals || 6;
-      if (decimals !== 6) continue;
-      try {
-        const amountRaw = BigInt(String(amountStr));
-        matches.push({ ixIndex: i, from, to, amountRaw });
-      } catch {
-        continue;
-      }
-    }
-
-    if (matches.length === 0) {
+    if (!extracted.ok) {
       return {
         ok: false,
         blockchain: "solana",
         transactionHash: sig,
-        code: "NOT_USDC",
-        message: `No USDC (mint ${USDC_CONTRACTS.solana}) transfer found in transaction`,
+        code: extracted.code,
+        message: extracted.message,
       };
     }
 
-    if (matches.length > 1) {
-      const candidates: DeriveMerchantCandidates = [];
-      for (const m of matches) {
-        if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
-        const amountMicrousdc = Number(m.amountRaw);
-        candidates.push({
-          tokenContract: USDC_CONTRACTS.solana,
-          payerAddress: m.from,
-          recipientAddress: m.to,
-          amountMicrousdc,
-          amountUsdc: formatMicrosToUsdc(amountMicrousdc),
-          logIndex: m.ixIndex,
-        });
-      }
+    if (extracted.transfers.length > 1) {
+      const candidates: DeriveMerchantCandidates = extracted.transfers.map((t) => ({
+        tokenContract: USDC_CONTRACTS.solana,
+        payerAddress: t.payerAddress,
+        recipientAddress: t.recipientAddress,
+        amountMicrousdc: t.amountMicrousdc,
+        amountUsdc: formatMicrosToUsdc(t.amountMicrousdc),
+        logIndex: t.ixIndex,
+      }));
       return {
         ok: false,
         blockchain: "solana",
@@ -545,26 +667,16 @@ export const deriveUsdcMerchantFromTxHashSolana = action({
       };
     }
 
-    const m = matches[0];
-    if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
-      return {
-        ok: false,
-        blockchain: "solana",
-        transactionHash: sig,
-        code: "UNSUPPORTED",
-        message: "USDC amount exceeds safe integer range",
-      };
-    }
-    const amountMicrousdc = Number(m.amountRaw);
+    const t = extracted.transfers[0]!;
     return {
       ok: true,
       blockchain: "solana",
       transactionHash: sig,
-      payerAddress: m.from,
-      recipientAddress: m.to,
-      amountMicrousdc,
-      amountUsdc: formatMicrosToUsdc(amountMicrousdc),
-      logIndex: m.ixIndex,
+      payerAddress: t.payerAddress,
+      recipientAddress: t.recipientAddress,
+      amountMicrousdc: t.amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(t.amountMicrousdc),
+      logIndex: t.ixIndex,
       tokenContract: USDC_CONTRACTS.solana,
     };
   },
@@ -619,12 +731,24 @@ export function findErc20TransferMatches(args: {
  * Blockchain RPC Endpoints
  * Only Base and Solana are supported
  * 
- * Using Alchemy for Base (EVM), public RPC for Solana
+ * Using Alchemy for Base (EVM) and Solana
  */
 const RPC_ENDPOINTS = {
   base: "https://base-mainnet.g.alchemy.com/v2",
-  solana: "https://api.mainnet-beta.solana.com"
+  solana: "https://solana-mainnet.g.alchemy.com/v2",
 } as const;
+
+function getSolanaRpcUrl(): { ok: true; url: string } | { ok: false; code: "NOT_CONFIGURED"; message: string } {
+  const alchemyKey = process.env.ALCHEMY_API_KEY;
+  if (!alchemyKey) {
+    return {
+      ok: false,
+      code: "NOT_CONFIGURED",
+      message: "ALCHEMY_API_KEY is not configured (required to verify Solana tx signatures)",
+    };
+  }
+  return { ok: true, url: `${RPC_ENDPOINTS.solana}/${alchemyKey}` };
+}
 
 /**
  * Deterministically verify a USDC transfer by expected microusdc amount and return the payer + logIndex.
@@ -674,12 +798,14 @@ export const verifyUsdcTransferByAmount = action({
 
     if (mockMode) {
       // In mock mode, assume the claimed amount matches deterministically.
+      const expectedTo = args.expectedToAddress || "0x9876543210987654321098765432109876543210";
       return {
         ok: true,
         blockchain: args.blockchain,
         transactionHash: args.transactionHash,
         payerAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        recipientAddress: (args.expectedToAddress || "0x9876543210987654321098765432109876543210").toLowerCase(),
+        // Solana addresses are case-sensitive; only lowercase EVM-style addresses in mock mode.
+        recipientAddress: args.blockchain === "base" ? String(expectedTo).toLowerCase() : String(expectedTo),
         amountMicrousdc: expected,
         amountUsdc: formatMicrosToUsdc(expected),
         logIndex: 0,
@@ -1311,11 +1437,22 @@ async function querySolanaUsdcTransferByAmount(
       ok: false;
       blockchain: "solana";
       transactionHash: string;
-      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "UNSUPPORTED";
+      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NOT_CONFIGURED" | "UNSUPPORTED";
       message: string;
     }
 > {
-  const resp = await fetch(RPC_ENDPOINTS.solana, {
+  const solRpc = getSolanaRpcUrl();
+  if (!solRpc.ok) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "NOT_CONFIGURED",
+      message: solRpc.message,
+    };
+  }
+
+  const resp = await fetch(solRpc.url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1342,34 +1479,21 @@ async function querySolanaUsdcTransferByAmount(
     };
   }
 
-  const instructions = data.result.transaction?.message?.instructions || [];
-  const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
-
-  for (let i = 0; i < instructions.length; i++) {
-    const ix = instructions[i];
-    if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
-    const info = ix.parsed?.info;
-    if (!info) continue;
-    if (info?.mint !== USDC_CONTRACTS.solana) continue;
-
-    const amountStr = info.amount || info.tokenAmount?.amount;
-    const decimals = info.decimals || info.tokenAmount?.decimals || 6;
-    if (decimals !== 6) continue;
-    try {
-      const amountRaw = BigInt(String(amountStr));
-      if (amountRaw === BigInt(expectedAmountMicrousdc)) {
-        matches.push({
-          ixIndex: i,
-          from: (info.source || info.authority || "").toString(),
-          to: (info.destination || "").toString(),
-          amountRaw,
-        });
-      }
-    } catch {
-      continue;
-    }
+  const extracted = extractSolanaUsdcTransfersFromGetTransactionResult({
+    txResult: data.result,
+    usdcMint: USDC_CONTRACTS.solana,
+  });
+  if (!extracted.ok) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: extracted.code,
+      message: extracted.message,
+    };
   }
 
+  const matches = extracted.transfers.filter((t) => t.amountMicrousdc === expectedAmountMicrousdc);
   if (matches.length === 0) {
     return {
       ok: false,
@@ -1389,16 +1513,16 @@ async function querySolanaUsdcTransferByAmount(
     };
   }
 
-  const match = matches[0];
+  const m = matches[0]!;
   return {
     ok: true,
     blockchain: "solana",
     transactionHash: signature,
-    payerAddress: match.from,
-    recipientAddress: match.to,
+    payerAddress: m.payerAddress,
+    recipientAddress: m.recipientAddress,
     amountMicrousdc: expectedAmountMicrousdc,
     amountUsdc: formatMicrosToUsdc(expectedAmountMicrousdc),
-    logIndex: match.ixIndex,
+    logIndex: m.ixIndex,
   };
 }
 
@@ -1421,12 +1545,30 @@ async function querySolanaUsdcTransferByRecipient(
       ok: false;
       blockchain: "solana";
       transactionHash: string;
-      code: "TX_NOT_FOUND" | "NOT_USDC" | "NO_MATCH" | "MULTI_MATCH" | "NO_MATCH_LOG_INDEX" | "UNSUPPORTED";
+      code:
+        | "TX_NOT_FOUND"
+        | "NOT_USDC"
+        | "NO_MATCH"
+        | "MULTI_MATCH"
+        | "NO_MATCH_LOG_INDEX"
+        | "NOT_CONFIGURED"
+        | "UNSUPPORTED";
       message: string;
       candidates?: VerifyRecipientCandidates;
     }
 > {
-  const resp = await fetch(RPC_ENDPOINTS.solana, {
+  const solRpc = getSolanaRpcUrl();
+  if (!solRpc.ok) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: "NOT_CONFIGURED",
+      message: solRpc.message,
+    };
+  }
+
+  const resp = await fetch(solRpc.url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1454,34 +1596,24 @@ async function querySolanaUsdcTransferByRecipient(
   }
 
   const expectedTo = recipientAddress;
-  const instructions = data.result.transaction?.message?.instructions || [];
-  const matches: Array<{ ixIndex: number; from: string; to: string; amountRaw: bigint }> = [];
+  const extracted = extractSolanaUsdcTransfersFromGetTransactionResult({
+    txResult: data.result,
+    usdcMint: USDC_CONTRACTS.solana,
+  });
 
-  for (let i = 0; i < instructions.length; i++) {
-    const ix = instructions[i];
-    if (ix?.parsed?.type !== "transfer" && ix?.parsed?.type !== "transferChecked") continue;
-    const info = ix.parsed?.info;
-    if (!info) continue;
-    if (info?.mint !== USDC_CONTRACTS.solana) continue;
-
-    const to = (info.destination || "").toString();
-    if (to !== expectedTo) continue;
-
-    const amountStr = info.amount || info.tokenAmount?.amount;
-    const decimals = info.decimals || info.tokenAmount?.decimals || 6;
-    if (decimals !== 6) continue;
-    try {
-      const amountRaw = BigInt(String(amountStr));
-      matches.push({
-        ixIndex: i,
-        from: (info.source || info.authority || "").toString(),
-        to,
-        amountRaw,
-      });
-    } catch {
-      continue;
-    }
+  if (!extracted.ok) {
+    return {
+      ok: false,
+      blockchain: "solana",
+      transactionHash: signature,
+      code: extracted.code,
+      message: extracted.message,
+    };
   }
+
+  const matches = extracted.transfers.filter(
+    (t) => t.recipientAddress === expectedTo || t.recipientTokenAccount === expectedTo,
+  );
 
   const toFindIx = opts?.sourceTransferLogIndex;
   if (typeof toFindIx === "number") {
@@ -1495,25 +1627,15 @@ async function querySolanaUsdcTransferByRecipient(
         message: `No USDC transfer to ${recipientAddress} matched instruction index ${toFindIx}`,
       };
     }
-    const m = exact[0];
-    if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
-      return {
-        ok: false,
-        blockchain: "solana",
-        transactionHash: signature,
-        code: "UNSUPPORTED",
-        message: "USDC amount exceeds safe integer range",
-      };
-    }
-    const amountMicrousdc = Number(m.amountRaw);
+    const m = exact[0]!;
     return {
       ok: true,
       blockchain: "solana",
       transactionHash: signature,
-      payerAddress: m.from,
-      recipientAddress: m.to,
-      amountMicrousdc,
-      amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+      payerAddress: m.payerAddress,
+      recipientAddress: m.recipientAddress,
+      amountMicrousdc: m.amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(m.amountMicrousdc),
       logIndex: m.ixIndex,
     };
   }
@@ -1528,19 +1650,14 @@ async function querySolanaUsdcTransferByRecipient(
     };
   }
   if (matches.length > 1) {
-    const candidates: VerifyRecipientCandidates = [];
-    for (const m of matches) {
-      if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) continue;
-      const amountMicrousdc = Number(m.amountRaw);
-      candidates.push({
-        tokenContract: USDC_CONTRACTS.solana,
-        payerAddress: m.from,
-        recipientAddress: m.to,
-        amountMicrousdc,
-        amountUsdc: formatMicrosToUsdc(amountMicrousdc),
-        logIndex: m.ixIndex,
-      });
-    }
+    const candidates: VerifyRecipientCandidates = matches.map((m) => ({
+      tokenContract: USDC_CONTRACTS.solana,
+      payerAddress: m.payerAddress,
+      recipientAddress: m.recipientAddress,
+      amountMicrousdc: m.amountMicrousdc,
+      amountUsdc: formatMicrosToUsdc(m.amountMicrousdc),
+      logIndex: m.ixIndex,
+    }));
     return {
       ok: false,
       blockchain: "solana",
@@ -1551,25 +1668,15 @@ async function querySolanaUsdcTransferByRecipient(
     };
   }
 
-  const m = matches[0];
-  if (m.amountRaw > BigInt(Number.MAX_SAFE_INTEGER)) {
-    return {
-      ok: false,
-      blockchain: "solana",
-      transactionHash: signature,
-      code: "UNSUPPORTED",
-      message: "USDC amount exceeds safe integer range",
-    };
-  }
-  const amountMicrousdc = Number(m.amountRaw);
+  const m = matches[0]!;
   return {
     ok: true,
     blockchain: "solana",
     transactionHash: signature,
-    payerAddress: m.from,
-    recipientAddress: m.to,
-    amountMicrousdc,
-    amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+    payerAddress: m.payerAddress,
+    recipientAddress: m.recipientAddress,
+    amountMicrousdc: m.amountMicrousdc,
+    amountUsdc: formatMicrosToUsdc(m.amountMicrousdc),
     logIndex: m.ixIndex,
   };
 }
@@ -1584,8 +1691,18 @@ async function querySolanaUsdcTransaction(
 ) {
   try {
     console.log(`🔍 Querying Solana blockchain for USDC transfer: ${signature}`);
-    
-    const response = await fetch(RPC_ENDPOINTS.solana, {
+
+    const solRpc = getSolanaRpcUrl();
+    if (!solRpc.ok) {
+      return {
+        success: false,
+        error: solRpc.message,
+        transactionHash: signature,
+        blockchain: "solana",
+      };
+    }
+
+    const response = await fetch(solRpc.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1614,71 +1731,57 @@ async function querySolanaUsdcTransaction(
     }
 
     const tx = data.result;
-    
-    // Parse SPL token transfer instructions
-    const instructions = tx.transaction?.message?.instructions || [];
-    let usdcTransfer = null;
-    
-    // Look for USDC token transfer instruction
-    for (const ix of instructions) {
-      if (ix.parsed?.type === "transfer" || ix.parsed?.type === "transferChecked") {
-        // Check if this is a USDC transfer by looking at the mint
-        const info = ix.parsed?.info;
-        if (info?.mint === USDC_CONTRACTS.solana) {
-          usdcTransfer = {
-            from: info.source || info.authority,
-            to: info.destination,
-            amount: info.amount || info.tokenAmount?.amount,
-            decimals: info.decimals || info.tokenAmount?.decimals || 6
-          };
-          break;
-        }
-      }
-    }
 
-    if (!usdcTransfer) {
+    const extracted = extractSolanaUsdcTransfersFromGetTransactionResult({
+      txResult: tx,
+      usdcMint: USDC_CONTRACTS.solana,
+    });
+    if (!extracted.ok) {
       return {
         success: false,
-        error: `Transaction is not a USDC transfer. Expected USDC mint ${USDC_CONTRACTS.solana}`,
+        error: extracted.message,
         transactionHash: signature,
         blockchain: "solana",
-        hint: "X-402 disputes only accept USDC token transfers on Solana"
+        hint: "X-402 disputes only accept USDC token transfers on Solana",
       };
     }
 
-    // Optional: enforce expected addresses (note: may be token accounts depending on wallet)
-    if (opts?.expectedFromAddress && usdcTransfer.from && usdcTransfer.from !== opts.expectedFromAddress) {
+    let matches = extracted.transfers;
+    if (opts?.expectedToAddress) {
+      matches = matches.filter(
+        (t) => t.recipientAddress === opts.expectedToAddress || t.recipientTokenAccount === opts.expectedToAddress,
+      );
+    }
+    if (opts?.expectedFromAddress) {
+      matches = matches.filter(
+        (t) => t.payerAddress === opts.expectedFromAddress || t.payerTokenAccount === opts.expectedFromAddress,
+      );
+    }
+
+    if (matches.length === 0) {
       return {
         success: false,
-        error: `Transaction payer mismatch. Expected from ${opts.expectedFromAddress}, got ${usdcTransfer.from}`,
+        error: "No USDC transfer matched expected address constraints",
         transactionHash: signature,
         blockchain: "solana",
-        expectedFromAddress: opts.expectedFromAddress,
-        actualFromAddress: usdcTransfer.from,
+        expectedFromAddress: opts?.expectedFromAddress,
+        expectedToAddress: opts?.expectedToAddress,
       };
     }
 
-    if (opts?.expectedToAddress && usdcTransfer.to && usdcTransfer.to !== opts.expectedToAddress) {
-      return {
-        success: false,
-        error: `Transaction recipient mismatch. Expected to ${opts.expectedToAddress}, got ${usdcTransfer.to}`,
-        transactionHash: signature,
-        blockchain: "solana",
-        expectedToAddress: opts.expectedToAddress,
-        actualToAddress: usdcTransfer.to,
-      };
-    }
+    // Pick the first match (callers who need strict disambiguation should use the
+    // deterministic verify-by-recipient APIs which support sourceTransferLogIndex).
+    const m = matches[0]!;
 
-    // USDC has 6 decimals on Solana
-    const usdcAmount = Number(usdcTransfer.amount) / Math.pow(10, usdcTransfer.decimals);
-    const amountUsd = usdcAmount; // 1 USDC = $1.00 USD
+    const usdcAmount = m.amountMicrousdc / 1e6;
+    const amountUsd = usdcAmount;
 
     const result = {
       success: true,
       transactionHash: signature,
       blockchain: "solana",
-      fromAddress: usdcTransfer.from,
-      toAddress: usdcTransfer.to,
+      fromAddress: m.payerAddress,
+      toAddress: m.recipientAddress,
       value: usdcAmount.toString(),
       currency: "USDC",
       amountUsd: amountUsd,
@@ -1688,7 +1791,7 @@ async function querySolanaUsdcTransaction(
     };
 
     console.log(`✅ Solana USDC transaction found:`);
-    console.log(`   From: ${usdcTransfer.from} → To: ${usdcTransfer.to}`);
+    console.log(`   From: ${m.payerAddress} → To: ${m.recipientAddress}`);
     console.log(`   Amount: ${usdcAmount} USDC = $${amountUsd.toFixed(2)} USD`);
 
     return result;

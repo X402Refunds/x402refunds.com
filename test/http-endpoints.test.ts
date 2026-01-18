@@ -33,13 +33,14 @@ describe("HTTP API - Removed endpoints", () => {
     expect(response.status).toBe(404);
     });
 
-  it("POST /agents/capabilities should be removed (404)", async () => {
+  it("POST /agents/capabilities should require auth (401/400) or be removed on older deployments", async () => {
     const response = await fetch(`${API_BASE_URL}/agents/capabilities`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentDid: "did:agent:test", capabilities: ["x"] }),
+      body: JSON.stringify({ routes: [{ blockchain: "base", payTo: "0x" + "11".repeat(20) }] }),
     });
-    expect(response.status).toBe(404);
+    // New behavior: requires API key. Older deployments: 404.
+    expect([401, 400, 404]).toContain(response.status);
   });
 
   it("POST /api/disputes/payment should be removed (404)", async () => {
@@ -321,6 +322,7 @@ describe("HTTP API - Wallet-first Topup (v1/v2 discovery)", () => {
       headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
         merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        blockchain: "base",
         amountMicrousdc: "10000",
         currency: "USDC",
       }),

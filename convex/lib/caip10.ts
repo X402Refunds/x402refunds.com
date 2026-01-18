@@ -112,6 +112,68 @@ export function normalizeToCaip10(
   }
 }
 
+/**
+ * Normalize a wallet identifier into a stable key for DB lookups/comparisons.
+ *
+ * Rules:
+ * - eip155 CAIP-10: lowercase the 0x-address portion only
+ * - raw 0x-address: lowercase
+ * - solana CAIP-10 and raw base58: preserve case (base58 is case-sensitive)
+ *
+ * NOTE: This does NOT validate that the identifier is “real”, only normalizes formats.
+ */
+export function normalizeWalletIndexKey(value: string): string {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  if (raw.includes(":")) {
+    const parts = raw.split(":");
+    if (parts.length === 3) {
+      const [namespace, chainId, address] = parts;
+      if (namespace === "eip155" && /^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return `eip155:${chainId}:${address.toLowerCase()}`;
+      }
+      if (namespace === "solana") {
+        // Preserve base58 case.
+        return `solana:${chainId}:${address}`;
+      }
+    }
+    return raw;
+  }
+
+  if (/^0x[a-fA-F0-9]{40}$/.test(raw)) return raw.toLowerCase();
+
+  // Assume non-0x identifiers (e.g. solana base58) are case-sensitive; preserve.
+  return raw;
+}
+
+/**
+ * Build a small set of lookup keys to find wallet-linked records across legacy storage shapes.
+ *
+ * For example:
+ * - eip155:8453:0xABC... -> [eip155:8453:0xabc..., 0xabc...]
+ * - solana:<chain>:FiZy... -> [solana:<chain>:FiZy..., FiZy...]
+ */
+export function walletMatchKeys(value: string): string[] {
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+
+  const out = new Set<string>();
+  const normalized = normalizeWalletIndexKey(raw);
+  if (normalized) out.add(normalized);
+
+  if (normalized.includes(":")) {
+    const parts = normalized.split(":");
+    if (parts.length === 3) {
+      const [namespace, _chainId, address] = parts;
+      if (namespace === "eip155" && /^0x[a-f0-9]{40}$/.test(address)) out.add(address);
+      if (namespace === "solana") out.add(address);
+    }
+  }
+
+  return Array.from(out);
+}
+
 
 
 

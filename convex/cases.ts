@@ -3,6 +3,71 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { createCustodyEvent } from "./custody";
 import { workflowManager } from "./workflows";
+import { normalizeWalletIndexKey, walletMatchKeys } from "./lib/caip10";
+
+async function assignUnassignedPaymentCasesToOrgForWalletKeys(ctx: any, args: {
+  organizationId: any;
+  walletKeys: string[];
+  limit: number;
+}) {
+  const org = await ctx.db.get(args.organizationId);
+  if (!org) throw new Error("Organization not found");
+
+  const limit = Math.min(args.limit ?? 500, 5000);
+
+  const caseMap = new Map<string, any>();
+  for (const k of args.walletKeys) {
+    const key = normalizeWalletIndexKey(k);
+    if (!key) continue;
+    const rows = await ctx.db
+      .query("cases")
+      .withIndex("by_defendant", (q: any) => q.eq("defendant", key))
+      .collect();
+    for (const r of rows as any[]) caseMap.set(String(r._id), r);
+    if (caseMap.size >= limit) break;
+  }
+
+  const candidates = Array.from(caseMap.values());
+  const eligible = candidates
+    .filter((c) => {
+      if (c.type !== "PAYMENT") return false;
+      if (c.reviewerOrganizationId) return false;
+      if (typeof c.filedAt !== "number") return false;
+      return c.filedAt >= org.createdAt;
+    })
+    .slice(0, limit);
+
+  let assigned = 0;
+  let feeCharged = 0;
+  let feeBlocked = 0;
+  let aiTriggered = 0;
+
+  for (const c of eligible) {
+    await ctx.db.patch(c._id, { reviewerOrganizationId: args.organizationId });
+    assigned++;
+
+    const feeRes = await ctx.runMutation((internal as any).refundCredits.chargeDisputeFeeForCase, { caseId: c._id });
+    if (!feeRes.ok) {
+      feeBlocked++;
+      await ctx.db.patch(c._id, {
+        tags: Array.from(new Set([...(c.tags || []), "awaiting_funding"])),
+        metadata: {
+          ...(c.metadata || {}),
+          fundingBlocked: true,
+          fundingBlockReason: feeRes.code,
+        },
+      });
+      continue;
+    }
+
+    feeCharged++;
+    if (org.aiEnabled === false) continue;
+    await ctx.scheduler.runAfter(0, (internal as any).paymentDisputes.triggerPaymentWorkflow, { caseId: c._id });
+    aiTriggered++;
+  }
+
+  return { success: true, assigned, feeCharged, feeBlocked, aiTriggered };
+}
 
 // General dispute category enum
 export const GENERAL_DISPUTE_CATEGORIES = [
@@ -880,9 +945,11 @@ export const getOrganizationCases = query({
     
     // Get both DIDs and wallet addresses for matching
     const agentDids = orgAgents.map(a => a.did);
-    const agentWallets = orgAgents
-      .map(a => a.walletAddress?.toLowerCase())
-      .filter((w): w is string => !!w); // Remove undefined/null
+    const agentWalletKeySet = new Set<string>();
+    for (const a of orgAgents) {
+      if (!a.walletAddress) continue;
+      for (const k of walletMatchKeys(a.walletAddress)) agentWalletKeySet.add(normalizeWalletIndexKey(k));
+    }
     
     // Get cases where organization is the reviewer (payment disputes)
     const reviewerCases = await ctx.db
@@ -908,13 +975,15 @@ export const getOrganizationCases = query({
     
     // Add cases where org's agents are involved (check both DID and wallet address)
     for (const c of agentCases) {
+      const plaintiffKey = typeof c.plaintiff === "string" ? normalizeWalletIndexKey(c.plaintiff) : "";
+      const defendantKey = typeof c.defendant === "string" ? normalizeWalletIndexKey(c.defendant) : "";
       const plaintiffMatch = c.plaintiff && (
         agentDids.includes(c.plaintiff) || 
-        agentWallets.includes(c.plaintiff.toLowerCase())
+        (plaintiffKey ? agentWalletKeySet.has(plaintiffKey) : false)
       );
       const defendantMatch = c.defendant && (
         agentDids.includes(c.defendant) || 
-        agentWallets.includes(c.defendant.toLowerCase())
+        (defendantKey ? agentWalletKeySet.has(defendantKey) : false)
       );
       
       if (plaintiffMatch || defendantMatch) {
@@ -960,60 +1029,41 @@ export const assignUnassignedDisputesToOrgForWallet = internalMutation({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) throw new Error("Organization not found");
+    const keys = walletMatchKeys(args.walletAddress);
+    return await assignUnassignedPaymentCasesToOrgForWalletKeys(ctx, {
+      organizationId: args.organizationId,
+      walletKeys: keys,
+      limit: args.limit ?? 500,
+    });
+  },
+});
 
-    const wallet = args.walletAddress.toLowerCase();
-    const limit = Math.min(args.limit ?? 500, 5000);
+/**
+ * Assign unassigned payment disputes using a mapped merchant wallet (merchantWallets).
+ * This is the marketplace/proxy path: the liable org may differ from the wallet's “profile”.
+ */
+export const assignUnassignedDisputesToOrgForMerchantWallet = internalMutation({
+  args: {
+    walletCaip10: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const wallet = normalizeWalletIndexKey(args.walletCaip10);
+    if (!wallet || !wallet.includes(":")) throw new Error("walletCaip10 must be CAIP-10");
 
-    const candidates = await ctx.db
-      .query("cases")
-      .withIndex("by_defendant", (q) => q.eq("defendant", wallet))
-      .collect();
-
-    const eligible = candidates
-      .filter((c) => {
-        if (c.type !== "PAYMENT") return false;
-        if (c.reviewerOrganizationId) return false;
-        if (typeof c.filedAt !== "number") return false;
-        return c.filedAt >= org.createdAt;
-      })
-      .slice(0, limit);
-
-    let assigned = 0;
-    let feeCharged = 0;
-    let feeBlocked = 0;
-    let aiTriggered = 0;
-
-    for (const c of eligible) {
-      await ctx.db.patch(c._id, { reviewerOrganizationId: args.organizationId });
-      assigned++;
-
-      const feeRes = await ctx.runMutation(internal.refundCredits.chargeDisputeFeeForCase, { caseId: c._id });
-      if (!feeRes.ok) {
-        feeBlocked++;
-        // Mark as awaiting funding (no new status in schema; use tags + metadata)
-        await ctx.db.patch(c._id, {
-          tags: Array.from(new Set([...(c.tags || []), "awaiting_funding"])),
-          metadata: {
-            ...(c.metadata || {}),
-            fundingBlocked: true,
-            fundingBlockReason: feeRes.code,
-          },
-        });
-        continue;
-      }
-
-      feeCharged++;
-
-      // Only trigger AI if org AI enabled
-      if (org.aiEnabled === false) continue;
-
-      await ctx.scheduler.runAfter(0, internal.paymentDisputes.triggerPaymentWorkflow as any, { caseId: c._id });
-      aiTriggered++;
+    const mapping = await ctx.db
+      .query("merchantWallets")
+      .withIndex("by_wallet", (q: any) => q.eq("walletCaip10", wallet))
+      .first();
+    if (!mapping?.liableOrganizationId) {
+      return { success: false, code: "NOT_MAPPED" as const };
     }
 
-    return { success: true, assigned, feeCharged, feeBlocked, aiTriggered };
+    return await assignUnassignedPaymentCasesToOrgForWalletKeys(ctx, {
+      organizationId: mapping.liableOrganizationId,
+      walletKeys: walletMatchKeys(wallet),
+      limit: args.limit ?? 500,
+    });
   },
 });
 
@@ -1199,6 +1249,8 @@ export const storeAIRecommendation = mutation({
       verdict: v.string(),
       confidence: v.number(),
       reasoning: v.string(),
+      // Optional: partner flows can provide a 2-line summary for emails/UI.
+      summary2: v.optional(v.string()),
       analyzedAt: v.number(),
       similarCases: v.array(v.id("cases")),
       refundAmountMicrousdc: v.optional(v.number()),

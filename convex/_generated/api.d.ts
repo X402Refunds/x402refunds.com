@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as agentWalletMigrations from "../agentWalletMigrations.js";
 import type * as agents from "../agents.js";
 import type * as agents_damageAgent from "../agents/damageAgent.js";
@@ -47,6 +48,7 @@ import type * as lib_merchantActionCopy from "../lib/merchantActionCopy.js";
 import type * as lib_merchantActionErrorCopy from "../lib/merchantActionErrorCopy.js";
 import type * as lib_merchantRefundEmailCopy from "../lib/merchantRefundEmailCopy.js";
 import type * as lib_openrouter from "../lib/openrouter.js";
+import type * as lib_partnerProcessedSummaryEmailCopy from "../lib/partnerProcessedSummaryEmailCopy.js";
 import type * as lib_solana from "../lib/solana.js";
 import type * as lib_usdc from "../lib/usdc.js";
 import type * as lib_x402PayTo from "../lib/x402PayTo.js";
@@ -56,8 +58,11 @@ import type * as mcp from "../mcp.js";
 import type * as merchantEmailActions from "../merchantEmailActions.js";
 import type * as merchantEmailVerification from "../merchantEmailVerification.js";
 import type * as merchantNotifications from "../merchantNotifications.js";
+import type * as merchantWallets from "../merchantWallets.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
+import type * as partnerPrograms from "../partnerPrograms.js";
+import type * as partners from "../partners.js";
 import type * as paymentDisputes from "../paymentDisputes.js";
 import type * as pool from "../pool.js";
 import type * as refundCredits from "../refundCredits.js";
@@ -81,6 +86,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   agentWalletMigrations: typeof agentWalletMigrations;
   agents: typeof agents;
   "agents/damageAgent": typeof agents_damageAgent;
@@ -120,6 +126,7 @@ declare const fullApi: ApiFromModules<{
   "lib/merchantActionErrorCopy": typeof lib_merchantActionErrorCopy;
   "lib/merchantRefundEmailCopy": typeof lib_merchantRefundEmailCopy;
   "lib/openrouter": typeof lib_openrouter;
+  "lib/partnerProcessedSummaryEmailCopy": typeof lib_partnerProcessedSummaryEmailCopy;
   "lib/solana": typeof lib_solana;
   "lib/usdc": typeof lib_usdc;
   "lib/x402PayTo": typeof lib_x402PayTo;
@@ -129,8 +136,11 @@ declare const fullApi: ApiFromModules<{
   merchantEmailActions: typeof merchantEmailActions;
   merchantEmailVerification: typeof merchantEmailVerification;
   merchantNotifications: typeof merchantNotifications;
+  merchantWallets: typeof merchantWallets;
   migrations: typeof migrations;
   notifications: typeof notifications;
+  partnerPrograms: typeof partnerPrograms;
+  partners: typeof partners;
   paymentDisputes: typeof paymentDisputes;
   pool: typeof pool;
   refundCredits: typeof refundCredits;

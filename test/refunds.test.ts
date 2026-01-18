@@ -342,6 +342,58 @@ describe("Refund System - Integration Tests", () => {
     expect(refund?.sourceTransferLogIndex).toBe(7);
   });
 
+  it("payment disputes: should schedule refund-to-source for Solana tx hashes (base58) when paymentDetails are present", async () => {
+    const organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", {
+        name: "Refund-to-source org (solana)",
+        createdAt: Date.now(),
+      });
+    });
+
+    // Solana signatures are base58; keep it within the validator range.
+    const solSig = "1".repeat(44);
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:PAYER_ABC",
+        defendant: "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:MERCHANT_XYZ",
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: Date.now(),
+        description: "Test Solana payment dispute scheduling",
+        amount: 0.25,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 250000,
+        decidedAt: Date.now(),
+        mock: false,
+        humanReviewRequired: true,
+        createdAt: Date.now(),
+        reviewerOrganizationId: organizationId,
+        paymentSourceChain: "solana",
+        paymentSourceTxHash: solSig,
+        paymentDetails: {
+          transactionId: solSig,
+          transactionHash: solSig,
+          blockchain: "solana",
+          amountMicrousdc: 250000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeReason: "other",
+          regulationEDeadline: Date.now() + 10 * 24 * 60 * 60 * 1000,
+          disputeFee: 0.05,
+          defendantMetadata: {
+            walletAddress: "SoLaNaMeRcHaNtWaLlEt1111111111111111111111111",
+          },
+        },
+      });
+    });
+
+    const res = await t.mutation(internal.refunds.executeAutomatedRefund, { caseId });
+    expect(res.status).toBe("SCHEDULED_REFUND_ATTEMPT");
+  });
+
   it("payment disputes: should refuse refund-to-source if recipient walletAddress is missing (prevents wrong-wallet refunds)", async () => {
     const organizationId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Users, FileText, Activity, Settings, Inbox, Bot, CreditCard } from "lucide-react"
+import { Home, Users, FileText, Activity, Settings, Inbox, Bot, CreditCard, Shield } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 
 interface NavigationItem {
@@ -45,6 +45,12 @@ const orgNavigationItems: NavigationItem[] = [
     title: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+  },
+  {
+    title: "Partners",
+    href: "/dashboard/partners",
+    icon: Shield,
+    adminOnly: true,
   },
 ]
 
@@ -104,6 +110,11 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
   const visibleDemoItems = demoNavigationItems.filter(item => 
     !item.adminOnly || isAdmin
   )
+
+  // Filter org navigation items based on admin status
+  const visibleOrgItems = orgNavigationItems.filter(item =>
+    !item.adminOnly || isAdmin
+  )
   
   // Determine which section to show based on current route
   const isOnDashboard = pathname?.startsWith('/dashboard')
@@ -127,7 +138,7 @@ export function GovernmentSidebar({ className, onClick }: GovernmentSidebarProps
               Organization
             </h3>
             <div className="space-y-1">
-              {orgNavigationItems.map((item) => {
+              {visibleOrgItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
                 return (

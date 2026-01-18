@@ -66,6 +66,9 @@ http.route({ path: "/v1/evidence/file", method: "OPTIONS", handler: optionsHandl
 // NOTE: Convex HTTP router in this deployment does not reliably support `:param` routes.
 // Use static paths with query/body for ID-based operations.
 http.route({ path: "/v1/refund", method: "OPTIONS", handler: optionsHandler });
+// Marketplace wallet routing endpoints
+http.route({ path: "/agents/capabilities", method: "OPTIONS", handler: optionsHandler });
+http.route({ path: "/agents/discover", method: "OPTIONS", handler: optionsHandler });
 // Demo agents for dispute testing
 http.route({ path: "/demo-agents/image-generator", method: "OPTIONS", handler: optionsHandler });
 
@@ -126,6 +129,139 @@ http.route({
       headers: corsHeaders,
     });
   })
+});
+
+function jsonError(status: number, body: any) {
+  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
+}
+
+async function requireApiKeyOrg(ctx: any, request: Request): Promise<{ ok: true; organizationId: any } | { ok: false; response: Response }> {
+  const auth = request.headers.get("authorization") || request.headers.get("Authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  const token = m ? m[1].trim() : "";
+  if (!token) {
+    return { ok: false, response: jsonError(401, { ok: false, code: "UNAUTHORIZED", message: "Missing Authorization: Bearer <api_key>" }) };
+  }
+
+  const keyRec = await ctx.db
+    .query("apiKeys")
+    .withIndex("by_key", (q: any) => q.eq("key", token))
+    .first();
+
+  if (!keyRec || keyRec.status !== "active" || !keyRec.organizationId) {
+    return { ok: false, response: jsonError(401, { ok: false, code: "UNAUTHORIZED", message: "Invalid or revoked API key" }) };
+  }
+
+  return { ok: true, organizationId: keyRec.organizationId };
+}
+
+// === Marketplace/Seller capability endpoints ===
+// POST /agents/capabilities
+// Registers one or more payTo wallets (Base/Solana) for a seller identity, liable to the calling org.
+http.route({
+  path: "/agents/capabilities",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const auth = await requireApiKeyOrg(ctx, request);
+    if (!auth.ok) return auth.response;
+
+    const body = await request.json().catch(() => ({} as any));
+    const sellerName = typeof body?.sellerName === "string" ? body.sellerName.trim() : "";
+    const sellerEmail = typeof body?.sellerEmail === "string" ? body.sellerEmail.trim() : "";
+
+    const routes = Array.isArray(body?.routes) ? body.routes : [];
+    if (!Array.isArray(routes) || routes.length === 0) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", message: "routes[] is required" });
+    }
+
+    const SOLANA_MAINNET_CHAINREF = "5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf";
+
+    const results: any[] = [];
+    for (const r of routes) {
+      const blockchain = typeof r?.blockchain === "string" ? r.blockchain : "";
+      const payToRaw = typeof r?.payTo === "string" ? r.payTo.trim() : "";
+      if ((blockchain !== "base" && blockchain !== "solana") || !payToRaw) {
+        return jsonError(400, { ok: false, code: "INVALID_ROUTE", message: "Each route requires blockchain (base|solana) and payTo" });
+      }
+
+      const walletCaip10 =
+        payToRaw.includes(":")
+          ? payToRaw
+          : blockchain === "base"
+            ? `eip155:8453:${payToRaw.toLowerCase()}`
+            : `solana:${SOLANA_MAINNET_CHAINREF}:${payToRaw}`;
+
+      const upsert = await (ctx.runMutation as any)((internal as any).merchantWallets.upsertMerchantProfileAndWallet, {
+        liableOrganizationId: auth.organizationId,
+        walletCaip10,
+        notificationEmail: sellerEmail || undefined,
+        name: sellerName || undefined,
+        isPrimary: typeof r?.isPrimary === "boolean" ? r.isPrimary : undefined,
+      });
+      results.push(upsert);
+
+      // Best-effort: backfill unassigned disputes for this wallet into the liable org.
+      try {
+        await (ctx.runMutation as any)((internal as any).cases.assignUnassignedDisputesToOrgForMerchantWallet, {
+          walletCaip10: walletCaip10,
+        });
+      } catch {
+        // ignore
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, liableOrganizationId: String(auth.organizationId), registered: results }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
+// POST /agents/discover
+// Returns registered wallets for a seller (by email) within the calling org.
+http.route({
+  path: "/agents/discover",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const auth = await requireApiKeyOrg(ctx, request);
+    if (!auth.ok) return auth.response;
+
+    const body = await request.json().catch(() => ({} as any));
+    const sellerEmail = typeof body?.sellerEmail === "string" ? body.sellerEmail.trim() : "";
+    if (!sellerEmail) {
+      return jsonError(400, { ok: false, code: "INVALID_REQUEST", message: "sellerEmail is required" });
+    }
+
+    const profile = await ctx.db
+      .query("merchantProfiles")
+      .withIndex("by_notification_email", (q: any) => q.eq("notificationEmail", sellerEmail))
+      .filter((q: any) => q.eq(q.field("organizationId"), auth.organizationId))
+      .first();
+    if (!profile) {
+      return jsonError(404, { ok: false, code: "NOT_FOUND", message: "No seller profile found for sellerEmail" });
+    }
+
+    const wallets = await ctx.db
+      .query("merchantWallets")
+      .withIndex("by_profile", (q: any) => q.eq("merchantProfileId", profile._id))
+      .collect();
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        merchantProfileId: String(profile._id),
+        sellerEmail: profile.notificationEmail || sellerEmail,
+        sellerName: profile.name || null,
+        liableOrganizationId: String(auth.organizationId),
+        wallets: wallets.map((w: any) => ({
+          walletCaip10: w.walletCaip10,
+          isPrimary: Boolean(w.isPrimary),
+          createdAt: w.createdAt,
+        })),
+      }),
+      { status: 200, headers: corsHeaders },
+    );
+  }),
 });
 
 // Health check endpoint
@@ -1213,10 +1349,6 @@ function base64EncodeJson(obj: unknown): string {
   return btoa(JSON.stringify(obj));
 }
 
-function jsonError(status: number, payload: unknown) {
-  return new Response(JSON.stringify(payload), { status, headers: corsHeaders });
-    }
-
 // GET /v1/tx/merchant?txHash=0x...
 // Derive the merchant recipient (CAIP-10) from an on-chain Base USDC transfer in the tx receipt.
 http.route({
@@ -1288,6 +1420,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const body = await request.json().catch(() => ({} as any));
     const merchant = typeof body?.merchant === "string" ? body.merchant : "";
+    const blockchainRaw = typeof body?.blockchain === "string" ? body.blockchain : "base";
+    const blockchain = blockchainRaw === "solana" ? "solana" : "base";
     const currency = typeof body?.currency === "string" ? body.currency : "USDC";
     const amountMicrousdcRaw = body?.amountMicrousdc;
     const caseId = typeof body?.caseId === "string" ? body.caseId : "";
@@ -1309,9 +1443,19 @@ http.route({
       return jsonError(400, { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc must be a positive integer" });
     }
 
-    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    const depositAddress =
+      blockchain === "base"
+        ? process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS
+        : process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS;
     if (!depositAddress) {
-      return jsonError(500, { ok: false, code: "NOT_CONFIGURED", message: "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS not configured" });
+      return jsonError(500, {
+        ok: false,
+        code: "NOT_CONFIGURED",
+        message:
+          blockchain === "base"
+            ? "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS not configured"
+            : "PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS not configured",
+      });
     }
 
     // x402 v2: requirements in PAYMENT-REQUIRED header (base64 JSON).
@@ -1320,14 +1464,17 @@ http.route({
       accepts: [
         {
           scheme: "exact",
-          network: "eip155:8453",
-          asset: USDC_BASE_MAINNET,
+          network: blockchain === "base" ? "eip155:8453" : "solana",
+          asset: blockchain === "base" ? USDC_BASE_MAINNET : "USDC",
           amount: String(amountMicrousdc),
           // Facilitator implementations often still read this legacy field name.
           maxAmountRequired: String(amountMicrousdc),
           payTo: depositAddress,
           resource: request.url,
-          description: "x402disputes refund pool top-up (Base USDC)",
+          description:
+            blockchain === "base"
+              ? "x402disputes refund pool top-up (Base USDC)"
+              : "x402disputes refund pool top-up (Solana USDC)",
           mimeType: "application/json",
           maxTimeoutSeconds: 60,
           extra: {
@@ -1344,12 +1491,15 @@ http.route({
       accepts: [
         {
           scheme: "exact",
-          network: "base",
+          network: blockchain,
           maxAmountRequired: String(amountMicrousdc),
-          asset: USDC_BASE_MAINNET,
+          asset: blockchain === "base" ? USDC_BASE_MAINNET : "USDC",
           payTo: depositAddress,
           resource: request.url,
-          description: "x402disputes refund pool top-up (Base USDC)",
+          description:
+            blockchain === "base"
+              ? "x402disputes refund pool top-up (Base USDC)"
+              : "x402disputes refund pool top-up (Solana USDC)",
           mimeType: "application/json",
           maxTimeoutSeconds: 60,
           extra: {
@@ -1388,6 +1538,7 @@ http.route({
             expectedAmountMicrousdc: amountMicrousdc,
             caseId: caseId ? (caseId as any) : undefined,
             actionToken: actionToken ? actionToken : undefined,
+            blockchain,
           },
         );
       } catch {
@@ -1460,6 +1611,7 @@ http.route({
           expectedAmountMicrousdc: amountMicrousdc,
           caseId: caseId ? (caseId as any) : undefined,
           actionToken: actionToken ? actionToken : undefined,
+          blockchain,
         },
       );
     } catch {

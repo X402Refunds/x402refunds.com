@@ -65,7 +65,7 @@ describe('X-402 Ultra-Minimal Refund Request Schema', () => {
       console.log("✅ Refund request submitted successfully!");
     } else {
       // Accept either TRANSACTION_NOT_FOUND or MCP_INTERNAL_ERROR (schema validation issues in test env)
-      expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error.code);
+      expect(['TX_NOT_FOUND', 'TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error.code);
       console.log(`⚠️  Expected failure: ${data.error.code} - ${data.error.message?.substring(0, 100)}`);
     }
   });

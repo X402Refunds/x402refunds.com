@@ -72,7 +72,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402 Refund Requests)', ()
         testCaseId = data.caseId;
       } else {
         // Expected in test env if blockchain query fails or address mismatch
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH']).toContain(data.error?.code);
+        expect(['TX_NOT_FOUND', 'TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR', 'ADDRESS_MISMATCH']).toContain(data.error?.code);
       }
     }, 30000);
 
@@ -93,7 +93,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402 Refund Requests)', ()
         expect(data.transactionVerification?.extractedDetails?.plaintiff).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TX_NOT_FOUND', 'TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     }, 30000);
 
@@ -114,7 +114,7 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (X-402 Refund Requests)', ()
         expect(data.transactionVerification?.extractedDetails?.defendant).toBeDefined();
       } else {
         // Or fail for other reasons (transaction not found, etc)
-        expect(['TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
+        expect(['TX_NOT_FOUND', 'TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error?.code);
       }
     }, 30000);
 

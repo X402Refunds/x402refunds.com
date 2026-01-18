@@ -102,15 +102,21 @@ export const ensureOrgRefundCredits = internalMutation({
 export const submitTopUpRequest = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    blockchain: v.union(v.literal("base")),
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
     txHash: v.string(),
     amount: v.any(),
     amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
   },
   handler: async (ctx, args) => {
     const tx = args.txHash.trim();
-    if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
-      throw new Error("Invalid txHash format (expected 0x + 64 hex chars)");
+    if (args.blockchain === "base") {
+      if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
+        throw new Error("Invalid txHash format (expected 0x + 64 hex chars)");
+      }
+    } else {
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(tx)) {
+        throw new Error("Invalid txHash format (expected Solana base58 signature)");
+      }
     }
 
     const parsed = parseUsdcAmountToMicros(args.amount, args.amountUnit);
@@ -138,7 +144,7 @@ export const submitTopUpRequest = internalMutation({
 export const applyVerifiedTopUp = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    blockchain: v.union(v.literal("base")),
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
     txHash: v.string(),
     sourceTransferLogIndex: v.number(),
     payerAddress: v.string(),
@@ -164,6 +170,8 @@ export const applyVerifiedTopUp = internalMutation({
     const credits2 = await ensureOrgRefundCreditsRow(ctx, args.organizationId);
 
     const now = Date.now();
+    const payerAddress = args.blockchain === "base" ? args.payerAddress.toLowerCase() : args.payerAddress;
+    const recipientAddress = args.blockchain === "base" ? args.recipientAddress.toLowerCase() : args.recipientAddress;
     const topUpId =
       existing?._id ??
       (await ctx.db.insert("refundTopUps", {
@@ -171,8 +179,8 @@ export const applyVerifiedTopUp = internalMutation({
         blockchain: args.blockchain,
         txHash: args.txHash,
         sourceTransferLogIndex: args.sourceTransferLogIndex,
-        payerAddress: args.payerAddress.toLowerCase(),
-        recipientAddress: args.recipientAddress.toLowerCase(),
+        payerAddress,
+        recipientAddress,
         amountMicrousdc: args.amountMicrousdc,
         status: "PENDING",
         createdAt: now,
@@ -202,14 +210,21 @@ export const applyVerifiedTopUp = internalMutation({
 export const submitTopUpAndAutoApply = action({
   args: {
     organizationId: v.id("organizations"),
+    blockchain: v.union(v.literal("base"), v.literal("solana")),
     txHash: v.string(),
     amount: v.any(),
     amountUnit: v.union(v.literal("usdc"), v.literal("microusdc")),
   },
   handler: async (ctx, args): Promise<any> => {
     const tx = args.txHash.trim();
-    if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
-      return { ok: false as const, code: "INVALID_TX_HASH", message: "Invalid txHash format (expected 0x + 64 hex chars)" };
+    if (args.blockchain === "base") {
+      if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) {
+        return { ok: false as const, code: "INVALID_TX_HASH", message: "Invalid txHash format (expected 0x + 64 hex chars)" };
+      }
+    } else {
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(tx)) {
+        return { ok: false as const, code: "INVALID_TX_HASH", message: "Invalid txHash format (expected Solana base58 signature)" };
+      }
     }
 
     const parsed = parseUsdcAmountToMicros(args.amount, args.amountUnit);
@@ -218,17 +233,23 @@ export const submitTopUpAndAutoApply = action({
     }
 
     // Static deposit address configured in Convex env.
-    const depositAddress = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+    const depositAddress =
+      args.blockchain === "base"
+        ? process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS
+        : process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS;
     if (!depositAddress) {
       return {
         ok: false as const,
         code: "NOT_CONFIGURED",
-        message: "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS is not configured in Convex",
+        message:
+          args.blockchain === "base"
+            ? "PLATFORM_BASE_USDC_DEPOSIT_ADDRESS is not configured in Convex"
+            : "PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS is not configured in Convex",
       };
     }
 
     const verified = await ctx.runAction(api.lib.blockchain.verifyUsdcTransferByAmount, {
-      blockchain: "base",
+      blockchain: args.blockchain,
       transactionHash: tx,
       expectedAmountMicrousdc: parsed.microusdc,
       expectedToAddress: depositAddress,
@@ -239,7 +260,11 @@ export const submitTopUpAndAutoApply = action({
     }
 
     // Extra safety: recipient must match deposit address.
-    if (verified.recipientAddress.toLowerCase() !== depositAddress.toLowerCase()) {
+    const recipientMatches =
+      args.blockchain === "base"
+        ? String(verified.recipientAddress || "").toLowerCase() === depositAddress.toLowerCase()
+        : String(verified.recipientAddress || "") === depositAddress;
+    if (!recipientMatches) {
       return {
         ok: false as const,
         code: "WRONG_RECIPIENT",
@@ -249,7 +274,7 @@ export const submitTopUpAndAutoApply = action({
 
     const applied = await ctx.runMutation(internal.refundCredits.applyVerifiedTopUp, {
       organizationId: args.organizationId,
-      blockchain: "base",
+      blockchain: args.blockchain,
       txHash: tx,
       sourceTransferLogIndex: verified.logIndex,
       payerAddress: verified.payerAddress,
@@ -273,9 +298,12 @@ export const submitTopUpAndAutoApply = action({
 });
 
 export const getPlatformDepositAddress = query({
-  args: {},
-  handler: async () => {
-    const address = process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS;
+  args: { blockchain: v.union(v.literal("base"), v.literal("solana")) },
+  handler: async (_ctx, args) => {
+    const address =
+      args.blockchain === "base"
+        ? process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS
+        : process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS;
     if (!address) return { ok: false as const, code: "NOT_CONFIGURED" as const };
     return { ok: true as const, address };
   },

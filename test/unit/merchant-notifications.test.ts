@@ -262,6 +262,200 @@ describe("merchant notifications (unit)", () => {
     process.env.EMAIL_FROM = prevEmailFrom;
   });
 
+  it("Dexter partner case: notifyMerchantDisputeFiled sends to platform ops (bypasses payTo/verification gates)", async () => {
+    const prevResendKey = process.env.RESEND_API_KEY;
+    const prevEmailFrom = process.env.EMAIL_FROM;
+    process.env.RESEND_API_KEY = "test_key";
+    process.env.EMAIL_FROM = "refunds@x402refunds.com";
+
+    const now = Date.now();
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", { name: "Dexter", domain: "dexter.cash", createdAt: now } as any);
+    });
+    const programId = await t.run(async (ctx) => {
+      return await ctx.db.insert("partnerPrograms", {
+        liableOrganizationId: orgId,
+        partnerKey: "dexter",
+        canonicalEmail: "refunds@dexter.cash",
+        enabled: true,
+        autoDecideEnabled: true,
+        autoExecuteEnabled: true,
+        maxAutoRefundMicrousdc: 2_000_000,
+        platformOpsEmail: "vbkotecha@gmail.com",
+        partnerOpsEmail: "refunds@dexter.cash",
+        protectedEndpointsMode: "noop_true_poc",
+        createdAt: now,
+      } as any);
+    });
+
+    const merchantCaip10 = "eip155:8453:0x00000000000000000000000000000000000000aa";
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x00000000000000000000000000000000000000bb",
+        defendant: merchantCaip10,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "dexter case",
+        amount: 1.0,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        reviewerOrganizationId: orgId,
+        metadata: {
+          partner: { partnerProgramId: String(programId), partnerKey: "dexter", canonicalEmail: "refunds@dexter.cash" },
+          v1: {
+            // Intentionally omit endpointPayToMatch and email verification setup; partner should bypass.
+            merchantOrigin: "https://merchant.example",
+            paymentSupportEmail: "refunds@dexter.cash",
+            transactionHash: "0x" + "44".repeat(32),
+            blockchain: "base",
+            amountMicrousdc: 1_000_000,
+          },
+        },
+        paymentDetails: {
+          transactionId: "0x" + "44".repeat(32),
+          transactionHash: "0x" + "44".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 1_000_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "44".repeat(32),
+      } as any);
+    });
+
+    const sent: any[] = [];
+    globalThis.fetch = vi.fn(async (url: any, init?: any) => {
+      const u = String(url);
+      if (u === "https://api.resend.com/emails") {
+        sent.push(JSON.parse(String(init?.body || "{}")));
+        return new Response(JSON.stringify({ id: `email_${sent.length}` }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${u}`);
+    }) as any;
+
+    const res = await t.action(api.merchantNotifications.notifyMerchantDisputeFiled, { caseId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(true);
+    expect(sent.length).toBe(1);
+    expect(sent[0]?.to?.[0]).toBe("vbkotecha@gmail.com");
+    expect(String(sent[0]?.subject || "")).toContain("Refund request received (Dexter)");
+
+    process.env.RESEND_API_KEY = prevResendKey;
+    process.env.EMAIL_FROM = prevEmailFrom;
+  });
+
+  it("Dexter partner case: notifyMerchantRefundExecuted sends ops executed email + partner processed summary (override to vbkotecha)", async () => {
+    const prevResendKey = process.env.RESEND_API_KEY;
+    const prevEmailFrom = process.env.EMAIL_FROM;
+    process.env.RESEND_API_KEY = "test_key";
+    process.env.EMAIL_FROM = "refunds@x402refunds.com";
+
+    const now = Date.now();
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", { name: "Dexter", domain: "dexter.cash", createdAt: now } as any);
+    });
+    const programId = await t.run(async (ctx) => {
+      return await ctx.db.insert("partnerPrograms", {
+        liableOrganizationId: orgId,
+        partnerKey: "dexter",
+        canonicalEmail: "refunds@dexter.cash",
+        enabled: true,
+        autoDecideEnabled: true,
+        autoExecuteEnabled: true,
+        maxAutoRefundMicrousdc: 2_000_000,
+        platformOpsEmail: "vbkotecha@gmail.com",
+        partnerOpsEmail: "refunds@dexter.cash",
+        protectedEndpointsMode: "noop_true_poc",
+        createdAt: now,
+      } as any);
+    });
+
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "eip155:8453:0x00000000000000000000000000000000000000bb",
+        defendant: "eip155:8453:0x00000000000000000000000000000000000000aa",
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "dexter executed",
+        amount: 1.0,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        reviewerOrganizationId: orgId,
+        aiRecommendation: {
+          verdict: "CONSUMER_WINS",
+          confidence: 0.9,
+          reasoning: "line1\nline2",
+          summary2: "line1\nline2",
+          analyzedAt: now,
+          similarCases: [],
+          refundAmountMicrousdc: 1_000_000,
+        },
+        metadata: {
+          partner: { partnerProgramId: String(programId), partnerKey: "dexter", canonicalEmail: "refunds@dexter.cash" },
+          v1: { paymentSupportEmail: "refunds@dexter.cash" },
+        },
+      } as any);
+    });
+
+    const refundId = await t.run(async (ctx) => {
+      return await ctx.db.insert("refundTransactions", {
+        caseId,
+        fromWallet: "eip155:8453:0xdead",
+        toWallet: "eip155:8453:0xbeef",
+        amount: 1,
+        currency: "USDC",
+        blockchain: "base",
+        status: "EXECUTED",
+        amountMicrousdc: 1_000_000,
+        sourceChain: "base",
+        sourceTxHash: "0x" + "55".repeat(32),
+        sourceTransferLogIndex: 0,
+        refundTxHash: "0x" + "66".repeat(32),
+        explorerUrl: "https://basescan.org/tx/0x" + "66".repeat(32),
+        createdAt: now,
+      } as any);
+    });
+
+    const sent: any[] = [];
+    globalThis.fetch = vi.fn(async (url: any, init?: any) => {
+      const u = String(url);
+      if (u === "https://api.resend.com/emails") {
+        sent.push(JSON.parse(String(init?.body || "{}")));
+        return new Response(JSON.stringify({ id: `email_${sent.length}` }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${u}`);
+    }) as any;
+
+    const res = await t.action((api as any).merchantNotifications.notifyMerchantRefundExecuted, { caseId, refundId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(true);
+
+    // Should send 2 emails: executed to platform ops + processed summary to vbkotecha override.
+    expect(sent.length).toBe(2);
+    const toList = sent.map((p) => p?.to?.[0]).sort();
+    expect(toList).toEqual(["vbkotecha@gmail.com", "vbkotecha@gmail.com"]);
+    expect(String(sent[1]?.text || sent[0]?.text || "")).toContain("AI summary:");
+    expect(String(sent[1]?.text || sent[0]?.text || "")).toContain("line1");
+
+    process.env.RESEND_API_KEY = prevResendKey;
+    process.env.EMAIL_FROM = prevEmailFrom;
+  });
+
   it("getNotificationStatusForCase returns requiredUsdc and hasSufficientCredits without needing x402.json fetch", async () => {
     const now = Date.now();
     const merchantAddress = "0x00000000000000000000000000000000000000bb";

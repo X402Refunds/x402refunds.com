@@ -106,6 +106,7 @@ describe("topup finalize auto-applies action token (unit)", () => {
       expectedAmountMicrousdc: topupMicros,
       caseId,
       actionToken: "tok_topup_apply",
+      blockchain: "base",
     });
     expect(finalize.ok).toBe(true);
 
