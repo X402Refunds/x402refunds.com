@@ -134,7 +134,26 @@ http.route({
 });
 
 function jsonError(status: number, body: any) {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
+  // Keep responses machine-parseable (agents rely on this).
+  // We intentionally include `field` + `message` for self-healing requests.
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json; charset=utf-8",
+    },
+  });
+}
+
+function invalidRequest(field: string, message: string, extra?: Record<string, unknown>) {
+  return {
+    ok: false,
+    code: "INVALID_REQUEST",
+    field,
+    message,
+    docs: "https://x402refunds.com/docs",
+    ...extra,
+  };
 }
 
 async function requireApiKeyOrg(ctx: any, request: Request): Promise<{ ok: true; organizationId: any } | { ok: false; response: Response }> {
@@ -1799,23 +1818,41 @@ http.route({
     const blockchainRaw = typeof body?.blockchain === "string" ? body.blockchain : "";
     const blockchain = blockchainRaw === "base" || blockchainRaw === "solana" ? blockchainRaw : "";
     if (!blockchain) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "blockchain", message: 'blockchain must be "base" or "solana"' });
+      return jsonError(400, invalidRequest("blockchain", 'blockchain must be "base" or "solana"', {
+        expected: ["base", "solana"],
+        example: {
+          blockchain: "base",
+          transactionHash: "0x<64-hex-chars>",
+          sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+          description: "Paid request returned an error after payment",
+        },
+      }));
     }
 
     const transactionHash = typeof body?.transactionHash === "string" ? body.transactionHash.trim() : "";
     if (!transactionHash) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "transactionHash is required" });
+      return jsonError(400, invalidRequest("transactionHash", "transactionHash is required", {
+        expected: blockchain === "base" ? "0x + 64 hex chars" : "base58 signature (32-128 chars)",
+      }));
     }
     if (blockchain === "base" && !/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "Base transactionHash must be 0x + 64 hex chars" });
+      return jsonError(400, invalidRequest("transactionHash", "Base transactionHash must be 0x + 64 hex chars", {
+        expected: "0x + 64 hex chars",
+      }));
     }
     if (blockchain === "solana" && !/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(transactionHash)) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "transactionHash", message: "Solana transactionHash must be a base58 signature" });
+      return jsonError(400, invalidRequest("transactionHash", "Solana transactionHash must be a base58 signature", {
+        expected: "base58 signature (32-128 chars)",
+      }));
     }
 
     const sellerEndpointUrlRaw = typeof body?.sellerEndpointUrl === "string" ? body.sellerEndpointUrl.trim() : "";
     if (!sellerEndpointUrlRaw) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "sellerEndpointUrl", message: "sellerEndpointUrl is required" });
+      return jsonError(400, invalidRequest("sellerEndpointUrl", "sellerEndpointUrl is required", {
+        expected: "https://<host>/<path> (must include a path, not just origin)",
+        hint:
+          "Use the *exact* paid API endpoint you called (the seller endpoint). For the demo image generator, use https://api.x402refunds.com/demo-agents/image-generator",
+      }));
     }
     let sellerEndpointUrl: string;
     let origin: string;
@@ -1826,12 +1863,17 @@ http.route({
       sellerEndpointUrl = u.toString();
       origin = u.origin;
       } catch (e: any) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "sellerEndpointUrl", message: e?.message || "Invalid sellerEndpointUrl" });
+      return jsonError(400, invalidRequest("sellerEndpointUrl", e?.message || "Invalid sellerEndpointUrl", {
+        expected: "https://<host>/<path> (must include a path, not just origin)",
+      }));
     }
 
     const description = typeof body?.description === "string" ? body.description.trim() : "";
     if (!description) {
-      return jsonError(400, { ok: false, code: "INVALID_REQUEST", field: "description", message: "description is required" });
+      return jsonError(400, invalidRequest("description", "description is required", {
+        expected: "string",
+        hint: "Describe what went wrong after payment (e.g. timeout, 500 error, wrong output).",
+      }));
     }
 
     const evidenceUrls =

@@ -215,7 +215,7 @@ export const MCP_TOOLS: any[] = [
   {
     name: "image_generator",
     description:
-      "X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be used to submit a refund request via x402_request_refund.",
+      "X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be used to submit a refund request via HTTP (POST /v1/refunds).",
     inputSchema: {
       type: "object",
       properties: {
@@ -831,10 +831,21 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           instructions: {
             step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
             step_2: "Call: POST https://api.x402refunds.com/demo-agents/image-generator",
-            step_3: "After receiving 500 error, use x402_request_refund to submit a refund request",
+            step_3: "If the paid API call fails, submit a refund request via HTTP: POST https://api.x402refunds.com/v1/refunds",
             coinbase_mcp: "Install: npx @coinbase/payments-mcp"
           },
           endpoint: "https://api.x402refunds.com/demo-agents/image-generator",
+          refund_request: {
+            endpoint: "https://api.x402refunds.com/v1/refunds",
+            required_body_fields: ["blockchain", "transactionHash", "sellerEndpointUrl", "description"],
+            example_body: {
+              blockchain: "base",
+              transactionHash: "0x<64-hex-chars>",
+              sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+              description: "Paid image generation request failed after payment",
+            },
+            note: "If you get HTTP 400, the response JSON includes {field,message,expected,hint} so you can correct the request.",
+          },
           prompt: parameters.prompt,
           size: parameters.size || "1024x1024",
           model: parameters.model || "stable-diffusion-xl",
