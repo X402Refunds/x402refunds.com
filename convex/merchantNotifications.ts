@@ -543,8 +543,9 @@ export const refreshMerchantContactForCase: any = internalAction({
       if (u.origin === "https://api.x402refunds.com" && u.pathname.startsWith("/demo-agents/")) {
         const fallbackEmail = process.env.DEMO_AGENTS_REFUND_CONTACT_EMAIL || "refunds@x402refunds.com";
         paymentSupportEmail = fallbackEmail;
-        if (expectedMerchant && expectedMerchant.startsWith("eip155:")) {
-          const expectedAddr = expectedMerchant.split(":")[2] || "";
+        if (expectedMerchant) {
+          const parts = expectedMerchant.split(":");
+          const expectedAddr = parts.length >= 3 ? String(parts[2] || "").trim() : "";
           if (expectedAddr) {
             endpointPayToCandidates = [expectedAddr];
             endpointPayToMatch = true;
@@ -570,10 +571,18 @@ export const refreshMerchantContactForCase: any = internalAction({
       const parsed = parseX402PayTo({ status: res.status, paymentRequiredHeader, bodyText });
       if (!parsed.ok) return;
       endpointPayToCandidates = parsed.payToCandidates;
-      if (expectedMerchant && expectedMerchant.startsWith("eip155:")) {
-        const expectedAddr = expectedMerchant.split(":")[2] || "";
-        endpointPayToMatch = parsed.payToCandidates.some((x) => x.toLowerCase() === expectedAddr.toLowerCase());
-        endpointPayToMismatch = !endpointPayToMatch;
+      if (expectedMerchant) {
+        const parts = expectedMerchant.split(":");
+        const chain = parts.length >= 1 ? String(parts[0] || "").trim() : "";
+        const expectedAddr = parts.length >= 3 ? String(parts[2] || "").trim() : "";
+        if (expectedAddr) {
+          // EVM addresses are case-insensitive; Solana base58 is case-sensitive.
+          endpointPayToMatch =
+            chain === "eip155"
+              ? parsed.payToCandidates.some((x) => String(x).toLowerCase() === expectedAddr.toLowerCase())
+              : parsed.payToCandidates.some((x) => String(x) === expectedAddr);
+          endpointPayToMismatch = !endpointPayToMatch;
+        }
       }
     };
 
