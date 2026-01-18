@@ -629,14 +629,22 @@ export default function TopupPage() {
                   }),
                 });
 
-                const data = await res2.json().catch(() => ({}));
-                if (!res2.ok || !data?.ok) {
-                  throw new Error(data?.message || `Topup failed: ${res2.status}`);
+                const data = (await res2.json().catch(() => ({}))) as unknown;
+                const obj: Record<string, unknown> | null =
+                  data && typeof data === "object" ? (data as Record<string, unknown>) : null;
+                const ok = obj?.ok === true;
+                if (!res2.ok || !ok) {
+                  const message = typeof obj?.message === "string" ? obj.message : "";
+                  const code = typeof obj?.code === "string" ? obj.code : "";
+                  const details = obj ? JSON.stringify(obj, null, 2).slice(0, 2000) : "";
+                  throw new Error(
+                    `${message || `Topup failed: ${res2.status}`}${code ? ` (${code})` : ""}${details ? `\n\n${details}` : ""}`,
+                  );
                 }
 
-                setTxHash(data.txHash || null);
+                setTxHash(typeof obj?.txHash === "string" ? obj.txHash : null);
                 setEstimatedNewBalanceUsdc(
-                  typeof data.estimatedNewBalanceUsdc === "number" ? data.estimatedNewBalanceUsdc : null,
+                  typeof obj?.estimatedNewBalanceUsdc === "number" ? obj.estimatedNewBalanceUsdc : null,
                 );
                 setStatus("submitted");
               } catch (e: unknown) {
