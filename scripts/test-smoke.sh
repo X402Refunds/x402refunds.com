@@ -26,6 +26,7 @@ echo ""
 
 # Enable CDP smoke test (hits deployed Convex action).
 export RUN_SMOKE_CDP_TEST=true
+export RUN_SMOKE_BLOCKHASH_TEST=true
 
 echo "Running preview smoke tests..."
 pnpm exec vitest run test/production-smoke.test.ts test/cdp-live.test.ts

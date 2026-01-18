@@ -2678,4 +2678,23 @@ http.route({
   handler: imageGeneratorHandler
 });
 
+// GET route - Provide a Solana recent blockhash via server-side RPC (avoids browser CSP).
+http.route({
+  path: "/demo-agents/solana/blockhash",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const res: any = await (ctx.runAction as any)((api as any).lib.blockchain.getLatestSolanaBlockhash, {});
+    if (!res?.ok || typeof res?.blockhash !== "string") {
+      return new Response(JSON.stringify({ ok: false, code: res?.code || "RPC_ERROR", message: res?.message || "failed" }), {
+        status: 502,
+        headers: corsHeaders,
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, blockhash: res.blockhash }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
 export default http;

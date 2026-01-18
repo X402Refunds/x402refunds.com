@@ -33,6 +33,7 @@ echo ""
 
 # Enable CDP smoke test (hits deployed Convex action).
 export RUN_SMOKE_CDP_TEST=true
+export RUN_SMOKE_BLOCKHASH_TEST=true
 
 # Run ONLY the production smoke tests (read-only critical path validation)
 echo "Running production smoke tests (read-only)..."

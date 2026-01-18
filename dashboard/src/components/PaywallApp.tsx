@@ -82,6 +82,18 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
         const pk = solanaAddress || (await connectSolanaWallet())
         if (!pk) return
 
+        setStatus("Fetching recent blockhash…")
+        const origin = new URL(apiUrl).origin
+        const bhRes = await fetch(`${origin}/demo-agents/solana/blockhash`, { method: "GET" })
+        const bhJson = (await bhRes.json()) as unknown
+        const blockhash =
+          bhRes.ok && bhJson && typeof bhJson === "object"
+            ? (bhJson as Record<string, unknown>).blockhash
+            : null
+        if (typeof blockhash !== "string" || !blockhash) {
+          throw new Error("Failed to fetch recent blockhash from server.")
+        }
+
         setStatus("Getting payment requirements…")
         const response1 = await fetch(apiUrl, {
           method: "POST",
@@ -119,6 +131,7 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
         const amount = BigInt(solReq.amount || solReq.maxAmountRequired)
 
         const tx = await createSolanaExactPaymentTransaction({
+          recentBlockhash: blockhash,
           payer,
           feePayer,
           payTo,

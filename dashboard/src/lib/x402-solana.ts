@@ -1,5 +1,9 @@
-import { Connection, PublicKey, Transaction, type TransactionBlockhashCtor } from "@solana/web3.js"
-import { createTransferCheckedInstruction, getAssociatedTokenAddressSync } from "@solana/spl-token"
+import { PublicKey, Transaction } from "@solana/web3.js"
+import {
+  createAssociatedTokenAccountIdempotentInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddressSync,
+} from "@solana/spl-token"
 
 export type SolanaWindowProvider = {
   isPhantom?: boolean
@@ -22,7 +26,7 @@ export function getDefaultSolanaRpcUrl(): string {
 }
 
 export async function createSolanaExactPaymentTransaction(params: {
-  rpcUrl?: string
+  recentBlockhash: string
   payer: PublicKey
   feePayer: PublicKey
   payTo: PublicKey
@@ -30,16 +34,27 @@ export async function createSolanaExactPaymentTransaction(params: {
   amountMicrousdc: bigint
   decimals?: number
 }): Promise<Transaction> {
-  const rpcUrl = params.rpcUrl || getDefaultSolanaRpcUrl()
-  const connection = new Connection(rpcUrl, "confirmed")
-
   const decimals = typeof params.decimals === "number" ? params.decimals : 6
 
   // Token accounts (ATAs)
   const fromAta = getAssociatedTokenAddressSync(params.mint, params.payer)
   const toAta = getAssociatedTokenAddressSync(params.mint, params.payTo)
 
-  const ix = createTransferCheckedInstruction(
+  // Ensure ATAs exist. Fee payer funds account creation; facilitator will add fee payer signature.
+  const ensureFromAta = createAssociatedTokenAccountIdempotentInstruction(
+    params.feePayer,
+    fromAta,
+    params.payer,
+    params.mint,
+  )
+  const ensureToAta = createAssociatedTokenAccountIdempotentInstruction(
+    params.feePayer,
+    toAta,
+    params.payTo,
+    params.mint,
+  )
+
+  const transferIx = createTransferCheckedInstruction(
     fromAta,
     params.mint,
     toAta,
@@ -48,12 +63,10 @@ export async function createSolanaExactPaymentTransaction(params: {
     decimals,
   )
 
-  const blockhash: TransactionBlockhashCtor = await connection.getLatestBlockhash("finalized")
-
   const tx = new Transaction()
   tx.feePayer = params.feePayer
-  tx.recentBlockhash = blockhash.blockhash
-  tx.add(ix)
+  tx.recentBlockhash = params.recentBlockhash
+  tx.add(ensureFromAta, ensureToAta, transferIx)
   return tx
 }
 

@@ -83,6 +83,21 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
         expect(typeof sol.extra.feePayer).toBe('string');
       }
     });
+
+    // This endpoint is only guaranteed after a backend deploy, so keep it out of the full test suite
+    // unless explicitly enabled by the smoke runner.
+    if (process.env.RUN_SMOKE_BLOCKHASH_TEST === 'true') {
+      it('GET /demo-agents/solana/blockhash returns a recent blockhash', async () => {
+        const response = await fetch(`${API_BASE_URL}/demo-agents/solana/blockhash`);
+        expect(response.status).toBe(200);
+        const data: any = await response.json();
+        expect(data.ok).toBe(true);
+        expect(typeof data.blockhash).toBe('string');
+        expect(data.blockhash.length).toBeGreaterThan(10);
+      });
+    } else {
+      it.skip('GET /demo-agents/solana/blockhash returns a recent blockhash', async () => {});
+    }
   });
 
   describe('MCP Endpoints', () => {

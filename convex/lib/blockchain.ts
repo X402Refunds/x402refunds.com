@@ -750,6 +750,50 @@ function getSolanaRpcUrl(): { ok: true; url: string } | { ok: false; code: "NOT_
   return { ok: true, url: `${RPC_ENDPOINTS.solana}/${alchemyKey}` };
 }
 
+export const getLatestSolanaBlockhash = action({
+  args: {},
+  handler: async (): Promise<
+    | { ok: true; blockhash: string }
+    | { ok: false; code: "NOT_CONFIGURED" | "RPC_ERROR"; message: string }
+  > => {
+    const mockMode =
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST === "true" ||
+      process.env.MOCK_BLOCKCHAIN_QUERIES === "true";
+    if (mockMode) {
+      return { ok: true, blockhash: "11111111111111111111111111111111" };
+    }
+
+    const rpc = getSolanaRpcUrl();
+    if (!rpc.ok) return { ok: false, code: "NOT_CONFIGURED", message: rpc.message };
+
+    try {
+      const resp = await fetch(rpc.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getLatestBlockhash",
+          params: [{ commitment: "processed" }],
+        }),
+      });
+      const text = await resp.text();
+      if (!resp.ok) {
+        return { ok: false, code: "RPC_ERROR", message: `RPC ${resp.status}: ${text.slice(0, 400)}` };
+      }
+      const data = JSON.parse(text) as any;
+      const blockhash = data?.result?.value?.blockhash;
+      if (typeof blockhash !== "string" || !blockhash) {
+        return { ok: false, code: "RPC_ERROR", message: "RPC response missing blockhash" };
+      }
+      return { ok: true, blockhash };
+    } catch (e: any) {
+      return { ok: false, code: "RPC_ERROR", message: e?.message || String(e) };
+    }
+  },
+});
+
 /**
  * Deterministically verify a USDC transfer by expected microusdc amount and return the payer + logIndex.
  * This is used for refund-to-source flows (refund destination = payer).
