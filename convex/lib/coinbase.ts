@@ -19,6 +19,14 @@ export type CoinbaseSendResult =
 
 const SOLANA_USDC_MINT_MAINNET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
+export function shouldFallbackSolanaUsdcTransfer(message: string): boolean {
+  const m = String(message || "").toLowerCase();
+  // Observed CDP variants:
+  // - "transaction simulation failed with error type: AccountNotFound"
+  // - "Solana error #3230000 ..."
+  return m.includes("solana error #3230000") || m.includes("account not found") || m.includes("accountnotfound");
+}
+
 function isEnabled(): boolean {
   return process.env.COINBASE_REFUNDS_ENABLED === "true";
 }
@@ -278,9 +286,7 @@ export const sendUsdcSolana = action({
         // In that case, fall back to building a Solana transaction that creates the ATA
         // idempotently and transfers checked USDC, then let CDP sign/send it.
         const message = e instanceof Error ? e.message : "Coinbase send failed";
-        const shouldFallback =
-          message.includes("Solana error #3230000") ||
-          message.toLowerCase().includes("account not found");
+        const shouldFallback = shouldFallbackSolanaUsdcTransfer(message);
 
         if (!shouldFallback) {
           throw e;
