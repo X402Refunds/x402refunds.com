@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { REFUND_HEADERS_AI_PROMPT } from "@/lib/refundHeadersAiPrompt";
 
 export type DocsSectionKey = "merchants" | "buyers";
 type Mermaid = (typeof import("mermaid"))["default"];
@@ -65,36 +66,7 @@ export function DocsClient(props: {
     const article = root.querySelector("article.markdown");
     const firstH2 = article?.querySelector("h2");
     if (firstH2 && !article?.querySelector('[data-copy-ai-prompt="1"]')) {
-      const aiPrompt = [
-        "You are integrating x402refunds.com into a repo with X-402 paywalled endpoints.",
-        "",
-        "Do these steps exactly (end-to-end):",
-        "",
-        "0) Find every X-402 paywalled endpoint in this repo",
-        "   - Identify all routes/handlers that can return HTTP 402 Payment Required for X-402.",
-        '   - These are the endpoints we mean by "paid endpoints" (exclude payment/signature/facilitator plumbing endpoints).',
-        "",
-        "1) Add a Link header with your refund email (refund contact) to ALL paywalled endpoints",
-        "   - Add this on every response those endpoints produce: both 200 and 402.",
-        "   - Apply it to every method used (GET, POST, etc.).",
-        '     Link: <mailto:refunds@yourdomain.com>; rel="https://x402refunds.com/rel/refund-contact"',
-        "   - The <...> target should be mailto:refunds@yourdomain.com",
-        "   - This must be the email the owner wants to receive refund requests at.",
-        "",
-        "2) Add a Link header advertising the refund-request filing URL on paid 200 responses",
-        "   - On every paywalled endpoint, when returning 200 OK after a paid request, include:",
-        '     Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"',
-        "   - Return this on successful paid 200 responses only.",
-        "",
-        "3) Deploy + test (required)",
-        "   - Deploy to production.",
-        "   - Test at least one paywalled endpoint:",
-        "     - Unpaid request => 402 response MUST include the refund-contact Link header.",
-        "     - Paid request => 200 response MUST include refund-contact + refund-request Link headers.",
-        "",
-        "Important:",
-        "If you do not know the correct refund contact email, ask your owner for it. Do not guess.",
-      ].join("\n");
+      const aiPrompt = REFUND_HEADERS_AI_PROMPT;
 
       const container = document.createElement("div");
       container.setAttribute("data-copy-ai-prompt", "1");
