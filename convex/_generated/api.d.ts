@@ -52,6 +52,7 @@ import type * as lib_partnerProcessedSummaryEmailCopy from "../lib/partnerProces
 import type * as lib_solana from "../lib/solana.js";
 import type * as lib_usdc from "../lib/usdc.js";
 import type * as lib_x402PayTo from "../lib/x402PayTo.js";
+import type * as lib_x402Settlement from "../lib/x402Settlement.js";
 import type * as lib_x402r from "../lib/x402r.js";
 import type * as llmEngine from "../llmEngine.js";
 import type * as mcp from "../mcp.js";
@@ -130,6 +131,7 @@ declare const fullApi: ApiFromModules<{
   "lib/solana": typeof lib_solana;
   "lib/usdc": typeof lib_usdc;
   "lib/x402PayTo": typeof lib_x402PayTo;
+  "lib/x402Settlement": typeof lib_x402Settlement;
   "lib/x402r": typeof lib_x402r;
   llmEngine: typeof llmEngine;
   mcp: typeof mcp;

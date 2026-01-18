@@ -301,6 +301,7 @@ export const settlePayment = action({
     let lastStatus = 500;
     let lastBody = "";
     let lastUrl = facilitatorUrls[0];
+    let lastHeaders: Record<string, string> = {};
 
     for (const baseUrl of facilitatorUrls) {
       lastUrl = baseUrl;
@@ -321,7 +322,29 @@ export const settlePayment = action({
             }),
           });
           const text = await resp.text();
-          return { status: resp.status, body: text };
+          const paymentResponse =
+            resp.headers.get("PAYMENT-RESPONSE") ||
+            resp.headers.get("payment-response") ||
+            resp.headers.get("X-PAYMENT-RESPONSE") ||
+            resp.headers.get("x-payment-response") ||
+            resp.headers.get("X-402-PAYMENT-RESPONSE") ||
+            resp.headers.get("x-402-payment-response") ||
+            "";
+          const txHashHeader =
+            resp.headers.get("X-402-Transaction-Hash") ||
+            resp.headers.get("x-402-transaction-hash") ||
+            resp.headers.get("X-Transaction-Hash") ||
+            resp.headers.get("x-transaction-hash") ||
+            "";
+
+          return {
+            status: resp.status,
+            body: text,
+            headers: {
+              ...(paymentResponse ? { paymentResponse } : {}),
+              ...(txHashHeader ? { txHashHeader } : {}),
+            },
+          };
         };
 
         const first = await attempt({
@@ -331,6 +354,7 @@ export const settlePayment = action({
         });
         lastStatus = first.status;
         lastBody = first.body;
+        lastHeaders = first.headers || {};
 
         if (
           originalX402Version === 2 &&
@@ -353,16 +377,27 @@ export const settlePayment = action({
           });
           lastStatus = second.status;
           lastBody = second.body;
-          return { status: second.status, body: second.body, facilitator: baseUrl };
+          return {
+            status: second.status,
+            body: second.body,
+            headers: second.headers || {},
+            facilitator: baseUrl,
+          };
         }
 
         // If no override is set and we got a 5xx, fall back to the next facilitator.
         if (!override && first.status >= 500) continue;
 
-        return { status: first.status, body: first.body, facilitator: baseUrl };
+        return {
+          status: first.status,
+          body: first.body,
+          headers: first.headers || {},
+          facilitator: baseUrl,
+        };
       } catch (err: any) {
         lastStatus = 500;
         lastBody = `fetch_error: ${err?.message || String(err)}`;
+        lastHeaders = {};
         continue;
       }
     }
@@ -370,6 +405,7 @@ export const settlePayment = action({
     return {
       status: lastStatus,
       body: lastBody,
+      headers: lastHeaders,
       facilitator: lastUrl,
     };
   },

@@ -1671,7 +1671,12 @@ http.route({
       return jsonError(400, { ok: false, code: "SETTLE_FAILED", facilitator: settle?.facilitator, message: settle?.body });
     }
 
-    const txHash = extractTxHashFromFacilitatorSettleBody({ bodyText: String(settle?.body ?? "") });
+    const settleBody = String(settle?.body ?? "");
+    const settleHeaders = (settle?.headers && typeof settle.headers === "object") ? settle.headers : {};
+    const txHash =
+      extractTxHashFromFacilitatorSettleBody({ bodyText: settleBody }) ||
+      extractTxHashFromFacilitatorSettleBody({ bodyText: String((settleHeaders as any)?.txHashHeader ?? "") }) ||
+      extractTxHashFromFacilitatorSettleBody({ bodyText: String((settleHeaders as any)?.paymentResponse ?? "") });
     if (!txHash) {
       return jsonError(502, {
         ok: false,
@@ -1679,7 +1684,9 @@ http.route({
         message: "Facilitator did not return a transaction hash",
         // Provide details for debugging without leaking the payment payload.
         facilitator: settle?.facilitator,
-        settleBodyPrefix: String(settle?.body ?? "").slice(0, 200),
+        settleBodyPrefix: settleBody.slice(0, 200),
+        settlePaymentResponseHeaderPrefix: String((settleHeaders as any)?.paymentResponse ?? "").slice(0, 120),
+        settleTxHashHeader: String((settleHeaders as any)?.txHashHeader ?? ""),
       });
     }
 

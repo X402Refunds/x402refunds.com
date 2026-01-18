@@ -4,34 +4,61 @@ export function extractTxHashFromFacilitatorSettleBody(args: {
   const raw = String(args.bodyText ?? "").trim();
   if (!raw) return null;
 
-  // 1) JSON response variants.
-  try {
-    const data: any = JSON.parse(raw);
-    const direct =
-      (typeof data?.transaction === "string" && data.transaction) ||
-      (typeof data?.transactionHash === "string" && data.transactionHash) ||
-      (typeof data?.txHash === "string" && data.txHash) ||
-      (typeof data?.signature === "string" && data.signature) ||
-      (typeof data?.txid === "string" && data.txid) ||
-      null;
-    if (direct) return String(direct).trim();
+  const isEvmTxHash = (s: string) => /^0x[a-fA-F0-9]{64}$/.test(s);
+  const isSolanaSig = (s: string) => /^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(s);
+  const isTxLike = (s: string) => isEvmTxHash(s) || isSolanaSig(s);
 
-    const nested =
-      (typeof data?.result?.transaction === "string" && data.result.transaction) ||
-      (typeof data?.result?.transactionHash === "string" && data.result.transactionHash) ||
-      (typeof data?.result?.signature === "string" && data.result.signature) ||
-      (typeof data?.result?.txHash === "string" && data.result.txHash) ||
-      null;
-    if (nested) return String(nested).trim();
-  } catch {
-    // not JSON
-  }
+  const parseTxFromJson = (jsonText: string): string | null => {
+    try {
+      const data: any = JSON.parse(jsonText);
+      const candidates = [
+        data?.transaction,
+        data?.transactionHash,
+        data?.signature,
+        data?.txid,
+        data?.txHash,
+        data?.result?.transaction,
+        data?.result?.transactionHash,
+        data?.result?.signature,
+        data?.result?.txHash,
+      ];
+      for (const c of candidates) {
+        if (typeof c === "string") {
+          const s = c.trim();
+          if (s && isTxLike(s)) return s;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // 1) JSON response variants.
+  const direct = parseTxFromJson(raw);
+  if (direct) return direct;
 
   // 2) Some facilitators return the tx hash/signature as a raw string.
-  // EVM tx hash: 0x + 64 hex chars
-  if (/^0x[a-fA-F0-9]{64}$/.test(raw)) return raw;
-  // Solana signature: base58-ish (typically 43–88 chars, but allow wider)
-  if (/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(raw)) return raw;
+  if (isTxLike(raw)) return raw;
+
+  // 3) Some facilitators return settlement info as base64(JSON(...)) in headers.
+  // Try base64 and base64url decoding and parse again.
+  const tryDecode = (enc: BufferEncoding): string | null => {
+    try {
+      const json = Buffer.from(raw, enc).toString("utf8");
+      // quick sanity: must look like json
+      if (!json.trim().startsWith("{")) return null;
+      return json;
+    } catch {
+      return null;
+    }
+  };
+
+  const decoded = tryDecode("base64") || tryDecode("base64url");
+  if (decoded) {
+    const fromDecoded = parseTxFromJson(decoded);
+    if (fromDecoded) return fromDecoded;
+  }
 
   return null;
 }

@@ -23,5 +23,11 @@ describe("facilitator settle tx hash extraction", () => {
     const sig = "FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N";
     expect(extractTxHashFromFacilitatorSettleBody({ bodyText: sig })).toBe(sig);
   });
+
+  it("extracts from base64(JSON({ success, transaction }))", () => {
+    const tx = "0x" + "c".repeat(64);
+    const b64 = Buffer.from(JSON.stringify({ success: true, transaction: tx }), "utf8").toString("base64");
+    expect(extractTxHashFromFacilitatorSettleBody({ bodyText: b64 })).toBe(tx);
+  });
 });
 
