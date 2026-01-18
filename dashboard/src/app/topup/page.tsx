@@ -629,14 +629,25 @@ export default function TopupPage() {
                   }),
                 });
 
-                const data = (await res2.json().catch(() => ({}))) as unknown;
+                const text = await res2.text().catch(() => "");
+                let parsed: unknown = null;
+                try {
+                  parsed = text ? (JSON.parse(text) as unknown) : null;
+                } catch {
+                  parsed = null;
+                }
+
                 const obj: Record<string, unknown> | null =
-                  data && typeof data === "object" ? (data as Record<string, unknown>) : null;
+                  parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
                 const ok = obj?.ok === true;
                 if (!res2.ok || !ok) {
                   const message = typeof obj?.message === "string" ? obj.message : "";
                   const code = typeof obj?.code === "string" ? obj.code : "";
-                  const details = obj ? JSON.stringify(obj, null, 2).slice(0, 2000) : "";
+                  const details = obj
+                    ? JSON.stringify(obj, null, 2).slice(0, 2000)
+                    : text
+                      ? text.slice(0, 2000)
+                      : "";
                   throw new Error(
                     `${message || `Topup failed: ${res2.status}`}${code ? ` (${code})` : ""}${details ? `\n\n${details}` : ""}`,
                   );
