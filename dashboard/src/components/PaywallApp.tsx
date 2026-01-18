@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect, useSwitchChain, useChainId } from 'wagmi';
+import { WagmiProvider, useWalletClient, useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getWagmiConfig } from '@/lib/wagmi';
 import {
@@ -56,8 +56,28 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
   const { data: walletClient } = useWalletClient();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
+
+  async function getActiveEvmChainId(): Promise<number | null> {
+    const w = walletClient as unknown as {
+      request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      chain?: { id?: unknown };
+    };
+    if (typeof w?.request === "function") {
+      try {
+        const res = await w.request({ method: "eth_chainId" });
+        if (typeof res === "string" && res.startsWith("0x")) {
+          const id = parseInt(res, 16);
+          if (Number.isFinite(id) && id > 0) return id;
+        }
+        if (typeof res === "number" && Number.isFinite(res) && res > 0) return res;
+      } catch {
+        // ignore
+      }
+    }
+    const id = w?.chain?.id;
+    return typeof id === "number" ? id : null;
+  }
 
   async function connectSolanaWallet(): Promise<string | null> {
     const provider = getSolanaProvider()
@@ -250,14 +270,27 @@ function PaywallAppInner({ apiUrl, prompt, size = '1024x1024', model = 'stable-d
       // UX guard: viem requires the requested EIP-712 chainId to match the active wallet chain.
       // If the user is connected on Ethereum mainnet (1) but trying to pay on Base (8453),
       // the signature flow fails with an internal error. Attempt a best-effort switch.
-      if (chainId !== 8453) {
+      const targetChainId = 8453
+      const before = await getActiveEvmChainId()
+      if (before !== targetChainId) {
         try {
           setStatus("Switching wallet network to Base…");
-          await switchChainAsync({ chainId: 8453 });
+          await switchChainAsync({ chainId: targetChainId });
+          // Wait for wallet to actually report the new chain.
+          const startedAt = Date.now()
+          while (Date.now() - startedAt < 5000) {
+            const nowId = await getActiveEvmChainId()
+            if (nowId === targetChainId) break
+            await new Promise((r) => setTimeout(r, 200))
+          }
+          const after = await getActiveEvmChainId()
+          if (after !== targetChainId) {
+            throw new Error("Wallet did not switch networks")
+          }
         } catch {
           throw new Error(
-            `Wrong network: your wallet is on chainId ${chainId}. ` +
-              `Please switch to Base (chainId 8453) in your wallet and try again.`,
+            `Wrong network: your wallet is on chainId ${before ?? "unknown"}. ` +
+              `Please switch to Base (chainId ${targetChainId}) in your wallet and try again.`,
           );
         }
       }

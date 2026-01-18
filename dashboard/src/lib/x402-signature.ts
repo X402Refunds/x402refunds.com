@@ -77,8 +77,41 @@ export function expectedEvmChainIdFromNetwork(network: string): number {
   return 8453;
 }
 
-function assertWalletOnExpectedChain(walletClient: WalletClient, expectedChainId: number) {
-  const active = (walletClient as unknown as { chain?: { id?: unknown } })?.chain?.id;
+async function getActiveEvmChainId(walletClient: WalletClient): Promise<number | null> {
+  const w = walletClient as unknown as {
+    getChainId?: () => Promise<number>;
+    request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+    chain?: { id?: unknown };
+  };
+
+  if (typeof w.getChainId === "function") {
+    try {
+      const id = await w.getChainId();
+      if (typeof id === "number") return id;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (typeof w.request === "function") {
+    try {
+      const res = await w.request({ method: "eth_chainId" });
+      if (typeof res === "string" && res.startsWith("0x")) {
+        const id = parseInt(res, 16);
+        if (Number.isFinite(id) && id > 0) return id;
+      }
+      if (typeof res === "number" && Number.isFinite(res) && res > 0) return res;
+    } catch {
+      // ignore
+    }
+  }
+
+  const active = w.chain?.id;
+  return typeof active === "number" ? active : null;
+}
+
+async function assertWalletOnExpectedChain(walletClient: WalletClient, expectedChainId: number) {
+  const active = await getActiveEvmChainId(walletClient);
   if (typeof active === "number" && active !== expectedChainId) {
     throw new Error(
       `Provided chainId "${expectedChainId}" must match the active chainId "${active}". ` +
@@ -102,7 +135,7 @@ export async function createX402PaymentSignature(
   // That means the signature is over the USDC contract's EIP-712 domain,
   // and the message shape is TransferWithAuthorization with a bytes32 nonce.
   const chainId = expectedEvmChainIdFromNetwork(requirements.network);
-  assertWalletOnExpectedChain(walletClient, chainId);
+  await assertWalletOnExpectedChain(walletClient, chainId);
 
   // USDC EIP-712 domain (EIP-3009)
   const domain = {
