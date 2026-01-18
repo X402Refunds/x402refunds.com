@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
-import { anyApi } from "convex/server";
+import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { Clock, FileText, DollarSign, Calendar, Shield, ExternalLink, Sparkles } from "lucide-react"
 import { motion } from "framer-motion";
@@ -85,17 +85,17 @@ function cleanMarkdown(text: string): string {
 export default function PublicCaseTrackingPage() {
   const params = useParams();
   const rawCaseId = String(params.id ?? "");
-  const normalized = useQuery(anyApi.cases.normalizeCaseIdFromString, { caseId: rawCaseId });
+  const normalized = useQuery(api.cases.normalizeCaseIdFromString, { caseId: rawCaseId });
   const caseId = (normalized?.caseId ?? null) as Id<"cases"> | null;
 
   // Fetch case details (public endpoint - no auth required)
-  const caseDetails = useQuery(anyApi.cases.getCaseByIdFromString, { caseId: rawCaseId });
-  const caseEvidence = useQuery(anyApi.evidence.getEvidenceByCaseIdFromString, { caseId: rawCaseId });
-  const refund = useQuery(anyApi.refunds.getRefundStatus, caseId ? { caseId } : "skip");
+  const caseDetails = useQuery(api.cases.getCaseByIdFromString, { caseId: rawCaseId });
+  const caseEvidence = useQuery(api.evidence.getEvidenceByCaseIdFromString, { caseId: rawCaseId });
+  const refund = useQuery(api.refunds.getRefundStatus, caseId ? { caseId } : "skip");
 
   // Fetch payment dispute data if this is a payment dispute case
   const paymentDispute = useQuery(
-    anyApi.paymentDisputes.getPaymentDisputeByCaseId,
+    api.paymentDisputes.getPaymentDisputeByCaseId,
     caseId ? { caseId } : "skip"
   );
 
