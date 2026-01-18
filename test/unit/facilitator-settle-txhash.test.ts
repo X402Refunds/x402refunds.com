@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractTxHashFromFacilitatorSettleBody } from "../../convex/lib/x402Settlement";
+import { extractTxHashFromFacilitatorSettleBody, parseFacilitatorSettleFailure } from "../../convex/lib/x402Settlement";
 
 describe("facilitator settle tx hash extraction", () => {
   it("extracts from { transaction }", () => {
@@ -28,6 +28,11 @@ describe("facilitator settle tx hash extraction", () => {
     const tx = "0x" + "c".repeat(64);
     const b64 = Buffer.from(JSON.stringify({ success: true, transaction: tx }), "utf8").toString("base64");
     expect(extractTxHashFromFacilitatorSettleBody({ bodyText: b64 })).toBe(tx);
+  });
+
+  it("parses facilitator settle failure errorReason", () => {
+    const body = JSON.stringify({ success: false, errorReason: "scheme_mismatch", transaction: "" });
+    expect(parseFacilitatorSettleFailure(body)?.errorReason).toBe("scheme_mismatch");
   });
 });
 

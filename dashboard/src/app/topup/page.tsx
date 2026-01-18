@@ -147,6 +147,18 @@ export default function TopupPage() {
     }
   }
 
+  function decodePaymentRequiredHeader(value: string): unknown | null {
+    const raw = (value || "").trim();
+    if (!raw) return null;
+    const normalized = raw.replace(/-/g, "+").replace(/_/g, "/");
+    try {
+      const json = atob(normalized);
+      return JSON.parse(json) as unknown;
+    } catch {
+      return null;
+    }
+  }
+
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...&amount=...
     if (didPrefill.current) return;
@@ -545,6 +557,7 @@ export default function TopupPage() {
                   const text = await res.text();
                   throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
                 }
+                const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED") || res.headers.get("payment-required") || "";
                 const response402 = await res.json().catch(() => ({}));
                 const requirement =
                   payNetwork === "base"
@@ -566,15 +579,29 @@ export default function TopupPage() {
                   const pk = solanaAddress || (await connectSolanaWallet());
                   if (!pk) throw new Error("Connect a Solana wallet to pay");
 
-                  const reqV2 = requirement as unknown as {
-                    scheme: string;
-                    network: string;
-                    asset: string;
-                    amount: string;
-                    payTo: string;
-                    extra?: Record<string, unknown>;
-                  };
-                  const feePayer = typeof reqV2.extra?.feePayer === "string" ? reqV2.extra.feePayer : "";
+                  const parsedHeader = paymentRequiredHeader ? decodePaymentRequiredHeader(paymentRequiredHeader) : null;
+                  const parsedObj: Record<string, unknown> | null =
+                    parsedHeader && typeof parsedHeader === "object" ? (parsedHeader as Record<string, unknown>) : null;
+                  const acceptsRaw = parsedObj?.accepts;
+                  const headerAccepts = Array.isArray(acceptsRaw) ? (acceptsRaw as unknown[]) : [];
+                  const solReq = headerAccepts.find((x) => {
+                    if (!x || typeof x !== "object") return false;
+                    const net = String((x as Record<string, unknown>).network || "").toLowerCase();
+                    return net.includes("solana");
+                  }) as
+                    | {
+                        scheme: string;
+                        network: string;
+                        asset: string;
+                        amount: string;
+                        payTo: string;
+                        maxTimeoutSeconds: number;
+                        extra?: Record<string, unknown>;
+                      }
+                    | undefined;
+                  if (!solReq) throw new Error("Missing Solana v2 requirement (PAYMENT-REQUIRED).");
+
+                  const feePayer = typeof solReq.extra?.feePayer === "string" ? solReq.extra.feePayer : "";
                   if (!feePayer) throw new Error("Solana fee payer not provided by facilitator. Please retry.");
 
                   const bhRes = await fetch(`${API_BASE}/demo-agents/solana/blockhash`, { method: "GET" });
@@ -594,22 +621,31 @@ export default function TopupPage() {
                     recentBlockhash: blockhash,
                     payer: new PublicKey(pk),
                     feePayer: new PublicKey(feePayer),
-                    payTo: new PublicKey(String(reqV2.payTo)),
-                    mint: new PublicKey(String(reqV2.asset)),
-                    amountMicrousdc: getSolanaAmountMicrousdcFromRequirement(reqV2),
+                    payTo: new PublicKey(String(solReq.payTo)),
+                    mint: new PublicKey(String(solReq.asset)),
+                    amountMicrousdc: getSolanaAmountMicrousdcFromRequirement(solReq),
                   });
                   const signed = await provider.signTransaction(tx);
                   const partialTx = encodePartialSolanaTransactionBase64(signed);
 
-                  const payload = {
+                  // Canonical x402 v2 Solana payment payload (matches demo agent flow).
+                  const amount = getSolanaAmountMicrousdcFromRequirement(solReq);
+                  const paymentPayload = {
                     x402Version: 2,
-                    type: "solana-transaction",
-                    transaction: partialTx,
-                    network: reqV2.network,
-                    requirement: reqV2,
-                    paymentRequirements: response402?.accepts,
+                    scheme: solReq.scheme,
+                    network: solReq.network,
+                    accepted: {
+                      scheme: solReq.scheme,
+                      network: solReq.network,
+                      amount: String(amount),
+                      asset: solReq.asset,
+                      payTo: solReq.payTo,
+                      maxTimeoutSeconds: solReq.maxTimeoutSeconds,
+                      extra: { feePayer },
+                    },
+                    payload: { transaction: partialTx },
                   };
-                  xPayment = btoa(JSON.stringify(payload));
+                  xPayment = btoa(JSON.stringify(paymentPayload));
                 }
 
                 // 3) settle (send X-PAYMENT header)

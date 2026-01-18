@@ -29,5 +29,19 @@ describe("Regression guards (smoke + routes)", () => {
     expect(http).toContain("paymentHeaderFromBody");
     expect(http).toContain("body?.paymentHeader");
   });
+
+  it("/v1/topup selects v1/v2 requirements based on paymentHeader", () => {
+    const http = readRepoFile("convex/http.ts");
+    expect(http).toContain("selectTopupPaymentRequirements");
+    expect(http).toContain("x402TopupSelect");
+  });
+
+  it("/topup constructs canonical x402 v2 Solana payload envelope", () => {
+    const topupPage = readRepoFile("dashboard/src/app/topup/page.tsx");
+    expect(topupPage).toContain("PAYMENT-REQUIRED");
+    expect(topupPage).toContain("accepted:");
+    expect(topupPage).toContain("payload:");
+    expect(topupPage).toContain("transaction:");
+  });
 });
 

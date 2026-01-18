@@ -36,6 +36,20 @@ describe("Preview integration: Solana topup 402 requirements", () => {
     expect(req.payTo.length).toBeGreaterThan(20);
     expect(typeof req.extra?.feePayer).toBe("string");
     expect(req.extra.feePayer.length).toBeGreaterThan(20);
+
+    // v2 requirements are provided via the PAYMENT-REQUIRED header (base64 JSON).
+    const pr = res.headers.get("payment-required") || res.headers.get("PAYMENT-REQUIRED") || "";
+    expect(typeof pr).toBe("string");
+    expect(pr.length).toBeGreaterThan(10);
+    const decoded = JSON.parse(Buffer.from(pr, "base64").toString("utf8"));
+    expect(decoded.x402Version).toBe(2);
+    expect(Array.isArray(decoded.accepts)).toBe(true);
+    const sol = decoded.accepts.find((x: any) => String(x?.network || "").toLowerCase().includes("solana"));
+    expect(sol).toBeTruthy();
+    expect(String(sol.network)).toBe("solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp");
+    expect(typeof sol.amount).toBe("string");
+    expect(sol.asset).toBe("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    expect(typeof sol.extra?.feePayer).toBe("string");
   });
 });
 

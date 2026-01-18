@@ -63,3 +63,17 @@ export function extractTxHashFromFacilitatorSettleBody(args: {
   return null;
 }
 
+export function parseFacilitatorSettleFailure(bodyText: string): { errorReason: string } | null {
+  const raw = String(bodyText ?? "").trim();
+  if (!raw) return null;
+  try {
+    const parsed: any = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.success !== false) return null;
+    const errorReason = typeof parsed.errorReason === "string" ? parsed.errorReason : "";
+    return { errorReason };
+  } catch {
+    return null;
+  }
+}
+

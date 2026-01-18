@@ -12,7 +12,8 @@ const { fileCanonicalDispute } = require("./lib/canonicalDispute") as any;
 import { imageGeneratorGetHandler, imageGeneratorHandler } from "./demoAgents";
 import { parseX402PayTo } from "./lib/x402PayTo";
 import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
-import { extractTxHashFromFacilitatorSettleBody } from "./lib/x402Settlement";
+import { extractTxHashFromFacilitatorSettleBody, parseFacilitatorSettleFailure } from "./lib/x402Settlement";
+import { selectTopupPaymentRequirements } from "./lib/x402TopupSelect";
 
 const http = httpRouter();
 
@@ -1342,6 +1343,8 @@ http.route({
 
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const USDC_SOLANA_MAINNET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+// Solana mainnet-beta cluster identifier (Dexter-supported chainRef).
+const SOLANA_MAINNET_CHAINREF = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 let cachedDexterSolanaFeePayer: { feePayer: string; fetchedAtMs: number } | null = null;
 async function getDexterSolanaFeePayer(): Promise<string | null> {
@@ -1533,7 +1536,7 @@ http.route({
       accepts: [
         {
           scheme: "exact",
-          network: blockchain === "base" ? "eip155:8453" : "solana",
+          network: blockchain === "base" ? "eip155:8453" : `solana:${SOLANA_MAINNET_CHAINREF}`,
           asset: blockchain === "base" ? USDC_BASE_MAINNET : USDC_SOLANA_MAINNET,
           amount: String(amountMicrousdc),
           // Facilitator implementations often still read this legacy field name.
@@ -1569,6 +1572,8 @@ http.route({
           scheme: "exact",
           network: blockchain,
           maxAmountRequired: String(amountMicrousdc),
+          // For Solana facilitators, include v2-style `amount` as well.
+          ...(blockchain === "solana" ? { amount: String(amountMicrousdc) } : {}),
           asset: blockchain === "base" ? USDC_BASE_MAINNET : USDC_SOLANA_MAINNET,
           payTo: depositAddress,
           resource: request.url,
@@ -1653,9 +1658,16 @@ http.route({
     }
 
     // Verify + settle via facilitator (node action).
-    // v2 uses PAYMENT-SIGNATURE; v1 uses X-PAYMENT.
+    // Choose v1 vs v2 requirements based on the payment proof version, mirroring demo agent flow.
     const paymentHeader = paymentSig || xPayment || paymentHeaderFromBody;
-    const paymentRequirements = paymentSig ? paymentRequiredV2.accepts[0] : paymentRequiredV1.accepts[0];
+    const selected = selectTopupPaymentRequirements({
+      paymentSigHeader: paymentSig,
+      xPaymentHeader: xPayment,
+      paymentHeaderFromBody,
+      paymentRequiredV1: paymentRequiredV1 as any,
+      paymentRequiredV2: paymentRequiredV2 as any,
+    });
+    const paymentRequirements = selected.requirement;
 
     const verify: any = await (ctx.runAction as any)((api as any).demoAgents.cdpAuth.verifyPayment, {
       paymentHeader,
@@ -1675,6 +1687,33 @@ http.route({
 
     const settleBody = String(settle?.body ?? "");
     const settleHeaders = (settle?.headers && typeof settle.headers === "object") ? settle.headers : {};
+
+    // Some facilitators return 2xx but indicate failure in the JSON body.
+    // Map these to a structured 400 so clients can see `errorReason` directly.
+    const settleFailure = parseFacilitatorSettleFailure(settleBody);
+    if (settleFailure) {
+      return jsonError(400, {
+        ok: false,
+        code: "SETTLE_REJECTED",
+        message: "Facilitator rejected settlement",
+        facilitator: settle?.facilitator,
+        errorReason: settleFailure.errorReason,
+        expected: {
+          scheme: paymentRequirements?.scheme,
+          network: paymentRequirements?.network,
+          asset: paymentRequirements?.asset,
+          payTo: paymentRequirements?.payTo,
+          amount:
+            typeof paymentRequirements?.amount === "string"
+              ? paymentRequirements.amount
+              : typeof paymentRequirements?.maxAmountRequired === "string"
+                ? paymentRequirements.maxAmountRequired
+                : undefined,
+        },
+        settleBodyPrefix: settleBody.slice(0, 200),
+      });
+    }
+
     const txHash =
       extractTxHashFromFacilitatorSettleBody({ bodyText: settleBody }) ||
       extractTxHashFromFacilitatorSettleBody({ bodyText: String((settleHeaders as any)?.txHashHeader ?? "") }) ||
