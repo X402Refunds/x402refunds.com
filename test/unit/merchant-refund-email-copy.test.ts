@@ -10,9 +10,10 @@ describe("merchant refund executed email copy (unit)", () => {
       refundTxHash: "0x" + "11".repeat(32),
     });
 
-    expect(text).toContain("[Case ID: jd780r2cdjf90h1tg4qenqyzyn7ysb0r]");
-    expect(text).toContain("Track refund on Basescan:");
+    expect(text).toContain("(Case ID: jd780r2cdjf90h1tg4qenqyzyn7ysb0r)");
+    expect(text).toContain("Track refund on blockchain:");
     expect(text).toContain("https://basescan.org/tx/0xabc");
+    expect(text).not.toContain("Note: on-chain confirmations can take a minute.");
   });
 
   it("falls back to basescan from refundTxHash", () => {
@@ -26,6 +27,18 @@ describe("merchant refund executed email copy (unit)", () => {
 
     expect(text).toContain("basescan.org/tx/");
     expect(text).toContain(`https://basescan.org/tx/${tx}`);
+  });
+
+  it("uses Solscan for Solana tx hashes", () => {
+    const sig = "4Fo4zkrtA15RqoWhhU8tymdwRKExn6bBgCUFarmvsHb9ZXvDYypMB21ob58Ct5mo3z5gNGGmEJdeck4zTc6NWyGE";
+    const text = buildMerchantRefundExecutedEmailCopy({
+      caseId: "jd_sol",
+      amountMicrousdc: 10_000,
+      explorerUrl: null,
+      refundTxHash: sig,
+    });
+    expect(text).toContain("Track refund on blockchain:");
+    expect(text).toContain(`https://solscan.io/tx/${sig}`);
   });
 });
 

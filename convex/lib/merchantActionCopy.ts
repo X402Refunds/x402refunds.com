@@ -7,6 +7,18 @@ export type MerchantActionCopyInput = {
   refundTxHash?: string | null;
 };
 
+function inferRefundExplorerUrl(args: { explorerUrl?: string | null; refundTxHash?: string | null }): string {
+  const explorerUrl = typeof args.explorerUrl === "string" ? args.explorerUrl.trim() : "";
+  const tx = typeof args.refundTxHash === "string" ? args.refundTxHash.trim() : "";
+  const isEvmTx = tx.startsWith("0x");
+  const isSolanaTx = Boolean(tx) && !isEvmTx;
+  return (
+    explorerUrl ||
+    (tx ? (isSolanaTx ? `https://solscan.io/tx/${tx}` : `https://basescan.org/tx/${tx}`) : "") ||
+    ""
+  );
+}
+
 export function buildMerchantActionCopy(input: MerchantActionCopyInput): string {
   const lines: string[] = [];
 
@@ -27,23 +39,17 @@ export function buildMerchantActionCopy(input: MerchantActionCopyInput): string 
     lines.push("Refund: processing now.");
   }
 
-  const proofUrl =
-    (typeof input.explorerUrl === "string" && input.explorerUrl) ||
-    (typeof input.refundTxHash === "string" && input.refundTxHash ? `https://basescan.org/tx/${input.refundTxHash}` : "") ||
-    "";
+  const proofUrl = inferRefundExplorerUrl({ explorerUrl: input.explorerUrl, refundTxHash: input.refundTxHash });
 
   lines.push("");
   if (proofUrl) {
-    lines.push("Track refund on Basescan:");
+    lines.push("Track refund on blockchain:");
     lines.push(`- ${proofUrl}`);
   } else {
-    lines.push("Track refund on Basescan (link will appear once the transaction is submitted).");
+    lines.push("Track refund on blockchain (link will appear once the transaction is submitted).");
   }
 
   lines.push("");
-  lines.push("Note: on-chain confirmations can take a minute.");
-  lines.push("");
-
   return lines.join("\n");
 }
 

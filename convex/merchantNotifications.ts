@@ -151,7 +151,7 @@ function buildMerchantDisputeEmailText(params: {
   }
 
   lines.push("Sent by x402refunds.com");
-  lines.push(`[Case ID: ${params.caseId}]`);
+  lines.push(`(Case ID: ${params.caseId})`);
   return lines.join("\n");
 }
 
@@ -229,7 +229,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
             ? paymentDetails.blockchain
             : undefined;
 
-      const subject = `Refund request received (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+      const subject = `Refund request received (Dexter) (${String(args.caseId).slice(0, 8)})`;
       const lines: string[] = [];
       lines.push("Dexter partner POC: dispute routed by canonical refund-contact email.");
       lines.push(...buildDisputeSummaryLines({ caseId: String(args.caseId), reason, amountMicrousdc, txHash, chain }));
@@ -238,7 +238,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       lines.push(`- https://x402refunds.com/cases/${encodeURIComponent(String(args.caseId))}`);
       lines.push("");
       lines.push("Sent by x402refunds.com");
-      lines.push(`[Case ID: ${String(args.caseId)}]`);
+      lines.push(`(Case ID: ${String(args.caseId)})`);
 
       const sent = await sendEmail({
         to,
@@ -404,7 +404,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
       return { ok: true, emailed: true, reason: "EMAIL_VERIFICATION_SENT" };
     }
 
-    const subject = `Refund request received [${String(args.caseId).slice(0, 8)}]`;
+    const subject = `Refund request received (${String(args.caseId).slice(0, 8)})`;
     const paymentAmountMicrousdc =
       typeof paymentDetails?.amountMicrousdc === "number" ? Math.round(paymentDetails.amountMicrousdc) : undefined;
     const disputeFeeMicrousdc =
@@ -814,7 +814,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
       }
 
       // 1) Executed email → platform ops (idempotent via refundTransactions fields).
-      const subject = `Refund processed (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+      const subject = `Refund processed (Dexter) (${String(args.caseId).slice(0, 8)})`;
       const amountMicrousdc =
         typeof refund.amountMicrousdc === "number"
           ? Math.round(refund.amountMicrousdc)
@@ -862,7 +862,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
                 ? aiRec.reasoning.trim()
                 : "";
 
-          const processedSubject = `Refund request processed (Dexter) [${String(args.caseId).slice(0, 8)}]`;
+          const processedSubject = `Refund request processed (Dexter) (${String(args.caseId).slice(0, 8)})`;
           const processedText = buildPartnerProcessedSummaryEmailCopy({
             caseId: String(args.caseId),
             verdict,
@@ -927,7 +927,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
           ? Math.round(refund.amount * 1_000_000)
           : null;
 
-    const subject = `Refund processed [${String(args.caseId).slice(0, 8)}]`;
+    const subject = `Refund processed (${String(args.caseId).slice(0, 8)})`;
     const text = buildMerchantRefundExecutedEmailCopy({
       caseId: String(args.caseId),
       amountMicrousdc,

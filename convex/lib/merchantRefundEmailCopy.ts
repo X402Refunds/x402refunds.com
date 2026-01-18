@@ -6,6 +6,18 @@ export type MerchantRefundExecutedEmailCopyInput = {
   trackingUrl?: string | null;
 };
 
+function inferRefundExplorerUrl(args: { explorerUrl?: string | null; refundTxHash?: string | null }): string {
+  const explorerUrl = typeof args.explorerUrl === "string" ? args.explorerUrl.trim() : "";
+  const tx = typeof args.refundTxHash === "string" ? args.refundTxHash.trim() : "";
+  const isEvmTx = tx.startsWith("0x");
+  const isSolanaTx = Boolean(tx) && !isEvmTx;
+  return (
+    explorerUrl ||
+    (tx ? (isSolanaTx ? `https://solscan.io/tx/${tx}` : `https://basescan.org/tx/${tx}`) : "") ||
+    ""
+  );
+}
+
 export function buildMerchantRefundExecutedEmailCopy(
   input: MerchantRefundExecutedEmailCopyInput,
 ): string {
@@ -15,19 +27,14 @@ export function buildMerchantRefundExecutedEmailCopy(
     lines.push(`Refund amount: ${(input.amountMicrousdc / 1_000_000).toFixed(6)} USDC`);
   }
 
-  const proofUrl =
-    (typeof input.explorerUrl === "string" && input.explorerUrl) ||
-    (typeof input.refundTxHash === "string" && input.refundTxHash
-      ? `https://basescan.org/tx/${input.refundTxHash}`
-      : "") ||
-    "";
+  const proofUrl = inferRefundExplorerUrl({ explorerUrl: input.explorerUrl, refundTxHash: input.refundTxHash });
 
   lines.push("");
   if (proofUrl) {
-    lines.push("Track refund on Basescan:");
+    lines.push("Track refund on blockchain:");
     lines.push(`- ${proofUrl}`);
   } else {
-    lines.push("Track refund on Basescan (link will appear once the transaction is available).");
+    lines.push("Track refund on blockchain (link will appear once the transaction is available).");
   }
 
   if (typeof input.trackingUrl === "string" && input.trackingUrl) {
@@ -37,10 +44,8 @@ export function buildMerchantRefundExecutedEmailCopy(
   }
 
   lines.push("");
-  lines.push("Note: on-chain confirmations can take a minute.");
-  lines.push("");
   lines.push("Sent by x402refunds.com");
-  lines.push(`[Case ID: ${input.caseId}]`);
+  lines.push(`(Case ID: ${input.caseId})`);
 
   return lines.join("\n");
 }

@@ -238,7 +238,7 @@ describe("merchant notifications (unit)", () => {
     expect(res.ok).toBe(true);
     expect(res.emailed).toBe(true);
 
-    expect(resendPayload?.subject).toMatch(/Refund request received \[/);
+    expect(resendPayload?.subject).toMatch(/Refund request received \(/);
     expect(typeof resendPayload?.text).toBe("string");
     const text = String(resendPayload.text);
 

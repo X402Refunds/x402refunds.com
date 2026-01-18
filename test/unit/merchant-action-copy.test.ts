@@ -13,8 +13,9 @@ describe("merchant action copy (unit)", () => {
 
     expect(text).not.toContain("Decision:");
     expect(text).not.toContain("x402refunds.com/cases/");
-    expect(text).toContain("Track refund on Basescan:");
+    expect(text).toContain("Track refund on blockchain:");
     expect(text).toContain("basescan.org/tx/");
+    expect(text).not.toContain("Note: on-chain confirmations can take a minute.");
   });
 
   it("reject flow: includes Case ID, no tracking links", () => {
@@ -41,7 +42,20 @@ describe("merchant action copy (unit)", () => {
       explorerUrl: null,
     });
 
-    expect(text).toContain("Track refund on Basescan (link will appear once the transaction is submitted).");
+    expect(text).toContain("Track refund on blockchain (link will appear once the transaction is submitted).");
+  });
+
+  it("uses Solscan wording for Solana tx hashes", () => {
+    const sig = "4Fo4zkrtA15RqoWhhU8tymdwRKExn6bBgCUFarmvsHb9ZXvDYypMB21ob58Ct5mo3z5gNGGmEJdeck4zTc6NWyGE";
+    const text = buildMerchantActionCopy({
+      isReject: false,
+      caseId: "jd_sol",
+      refundScheduled: true,
+      refundStatus: "PROCESSING",
+      refundTxHash: sig,
+    });
+    expect(text).toContain("Track refund on blockchain:");
+    expect(text).toContain(`https://solscan.io/tx/${sig}`);
   });
 });
 

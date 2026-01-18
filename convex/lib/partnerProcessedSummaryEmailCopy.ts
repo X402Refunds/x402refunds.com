@@ -8,6 +8,16 @@ export type PartnerProcessedSummaryEmailCopyInput = {
   trackingUrl?: string | null;
 };
 
+function inferRefundExplorer(args: { explorerUrl?: string | null; refundTxHash?: string | null }): string {
+  const explorerUrl = typeof args.explorerUrl === "string" ? args.explorerUrl.trim() : "";
+  const tx = typeof args.refundTxHash === "string" ? args.refundTxHash.trim() : "";
+  const isEvmTx = tx.startsWith("0x");
+  const isSolanaTx = Boolean(tx) && !isEvmTx;
+  if (explorerUrl) return explorerUrl;
+  if (!tx) return "";
+  return isSolanaTx ? `https://solscan.io/tx/${tx}` : `https://basescan.org/tx/${tx}`;
+}
+
 export function buildPartnerProcessedSummaryEmailCopy(input: PartnerProcessedSummaryEmailCopyInput): string {
   const lines: string[] = [];
 
@@ -25,12 +35,7 @@ export function buildPartnerProcessedSummaryEmailCopy(input: PartnerProcessedSum
     lines.push(summary);
   }
 
-  const proofUrl =
-    (typeof input.explorerUrl === "string" && input.explorerUrl) ||
-    (typeof input.refundTxHash === "string" && input.refundTxHash
-      ? `https://basescan.org/tx/${input.refundTxHash}`
-      : "") ||
-    "";
+  const proofUrl = inferRefundExplorer({ explorerUrl: input.explorerUrl, refundTxHash: input.refundTxHash });
 
   if (proofUrl) {
     lines.push("");
@@ -46,7 +51,7 @@ export function buildPartnerProcessedSummaryEmailCopy(input: PartnerProcessedSum
 
   lines.push("");
   lines.push("Sent by x402refunds.com");
-  lines.push(`[Case ID: ${input.caseId}]`);
+  lines.push(`(Case ID: ${input.caseId})`);
 
   return lines.join("\n");
 }
