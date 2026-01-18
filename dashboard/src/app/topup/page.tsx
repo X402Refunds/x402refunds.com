@@ -8,9 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CopyableField } from "@/components/case-detail/CopyableField";
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
-import { useAccount, useWalletClient } from "wagmi";
-import { createX402PaymentSignature, parsePaymentRequirements } from "@/lib/x402-signature";
-import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
+import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
+import { PublicKey } from "@solana/web3.js";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { inferTopupPayNetworkFromMerchant } from "@/lib/topup-network";
+import {
+  createX402PaymentSignature,
+  parsePaymentRequirements,
+  pickPaymentRequirementByNetwork,
+} from "@/lib/x402-signature";
+import {
+  createSolanaExactPaymentTransaction,
+  encodePartialSolanaTransactionBase64,
+  getSolanaProvider,
+} from "@/lib/x402-solana";
 import { Loader2 } from "lucide-react";
 const API_BASE = "https://api.x402refunds.com";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
@@ -30,6 +41,7 @@ function parseUsdcToMicros(amount: string): string | null {
 export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const { switchChainAsync } = useSwitchChain();
 
   // Avoid React hydration mismatch (#418) by ensuring any wallet-dependent UI
   // (and other browser-initialized state) only renders after the component is mounted on the client.
@@ -53,8 +65,11 @@ export default function TopupPage() {
   const overMax = !!amountMicrosBig && amountMicrosBig > MAX_TOPUP_MICROUSDC;
   const underMin = !!amountMicrosBig && amountMicrosBig > BigInt(0) && amountMicrosBig < MIN_TOPUP_MICROUSDC;
 
-  const merchantNormalized = useMemo(() => normalizeMerchantToCaip10Base(merchantAddress), [merchantAddress]);
-  const merchantCaip10 = merchantNormalized.caip10;
+  const inferred = useMemo(() => inferTopupPayNetworkFromMerchant(merchantAddress), [merchantAddress]);
+  const merchantCaip10 = inferred.merchantCaip10;
+  const [payNetwork, setPayNetwork] = useState<"base" | "solana">("base");
+  const [solanaAddress, setSolanaAddress] = useState<string>("");
+  const [solanaConnectStatus, setSolanaConnectStatus] = useState<"idle" | "connecting">("idle");
 
   const [status, setStatus] = useState<"idle" | "processing" | "submitted" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +83,67 @@ export default function TopupPage() {
   const [completionStatus, setCompletionStatus] = useState<"idle" | "waiting" | "done" | "error">("idle");
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
-  const walletReady = mounted && isConnected && !!address && !!walletClient;
+  const walletReadyEvm = mounted && isConnected && !!address && !!walletClient;
+  const walletReadySolana = mounted && !!solanaAddress;
+
+  useEffect(() => {
+    // Auto-switch and lock based on merchant input.
+    if (!inferred.locked || !inferred.network) return;
+    setPayNetwork(inferred.network);
+  }, [inferred.locked, inferred.network]);
+
+  async function getActiveEvmChainId(): Promise<number | null> {
+    const w = walletClient as unknown as {
+      request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      chain?: { id?: unknown };
+    };
+    if (typeof w?.request === "function") {
+      try {
+        const res = await w.request({ method: "eth_chainId" });
+        if (typeof res === "string" && res.startsWith("0x")) {
+          const id = parseInt(res, 16);
+          if (Number.isFinite(id) && id > 0) return id;
+        }
+        if (typeof res === "number" && Number.isFinite(res) && res > 0) return res;
+      } catch {
+        // ignore
+      }
+    }
+    const id = w?.chain?.id;
+    return typeof id === "number" ? id : null;
+  }
+
+  async function connectSolanaWallet(): Promise<string | null> {
+    const provider = getSolanaProvider();
+    if (!provider) {
+      setError("No Solana wallet found. Please install Phantom (or a Solana wallet that injects window.solana).");
+      return null;
+    }
+    setSolanaConnectStatus("connecting");
+    try {
+      const res = await provider.connect();
+      const pk = res.publicKey?.toBase58?.() || provider.publicKey?.toBase58?.() || "";
+      if (!pk) {
+        setError("Failed to connect Solana wallet.");
+        return null;
+      }
+      setSolanaAddress(pk);
+      return pk;
+    } finally {
+      setSolanaConnectStatus("idle");
+    }
+  }
+
+  async function disconnectSolanaWallet() {
+    const provider = getSolanaProvider() as unknown as { disconnect?: () => Promise<void> | void };
+    try {
+      if (provider && typeof provider.disconnect === "function") await provider.disconnect();
+    } catch {
+      // ignore
+    } finally {
+      setSolanaAddress("");
+    }
+  }
 
   useEffect(() => {
     // Prefill from email links: /topup?merchant=...&caseId=...&amount=...
@@ -282,7 +357,7 @@ export default function TopupPage() {
             <Label htmlFor="merchant">Merchant wallet</Label>
             <Input
               id="merchant"
-              placeholder="0x... or solana:<chainRef>:<base58>"
+              placeholder="0x... or <Solana base58> or solana:<chainRef>:<base58>"
               value={merchantAddress}
               onChange={(e) => setMerchantAddress(e.target.value)}
             />
@@ -290,11 +365,11 @@ export default function TopupPage() {
               Examples:{" "}
               <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code> or{" "}
               <code className="font-mono">
-                solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+                FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
               </code>
             </div>
-            {merchantAddress.trim() && merchantNormalized.error && (
-              <div className="text-xs text-destructive">{merchantNormalized.error}</div>
+            {merchantAddress.trim() && inferred.error && (
+              <div className="text-xs text-destructive">{inferred.error}</div>
             )}
             {merchantCaip10 && (
               <div className="text-sm">
@@ -336,9 +411,29 @@ export default function TopupPage() {
           )}
 
           <div className="space-y-2">
-            <Label>Blockchain</Label>
-            <div className="text-sm text-muted-foreground">
-              Top-up payment network: Base (USDC, gasless)
+            <Label>Top-up payment network</Label>
+            <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}>
+              <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
+                <TabsTrigger
+                  value="base"
+                  disabled={inferred.locked && inferred.network === "solana"}
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                >
+                  Base (USDC)
+                </TabsTrigger>
+                <TabsTrigger
+                  value="solana"
+                  disabled={inferred.locked && inferred.network === "base"}
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                >
+                  Solana (USDC)
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="text-xs text-muted-foreground">
+              {payNetwork === "base"
+                ? "Pay gasless via Base (facilitator executes the transfer)."
+                : "Pay gasless via Solana (facilitator is the fee payer)."}
             </div>
           </div>
 
@@ -364,14 +459,39 @@ export default function TopupPage() {
             )}
           </div>
 
-          {!isConnected ? (
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Connect payer wallet</div>
-              <ConnectWalletButton />
-            </div>
+          {payNetwork === "base" ? (
+            !isConnected ? (
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground">Connect payer wallet (Base)</div>
+                <ConnectWalletButton />
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                Payer wallet (connected): <code className="font-mono">{address}</code>
+              </div>
+            )
           ) : (
-            <div className="text-xs text-muted-foreground">
-              Payer wallet (connected): <code className="font-mono">{address}</code>
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Connect payer wallet (Solana)</div>
+              {solanaAddress ? (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground">
+                    Connected: <code className="font-mono">{solanaAddress}</code>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void connectSolanaWallet()}
+                  disabled={solanaConnectStatus === "connecting"}
+                >
+                  {solanaConnectStatus === "connecting" ? "Connecting…" : "Connect Phantom"}
+                </Button>
+              )}
             </div>
           )}
 
@@ -385,12 +505,26 @@ export default function TopupPage() {
               setCompletionMessage(null);
               setStatus("processing");
               try {
-                if (!merchantCaip10) throw new Error(merchantNormalized.error || "Merchant wallet is required");
+                if (!merchantCaip10) throw new Error(inferred.error || "Merchant wallet is required");
                 if (!amountMicros) throw new Error("Enter an amount");
                 if (!amountMicrosBig) throw new Error("Enter an amount");
                 if (overMax) throw new Error("Max top up is $10 USDC");
                 if (underMin) throw new Error("Minimum top up is $0.01 USDC");
-                if (!walletReady) throw new Error("Connect a wallet to pay");
+                if (payNetwork === "base" && !walletReadyEvm) throw new Error("Connect a Base wallet to pay");
+                if (payNetwork === "solana" && !walletReadySolana) throw new Error("Connect a Solana wallet to pay");
+
+                if (payNetwork === "base" && walletClient) {
+                  // Best-effort: switch to Base before signing (prevents chainId mismatch errors).
+                  const active = await getActiveEvmChainId();
+                  if (typeof active === "number" && active !== 8453) {
+                    try {
+                      await switchChainAsync({ chainId: 8453 });
+                    } catch (e: unknown) {
+                      const msg = e instanceof Error ? e.message : String(e);
+                      throw new Error(`Please switch your wallet to Base (chainId 8453). ${msg}`);
+                    }
+                  }
+                }
 
                 // 1) request payment requirements (402)
                 const res = await fetch(`${API_BASE}/v1/topup`, {
@@ -400,6 +534,7 @@ export default function TopupPage() {
                     merchant: merchantCaip10,
                     amountMicrousdc: amountMicros,
                     currency: "USDC",
+                    blockchain: payNetwork,
                     caseId: caseId || undefined,
                     actionToken: actionToken || undefined,
                   }),
@@ -409,15 +544,71 @@ export default function TopupPage() {
                   throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
                 }
                 const response402 = await res.json().catch(() => ({}));
-                const requirement = parsePaymentRequirements(response402);
-                if (address.toLowerCase() === String(requirement.payTo).toLowerCase()) {
-                  throw new Error(
-                    `Connected wallet is the same as payTo (${requirement.payTo}). Switch to a payer wallet.`,
-                  );
-                }
+                const requirement =
+                  payNetwork === "base"
+                    ? pickPaymentRequirementByNetwork(response402, "base")
+                    : pickPaymentRequirementByNetwork(response402, "solana");
+                if (!requirement) throw new Error("Missing payment requirement.");
 
-                // 2) sign (x402 v1: X-PAYMENT)
-                const xPayment = await createX402PaymentSignature(walletClient, requirement, address);
+                let xPayment: string;
+
+                if (payNetwork === "base") {
+                  if (!address || !walletClient) throw new Error("Connect a Base wallet to pay");
+                  // v1 requirement
+                  const req = parsePaymentRequirements(response402);
+                  if (address.toLowerCase() === String(req.payTo).toLowerCase()) {
+                    throw new Error(`Connected wallet is the same as payTo (${req.payTo}). Switch to a payer wallet.`);
+                  }
+                  xPayment = await createX402PaymentSignature(walletClient, req, address);
+                } else {
+                  const pk = solanaAddress || (await connectSolanaWallet());
+                  if (!pk) throw new Error("Connect a Solana wallet to pay");
+
+                  const reqV2 = requirement as unknown as {
+                    scheme: string;
+                    network: string;
+                    asset: string;
+                    amount: string;
+                    payTo: string;
+                    extra?: Record<string, unknown>;
+                  };
+                  const feePayer = typeof reqV2.extra?.feePayer === "string" ? reqV2.extra.feePayer : "";
+                  if (!feePayer) throw new Error("Solana fee payer not provided by facilitator. Please retry.");
+
+                  const bhRes = await fetch(`${API_BASE}/demo-agents/solana/blockhash`, { method: "GET" });
+                  const bhJson = (await bhRes.json().catch(() => null)) as unknown;
+                  const blockhash =
+                    bhRes.ok && bhJson && typeof bhJson === "object"
+                      ? (bhJson as Record<string, unknown>).blockhash
+                      : null;
+                  if (typeof blockhash !== "string" || !blockhash) {
+                    throw new Error("Failed to fetch recent blockhash from server.");
+                  }
+
+                  const provider = getSolanaProvider();
+                  if (!provider) throw new Error("No Solana wallet found.");
+
+                  const tx = await createSolanaExactPaymentTransaction({
+                    recentBlockhash: blockhash,
+                    payer: new PublicKey(pk),
+                    feePayer: new PublicKey(feePayer),
+                    payTo: new PublicKey(String(reqV2.payTo)),
+                    mint: new PublicKey(String(reqV2.asset)),
+                    amountMicrousdc: BigInt(reqV2.amount),
+                  });
+                  const signed = await provider.signTransaction(tx);
+                  const partialTx = encodePartialSolanaTransactionBase64(signed);
+
+                  const payload = {
+                    x402Version: 2,
+                    type: "solana-transaction",
+                    transaction: partialTx,
+                    network: reqV2.network,
+                    requirement: reqV2,
+                    paymentRequirements: response402?.accepts,
+                  };
+                  xPayment = btoa(JSON.stringify(payload));
+                }
 
                 // 3) settle (send X-PAYMENT header)
                 const res2 = await fetch(`${API_BASE}/v1/topup`, {
@@ -430,6 +621,7 @@ export default function TopupPage() {
                     merchant: merchantCaip10,
                     amountMicrousdc: amountMicros,
                     currency: "USDC",
+                    blockchain: payNetwork,
                     caseId: caseId || undefined,
                     actionToken: actionToken || undefined,
                   }),
@@ -456,15 +648,21 @@ export default function TopupPage() {
 
           {txHash && (
             <div className="space-y-2">
-              <div className="text-sm font-medium text-foreground">Payment transaction hash (Base)</div>
+              <div className="text-sm font-medium text-foreground">
+                Payment transaction hash ({payNetwork === "solana" ? "Solana" : "Base"})
+              </div>
               <CopyableField value={txHash} truncate={false} label="Copied transaction hash" />
               <a
                 className="text-xs text-muted-foreground underline"
-                href={`https://basescan.org/tx/${encodeURIComponent(txHash)}`}
+                href={
+                  payNetwork === "solana"
+                    ? `https://solscan.io/tx/${encodeURIComponent(txHash)}`
+                    : `https://basescan.org/tx/${encodeURIComponent(txHash)}`
+                }
                 target="_blank"
                 rel="noreferrer"
               >
-                View on Basescan
+                View on {payNetwork === "solana" ? "Solscan" : "Basescan"}
               </a>
             </div>
           )}

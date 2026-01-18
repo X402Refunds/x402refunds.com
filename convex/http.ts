@@ -1340,6 +1340,58 @@ http.route({
 // === WALLET-FIRST V1 ENDPOINTS (NO SIGNUP, NO API KEYS) ===
 
 const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const USDC_SOLANA_MAINNET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+let cachedDexterSolanaFeePayer: { feePayer: string; fetchedAtMs: number } | null = null;
+async function getDexterSolanaFeePayer(): Promise<string | null> {
+  const ttlMs = 10 * 60 * 1000;
+  if (cachedDexterSolanaFeePayer && Date.now() - cachedDexterSolanaFeePayer.fetchedAtMs < ttlMs) {
+    return cachedDexterSolanaFeePayer.feePayer;
+  }
+
+  try {
+    const res = await fetch("https://x402.dexter.cash/supported", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    const json = (await res.json().catch(() => null)) as unknown;
+    if (!res.ok || !json || typeof json !== "object") return null;
+
+    const kinds = Array.isArray((json as any)?.kinds) ? ((json as any).kinds as any[]) : [];
+    const now = Date.now();
+
+    // Prefer v1-ish exact solana (network === "solana") if present.
+    for (const k of kinds) {
+      if (!k || typeof k !== "object") continue;
+      const scheme = String((k as any).scheme || "").toLowerCase();
+      const network = String((k as any).network || "").toLowerCase();
+      const extra = (k as any).extra && typeof (k as any).extra === "object" ? (k as any).extra : null;
+      const feePayer = extra && typeof extra.feePayer === "string" ? String(extra.feePayer) : "";
+      if (scheme === "exact" && network === "solana" && feePayer) {
+        cachedDexterSolanaFeePayer = { feePayer: feePayer.trim(), fetchedAtMs: now };
+        return cachedDexterSolanaFeePayer.feePayer;
+      }
+    }
+
+    // Fallback: any exact solana kind (v2 CAIP network strings).
+    for (const k of kinds) {
+      if (!k || typeof k !== "object") continue;
+      const scheme = String((k as any).scheme || "").toLowerCase();
+      const network = String((k as any).network || "").toLowerCase();
+      const extra = (k as any).extra && typeof (k as any).extra === "object" ? (k as any).extra : null;
+      const feePayer = extra && typeof extra.feePayer === "string" ? String(extra.feePayer) : "";
+      if (scheme === "exact" && network.includes("solana") && feePayer) {
+        cachedDexterSolanaFeePayer = { feePayer: feePayer.trim(), fetchedAtMs: now };
+        return cachedDexterSolanaFeePayer.feePayer;
+      }
+    }
+
+    cachedDexterSolanaFeePayer = { feePayer: "", fetchedAtMs: now };
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function base64EncodeJson(obj: unknown): string {
   return btoa(JSON.stringify(obj));
@@ -1458,6 +1510,21 @@ http.route({
       });
     }
 
+    const solanaFeePayer =
+      blockchain === "solana"
+        ? (process.env.X402_SOLANA_FEE_PAYER?.trim() ||
+            process.env.DEMO_AGENTS_SOLANA_FEE_PAYER?.trim() ||
+            (await getDexterSolanaFeePayer()) ||
+            "")
+        : "";
+    if (blockchain === "solana" && !solanaFeePayer) {
+      return jsonError(502, {
+        ok: false,
+        code: "FEE_PAYER_UNAVAILABLE",
+        message: "Solana facilitator fee payer unavailable (set X402_SOLANA_FEE_PAYER or retry).",
+      });
+    }
+
     // x402 v2: requirements in PAYMENT-REQUIRED header (base64 JSON).
     const paymentRequiredV2 = {
       x402Version: 2,
@@ -1465,7 +1532,7 @@ http.route({
         {
           scheme: "exact",
           network: blockchain === "base" ? "eip155:8453" : "solana",
-          asset: blockchain === "base" ? USDC_BASE_MAINNET : "USDC",
+          asset: blockchain === "base" ? USDC_BASE_MAINNET : USDC_SOLANA_MAINNET,
           amount: String(amountMicrousdc),
           // Facilitator implementations often still read this legacy field name.
           maxAmountRequired: String(amountMicrousdc),
@@ -1477,10 +1544,17 @@ http.route({
               : "x402disputes refund pool top-up (Solana USDC)",
           mimeType: "application/json",
           maxTimeoutSeconds: 60,
-          extra: {
-            name: "USD Coin",
-            version: "2",
-          },
+          extra:
+            blockchain === "base"
+              ? {
+                  name: "USD Coin",
+                  version: "2",
+                }
+              : {
+                  name: "USDC",
+                  version: "1",
+                  feePayer: solanaFeePayer,
+                },
         },
       ],
     };
@@ -1493,7 +1567,7 @@ http.route({
           scheme: "exact",
           network: blockchain,
           maxAmountRequired: String(amountMicrousdc),
-          asset: blockchain === "base" ? USDC_BASE_MAINNET : "USDC",
+          asset: blockchain === "base" ? USDC_BASE_MAINNET : USDC_SOLANA_MAINNET,
           payTo: depositAddress,
           resource: request.url,
           description:
@@ -1502,10 +1576,17 @@ http.route({
               : "x402disputes refund pool top-up (Solana USDC)",
           mimeType: "application/json",
           maxTimeoutSeconds: 60,
-          extra: {
-            name: "USD Coin",
-            version: "2",
-          },
+          extra:
+            blockchain === "base"
+              ? {
+                  name: "USD Coin",
+                  version: "2",
+                }
+              : {
+                  name: "USDC",
+                  version: "1",
+                  feePayer: solanaFeePayer,
+                },
         },
       ],
     };

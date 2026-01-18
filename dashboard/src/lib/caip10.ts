@@ -1,5 +1,7 @@
 const BASE_EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,64}$/;
+// Solana mainnet-beta cluster identifier (commonly used CAIP-2 chain reference).
+const SOLANA_MAINNET_CHAIN_REF = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 export function baseAddressToCaip10(address: string): string {
   const raw = (address || "").trim();
@@ -35,7 +37,9 @@ export function normalizeMerchantToCaip10Base(input: string): { caip10: string |
   }
 
   // For the human-friendly flow we accept a plain address and default to Base.
-  if (!isEvmAddress(raw)) return { caip10: null, error: "Enter a valid 0x address or CAIP-10 solana:... identity" };
+  // Additionally: accept a raw Solana base58 address and default it to Solana mainnet.
+  if (SOLANA_ADDRESS_RE.test(raw)) return { caip10: `solana:${SOLANA_MAINNET_CHAIN_REF}:${raw}` };
+  if (!isEvmAddress(raw)) return { caip10: null, error: "Enter a valid 0x address, Solana base58 address, or CAIP-10 solana:... identity" };
   return { caip10: `eip155:8453:${raw.toLowerCase()}` };
 }
 
