@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-15T08:42:04.313Z
+**Auto-generated on**: 2026-01-18T01:29:46.228Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,8 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (68 files)
+### Convex Files (73 files)
+- **admin.ts** - adminCreateOrganization, adminGrantOrganizationCredits, adminGetOrganizationByDomain
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
 - **evidenceAgent.ts** - evidenceReviewAgent, reviewEvidence
@@ -89,7 +90,7 @@ consulate/
 - **agents.ts** - joinAgent, getAgent, getAgentReputation, getAgentsByMockStatus, getAgentsByFunctionalType, getTopAgentsByReputation, listAgents, updateAgentStatus, deactivateAgent, anonymizeAgent, updateAgentReputation, listOrgAgents, registerAgentManual, migrateAgentsSchema, getAgentByWallet, migrateAgentWalletsToCaip10
 - **auth.config.ts** - Core logic
 - **auth.ts** - extractAuthFromHeaders, createAuthMessage, createOwner
-- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, normalizeCaseIdFromString, getCaseByIdFromString, backfillPaymentSourceTx, migratePaymentCasesToWalletFirstV1, runMigratePaymentCasesToWalletFirstV1, purgeNonPaymentCasesAndOrphans, runPurgeNonPaymentCasesAndOrphans, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, listLiveFeedCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
+- **cases.ts** - GENERAL_DISPUTE_CATEGORIES, fileDispute, getCasesByType, getAllCases, getCase, getCasePublic, getCaseById, normalizeCaseIdFromString, getCaseByIdFromString, backfillPaymentSourceTx, migratePaymentCasesToWalletFirstV1, runMigratePaymentCasesToWalletFirstV1, purgeNonPaymentCasesAndOrphans, runPurgeNonPaymentCasesAndOrphans, getCasesByStatus, getCasesByParty, getCasesByPlaintiff, getCasesByDefendant, getRecentCases, listLiveFeedCases, getOrganizationCases, backfillReviewerOrgId, assignUnassignedDisputesToOrgForWallet, assignUnassignedDisputesToOrgForMerchantWallet, updateCaseStatus, updateCaseStatusPublic, updateCaseRuling, getCachedSystemStats, storeAIRecommendation
 - **cleanup.ts** - deleteNonPaymentDisputes, analyzeDatabase, deleteAllAgentsExceptOne, deleteMockData, deleteLargeAmountCases, deleteZeroAmountCases, cleanupOrphanedRecords
 - **convex.config.ts** - Core logic
 - **courtEngine.ts** - getEngineStats, runCourtWorkflow
@@ -106,10 +107,10 @@ consulate/
 - **evidence.ts** - submitEvidence, getEvidence, getEvidenceByCase, getEvidenceByCaseId, getEvidenceByCaseIdFromString, getEvidenceByAgent, getRecentEvidence, getFunctionalEvidence, getEvidenceByFunctionalType, getPhysicalEvidence, getVoiceEvidence, getCodingEvidence, getFinancialEvidence, getHealthcareEvidence, submitPhysicalEvidence, submitVoiceEvidence
 - **http.ts** - Core logic
 - **judges.ts** - registerJudge, assignPanel, submitVote, getPanel, deliberateWithAI, createDemoJudges, getPanelStatus, getJudges, getJudgeStats, createPanel
-- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, deriveUsdcMerchantFromTxHashSolana, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
-- **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10
+- **blockchain.ts** - BASE_USDC_CONTRACT_ALLOWLIST, ERC20_TRANSFER_TOPIC0, topicToAddress, findErc20TransfersToRecipient, verifyUsdcTransferByRecipient, deriveUsdcMerchantFromTxHashBase, extractSolanaUsdcTransfersFromGetTransactionResult, deriveUsdcMerchantFromTxHashSolana, findErc20TransferMatches, verifyUsdcTransferByAmount, queryTransaction, mockQueryTransaction
+- **caip10.ts** - parseCaip10, formatCaip10, isSolana, isEvm, extractAddress, normalizeToCaip10, normalizeWalletIndexKey, walletMatchKeys
 - **canonicalDispute.ts** - Core logic
-- **coinbase.ts** - getOrCreatePlatformEvmAccount, sendUsdcBase
+- **coinbase.ts** - getOrCreatePlatformEvmAccount, getOrCreatePlatformSolanaAccount, sendUsdcBase, sendUsdcSolana
 - **crypto.ts** - verifyEd25519Signature, uint8ArrayToBase64
 - **duplicateDispute.ts** - parseDuplicatePaymentDisputeError
 - **email.ts** - Core logic
@@ -118,6 +119,7 @@ consulate/
 - **merchantActionErrorCopy.ts** - buildMerchantActionErrorCopy
 - **merchantRefundEmailCopy.ts** - buildMerchantRefundExecutedEmailCopy
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
+- **partnerProcessedSummaryEmailCopy.ts** - buildPartnerProcessedSummaryEmailCopy
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
 - **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
 - **x402PayTo.ts** - parseX402PayTo
@@ -126,9 +128,12 @@ consulate/
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **merchantEmailActions.ts** - createActionTokensForCase, getToken, markTokenUsed, applyDecisionFromToken
 - **merchantEmailVerification.ts** - getVerification, createOrReuseVerificationToken, confirmVerificationToken
-- **merchantNotifications.ts** - notifyMerchantDisputeFiled, refreshMerchantContactForCase, _patchCaseMetadataV1, getNotificationStatusForCase, markRefundExecutedEmailSent, notifyMerchantRefundExecuted, throttleResendForCase
+- **merchantNotifications.ts** - notifyMerchantDisputeFiled, refreshMerchantContactForCase, _patchCaseMetadataV1, _patchCasePartnerMetadata, getNotificationStatusForCase, markRefundExecutedEmailSent, notifyMerchantRefundExecuted, throttleResendForCase
+- **merchantWallets.ts** - getMerchantWalletMapping, upsertMerchantProfileAndWallet
 - **migrations.ts** - runCaseTypeCounts, runDeleteSpecificCases, runNotifyMerchantDisputeFiled
 - **notifications.ts** - sendRuling
+- **partnerPrograms.ts** - getPartnerProgramByCanonicalEmailInternal, getPartnerProgramByIdInternal, getPartnerProgram, upsertPartnerProgram
+- **partners.ts** - dexterAdjudicateAndMaybeExecute
 - **paymentDisputes.ts** - findExistingPaymentCaseByTxHash, triggerPaymentWorkflow, processWithAI, updateWithAIRuling, autoResolve, findSimilarDisputes, getPaymentDispute, getPaymentDisputeByCaseId, getByCase, getDisputesNeedingHumanReview, humanReview, getMicroDisputeStats, getHeroStats, customerReview, getCustomerReviewQueue, autoApproveAIRecommendation
 - **pool.ts** - cases_fileWalletPaymentDispute, cases_getWalletPaymentDisputeBySourceTx, getMerchantUsdcBalanceMicrousdc, cases_listWalletDisputesByMerchant, topup_creditMerchantBalanceFromTx, topup_finalizeFromTxHash, arbiter_resolveDispute
 - **refundCredits.ts** - DISPUTE_FEE_MICROUSDC, DEFAULT_TRIAL_CREDIT_MICROUSDC, DEFAULT_MAX_PER_CASE_MICROUSDC, getOrgRefundCredits, getOrgRefundCreditsSummary, ensureOrgRefundCredits, submitTopUpRequest, applyVerifiedTopUp, submitTopUpAndAutoApply, getPlatformDepositAddress, listTopUpRequests, initializeTrialRefundCredits, chargeDisputeFeeForCase, debitRefundAmount, rollbackRefundAmount
@@ -197,7 +202,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (67 test files)
+### Test Suites (72 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -206,6 +211,7 @@ Common HTTP routes exposed:
 - test/auto-approve-ai.test.ts
 - test/base64-public-key.test.ts
 - test/cases.test.ts
+- test/cdp-live.test.ts
 - test/customer-review-workflow.test.ts
 - test/e2e-flow.test.ts
 - test/e2e-wallet-first.test.ts
@@ -232,6 +238,7 @@ Common HTTP routes exposed:
 - test/signed-evidence-workflow.test.ts
 - test/system-endpoints.test.ts
 - test/unit/aa-usdc-transfer-logs.test.ts
+- test/unit/admin-bootstrap.test.ts
 - test/unit/base-caip10-mapping.test.ts
 - test/unit/batch-processing.test.ts
 - test/unit/blockchain-derive-merchant.test.ts
@@ -239,6 +246,7 @@ Common HTTP routes exposed:
 - test/unit/canonical-dispute-created.test.ts
 - test/unit/canonical-dispute-duplicate.test.ts
 - test/unit/case-tracking.test.ts
+- test/unit/dexter-partner-flow.test.ts
 - test/unit/docs-markdown-splitting.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
 - test/unit/link-header-parser.test.ts
@@ -248,10 +256,12 @@ Common HTTP routes exposed:
 - test/unit/merchant-email-verification.test.ts
 - test/unit/merchant-notifications.test.ts
 - test/unit/merchant-refund-email-copy.test.ts
+- test/unit/merchant-wallet-mapping.test.ts
 - test/unit/migrate-wallet-first-payment-cases.test.ts
 - test/unit/payment-dispute-defendant-metadata.test.ts
 - test/unit/purge-nonpayment-cases.test.ts
 - test/unit/regulation-e-compliance.test.ts
+- test/unit/solana-usdc-owner-parsing.test.ts
 - test/unit/topup-auto-action.test.ts
 - test/unit/tx-merchant-lookup.test.ts
 - test/unit/v1-wallet-first-disputes.test.ts
@@ -346,7 +356,7 @@ Common HTTP routes exposed:
 
 ## 📦 Dependencies
 
-### Production Dependencies (13)
+### Production Dependencies (15)
 - @ai-sdk/openai@^2.0.62
 - @coinbase/cdp-sdk@^1.40.1
 - @coinbase/coinbase-sdk@^0.25.0
@@ -354,9 +364,9 @@ Common HTTP routes exposed:
 - @convex-dev/agent@^0.2.12
 - @convex-dev/workflow@^0.2.7
 - @convex-dev/workpool@^0.2.19
+- @solana/spl-token@^0.4.14
+- @solana/web3.js@^1.98.4
 - @x402sdk/sdk@^1.1.0
-- ai@^5.0.87
-- convex@^1.31.3
 
 ### Dev Dependencies (9)
 - @semantic-release/changelog@^6.0.0
@@ -380,13 +390,13 @@ Common HTTP routes exposed:
 - 78 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 68 TypeScript files with serverless functions
+- 73 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 67 test files using Vitest
+- 72 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -419,5 +429,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/15/2026, 12:42:04 AM
-Files scanned: 547
+Generated: 1/17/2026, 5:29:46 PM
+Files scanned: 562
