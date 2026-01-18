@@ -82,7 +82,7 @@ describe("Refund System - Unit Tests", () => {
     });
   });
 
-  it("does not create/send refunds for self-payments (refund-to-self)", async () => {
+  it("creates refund attempts for self-payments (refund-to-self)", async () => {
     // In test mode, blockchain verification is mocked. The mock payer address is fixed in
     // convex/lib/blockchain.ts verifyUsdcTransferByRecipient mockMode.
     const mockPayerBase = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0".toLowerCase();
@@ -130,7 +130,8 @@ describe("Refund System - Unit Tests", () => {
 
     const res: any = await t.action((internal as any).refunds.createRefundAttempt, { caseId });
     expect(res).toBeDefined();
-    expect(res.status).toBe("INVALID_PROOF");
+    // Self-payments should no longer be treated as invalid proof.
+    expect(res.status).not.toBe("INVALID_PROOF");
 
     const refund = await t.run(async (ctx) =>
       ctx.db
@@ -140,7 +141,7 @@ describe("Refund System - Unit Tests", () => {
         .first(),
     );
     expect(refund).toBeTruthy();
-    expect(refund?.failureCode).toBe("SELF_PAYMENT");
+    expect(refund?.failureCode).not.toBe("SELF_PAYMENT");
   });
 
   it("should create merchant balance with CAIP-10 wallet", async () => {

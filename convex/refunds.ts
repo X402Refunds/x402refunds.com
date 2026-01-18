@@ -8,7 +8,6 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { extractAddress, isSolana } from "./lib/caip10";
 import { executeSolanaRefundImpl } from "./lib/solana";
-import { allowSelfPaymentRefundToProceed } from "./lib/selfPaymentException";
 import type { Id } from "./_generated/dataModel";
 
 function isCoinbaseRefundsEnabled(): boolean {
@@ -400,40 +399,6 @@ export const createRefundAttempt = internalAction({
         status: "INVALID_PROOF",
         failureCode: "AMOUNT_MISMATCH",
         failureReason: `Verified amount (${verify.amountMicrousdc}) did not match expected (${paymentAmountMicrousdc})`,
-      });
-      return { status: "INVALID_PROOF", refundId: inserted.refundId };
-    }
-
-    // Safety: if payer == recipient, "refund to source" is a no-op and can waste credits.
-    const payerAddr = String(verify.payerAddress || "");
-    const recipientAddr = String(verify.recipientAddress || "");
-    const isSelfPayment =
-      sourceChain === "base"
-        ? payerAddr.toLowerCase() === recipientAddr.toLowerCase()
-        : payerAddr === recipientAddr;
-    const allowSelfPayment =
-      isSelfPayment &&
-      allowSelfPaymentRefundToProceed({
-        sourceChain,
-        payerAddress: payerAddr,
-        recipientAddress: recipientAddr,
-        merchantOrigin: typeof pd?.defendantMetadata?.merchantOrigin === "string" ? pd.defendantMetadata.merchantOrigin : undefined,
-        sellerEndpointUrl:
-          typeof (dispute as any)?.metadata?.v1?.sellerEndpointUrl === "string"
-            ? (dispute as any).metadata.v1.sellerEndpointUrl
-            : undefined,
-      });
-
-    if (isSelfPayment && !allowSelfPayment) {
-      const inserted = await ctx.runMutation(internal.refunds.insertRefundFailure, {
-        caseId: args.caseId,
-        sourceChain,
-        sourceTxHash,
-        sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex,
-        amountMicrousdc: paymentAmountMicrousdc,
-        status: "INVALID_PROOF",
-        failureCode: "SELF_PAYMENT",
-        failureReason: "payer and recipient are the same wallet; refund-to-source is a no-op",
       });
       return { status: "INVALID_PROOF", refundId: inserted.refundId };
     }
