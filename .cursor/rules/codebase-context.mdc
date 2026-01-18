@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-18T09:48:26.614Z
+**Auto-generated on**: 2026-01-18T10:10:21.853Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -98,7 +98,7 @@ consulate/
 - **custody.ts** - computeEventHash, verifyCustodyChain
 - **cdpAuth.ts** - decodeXPaymentHeader, verifyPayment, settlePayment
 - **testCdp.ts** - testCdpAuth
-- **demoAgents.ts** - imageGeneratorGetHandler, imageGeneratorHandler
+- **demoAgents.ts** - getDemoAgentsPayToWallets, imageGeneratorGetHandler, imageGeneratorHandler
 - **disputeEngine.ts** - AI_VENDORS, AI_CONSUMERS, initializeOwners, initializeAgents
 - **disputePricing.ts** - calculateDisputeFee, getFeeExplanation
 - **events.ts** - getDisputeActivityEvents, getRecentEvents, getEventsByType, getEventsByAgent, getEventsByCase, getSystemStats, getEventTimeline, getOrganizationEvents, getOrganizationStats, getApiKeyEvents
@@ -202,7 +202,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (75 test files)
+### Test Suites (76 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -247,6 +247,7 @@ Common HTTP routes exposed:
 - test/unit/canonical-dispute-created.test.ts
 - test/unit/canonical-dispute-duplicate.test.ts
 - test/unit/case-tracking.test.ts
+- test/unit/demo-agents-payto.test.ts
 - test/unit/dexter-partner-flow.test.ts
 - test/unit/docs-markdown-splitting.test.ts
 - test/unit/duplicate-payment-dispute-http.test.ts
@@ -399,7 +400,7 @@ Common HTTP routes exposed:
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 75 test files using Vitest
+- 76 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -432,5 +433,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/18/2026, 1:48:26 AM
-Files scanned: 566
+Generated: 1/18/2026, 2:10:21 AM
+Files scanned: 567
