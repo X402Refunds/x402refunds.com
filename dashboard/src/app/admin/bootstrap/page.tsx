@@ -73,7 +73,11 @@ export default function AdminBootstrapPage() {
 
       const data = (await res.json().catch(() => ({}))) as CreateOrganizationResponse;
       if (!res.ok || !data.ok) {
-        throw new Error(data?.error?.message || `Failed (${res.status})`);
+        const msg =
+          data && typeof data === "object" && "error" in data
+            ? ((data as unknown as { error?: { message?: string } }).error?.message ?? "")
+            : "";
+        throw new Error(msg || `Failed (${res.status})`);
       }
 
       setCreateOut(data);
@@ -108,7 +112,11 @@ export default function AdminBootstrapPage() {
 
       const data = (await res.json().catch(() => ({}))) as GrantCreditsResponse;
       if (!res.ok || !data.ok) {
-        throw new Error(data?.error?.message || `Failed (${res.status})`);
+        const msg =
+          data && typeof data === "object" && "error" in data
+            ? ((data as unknown as { error?: { message?: string } }).error?.message ?? "")
+            : "";
+        throw new Error(msg || `Failed (${res.status})`);
       }
 
       setGrantStatus("done");

@@ -1,6 +1,5 @@
 import { PublicKey, Transaction } from "@solana/web3.js"
 import {
-  createAssociatedTokenAccountIdempotentInstruction,
   createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token"
@@ -40,20 +39,8 @@ export async function createSolanaExactPaymentTransaction(params: {
   const fromAta = getAssociatedTokenAddressSync(params.mint, params.payer)
   const toAta = getAssociatedTokenAddressSync(params.mint, params.payTo)
 
-  // Ensure ATAs exist. Fee payer funds account creation; facilitator will add fee payer signature.
-  const ensureFromAta = createAssociatedTokenAccountIdempotentInstruction(
-    params.feePayer,
-    fromAta,
-    params.payer,
-    params.mint,
-  )
-  const ensureToAta = createAssociatedTokenAccountIdempotentInstruction(
-    params.feePayer,
-    toAta,
-    params.payTo,
-    params.mint,
-  )
-
+  // NOTE: Do NOT include ATA creation here. Some facilitators disallow the Associated Token
+  // Account program (AToken...), causing verification to fail. We only include the SPL transfer.
   const transferIx = createTransferCheckedInstruction(
     fromAta,
     params.mint,
@@ -66,7 +53,7 @@ export async function createSolanaExactPaymentTransaction(params: {
   const tx = new Transaction()
   tx.feePayer = params.feePayer
   tx.recentBlockhash = params.recentBlockhash
-  tx.add(ensureFromAta, ensureToAta, transferIx)
+  tx.add(transferIx)
   return tx
 }
 

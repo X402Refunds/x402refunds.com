@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+// Avoid deep type instantiation in downstream TS projects.
+const { internal } = require("./_generated/api") as any;
 
 function normalizeDomain(input: string): string {
   const s = input.trim().toLowerCase();
