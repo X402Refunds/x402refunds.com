@@ -527,7 +527,11 @@ http.route({
         start(controller) {
           // Send initial connection confirmation
           const encoder = new TextEncoder();
-          controller.enqueue(encoder.encode(`event: endpoint\ndata: /mcp\n\n`));
+          const origin = new URL(request.url).origin;
+          const endpoint = `${origin}/mcp`;
+          controller.enqueue(
+            encoder.encode(`event: endpoint\ndata: ${JSON.stringify({ endpoint })}\n\n`)
+          );
           
           // Keep connection alive
           // Note: Convex HTTP actions have a timeout, so this will eventually close
@@ -645,6 +649,26 @@ http.route({
             }), {
               status: 400,
               headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+              }
+            });
+          }
+
+          // Enforce "only enabled tools are callable" (prevents invoking hidden tools).
+          const { MCP_TOOLS } = await import("./mcp");
+          const enabledToolNames = new Set((MCP_TOOLS as any[]).map((t) => t?.name));
+          if (!enabledToolNames.has(toolName)) {
+            return new Response(JSON.stringify({
+              jsonrpc: "2.0",
+              id,
+              error: {
+                code: -32602,
+                message: `Tool is not enabled: ${toolName}`,
+              }
+            }), {
+              status: 400,
+              headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
               }
@@ -851,7 +875,7 @@ http.route({
                 break;
               }
               
-              case "demo_image_generator": {
+              case "image_generator": {
                 // Demo agent - returns information about the demo endpoint
                 const parameters = toolArgs || {};
                 
@@ -954,7 +978,7 @@ http.route({
                     `   Defendant: ${c.defendant?.substring(0, 10)}...`
                   ).join('\n\n') +
                   (cases.length > 10 ? `\n\n... and ${cases.length - 10} more` : '');
-              } else if (toolName === "demo_image_generator") {
+              } else if (toolName === "image_generator") {
                 textOutput = `🎨 ImageGenerator500 Demo Agent\n\n` +
                   `📝 Prompt: "${invokeData.prompt}"\n` +
                   `📐 Size: ${invokeData.size}\n` +

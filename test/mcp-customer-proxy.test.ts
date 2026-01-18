@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
  * 
  * Tests a simple customer integration pattern where:
  * 1. Customer fetches X402Refunds MCP schema
- * 2. Customer filters to core tools (no renaming, no legacy aliases)
+ * 2. Customer uses the enabled tool(s) only (no legacy aliases)
  */
 
 describe('MCP Customer Proxy Pattern', () => {
@@ -27,51 +27,29 @@ describe('MCP Customer Proxy Pattern', () => {
     
     const toolNames = schema.tools.map((t: any) => t.name);
 
-    expect(toolNames).toContain('x402_request_refund');
-    expect(toolNames).toContain('x402_check_refund_status');
+    expect(toolNames).toEqual(['image_generator']);
   }, 30000);
 
   it('should have complete schemas for core tools', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const schema = await response.json();
     
-    const requestRefundTool = schema.tools.find((t: any) => t.name === 'x402_request_refund');
-    const checkStatusTool = schema.tools.find((t: any) => t.name === 'x402_check_refund_status');
+    const imageGeneratorTool = schema.tools.find((t: any) => t.name === 'image_generator');
     
-    expect(requestRefundTool).toBeDefined();
-    expect(requestRefundTool.description).toBeDefined();
-    expect(requestRefundTool.inputSchema).toBeDefined();
-    expect(requestRefundTool.inputSchema.type).toBe('object');
-    expect(requestRefundTool.inputSchema.properties).toBeDefined();
-    expect(requestRefundTool.inputSchema.required).toBeDefined();
-    
-    // Verify required fields (X-402 simplified - plaintiff/defendant extracted from blockchain)
-    expect(requestRefundTool.inputSchema.required).toContain('description');
-    expect(requestRefundTool.inputSchema.required).toContain('request');
-    expect(requestRefundTool.inputSchema.required).toContain('response');
-    expect(requestRefundTool.inputSchema.required).toContain('transactionHash');
-    expect(requestRefundTool.inputSchema.required).toContain('blockchain');
-    
-    // These are now extracted from blockchain (not required from agent)
-    expect(requestRefundTool.inputSchema.required).not.toContain('plaintiff');
-    expect(requestRefundTool.inputSchema.required).not.toContain('defendant');
-    expect(requestRefundTool.inputSchema.required).not.toContain('disputeUrl');
-    expect(requestRefundTool.inputSchema.required).not.toContain('amountUsd');
-    expect(requestRefundTool.inputSchema.required).not.toContain('currency');
-    expect(requestRefundTool.inputSchema.required).not.toContain('fromAddress');
-    expect(requestRefundTool.inputSchema.required).not.toContain('toAddress');
-    
-    // Verify check_status schema
-    expect(checkStatusTool).toBeDefined();
-    expect(checkStatusTool.inputSchema.required).toContain('caseId');
+    expect(imageGeneratorTool).toBeDefined();
+    expect(imageGeneratorTool.description).toBeDefined();
+    expect(imageGeneratorTool.inputSchema).toBeDefined();
+    expect(imageGeneratorTool.inputSchema.type).toBe('object');
+    expect(imageGeneratorTool.inputSchema.properties).toBeDefined();
+    expect(imageGeneratorTool.inputSchema.required).toEqual(['prompt']);
   }, 30000);
 
   it('should support schema filtering (customer pattern)', async () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const originalSchema = await response.json();
     
-    // Simulate customer's filtering to core tools
-    const CORE_TOOLS = ['x402_request_refund', 'x402_check_refund_status'];
+    // Simulate customer's filtering to enabled tool(s)
+    const CORE_TOOLS = ['image_generator'];
     
     const customerSchema = {
       ...originalSchema,
@@ -82,33 +60,13 @@ describe('MCP Customer Proxy Pattern', () => {
     
     // Verify customer sees strict namespaced names
     const toolNames = customerSchema.tools.map((t: any) => t.name);
-    expect(toolNames).toContain('x402_request_refund');
-    expect(toolNames).toContain('x402_check_refund_status');
+    expect(toolNames).toEqual(['image_generator']);
     
     // Verify schemas are preserved
-    expect(customerSchema.tools.length).toBe(2);
-    const requestRefund = customerSchema.tools.find((t: any) => t.name === 'x402_request_refund');
-    expect(requestRefund).toBeDefined();
-    // X-402 simplified schema (plaintiff/defendant extracted from blockchain)
-    expect(requestRefund.inputSchema.required).toContain('request');
-    expect(requestRefund.inputSchema.required).toContain('response');
-    expect(requestRefund.inputSchema.required).toContain('transactionHash');
-    expect(requestRefund.inputSchema.required).toContain('blockchain');
-    expect(requestRefund.inputSchema.required).toContain('description');
-    
-    // Plaintiff/defendant now extracted from blockchain (not required from agent)
-    expect(requestRefund.inputSchema.required).not.toContain('plaintiff');
-    expect(requestRefund.inputSchema.required).not.toContain('defendant');
-  }, 30000);
-
-  it('should include pricing information in schema', async () => {
-    const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
-    const schema = await response.json();
-    
-    // Verify flat pricing is documented
-    expect(schema.server.pricing).toBeDefined();
-    expect(schema.server.pricing.flat_fee).toBeDefined();
-    expect(String(schema.server.pricing.flat_fee)).toBe('$0.05 per refund request');
+    expect(customerSchema.tools.length).toBe(1);
+    const imageGenerator = customerSchema.tools.find((t: any) => t.name === 'image_generator');
+    expect(imageGenerator).toBeDefined();
+    expect(imageGenerator.inputSchema.required).toContain('prompt');
   }, 30000);
 
   it('should include authentication info for customers', async () => {
@@ -126,37 +84,17 @@ describe('MCP Customer Proxy Pattern', () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const schema = await response.json();
     
-    const fileDisputeTool = schema.tools.find((t: any) => t.name === 'x402_request_refund');
-    // X-402 simplified - blockchain is source of truth
-    if (!fileDisputeTool) return; // Skip if tool not found
-    const blockchainProperty = fileDisputeTool.inputSchema.properties.blockchain;
-    const transactionHashProperty = fileDisputeTool.inputSchema.properties.transactionHash;
-    
-    // Plaintiff/defendant no longer in schema (extracted from blockchain)
-    expect(fileDisputeTool.inputSchema.properties.plaintiff).toBeUndefined();
-    expect(fileDisputeTool.inputSchema.properties.defendant).toBeUndefined();
-    
-    // Blockchain enum includes ethereum/base/solana in discovery manifest (documentation layer)
-    expect(blockchainProperty).toBeDefined();
-    expect(blockchainProperty.enum).toEqual(['ethereum', 'base', 'solana']);
-    
-    // Transaction hash is required (used to extract all details)
-    expect(transactionHashProperty).toBeDefined();
-    expect(transactionHashProperty.description).toContain('blockchain');
+    // Refund tools are intentionally disabled and not exposed in discovery.
+    expect(schema.tools.find((t: any) => t.name === 'x402_request_refund')).toBeUndefined();
   }, 30000);
 });
 
 describe('MCP Customer Proxy - Tool Invocation', () => {
   it('should preserve parameters during proxying', () => {
     const customerRequest = {
-      tool: 'x402_request_refund',
+      tool: 'image_generator',
       parameters: {
-        transactionId: 'txn_123',
-        amount: 10.50,
-        plaintiff: 'customer@example.com',
-        defendant: 'merchant@example.com',
-        disputeReason: 'service_not_rendered',
-        description: 'Test dispute'
+        prompt: 'a courthouse sketched in pencil'
       }
     };
 
@@ -166,9 +104,9 @@ describe('MCP Customer Proxy - Tool Invocation', () => {
       parameters: customerRequest.parameters // Unchanged
     };
 
-    expect(consulateRequest.tool).toBe('x402_request_refund');
+    expect(consulateRequest.tool).toBe('image_generator');
     expect(consulateRequest.parameters).toEqual(customerRequest.parameters);
-    expect(consulateRequest.parameters.transactionId).toBe('txn_123');
+    expect(consulateRequest.parameters.prompt).toBe('a courthouse sketched in pencil');
   });
 });
 

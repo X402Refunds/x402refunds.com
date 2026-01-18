@@ -74,7 +74,12 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
  * MCP Tool Definitions
  * These are discoverable by any MCP-compatible agent
  */
-export const MCP_TOOLS = [
+// Intentionally typed as `any[]` so downstream code/tests don't rely on
+// literal inference of the schema when tools are toggled on/off.
+export const MCP_TOOLS: any[] = [
+  // NOTE: Tools are intentionally disabled for this MCP server right now.
+  // Keeping definitions commented makes it easy to re-enable later.
+  /*
   {
     name: "x402_request_refund",
     description: "Submit an X-402 payment refund request for API service failures. USDC payments on Base and Solana only. Permissionless requests with blockchain transaction verification. Plaintiff/defendant are extracted from chain; amount is provided by the caller and must match a USDC Transfer in the transaction.",
@@ -206,10 +211,11 @@ export const MCP_TOOLS = [
       required: ["caseId"]
     }
   },
+  */
   {
-    name: "demo_image_generator",
+    name: "image_generator",
     description:
-      "Demo X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be used to submit a refund request via x402_request_refund.",
+      "X-402 agent (image generator) to test signature-based USDC payments on Base. Returns instructions and the HTTP endpoint to call; useful for reproducing a paid API call that can later be used to submit a refund request via x402_request_refund.",
     inputSchema: {
       type: "object",
       properties: {
@@ -271,47 +277,11 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "2.0.0",
     server: {
-      name: "x402refunds.com - Permissionless X-402 Refund Requests",
+      name: "X-402 Image Generator",
       version: "2.0.0",
-      description: "Permissionless refund requests for X-402 USDC payments. Base and Solana only. Agents submit refund requests directly. Refund status is trackable via API.",
-      
-      payment_details: {
-        format: "All transaction details extracted from blockchain",
-        note: "Agent only provides USDC transaction hash. We query blockchain to extract plaintiff, defendant, and amount. Only USDC on Base and Solana supported."
-      },
-      
-      dispute_types: "Refund requests only (USDC on Base and Solana)",
-      
-      evidence_requirements: {
-        required_from_agent: [
-          "transactionHash - USDC token transfer transaction hash",
-          "blockchain - Network (base or solana only)",
-          "description - What went wrong (10-500 chars)",
-          "request - API request object that was sent",
-          "response - Error response that was received"
-        ],
-        extracted_from_blockchain: [
-          "plaintiff - Buyer's wallet address (USDC sender)",
-          "defendant - Seller's wallet address (USDC recipient)",
-          "amount - USDC payment amount (1 USDC = $1.00 USD)",
-          "currency - Always USDC (only supported currency)"
-        ],
-        optional_but_recommended: {
-          sellerXSignature: {
-            importance: "HIGH",
-            description: "Ed25519 signature from seller's X-Signature response header",
-            impact_if_missing: "Evidence strength reduced to MEDIUM. May require additional verification.",
-            impact_if_provided: "Evidence strength STRONG. Higher confidence in verdict.",
-            how_to_obtain: "Extract X-Signature header from seller's HTTP response"
-          }
-        }
-      },
-      
-      pricing: {
-        flat_fee: "$0.05 per refund request"
-      },
-      resolution_time: "Varies by merchant and request type",
-      url: "https://api.x402refunds.com"
+      description:
+        "Demo-only MCP server exposing a paid X-402 image generator tool for integration testing. Discovery lists only the demo tool; invoke it to get instructions for completing a paid call against the demo agent endpoint.",
+      url: "https://api.x402refunds.com",
     },
     tools: discoveryTools,
     authentication: {
@@ -334,10 +304,10 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
         },
         message_format: "METHOD:PATH:BODY:TIMESTAMP"
       },
-      note: "MCP endpoints are publicly accessible. Agent identity is verified via Ed25519 signatures on signed evidence, not API keys."
+      note: "MCP endpoints are publicly accessible. This demo tool is intended for integration testing."
     },
     documentation: "https://x402refunds.com/docs",
-    support: "support@x402refunds.com"
+    support: "https://x402refunds.com/support"
   }), {
     headers: {
       "Content-Type": "application/json",
@@ -365,8 +335,24 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     const { tool, parameters } = body;
     const bodyStr = JSON.stringify(body);
 
-    // Public tools (no auth required): check_refund_status
-    const publicTools = ['x402_check_refund_status'];
+    // Enforce "only enabled tools are callable" (even if someone bypasses discovery).
+    const enabledToolNames = new Set(MCP_TOOLS.map((t) => t.name));
+    if (!enabledToolNames.has(tool)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: {
+          code: MCP_ERROR_CODES.TOOL_NOT_FOUND,
+          message: `Unknown tool: ${tool}`,
+          hint: "This tool is not enabled on this MCP server",
+        }
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Public tools (no auth required)
+    const publicTools = ["image_generator"];
     const isPublicTool = publicTools.includes(tool);
 
     // For now, no authentication required for MCP tools
@@ -765,9 +751,8 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           trackingUrl: filed.trackingUrl,
           evidenceUrls: filed.evidenceUrls || [],
           nextSteps: [
-            signatureProvided ? null : "Consider submitting X-Signature for stronger evidence",
-            "Merchant reviews in dashboard",
-            "Resolution within 10 business days (Regulation E)"
+            signatureProvided ? null : "Consider submitting X-Signature for stronger evidence"
+
           ].filter(Boolean),
           _links: {
             self: filed.trackingUrl,
@@ -794,7 +779,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
         });
         break;
         
-      case "demo_image_generator":
+      case "image_generator":
         // Demo agent - calls ImageGenerator500 endpoint internally
         // This allows Claude to test the full X-402 payment + dispute flow
         
@@ -903,8 +888,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
           error: {
             code: MCP_ERROR_CODES.TOOL_NOT_FOUND,
             message: `Unknown tool: ${tool}`,
-            hint: "Check the tool name spelling or list available tools",
-            availableTools: MCP_TOOLS.map(t => t.name)
+            hint: "This tool is not enabled on this MCP server",
           }
         }), {
           status: 400,

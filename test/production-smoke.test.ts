@@ -120,15 +120,9 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tool: 'x402_request_refund',
+          tool: 'image_generator',
           parameters: { 
             // Intentionally invalid / incomplete parameters to validate public access & error shape.
-            description: 'Test refund request',
-            request: { method: 'POST', url: 'https://example.com' },
-            response: { status: 500 },
-            transactionHash: '0xdeadbeef',
-            recipientAddress: '0x0000000000000000000000000000000000000000',
-            blockchain: 'base'
           }
         })
       });

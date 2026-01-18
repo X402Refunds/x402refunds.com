@@ -31,100 +31,17 @@ async function invokeMcpTool(toolName: string, parameters: any) {
 }
 
 describe('X-402 Ultra-Minimal Refund Request Schema', () => {
-  it('should submit refund request with blockchain extraction (no plaintiff/defendant needed)', async () => {
-    const timestamp = Date.now();
-    
-    const { response, data } = await invokeMcpTool('x402_request_refund', {
-      description: "API returned 500 error after payment was confirmed on-chain",
-      request: {
-        method: "POST",
-        url: "https://api.seller.com/v1/chat",
-        headers: { "Content-Type": "application/json", "X-402-Transaction-Hash": "0xabc123" },
-        body: { model: "gpt-4", messages: [{role: "user", content: "Hello"}] }
-      },
-      response: {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-        body: { error: "Internal Server Error" }
-      },
-      transactionHash: `0x${timestamp}abc123`,
-      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
-      blockchain: "base"
-    });
-    
-    console.log("📥 X-402 refund request response:", JSON.stringify(data, null, 2));
-    
-    // Note: Will fail in test if blockchain query not mocked
-    // Expected behavior: either success or TRANSACTION_NOT_FOUND
-    expect(data).toBeDefined();
-    expect(data.success !== undefined).toBe(true);
-    
-    if (data.success) {
-      expect(data.caseId).toBeDefined();
-      expect(data.trackingUrl).toContain('/cases/');
-      console.log("✅ Refund request submitted successfully!");
-    } else {
-      // Accept either TRANSACTION_NOT_FOUND or MCP_INTERNAL_ERROR (schema validation issues in test env)
-      expect(['TX_NOT_FOUND', 'TRANSACTION_NOT_FOUND', 'TRANSACTION_VERIFICATION_FAILED', 'NOT_CONFIGURED', 'MCP_INTERNAL_ERROR']).toContain(data.error.code);
-      console.log(`⚠️  Expected failure: ${data.error.code} - ${data.error.message?.substring(0, 100)}`);
-    }
-  });
-
-  it('should validate blockchain enum (only base, solana)', async () => {
-    const { data } = await invokeMcpTool('x402_request_refund', {
-      description: "Testing blockchain validation",
-      request: { method: "POST", url: "https://api.seller.com" },
-      response: { status: 500, body: { error: "test" } },
-      transactionHash: "0xabc123",
-      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
-      blockchain: "polygon" // ❌ Invalid - not supported
-    });
-    
+  it('should reject x402_request_refund when tool is disabled', async () => {
+    const { response, data } = await invokeMcpTool('x402_request_refund', {});
+    expect(response.status).toBe(400);
     expect(data.success).toBe(false);
-    expect(['UNSUPPORTED_BLOCKCHAIN']).toContain(data.error.code);
-    if (data.error.field) {
-      expect(data.error.field).toBe('blockchain');
-    }
-    if (data.error.suggestion) {
-      expect(data.error.suggestion).toContain('Base');
-    }
-    
-    console.log("✅ Address validation works:", data.error.message);
+    expect(String(data.error?.code)).toMatch(/MCP_TOOL_NOT_FOUND/);
   });
 
-  it('should validate required fields', async () => {
-    const { data } = await invokeMcpTool('x402_request_refund', {
-      // Missing all required fields
-    });
-    
-    expect(data.success).toBe(false);
-    expect(data.error).toBeDefined();
-    
-    // Should fail with missing required field error
-    expect(['MISSING_REQUEST', 'MISSING_RESPONSE', 'MISSING_TRANSACTION_HASH', 'MISSING_RECIPIENT_ADDRESS', 'MISSING_BLOCKCHAIN', 'MISSING_DESCRIPTION']).toContain(data.error.code);
-    
-    console.log("✅ Required field validation works:", data.error.code);
-  });
-
-  it('should support dryRun mode', async () => {
-    const { data } = await invokeMcpTool('x402_request_refund', {
-      description: "Testing dryRun validation mode",
-      request: { method: "POST", url: "https://api.seller.com" },
-      response: { status: 500, body: { error: "test" } },
-      transactionHash: "0xabc123def456",
-      recipientAddress: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
-      blockchain: "base",
-      dryRun: true  // ← Validation only
-    });
-    
-    // In dryRun mode, might succeed validation or fail on blockchain query
+  it('should allow image_generator tool', async () => {
+    const { response, data } = await invokeMcpTool('image_generator', { prompt: 'a courthouse sketched in pencil' });
+    expect([200, 400]).toContain(response.status);
     expect(data).toBeDefined();
-    
-    if (data.dryRun) {
-      expect(data.wouldExecute).toBeDefined();
-      expect(data.validations).toBeDefined();
-      console.log("✅ DryRun mode works:", Object.keys(data.validations).length, "validations");
-    }
   });
 });
 

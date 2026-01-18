@@ -41,35 +41,17 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(String(manifest.server.name)).toBe('x402refunds.com - Permissionless X-402 Refund Requests');
-      expect(String(manifest.server.dispute_types)).toContain('Refund requests only');
-      expect(manifest.server.pricing).toBeDefined();
-      expect(String(manifest.server.pricing.flat_fee)).toBe('$0.05 per refund request');
+      expect(String(manifest.server.name)).toBe('X-402 Image Generator');
+      expect(String(manifest.server.url)).toContain('api.x402refunds.com');
     });
 
-    it('should list X-402 MCP tools (plus demo)', async () => {
+    it('should list only enabled tools', async () => {
       const response = await fetch(`${API_BASE_URL}/.well-known/mcp.json`);
       const manifest = await response.json();
       
       const toolNames = manifest.tools.map((t: any) => t.name);
-      const expectedTools = [
-        "x402_request_refund",
-        "x402_list_my_refund_requests",
-        "x402_check_refund_status"
-      ];
-      const expectedOptionalTools = [
-        "demo_image_generator",
-      ];
-      
-      expect(manifest.tools.length).toBe(4);
-      // Check for the core X-402 refund tools
-      for (const expectedTool of expectedTools) {
-        expect(toolNames).toContain(expectedTool);
-      }
-      // Check for the demo tool
-      for (const expectedTool of expectedOptionalTools) {
-        expect(toolNames).toContain(expectedTool);
-      }
+      expect(manifest.tools.length).toBe(1);
+      expect(toolNames).toEqual(['image_generator']);
       // Verify old tools are removed
       expect(toolNames).not.toContain('consulate_file_general_dispute');
       expect(toolNames).not.toContain('consulate_file_dispute');
@@ -173,7 +155,7 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
       expect(data.result).toBeDefined();
       expect(data.result.tools).toBeDefined();
       expect(Array.isArray(data.result.tools)).toBe(true);
-      expect(data.result.tools.length).toBe(4);
+      expect(data.result.tools.length).toBe(1);
       
       // Verify tools use inputSchema (MCP standard)
       data.result.tools.forEach((tool: any) => {
@@ -192,10 +174,8 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
           id: 3,
           method: 'tools/call',
           params: {
-            name: 'x402_check_refund_status',
-            arguments: {
-              caseId: 'invalid-case-id-for-format-test'
-            }
+            name: 'image_generator',
+            arguments: {}
           }
         })
       });
@@ -274,12 +254,9 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'x402_request_refund', // Using x402_request_refund instead of non-existent register tool
+          tool: 'image_generator',
           parameters: {
-            name: 'Test Agent',
-            publicKey: testPublicKey,
-            organizationName: 'Test Org',
-            functionalType: 'api'
+            prompt: 'a courthouse sketched in pencil'
           },
         }),
       });
@@ -302,13 +279,13 @@ describe('MCP Protocol - Authentication', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tool: 'x402_check_refund_status',
-          parameters: { caseId: 'test-case-id' },
+          tool: 'image_generator',
+          parameters: { prompt: 'a courthouse sketched in pencil' },
         }),
       });
 
-      // Public tool should work without auth (may return 500 if case not found internally)
-      expect([200, 400, 404, 500]).toContain(response.status);
+      // Public tool should work without auth
+      expect([200, 400, 500]).toContain(response.status);
       const data = await response.json();
       expect(data).toBeDefined();
     });

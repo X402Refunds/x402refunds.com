@@ -14,12 +14,13 @@ import schema from '../convex/schema';
  */
 
 describe('MCP - Tool Definitions', () => {
-  it('should export 3 simplified MCP tools', async () => {
+  it('should export only the enabled MCP tools', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(4); // Simplified + demo_image_generator
+    expect(MCP_TOOLS.length).toBe(1);
+    expect(MCP_TOOLS[0]?.name).toBe('image_generator');
   });
 
   it('should have valid tool schemas', async () => {
@@ -36,96 +37,32 @@ describe('MCP - Tool Definitions', () => {
     }
   });
 
-  it('should include x402_request_refund tool with improved schema', async () => {
+  it('should include image_generator tool', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
+    const tool = MCP_TOOLS.find(t => t.name === 'image_generator');
     expect(tool).toBeDefined();
-    expect(String(tool?.description)).toMatch(/(refund request|payment refund)/i);
+    expect(String(tool?.description)).toMatch(/image/i);
     
-    // Check for X-402 simplified schema (7 required fields - plaintiff/defendant extracted from blockchain)
-    expect(tool?.inputSchema.required).toContain('description');
-    expect(tool?.inputSchema.required).toContain('request');  // Object
-    expect(tool?.inputSchema.required).toContain('response');  // Object
-    expect(tool?.inputSchema.required).toContain('transactionHash');
-    expect(tool?.inputSchema.required).toContain('blockchain');
-    expect(tool?.inputSchema.required).toContain('recipientAddress');
-    
-    // Plaintiff/defendant now extracted from blockchain (not required from agent)
-    expect(tool?.inputSchema.required).not.toContain('plaintiff');
-    expect(tool?.inputSchema.required).not.toContain('defendant');
-    expect(tool?.inputSchema.required).not.toContain('disputeUrl');
-    
-    // These are extracted from blockchain
-    expect(tool?.inputSchema.required).not.toContain('amountUsd');
-    expect(tool?.inputSchema.required).not.toContain('currency');
-    expect(tool?.inputSchema.required).not.toContain('fromAddress');
-    expect(tool?.inputSchema.required).not.toContain('toAddress');
-    
-    // Check for blockchain enum (only base, solana - USDC chains)
-    expect(tool?.inputSchema.properties.blockchain.enum).toBeDefined();
-    expect(tool?.inputSchema.properties.blockchain.enum).toEqual(['base', 'solana']);
-    expect(tool?.inputSchema.properties.dryRun).toBeDefined();
-    // Note: returns field removed (not part of MCP standard)
+    expect(tool?.inputSchema.required).toContain('prompt');
   });
 
-  it('should include x402_check_refund_status tool', async () => {
+  it('should not expose refund tools when disabled', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_check_refund_status');
-    expect(tool).toBeDefined();
-    expect(tool?.inputSchema.required).toContain('caseId');
-  });
-
-  it('should include x402_list_my_refund_requests tool', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const tool = MCP_TOOLS.find(t => t.name === 'x402_list_my_refund_requests');
-    expect(tool).toBeDefined();
-    expect(tool?.inputSchema.required).toContain('walletAddress');
+    const names = MCP_TOOLS.map((t) => t.name);
+    expect(names).not.toContain('x402_request_refund');
+    expect(names).not.toContain('x402_check_refund_status');
+    expect(names).not.toContain('x402_list_my_refund_requests');
   });
 });
 
 describe('MCP - Schema Improvements', () => {
-  it('should have blockchain enum validation (ethereum, base, solana only)', async () => {
+  it('should have prompt parameter for image_generator', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
-
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
-    const blockchain = fileDisputeTool?.inputSchema.properties.blockchain;
-
-    expect(blockchain).toBeDefined();
-    expect(blockchain?.enum).toEqual(['base', 'solana']);
-    expect(blockchain?.description).toContain('Base');
-    expect(blockchain?.description).toContain('Solana');
-    expect(blockchain?.description).not.toContain('Ethereum');
-    expect(blockchain?.examples).toBeDefined();
-    expect(blockchain?.examples?.length).toBeGreaterThan(0);
-  });
-
-  it('should have contentEncoding for optional sellerXSignature field', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
-    const sellerXSignature = fileDisputeTool?.inputSchema.properties.sellerXSignature;
-    
-    expect(sellerXSignature).toBeDefined();
-    expect(sellerXSignature?.contentEncoding).toBe('base64');
-    expect(sellerXSignature?.examples).toBeDefined();
-    
-    // sellerXSignature is optional (not required)
-    expect(fileDisputeTool?.inputSchema.required).not.toContain('sellerXSignature');
-  });
-
-  it('should have dryRun parameter for testing', async () => {
-    const { MCP_TOOLS } = await import('../convex/mcp');
-    
-    const fileDisputeTool = MCP_TOOLS.find(t => t.name === 'x402_request_refund');
-    const dryRun = fileDisputeTool?.inputSchema.properties.dryRun;
-    
-    expect(dryRun).toBeDefined();
-    expect(dryRun?.type).toBe('boolean');
-    expect(dryRun?.default).toBe(false);
-    expect(dryRun?.description).toContain('validates');
+    const tool = MCP_TOOLS.find((t) => t.name === 'image_generator');
+    expect(tool).toBeDefined();
+    expect(tool?.inputSchema?.properties?.prompt).toBeDefined();
+    expect(tool?.inputSchema?.required).toContain('prompt');
   });
 });
 
