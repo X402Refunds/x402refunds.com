@@ -1384,7 +1384,7 @@ http.route({
   }),
 });
 
-// GET /v1/merchant/balance?merchant=eip155:8453:0x...
+// GET /v1/merchant/balance?merchant=<CAIP-10>
 http.route({
   path: "/v1/merchant/balance",
   method: "GET",
@@ -1397,7 +1397,11 @@ http.route({
 
     const res: any = await (ctx.runQuery as any)((internal as any).pool.getMerchantUsdcBalanceMicrousdc, { merchant });
     if (!res?.ok) {
-      return jsonError(400, { ok: false, code: "INVALID_MERCHANT", message: "merchant must be CAIP-10 eip155:..." });
+      return jsonError(400, {
+        ok: false,
+        code: "INVALID_MERCHANT",
+        message: "merchant must be CAIP-10 eip155:<chainId>:0x<40hex> or solana:<chainRef>:<base58Address>",
+      });
     }
     return new Response(JSON.stringify({ ok: true, merchant, availableMicrousdc: res.availableMicrousdc ?? 0 }), {
       status: 200,

@@ -1,4 +1,5 @@
 const BASE_EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,64}$/;
 
 export function baseAddressToCaip10(address: string): string {
   const raw = (address || "").trim();
@@ -23,8 +24,18 @@ export function normalizeMerchantToCaip10Base(input: string): { caip10: string |
     return { caip10: `eip155:8453:${addr.toLowerCase()}` };
   }
 
+  // Allow direct CAIP-10 input (Solana).
+  if (raw.startsWith("solana:")) {
+    const m = raw.match(/^solana:([^:]+):([1-9A-HJ-NP-Za-km-z]{32,64})$/);
+    if (!m) return { caip10: null, error: "Invalid Solana CAIP-10 (expected solana:<chainRef>:<base58Address>)" };
+    const chainRef = m[1];
+    const addr = m[2];
+    if (!chainRef || !SOLANA_ADDRESS_RE.test(addr)) return { caip10: null, error: "Invalid Solana address" };
+    return { caip10: `solana:${chainRef}:${addr}` };
+  }
+
   // For the human-friendly flow we accept a plain address and default to Base.
-  if (!isEvmAddress(raw)) return { caip10: null, error: "Enter a valid 0x address" };
+  if (!isEvmAddress(raw)) return { caip10: null, error: "Enter a valid 0x address or CAIP-10 solana:... identity" };
   return { caip10: `eip155:8453:${raw.toLowerCase()}` };
 }
 

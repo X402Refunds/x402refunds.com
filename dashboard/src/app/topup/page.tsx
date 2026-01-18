@@ -282,12 +282,16 @@ export default function TopupPage() {
             <Label htmlFor="merchant">Merchant wallet</Label>
             <Input
               id="merchant"
-              placeholder="0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+              placeholder="0x... or solana:<chainRef>:<base58>"
               value={merchantAddress}
               onChange={(e) => setMerchantAddress(e.target.value)}
             />
             <div className="text-xs text-muted-foreground">
-              Example: <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code>
+              Examples:{" "}
+              <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code> or{" "}
+              <code className="font-mono">
+                solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+              </code>
             </div>
             {merchantAddress.trim() && merchantNormalized.error && (
               <div className="text-xs text-destructive">{merchantNormalized.error}</div>
@@ -333,7 +337,9 @@ export default function TopupPage() {
 
           <div className="space-y-2">
             <Label>Blockchain</Label>
-            <div className="text-sm text-muted-foreground">Base (USDC)</div>
+            <div className="text-sm text-muted-foreground">
+              Top-up payment network: Base (USDC, gasless)
+            </div>
           </div>
 
           <div className="space-y-2">

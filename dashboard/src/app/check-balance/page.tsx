@@ -36,7 +36,7 @@ export default function CheckBalancePage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Check balance</h1>
         <p className="text-sm text-muted-foreground">
-          Check your refund credits by merchant wallet address (Base).
+          Check your refund credits by merchant identity (Base or Solana).
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export default function CheckBalancePage() {
             <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
               id="merchant"
-              placeholder="0x..."
+              placeholder="0x... or solana:<chainRef>:<base58>"
               value={merchant}
               onChange={(e) => {
                 setMerchant(e.target.value);

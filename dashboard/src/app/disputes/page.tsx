@@ -47,7 +47,7 @@ export default function DisputesPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Refund requests</h1>
         <p className="text-sm text-muted-foreground">
-          Public refund-request registry. Search by merchant wallet address (defaults to Base).
+          Public refund-request registry. Search by merchant identity (Base or Solana).
         </p>
       </div>
 
@@ -60,7 +60,7 @@ export default function DisputesPage() {
             <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
               id="merchant"
-              placeholder="0x..."
+              placeholder="0x... or solana:<chainRef>:<base58>"
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
             />

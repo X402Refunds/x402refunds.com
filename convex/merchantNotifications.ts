@@ -42,6 +42,26 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function computeEndpointPayToMatch(params: {
+  expectedMerchant: string;
+  payToCandidates: string[];
+}): { endpointPayToMatch: boolean; endpointPayToMismatch: boolean } | null {
+  const expectedMerchant = String(params.expectedMerchant || "").trim();
+  if (!expectedMerchant) return null;
+  const parts = expectedMerchant.split(":");
+  const chain = parts.length >= 1 ? String(parts[0] || "").trim() : "";
+  const expectedAddr = parts.length >= 3 ? String(parts[2] || "").trim() : "";
+  if (!expectedAddr) return null;
+
+  const candidates = Array.isArray(params.payToCandidates) ? params.payToCandidates : [];
+  const endpointPayToMatch =
+    chain === "eip155"
+      ? candidates.some((x) => String(x).toLowerCase() === expectedAddr.toLowerCase())
+      : candidates.some((x) => String(x) === expectedAddr);
+
+  return { endpointPayToMatch, endpointPayToMismatch: !endpointPayToMatch };
+}
+
 async function resolveDexterPartnerProgram(ctx: any, caseData: any): Promise<any | null> {
   const meta = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
   const partnerMeta = meta?.partner && typeof meta.partner === "object" ? meta.partner : null;
@@ -548,8 +568,14 @@ export const refreshMerchantContactForCase: any = internalAction({
           const expectedAddr = parts.length >= 3 ? String(parts[2] || "").trim() : "";
           if (expectedAddr) {
             endpointPayToCandidates = [expectedAddr];
-            endpointPayToMatch = true;
-            endpointPayToMismatch = false;
+            const computed = computeEndpointPayToMatch({
+              expectedMerchant,
+              payToCandidates: endpointPayToCandidates,
+            });
+            if (computed) {
+              endpointPayToMatch = computed.endpointPayToMatch;
+              endpointPayToMismatch = computed.endpointPayToMismatch;
+            }
           }
         }
       }
@@ -572,16 +598,13 @@ export const refreshMerchantContactForCase: any = internalAction({
       if (!parsed.ok) return;
       endpointPayToCandidates = parsed.payToCandidates;
       if (expectedMerchant) {
-        const parts = expectedMerchant.split(":");
-        const chain = parts.length >= 1 ? String(parts[0] || "").trim() : "";
-        const expectedAddr = parts.length >= 3 ? String(parts[2] || "").trim() : "";
-        if (expectedAddr) {
-          // EVM addresses are case-insensitive; Solana base58 is case-sensitive.
-          endpointPayToMatch =
-            chain === "eip155"
-              ? parsed.payToCandidates.some((x) => String(x).toLowerCase() === expectedAddr.toLowerCase())
-              : parsed.payToCandidates.some((x) => String(x) === expectedAddr);
-          endpointPayToMismatch = !endpointPayToMatch;
+        const computed = computeEndpointPayToMatch({
+          expectedMerchant,
+          payToCandidates: parsed.payToCandidates,
+        });
+        if (computed) {
+          endpointPayToMatch = computed.endpointPayToMatch;
+          endpointPayToMismatch = computed.endpointPayToMismatch;
         }
       }
     };
