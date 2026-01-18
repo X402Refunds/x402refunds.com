@@ -232,7 +232,7 @@ http.route({
       return jsonError(400, { ok: false, code: "INVALID_REQUEST", message: "sellerEmail is required" });
     }
 
-    const discovered: any = await (ctx.runQuery as any)((internalApi as any).merchantWallets.discoverSellerWalletsByEmailInternal, {
+    const discovered: any = await (ctx.runQuery as any)((internal as any).merchantWallets.discoverSellerWalletsByEmailInternal, {
       organizationId: auth.organizationId,
       sellerEmail,
     });

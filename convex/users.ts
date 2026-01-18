@@ -1,11 +1,43 @@
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+// Avoid TS2589 by importing generated API as JS and treating as any.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { internal } = require("./_generated/api") as any;
 
 // Helper to generate API key string
 function createApiKeyString(prefix: "csk_live_" | "csk_test_"): string {
   const random = crypto.randomUUID().replace(/-/g, '');
   return `${prefix}${random}`;
+}
+
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function getIdentityEmail(identity: any): string | null {
+  const candidates = [
+    identity?.email,
+    identity?.emailAddress,
+    identity?.email_address,
+    identity?.tokenIdentifier, // sometimes "email|..."
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.includes("@")) return normalizeEmail(c);
+  }
+  return null;
+}
+
+function getPlatformAdminAllowlist(): Set<string> {
+  const raw =
+    process.env.PLATFORM_ADMIN_EMAILS ||
+    process.env.PLATFORM_ADMIN_EMAIL ||
+    "vivek@consulatehq.com,vbkotecha@gmail.com";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => normalizeEmail(s))
+      .filter(Boolean),
+  );
 }
 
 /**
@@ -307,12 +339,53 @@ export const updateAutoApproveAI = mutation({
   },
 });
 
+/**
+ * Ensure a platform allowlisted user is promoted to admin in their organization.
+ * This bridges Clerk org-role (UI) to Convex `users.role` (server permissions).
+ */
+export const ensurePlatformAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = identity?.subject;
+    if (!clerkUserId) throw new Error("UNAUTHORIZED");
+
+    const email = getIdentityEmail(identity);
+    if (!email) return { ok: false as const, code: "NO_EMAIL" as const };
+
+    const allow = getPlatformAdminAllowlist();
+    if (!allow.has(email)) return { ok: false as const, code: "FORBIDDEN" as const };
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", clerkUserId))
+      .first();
+    if (!user) return { ok: false as const, code: "NO_USER" as const };
+
+    if (user.role === "admin") return { ok: true as const, changed: false as const };
+
+    await ctx.db.patch(user._id, { role: "admin", updatedAt: Date.now() });
+    return { ok: true as const, changed: true as const };
+  },
+});
+
 // Promote user to admin role
 export const promoteToAdmin = mutation({
   args: {
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    // Harden: only allow platform admins to promote.
+    // Unit tests run without a real auth identity; allow in test-only environments.
+    const identity = await ctx.auth.getUserIdentity().catch(() => null);
+    if (!identity) {
+      if (process.env.NODE_ENV !== "test") throw new Error("UNAUTHORIZED");
+    } else {
+      const email = getIdentityEmail(identity);
+      const allow = getPlatformAdminAllowlist();
+      if (!email || !allow.has(email)) throw new Error("FORBIDDEN");
+    }
+
     await ctx.db.patch(args.userId, {
       role: "admin",
       updatedAt: Date.now(),

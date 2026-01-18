@@ -35,6 +35,8 @@ export default function PartnersPage() {
 
   const qGetCurrentUser = makeFunctionReference<"query">("users:getCurrentUser")
   const qGetPartnerProgram = makeFunctionReference<"query">("partnerPrograms:getPartnerProgram")
+  const mSyncUser = makeFunctionReference<"mutation">("users:syncUser")
+  const mEnsurePlatformAdmin = makeFunctionReference<"mutation">("users:ensurePlatformAdmin")
   const mUpsertPartnerProgram = makeFunctionReference<"mutation">("partnerPrograms:upsertPartnerProgram")
 
   const currentUser = useQuery(qGetCurrentUser, {}) as { organizationId?: string } | null | undefined
@@ -48,6 +50,8 @@ export default function PartnersPage() {
   const existing = existingRes?.ok === true ? existingRes.partnerProgram : null
   const existingError = existingRes?.ok === false ? String(existingRes.code || "ERROR") : null
 
+  const syncUser = useMutation(mSyncUser)
+  const ensurePlatformAdmin = useMutation(mEnsurePlatformAdmin)
   const upsert = useMutation(mUpsertPartnerProgram)
 
   const [saving, setSaving] = useState(false)
@@ -61,6 +65,20 @@ export default function PartnersPage() {
   const [platformOpsEmail, setPlatformOpsEmail] = useState("vbkotecha@gmail.com")
   const [partnerOpsEmail, setPartnerOpsEmail] = useState("refunds@dexter.cash")
   const [maxAutoRefundMicrousdc, setMaxAutoRefundMicrousdc] = useState("2000000")
+
+  // Ensure we have a Convex user row + admin role (platform allowlist) so Convex permissions match Clerk UI.
+  useEffect(() => {
+    if (!isLoaded || !user) return
+    // If the user row doesn't exist yet, create it based on email domain.
+    if (!currentUser) {
+      syncUser({
+        email: user.primaryEmailAddress?.emailAddress || "",
+        name: user.fullName || undefined,
+      }).catch(() => {});
+    }
+    // Best-effort promote if allowlisted.
+    ensurePlatformAdmin({}).catch(() => {});
+  }, [isLoaded, user, currentUser, syncUser, ensurePlatformAdmin])
 
   useEffect(() => {
     if (!existing) return
