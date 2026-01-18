@@ -1795,6 +1795,20 @@ http.route({
     const merchant =
       blockchain === "base" ? `eip155:8453:${recipientAddress}` : `solana:${SOLANA_MAINNET_CHAINREF}:${recipientAddress}`;
 
+    // Safety: disallow self-payments (payer == merchant). These transfers are valid on-chain,
+    // but refund-to-source would be a no-op and can waste credits / create confusing cases.
+    if (payer === merchant) {
+      return jsonError(400, {
+        ok: false,
+        code: "SELF_PAYMENT",
+        message: "payer and merchant are the same wallet; self-payments cannot be disputed",
+        blockchain,
+        transactionHash,
+        payer,
+        merchant,
+      });
+    }
+
     // === Best-effort seller endpoint corroboration (does NOT block filing) ===
     // Some sellers return 200 on GET (service info) but 402 on POST without payment (x402 flow),
     // so we may need to probe both to discover refund-contact + payTo.

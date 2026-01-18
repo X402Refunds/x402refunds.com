@@ -37,6 +37,43 @@ describe("v1 wallet-first disputes (unit)", () => {
     expect(row.metadata?.poolStatus).toBe("FILED");
   });
 
+  it("rejects self-payments (payer == merchant) to avoid refund-to-self", async () => {
+    const res = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "solana",
+      transactionHash: "3BTNYaLGEFsMUy6ir5pc23qRWaz481hyh1VKT44Gn1QGNAtMGHS2aPXUgkm3raQZU9FEvp1J14ZRfJ1fgUk6w1hW",
+      sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+      origin: "https://api.x402refunds.com",
+      payer: "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N",
+      merchant: "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N",
+      amountMicrousdc: 10000,
+      sourceTransferLogIndex: 0,
+      description: "self payment test",
+    });
+
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.code).toBe("SELF_PAYMENT");
+  });
+
+  it("rejects self-payments for Base (payer == merchant)", async () => {
+    const addr = "eip155:8453:0x00000000000000000000000000000000000000aa";
+    const res = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: "0x" + "aa".repeat(32),
+      sellerEndpointUrl: "https://merchant.example/v1/paid-endpoint",
+      origin: "https://merchant.example",
+      payer: addr,
+      merchant: addr,
+      amountMicrousdc: 10000,
+      sourceTransferLogIndex: 0,
+      description: "self payment base",
+    });
+
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.code).toBe("SELF_PAYMENT");
+  });
+
   it("lists disputes by merchant (CAIP-10 normalized)", async () => {
     const merchantRaw = "eip155:8453:0x00000000000000000000000000000000000000AA";
     const merchantNormalized = "eip155:8453:0x00000000000000000000000000000000000000aa";

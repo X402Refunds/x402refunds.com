@@ -126,6 +126,16 @@ export const cases_fileWalletPaymentDispute = mutation({
     const parsedPayer = parseCaip10Any(args.payer);
     if (!parsedPayer.ok) return parsedPayer;
 
+    // Safety: disallow self-payments (payer == merchant). These transfers are valid on-chain,
+    // but "refund to source" would be a no-op and can waste credits / cause confusing UX.
+    if (parsedPayer.normalized === parsedMerchant.normalized) {
+      return {
+        ok: false,
+        code: "SELF_PAYMENT",
+        message: "payer and merchant are the same wallet; self-payments cannot be disputed",
+      };
+    }
+
     const sellerEndpointUrl = (args.sellerEndpointUrl || "").trim();
     if (!sellerEndpointUrl) return { ok: false, code: "INVALID_SELLER_ENDPOINT_URL", message: "sellerEndpointUrl is required" };
 

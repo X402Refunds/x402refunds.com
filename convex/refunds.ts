@@ -403,6 +403,27 @@ export const createRefundAttempt = internalAction({
       return { status: "INVALID_PROOF", refundId: inserted.refundId };
     }
 
+    // Safety: if payer == recipient, "refund to source" is a no-op and can waste credits.
+    const payerAddr = String(verify.payerAddress || "");
+    const recipientAddr = String(verify.recipientAddress || "");
+    const isSelfPayment =
+      sourceChain === "base"
+        ? payerAddr.toLowerCase() === recipientAddr.toLowerCase()
+        : payerAddr === recipientAddr;
+    if (isSelfPayment) {
+      const inserted = await ctx.runMutation(internal.refunds.insertRefundFailure, {
+        caseId: args.caseId,
+        sourceChain,
+        sourceTxHash,
+        sourceTransferLogIndex: typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex,
+        amountMicrousdc: paymentAmountMicrousdc,
+        status: "INVALID_PROOF",
+        failureCode: "SELF_PAYMENT",
+        failureReason: "payer and recipient are the same wallet; refund-to-source is a no-op",
+      });
+      return { status: "INVALID_PROOF", refundId: inserted.refundId };
+    }
+
     const logIndex = typeof pd?.sourceTransferLogIndex === "number" ? pd.sourceTransferLogIndex : verify.logIndex;
 
     // Idempotency: if a refund already exists for this exact source transfer, surface it.

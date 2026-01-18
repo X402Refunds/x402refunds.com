@@ -32,18 +32,30 @@
  */
 
 import { httpAction, action } from "./_generated/server";
-// @ts-ignore - Convex generated `api` types can exceed TS instantiation depth in some TS configs.
-import { api } from "./_generated/api";
+import * as apiMod from "./_generated/api.js";
 import { v } from "convex/values";
 
-// Shared wallet for all demo agents (Base / EVM)
-const DEMO_AGENTS_WALLET =
-  process.env.DEMO_AGENTS_WALLET || "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+// Avoid TS2589 (excessively deep type instantiation) in downstream TS projects (notably dashboard)
+// by importing generated API as JS and treating it as `any`.
+const api: any = (apiMod as any).api;
 
-// Shared wallet for all demo agents (Solana)
-// Default is a public address used during development; override in env for your own agent.
-const DEMO_AGENTS_SOLANA_WALLET =
-  process.env.DEMO_AGENTS_SOLANA_WALLET || "FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N";
+// Resolve payTo wallets for demo agents.
+// Prefer explicit DEMO_AGENTS_* overrides; otherwise use the platform CDP deposit wallets
+// (same ones used by /v1/topup) so operators see funds in CDP by default.
+export function getDemoAgentsPayToWallets(): { base: string; solana: string } {
+  const base =
+    (process.env.DEMO_AGENTS_WALLET && process.env.DEMO_AGENTS_WALLET.trim()) ||
+    (process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS && process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS.trim()) ||
+    "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381";
+
+  const solana =
+    (process.env.DEMO_AGENTS_SOLANA_WALLET && process.env.DEMO_AGENTS_SOLANA_WALLET.trim()) ||
+    (process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS && process.env.PLATFORM_SOLANA_USDC_DEPOSIT_ADDRESS.trim()) ||
+    // Default is a public address used during development; override in env for your own agent.
+    "FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N";
+
+  return { base, solana };
+}
 
 // Refund contact email the demo agent wants to receive refund requests at (exposed via Link on 402).
 const DEMO_AGENTS_REFUND_CONTACT_EMAIL =
@@ -173,6 +185,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
   console.log(`📨 GET request received - returning service info`);
   
   const USDC_BASE_MAINNET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+  const payTo = getDemoAgentsPayToWallets();
   
   return new Response(JSON.stringify({
     status: "available",
@@ -182,7 +195,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
     x402Version: 1,
     payments: [
       {
-        address: DEMO_AGENTS_WALLET,
+        address: payTo.base,
         network: "base",
         currency: "USDC",
         price: "$0.01",
@@ -190,7 +203,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
         asset: USDC_BASE_MAINNET,
       },
       {
-        address: DEMO_AGENTS_SOLANA_WALLET,
+        address: payTo.solana,
         network: "solana",
         currency: "USDC",
         price: "$0.01",
@@ -235,6 +248,7 @@ export const imageGeneratorGetHandler = httpAction(async (ctx, request) => {
  * 5. Returns 200 OK with image URL + X-PAYMENT-RESPONSE
  */
 export const imageGeneratorHandler = httpAction(async (ctx, request) => {
+  const payTo = getDemoAgentsPayToWallets();
   console.log(`📨 POST request received`);
   const refundRequest = buildRefundRequestLinkHeader(request.url);
   const refundContactLink = buildRefundContactLinkHeader();
@@ -290,7 +304,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
       network: "base", // v1 uses simple network name
       maxAmountRequired: "10000", // v1 uses maxAmountRequired
       asset: USDC_BASE_MAINNET,
-      payTo: DEMO_AGENTS_WALLET,
+      payTo: payTo.base,
       resource: request.url, // v1 has these at top level
       description: "AI Image Generation via Pollinations",
       mimeType: "application/json",
@@ -331,7 +345,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     // Some facilitators expect `amount` instead of `maxAmountRequired`.
     amount: "10000",
     asset: USDC_SOLANA_MAINNET,
-    payTo: DEMO_AGENTS_SOLANA_WALLET,
+    payTo: payTo.solana,
     resource: request.url,
     description: "AI Image Generation via Pollinations",
     mimeType: "application/json",
@@ -387,7 +401,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     const txResult: any = await runAction((api as any).lib.blockchain.queryTransaction as any, {
       blockchain: isSolana ? "solana" : "base",
       transactionHash: effectiveTxHash,
-      expectedToAddress: isSolana ? DEMO_AGENTS_SOLANA_WALLET : DEMO_AGENTS_WALLET,
+      expectedToAddress: isSolana ? payTo.solana : payTo.base,
     });
     
     if (!txResult.success) {
@@ -424,7 +438,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
     console.log(`   Amount: ${txResult.value} USDC`);
 
     // Defense-in-depth: ensure the USDC recipient matches our expected payTo
-    const expectedTo = isSolana ? DEMO_AGENTS_SOLANA_WALLET : DEMO_AGENTS_WALLET;
+    const expectedTo = isSolana ? payTo.solana : payTo.base;
     if (String(txResult.toAddress || "") !== String(expectedTo)) {
       return new Response(JSON.stringify({
         error: "Payment recipient mismatch",
@@ -541,7 +555,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           maxAmountRequired: "10000",
           amount: "10000",
           asset: USDC_SOLANA_MAINNET,
-          payTo: DEMO_AGENTS_SOLANA_WALLET,
+          payTo: payTo.solana,
           resource: request.url,
           description: "Image generation API (demo - always returns 500 error)",
           mimeType: "application/json",
@@ -555,7 +569,7 @@ export const imageGeneratorHandler = httpAction(async (ctx, request) => {
           network: "base",
           maxAmountRequired: "10000",
           asset: USDC_BASE_MAINNET,
-          payTo: DEMO_AGENTS_WALLET,
+          payTo: payTo.base,
           resource: request.url,
           description: "Image generation API (demo - always returns 500 error)",
           mimeType: "application/json",

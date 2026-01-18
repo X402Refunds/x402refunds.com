@@ -82,6 +82,67 @@ describe("Refund System - Unit Tests", () => {
     });
   });
 
+  it("does not create/send refunds for self-payments (refund-to-self)", async () => {
+    // In test mode, blockchain verification is mocked. The mock payer address is fixed in
+    // convex/lib/blockchain.ts verifyUsdcTransferByRecipient mockMode.
+    const mockPayerBase = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0".toLowerCase();
+    const merchant = `eip155:8453:${mockPayerBase}`;
+    const now = Date.now();
+
+    const orgId = await t.run(async (ctx) =>
+      ctx.db.insert("organizations", { name: "SelfPay Org", createdAt: now } as any),
+    );
+
+    // Create a PAYMENT case where merchant recipient == payer (self-payment).
+    const caseId = await t.run(async (ctx) =>
+      ctx.db.insert("cases", {
+        plaintiff: merchant,
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "self payment",
+        amount: 0.25,
+        currency: "USDC",
+        evidenceIds: [],
+        reviewerOrganizationId: orgId,
+        finalVerdict: "CONSUMER_WINS",
+        decidedAt: now,
+        finalRefundAmountMicrousdc: 250_000,
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+        paymentDetails: {
+          transactionId: "0x" + "11".repeat(32),
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 250_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeReason: "other",
+          regulationEDeadline: now + 1_000_000,
+          plaintiffMetadata: { walletAddress: mockPayerBase, requestJson: "{}" },
+          defendantMetadata: { walletAddress: mockPayerBase, merchantId: merchant, merchantOrigin: "https://m.example", responseJson: "{}" },
+          disputeFee: 0.05,
+        },
+        createdAt: now,
+      } as any),
+    );
+
+    const res: any = await t.action((internal as any).refunds.createRefundAttempt, { caseId });
+    expect(res).toBeDefined();
+    expect(res.status).toBe("INVALID_PROOF");
+
+    const refund = await t.run(async (ctx) =>
+      ctx.db
+        .query("refundTransactions")
+        // @ts-expect-error convex-test query typing
+        .withIndex("by_case", (q) => q.eq("caseId", caseId))
+        .first(),
+    );
+    expect(refund).toBeTruthy();
+    expect(refund?.failureCode).toBe("SELF_PAYMENT");
+  });
+
   it("should create merchant balance with CAIP-10 wallet", async () => {
     const walletAddress = "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:TEST_MERCHANT_123";
     
