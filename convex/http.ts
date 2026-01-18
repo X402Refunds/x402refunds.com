@@ -1687,6 +1687,7 @@ http.route({
         settleBodyPrefix: settleBody.slice(0, 200),
         settlePaymentResponseHeaderPrefix: String((settleHeaders as any)?.paymentResponse ?? "").slice(0, 120),
         settleTxHashHeader: String((settleHeaders as any)?.txHashHeader ?? ""),
+        settleInterestingHeaders: String((settleHeaders as any)?.interestingHeaders ?? ""),
       });
     }
 

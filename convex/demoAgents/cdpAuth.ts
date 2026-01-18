@@ -337,12 +337,25 @@ export const settlePayment = action({
             resp.headers.get("x-transaction-hash") ||
             "";
 
+          const interestingHeaders: Array<[string, string]> = [];
+          try {
+            for (const [k, v] of resp.headers.entries()) {
+              const key = String(k || "").toLowerCase();
+              if (/(payment|transaction|tx|signature)/i.test(key)) {
+                interestingHeaders.push([k, String(v || "")]);
+              }
+            }
+          } catch {
+            // ignore
+          }
+
           return {
             status: resp.status,
             body: text,
             headers: {
               ...(paymentResponse ? { paymentResponse } : {}),
               ...(txHashHeader ? { txHashHeader } : {}),
+              ...(interestingHeaders.length ? { interestingHeaders: JSON.stringify(interestingHeaders).slice(0, 2000) } : {}),
             },
           };
         };
