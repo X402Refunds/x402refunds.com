@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-18T19:51:15.736Z
+**Auto-generated on**: 2026-01-18T20:17:03.094Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (75 files)
+### Convex Files (76 files)
 - **admin.ts** - adminCreateOrganization, adminGrantOrganizationCredits, adminGetOrganizationByDomain
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
@@ -120,6 +120,7 @@ consulate/
 - **merchantRefundEmailCopy.ts** - buildMerchantRefundExecutedEmailCopy
 - **openrouter.ts** - openrouter, DEFAULT_MODEL, selectModel, getModelConfig
 - **partnerProcessedSummaryEmailCopy.ts** - buildPartnerProcessedSummaryEmailCopy
+- **selfPaymentException.ts** - allowSelfPaymentRefundToProceed
 - **solana.ts** - executeSolanaRefund, checkSolanaBalance
 - **usdc.ts** - parseUsdcAmountToMicros, formatMicrosToUsdc
 - **x402PayTo.ts** - parseX402PayTo
@@ -204,7 +205,7 @@ Common HTTP routes exposed:
 
 ## 🧪 Test Files
 
-### Test Suites (82 test files)
+### Test Suites (83 test files)
 - test/adp-compliance-payment.test.ts
 - test/adp-endpoints.test.ts
 - test/agents-x402.test.ts
@@ -268,6 +269,7 @@ Common HTTP routes exposed:
 - test/unit/purge-nonpayment-cases.test.ts
 - test/unit/regression-guards.test.ts
 - test/unit/regulation-e-compliance.test.ts
+- test/unit/self-payment-exception.test.ts
 - test/unit/solana-demo-payment-safety.test.ts
 - test/unit/solana-usdc-owner-parsing.test.ts
 - test/unit/topup-auto-action.test.ts
@@ -402,13 +404,13 @@ Common HTTP routes exposed:
 - 78 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 75 TypeScript files with serverless functions
+- 76 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
 
 **Tests**: Look in `test/`
-- 82 test files using Vitest
+- 83 test files using Vitest
 
 **Scripts**: Look in `scripts/`
 - Automation, deployment, and utility scripts
@@ -441,5 +443,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/18/2026, 11:51:15 AM
-Files scanned: 577
+Generated: 1/18/2026, 12:17:03 PM
+Files scanned: 579
