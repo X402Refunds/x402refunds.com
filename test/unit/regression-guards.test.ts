@@ -18,5 +18,10 @@ describe("Regression guards (smoke + routes)", () => {
     const http = readRepoFile("convex/http.ts");
     expect(http).toContain('path: "/demo-agents/solana/blockhash"');
   });
+
+  it("/topup uses same-origin proxy for POST /v1/topup", () => {
+    const topupPage = readRepoFile("dashboard/src/app/topup/page.tsx");
+    expect(topupPage).toContain('"/api/wallet-first/topup"');
+  });
 });
 

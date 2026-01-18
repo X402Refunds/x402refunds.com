@@ -25,6 +25,7 @@ import {
 } from "@/lib/x402-solana";
 import { Loader2 } from "lucide-react";
 const API_BASE = "https://api.x402refunds.com";
+const TOPUP_PROXY_PATH = "/api/wallet-first/topup";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
 const MIN_TOPUP_MICROUSDC = BigInt(10_000); // $0.01
 
@@ -528,7 +529,7 @@ export default function TopupPage() {
                 }
 
                 // 1) request payment requirements (402)
-                const res = await fetch(`${API_BASE}/v1/topup`, {
+                const res = await fetch(TOPUP_PROXY_PATH, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -612,7 +613,7 @@ export default function TopupPage() {
                 }
 
                 // 3) settle (send X-PAYMENT header)
-                const res2 = await fetch(`${API_BASE}/v1/topup`, {
+                const res2 = await fetch(TOPUP_PROXY_PATH, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
