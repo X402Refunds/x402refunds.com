@@ -2254,6 +2254,42 @@ http.route({
     const url = new URL(request.url);
     const merchant = url.searchParams.get("merchant") || "";
     const limit = Number(url.searchParams.get("limit") || "50");
+
+    // Agent-first discovery: allow GET /v1/refunds (no params) to return a self-describing
+    // contract so clients don't have to hardcode request bodies.
+    if (!merchant) {
+      const origin = url.origin;
+      const schemaUrl = `${origin}/v1/refunds/schema`;
+      const describedby = `<${schemaUrl}>; rel="describedby"; type="application/schema+json"`;
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          kind: "refund_request_endpoint",
+          endpoint: `${origin}/v1/refunds`,
+          method: "POST",
+          schemaUrl,
+          requiredBodyFields: ["blockchain", "transactionHash", "sellerEndpointUrl", "description"],
+          exampleBody: {
+            blockchain: "base",
+            transactionHash: "0x<64-hex-chars>",
+            sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+            description: "Paid request returned an error after payment",
+          },
+          listRefundRequests: {
+            endpoint: `${origin}/v1/refunds?merchant=<caip10>`,
+            note: "Pass merchant (CAIP-10) to list refund requests for a merchant wallet.",
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json; charset=utf-8",
+            Link: describedby,
+          },
+        },
+      );
+    }
     
     const res = await ctx.runQuery((api as any).pool.cases_listWalletDisputesByMerchant, {
       merchant,
