@@ -26,6 +26,10 @@ type PartnerProgram = {
   broadcastUrl?: string
 }
 
+type GetPartnerProgramResult =
+  | { ok: true; partnerProgram: PartnerProgram | null }
+  | { ok: false; code: string; message?: string }
+
 export default function PartnersPage() {
   const { user, isLoaded } = useUser()
 
@@ -36,10 +40,13 @@ export default function PartnersPage() {
   const currentUser = useQuery(qGetCurrentUser, {}) as { organizationId?: string } | null | undefined
   const orgId = currentUser?.organizationId
 
-  const existing = useQuery(
+  const existingRes = useQuery(
     qGetPartnerProgram,
     orgId ? { organizationId: orgId, partnerKey: "dexter" } : "skip",
-  ) as PartnerProgram | null | undefined
+  ) as GetPartnerProgramResult | undefined
+
+  const existing = existingRes?.ok === true ? existingRes.partnerProgram : null
+  const existingError = existingRes?.ok === false ? String(existingRes.code || "ERROR") : null
 
   const upsert = useMutation(mUpsertPartnerProgram)
 
@@ -95,6 +102,17 @@ export default function PartnersPage() {
           </Badge>
         </div>
 
+        {existingError && (
+          <Card>
+            <CardContent className="py-6 text-sm">
+              <div className="font-medium text-foreground">Access denied</div>
+              <div className="text-muted-foreground mt-1">
+                This page requires an org admin. Convex returned: <span className="font-mono">{existingError}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {!orgId && (
           <Card>
             <CardContent className="py-6 text-sm text-muted-foreground">
@@ -103,7 +121,7 @@ export default function PartnersPage() {
           </Card>
         )}
 
-        {orgId && (
+        {orgId && !existingError && (
           <Card>
             <CardHeader>
               <CardTitle>Dexter partner program</CardTitle>

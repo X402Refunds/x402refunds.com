@@ -17,16 +17,34 @@ async function requireAdminForOrg(
   const clerkUserId = identity?.subject;
   if (!clerkUserId) throw new Error("UNAUTHORIZED");
 
+  const orgIdFromIdentity =
+    (identity as any)?.orgId ?? (identity as any)?.organizationId ?? (identity as any)?.org ?? null;
+  const orgRoleFromIdentity =
+    (identity as any)?.orgRole ?? (identity as any)?.organizationRole ?? (identity as any)?.role ?? null;
+
+  // Best-effort: allow Clerk org admins even if our local `users` row hasn't been promoted yet.
+  const isIdentityAdmin =
+    typeof orgRoleFromIdentity === "string" &&
+    (orgRoleFromIdentity === "org:admin" || orgRoleFromIdentity === "admin");
+  const isIdentityInOrg = orgIdFromIdentity ? String(orgIdFromIdentity) === String(organizationId) : false;
+
   const user = await ctx.db
     .query("users")
     .withIndex("by_clerk_user_id", (q: any) => q.eq("clerkUserId", clerkUserId))
     .first();
-  if (!user) throw new Error("UNAUTHORIZED");
-  if (user.role !== "admin") throw new Error("FORBIDDEN");
-  if (!user.organizationId || String(user.organizationId) !== String(organizationId)) {
-    throw new Error("FORBIDDEN");
-  }
-  return { user };
+
+  const isUserInOrg = user?.organizationId ? String(user.organizationId) === String(organizationId) : false;
+  const isUserAdmin = user?.role === "admin";
+
+  // If we have a user row, require org membership; admin can come from either local role or Clerk org role.
+  // If we don't have a user row yet, fall back to identity org role + org match.
+  const inOrg = user ? isUserInOrg : isIdentityInOrg;
+  const isAdmin = user ? (isUserAdmin || isIdentityAdmin) : isIdentityAdmin;
+
+  if (!inOrg) throw new Error("FORBIDDEN");
+  if (!isAdmin) throw new Error("FORBIDDEN");
+
+  return { user: user ?? null };
 }
 
 export const getPartnerProgramByCanonicalEmailInternal = internalQuery({
@@ -51,15 +69,25 @@ export const getPartnerProgramByIdInternal = internalQuery({
 export const getPartnerProgram = query({
   args: { organizationId: v.id("organizations"), partnerKey: v.string() },
   handler: async (ctx, args) => {
-    await requireAdminForOrg(ctx, args.organizationId);
     const key = (args.partnerKey || "").trim();
-    if (!key) throw new Error("partnerKey is required");
-    return await ctx.db
+    if (!key) return { ok: false as const, code: "INVALID_REQUEST" as const, message: "partnerKey is required" };
+
+    try {
+      await requireAdminForOrg(ctx, args.organizationId);
+    } catch (e: any) {
+      const msg = e?.message ? String(e.message) : String(e);
+      const code = msg === "UNAUTHORIZED" ? "UNAUTHORIZED" : "FORBIDDEN";
+      return { ok: false as const, code, message: msg };
+    }
+
+    const partnerProgram = await ctx.db
       .query("partnerPrograms")
       .withIndex("by_org_key", (q: any) =>
         q.eq("liableOrganizationId", args.organizationId).eq("partnerKey", key),
       )
       .first();
+
+    return { ok: true as const, partnerProgram: partnerProgram ?? null };
   },
 });
 
