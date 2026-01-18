@@ -617,13 +617,13 @@ export default function TopupPage() {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    "X-PAYMENT": xPayment,
                   },
                   body: JSON.stringify({
                     merchant: merchantCaip10,
                     amountMicrousdc: amountMicros,
                     currency: "USDC",
                     blockchain: payNetwork,
+                    paymentHeader: xPayment,
                     caseId: caseId || undefined,
                     actionToken: actionToken || undefined,
                   }),

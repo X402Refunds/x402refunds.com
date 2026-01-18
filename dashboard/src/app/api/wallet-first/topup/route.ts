@@ -6,10 +6,6 @@ export const runtime = "nodejs";
 const UPSTREAM_API_BASE = "https://api.x402refunds.com";
 
 export async function POST(request: Request) {
-  const xPayment = request.headers.get("X-PAYMENT");
-  const paymentSignature = request.headers.get("PAYMENT-SIGNATURE");
-  const txHashHeader = request.headers.get("X-402-Transaction-Hash");
-
   const bodyText = await request.text().catch(() => "");
 
   // Proxy the wallet-first endpoint server-side to avoid browser CORS / preflight variability.
@@ -17,9 +13,6 @@ export async function POST(request: Request) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(xPayment ? { "X-PAYMENT": xPayment } : {}),
-      ...(paymentSignature ? { "PAYMENT-SIGNATURE": paymentSignature } : {}),
-      ...(txHashHeader ? { "X-402-Transaction-Hash": txHashHeader } : {}),
     },
     body: bodyText,
   });

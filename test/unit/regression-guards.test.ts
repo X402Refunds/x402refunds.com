@@ -23,5 +23,11 @@ describe("Regression guards (smoke + routes)", () => {
     const topupPage = readRepoFile("dashboard/src/app/topup/page.tsx");
     expect(topupPage).toContain('"/api/wallet-first/topup"');
   });
+
+  it("wallet-first /v1/topup supports paymentHeader in JSON body", () => {
+    const http = readRepoFile("convex/http.ts");
+    expect(http).toContain("paymentHeaderFromBody");
+    expect(http).toContain("body?.paymentHeader");
+  });
 });
 

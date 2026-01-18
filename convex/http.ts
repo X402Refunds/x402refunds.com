@@ -1594,6 +1594,7 @@ http.route({
 
     const paymentSig = request.headers.get("PAYMENT-SIGNATURE");
     const xPayment = request.headers.get("X-PAYMENT");
+    const paymentHeaderFromBody = typeof body?.paymentHeader === "string" ? body.paymentHeader : "";
     const txHashHeader = request.headers.get("X-402-Transaction-Hash");
 
     async function estimatedNewBalanceUsdc(): Promise<number | null> {
@@ -1640,7 +1641,7 @@ http.route({
 }
 
     // Discovery: return BOTH v2 header and v1 body so either client can proceed.
-    if (!paymentSig && !xPayment) {
+    if (!paymentSig && !xPayment && !paymentHeaderFromBody) {
       return new Response(JSON.stringify(paymentRequiredV1), {
         status: 402,
         headers: {
@@ -1652,7 +1653,7 @@ http.route({
 
     // Verify + settle via facilitator (node action).
     // v2 uses PAYMENT-SIGNATURE; v1 uses X-PAYMENT.
-    const paymentHeader = paymentSig || xPayment;
+    const paymentHeader = paymentSig || xPayment || paymentHeaderFromBody;
     const paymentRequirements = paymentSig ? paymentRequiredV2.accepts[0] : paymentRequiredV1.accepts[0];
 
     const verify: any = await (ctx.runAction as any)((api as any).demoAgents.cdpAuth.verifyPayment, {
