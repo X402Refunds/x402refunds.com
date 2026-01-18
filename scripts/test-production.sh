@@ -24,6 +24,9 @@ export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-https://x402refunds.com}"
 export NODE_ENV="${NODE_ENV:-production}"
 export USE_LIVE_API="${USE_LIVE_API:-true}"
 
+# Prefer IPv4 to avoid IPv6 connect timeouts on some networks (undici/node fetch).
+export NODE_OPTIONS="--dns-result-order=ipv4first ${NODE_OPTIONS:-}"
+
 echo "🔥 Running smoke tests against PRODUCTION environment"
 echo "⚠️  WARNING: Testing against live production!"
 echo "📍 API Base URL: $API_BASE_URL"

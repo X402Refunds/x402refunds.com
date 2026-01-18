@@ -24,6 +24,9 @@ echo "📍 Frontend Base URL: $FRONTEND_BASE_URL"
 echo "📍 Environment: $NODE_ENV"
 echo ""
 
+# Prefer IPv4 to avoid IPv6 connect timeouts on some networks (undici/node fetch).
+export NODE_OPTIONS="--dns-result-order=ipv4first ${NODE_OPTIONS:-}"
+
 # Enable CDP smoke test (hits deployed Convex action).
 export RUN_SMOKE_CDP_TEST=true
 export RUN_SMOKE_BLOCKHASH_TEST=true
