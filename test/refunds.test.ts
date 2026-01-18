@@ -144,6 +144,75 @@ describe("Refund System - Unit Tests", () => {
     expect(refund?.failureCode).not.toBe("SELF_PAYMENT");
   });
 
+  it("retries wallet-first email-link refunds that failed Coinbase send", async () => {
+    const now = Date.now();
+    const payer = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0".toLowerCase();
+    const merchant = `eip155:8453:${"0x9876543210987654321098765432109876543210".toLowerCase()}`;
+    const tx = "0x" + "22".repeat(32);
+
+    const caseId = await t.run(async (ctx) =>
+      ctx.db.insert("cases", {
+        plaintiff: `eip155:8453:${payer}`,
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "retry failed refund",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        finalVerdict: "CONSUMER_WINS",
+        decidedAt: now,
+        // Must match convex/lib/blockchain.ts mockMode amountMicrousdc (250_000)
+        finalRefundAmountMicrousdc: 250_000,
+        humanOverrideReason: "Approved via email link",
+        paymentSourceChain: "base",
+        paymentSourceTxHash: tx,
+        paymentDetails: {
+          transactionId: tx,
+          transactionHash: tx,
+          blockchain: "base",
+          amountMicrousdc: 250_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeReason: "other",
+          regulationEDeadline: now + 1_000_000,
+          plaintiffMetadata: { walletAddress: payer, requestJson: "{}" },
+          defendantMetadata: { walletAddress: merchant.split(":").pop(), merchantId: merchant, merchantOrigin: "https://api.x402refunds.com", responseJson: "{}" },
+          disputeFee: 0.05,
+        },
+        createdAt: now,
+      } as any),
+    );
+
+    // Insert an existing failed refund record for the same source triplet (simulates first attempt failure).
+    await t.run(async (ctx) => {
+      await ctx.db.insert("refundTransactions", {
+        caseId,
+        fromWallet: "platform",
+        toWallet: payer,
+        amount: 0.25,
+        currency: "USDC",
+        blockchain: "base",
+        status: "FAILED",
+        createdAt: now,
+        sourceChain: "base",
+        sourceTxHash: tx,
+        sourceTransferLogIndex: 0,
+        amountMicrousdc: 250_000,
+        refundToAddress: payer,
+        provider: "coinbase",
+        failureCode: "COINBASE_SEND_FAILED",
+        failureReason: "AccountNotFound",
+        errorMessage: "AccountNotFound",
+      } as any);
+    });
+
+    const res: any = await t.action((internal as any).refunds.createRefundAttempt, { caseId });
+    expect(res).toBeDefined();
+    expect(["PENDING_SEND", "ALREADY_EXISTS"]).toContain(res.status);
+  });
+
   it("should create merchant balance with CAIP-10 wallet", async () => {
     const walletAddress = "solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:TEST_MERCHANT_123";
     

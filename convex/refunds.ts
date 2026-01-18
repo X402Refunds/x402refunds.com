@@ -412,6 +412,46 @@ export const createRefundAttempt = internalAction({
       sourceTransferLogIndex: logIndex,
     });
     if (existingBySource) {
+      // If the existing refund failed in a retryable way, allow re-sending.
+      // This fixes both org-scoped and wallet-first (email-link) flows.
+      const retryableCoinbaseFailure =
+        existingBySource.provider === "coinbase" &&
+        (existingBySource.status === "FAILED" || existingBySource.status === "COINBASE_DISABLED") &&
+        (existingBySource.failureCode === "COINBASE_SEND_FAILED" || existingBySource.failureCode === "COINBASE_DISABLED");
+
+      // For org-scoped cases, delegate to createRefundAttemptRecord so credits are re-debited safely.
+      if (retryableCoinbaseFailure && dispute.reviewerOrganizationId) {
+        const retried = await ctx.runMutation(internal.refunds.createRefundAttemptRecord, {
+          caseId: args.caseId,
+          organizationId: dispute.reviewerOrganizationId,
+          sourceChain,
+          sourceTxHash,
+          sourceTransferLogIndex: logIndex,
+          amountMicrousdc: refundAmountMicrousdc,
+          refundToAddress: verify.payerAddress,
+        });
+        if (retried.status === "PENDING_SEND" && isCoinbaseRefundsEnabled()) {
+          await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: retried.refundId });
+        }
+        return retried;
+      }
+
+      // For wallet-first email-link approvals, balances were already debited at click time.
+      // So we can safely re-send without touching balances.
+      const predebitedByEmailLink = dispute.humanOverrideReason === "Approved via email link";
+      if (retryableCoinbaseFailure && predebitedByEmailLink) {
+        await ctx.runMutation(internal.refunds.markRefundPendingSendForRetry as any, {
+          refundId: existingBySource._id,
+          amountMicrousdc: refundAmountMicrousdc,
+          refundToAddress: verify.payerAddress,
+        });
+        if (isCoinbaseRefundsEnabled()) {
+          await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: existingBySource._id });
+        }
+        return { status: "PENDING_SEND", refundId: existingBySource._id, retried: true };
+      }
+
+      // Otherwise, keep idempotent behavior.
       return { status: "ALREADY_EXISTS", refundId: existingBySource._id };
     }
 
@@ -1018,6 +1058,27 @@ export const markRefundFailed = internalMutation({
       failureCode: args.failureCode,
       failureReason: args.failureReason,
     });
+    return { success: true };
+  },
+});
+
+export const markRefundPendingSendForRetry = internalMutation({
+  args: {
+    refundId: v.id("refundTransactions"),
+    amountMicrousdc: v.number(),
+    refundToAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.refundId, {
+      status: "PENDING_SEND",
+      failureCode: undefined,
+      failureReason: undefined,
+      errorMessage: undefined,
+      amountMicrousdc: args.amountMicrousdc,
+      refundToAddress: args.refundToAddress,
+      toWallet: args.refundToAddress,
+      provider: "coinbase",
+    } as any);
     return { success: true };
   },
 });
