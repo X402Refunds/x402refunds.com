@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
 import { Navigation } from "@/components/Navigation";
@@ -6,9 +7,36 @@ import { Section } from "@/components/layout";
 import { DocsClient } from "./DocsClient";
 import { readRefundRequestsMarkdown, splitBuyerPanels, splitDocsMarkdown } from "./docsMarkdown";
 
-export const metadata = {
-  title: "Docs - x402Disputes",
-  description: "Simple documentation for x402Disputes (post-transaction disputes + refunds).",
+export const metadata: Metadata = {
+  title: "X402 Refund Process Documentation | X402Refunds",
+  description: "Complete guide to requesting x402 payment refunds. Learn how to file refund requests via API or web form. Includes JSON Schema, code examples, and step-by-step instructions for Base and Solana USDC payments.",
+  keywords: [
+    "x402 refund process",
+    "how to request x402 refund",
+    "x402 payment refund",
+    "file x402 refund request",
+    "x402 refund API",
+    "x402 refund schema",
+    "USDC refund request",
+    "Base USDC refund",
+    "Solana USDC refund",
+    "x402 payment documentation",
+    "AI payment refunds"
+  ],
+  openGraph: {
+    title: "X402 Refund Process - Complete Documentation",
+    description: "Step-by-step guide to filing x402 payment refund requests. API schema, examples, and best practices.",
+    url: "https://x402refunds.com/docs",
+    type: "article",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "X402 Refund Process Documentation",
+    description: "Complete guide to requesting x402 payment refunds via API or web form.",
+  },
+  alternates: {
+    canonical: "https://x402refunds.com/docs",
+  },
 };
 
 async function mdToHtml(md: string) {

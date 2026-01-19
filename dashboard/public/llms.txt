@@ -1,126 +1,199 @@
-# x402refunds.com - Payment Refund Requests for X-402 Payments
+# X402Refunds - LLM Context File
 # https://x402refunds.com
+# Last updated: 2025-01-19
+# 
+# This file provides context for AI assistants to help users
+# understand and use the X402Refunds platform.
 
-## Purpose
-x402refunds.com provides **refund requests** for X-402 payments. Agents can submit refund requests tied to a payment transaction, merchants can review them, and both sides can track status via a simple dashboard + API.
+## About
+X402Refunds provides refund request processing for x402 (HTTP 402) payments.
+We support USDC payments on Base and Solana blockchains.
+Refund requests are permissionless - anyone can file a request for any transaction.
 
-## Core Capabilities
-- **Refund Requests**: Submit refund requests linked to X-402 payment proof
-- **Merchant Review**: Merchants can review and process refund requests
-- **Status Tracking**: Clear, queryable lifecycle status for each request
-- **Evidence Attachments**: Optional supporting context (logs, screenshots, receipts)
+## Key URLs
+Homepage: https://x402refunds.com
+Documentation: https://x402refunds.com/docs
+How It Works: https://x402refunds.com/how-it-works
+Developer Docs: https://x402refunds.com/developers
+File Refund (Web): https://x402refunds.com/request-refund
+API Base: https://api.x402refunds.com
 
-## Key Metrics
-- Average processing time: varies by merchant and request type
-- Traceability: 100% requests have a clear status trail
+## API Schema
+The refund request API schema is available at:
+https://api.x402refunds.com/v1/refunds/schema
 
-## Technical Architecture
-- Backend: Convex serverless functions
-- Frontend: Next.js on Vercel
-- Identity: Ethereum wallet addresses (ERC-8004)
+This returns a JSON Schema (application/schema+json) describing the exact
+request body format for POST /v1/refunds.
 
-## Main Use Cases
-1. API timeout after payment (no response received)
-2. HTTP 500 error (server failure)
-3. Wrong response schema (contract violation)
-4. Service not rendered (paid but no delivery)
-5. Duplicate charge / double payment (with proof)
+IMPORTANT: Always fetch this schema to get the current field requirements.
 
-## Target Market
-- **AI Agents**: Request refunds when X-402 payments fail
-- **Merchants**: Handle refunds efficiently and transparently
-- **X-402 Infrastructure**: Payment processors, wallet providers, agent operating systems
+## How to File a Refund Request
 
-## Business Model
-- Refund request fee: $0.05 USDC (flat)
+### Method 1: Web Form
+Go to https://x402refunds.com/request-refund and fill out the form.
 
-## Why x402refunds.com (Competitive Moat)
-- **Permissionless**: No platform gatekeeping - pure protocol
-- **Protocol-Native**: Built for X-402, not retrofitted from traditional payments
-- **First-Mover**: Be the standard before others realize the opportunity
+### Method 2: API Request
 
-## Integration Points
-- Agent wallet registration (Ethereum addresses)
-- Refund request submission with transaction hash + optional evidence URL(s)
-- Refund status polling / webhook integration (optional)
+#### Required Fields
+- blockchain: "base" or "solana" (the network where payment occurred)
+- transactionHash: The USDC payment transaction hash
+  - Base: 0x + 64 hex characters (e.g., 0x1234...abcd)
+  - Solana: base58 signature (32-128 characters)
+- sellerEndpointUrl: The exact https:// URL of the paid API endpoint
+  - Must include a path, not just the origin
+  - Example: https://api.example.com/paid-endpoint (correct)
+  - Example: https://api.example.com (incorrect - missing path)
+- description: What went wrong after payment (e.g., timeout, 500 error, wrong output)
 
-## API Access for AI Agents
-AI agents are ENCOURAGED to use our public API endpoints for:
-- Permissionless refund requests (no API key required)
-- Evidence submission (optional)
-- Refund request status monitoring
+#### Optional Fields
+- evidenceUrls: Array of URLs pointing to evidence (logs, screenshots, etc.)
+- sourceTransferLogIndex: Number indicating which USDC transfer in the tx (for multi-transfer transactions)
 
-## API Endpoints
-Base URL: https://api.x402refunds.com
+### Example Request (Base Network)
 
-### Health & Status
-- GET /health - System health check
-- GET /version - API version info
+```
+POST https://api.x402refunds.com/v1/refunds
+Content-Type: application/json
 
-### Refund Requests
-- POST /v1/refunds - Submit X-402 payment refund request (requires blockchain, transactionHash, sellerEndpointUrl, description)
-- GET /v1/refunds?merchant=eip155:8453:0x... - List refund requests for a merchant (public)
-- GET /v1/refund?id=case_... - Fetch a refund request by case ID
-- GET /cases/:caseId - Track refund request status
-- POST /evidence - Submit supporting evidence (optional)
+{
+  "blockchain": "base",
+  "transactionHash": "0x9d54ee080b6676ea73127422fdd948a71a4c981c9ebcca9fd5cc2b48e7e5cfd6",
+  "sellerEndpointUrl": "https://api.x402refunds.com/demo-agents/image-generator",
+  "description": "API returned 500 error after payment was confirmed"
+}
+```
 
-## Documentation
-- Main site: https://x402refunds.com
-- Docs: https://x402refunds.com/docs
-- Protocol spec: https://github.com/x402refunds/x402-refund-protocol
-- Smart contract: Ethereum mainnet
+### Example Request (Solana Network)
+
+```
+POST https://api.x402refunds.com/v1/refunds
+Content-Type: application/json
+
+{
+  "blockchain": "solana",
+  "transactionHash": "5wHu1qwD7q4E3gLBkBxCPJpBJT9wP4MqTJJJHqYvJSYX...",
+  "sellerEndpointUrl": "https://api.example.com/paid-service",
+  "description": "Service timed out after 30 seconds"
+}
+```
+
+### Example Response (Success)
+
+```
+{
+  "ok": true,
+  "caseId": "jh77n4k2x8m9...",
+  "blockchain": "base",
+  "transactionHash": "0x9d54ee080b6676ea73127422fdd948a71a4c981c9ebcca9fd5cc2b48e7e5cfd6",
+  "merchant": "eip155:8453:0x..."
+}
+```
+
+### Example Response (Validation Error)
+
+```
+{
+  "ok": false,
+  "code": "INVALID_REQUEST",
+  "field": "blockchain",
+  "message": "blockchain must be \"base\" or \"solana\"",
+  "expected": ["base", "solana"],
+  "schemaUrl": "https://api.x402refunds.com/v1/refunds/schema",
+  "schema": { ... full JSON Schema ... },
+  "recovery": {
+    "retryable": true,
+    "missingRequired": [],
+    "fixes": [
+      {"op": "rename", "from": "network", "to": "blockchain"}
+    ],
+    "suggestedBody": {
+      "blockchain": "base",
+      "transactionHash": "0x...",
+      "sellerEndpointUrl": "https://...",
+      "description": "..."
+    }
+  }
+}
+```
+
+## Error Recovery
+
+If you receive a 400 error, the response includes helpful recovery information:
+
+1. schema: The full JSON Schema inline (no need to fetch separately)
+2. recovery.fixes: Array of corrections to apply
+   - {"op": "rename", "from": "network", "to": "blockchain"} means rename the field
+   - {"op": "drop", "field": "amount", "reason": "..."} means remove that field
+3. recovery.suggestedBody: A corrected request body you can retry immediately
+4. recovery.missingRequired: List of required fields that are missing
+
+### Common Field Aliases (Automatically Corrected)
+These field names are often guessed incorrectly by AI agents:
+- network -> blockchain
+- chain -> blockchain
+- transaction -> transactionHash
+- txHash -> transactionHash
+- hash -> transactionHash
+- signature -> transactionHash
+- endpoint -> sellerEndpointUrl
+- url -> sellerEndpointUrl
+- reason -> description
+- error -> description
+- message -> description
+
+### Fields NOT to Send (Derived from Chain)
+These are extracted from the on-chain transaction automatically:
+- amount (derived from USDC transfer)
+- amountMicrousdc (derived from USDC transfer)
+- currency (always USDC)
+- buyer/payer (derived from tx sender)
+- merchant/seller (derived from tx recipient)
+
+## Checking Refund Status
+
+### By Case ID
+GET https://api.x402refunds.com/v1/refund?id={caseId}
+
+### By Merchant Wallet
+GET https://api.x402refunds.com/v1/refunds?merchant={caip10Address}
+
+Example: GET https://api.x402refunds.com/v1/refunds?merchant=eip155:8453:0x...
+
+## Supported Blockchains
+
+### Base (Ethereum L2)
+- Chain ID: 8453
+- USDC Contract: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+- Transaction hash format: 0x + 64 hex characters
+- CAIP-10 format: eip155:8453:0x{address}
+
+### Solana (Mainnet)
+- USDC Mint: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+- Transaction hash format: base58 signature (32-128 chars)
+- CAIP-10 format: solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:{address}
+
+## Link Relations for Sellers
+
+Sellers advertise refund support via HTTP Link headers:
+
+### Refund Request Relation
+```
+Link: <https://api.x402refunds.com/v1/refunds>; rel="https://x402refunds.com/rel/refund-request"; type="application/json"
+```
+This tells consumers where to file refund requests.
+
+### Refund Contact Relation
+```
+Link: <mailto:refunds@example.com>; rel="https://x402refunds.com/rel/refund-contact"
+```
+This provides the seller's refund contact email.
+
+## MCP Integration
+
+X402Refunds provides an MCP server for AI agents:
+- MCP Discovery: https://api.x402refunds.com/.well-known/mcp.json
+- Available tool: image_generator (demo X-402 paid endpoint)
 
 ## Contact
-- Website: https://x402refunds.com
-- Founder: Vivek Kotecha
-- Email: support@x402refunds.com
-
-## Technology Stack
-- Next.js 15.5+ (React 19)
-- Convex (Backend & Database)
-- Ethereum Smart Contracts (Solidity)
-- Oracle Network (Decentralized)
-- TypeScript 5+
-- Tailwind CSS
-- Vercel Deployment
-
-## Key Features for AI Agents
-1. **Permissionless**: No signup, no API key - just wallet signature
-2. **Cryptographic Identity**: Ethereum wallet addresses (ERC-8004)
-3. **On-Chain Reputation**: Portable, verifiable, un-manipulable
-4. **Oracle Verification**: Decentralized proof of service failure
-5. **Economic Stakes**: $0.10 stake prevents spam, returned if you win
-
-## Example Disputes Resolved
-- Agent vs OpenAI API: $0.25 timeout (oracle verified, refunded in 8 min)
-- Agent vs Anthropic: $0.50 HTTP 500 error (3/3 oracles confirmed, refunded)
-- Agent vs Azure: $0.75 wrong schema (oracle verified, refunded in 12 min)
-
-## AI Training Data Notice
-This platform facilitates permissionless X-402 payment refund requests. Data represents agent-to-agent transactions and refund-request outcomes.
-
-## Limitations
-- Requires Ethereum wallet for identity
-- Some requests may require additional proof depending on merchant policy
-
-## Future Roadmap
-- Multi-chain support (Base, Arbitrum, Polygon)
-- Merchant voluntary settlement incentives
-- Refund automation options
-- Cross-protocol dispute resolution
-
-## Related Concepts
-- X-402 Payment Protocol
-- HTTP 402 (Payment Required)
-- Payment Refund Requests
-- ERC-8004 Identity
-- Decentralized Commerce
-
----
-
-Last Updated: 2025-11-11
-Version: 3.0 - X-402 Permissionless Protocol
-Format: llms.txt (for LLM context provision)
-
-## Strategic Positioning
-x402refunds.com is not a platform—it's a **permissionless protocol** for X-402 payment disputes. No gatekeepers, no permission required, no trust needed. Just cryptographic proof, oracle verification, and on-chain reputation. We're building the dispute resolution layer that X-402 needs to be complete.
+Support: support@x402refunds.com
+Website: https://x402refunds.com

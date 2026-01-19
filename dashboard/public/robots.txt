@@ -1,10 +1,15 @@
-# Robots.txt for X402Refunds - x402 Payment Disputes & Refunds
+# Robots.txt for X402Refunds - x402 Payment Refunds
 # https://x402refunds.com
 
 # Default rule for all bots
 User-agent: *
 Allow: /
 Allow: /api/
+Allow: /docs/
+Allow: /developers/
+Allow: /request-refund/
+Allow: /how-it-works/
+Allow: /rel/
 Disallow: /dashboard/settings/
 Disallow: /sign-in/
 Disallow: /sign-up/
@@ -14,7 +19,48 @@ Disallow: /private/
 # Crawl delay (1 second between requests)
 Crawl-delay: 1
 
-# Block AI scrapers and training bots
+# ============================================
+# AI SEARCH ASSISTANTS - ALLOWED
+# These help users find and understand our docs
+# ============================================
+
+# Claude AI Search (helps users discover refund process)
+User-agent: Claude-Web
+Allow: /
+Allow: /docs/
+Allow: /developers/
+Allow: /request-refund/
+Allow: /how-it-works/
+Allow: /rel/
+Allow: /api/
+Allow: /llms.txt
+Allow: /ai.txt
+Disallow: /dashboard/settings/
+Disallow: /sign-in/
+Disallow: /sign-up/
+Crawl-delay: 1
+
+# Perplexity AI Search
+User-agent: PerplexityBot
+Allow: /
+Allow: /docs/
+Allow: /developers/
+Allow: /request-refund/
+Allow: /how-it-works/
+Allow: /rel/
+Allow: /api/
+Allow: /llms.txt
+Allow: /ai.txt
+Disallow: /dashboard/settings/
+Disallow: /sign-in/
+Disallow: /sign-up/
+Crawl-delay: 1
+
+# ============================================
+# AI TRAINING SCRAPERS - BLOCKED
+# These train models on content without permission
+# ============================================
+
 User-agent: GPTBot
 Disallow: /
 
@@ -25,9 +71,6 @@ User-agent: CCBot
 Disallow: /
 
 User-agent: anthropic-ai
-Disallow: /
-
-User-agent: Claude-Web
 Disallow: /
 
 User-agent: Google-Extended
@@ -45,10 +88,10 @@ Disallow: /
 User-agent: Bytespider
 Disallow: /
 
-User-agent: PerplexityBot
-Disallow: /
+# ============================================
+# SEARCH ENGINES - ALLOWED
+# ============================================
 
-# Allow specific search engines
 User-agent: Googlebot
 Allow: /
 Allow: /api/
@@ -71,7 +114,7 @@ Disallow: /dashboard/settings/
 # Sitemap location
 Sitemap: https://x402refunds.com/sitemap.xml
 
-# Additional resources
+# Additional resources for AI assistants
 # AI policy: https://x402refunds.com/ai.txt
 # LLM context: https://x402refunds.com/llms.txt
 # Security: https://x402refunds.com/security.txt

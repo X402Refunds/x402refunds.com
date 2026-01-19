@@ -2,7 +2,7 @@
 
 ## Integration Guide for Sellers
 
-### What you’re adding
+### What you're adding
 1) A `Link` header advertising your refund contact email
 2) A `Link` header advertising your refund request endpoint.
 3) Top up refund credits for one-click refunds (optional).
@@ -60,36 +60,94 @@ Use the MCP tool x402_check_refund_status to check the current status of a refun
 ```
 
 ### HTTP
-Send the refund request to:
+
+**Endpoint:**
 
 ```txt
 POST https://api.x402refunds.com/v1/refunds
 ```
 
-Schema (machine-readable):
+**JSON Schema (machine-readable):**
 
 ```txt
 GET https://api.x402refunds.com/v1/refunds/schema
 ```
 
-Note for agents: If you are running in a sandboxed “fetch” environment (e.g. Claude Desktop),
-you may need this exact URL to appear in search results or be user-provided before your fetch tool
-is allowed to request it.
+Always fetch this schema to get the current field requirements. The schema URL returns a JSON Schema (`application/schema+json`) describing the exact request body format.
 
-Body:
+**Required Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `blockchain` | `"base"` or `"solana"` | Network where the USDC payment occurred |
+| `transactionHash` | string | USDC payment tx hash. Base: `0x` + 64 hex. Solana: base58 signature |
+| `sellerEndpointUrl` | string | The exact `https://` URL of the paid API endpoint (must include path) |
+| `description` | string | What went wrong after payment |
+
+**Optional Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `evidenceUrls` | string[] | Array of URLs pointing to evidence |
+| `sourceTransferLogIndex` | number | For transactions with multiple USDC transfers |
+
+**Example Request (Base):**
+
+```bash
+curl -X POST https://api.x402refunds.com/v1/refunds \
+  -H "Content-Type: application/json" \
+  -d '{
+    "blockchain": "base",
+    "transactionHash": "0x9d54ee080b6676ea73127422fdd948a71a4c981c9ebcca9fd5cc2b48e7e5cfd6",
+    "sellerEndpointUrl": "https://api.x402refunds.com/demo-agents/image-generator",
+    "description": "API returned 500 error after payment was confirmed"
+  }'
+```
+
+**Example Request (Solana):**
+
+```bash
+curl -X POST https://api.x402refunds.com/v1/refunds \
+  -H "Content-Type: application/json" \
+  -d '{
+    "blockchain": "solana",
+    "transactionHash": "5wHu1qwD7q4E3gLBkBxCPJpBJT9wP4MqTJJJHqYvJSYX...",
+    "sellerEndpointUrl": "https://api.example.com/paid-service",
+    "description": "Service timed out after 30 seconds"
+  }'
+```
+
+**Success Response:**
 
 ```json
 {
+  "ok": true,
+  "caseId": "jh77n4k2x8m9...",
   "blockchain": "base",
-  "transactionHash": "0x...",
-  "recipientAddress": "0x...",
-  "description": "What went wrong after payment",
-  "evidenceUrls": ["https://..."]
+  "transactionHash": "0x9d54ee...",
+  "merchant": "eip155:8453:0x..."
 }
 ```
 
-Check status:
+**Error Recovery:**
+
+If your request fails with HTTP 400, the response includes:
+- `schema`: Full JSON Schema inline (no extra fetch needed)
+- `recovery.fixes`: Array of field renames to apply
+- `recovery.suggestedBody`: Corrected request body to retry immediately
+
+Common field aliases that get auto-corrected:
+- `network` → `blockchain`
+- `transaction`, `txHash` → `transactionHash`
+- `endpoint`, `url` → `sellerEndpointUrl`
+- `reason`, `error` → `description`
+
+**Important:** Do NOT send `amount`, `payer`, or `merchant` fields - these are derived from the on-chain USDC transfer automatically.
+
+**Check status:**
 
 ```txt
 GET https://api.x402refunds.com/v1/refund?id=<caseId>
 ```
+
+**Full API Documentation:** [/developers](/developers)

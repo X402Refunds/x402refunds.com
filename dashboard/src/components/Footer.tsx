@@ -1,12 +1,12 @@
 "use client"
 
-import { Github, Twitter } from "lucide-react"
+import { Github, Twitter, ExternalLink } from "lucide-react"
 
 export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-2">
             <div className="text-base font-semibold text-slate-950">x402refunds</div>
             <div className="text-sm text-slate-600">
@@ -24,10 +24,36 @@ export function Footer() {
                 <a className="hover:text-slate-900" href="/docs">Docs</a>
               </li>
               <li>
+                <a className="hover:text-slate-900" href="/how-it-works">How It Works</a>
+              </li>
+              <li>
                 <a className="hover:text-slate-900" href="/topup">Top up</a>
               </li>
               <li>
                 <a className="hover:text-slate-900" href="/check-balance">Check balance</a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-sm font-semibold text-slate-950">Developers</div>
+            <ul className="mt-3 space-y-2 text-sm text-slate-600">
+              <li>
+                <a className="hover:text-slate-900" href="/developers">API Documentation</a>
+              </li>
+              <li>
+                <a 
+                  className="inline-flex items-center gap-1 hover:text-slate-900" 
+                  href="https://api.x402refunds.com/v1/refunds/schema"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  API Schema
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-slate-900" href="/request-refund">File Refund</a>
               </li>
             </ul>
           </div>

@@ -177,45 +177,149 @@ export function FAQStructuredData() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "How fast does X402Refunds process refund requests?",
+        "name": "How do I request an x402 payment refund?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "X402Refunds processes refund requests quickly with a streamlined workflow and a clear status trail."
+          "text": "To request an x402 payment refund, POST your transaction details to https://api.x402refunds.com/v1/refunds. Required fields: blockchain (base or solana), transactionHash, sellerEndpointUrl, and description. You can also use the web form at https://x402refunds.com/request-refund."
         }
       },
       {
         "@type": "Question",
-        "name": "What types of refund requests can X402Refunds handle?",
+        "name": "What is the x402 refund process?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "X402Refunds supports refund requests tied to X-402 payments, including cases like timeouts, errors, or non-delivery after payment."
+          "text": "The x402 refund process: 1) File a refund request with your transaction hash 2) We verify the USDC payment on-chain 3) The merchant receives an email notification 4) Merchant approves, denies, or offers partial refund 5) If approved, refund is executed automatically to your wallet."
         }
       },
       {
         "@type": "Question",
-        "name": "How much does X402Refunds cost?",
+        "name": "What information do I need to file an x402 refund?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "X402Refunds charges a $0.05 flat fee per refund request. Simple, transparent pricing."
+          "text": "You need: 1) The blockchain (base or solana) 2) Your transaction hash (0x... for Base, base58 for Solana) 3) The seller's API endpoint URL you paid 4) A description of what went wrong. Optional: evidence URLs and source transfer log index for multi-transfer transactions."
         }
       },
       {
         "@type": "Question",
-        "name": "Is X402Refunds available 24/7 for refund requests?",
+        "name": "Where can I find the x402 refund API schema?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes, X402Refunds is available 24/7 for submitting and tracking refund requests."
+          "text": "The complete JSON Schema for x402 refund requests is available at https://api.x402refunds.com/v1/refunds/schema. This machine-readable schema describes all required and optional fields, formats, and constraints."
         }
       },
       {
         "@type": "Question",
-        "name": "How does the refund request workflow work?",
+        "name": "What blockchains does x402refunds.com support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "X402Refunds collects the request details, links it to the underlying payment proof, and provides a clear workflow for review and processing."
+          "text": "X402Refunds supports USDC payments on Base (Ethereum L2) and Solana mainnet. Both native USDC and bridged USDC (USDbC) are supported on Base."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How long does x402 refund processing take?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Refund requests are processed in real-time. The merchant is notified immediately via email. Processing time depends on merchant response - most merchants respond within 24 hours. Once approved, the refund is executed within minutes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can AI agents file x402 refund requests?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, AI agents can file refund requests via the API at POST https://api.x402refunds.com/v1/refunds. The API returns self-healing error responses with schema and recovery hints, enabling agents to correct mistakes and retry automatically."
         }
       }
     ]
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  )
+}
+
+export function HowToStructuredData() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Request an X402 Payment Refund",
+    "description": "Step-by-step guide to filing an x402 USDC payment refund request",
+    "totalTime": "PT5M",
+    "estimatedCost": {
+      "@type": "MonetaryAmount",
+      "currency": "USD",
+      "value": "0"
+    },
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Get your transaction hash",
+        "text": "Find the USDC payment transaction hash from your wallet or block explorer. For Base, it starts with 0x. For Solana, it's a base58 signature.",
+        "url": "https://x402refunds.com/docs#transaction-hash"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Identify the seller endpoint",
+        "text": "Find the exact API endpoint URL you paid for. This is the https:// URL that returned a 402 Payment Required response.",
+        "url": "https://x402refunds.com/docs#seller-endpoint"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Describe the problem",
+        "text": "Write a clear description of what went wrong after payment - e.g., API error, timeout, wrong output, service unavailable.",
+        "url": "https://x402refunds.com/docs#description"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Submit the refund request",
+        "text": "POST your request to https://api.x402refunds.com/v1/refunds with blockchain, transactionHash, sellerEndpointUrl, and description fields. Or use the web form at https://x402refunds.com/request-refund.",
+        "url": "https://x402refunds.com/developers"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Track your refund",
+        "text": "Use the returned caseId to check status at https://x402refunds.com/cases/{caseId} or via API at GET /v1/refund?id={caseId}.",
+        "url": "https://x402refunds.com/docs#tracking"
+      }
+    ],
+    "tool": [
+      {
+        "@type": "HowToTool",
+        "name": "Transaction hash from wallet or block explorer"
+      },
+      {
+        "@type": "HowToTool",
+        "name": "API client or web browser"
+      }
+    ]
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  )
+}
+
+export function WebAPIStructuredData() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebAPI",
+    "name": "X402Refunds API",
+    "description": "REST API for filing and managing x402 payment refund requests. Supports USDC payments on Base and Solana.",
+    "url": "https://api.x402refunds.com",
+    "documentation": "https://x402refunds.com/developers",
+    "termsOfService": "https://x402refunds.com/terms",
+    "provider": {
+      "@type": "Organization",
+      "name": "X402Refunds",
+      "url": "https://x402refunds.com"
+    }
   }
 
   return (

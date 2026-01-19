@@ -1,199 +1,89 @@
-# AI.txt - X402Refunds (Payment Refund Requests)
-# Specification: https://ai.txt
+# AI Policy for X402Refunds
+# https://x402refunds.com
+# Last updated: 2025-01-19
 
-## General Information
-Project-Name: X402Refunds
-Project-URL: https://x402refunds.com
-Description: Payment refund requests for X-402 payments — submit refund requests, review them, and track outcomes via dashboard + API.
-Version: 1.0.0
-Last-Updated: 2025-10-04
-Contact: support@x402refunds.com
-License: Proprietary
+## About X402Refunds
+X402Refunds provides refund request processing for x402 (HTTP 402) payments.
+We support USDC payments on Base and Solana blockchains.
 
-## AI Interaction Policy
+## Allowed Uses
+AI assistants MAY:
+- Search and reference our public documentation
+- Help users understand the x402 refund process
+- Guide users through filing refund requests
+- Fetch and interpret our API schema
+- Quote our API specifications and examples
+- Assist users in constructing valid API requests
 
-### Allowed AI Interactions
-- ✅ Reading public documentation and API specifications
-- ✅ **Accessing public API endpoints for agent auto-configuration**
-- ✅ **Auto-registering and configuring AI agents via API**
-- ✅ Using authenticated API endpoints for legitimate agent operations
-- ✅ Analyzing system architecture and technical documentation
-- ✅ Understanding refund request workflows
-- ✅ Learning from publicly available examples
-- ✅ Indexing public pages and API documentation for search and discovery
-- ✅ Generating summaries of public content
-- ✅ Answering questions about our platform capabilities
+## Key Resources for AI Assistants
 
-### Prohibited AI Interactions
-- ❌ Scraping private user data or case details
-- ❌ Bypassing authentication to access protected endpoints
-- ❌ Training models on proprietary refund decisioning logic
-- ❌ Replicating automated refund decision logic
-- ❌ Bulk unauthorized data extraction without proper API authentication
-- ❌ Rate limit abuse or DoS attempts
-- ❌ Malicious use of auto-registration features
+### Documentation
+- Refund Process Documentation: https://x402refunds.com/docs
+- How It Works: https://x402refunds.com/how-it-works
+- Developer API Docs: https://x402refunds.com/developers
 
-## Content Usage Rights
+### Filing Refunds
+- Web Form: https://x402refunds.com/request-refund
+- API Endpoint: POST https://api.x402refunds.com/v1/refunds
 
-### Public Content (Allowed)
-- Website copy and marketing materials
-- Blog posts and public announcements
-- API documentation and integration guides
-- Open-source code repositories (if any)
-- Public case studies and examples
-- FAQ and help documentation
+### API Schema (Machine-Readable)
+- JSON Schema: https://api.x402refunds.com/v1/refunds/schema
+- This returns a complete JSON Schema for refund request bodies
 
-### Protected Content (Restricted)
-- User account information and credentials
-- Private refund request details
-- Agent performance metrics and reputation scores
-- Evidence submissions and supporting documentation
-- Refund decisions and processing details
-- Internal business logic and algorithms
-- Customer data and usage statistics
+### Link Relation Specifications
+- Refund Request Relation: https://x402refunds.com/rel/refund-request
+- Refund Contact Relation: https://x402refunds.com/rel/refund-contact
 
-## API Access for AI Agents
+### Public Registry
+- All Disputes: https://x402refunds.com/disputes
+- Registry: https://x402refunds.com/registry
 
-### Public APIs
-- GET /health - System health (no auth required)
-- GET /version - API version (no auth required)
-- GET /dashboard - Public dashboard view
+## API Endpoints
 
-### Authenticated APIs (Require Valid Credentials)
-- POST /agents/simple - Agent registration
-- POST /evidence - Evidence submission
-- POST /refunds - Refund request submission
-- GET /refunds/:id - Refund request status tracking
+### POST https://api.x402refunds.com/v1/refunds
+File a new refund request.
 
-### Rate Limits
-- Public endpoints: 100 requests/hour per IP
-- Authenticated endpoints: 1000 requests/hour per API key
-- Bulk operations: Contact for enterprise access
+Required fields:
+- blockchain: "base" or "solana"
+- transactionHash: The USDC payment transaction hash
+- sellerEndpointUrl: The paid API endpoint URL (https://)
+- description: What went wrong after payment
 
-## AI Training Data
+Optional fields:
+- evidenceUrls: Array of evidence URLs
+- sourceTransferLogIndex: For multi-transfer transactions
 
-### Permitted Uses
-- Understanding refund request workflows for X-402 payments
-- Studying refund processing patterns and status tracking
+### GET https://api.x402refunds.com/v1/refunds/schema
+Returns the complete JSON Schema for POST /v1/refunds requests.
+Content-Type: application/schema+json
 
-### Prohibited Uses
-- Training competing refund-processing systems
-- Replicating automated refund decision algorithms
-- Building automated case filing bots without authorization
-- Extracting proprietary business logic
-- Creating derivative refund-processing platforms
+### GET https://api.x402refunds.com/v1/refund?id={caseId}
+Check the status of a refund request.
 
-## Robots and Crawlers
+### GET https://api.x402refunds.com/v1/refunds?merchant={caip10}
+List refund requests for a merchant wallet.
 
-### Allowed Bots
-- Google Bot (for search indexing)
-- Bing Bot (for search indexing)
-- Other legitimate search engine crawlers
-- Authorized API monitoring and testing tools
+## Error Recovery
+If an API request fails with HTTP 400, the response includes:
+- schema: Full JSON Schema inline (no extra fetch needed)
+- recovery.suggestedBody: Corrected request body to retry
+- recovery.fixes: List of field renames/corrections
 
-### Blocked Bots (See robots.txt)
-- GPTBot (OpenAI scraper)
-- ChatGPT-User (OpenAI user agent)
-- CCBot (Common Crawl)
-- Claude-Web (Anthropic scraper)
-- Other AI training data collectors
+This enables AI agents to self-correct and retry without guessing.
 
-## Data Privacy and Security
+## Disallowed Uses
+AI systems may NOT:
+- Train models on our proprietary code or business logic
+- Scrape user data or private dashboard content
+- Access authenticated/private endpoints without authorization
+- Store or cache user transaction data
+- Impersonate X402Refunds or our API
 
-### What We Protect
-- User personal information (PII)
-- Agent identity credentials (DIDs, keys)
-- Private dispute evidence and documentation
-- Financial transaction details
-- Arbitration panel deliberations
-- Proprietary algorithms and business logic
+## Supported Blockchains
+- Base (Ethereum L2): USDC payments via ERC-20 transfers
+- Solana: USDC payments via SPL token transfers
 
-### Public Information
-- General system capabilities and features
-- Aggregate statistics (agent count, case volume)
-- Public case studies (anonymized)
-- API documentation and specifications
-- Pricing and business model information
-
-## Attribution Requirements
-
-When referencing X402Refunds in AI-generated content:
-- Cite: "X402Refunds (https://x402refunds.com)"
-- Include: "X-402 payment refund request platform"
-- Provide: Link to relevant documentation or source
-- Respect: Trademark and branding guidelines
-
-## Contact for AI/ML Teams
-
-### Questions About AI Usage
-Email: ai@x402refunds.com
-Subject: AI.txt Inquiry - [Your Organization]
-
-### API Access for AI Agents
-Email: api@x402refunds.com
-Subject: AI Agent API Access Request
-
-### Reporting Abuse
-Email: security@x402refunds.com
-Subject: AI Bot Abuse Report
-
-## Ethical AI Guidelines
-
-We support responsible AI development:
-- ✅ Transparency in AI agent operations
-- ✅ Fair and consistent refund handling
-- ✅ Privacy-preserving data handling
-- ✅ Explainable refund decisions
-- ✅ Human oversight where appropriate
-- ✅ Open standards for agent identity
-
-## Technical Specifications
-
-### Preferred Data Formats
-- JSON for API responses
-- Markdown for documentation
-- OpenAPI/Swagger for API specs
-- JSON-LD for structured data
-
-### Character Encoding
-UTF-8 for all text content
-
-### API Authentication
-Bearer token authentication (JWT)
-API keys for programmatic access
-
-## Compliance
-
-### Legal Framework
-- GDPR compliant (data protection)
-- CCPA compliant (California privacy)
-- SOC 2 Type II (in progress)
-- ISO 27001 (information security)
-
-### Terms of Service
-URL: https://x402refunds.com/terms
-Last Updated: 2024-10-04
-
-### Privacy Policy
-URL: https://x402refunds.com/privacy
-Last Updated: 2024-10-04
-
-## Related Standards
-
-This file follows:
-- ai.txt specification (https://ai.txt)
-- robots.txt standard (RFC 9309)
-- security.txt standard (RFC 9116)
-- humans.txt convention
-
-## Version History
-
-### v1.0.0 (2024-10-04)
-- Initial ai.txt specification
-- Defined AI interaction policies
-- Established content usage rights
-- Set crawler and bot guidelines
-
----
-
-For questions or clarifications about AI interaction with our platform, please contact ai@x402refunds.com
+## Contact
+- Support: support@x402refunds.com
+- Security issues: security@x402refunds.com
+- Website: https://x402refunds.com

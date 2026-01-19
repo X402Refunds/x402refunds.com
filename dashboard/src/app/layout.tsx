@@ -9,7 +9,9 @@ import {
   WebSiteStructuredData, 
   ServiceStructuredData,
   SoftwareApplicationStructuredData,
-  FAQStructuredData 
+  FAQStructuredData,
+  HowToStructuredData,
+  WebAPIStructuredData
 } from "@/components/StructuredData";
 import { WagmiProviderWrapper } from '@/lib/wagmi-provider';
 
@@ -152,6 +154,8 @@ export default function RootLayout({
           <ServiceStructuredData />
           <SoftwareApplicationStructuredData />
           <FAQStructuredData />
+          <HowToStructuredData />
+          <WebAPIStructuredData />
           
           {/* Ahrefs Analytics */}
           <script src="https://analytics.ahrefs.com/analytics.js" data-key="t8J3APG0cO6rucq4JUwaWw" async></script>
