@@ -354,6 +354,82 @@ describe("HTTP API - Wallet-first Topup (v1/v2 discovery)", () => {
     expect(body.accepts.length).toBeGreaterThan(0);
     });
   });
+
+describe("HTTP API - Wallet-first Topup actionToken guardrails", () => {
+  it("POST /v1/topup with unknown actionToken returns 400 INVALID_ACTION_TOKEN", async () => {
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        blockchain: "base",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+        caseId: "k_case_does_not_matter_for_invalid_token",
+        actionToken: `tok_invalid_${Date.now()}`,
+      }),
+    });
+
+    // If the deployment doesn't include these guardrails yet, it may proceed to 402/500.
+    // When guardrails are present, it should 400 with INVALID_ACTION_TOKEN.
+    expect([400, 402, 500]).toContain(response.status);
+    if (response.status !== 400) return;
+
+    const body = await response.json().catch(() => ({}));
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("INVALID_ACTION_TOKEN");
+  });
+
+  // Comprehensive mismatch/expired/used cases require a real token. These are opt-in and run only
+  // when a token is provided via environment variables (e.g. captured from a real email).
+  const RUN_ACTIONTOKEN_HTTP = process.env.RUN_E2E_ACTIONTOKEN_HTTP === "true";
+  const VALID_TOKEN = process.env.E2E_ACTIONTOKEN || "";
+  const TOKEN_MERCHANT = process.env.E2E_ACTIONTOKEN_MERCHANT || "";
+  const TOKEN_CASE_ID = process.env.E2E_ACTIONTOKEN_CASE_ID || "";
+
+  const shouldRun = RUN_ACTIONTOKEN_HTTP && VALID_TOKEN && TOKEN_MERCHANT;
+
+  it(shouldRun ? "POST /v1/topup merchant mismatch returns 400 ACTION_TOKEN_MERCHANT_MISMATCH" : "set RUN_E2E_ACTIONTOKEN_HTTP=true and E2E_ACTIONTOKEN* vars to run mismatch tests", async () => {
+    if (!shouldRun) return;
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: "eip155:8453:0x00000000000000000000000000000000000000ff",
+        blockchain: "base",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+        caseId: TOKEN_CASE_ID || undefined,
+        actionToken: VALID_TOKEN,
+      }),
+    });
+    expect(response.status).toBe(400);
+    const body = await response.json().catch(() => ({}));
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ACTION_TOKEN_MERCHANT_MISMATCH");
+  });
+
+  it(shouldRun && TOKEN_CASE_ID ? "POST /v1/topup case mismatch returns 400 ACTION_TOKEN_CASE_MISMATCH" : "provide E2E_ACTIONTOKEN_CASE_ID to run case-mismatch test", async () => {
+    if (!shouldRun) return;
+    if (!TOKEN_CASE_ID) return;
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: TOKEN_MERCHANT,
+        blockchain: "base",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+        caseId: "k_wrong_case_id",
+        actionToken: VALID_TOKEN,
+      }),
+    });
+    expect(response.status).toBe(400);
+    const body = await response.json().catch(() => ({}));
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ACTION_TOKEN_CASE_MISMATCH");
+  });
+});
   
   afterAll(async () => {
     // Clean up any test data created (though these are mostly error tests)

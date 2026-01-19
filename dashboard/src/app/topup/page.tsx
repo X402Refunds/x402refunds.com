@@ -85,6 +85,8 @@ export default function TopupPage() {
   const [completionStatus, setCompletionStatus] = useState<"idle" | "waiting" | "done" | "error">("idle");
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
+  const isEmailActionFlow = Boolean(actionToken.trim()) && Boolean(caseId);
+
   const walletReadyEvm = mounted && isConnected && !!address && !!walletClient;
   const walletReadySolana = mounted && !!solanaAddress;
 
@@ -346,6 +348,11 @@ export default function TopupPage() {
         <p className="text-sm text-muted-foreground">
           Add USDC so approved disputes can be refunded automatically. No account required.
         </p>
+        {isEmailActionFlow && (
+          <p className="text-sm text-muted-foreground">
+            Opened from an approval email link. Merchant, amount, and network are locked to prevent accidental changes.
+          </p>
+        )}
         {caseId && (
           <p className="text-sm text-muted-foreground">
             After you top up, we&apos;ll automatically complete your selected action for case{" "}
@@ -373,6 +380,7 @@ export default function TopupPage() {
               id="merchant"
               placeholder="0x... or <Solana base58> or solana:<chainRef>:<base58>"
               value={merchantAddress}
+              disabled={isEmailActionFlow}
               onChange={(e) => setMerchantAddress(e.target.value)}
             />
             <div className="text-xs text-muted-foreground">
@@ -426,18 +434,24 @@ export default function TopupPage() {
 
           <div className="space-y-2">
             <Label>Top-up payment network</Label>
-            <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}>
+            <Tabs
+              value={payNetwork}
+              onValueChange={(v) => {
+                if (isEmailActionFlow) return;
+                setPayNetwork(v === "solana" ? "solana" : "base");
+              }}
+            >
               <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
                 <TabsTrigger
                   value="base"
-                  disabled={inferred.locked && inferred.network === "solana"}
+                  disabled={isEmailActionFlow || (inferred.locked && inferred.network === "solana")}
                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
                 >
                   Base (USDC)
                 </TabsTrigger>
                 <TabsTrigger
                   value="solana"
-                  disabled={inferred.locked && inferred.network === "base"}
+                  disabled={isEmailActionFlow || (inferred.locked && inferred.network === "base")}
                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
                 >
                   Solana (USDC)
@@ -460,6 +474,7 @@ export default function TopupPage() {
               id="amount"
               placeholder="e.g. 5.00"
               value={amountUsdc}
+              disabled={isEmailActionFlow}
               onChange={(e) => setAmountUsdc(e.target.value)}
             />
             {amountUsdc && !amountMicros && (

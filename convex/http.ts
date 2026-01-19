@@ -1804,6 +1804,24 @@ http.route({
     if (currency !== "USDC") {
       return jsonError(400, { ok: false, code: "UNSUPPORTED_CURRENCY", message: "Only USDC is supported" });
       }
+
+    // If this top-up was triggered from an email action link, validate that the token context
+    // matches the requested merchant/case. UI locking helps prevent mistakes, but this is the
+    // authoritative guardrail.
+    if (actionToken && actionToken.trim()) {
+      const validate: any = await (ctx.runQuery as any)((internal as any).merchantEmailActions.validateTokenContextForTopup, {
+        token: actionToken.trim(),
+        merchant,
+        caseId: caseId ? caseId : undefined,
+      });
+      if (!validate?.ok) {
+        return jsonError(400, {
+          ok: false,
+          code: typeof validate?.code === "string" ? validate.code : "INVALID_ACTION_TOKEN",
+          message: typeof validate?.message === "string" ? validate.message : "Invalid action token",
+        });
+      }
+    }
     const amountMicrousdc =
       typeof amountMicrousdcRaw === "number"
         ? amountMicrousdcRaw

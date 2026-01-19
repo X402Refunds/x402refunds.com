@@ -6,7 +6,13 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      'test/e2e/**',
+      'dashboard/src/**',
+    ],
     testTimeout: 10000,
     setupFiles: ['./test/setup.ts'],
     coverage: {

@@ -1,6 +1,8 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+// Avoid TS "excessively deep" instantiation when dashboard type-check pulls `@convex/*`.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { internal } = require("./_generated/api") as any;
 
 function normalizeOrigin(origin: string): string | null {
   try {
@@ -68,6 +70,43 @@ export const getToken = internalQuery({
       .query("merchantEmailActionTokens")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .first();
+  },
+});
+
+/**
+ * Validate an email action token in the context of a top-up request.
+ *
+ * Rationale: UI locking is helpful but not authoritative. This is used by `/v1/topup`
+ * to ensure `actionToken` cannot be paired with a different merchant/case.
+ */
+export const validateTokenContextForTopup = internalQuery({
+  args: { token: v.string(), merchant: v.string(), caseId: v.optional(v.string()) },
+  // Keep return type loose to avoid excessive type instantiation in dashboard type-check.
+  handler: async (ctx, args): Promise<any> => {
+    const now = Date.now();
+    const rec: any = await ctx.db
+      .query("merchantEmailActionTokens")
+      .withIndex("by_token", (q: any) => q.eq("token", args.token))
+      .first();
+    if (!rec) return { ok: false, code: "INVALID_ACTION_TOKEN", message: "Invalid action token" };
+    if (typeof rec.usedAt === "number" && rec.usedAt > 0) {
+      return { ok: false, code: "ACTION_TOKEN_USED", message: "This approval link has already been used" };
+    }
+    if (typeof rec.expiresAt === "number" && rec.expiresAt <= now) {
+      return { ok: false, code: "ACTION_TOKEN_EXPIRED", message: "This approval link has expired" };
+    }
+
+    const tokenMerchant = typeof rec.merchant === "string" ? rec.merchant : "";
+    if (tokenMerchant && tokenMerchant !== args.merchant) {
+      return { ok: false, code: "ACTION_TOKEN_MERCHANT_MISMATCH", message: "Action token does not match merchant" };
+    }
+
+    const tokenCaseId = rec.caseId ? String(rec.caseId) : "";
+    if (args.caseId && tokenCaseId && tokenCaseId !== args.caseId) {
+      return { ok: false, code: "ACTION_TOKEN_CASE_MISMATCH", message: "Action token does not match case" };
+    }
+
+    return { ok: true, token: String(rec.token), merchant: String(rec.merchant), caseId: tokenCaseId };
   },
 });
 

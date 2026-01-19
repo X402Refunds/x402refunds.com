@@ -133,5 +133,98 @@ describe("topup finalize auto-applies action token (unit)", () => {
     // 0.10 credited - 0.06 debited = 0.04 remaining
     expect(balAfter?.availableBalance).toBeCloseTo((topupMicros / 1_000_000) - requiredUsdc, 6);
   });
+
+  it("still credits balance even if the action token cannot be applied (e.g. NOT_VERIFIED)", async () => {
+    process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS = "0x9876543210987654321098765432109876543210";
+
+    const now = Date.now();
+    // Use a distinct tuple from the previous test to avoid leaking verification state.
+    const merchant = "eip155:8453:0x00000000000000000000000000000000000000cc";
+    const origin = "https://merchant2.example";
+    const supportEmail = "support2@merchant.example";
+
+    const topupMicros = 100_000; // 0.10 USDC
+
+    const caseId = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "IN_REVIEW",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "not verified apply test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.01,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+
+      // Deliberately do NOT insert merchantEmailVerifications (so applyDecisionFromToken returns NOT_VERIFIED).
+
+      // Start with 0 credits.
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchant,
+        currency: "USDC",
+        availableBalance: 0,
+        lockedBalance: 0,
+        totalDeposited: 0,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
+      await ctx.db.insert("merchantEmailActionTokens", {
+        token: "tok_not_verified",
+        caseId: id,
+        merchant,
+        origin,
+        supportEmail,
+        action: "APPROVE_FULL_REFUND",
+        refundAmountMicrousdc: 10_000,
+        createdAt: now,
+        expiresAt: now + 60_000,
+      } as any);
+
+      return id;
+    });
+
+    const txHash = "0x" + "bb".repeat(32);
+    const finalize = await t.action((internal as any).pool.topup_finalizeFromTxHash, {
+      merchant,
+      txHash,
+      expectedAmountMicrousdc: topupMicros,
+      caseId,
+      actionToken: "tok_not_verified",
+      blockchain: "base",
+    });
+    expect(finalize.ok).toBe(true);
+
+    const updatedCase = await t.run(async (ctx) => await ctx.db.get(caseId));
+    // Should remain undecided because token apply fails NOT_VERIFIED (but finalize should not fail).
+    expect(updatedCase?.status).toBe("IN_REVIEW");
+    expect(typeof updatedCase?.finalVerdict).not.toBe("string");
+
+    const balAfter = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantBalances")
+        .withIndex("by_wallet_currency", (q: any) => q.eq("walletAddress", merchant).eq("currency", "USDC"))
+        .first();
+    });
+    expect(balAfter?.availableBalance).toBeCloseTo(topupMicros / 1_000_000, 6);
+  });
 });
 
