@@ -215,6 +215,174 @@ function buildRefundsSchema(origin: string) {
   };
 }
 
+function buildRefundRecoveryHints(body: any, origin: string) {
+  const fixes: any[] = [];
+
+  const knownKeys = new Set([
+    // canonical
+    "blockchain",
+    "transactionHash",
+    "sellerEndpointUrl",
+    "description",
+    "evidenceUrls",
+    "sourceTransferLogIndex",
+    // common aliases agents guess
+    "network",
+    "chain",
+    "transaction",
+    "txHash",
+    "hash",
+    "signature",
+    "endpoint",
+    "endpointUrl",
+    "url",
+    "serviceUrl",
+    "sellerUrl",
+    "reason",
+    "error",
+    "message",
+    "failure",
+    "evidence",
+    "logs",
+    "logIndex",
+    "instructionIndex",
+    // common-but-unsupported (derived from chain)
+    "amount",
+    "amountMicrousdc",
+    "currency",
+    "buyer",
+    "payer",
+    "recipient",
+    "merchant",
+    "seller",
+    "plaintiff",
+    "defendant",
+    "from",
+    "to",
+  ]);
+
+  const getString = (k: string) => (typeof body?.[k] === "string" ? body[k].trim() : "");
+  const getNumber = (k: string) =>
+    typeof body?.[k] === "number" && Number.isFinite(body[k]) ? Math.trunc(body[k]) : undefined;
+
+  const canonical: Record<string, any> = {};
+
+  // Prefer canonical fields when present.
+  canonical.blockchain = getString("blockchain") || undefined;
+  canonical.transactionHash = getString("transactionHash") || undefined;
+  canonical.sellerEndpointUrl = getString("sellerEndpointUrl") || undefined;
+  canonical.description = getString("description") || undefined;
+
+  // Aliases -> canonical (record a fix when we had to map).
+  const mapString = (from: string, to: string) => {
+    if (canonical[to]) return;
+    const v = getString(from);
+    if (!v) return;
+    canonical[to] = v;
+    fixes.push({ op: "rename", from, to });
+  };
+
+  mapString("network", "blockchain");
+  mapString("chain", "blockchain");
+
+  mapString("transaction", "transactionHash");
+  mapString("txHash", "transactionHash");
+  mapString("hash", "transactionHash");
+  mapString("signature", "transactionHash");
+
+  mapString("endpoint", "sellerEndpointUrl");
+  mapString("endpointUrl", "sellerEndpointUrl");
+  mapString("url", "sellerEndpointUrl");
+  mapString("serviceUrl", "sellerEndpointUrl");
+  mapString("sellerUrl", "sellerEndpointUrl");
+
+  mapString("reason", "description");
+  mapString("error", "description");
+  mapString("message", "description");
+  mapString("failure", "description");
+
+  // evidenceUrls
+  if (Array.isArray(body?.evidenceUrls) && body.evidenceUrls.every((x: any) => typeof x === "string")) {
+    canonical.evidenceUrls = body.evidenceUrls as string[];
+  } else if (Array.isArray(body?.evidence) && body.evidence.every((x: any) => typeof x === "string")) {
+    canonical.evidenceUrls = body.evidence as string[];
+    fixes.push({ op: "rename", from: "evidence", to: "evidenceUrls" });
+  } else if (Array.isArray(body?.logs) && body.logs.every((x: any) => typeof x === "string")) {
+    canonical.evidenceUrls = body.logs as string[];
+    fixes.push({ op: "rename", from: "logs", to: "evidenceUrls" });
+  }
+
+  // sourceTransferLogIndex
+  const sti =
+    getNumber("sourceTransferLogIndex") ??
+    getNumber("logIndex") ??
+    getNumber("instructionIndex") ??
+    (typeof body?.logIndex === "string" && /^\d+$/.test(body.logIndex) ? Number(body.logIndex) : undefined) ??
+    (typeof body?.instructionIndex === "string" && /^\d+$/.test(body.instructionIndex) ? Number(body.instructionIndex) : undefined);
+  if (typeof sti === "number" && Number.isFinite(sti)) {
+    canonical.sourceTransferLogIndex = Math.trunc(sti);
+    if (body?.logIndex != null && body?.sourceTransferLogIndex == null) {
+      fixes.push({ op: "rename", from: "logIndex", to: "sourceTransferLogIndex" });
+    }
+    if (body?.instructionIndex != null && body?.sourceTransferLogIndex == null) {
+      fixes.push({ op: "rename", from: "instructionIndex", to: "sourceTransferLogIndex" });
+    }
+  }
+
+  // Explicitly call out common "derived" fields so agents stop guessing.
+  if (body && typeof body === "object") {
+    if ("amount" in body) fixes.push({ op: "drop", field: "amount", reason: "Derived from on-chain USDC transfer. Do not send." });
+    if ("amountMicrousdc" in body)
+      fixes.push({ op: "drop", field: "amountMicrousdc", reason: "Derived from on-chain USDC transfer. Do not send." });
+    if ("currency" in body) fixes.push({ op: "drop", field: "currency", reason: "Implied (USDC) from transfer verification. Do not send." });
+  }
+
+  // Normalize blockchain if agent used "base"/"solana" casing/variants.
+  if (typeof canonical.blockchain === "string") canonical.blockchain = canonical.blockchain.toLowerCase();
+
+  const required = ["blockchain", "transactionHash", "sellerEndpointUrl", "description"];
+  const missingRequired = required.filter((k) => !canonical[k]);
+
+  const template = {
+    blockchain: canonical.blockchain || "base",
+    transactionHash: canonical.transactionHash || "0x<64-hex-chars>",
+    sellerEndpointUrl: canonical.sellerEndpointUrl || `${origin}/demo-agents/image-generator`,
+    description: canonical.description || "Describe what went wrong after payment",
+    ...(Array.isArray(canonical.evidenceUrls) ? { evidenceUrls: canonical.evidenceUrls } : {}),
+    ...(typeof canonical.sourceTransferLogIndex === "number"
+      ? { sourceTransferLogIndex: canonical.sourceTransferLogIndex }
+      : {}),
+  };
+
+  const suggestedBody =
+    missingRequired.length === 0
+      ? {
+          blockchain: canonical.blockchain,
+          transactionHash: canonical.transactionHash,
+          sellerEndpointUrl: canonical.sellerEndpointUrl,
+          description: canonical.description,
+          ...(Array.isArray(canonical.evidenceUrls) ? { evidenceUrls: canonical.evidenceUrls } : {}),
+          ...(typeof canonical.sourceTransferLogIndex === "number"
+            ? { sourceTransferLogIndex: canonical.sourceTransferLogIndex }
+            : {}),
+        }
+      : undefined;
+
+  const unknownFields =
+    body && typeof body === "object" ? Object.keys(body).filter((k) => !knownKeys.has(k)).slice(0, 50) : null;
+
+  return {
+    retryable: true,
+    missingRequired,
+    fixes,
+    suggestedBody,
+    suggestedBodyTemplate: template,
+    unknownFields,
+    schemaUrl: `${origin}/v1/refunds/schema`,
+    docs: "https://x402refunds.com/docs",
+  };
+}
+
 async function requireApiKeyOrg(ctx: any, request: Request): Promise<{ ok: true; organizationId: any } | { ok: false; response: Response }> {
   const auth = request.headers.get("authorization") || request.headers.get("Authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/i);
@@ -1876,6 +2044,7 @@ http.route({
     const describedby = `<${origin}/v1/refunds/schema>; rel="describedby"; type="application/schema+json"`;
     const schemaUrl = `${origin}/v1/refunds/schema`;
     const schema = buildRefundsSchema(origin);
+    const recovery = buildRefundRecoveryHints(body, origin);
 
     // === HARD CUTOVER: txHash-first filing (no backwards compatibility) ===
     const blockchainRaw = typeof body?.blockchain === "string" ? body.blockchain : "";
@@ -1892,6 +2061,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
 
@@ -1902,6 +2072,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
     if (blockchain === "base" && !/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
@@ -1910,6 +2081,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
     if (blockchain === "solana" && !/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(transactionHash)) {
@@ -1918,6 +2090,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
 
@@ -1930,6 +2103,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
     let sellerEndpointUrl: string;
@@ -1946,6 +2120,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
 
@@ -1957,6 +2132,7 @@ http.route({
         schemaUrl,
         schema,
         received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
+        recovery,
       }), { Link: describedby });
     }
 
@@ -1987,6 +2163,13 @@ http.route({
               code: "MULTI_MATCH",
               message: "Multiple USDC transfers found. Provide sourceTransferLogIndex to disambiguate.",
               candidates,
+              recovery: {
+                ...recovery,
+                fixes: [
+                  ...(Array.isArray(recovery?.fixes) ? recovery.fixes : []),
+                  { op: "set", field: "sourceTransferLogIndex", reason: "Pick a candidate.logIndex and retry." },
+                ],
+              },
             });
           }
           const picked = candidates.find((c: any) => Number(c?.logIndex) === sourceTransferLogIndex);
@@ -1998,6 +2181,13 @@ http.route({
               code: "NO_MATCH_LOG_INDEX",
               message: `No USDC transfer matched sourceTransferLogIndex=${sourceTransferLogIndex}`,
               candidates,
+              recovery: {
+                ...recovery,
+                fixes: [
+                  ...(Array.isArray(recovery?.fixes) ? recovery.fixes : []),
+                  { op: "set", field: "sourceTransferLogIndex", reason: "Use one of candidates[].logIndex." },
+                ],
+              },
             });
           }
           derived = {
@@ -2031,6 +2221,13 @@ http.route({
               code: "MULTI_MATCH",
               message: "Multiple USDC transfers found. Provide sourceTransferLogIndex to disambiguate.",
               candidates,
+              recovery: {
+                ...recovery,
+                fixes: [
+                  ...(Array.isArray(recovery?.fixes) ? recovery.fixes : []),
+                  { op: "set", field: "sourceTransferLogIndex", reason: "Pick a candidate.logIndex and retry." },
+                ],
+              },
             });
           }
           const picked = candidates.find((c: any) => Number(c?.logIndex) === sourceTransferLogIndex);
@@ -2042,6 +2239,13 @@ http.route({
               code: "NO_MATCH_LOG_INDEX",
               message: `No USDC transfer matched sourceTransferLogIndex=${sourceTransferLogIndex}`,
               candidates,
+              recovery: {
+                ...recovery,
+                fixes: [
+                  ...(Array.isArray(recovery?.fixes) ? recovery.fixes : []),
+                  { op: "set", field: "sourceTransferLogIndex", reason: "Use one of candidates[].logIndex." },
+                ],
+              },
             });
           }
           derived = {

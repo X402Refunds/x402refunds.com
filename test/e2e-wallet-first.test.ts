@@ -34,6 +34,9 @@ describe("E2E: wallet-first /v1/* endpoints", () => {
     expect(res.status).toBe(400);
     const body = await res.json().catch(() => ({}));
     expect(body.ok).toBe(false);
+    // "Graceful failure mode": provide machine-readable recovery hints inline.
+    expect(typeof (body as any).recovery).toBe("object");
+    expect(typeof (body as any).schema).toBe("object");
   });
 
   it("POST /v1/refunds should not 404 for a well-formed request (may fail on chain verification)", async () => {

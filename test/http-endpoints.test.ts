@@ -207,6 +207,15 @@ describe('HTTP API - Dispute Filing', () => {
         }),
       });
       expect(response.status).toBe(400);
+      const data = await response.json().catch(() => ({} as any));
+      expect(data.ok).toBe(false);
+      expect(data.code).toBe("INVALID_REQUEST");
+      expect(data.field).toBe("blockchain");
+      expect(typeof data.schemaUrl).toBe("string");
+      expect(typeof data.schema).toBe("object");
+      expect(typeof data.recovery).toBe("object");
+      expect(Array.isArray(data.recovery.fixes)).toBe(true);
+      expect(typeof data.recovery.suggestedBodyTemplate).toBe("object");
     });
 
     it("should reject origin-only sellerEndpointUrl", async () => {
@@ -221,6 +230,10 @@ describe('HTTP API - Dispute Filing', () => {
         }),
       });
       expect(response.status).toBe(400);
+      const data = await response.json().catch(() => ({} as any));
+      expect(data.ok).toBe(false);
+      expect(typeof data.recovery).toBe("object");
+      expect(typeof data.recovery.suggestedBodyTemplate).toBe("object");
     });
 
     it("should return a structured error for unknown tx hashes (or ok:true if mocked)", async () => {
