@@ -31,8 +31,8 @@ describe("docs/refund-requests.md splitter", () => {
     expect(httpMd).toContain("GET https://api.x402refunds.com/v1/refund?id=<caseId>");
     expect(mcpMd.toLowerCase()).toContain("mcp");
     expect(mcpMd).toContain("https://api.x402refunds.com/mcp");
-    expect(mcpMd).toContain("x402_request_refund");
-    expect(mcpMd).toContain("x402_check_refund_status");
+    expect(mcpMd).toContain("x402_file_refund_request");
+    expect(mcpMd).toContain("x402_get_refund_status");
   });
 });
 

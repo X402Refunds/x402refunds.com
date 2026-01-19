@@ -924,6 +924,7 @@ http.route({
           // Call tool handlers directly (no internal HTTP fetch)
           // This is more reliable than fetch() for Convex HTTP actions
           let invokeData: any;
+          let invokeStatus = 200;
           
           try {
             // Route to appropriate handler based on tool name
@@ -1083,12 +1084,40 @@ http.route({
                   evidenceUrls: filed.evidenceUrls || [],
                   nextSteps: [
                     "Merchant reviews in dashboard",
-                    "Resolution within 10 business days (Regulation E)"
+                    "Merchant reviews and resolves the request"
                   ]
                 };
                 break;
               }
               
+              case "x402_file_refund_request": {
+                const origin = new URL(request.url).origin;
+                const { invokeMcpTool } = await import("./mcp");
+                const invoked = await invokeMcpTool({
+                  ctx,
+                  origin,
+                  tool: toolName,
+                  parameters: toolArgs || {},
+                });
+                invokeData = invoked.body;
+                invokeStatus = invoked.status;
+                break;
+              }
+
+              case "x402_list_refund_requests": {
+                const origin = new URL(request.url).origin;
+                const { invokeMcpTool } = await import("./mcp");
+                const invoked = await invokeMcpTool({
+                  ctx,
+                  origin,
+                  tool: toolName,
+                  parameters: toolArgs || {},
+                });
+                invokeData = invoked.body;
+                invokeStatus = invoked.status;
+                break;
+              }
+
               case "x402_list_my_refund_requests": {
                 const parameters = toolArgs || {};
                 const cases = await ctx.runQuery(api.cases.getCasesByParty, {
@@ -1108,6 +1137,20 @@ http.route({
                 break;
               }
               
+              case "x402_get_refund_status": {
+                const origin = new URL(request.url).origin;
+                const { invokeMcpTool } = await import("./mcp");
+                const invoked = await invokeMcpTool({
+                  ctx,
+                  origin,
+                  tool: toolName,
+                  parameters: toolArgs || {},
+                });
+                invokeData = invoked.body;
+                invokeStatus = invoked.status;
+                break;
+              }
+
               case "x402_check_refund_status": {
                 const parameters = toolArgs || {};
                 const caseData = await ctx.runQuery(internal.cases.getCase, {
@@ -1189,7 +1232,7 @@ http.route({
             // MCP requires tool results in content blocks format
             let formattedResult;
             
-            if (invokeData.success === false) {
+            if (invokeStatus >= 400 || invokeData.success === false) {
               // Error response - format as MCP error
               formattedResult = {
                 content: [
@@ -1205,14 +1248,16 @@ http.route({
               let textOutput = "";
               
               // Format based on tool type
-              if (toolName === "x402_request_refund") {
-                textOutput = `✅ Refund request submitted!\n\n` +
+              if (toolName === "x402_file_refund_request") {
+                textOutput =
+                  `✅ Refund request filed!\n\n` +
                   `📋 Case ID: ${invokeData.caseId}\n` +
-                  `💰 Fee: $${invokeData.disputeFee}\n` +
-                  `⏱️  Status: ${invokeData.status}\n` +
-                  `🔗 Track: ${invokeData.trackingUrl}\n\n` +
-                  `Next Steps:\n${invokeData.nextSteps?.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n') || 'N/A'}`;
-              } else if (toolName === "x402_list_my_refund_requests") {
+                  `🔗 Track: https://x402refunds.com/cases/${invokeData.caseId}\n` +
+                  `⛓️  Chain: ${invokeData.blockchain}\n` +
+                  `🧾 Tx: ${invokeData.transactionHash}\n` +
+                  `🏷️  Merchant: ${invokeData.merchant}\n` +
+                  `📧 Refund contact: ${invokeData.paymentSupportEmail || "Not found (seller did not advertise refund-contact Link header)"}\n`;
+              } else if (toolName === "x402_list_refund_requests") {
                 const cases = invokeData.cases || [];
                 textOutput = `📊 Refund requests for ${invokeData.walletAddress}\n\n` +
                   `Total: ${invokeData.totalCases} requests\n\n` +
@@ -1240,7 +1285,7 @@ http.route({
                   `2. ${invokeData.instructions.step_2}\n` +
                   `3. ${invokeData.instructions.step_3}\n\n` +
                   `💡 ${invokeData.use_case}`;
-              } else if (toolName === "x402_check_refund_status") {
+              } else if (toolName === "x402_get_refund_status") {
                 const caseData = invokeData.case;
                 textOutput = `📋 Refund request status\n\n` +
                   `Case ID: ${caseData?._id || caseData?.caseId || 'N/A'}\n` +

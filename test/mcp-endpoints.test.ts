@@ -41,7 +41,7 @@ describe('MCP Protocol - Tool Discovery', () => {
       expect(manifest.protocol).toBe('mcp');
       expect(manifest.version).toBeDefined();
       expect(manifest.server).toBeDefined();
-      expect(String(manifest.server.name)).toBe('X-402 Image Generator');
+      expect(String(manifest.server.name)).toBe('x402refunds.com');
       expect(String(manifest.server.url)).toContain('api.x402refunds.com');
     });
 
@@ -50,11 +50,19 @@ describe('MCP Protocol - Tool Discovery', () => {
       const manifest = await response.json();
       
       const toolNames = manifest.tools.map((t: any) => t.name);
-      expect(manifest.tools.length).toBe(1);
-      expect(toolNames).toEqual(['image_generator']);
-      // Verify old tools are removed
-      expect(toolNames).not.toContain('consulate_file_general_dispute');
-      expect(toolNames).not.toContain('consulate_file_dispute');
+      expect(manifest.tools.length).toBeGreaterThanOrEqual(4);
+      expect(toolNames).toEqual(
+        [
+          "x402_file_refund_request",
+          "x402_list_refund_requests",
+          "x402_get_refund_status",
+          "image_generator",
+        ],
+      );
+      // Verify old tools are removed / renamed
+      expect(toolNames).not.toContain('x402_request_refund');
+      expect(toolNames).not.toContain('x402_check_refund_status');
+      expect(toolNames).not.toContain('x402_list_my_refund_requests');
     });
 
     it('should include tool descriptions', async () => {
@@ -155,7 +163,16 @@ describe('MCP Protocol - Standard JSON-RPC Endpoint', () => {
       expect(data.result).toBeDefined();
       expect(data.result.tools).toBeDefined();
       expect(Array.isArray(data.result.tools)).toBe(true);
-      expect(data.result.tools.length).toBe(1);
+      expect(data.result.tools.length).toBeGreaterThanOrEqual(4);
+      const names = data.result.tools.map((t: any) => t.name);
+      expect(names).toEqual(
+        [
+          "x402_file_refund_request",
+          "x402_list_refund_requests",
+          "x402_get_refund_status",
+          "image_generator",
+        ],
+      );
       
       // Verify tools use inputSchema (MCP standard)
       data.result.tools.forEach((tool: any) => {

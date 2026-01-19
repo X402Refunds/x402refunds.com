@@ -12,9 +12,13 @@
  */
 
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+// Avoid TS2589 (excessively deep type instantiation) by importing generated API as JS and treating it as `any`.
+import * as apiMod from "./_generated/api.js";
+const api: any = (apiMod as any).api;
+const internal: any = (apiMod as any).internal;
 import { formatMicrosToUsdc } from "./lib/usdc";
+import { findLinkByRel, parseRefundContactEmailFromLinkUri } from "./lib/linkHeader";
+import { parseX402PayTo } from "./lib/x402PayTo";
 
 /**
  * MCP Error Codes
@@ -76,15 +80,33 @@ function extractPlaintiffFromPayment(signedEvidence: any): string {
 // Intentionally typed as `any[]` so downstream code/tests don't rely on
 // literal inference of the schema when tools are toggled on/off.
 export const MCP_TOOLS: any[] = [
-  // NOTE: Tools are intentionally disabled for this MCP server right now.
-  // Keeping definitions commented makes it easy to re-enable later.
-  /*
   {
-    name: "x402_request_refund",
-    description: "Submit an X-402 payment refund request for API service failures. USDC payments on Base and Solana only. Permissionless requests with blockchain transaction verification. Plaintiff/defendant are extracted from chain; amount is provided by the caller and must match a USDC Transfer in the transaction.",
+    name: "x402_file_refund_request",
+    description:
+      "File an X-402 payment refund request for a paid API call that failed (timeout, 5xx, wrong output). USDC payments on Base and Solana only. sellerEndpointUrl is REQUIRED because we fetch the seller endpoint to discover the seller's refund-contact email via Link headers.",
     inputSchema: {
       type: "object",
       properties: {
+        blockchain: {
+          type: "string",
+          enum: ["base", "solana"],
+          description: "REQUIRED. Blockchain network where the USDC payment occurred.",
+          examples: ["base", "solana"],
+        },
+        transactionHash: {
+          type: "string",
+          description:
+            "REQUIRED. USDC payment transaction hash/signature. Base: 0x + 64 hex chars. Solana: base58 signature (32-128 chars).",
+          examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."],
+        },
+        sellerEndpointUrl: {
+          type: "string",
+          format: "uri",
+          pattern: "^https://",
+          description:
+            "REQUIRED. The exact https:// URL of the paid seller API endpoint you called (must include a path). We fetch this endpoint to extract the seller's refund-contact email from Link headers.",
+          examples: ["https://api.x402refunds.com/demo-agents/image-generator", "https://api.seller.com/v1/chat"],
+        },
         description: {
           type: "string",
           minLength: 10,
@@ -96,9 +118,22 @@ export const MCP_TOOLS: any[] = [
             "Charged but received empty response body"
           ]
         },
-        request: {
+        recipientAddress: {
+          type: "string",
+          description:
+            "Optional but RECOMMENDED for batched transactions. Merchant/vendor address that received USDC in this transaction. If the transaction contains multiple USDC transfers to different recipients, you must provide recipientAddress (and possibly sourceTransferLogIndex) to disambiguate.",
+          examples: ["0x96BDBD233d4ABC11E7C77c45CAE14194332E7381"],
+        },
+        sourceTransferLogIndex: {
+          description:
+            "Optional. If the transaction contains multiple USDC transfers to the same recipient, provide the logIndex/instructionIndex to disambiguate.",
+          anyOf: [{ type: "string" }, { type: "number" }],
+          examples: [0, "3"],
+        },
+        apiRequest: {
           type: "object",
-          description: "REQUIRED. The API request that buyer sent. Include method, url, headers, body.",
+          description:
+            "Optional. The API request that the buyer sent. Include method, url, headers, body. Helpful evidence, but not required to file.",
           examples: [{
             method: "POST",
             url: "https://api.seller.com/v1/chat",
@@ -106,43 +141,21 @@ export const MCP_TOOLS: any[] = [
             body: { model: "gpt-4", messages: [] }
           }]
         },
-        response: {
+        apiResponse: {
           type: "object",
-          description: "REQUIRED. The error response buyer received. Include status, headers, body.",
+          description:
+            "Optional. The error response the buyer received. Include status, headers, body. Helpful evidence, but not required to file.",
           examples: [{
             status: 500,
             headers: { "Content-Type": "application/json" },
             body: { error: "Internal Server Error" }
           }]
         },
-        transactionHash: {
-          type: "string",
-          description: "REQUIRED. USDC token transfer transaction hash. We query the blockchain to extract all transaction details (from address, to address, amount). Format: 0x... for Base, base58 for Solana.",
-          examples: ["0xabc123def456789...", "5J7Qw8mN3pR..."]
-        },
-        blockchain: {
-          type: "string",
-          enum: ["base", "solana"],
-          description: "REQUIRED. Blockchain network where USDC payment occurred. Only Base and Solana are supported.",
-          examples: ["base", "solana"]
-        },
-        recipientAddress: {
-          type: "string",
-          description:
-            "REQUIRED. Merchant/vendor address that received USDC in this transaction. Used to deterministically select the payment transfer log.",
-          examples: ["0x96BDBD233d4ABC11E7C77c45CAE14194332E7381"],
-        },
         evidenceUrls: {
           type: "array",
           items: { type: "string" },
           description: "Optional. Evidence URLs (logs, screenshots, etc.). These will be stored as evidence manifests on the case.",
           examples: [["https://example.com/logs/timeout.json"]],
-        },
-        sourceTransferLogIndex: {
-          description:
-            "Optional. If the transaction contains multiple USDC transfers to the same recipient, provide the logIndex/instructionIndex to disambiguate.",
-          anyOf: [{ type: "string" }, { type: "number" }],
-          examples: [0, "3"],
         },
         sellerXSignature: {
           type: "string",
@@ -169,22 +182,24 @@ export const MCP_TOOLS: any[] = [
           description: "Optional. If true, validates parameters without filing."
         }
       },
-      required: ["description", "request", "response", "transactionHash", "blockchain", "recipientAddress"]
+      required: ["description", "transactionHash", "blockchain", "sellerEndpointUrl"]
     }
   },
   {
-    name: "x402_list_my_refund_requests",
-    description: "List all X-402 refund requests where you are a party (payer or recipient). Uses ERC-8004 Ethereum wallet addresses as canonical identity.",
+    name: "x402_list_refund_requests",
+    description:
+      "List X-402 refund requests where you are a party (payer or merchant). Provide your wallet address (EVM 0x..., Solana base58, or CAIP-10).",
     inputSchema: {
       type: "object",
       properties: {
         walletAddress: {
           type: "string",
-          pattern: "^0x[a-fA-F0-9]{40}$",
-          description: "Your Ethereum wallet address (ERC-8004 canonical identity for X-402 protocol)",
+          description:
+            "REQUIRED. Your wallet address. Accepts EVM 0x..., Solana base58, or CAIP-10 (e.g. eip155:8453:0x... or solana:...:...).",
           examples: [
             "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-            "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+            "7EcDhSYGxXyscszYEp35KHN8sBC6t6uAMq2DysH3sPVK",
+            "eip155:8453:0x742d35cc6634c0532925a3b844bc9e7595f0beb0"
           ]
         },
         status: {
@@ -197,7 +212,7 @@ export const MCP_TOOLS: any[] = [
     }
   },
   {
-    name: "x402_check_refund_status",
+    name: "x402_get_refund_status",
     description: "Check the current status of a refund request. Returns request status, evidence, and outcome details.",
     inputSchema: {
       type: "object",
@@ -210,7 +225,6 @@ export const MCP_TOOLS: any[] = [
       required: ["caseId"]
     }
   },
-  */
   {
     name: "image_generator",
     description:
@@ -241,6 +255,527 @@ export const MCP_TOOLS: any[] = [
   }
 ];
 
+const SOLANA_MAINNET_CHAINREF = "5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf";
+
+function parseOptionalNonNegativeInt(raw: unknown): number | undefined {
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.trunc(raw);
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw);
+    if (Number.isFinite(n)) return Math.trunc(n);
+  }
+  return undefined;
+}
+
+function normalizeRecipient(blockchain: "base" | "solana", addr: string): string {
+  return blockchain === "base" ? addr.toLowerCase() : addr;
+}
+
+async function probeSellerEndpoint(args: {
+  sellerEndpointUrl: string;
+  blockchain: "base" | "solana";
+  recipientAddress: string;
+}): Promise<{
+  paymentSupportEmail?: string;
+  endpointPayToCandidates?: string[];
+  endpointPayToMatch?: boolean;
+  endpointPayToMismatch?: boolean;
+}> {
+  let endpointPayToCandidates: string[] | undefined = undefined;
+  let endpointPayToMatch: boolean | undefined = undefined;
+  let endpointPayToMismatch: boolean | undefined = undefined;
+  let paymentSupportEmail: string | undefined = undefined;
+
+  const tryParseContact = (res: Response) => {
+    const link = res.headers.get("Link") || "";
+    const uri = findLinkByRel(link, "https://x402refunds.com/rel/refund-contact");
+    const email = uri ? parseRefundContactEmailFromLinkUri(uri) : null;
+    if (email) paymentSupportEmail = email;
+  };
+
+  const tryParsePayToFrom402 = async (res: Response) => {
+    if (res.status !== 402) return;
+    const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED");
+    // HEAD responses may not have a body; parseX402PayTo can still use headers.
+    const bodyText = res.status === 402 ? await res.text().catch(() => "") : "";
+    const parsed = parseX402PayTo({
+      status: res.status,
+      paymentRequiredHeader,
+      bodyText,
+    });
+    if (parsed.ok) {
+      endpointPayToCandidates = parsed.payToCandidates;
+      endpointPayToMatch = parsed.payToCandidates.some((x: string) =>
+        args.blockchain === "base" ? x.toLowerCase() === args.recipientAddress : x === args.recipientAddress,
+      );
+      endpointPayToMismatch = !endpointPayToMatch;
+    }
+  };
+
+  try {
+    // 0) HEAD probe (cheap; often contains Link headers).
+    const headRes = await fetch(args.sellerEndpointUrl, {
+      method: "HEAD",
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    tryParseContact(headRes);
+    await tryParsePayToFrom402(headRes);
+
+    // 1) GET probe (many sellers support GET discovery).
+    if (!paymentSupportEmail || headRes.status !== 402) {
+      const getRes = await fetch(args.sellerEndpointUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+      tryParseContact(getRes);
+      await tryParsePayToFrom402(getRes);
+
+      // 2) POST probe (common for x402 endpoints: 402 only on POST).
+      if (getRes.status !== 402) {
+        const postRes = await fetch(args.sellerEndpointUrl, {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: "{}",
+          signal: AbortSignal.timeout(5_000),
+        });
+        tryParseContact(postRes);
+        await tryParsePayToFrom402(postRes);
+      }
+    }
+  } catch {
+    // Never block filing based on endpoint fetch/parse failures.
+  }
+
+  return { paymentSupportEmail, endpointPayToCandidates, endpointPayToMatch, endpointPayToMismatch };
+}
+
+export async function invokeMcpTool(args: {
+  ctx: any;
+  origin: string;
+  tool: string;
+  parameters: any;
+}): Promise<{ status: number; body: any }> {
+  const { ctx, origin, tool, parameters } = args;
+
+  switch (tool) {
+    case "x402_file_refund_request": {
+      const p = parameters || {};
+
+      const blockchainRaw = typeof p.blockchain === "string" ? p.blockchain : "";
+      const blockchain = blockchainRaw === "base" || blockchainRaw === "solana" ? (blockchainRaw as "base" | "solana") : null;
+      if (!blockchain) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "MISSING_BLOCKCHAIN",
+              field: "blockchain",
+              message: 'blockchain is required ("base" or "solana")',
+              expected: ["base", "solana"],
+              suggestion: 'Set blockchain to "base" or "solana".',
+            },
+          },
+        };
+      }
+
+      const transactionHash = typeof p.transactionHash === "string" ? p.transactionHash.trim() : "";
+      if (!transactionHash) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "MISSING_TRANSACTION_HASH",
+              field: "transactionHash",
+              message: "transactionHash is required",
+              suggestion: "Provide the USDC payment transaction hash/signature.",
+            },
+          },
+        };
+      }
+
+      const sellerEndpointUrlRaw = typeof p.sellerEndpointUrl === "string" ? p.sellerEndpointUrl.trim() : "";
+      if (!sellerEndpointUrlRaw) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "MISSING_SELLER_ENDPOINT_URL",
+              field: "sellerEndpointUrl",
+              message: "sellerEndpointUrl is required",
+              expected: "https://<host>/<path> (must include a path, not just origin)",
+              suggestion:
+                "Provide the exact paid API endpoint URL you called. We fetch it to extract the seller's refund-contact email via Link headers.",
+              example: {
+                blockchain,
+                transactionHash,
+                sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+                description: "Paid request returned an error after payment",
+              },
+            },
+          },
+        };
+      }
+      let sellerEndpointUrl: string;
+      let sellerOrigin: string;
+      try {
+        const u = new URL(sellerEndpointUrlRaw);
+        if (u.protocol !== "https:") throw new Error("sellerEndpointUrl must be https://");
+        if (!u.pathname || u.pathname === "/") throw new Error("sellerEndpointUrl must include a path (not just origin)");
+        sellerEndpointUrl = u.toString();
+        sellerOrigin = u.origin;
+      } catch (e: any) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "INVALID_SELLER_ENDPOINT_URL",
+              field: "sellerEndpointUrl",
+              message: e?.message || "Invalid sellerEndpointUrl",
+              expected: "https://<host>/<path> (must include a path, not just origin)",
+            },
+          },
+        };
+      }
+
+      const description = typeof p.description === "string" ? p.description.trim() : "";
+      if (!description) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "MISSING_DESCRIPTION",
+              field: "description",
+              message: "description is required",
+              suggestion: "Describe what went wrong after payment (timeout, 5xx, wrong output).",
+            },
+          },
+        };
+      }
+
+      const evidenceUrls =
+        Array.isArray(p.evidenceUrls) && p.evidenceUrls.every((x: any) => typeof x === "string")
+          ? (p.evidenceUrls as string[])
+          : [];
+
+      const sourceTransferLogIndex = parseOptionalNonNegativeInt(p.sourceTransferLogIndex);
+      const recipientAddressRaw = typeof p.recipientAddress === "string" ? p.recipientAddress.trim() : "";
+      const recipientAddressFilter = recipientAddressRaw ? normalizeRecipient(blockchain, recipientAddressRaw) : "";
+
+      // === Chain verification: derive merchant recipient from tx hash ===
+      let derived: any = null;
+      if (blockchain === "base") {
+        derived = await (ctx.runAction as any)((api as any).lib.blockchain.deriveUsdcMerchantFromTxHashBase, {
+          transactionHash,
+        });
+      } else {
+        derived = await (ctx.runAction as any)((api as any).lib.blockchain.deriveUsdcMerchantFromTxHashSolana, {
+          transactionHash,
+        });
+      }
+
+      if (!derived?.ok) {
+        if (derived?.code === "MULTI_MATCH") {
+          const candidates = Array.isArray(derived?.candidates) ? derived.candidates : [];
+
+          // 1) If sourceTransferLogIndex provided, pick by logIndex.
+          if (typeof sourceTransferLogIndex === "number") {
+            const picked = candidates.find((c: any) => Number(c?.logIndex) === sourceTransferLogIndex);
+            if (picked) {
+              derived = { ok: true, blockchain, transactionHash, ...picked };
+            } else {
+              return {
+                status: 400,
+                body: {
+                  success: false,
+                  error: {
+                    code: "NO_MATCH_LOG_INDEX",
+                    field: "sourceTransferLogIndex",
+                    message: `No USDC transfer matched sourceTransferLogIndex=${sourceTransferLogIndex}`,
+                    candidates,
+                    suggestion: "Use one of candidates[].logIndex and retry.",
+                    retry: {
+                      tool: "x402_file_refund_request",
+                      parameters: {
+                        blockchain,
+                        transactionHash,
+                        sellerEndpointUrl,
+                        description,
+                        sourceTransferLogIndex: candidates[0]?.logIndex,
+                        recipientAddress: recipientAddressFilter || candidates[0]?.recipientAddress,
+                      },
+                    },
+                  },
+                },
+              };
+            }
+          }
+
+          // 2) If recipientAddress provided, filter candidates by recipientAddress.
+          if (derived?.ok !== true && recipientAddressFilter) {
+            const filtered = candidates.filter((c: any) => {
+              const cand = String(c?.recipientAddress || "");
+              const normalized = normalizeRecipient(blockchain, cand);
+              return normalized === recipientAddressFilter;
+            });
+            if (filtered.length === 1) {
+              derived = { ok: true, blockchain, transactionHash, ...filtered[0] };
+            } else if (filtered.length > 1) {
+              return {
+                status: 400,
+                body: {
+                  success: false,
+                  error: {
+                    code: "MULTI_MATCH",
+                    message:
+                      "Multiple USDC transfers matched recipientAddress. Provide sourceTransferLogIndex to disambiguate.",
+                    field: "sourceTransferLogIndex",
+                    candidates: filtered,
+                    suggestion: "Pick a candidate.logIndex and retry.",
+                  },
+                },
+              };
+            } else {
+              return {
+                status: 400,
+                body: {
+                  success: false,
+                  error: {
+                    code: "RECIPIENT_ADDRESS_NO_MATCH",
+                    field: "recipientAddress",
+                    message: "recipientAddress did not match any USDC transfer recipients in this transaction",
+                    candidates,
+                    suggestion:
+                      "Use one of the candidates[].recipientAddress values, or omit recipientAddress and use sourceTransferLogIndex.",
+                  },
+                },
+              };
+            }
+          }
+
+          // 3) Still ambiguous: require either recipientAddress or sourceTransferLogIndex.
+          if (derived?.ok !== true) {
+            return {
+              status: 400,
+              body: {
+                success: false,
+                error: {
+                  code: "MULTI_MATCH",
+                  message:
+                    "Multiple USDC transfers found in this transaction. Provide recipientAddress (preferred) or sourceTransferLogIndex to disambiguate.",
+                  candidates,
+                  suggestion: "Retry with recipientAddress (or candidates[].logIndex as sourceTransferLogIndex).",
+                  retry: {
+                    tool: "x402_file_refund_request",
+                    parameters: {
+                      blockchain,
+                      transactionHash,
+                      sellerEndpointUrl,
+                      description,
+                      recipientAddress: candidates[0]?.recipientAddress,
+                      sourceTransferLogIndex: candidates[0]?.logIndex,
+                    },
+                  },
+                },
+              },
+            };
+          }
+        } else {
+          return {
+            status: derived?.code === "NOT_CONFIGURED" ? 500 : 400,
+            body: { success: false, error: { code: derived?.code || "FAILED", message: derived?.message || "Failed to verify transaction" } },
+          };
+        }
+      }
+
+      const payerAddressRaw = String(derived?.payerAddress || "");
+      const recipientAddressRaw2 = String(derived?.recipientAddress || "");
+      const payerAddress = blockchain === "base" ? payerAddressRaw.toLowerCase() : payerAddressRaw;
+      const recipientAddress = normalizeRecipient(blockchain, recipientAddressRaw2);
+      const amountMicrousdc = Number(derived?.amountMicrousdc);
+      const logIndex = Number(derived?.logIndex);
+
+      if (!payerAddress || !recipientAddress || !Number.isFinite(amountMicrousdc) || !Number.isFinite(logIndex)) {
+        return {
+          status: 500,
+          body: { success: false, error: { code: "INTERNAL_ERROR", message: "Chain verification returned incomplete data" } },
+        };
+      }
+
+      const payer =
+        blockchain === "base" ? `eip155:8453:${payerAddress}` : `solana:${SOLANA_MAINNET_CHAINREF}:${payerAddress}`;
+      const merchant =
+        blockchain === "base"
+          ? `eip155:8453:${recipientAddress}`
+          : `solana:${SOLANA_MAINNET_CHAINREF}:${recipientAddress}`;
+
+      // Best-effort seller endpoint corroboration (does NOT block filing).
+      const probe = await probeSellerEndpoint({ sellerEndpointUrl, blockchain, recipientAddress });
+
+      if (p.dryRun === true) {
+        return {
+          status: 200,
+          body: {
+            success: true,
+            dryRun: true,
+            wouldFile: {
+              blockchain,
+              transactionHash,
+              sellerEndpointUrl,
+              payer,
+              merchant,
+              amountUsdc: formatMicrosToUsdc(amountMicrousdc),
+              sourceTransferLogIndex: logIndex,
+              paymentSupportEmail: probe.paymentSupportEmail,
+            },
+            note:
+              "Dry run only: set dryRun=false (or omit) to file. sellerEndpointUrl is required so we can fetch refund-contact email via Link headers.",
+          },
+        };
+      }
+
+      const created = await (ctx.runMutation as any)((api as any).pool.cases_fileWalletPaymentDispute, {
+        blockchain,
+        transactionHash,
+        sellerEndpointUrl,
+        origin: sellerOrigin,
+        payer,
+        merchant,
+        amountMicrousdc,
+        sourceTransferLogIndex: logIndex,
+        description,
+        evidenceUrls,
+        endpointPayToCandidates: probe.endpointPayToCandidates,
+        endpointPayToMatch: probe.endpointPayToMatch,
+        endpointPayToMismatch: probe.endpointPayToMismatch,
+        paymentSupportEmail: probe.paymentSupportEmail,
+      });
+      if (!created?.ok) {
+        return { status: 400, body: { success: false, error: created } };
+      }
+
+      return {
+        status: 200,
+        body: {
+          success: true,
+          caseId: created.disputeId,
+          blockchain,
+          transactionHash,
+          merchant,
+          recipientAddress,
+          paymentSupportEmail: probe.paymentSupportEmail,
+          endpointPayToMatch: probe.endpointPayToMatch,
+          note:
+            "Refund request filed. sellerEndpointUrl was fetched to discover refund-contact email via Link headers. If the seller did not include refund-contact, notification may fall back to known merchant profile settings.",
+        },
+      };
+    }
+
+    case "x402_get_refund_status": {
+      const p = parameters || {};
+      if (!p.caseId) {
+        return {
+          status: 400,
+          body: { success: false, error: { code: "MISSING_CASE_ID", field: "caseId", message: "caseId is required" } },
+        };
+      }
+      const caseData = await (ctx.runQuery as any)((internal as any).cases.getCase, { caseId: p.caseId as any });
+      return { status: 200, body: { success: true, case: caseData } };
+    }
+
+    case "x402_list_refund_requests": {
+      const p = parameters || {};
+      const walletRaw = typeof p.walletAddress === "string" ? p.walletAddress.trim() : "";
+      if (!walletRaw) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: { code: "MISSING_WALLET_ADDRESS", field: "walletAddress", message: "walletAddress is required" },
+          },
+        };
+      }
+      const isCaip10 = walletRaw.includes(":") && walletRaw.split(":").length === 3;
+      const party = isCaip10
+        ? walletRaw
+        : walletRaw.startsWith("0x") && /^0x[a-fA-F0-9]{40}$/.test(walletRaw)
+          ? `eip155:8453:${walletRaw.toLowerCase()}`
+          : walletRaw; // allow solana base58 or other strings; backend may still filter by equality
+
+      const cases = await (ctx.runQuery as any)((api as any).cases.getCasesByParty, { party });
+      const filtered = p.status && p.status !== "all" ? cases.filter((c: any) => c.status === p.status) : cases;
+      return { status: 200, body: { success: true, walletAddress: walletRaw, party, totalCases: filtered.length, cases: filtered } };
+    }
+
+    case "image_generator": {
+      const p = parameters || {};
+      if (!p.prompt || typeof p.prompt !== "string") {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "MISSING_PROMPT",
+              message: "prompt is required",
+              field: "prompt",
+              expected: "String between 3-1000 characters",
+            },
+          },
+        };
+      }
+      if (p.prompt.length < 3 || p.prompt.length > 1000) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: {
+              code: "INVALID_PROMPT_LENGTH",
+              message: `Prompt must be between 3-1000 characters (got ${p.prompt.length})`,
+              field: "prompt",
+            },
+          },
+        };
+      }
+      return {
+        status: 200,
+        body: {
+          success: true,
+          note: "This is a demo agent that requires X-402 payment",
+          payment_required: {
+            amount: "0.01",
+            currency: "USDC",
+            network: "base",
+            recipient: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
+            protocol: "X-402",
+          },
+          instructions: {
+            step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
+            step_2: "Call: POST https://api.x402refunds.com/demo-agents/image-generator",
+            step_3: "This endpoint is intentionally unreliable for testing paid API flows",
+            coinbase_mcp: "Install: npx @coinbase/payments-mcp",
+          },
+          endpoint: "https://api.x402refunds.com/demo-agents/image-generator",
+          prompt: p.prompt,
+          size: p.size || "1024x1024",
+          model: p.model || "stable-diffusion-xl",
+          expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
+          use_case: "Perfect for testing X-402 paid API flows",
+        },
+      };
+    }
+  }
+
+  return {
+    status: 400,
+    body: { success: false, error: { code: MCP_ERROR_CODES.TOOL_NOT_FOUND, message: `Unknown tool: ${tool}` } },
+  };
+}
+
 /**
  * MCP Discovery Endpoint
  * Returns available tools that agents can invoke
@@ -254,7 +789,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
   // the broader enum (ethereum, base, solana). To keep backward compatibility and satisfy
   // both sets, we widen the enum *only in the HTTP manifest*.
   const discoveryTools = MCP_TOOLS.map((tool) => {
-    if (tool.name !== "x402_request_refund") return tool;
+    if (tool.name !== "x402_file_refund_request") return tool;
     const inputSchema: any = tool.inputSchema;
     if (!inputSchema?.properties?.blockchain) return tool;
     return {
@@ -276,10 +811,10 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
     protocol: "mcp",
     version: "2.0.0",
     server: {
-      name: "X-402 Image Generator",
+      name: "x402refunds.com",
       version: "2.0.0",
       description:
-        "Demo-only MCP server exposing a paid X-402 image generator tool for integration testing. Discovery lists only the demo tool; invoke it to get instructions for completing a paid call against the demo agent endpoint.",
+        "X402Refunds MCP server. Provides refund-request tools for X-402 USDC payments (Base, Solana) plus a demo paid image generator endpoint for integration testing.",
       url: "https://api.x402refunds.com",
     },
     tools: discoveryTools,
@@ -320,7 +855,7 @@ export const mcpDiscovery = httpAction(async (ctx, request) => {
  * Handles actual tool calls from MCP clients
  * 
  * Route: POST /mcp/invoke
- * Body: { tool: "x402_request_refund", parameters: {...} }
+ * Body: { tool: "x402_file_refund_request", parameters: {...} }
  * 
  * Authentication: Ed25519 signatures (REQUIRED)
  * Required headers:
@@ -332,7 +867,7 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
   try {
     const body = await request.json();
     const { tool, parameters } = body;
-    const bodyStr = JSON.stringify(body);
+    const origin = new URL(request.url).origin;
 
     // Enforce "only enabled tools are callable" (even if someone bypasses discovery).
     const enabledToolNames = new Set(MCP_TOOLS.map((t) => t.name));
@@ -356,8 +891,6 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
 
     // For now, no authentication required for MCP tools
     // In the future, we can add Ed25519 signature verification here
-    const authenticatedOrg: Id<"organizations"> | null = null;
-
     if (!isPublicTool) {
       // For non-public tools, we'll eventually add signature verification
       // For now, allow all requests
@@ -367,533 +900,11 @@ export const mcpInvoke = httpAction(async (ctx, request) => {
     // Continue without auth check - signature verification will happen at the evidence/dispute level
     // TODO: Add Ed25519 signature verification here in the future
 
-    // Route to appropriate handler based on tool name
-    let result;
-    
-    switch (tool) {
-      case "x402_request_refund":
-        // X-402 REFUND REQUEST HANDLER
-        // Extracts all transaction details (plaintiff, defendant, amount, currency) from blockchain
-        // Blockchain is the single source of truth
-        
-        // 1. Validate required fields
-        if (!parameters.request) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_REQUEST",
-              message: "request object is required",
-              field: "request",
-              expected: "Object with method, url, headers, body",
-              suggestion: "Provide the API request you sent: {method: 'POST', url: '...', headers: {...}, body: {...}}"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        if (!parameters.response) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_RESPONSE",
-              message: "response object is required",
-              field: "response",
-              expected: "Object with status, headers, body",
-              suggestion: "Provide the error response you received: {status: 500, headers: {...}, body: {...}}"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        if (!parameters.transactionHash) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: {
-              code: "MISSING_TRANSACTION_HASH",
-              message: "transactionHash is required",
-              field: "transactionHash",
-              expected: "Blockchain transaction hash",
-              suggestion: "Provide the transaction hash from X-402-Transaction-Hash header or your wallet"
-              }
-            }), {
-              status: 400,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-
-        if (!parameters.blockchain) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_BLOCKCHAIN",
-              message: "blockchain is required",
-              field: "blockchain",
-              expected: "ethereum, base, or solana",
-              suggestion: "Specify which blockchain network the payment transaction occurred on. Only Ethereum, Base, and Solana are supported."
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        if (!parameters.recipientAddress) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_RECIPIENT_ADDRESS",
-              message: "recipientAddress is required",
-              field: "recipientAddress",
-              expected: "Merchant/vendor address that received USDC",
-              suggestion: "Provide the merchant/vendor wallet address that received USDC in the transaction."
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        // Breaking change: amount fields are no longer accepted (derive from chain).
-        if (parameters.amount !== undefined || parameters.amountUnit !== undefined) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "UNSUPPORTED_FIELDS",
-              message: "amount/amountUnit are no longer accepted; amounts are derived from chain",
-              fields: ["amount", "amountUnit"],
-              suggestion: "Remove amount/amountUnit and provide recipientAddress (and optionally sourceTransferLogIndex if MULTI_MATCH)."
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // Validate blockchain is one of the supported chains (Base or Solana only)
-        const supportedChains = ["base", "solana"];
-        if (!supportedChains.includes(parameters.blockchain)) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "UNSUPPORTED_BLOCKCHAIN",
-              message: `Only Base and Solana chains are supported for USDC payments`,
-              field: "blockchain",
-              received: parameters.blockchain,
-              expected: "base or solana",
-              suggestion: "Specify which blockchain network the payment transaction occurred on. Only Ethereum, Base, and Solana are supported."
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        if (!parameters.description) {
-        return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_DESCRIPTION",
-              message: "description is required",
-              field: "description",
-              expected: "String between 10-500 characters describing what went wrong",
-              suggestion: "Add a description like: 'API returned 500 error after payment was confirmed on-chain'"
-          }
-        }), {
-            status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-        }
-        
-        // 2. Deterministic verification: select the USDC Transfer by merchant recipient address (+ optional logIndex).
-        const rawLogIndex = parameters.sourceTransferLogIndex;
-        const parsedLogIndex =
-          typeof rawLogIndex === "number"
-            ? rawLogIndex
-            : typeof rawLogIndex === "string" && rawLogIndex.trim() !== ""
-              ? Number(rawLogIndex)
-              : undefined;
-        if (parsedLogIndex !== undefined && (!Number.isSafeInteger(parsedLogIndex) || parsedLogIndex < 0)) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_SOURCE_TRANSFER_LOG_INDEX",
-              message: "sourceTransferLogIndex must be a non-negative integer",
-              field: "sourceTransferLogIndex",
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        console.log(`🔍 Verifying ${parameters.blockchain} USDC transfer by recipient for tx: ${parameters.transactionHash}`);
-        // @ts-ignore - avoid TS instantiation depth issues in downstream packages
-        const verify = await (ctx.runAction as any)(api.lib.blockchain.verifyUsdcTransferByRecipient, {
-          blockchain: parameters.blockchain,
-          transactionHash: parameters.transactionHash,
-          recipientAddress: parameters.recipientAddress,
-          sourceTransferLogIndex: parsedLogIndex,
-        });
-
-        if (!verify.ok) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: verify.code,
-              message: verify.message,
-              field: verify.code === "MULTI_MATCH" ? "sourceTransferLogIndex" : "transactionHash",
-              received: parameters.transactionHash,
-              candidates: verify.candidates
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // 3. Extract deterministic details for the dispute
-        const plaintiff = verify.payerAddress;
-        const defendant = verify.recipientAddress;
-        const txCurrency = "USDC";
-        const txAmountUsd = parseFloat(formatMicrosToUsdc(verify.amountMicrousdc));
-        
-        console.log(`✅ Transaction details extracted from blockchain:`);
-        console.log(`   Plaintiff (buyer): ${plaintiff}`);
-        console.log(`   Defendant (seller): ${defendant}`);
-        console.log(`   Amount: ${txAmountUsd} ${txCurrency}`);
-        console.log(`   LogIndex: ${verify.logIndex}`);
-        
-        // 4. Build evidence object from request/response
-        const evidence: any = {
-          request: parameters.request,
-          response: parameters.response,
-          amountUsd: txAmountUsd,
-          x402paymentDetails: {
-            currency: txCurrency,
-            blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash,
-            fromAddress: plaintiff,  // From blockchain
-            toAddress: defendant,    // From blockchain
-            logIndex: verify.logIndex
-            // Note: 'value' not included - schema doesn't support it
-          }
-        };
-        
-        // 5. Check if defendant agent exists (permissionless refund requests)
-        let defendantAgent = await ctx.runQuery(api.agents.getAgentByWallet, { 
-          walletAddress: defendant 
-        });
-        
-        if (defendantAgent) {
-          console.log(`✅ Defendant agent found: ${defendantAgent.did} (status: ${defendantAgent.status})`);
-        } else {
-          console.log(`ℹ️  Defendant agent not found for ${defendant} - disputes can still be filed`);
-        }
-        
-        // 6. Verify seller X-Signature if provided (recommended for strong evidence)
-        let signatureProvided = !!parameters.sellerXSignature;
-        let signatureVerified = false;
-        
-        if (parameters.sellerXSignature && defendantAgent?.publicKey) {
-          console.log("🔐 Verifying seller X-Signature...");
-          const payloadString = JSON.stringify(evidence);
-          const verificationResult = await ctx.runAction(api.lib.crypto.verifyEd25519Signature, {
-            publicKey: defendantAgent.publicKey,
-            signature: parameters.sellerXSignature,
-            payload: payloadString
-          });
-        
-          if (!verificationResult.valid) {
-            console.warn("⚠️  Seller signature verification failed");
-            console.warn("   Reason:", verificationResult.error);
-            console.warn("   Evidence strength: MEDIUM (signature invalid)");
-          } else {
-            console.log("✅ Seller X-Signature verified!");
-            evidence.sellerXSignatureVerified = true;
-            signatureVerified = true;
-            console.log("   Evidence strength: STRONG");
-          }
-        } else if (!parameters.sellerXSignature) {
-          console.warn("⚠️  No X-Signature provided");
-          console.warn("   Evidence strength: MEDIUM (no signature)");
-        } else if (!defendantAgent?.publicKey) {
-          console.warn("⚠️  Cannot verify signature - defendant has no registered public key");
-          console.warn("   Evidence strength: MEDIUM (cannot verify)");
-        }
-        
-        const transactionId = parameters.transactionHash;
-        
-        // If dry run, return validation results without filing
-        if (parameters.dryRun) {
-          return new Response(JSON.stringify({
-            success: true,
-            dryRun: true,
-            wouldExecute: {
-              action: "file_x402_payment_dispute",
-              plaintiff: `${plaintiff} (extracted from blockchain)`,
-              defendant: `${defendant} (extracted from blockchain)`,
-              amount: txAmountUsd,
-              currency: txCurrency,
-              blockchain: parameters.blockchain,
-              transactionHash: parameters.transactionHash,
-              estimatedFee: 0,
-              merchantProcessingFee: 0.05
-            },
-            validations: {
-              transactionFound: `✓ Transaction found on ${parameters.blockchain}`,
-              transactionDetails: "✓ All details extracted from blockchain",
-              signatureStatus: signatureProvided 
-                ? (signatureVerified ? "✓ X-Signature verified (STRONG evidence)" : "⚠ X-Signature invalid (MEDIUM evidence)")
-                : "⚠ X-Signature NOT provided (MEDIUM evidence - consider including for stronger case)",
-              request: "✓ Request object provided",
-              response: "✓ Response object provided"
-            },
-            blockchainExtraction: {
-              source: "Verified blockchain data",
-              blockchain: parameters.blockchain,
-              transactionHash: parameters.transactionHash,
-              plaintiff: plaintiff,
-              defendant: defendant,
-              amount: txAmountUsd,
-              currency: txCurrency,
-              logIndex: verify.logIndex
-            },
-            evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
-            nextSteps: [
-              "Remove 'dryRun: true' to file the dispute",
-              signatureProvided ? null : "Consider including sellerXSignature for stronger evidence",
-              "Dispute will be filed immediately",
-              "Filing fee: $0.00 (merchant pays $0.05 processing fee)",
-              "Resolution within 5-10 minutes for micro-disputes"
-            ].filter(Boolean)
-          }), {
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // 7. File payment dispute (canonical HTTP-first workflow).
-        // MCP is a thin adapter over the same canonical handler used by POST /v1/refunds.
-        const merchantCaip10 =
-          parameters.blockchain === "base"
-            ? `eip155:8453:${String(parameters.recipientAddress).toLowerCase()}`
-            : `solana:5eykt4GNfsw7SU33zdhhrELoMu3gFmT33EpFdpEfmgbf:${String(parameters.recipientAddress)}`;
-        const merchantApiUrl = typeof parameters.request?.url === "string" ? parameters.request.url : "";
-
-        const { fileCanonicalDispute } = await import("./lib/canonicalDispute");
-        const filed = await (fileCanonicalDispute as any)(ctx, {
-          merchant: merchantCaip10,
-          merchantApiUrl,
-          txHash: parameters.transactionHash,
-          description: parameters.description,
-          callbackUrl: parameters.callbackUrl,
-          sourceTransferLogIndex: verify.logIndex,
-          evidenceUrls: Array.isArray(parameters.evidenceUrls) ? parameters.evidenceUrls : [],
-          request: parameters.request,
-          response: parameters.response,
-        });
-
-        if (!filed?.ok) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: filed?.code || "FAILED",
-              message: filed?.message || "Failed to file dispute",
-              field: filed?.field,
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          disputeType: "PAYMENT",
-          created: filed.created === true,
-          duplicate: filed.duplicate === true,
-          caseId: filed.caseId,
-          status: filed.status || "received",
-          disputeFee: filed.disputeFee,
-          signatureVerification: {
-            provided: signatureProvided,
-            verified: signatureVerified,
-            message: !signatureProvided
-              ? "No X-Signature provided. Response authenticity cannot be confirmed. Evidence strength reduced."
-              : signatureVerified
-                ? "X-Signature verified. Response authenticity confirmed."
-                : "X-Signature verification failed. Response authenticity questionable.",
-            impact: !signatureProvided || !signatureVerified
-              ? "May require additional evidence for resolution"
-              : "Strong evidence - higher confidence in verdict"
-          },
-          transactionVerification: {
-            source: "blockchain",
-            blockchain: parameters.blockchain,
-            transactionHash: parameters.transactionHash,
-            verified: true,
-            extractedDetails: {
-              plaintiff: `${plaintiff} (extracted from blockchain)`,
-              defendant: `${defendant} (extracted from blockchain)`,
-              amount: txAmountUsd,
-              currency: txCurrency,
-              logIndex: verify.logIndex
-            }
-          },
-          evidenceStrength: signatureVerified ? "STRONG" : "MEDIUM",
-          message: filed.created === false
-            ? `Dispute already exists for this transaction. Returning the existing case.`
-            : `X-402 payment dispute filed. All transaction details verified from blockchain.`,
-          trackingUrl: filed.trackingUrl,
-          evidenceUrls: filed.evidenceUrls || [],
-          nextSteps: [
-            signatureProvided ? null : "Consider submitting X-Signature for stronger evidence"
-
-          ].filter(Boolean),
-          _links: {
-            self: filed.trackingUrl,
-            api: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/cases/${filed.caseId}`,
-            submitEvidence: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/evidence`,
-            checkStatus: `${process.env.NEXT_PUBLIC_API_URL || 'https://api.x402refunds.com'}/cases/${filed.caseId}`
-          }
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        break;
-        
-      case "x402_check_refund_status":
-        // @ts-ignore - avoid TS instantiation depth issues in downstream packages
-        result = await (ctx.runQuery as any)(internal.cases.getCase, {
-          caseId: parameters.caseId as any
-        });
-        
-        return new Response(JSON.stringify({
-          success: true,
-          case: result
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        break;
-        
-      case "image_generator":
-        // Demo agent - calls ImageGenerator500 endpoint internally
-        // This allows Claude to test the full X-402 payment + dispute flow
-        
-        // Validate prompt
-        if (!parameters.prompt || typeof parameters.prompt !== 'string') {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "MISSING_PROMPT",
-              message: "prompt is required",
-              field: "prompt",
-              expected: "String between 3-1000 characters",
-              suggestion: "Provide a text prompt like 'a dog playing in the park'"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        if (parameters.prompt.length < 3 || parameters.prompt.length > 1000) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_PROMPT_LENGTH",
-              message: `Prompt must be between 3-1000 characters (got ${parameters.prompt.length})`,
-              field: "prompt"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        // Make internal HTTP call to the demo agent endpoint
-        // In production, this would be an actual external API call
-        // For now, we'll return a simulated response showing the X-402 flow
-        
-        return new Response(JSON.stringify({
-          success: true,
-          note: "This is a demo agent that requires X-402 payment",
-          payment_required: {
-            amount: "0.01",
-            currency: "USDC",
-            network: "base",
-            recipient: "0x96BDBD233d4ABC11E7C77c45CAE14194332E7381",
-            protocol: "X-402"
-          },
-          instructions: {
-            step_1: "Coinbase Payments MCP will automatically handle payment when you call the API endpoint directly",
-            step_2: "Call: POST https://api.x402refunds.com/demo-agents/image-generator",
-            step_3: "This endpoint is intentionally unreliable for testing paid API flows",
-            coinbase_mcp: "Install: npx @coinbase/payments-mcp"
-          },
-          endpoint: "https://api.x402refunds.com/demo-agents/image-generator",
-          prompt: parameters.prompt,
-          size: parameters.size || "1024x1024",
-          model: parameters.model || "stable-diffusion-xl",
-          expected_behavior: "Returns 500 'model_overloaded' error after payment verification",
-          use_case: "Perfect for testing X-402 paid API flows"
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        break;
-        
-      case "x402_list_my_refund_requests":
-        // Validate Ethereum address format
-        if (!parameters.walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(parameters.walletAddress)) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: {
-              code: "INVALID_WALLET_ADDRESS",
-              message: "Invalid Ethereum wallet address",
-              field: "walletAddress",
-              received: parameters.walletAddress,
-              expected: "0x-prefixed 40-character hex string (ERC-8004)",
-              suggestion: "Provide a valid Ethereum wallet address, e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
-            }
-          }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        
-        result = await ctx.runQuery(api.cases.getCasesByParty, {
-          party: parameters.walletAddress
-        });
-        
-        const filteredCases = parameters.status && parameters.status !== "all"
-          ? result.filter((c: any) => c.status === parameters.status)
-          : result;
-        
-        return new Response(JSON.stringify({
-          success: true,
-          walletAddress: parameters.walletAddress,
-          totalCases: filteredCases.length,
-          cases: filteredCases
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-        break;
-        
-      default:
-        return new Response(JSON.stringify({
-          success: false,
-          error: {
-            code: MCP_ERROR_CODES.TOOL_NOT_FOUND,
-            message: `Unknown tool: ${tool}`,
-            hint: "This tool is not enabled on this MCP server",
-          }
-        }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-    }
+    const invoked = await invokeMcpTool({ ctx, origin, tool, parameters });
+    return new Response(JSON.stringify(invoked.body), {
+      status: invoked.status,
+      headers: { "Content-Type": "application/json" },
+    });
     
   } catch (error: any) {
     return new Response(JSON.stringify({

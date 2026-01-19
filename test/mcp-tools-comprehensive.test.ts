@@ -4,9 +4,7 @@ import { API_BASE_URL } from './fixtures';
 /**
  * Comprehensive MCP Tools Test Suite - HTTP Endpoint Testing
  *
- * NOTE: Refund tools may be disabled (not exposed) while still present in code.
- * This suite asserts that disabled tools are NOT callable, and that the demo image
- * generator tool remains callable.
+ * NOTE: Refund tools are enabled and callable via /mcp/invoke.
  *
  * IMPORTANT: These tests use real HTTP endpoints, not in-memory convex-test.
  * This ensures we're testing the actual MCP protocol implementation.
@@ -38,11 +36,11 @@ describe('MCP Tools - Comprehensive HTTP Test Suite (tool gating)', () => {
     return { response, data };
   }
 
-  it('should reject disabled tools (refund tools) via /mcp/invoke', async () => {
-    const { response, data } = await invokeMcpTool('x402_request_refund', {});
+  it('should return actionable missing-field errors for refund tools via /mcp/invoke', async () => {
+    const { response, data } = await invokeMcpTool('x402_file_refund_request', {});
     expect(response.status).toBe(400);
     expect(data.success).toBe(false);
-    expect(String(data.error?.code)).toMatch(/MCP_TOOL_NOT_FOUND/);
+    expect(String(data.error?.code)).toBe("MISSING_BLOCKCHAIN");
   });
 
   it('should allow calling image_generator via /mcp/invoke', async () => {

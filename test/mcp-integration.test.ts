@@ -14,13 +14,20 @@ import schema from '../convex/schema';
  */
 
 describe('MCP - Tool Definitions', () => {
-  it('should export only the enabled MCP tools', async () => {
+  it('should export the enabled MCP tools', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     
     expect(MCP_TOOLS).toBeDefined();
     expect(Array.isArray(MCP_TOOLS)).toBe(true);
-    expect(MCP_TOOLS.length).toBe(1);
-    expect(MCP_TOOLS[0]?.name).toBe('image_generator');
+    const names = MCP_TOOLS.map((t) => t.name).sort();
+    expect(names).toEqual(
+      [
+        "image_generator",
+        "x402_file_refund_request",
+        "x402_get_refund_status",
+        "x402_list_refund_requests",
+      ].sort(),
+    );
   });
 
   it('should have valid tool schemas', async () => {
@@ -47,12 +54,20 @@ describe('MCP - Tool Definitions', () => {
     expect(tool?.inputSchema.required).toContain('prompt');
   });
 
-  it('should not expose refund tools when disabled', async () => {
+  it('should expose refund tools with required sellerEndpointUrl', async () => {
     const { MCP_TOOLS } = await import('../convex/mcp');
     const names = MCP_TOOLS.map((t) => t.name);
-    expect(names).not.toContain('x402_request_refund');
-    expect(names).not.toContain('x402_check_refund_status');
-    expect(names).not.toContain('x402_list_my_refund_requests');
+    expect(names).toContain('x402_file_refund_request');
+    expect(names).toContain('x402_get_refund_status');
+    expect(names).toContain('x402_list_refund_requests');
+
+    const tool = MCP_TOOLS.find((t) => t.name === "x402_file_refund_request");
+    expect(tool).toBeDefined();
+    expect(tool?.inputSchema?.required).toContain("sellerEndpointUrl");
+    expect(tool?.inputSchema?.required).toContain("transactionHash");
+    expect(tool?.inputSchema?.required).toContain("blockchain");
+    expect(tool?.inputSchema?.required).toContain("description");
+    expect(tool?.inputSchema?.properties?.recipientAddress).toBeDefined();
   });
 });
 

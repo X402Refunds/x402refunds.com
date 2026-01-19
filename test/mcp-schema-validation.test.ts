@@ -9,10 +9,17 @@ import { describe, it, expect } from "vitest";
 import { MCP_TOOLS } from "../convex/mcp";
 
 describe("MCP Tool Schema Validation", () => {
-  describe("image_generator", () => {
-    it("should be the only enabled tool", () => {
-      const names = MCP_TOOLS.map((t) => t.name);
-      expect(names).toEqual(["image_generator"]);
+  describe("enabled tools", () => {
+    it("should include refund tools and image_generator", () => {
+      const names = MCP_TOOLS.map((t) => t.name).sort();
+      expect(names).toEqual(
+        [
+          "image_generator",
+          "x402_file_refund_request",
+          "x402_get_refund_status",
+          "x402_list_refund_requests",
+        ].sort(),
+      );
     });
 
     it("should have required fields", () => {
@@ -51,6 +58,17 @@ describe("MCP Tool Schema Validation", () => {
         expect(tool.inputSchema.type).toBe("object");
         expect(tool.inputSchema.properties).toBeDefined();
       }
+    });
+
+    it("x402_file_refund_request should require sellerEndpointUrl", () => {
+      const tool = MCP_TOOLS.find((t) => t.name === "x402_file_refund_request");
+      expect(tool).toBeDefined();
+      expect(tool?.inputSchema?.required).toContain("sellerEndpointUrl");
+      expect(tool?.inputSchema?.required).toContain("transactionHash");
+      expect(tool?.inputSchema?.required).toContain("blockchain");
+      expect(tool?.inputSchema?.required).toContain("description");
+      expect(tool?.inputSchema?.properties?.recipientAddress).toBeDefined();
+      expect(tool?.inputSchema?.properties?.sourceTransferLogIndex).toBeDefined();
     });
   });
 });

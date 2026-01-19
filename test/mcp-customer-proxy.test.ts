@@ -27,7 +27,12 @@ describe('MCP Customer Proxy Pattern', () => {
     
     const toolNames = schema.tools.map((t: any) => t.name);
 
-    expect(toolNames).toEqual(['image_generator']);
+    expect(toolNames).toEqual([
+      "x402_file_refund_request",
+      "x402_list_refund_requests",
+      "x402_get_refund_status",
+      "image_generator",
+    ]);
   }, 30000);
 
   it('should have complete schemas for core tools', async () => {
@@ -84,8 +89,11 @@ describe('MCP Customer Proxy Pattern', () => {
     const response = await fetch(`${CONSULATE_API_URL}/.well-known/mcp.json`);
     const schema = await response.json();
     
-    // Refund tools are intentionally disabled and not exposed in discovery.
-    expect(schema.tools.find((t: any) => t.name === 'x402_request_refund')).toBeUndefined();
+    const tool = schema.tools.find((t: any) => t.name === 'x402_file_refund_request');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema?.required).toContain("sellerEndpointUrl");
+    expect(tool.inputSchema?.required).toContain("transactionHash");
+    expect(tool.inputSchema?.required).toContain("blockchain");
   }, 30000);
 });
 

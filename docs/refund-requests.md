@@ -36,27 +36,28 @@ https://api.x402refunds.com/mcp
 
 **Request a refund:**
 
-Call tool `x402_request_refund` with:
+Call tool `x402_file_refund_request` with:
 - `blockchain`: "base" or "solana"
-- `transactionHash`: USDC transfer tx hash
-- `recipientAddress`: Merchant wallet address
+- `transactionHash`: USDC payment tx hash / signature
+- `sellerEndpointUrl`: The exact paid API endpoint URL you called (**required**; we fetch it to extract the seller's refund-contact email from `Link` headers)
 - `description`: What went wrong (10-500 chars)
+- `recipientAddress`: Optional (recommended for batched transactions). If the transaction has multiple USDC recipients, you must provide `recipientAddress` (and possibly `sourceTransferLogIndex`) to disambiguate.
 - `evidenceUrls`: Optional array of evidence URLs
 
 AI prompt (copy/paste):
 
 ```txt
-Use the MCP tool x402_request_refund to submit a refund request for an X-402 payment that I just made.
+Use the MCP tool x402_file_refund_request to submit a refund request for an X-402 payment that I just made.
 ```
 
 **Check status:**
 
-Call tool `x402_check_refund_status` with `caseId` (from refund request response).
+Call tool `x402_get_refund_status` with `caseId` (from refund request response).
 
 AI prompt (copy/paste):
 
 ```txt
-Use the MCP tool x402_check_refund_status to check the current status of a refund request that I filed.
+Use the MCP tool x402_get_refund_status to check the current status of a refund request that I filed.
 ```
 
 ### HTTP

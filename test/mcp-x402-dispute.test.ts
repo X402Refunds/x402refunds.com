@@ -31,11 +31,11 @@ async function invokeMcpTool(toolName: string, parameters: any) {
 }
 
 describe('X-402 Ultra-Minimal Refund Request Schema', () => {
-  it('should reject x402_request_refund when tool is disabled', async () => {
-    const { response, data } = await invokeMcpTool('x402_request_refund', {});
+  it('should return actionable missing-field errors for x402_file_refund_request', async () => {
+    const { response, data } = await invokeMcpTool('x402_file_refund_request', {});
     expect(response.status).toBe(400);
     expect(data.success).toBe(false);
-    expect(String(data.error?.code)).toMatch(/MCP_TOOL_NOT_FOUND/);
+    expect(String(data.error?.code)).toBe("MISSING_BLOCKCHAIN");
   });
 
   it('should allow image_generator tool', async () => {
