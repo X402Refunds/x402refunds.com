@@ -157,6 +157,64 @@ function invalidRequest(field: string, message: string, extra?: Record<string, u
   };
 }
 
+function buildRefundsSchema(origin: string) {
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $id: `${origin}/v1/refunds/schema`,
+    title: "X-402 Refund Request (txHash-first)",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      blockchain: {
+        type: "string",
+        enum: ["base", "solana"],
+        description: 'Network where the USDC payment occurred ("base" or "solana").',
+      },
+      transactionHash: {
+        type: "string",
+        description:
+          "USDC payment transaction hash/signature. Base: 0x + 64 hex chars. Solana: base58 signature.",
+      },
+      sellerEndpointUrl: {
+        type: "string",
+        format: "uri",
+        pattern: "^https://",
+        description:
+          "The exact paid API endpoint you called (must be https:// and include a path, not just origin).",
+        examples: ["https://api.x402refunds.com/demo-agents/image-generator"],
+      },
+      description: {
+        type: "string",
+        minLength: 1,
+        description: "What went wrong after payment (e.g. timeout, 500 error, wrong output).",
+      },
+      evidenceUrls: {
+        type: "array",
+        items: { type: "string", format: "uri" },
+        description: "Optional evidence URLs (logs, screenshots, etc.).",
+      },
+      sourceTransferLogIndex: {
+        description:
+          "Optional. If the transaction contains multiple USDC transfers, provide the logIndex/instructionIndex to disambiguate.",
+        anyOf: [{ type: "number" }, { type: "string" }],
+      },
+    },
+    required: ["blockchain", "transactionHash", "sellerEndpointUrl", "description"],
+    examples: [
+      {
+        blockchain: "base",
+        transactionHash: "0x<64-hex-chars>",
+        sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
+        description: "Paid request returned an error after payment",
+      },
+    ],
+    "x-x402refunds": {
+      note: "Amounts and parties are derived from the on-chain USDC transfer; clients should not send amount.",
+      docs: "https://x402refunds.com/docs",
+    },
+  };
+}
+
 async function requireApiKeyOrg(ctx: any, request: Request): Promise<{ ok: true; organizationId: any } | { ok: false; response: Response }> {
   const auth = request.headers.get("authorization") || request.headers.get("Authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/i);
@@ -1816,6 +1874,8 @@ http.route({
     const body = await request.json().catch(() => ({} as any));
     const origin = new URL(request.url).origin;
     const describedby = `<${origin}/v1/refunds/schema>; rel="describedby"; type="application/schema+json"`;
+    const schemaUrl = `${origin}/v1/refunds/schema`;
+    const schema = buildRefundsSchema(origin);
 
     // === HARD CUTOVER: txHash-first filing (no backwards compatibility) ===
     const blockchainRaw = typeof body?.blockchain === "string" ? body.blockchain : "";
@@ -1829,6 +1889,9 @@ http.route({
           sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
           description: "Paid request returned an error after payment",
         },
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
 
@@ -1836,16 +1899,25 @@ http.route({
     if (!transactionHash) {
       return jsonError(400, invalidRequest("transactionHash", "transactionHash is required", {
         expected: blockchain === "base" ? "0x + 64 hex chars" : "base58 signature (32-128 chars)",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
     if (blockchain === "base" && !/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
       return jsonError(400, invalidRequest("transactionHash", "Base transactionHash must be 0x + 64 hex chars", {
         expected: "0x + 64 hex chars",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
     if (blockchain === "solana" && !/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(transactionHash)) {
       return jsonError(400, invalidRequest("transactionHash", "Solana transactionHash must be a base58 signature", {
         expected: "base58 signature (32-128 chars)",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
 
@@ -1855,6 +1927,9 @@ http.route({
         expected: "https://<host>/<path> (must include a path, not just origin)",
         hint:
           "Use the *exact* paid API endpoint you called (the seller endpoint). For the demo image generator, use https://api.x402refunds.com/demo-agents/image-generator",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
     let sellerEndpointUrl: string;
@@ -1868,6 +1943,9 @@ http.route({
       } catch (e: any) {
       return jsonError(400, invalidRequest("sellerEndpointUrl", e?.message || "Invalid sellerEndpointUrl", {
         expected: "https://<host>/<path> (must include a path, not just origin)",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
 
@@ -1876,6 +1954,9 @@ http.route({
       return jsonError(400, invalidRequest("description", "description is required", {
         expected: "string",
         hint: "Describe what went wrong after payment (e.g. timeout, 500 error, wrong output).",
+        schemaUrl,
+        schema,
+        received: body && typeof body === "object" ? Object.keys(body).slice(0, 50) : null,
       }), { Link: describedby });
     }
 
@@ -2106,61 +2187,10 @@ http.route({
   path: "/v1/refunds/schema",
   method: "GET",
   handler: httpAction(async (_ctx, _request) => {
-    const schema = {
-      $schema: "https://json-schema.org/draft/2020-12/schema",
-      $id: "https://api.x402refunds.com/v1/refunds/schema",
-      title: "X-402 Refund Request (txHash-first)",
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        blockchain: {
-          type: "string",
-          enum: ["base", "solana"],
-          description: 'Network where the USDC payment occurred ("base" or "solana").',
-        },
-        transactionHash: {
-          type: "string",
-          description:
-            "USDC payment transaction hash/signature. Base: 0x + 64 hex chars. Solana: base58 signature.",
-        },
-        sellerEndpointUrl: {
-          type: "string",
-          format: "uri",
-          pattern: "^https://",
-          description:
-            "The exact paid API endpoint you called (must be https:// and include a path, not just origin).",
-          examples: ["https://api.x402refunds.com/demo-agents/image-generator"],
-        },
-        description: {
-          type: "string",
-          minLength: 1,
-          description: "What went wrong after payment (e.g. timeout, 500 error, wrong output).",
-        },
-        evidenceUrls: {
-          type: "array",
-          items: { type: "string", format: "uri" },
-          description: "Optional evidence URLs (logs, screenshots, etc.).",
-        },
-        sourceTransferLogIndex: {
-          description:
-            "Optional. If the transaction contains multiple USDC transfers, provide the logIndex/instructionIndex to disambiguate.",
-          anyOf: [{ type: "number" }, { type: "string" }],
-        },
-      },
-      required: ["blockchain", "transactionHash", "sellerEndpointUrl", "description"],
-      examples: [
-        {
-          blockchain: "base",
-          transactionHash: "0x<64-hex-chars>",
-          sellerEndpointUrl: "https://api.x402refunds.com/demo-agents/image-generator",
-          description: "Paid request returned an error after payment",
-        },
-      ],
-      "x-x402refunds": {
-        note: "Amounts and parties are derived from the on-chain USDC transfer; clients should not send amount.",
-        docs: "https://x402refunds.com/docs",
-      },
-    };
+    // Use the request origin so schema works on convex.site and custom domains.
+    // Note: _request.url is available in Convex httpAction runtime.
+    const origin = new URL((_request as any).url).origin;
+    const schema = buildRefundsSchema(origin);
 
     return new Response(JSON.stringify(schema), {
       status: 200,
