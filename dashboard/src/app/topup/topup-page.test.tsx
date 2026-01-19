@@ -57,15 +57,18 @@ describe("TopupPage (email-linked locking)", () => {
 
     expect(amount).toBeDisabled();
 
-    // Tabs should not render in email mode; we show static Pay on.
+    // Tabs should not render in email mode; we show a compact Network row.
     expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
     expect(screen.queryByRole("tab", { name: /Solana \(USDC\)/i })).toBeNull();
-    // Text is split across nodes; assert both parts are present.
-    expect(screen.getByText(/Pay on:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Network:/i)).toBeInTheDocument();
     expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: "Add USDC credits" })).toBeInTheDocument();
-    expect(screen.getAllByText(/No gas fees\. Powered by X-402\./i).length).toBeGreaterThan(0);
+    // Credits display should be in header with <= 2 decimals.
+    expect(screen.getByText("Credits")).toBeInTheDocument();
+    expect(screen.getByText(/^0(\.\d{1,2})?\sUSDC$/)).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Process refund" })).toBeInTheDocument();
+    expect(screen.getByText(/No gas fees\. Powered by X-402\./i)).toBeInTheDocument();
   });
 
   it("does not lock fields when actionToken is absent", async () => {
@@ -109,8 +112,9 @@ describe("TopupPage (email-linked locking)", () => {
     expect(screen.getByText(/Approving case/i)).toBeInTheDocument();
     expect(screen.getAllByText(/kLegacy/).length).toBeGreaterThan(0);
     expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
-    expect(screen.getByText(/Pay on:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Network:/i)).toBeInTheDocument();
     expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Process refund" })).toBeInTheDocument();
   });
 });
 

@@ -310,6 +310,13 @@ export default function TopupPage() {
     balanceStatus === "success" && balanceMicros ? Number(balanceMicros) / 1_000_000 : null;
   const requiredUsdc = typeof notificationRequiredUsdc === "number" ? notificationRequiredUsdc : null;
 
+  const formatUsdc2 = useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }, []);
+
   // UX: If we know the required credits for a dispute and the merchant's current credits,
   // prefill the top-up amount with the missing delta (without overriding user input).
   useEffect(() => {
@@ -364,27 +371,43 @@ export default function TopupPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-end">
-          <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
-            {status === "idle"
-              ? "Ready"
-              : status === "processing"
-                ? "Processing"
-                : status === "submitted"
-                  ? "Submitted"
-                  : "Error"}
-          </Badge>
+        <CardHeader className="flex flex-row items-center justify-end gap-3">
+          {merchantCaip10 && (
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">Credits</div>
+              <div className="text-sm font-medium text-foreground">
+                {balanceStatus === "loading"
+                  ? "Loading…"
+                  : balanceStatus === "success" && typeof availableUsdc === "number"
+                    ? `${formatUsdc2.format(availableUsdc)} USDC`
+                    : balanceStatus === "error"
+                      ? "Unable to load"
+                      : "—"}
+              </div>
+            </div>
+          )}
+
+          {status !== "idle" && (
+            <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
+              {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
+            </Badge>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Step 1: Confirm */}
           <div className="space-y-3">
-            <div className="text-sm font-medium text-foreground">Confirm</div>
+            {!isEmailActionFlow && <div className="text-sm font-medium text-foreground">Confirm</div>}
 
             <div className="space-y-2">
               <Label htmlFor="merchant">Merchant</Label>
               {isEmailActionFlow ? (
                 <div className="space-y-2">
-                  <CopyableField value={merchantAddress || merchantCaip10 || ""} truncate={false} label="Copied merchant" />
+                  <CopyableField
+                    value={merchantAddress || merchantCaip10 || ""}
+                    truncate
+                    truncateLength={26}
+                    label="Copied merchant"
+                  />
                 </div>
               ) : (
                 <Input
@@ -401,32 +424,41 @@ export default function TopupPage() {
               )}
 
               {merchantCaip10 && (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div className="text-sm">
-                    <div className="text-xs text-muted-foreground">Credits balance</div>
-                    <div className="font-medium text-foreground">
-                      {balanceStatus === "loading"
-                        ? "Loading…"
-                        : balanceStatus === "success" && typeof availableUsdc === "number"
-                          ? `${availableUsdc.toFixed(6)} USDC`
-                          : balanceStatus === "error"
-                            ? "Unable to load"
-                            : "—"}
-                    </div>
-                  </div>
-
+                <>
                   {caseId ? (
                     <div className="text-sm">
                       <div className="text-xs text-muted-foreground">Case</div>
-                      <div className="font-medium text-foreground">
-                        <code className="font-mono">{caseId}</code>{" "}
-                        <a className="ml-2 text-xs underline text-muted-foreground" href={`/cases/${encodeURIComponent(caseId)}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CopyableField
+                            value={caseId}
+                            truncate
+                            truncateLength={18}
+                            label="Copied case ID"
+                            className="w-full"
+                          />
+                        </div>
+                        <a
+                          className="text-xs underline text-muted-foreground whitespace-nowrap"
+                          href={`/cases/${encodeURIComponent(caseId)}`}
+                        >
                           View case
                         </a>
                       </div>
                     </div>
                   ) : null}
-                </div>
+
+                  {isEmailActionFlow && (
+                    <div className="text-xs text-muted-foreground">
+                      Network:{" "}
+                      <span className="text-foreground">
+                        {(inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana"
+                          ? "Solana (USDC)"
+                          : "Base (USDC)"}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
 
               {!isEmailActionFlow && (
@@ -473,24 +505,9 @@ export default function TopupPage() {
           )}
 
           {/* Step 2: Pay on */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          {!isEmailActionFlow && (
+            <div className="space-y-2">
               <div className="text-sm font-medium text-foreground">Pay on</div>
-              <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
-            </div>
-
-            {isEmailActionFlow ? (
-              <div className="rounded-lg border border-border bg-muted/20 p-3">
-                <div className="text-sm text-foreground">
-                  Pay on:{" "}
-                  <span className="font-medium">
-                    {(inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana"
-                      ? "Solana (USDC)"
-                      : "Base (USDC)"}
-                  </span>
-                </div>
-              </div>
-            ) : (
               <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}>
                 <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
                   <TabsTrigger
@@ -509,8 +526,8 @@ export default function TopupPage() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Step 3: Amount + Pay */}
           <div className="space-y-2">
@@ -768,7 +785,7 @@ export default function TopupPage() {
               }
             }}
           >
-            Add USDC credits
+            {isEmailActionFlow ? "Process refund" : "Add USDC credits"}
           </Button>
           <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
 

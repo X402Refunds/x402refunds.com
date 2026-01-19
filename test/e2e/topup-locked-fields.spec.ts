@@ -20,16 +20,21 @@ test.describe("TopUp email-linked locking", () => {
     const amountInput = page.getByLabel("Amount to add (USDC)");
     await expect(amountInput).toBeDisabled();
 
-    // Tabs should not render in email mode; show static Pay on instead.
-    await expect(page.getByText(/Pay on:\s*Base \(USDC\)/i)).toBeVisible();
+    // Tabs should not render in email mode; show compact Network row instead.
+    await expect(page.getByText(/Network:/i)).toBeVisible();
+    await expect(page.getByText(/Base \(USDC\)/i)).toBeVisible();
     await expect(page.getByRole("tab", { name: /Base \(USDC\)/i })).toHaveCount(0);
     await expect(page.getByRole("tab", { name: /Solana \(USDC\)/i })).toHaveCount(0);
 
     // Examples disclosure should not render in email mode.
     await expect(page.getByText(/Wallet format examples/i)).toHaveCount(0);
 
-    await expect(page.getByRole("button", { name: "Add USDC credits" })).toBeVisible();
-    await expect(page.locator("text=/No gas fees\\. Powered by X-402\\./i").first()).toBeVisible();
+    // Credits should be in header and formatted to 0–2 decimals.
+    await expect(page.getByText("Credits", { exact: true })).toBeVisible();
+    await expect(page.getByText(/^\d+(\.\d{1,2})?\sUSDC$/)).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Process refund" })).toBeVisible();
+    await expect(page.getByText(/No gas fees\. Powered by X-402\./i)).toBeVisible();
   });
 });
 
