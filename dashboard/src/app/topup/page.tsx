@@ -11,6 +11,7 @@ import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { PublicKey } from "@solana/web3.js";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { inferTopupPayNetworkFromMerchant } from "@/lib/topup-network";
 import {
   createX402PaymentSignature,
@@ -344,21 +345,22 @@ export default function TopupPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">Top up refund credits</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Add refund credits</h1>
         <p className="text-sm text-muted-foreground">
-          Add USDC so approved disputes can be refunded automatically. No account required.
+          Add USDC credits so refunds can be executed automatically.
         </p>
-        {isEmailActionFlow && (
+        {isEmailActionFlow ? (
           <p className="text-sm text-muted-foreground">
-            Opened from an approval email link. Merchant, amount, and network are locked to prevent accidental changes.
+            Approving case{" "}
+            <code className="font-mono">{caseId}</code>.
+            {" "}Add credits to complete this approval automatically.
           </p>
-        )}
-        {caseId && (
+        ) : caseId ? (
           <p className="text-sm text-muted-foreground">
-            After you top up, we&apos;ll automatically complete your selected action for case{" "}
+            After you add credits, we&apos;ll automatically complete your selected action for case{" "}
             <code className="font-mono">{caseId}</code>.
           </p>
-        )}
+        ) : null}
       </div>
 
       <Card>
@@ -374,39 +376,77 @@ export default function TopupPage() {
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="merchant">Merchant wallet</Label>
-            <Input
-              id="merchant"
-              placeholder="0x... or <Solana base58> or solana:<chainRef>:<base58>"
-              value={merchantAddress}
-              disabled={isEmailActionFlow}
-              onChange={(e) => setMerchantAddress(e.target.value)}
-            />
-            <div className="text-xs text-muted-foreground">
-              Examples:{" "}
-              <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code> or{" "}
-              <code className="font-mono">
-                FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
-              </code>
-            </div>
-            {merchantAddress.trim() && inferred.error && (
-              <div className="text-xs text-destructive">{inferred.error}</div>
-            )}
-            {merchantCaip10 && (
-              <div className="text-sm">
-                <div className="text-xs text-muted-foreground">Refund credit balance</div>
-                <div className="font-medium text-foreground">
-                  {balanceStatus === "loading"
-                    ? "Loading…"
-                    : balanceStatus === "success" && typeof availableUsdc === "number"
-                      ? `${availableUsdc.toFixed(6)} USDC`
-                      : balanceStatus === "error"
-                        ? "Unable to load"
-                        : "—"}
+          {/* Step 1: Confirm */}
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-foreground">Confirm</div>
+
+            <div className="space-y-2">
+              <Label htmlFor="merchant">Merchant</Label>
+              {isEmailActionFlow ? (
+                <div className="space-y-2">
+                  <CopyableField value={merchantAddress || merchantCaip10 || ""} truncate={false} label="Copied merchant" />
                 </div>
-              </div>
-            )}
+              ) : (
+                <Input
+                  id="merchant"
+                  placeholder="0x... or <Solana base58> or solana:<chainRef>:<base58>"
+                  value={merchantAddress}
+                  disabled={isEmailActionFlow}
+                  onChange={(e) => setMerchantAddress(e.target.value)}
+                />
+              )}
+
+              {merchantAddress.trim() && inferred.error && (
+                <div className="text-xs text-destructive">{inferred.error}</div>
+              )}
+
+              {merchantCaip10 && (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="text-sm">
+                    <div className="text-xs text-muted-foreground">Credits balance</div>
+                    <div className="font-medium text-foreground">
+                      {balanceStatus === "loading"
+                        ? "Loading…"
+                        : balanceStatus === "success" && typeof availableUsdc === "number"
+                          ? `${availableUsdc.toFixed(6)} USDC`
+                          : balanceStatus === "error"
+                            ? "Unable to load"
+                            : "—"}
+                    </div>
+                  </div>
+
+                  {caseId ? (
+                    <div className="text-sm">
+                      <div className="text-xs text-muted-foreground">Case</div>
+                      <div className="font-medium text-foreground">
+                        <code className="font-mono">{caseId}</code>{" "}
+                        <a className="ml-2 text-xs underline text-muted-foreground" href={`/cases/${encodeURIComponent(caseId)}`}>
+                          View case
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {!isEmailActionFlow && (
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="examples">
+                    <AccordionTrigger className="text-sm">Wallet format examples</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="text-xs text-muted-foreground space-y-2">
+                        <div>
+                          EVM: <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code>
+                        </div>
+                        <div>
+                          Solana: <code className="font-mono">FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N</code>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
+            </div>
           </div>
 
           {caseId && completionStatus !== "idle" && (
@@ -432,44 +472,57 @@ export default function TopupPage() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label>Top-up payment network</Label>
-            <Tabs
-              value={payNetwork}
-              onValueChange={(v) => {
-                if (isEmailActionFlow) return;
-                setPayNetwork(v === "solana" ? "solana" : "base");
-              }}
-            >
-              <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
-                <TabsTrigger
-                  value="base"
-                  disabled={isEmailActionFlow || (inferred.locked && inferred.network === "solana")}
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
-                >
-                  Base (USDC)
-                </TabsTrigger>
-                <TabsTrigger
-                  value="solana"
-                  disabled={isEmailActionFlow || (inferred.locked && inferred.network === "base")}
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
-                >
-                  Solana (USDC)
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="text-xs text-muted-foreground">
-              {payNetwork === "base"
-                ? "Pay gasless via Base (facilitator executes the transfer)."
-                : "Pay gasless via Solana (facilitator is the fee payer)."}
-            </div>
-          </div>
-
+          {/* Step 2: Pay on */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="amount">Amount (USDC)</Label>
+              <div className="text-sm font-medium text-foreground">Pay on</div>
+              <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
+            </div>
+
+            {isEmailActionFlow ? (
+              <div className="rounded-lg border border-border bg-muted/20 p-3">
+                <div className="text-sm text-foreground">
+                  Pay on:{" "}
+                  <span className="font-medium">
+                    {(inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana"
+                      ? "Solana (USDC)"
+                      : "Base (USDC)"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}>
+                <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
+                  <TabsTrigger
+                    value="base"
+                    disabled={inferred.locked && inferred.network === "solana"}
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                  >
+                    Base (USDC)
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="solana"
+                    disabled={inferred.locked && inferred.network === "base"}
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                  >
+                    Solana (USDC)
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+          </div>
+
+          {/* Step 3: Amount + Pay */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="amount">Amount to add (USDC)</Label>
               <span className="text-xs text-muted-foreground">Max $10</span>
             </div>
+            {typeof requiredUsdc === "number" && caseId && (
+              <div className="text-xs text-muted-foreground">
+                Required to proceed: <code className="font-mono">{requiredUsdc.toFixed(6)}</code> USDC
+              </div>
+            )}
             <Input
               id="amount"
               placeholder="e.g. 5.00"
@@ -715,8 +768,9 @@ export default function TopupPage() {
               }
             }}
           >
-            Top up (gasless)
+            Add USDC credits
           </Button>
+          <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
 
           {txHash && (
             <div className="space-y-2">

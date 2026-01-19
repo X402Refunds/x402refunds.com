@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../../convex/schema";
-import { internal } from "../../convex/_generated/api";
+// Avoid TS \"excessively deep\" instantiation from generated API types.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { internal } = require("../../convex/_generated/api") as any;
 
 describe("topup actionToken validation (unit)", () => {
   let t: ReturnType<typeof convexTest>;
 
   beforeAll(async () => {
-    const modules = import.meta.glob("../../convex/**/*.{ts,js}");
+    const modules = (import.meta as any).glob("../../convex/**/*.{ts,js}");
     t = convexTest(schema, modules);
   });
 
@@ -237,6 +239,46 @@ describe("topup actionToken validation (unit)", () => {
       token: "tok_ok",
       merchant,
       caseId: String(caseId),
+    });
+    expect(res?.ok).toBe(true);
+  });
+
+  it("returns ok when caseId is omitted (merchant still must match)", async () => {
+    const now = Date.now();
+    const merchant = "eip155:8453:0x00000000000000000000000000000000000000aa";
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "omit caseId test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+      } as any);
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("merchantEmailActionTokens", {
+        token: "tok_no_case",
+        caseId,
+        merchant,
+        origin: "https://merchant.example",
+        supportEmail: "support@merchant.example",
+        action: "APPROVE_FULL_REFUND",
+        refundAmountMicrousdc: 10_000,
+        createdAt: now,
+        expiresAt: now + 60_000,
+      } as any);
+    });
+
+    const res = await t.query((internal as any).merchantEmailActions.validateTokenContextForTopup, {
+      token: "tok_no_case",
+      merchant,
+      // caseId intentionally omitted
     });
     expect(res?.ok).toBe(true);
   });

@@ -11,15 +11,25 @@ test.describe("TopUp email-linked locking", () => {
 
     await page.goto(url);
 
-    const merchantInput = page.getByLabel("Merchant wallet");
-    const amountInput = page.getByLabel("Amount (USDC)");
-    const baseTab = page.getByRole("tab", { name: /Base \(USDC\)/i });
-    const solTab = page.getByRole("tab", { name: /Solana \(USDC\)/i });
+    await expect(page.getByRole("heading", { name: "Add refund credits" })).toBeVisible();
+    await expect(page.getByText(/Approving case/i)).toBeVisible();
 
-    await expect(merchantInput).toBeDisabled();
+    // Merchant renders as a copyable code field (not an editable input) in email mode.
+    await expect(page.getByText(/eip155:8453/i)).toBeVisible();
+
+    const amountInput = page.getByLabel("Amount to add (USDC)");
     await expect(amountInput).toBeDisabled();
-    await expect(baseTab).toBeDisabled();
-    await expect(solTab).toBeDisabled();
+
+    // Tabs should not render in email mode; show static Pay on instead.
+    await expect(page.getByText(/Pay on:\s*Base \(USDC\)/i)).toBeVisible();
+    await expect(page.getByRole("tab", { name: /Base \(USDC\)/i })).toHaveCount(0);
+    await expect(page.getByRole("tab", { name: /Solana \(USDC\)/i })).toHaveCount(0);
+
+    // Examples disclosure should not render in email mode.
+    await expect(page.getByText(/Wallet format examples/i)).toHaveCount(0);
+
+    await expect(page.getByRole("button", { name: "Add USDC credits" })).toBeVisible();
+    await expect(page.locator("text=/No gas fees\\. Powered by X-402\\./i").first()).toBeVisible();
   });
 });
 

@@ -384,6 +384,8 @@ describe("HTTP API - Wallet-first Topup actionToken guardrails", () => {
   // when a token is provided via environment variables (e.g. captured from a real email).
   const RUN_ACTIONTOKEN_HTTP = process.env.RUN_E2E_ACTIONTOKEN_HTTP === "true";
   const VALID_TOKEN = process.env.E2E_ACTIONTOKEN || "";
+  const EXPIRED_TOKEN = process.env.E2E_ACTIONTOKEN_EXPIRED || "";
+  const USED_TOKEN = process.env.E2E_ACTIONTOKEN_USED || "";
   const TOKEN_MERCHANT = process.env.E2E_ACTIONTOKEN_MERCHANT || "";
   const TOKEN_CASE_ID = process.env.E2E_ACTIONTOKEN_CASE_ID || "";
 
@@ -428,6 +430,44 @@ describe("HTTP API - Wallet-first Topup actionToken guardrails", () => {
     const body = await response.json().catch(() => ({}));
     expect(body.ok).toBe(false);
     expect(body.code).toBe("ACTION_TOKEN_CASE_MISMATCH");
+  });
+
+  it(RUN_ACTIONTOKEN_HTTP && EXPIRED_TOKEN ? "POST /v1/topup expired token returns 400 ACTION_TOKEN_EXPIRED" : "provide E2E_ACTIONTOKEN_EXPIRED to run expired-token test", async () => {
+    if (!(RUN_ACTIONTOKEN_HTTP && EXPIRED_TOKEN)) return;
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        blockchain: "base",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+        actionToken: EXPIRED_TOKEN,
+      }),
+    });
+    expect(response.status).toBe(400);
+    const body = await response.json().catch(() => ({}));
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ACTION_TOKEN_EXPIRED");
+  });
+
+  it(RUN_ACTIONTOKEN_HTTP && USED_TOKEN ? "POST /v1/topup used token returns 400 ACTION_TOKEN_USED" : "provide E2E_ACTIONTOKEN_USED to run used-token test", async () => {
+    if (!(RUN_ACTIONTOKEN_HTTP && USED_TOKEN)) return;
+    const response = await fetch(`${API_BASE_URL}/v1/topup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+        blockchain: "base",
+        amountMicrousdc: "10000",
+        currency: "USDC",
+        actionToken: USED_TOKEN,
+      }),
+    });
+    expect(response.status).toBe(400);
+    const body = await response.json().catch(() => ({}));
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ACTION_TOKEN_USED");
   });
 });
   

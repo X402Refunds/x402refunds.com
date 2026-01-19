@@ -226,5 +226,101 @@ describe("topup finalize auto-applies action token (unit)", () => {
     });
     expect(balAfter?.availableBalance).toBeCloseTo(topupMicros / 1_000_000, 6);
   });
+
+  it("still credits balance even if the action token is expired", async () => {
+    process.env.PLATFORM_BASE_USDC_DEPOSIT_ADDRESS = "0x9876543210987654321098765432109876543210";
+
+    const now = Date.now();
+    const merchant = "eip155:8453:0x00000000000000000000000000000000000000dd";
+    const origin = "https://merchant-expired.example";
+    const supportEmail = "support-expired@merchant.example";
+
+    const topupMicros = 100_000; // 0.10 USDC
+
+    const caseId = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "IN_REVIEW",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "expired token apply test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.01,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+
+      await ctx.db.insert("merchantBalances", {
+        walletAddress: merchant,
+        currency: "USDC",
+        availableBalance: 0,
+        lockedBalance: 0,
+        totalDeposited: 0,
+        totalRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+
+      await ctx.db.insert("merchantEmailActionTokens", {
+        token: "tok_expired_apply",
+        caseId: id,
+        merchant,
+        origin,
+        supportEmail,
+        action: "APPROVE_FULL_REFUND",
+        refundAmountMicrousdc: 10_000,
+        createdAt: now,
+        expiresAt: now - 1,
+      } as any);
+
+      return id;
+    });
+
+    const txHash = "0x" + "cc".repeat(32);
+    const finalize = await t.action((internal as any).pool.topup_finalizeFromTxHash, {
+      merchant,
+      txHash,
+      expectedAmountMicrousdc: topupMicros,
+      caseId,
+      actionToken: "tok_expired_apply",
+      blockchain: "base",
+    });
+    expect(finalize.ok).toBe(true);
+
+    const updatedCase = await t.run(async (ctx) => await ctx.db.get(caseId));
+    expect(updatedCase?.status).toBe("IN_REVIEW");
+    expect(typeof updatedCase?.finalVerdict).not.toBe("string");
+
+    const tokenRec = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantEmailActionTokens")
+        .withIndex("by_token", (q) => q.eq("token", "tok_expired_apply"))
+        .first();
+    });
+    expect(typeof tokenRec?.usedAt).not.toBe("number");
+
+    const balAfter = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantBalances")
+        .withIndex("by_wallet_currency", (q: any) => q.eq("walletAddress", merchant).eq("currency", "USDC"))
+        .first();
+    });
+    expect(balAfter?.availableBalance).toBeCloseTo(topupMicros / 1_000_000, 6);
+  });
 });
 

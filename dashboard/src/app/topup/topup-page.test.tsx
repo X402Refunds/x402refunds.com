@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 // Minimal mocks: we only need to render and assert disabled fields.
 vi.mock("wagmi", () => ({
@@ -47,20 +47,25 @@ describe("TopupPage (email-linked locking)", () => {
     render(<TopupPage />);
 
     // Wait until mounted UI renders.
-    await screen.findByText("Top up refund credits");
+    await screen.findByText("Add refund credits");
+    expect(screen.getByText(/Approving case/i)).toBeInTheDocument();
 
-    const merchant = screen.getByLabelText("Merchant wallet") as HTMLInputElement;
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
+    // Merchant is rendered as a copyable code field (not an editable input) in email mode.
+    expect(screen.getByText(/eip155:8453/i)).toBeInTheDocument();
 
-    await waitFor(() => expect(merchant.value).toContain("eip155:8453"));
+    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
 
-    expect(merchant).toBeDisabled();
     expect(amount).toBeDisabled();
 
-    const baseTab = screen.getByRole("tab", { name: /Base \(USDC\)/i });
-    const solTab = screen.getByRole("tab", { name: /Solana \(USDC\)/i });
-    expect(baseTab).toBeDisabled();
-    expect(solTab).toBeDisabled();
+    // Tabs should not render in email mode; we show static Pay on.
+    expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
+    expect(screen.queryByRole("tab", { name: /Solana \(USDC\)/i })).toBeNull();
+    // Text is split across nodes; assert both parts are present.
+    expect(screen.getByText(/Pay on:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Add USDC credits" })).toBeInTheDocument();
+    expect(screen.getAllByText(/No gas fees\. Powered by X-402\./i).length).toBeGreaterThan(0);
   });
 
   it("does not lock fields when actionToken is absent", async () => {
@@ -69,13 +74,22 @@ describe("TopupPage (email-linked locking)", () => {
     const TopupPage = (await import("./page")).default;
     render(<TopupPage />);
 
-    await screen.findByText("Top up refund credits");
+    await screen.findByText("Add refund credits");
 
-    const merchant = screen.getByLabelText("Merchant wallet") as HTMLInputElement;
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
+    const merchant = screen.getByLabelText("Merchant") as HTMLInputElement;
+    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
 
     expect(merchant).not.toBeDisabled();
     expect(amount).not.toBeDisabled();
+
+    // Tabs should be present in non-email flow.
+    expect(screen.getByRole("tab", { name: /Base \(USDC\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Solana \(USDC\)/i })).toBeInTheDocument();
+
+    // Examples should be hidden by default behind a disclosure.
+    expect(screen.getByText("Wallet format examples")).toBeInTheDocument();
+    const maybeExample = screen.queryByText(/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/);
+    if (maybeExample) expect(maybeExample).not.toBeVisible();
   });
 
   it("prefills from legacy params (case + token) and locks when both are present", async () => {
@@ -86,15 +100,17 @@ describe("TopupPage (email-linked locking)", () => {
     const TopupPage = (await import("./page")).default;
     render(<TopupPage />);
 
-    await screen.findByText("Top up refund credits");
+    await screen.findByText("Add refund credits");
 
-    const merchant = screen.getByLabelText("Merchant wallet") as HTMLInputElement;
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
-    expect(merchant).toBeDisabled();
+    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
     expect(amount).toBeDisabled();
 
-    // Case banner should show the legacy case id.
-    expect(screen.getByText(/kLegacy/)).toBeInTheDocument();
+    // Email-mode banner should show the legacy case id.
+    expect(screen.getByText(/Approving case/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/kLegacy/).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
+    expect(screen.getByText(/Pay on:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
   });
 });
 
