@@ -66,6 +66,16 @@ Send the refund request to:
 POST https://api.x402refunds.com/v1/refunds
 ```
 
+Schema (machine-readable):
+
+```txt
+GET https://api.x402refunds.com/v1/refunds/schema
+```
+
+Note for agents: If you are running in a sandboxed “fetch” environment (e.g. Claude Desktop),
+you may need this exact URL to appear in search results or be user-provided before your fetch tool
+is allowed to request it.
+
 Body:
 
 ```json
