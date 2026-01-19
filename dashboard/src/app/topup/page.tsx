@@ -76,6 +76,7 @@ export default function TopupPage() {
 
   const [status, setStatus] = useState<"idle" | "processing" | "submitted" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [friendlyError, setFriendlyError] = useState<{ title: string; body: string } | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [estimatedNewBalanceUsdc, setEstimatedNewBalanceUsdc] = useState<number | null>(null);
   const [balanceStatus, setBalanceStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -353,9 +354,11 @@ export default function TopupPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Add refund credits</h1>
-        <p className="text-sm text-muted-foreground">
-          Add USDC credits so refunds can be executed automatically.
-        </p>
+        {!isEmailActionFlow && (
+          <p className="text-sm text-muted-foreground">
+            Add USDC credits so refunds can be executed automatically.
+          </p>
+        )}
         {isEmailActionFlow ? (
           <p className="text-sm text-muted-foreground">
             Approving case{" "}
@@ -374,7 +377,7 @@ export default function TopupPage() {
         <CardHeader className="flex flex-row items-center justify-end gap-3">
           {merchantCaip10 && (
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">Credits</div>
+              <div className="text-xs text-muted-foreground">Credit Balance</div>
               <div className="text-sm font-medium text-foreground">
                 {balanceStatus === "loading"
                   ? "Loading…"
@@ -404,8 +407,6 @@ export default function TopupPage() {
                 <div className="space-y-2">
                   <CopyableField
                     value={merchantAddress || merchantCaip10 || ""}
-                    truncate
-                    truncateLength={26}
                     label="Copied merchant"
                   />
                 </div>
@@ -428,23 +429,7 @@ export default function TopupPage() {
                   {caseId ? (
                     <div className="text-sm">
                       <div className="text-xs text-muted-foreground">Case</div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <CopyableField
-                            value={caseId}
-                            truncate
-                            truncateLength={18}
-                            label="Copied case ID"
-                            className="w-full"
-                          />
-                        </div>
-                        <a
-                          className="text-xs underline text-muted-foreground whitespace-nowrap"
-                          href={`/cases/${encodeURIComponent(caseId)}`}
-                        >
-                          View case
-                        </a>
-                      </div>
+                      <code className="mt-1 block font-mono text-sm break-all text-foreground">{caseId}</code>
                     </div>
                   ) : null}
 
@@ -532,8 +517,7 @@ export default function TopupPage() {
           {/* Step 3: Amount + Pay */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="amount">Amount to add (USDC)</Label>
-              <span className="text-xs text-muted-foreground">Max $10</span>
+              <Label htmlFor="amount">Amount (USDC)</Label>
             </div>
             {typeof requiredUsdc === "number" && caseId && (
               <div className="text-xs text-muted-foreground">
@@ -598,6 +582,7 @@ export default function TopupPage() {
             disabled={status === "processing"}
             onClick={async () => {
               setError(null);
+              setFriendlyError(null);
               setTxHash(null);
               setEstimatedNewBalanceUsdc(null);
               setCompletionStatus("idle");
@@ -638,6 +623,24 @@ export default function TopupPage() {
                     actionToken: actionToken || undefined,
                   }),
                 });
+                if (res.status === 400) {
+                  const parsed = (await res.json().catch(() => null)) as unknown;
+                  const obj: Record<string, unknown> | null =
+                    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                  const code = typeof obj?.code === "string" ? obj.code : "";
+                  if (code === "ACTION_TOKEN_USED") {
+                    setFriendlyError({
+                      title: "Already processed",
+                      body: "This case has already been decided, so there’s nothing to process.",
+                    });
+                    setStatus("error");
+                    return;
+                  }
+                  const msg = typeof obj?.message === "string" ? obj.message : "";
+                  setError(msg || "Unable to process this request.");
+                  setStatus("error");
+                  return;
+                }
                 if (res.status !== 402) {
                   const text = await res.text();
                   throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
@@ -788,6 +791,13 @@ export default function TopupPage() {
             {isEmailActionFlow ? "Process refund" : "Add USDC credits"}
           </Button>
           <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
+
+          {friendlyError && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3">
+              <div className="text-sm font-medium text-foreground">{friendlyError.title}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{friendlyError.body}</div>
+            </div>
+          )}
 
           {txHash && (
             <div className="space-y-2">

@@ -53,7 +53,7 @@ describe("TopupPage (email-linked locking)", () => {
     // Merchant is rendered as a copyable code field (not an editable input) in email mode.
     expect(screen.getByText(/eip155:8453/i)).toBeInTheDocument();
 
-    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
+    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
 
     expect(amount).toBeDisabled();
 
@@ -64,7 +64,7 @@ describe("TopupPage (email-linked locking)", () => {
     expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
 
     // Credits display should be in header with <= 2 decimals.
-    expect(screen.getByText("Credits")).toBeInTheDocument();
+    expect(screen.getByText("Credit Balance")).toBeInTheDocument();
     expect(screen.getByText(/^0(\.\d{1,2})?\sUSDC$/)).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Process refund" })).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe("TopupPage (email-linked locking)", () => {
     await screen.findByText("Add refund credits");
 
     const merchant = screen.getByLabelText("Merchant") as HTMLInputElement;
-    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
+    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
 
     expect(merchant).not.toBeDisabled();
     expect(amount).not.toBeDisabled();
@@ -105,7 +105,7 @@ describe("TopupPage (email-linked locking)", () => {
 
     await screen.findByText("Add refund credits");
 
-    const amount = screen.getByLabelText("Amount to add (USDC)") as HTMLInputElement;
+    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
     expect(amount).toBeDisabled();
 
     // Email-mode banner should show the legacy case id.

@@ -17,7 +17,7 @@ test.describe("TopUp email-linked locking", () => {
     // Merchant renders as a copyable code field (not an editable input) in email mode.
     await expect(page.getByText(/eip155:8453/i)).toBeVisible();
 
-    const amountInput = page.getByLabel("Amount to add (USDC)");
+    const amountInput = page.getByLabel("Amount (USDC)");
     await expect(amountInput).toBeDisabled();
 
     // Tabs should not render in email mode; show compact Network row instead.
@@ -30,7 +30,7 @@ test.describe("TopUp email-linked locking", () => {
     await expect(page.getByText(/Wallet format examples/i)).toHaveCount(0);
 
     // Credits should be in header and formatted to 0–2 decimals.
-    await expect(page.getByText("Credits", { exact: true })).toBeVisible();
+    await expect(page.getByText("Credit Balance", { exact: true })).toBeVisible();
     await expect(page.getByText(/^\d+(\.\d{1,2})?\sUSDC$/)).toBeVisible();
 
     await expect(page.getByRole("button", { name: "Process refund" })).toBeVisible();
