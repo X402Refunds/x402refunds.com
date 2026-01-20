@@ -418,15 +418,16 @@ export default function TopupPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          {status !== "idle" && (
-            <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
-              {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
-            </Badge>
-          )}
-
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div className="flex-1">
+            {status !== "idle" && (
+              <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
+                {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
+              </Badge>
+            )}
+          </div>
           {merchantCaip10 && (
-            <div className="text-right">
+            <div className="ml-auto text-right">
               <div className="text-xs text-muted-foreground">Credit Balance</div>
               <div className="text-sm font-medium text-foreground">
                 {balanceStatus === "loading"
@@ -554,7 +555,7 @@ export default function TopupPage() {
               </div>
             )}
             {isEmailActionFlow ? (
-              <div aria-label="Amount" className="text-lg font-semibold text-foreground font-mono">
+              <div aria-label="Amount" className="text-base font-medium text-foreground/70 font-mono">
                 {amountUsdc
                   ? `${amountUsdc} USDC`
                   : typeof requiredUsdc === "number"

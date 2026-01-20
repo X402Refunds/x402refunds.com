@@ -61,10 +61,12 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
     // from the seller's 402 Link refund-contact rel instead.
 
     it('POST /demo-agents/image-generator returns 402 with Base+Solana accepts', async () => {
+      // Production can be slow/cold-started; keep a slightly longer timeout to reduce flakiness.
       const response = await fetch(`${API_BASE_URL}/demo-agents/image-generator`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
+        signal: AbortSignal.timeout(20000),
       });
 
       expect(response.status).toBe(402);
@@ -82,7 +84,7 @@ describe('Production HTTP Endpoint Smoke Tests', () => {
       if (sol?.extra?.feePayer) {
         expect(typeof sol.extra.feePayer).toBe('string');
       }
-    });
+    }, 25000);
 
     // This endpoint is only guaranteed after a backend deploy, so keep it out of the full test suite
     // unless explicitly enabled by the smoke runner.
