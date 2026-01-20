@@ -54,14 +54,12 @@ describe("TopupPage (email-linked locking)", () => {
     expect(screen.getByText(/eip155:8453/i)).toBeInTheDocument();
 
     // Email flow: amount is non-editable display (not an input box).
-    expect(screen.queryByLabelText("Amount (USDC)", { selector: "input" })).toBeNull();
-    expect(screen.getByLabelText("Amount (USDC)")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Amount", { selector: "input" })).toBeNull();
+    expect(screen.getByLabelText("Amount")).toBeInTheDocument();
 
-    // Tabs should not render in email mode; we show a compact Network row.
+    // Tabs should not render in email mode.
     expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
     expect(screen.queryByRole("tab", { name: /Solana \(USDC\)/i })).toBeNull();
-    expect(screen.getByText(/Network:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
 
     // Credits display should be in header with <= 2 decimals.
     expect(screen.getByText("Credit Balance")).toBeInTheDocument();
@@ -80,7 +78,7 @@ describe("TopupPage (email-linked locking)", () => {
     await screen.findByText("Add refund credits");
 
     const merchant = screen.getByLabelText("Merchant") as HTMLInputElement;
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
+    const amount = screen.getByLabelText("Amount") as HTMLInputElement;
 
     expect(merchant).not.toBeDisabled();
     expect(amount).not.toBeDisabled();
@@ -106,15 +104,13 @@ describe("TopupPage (email-linked locking)", () => {
     await screen.findByText("Add refund credits");
 
     // Email flow: amount is non-editable display (not an input box).
-    expect(screen.queryByLabelText("Amount (USDC)", { selector: "input" })).toBeNull();
-    expect(screen.getByLabelText("Amount (USDC)")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Amount", { selector: "input" })).toBeNull();
+    expect(screen.getByLabelText("Amount")).toBeInTheDocument();
 
     // Email-mode banner should show the legacy case id.
     expect(screen.getByText(/Approving case/i)).toBeInTheDocument();
     expect(screen.getAllByText(/kLegacy/).length).toBeGreaterThan(0);
     expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
-    expect(screen.getByText(/Network:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Base \(USDC\)/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Process refund" })).toBeInTheDocument();
   });
 });

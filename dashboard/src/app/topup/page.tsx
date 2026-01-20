@@ -49,29 +49,38 @@ function ChainIcon({
   className?: string;
 }) {
   if (network === "base") {
+    // Base logo: blue circle with stylized "B"
     return (
       <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
         <circle cx="16" cy="16" r="16" fill="#0052FF" />
-        <text
-          x="16"
-          y="21"
-          textAnchor="middle"
-          fontSize="16"
-          fontWeight="700"
+        <path
+          d="M12 10h4.5c2.5 0 4 1.5 4 4s-1.5 4-4 4H14v4H12V10zm2.5 6.5c1.1 0 1.8-.7 1.8-1.8s-.7-1.8-1.8-1.8H14v3.6h.5z"
           fill="#fff"
-          fontFamily="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-        >
-          B
-        </text>
+        />
       </svg>
     );
   }
 
+  // Solana logo: gradient bars (green, cyan, purple)
   return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <rect x="12" y="14" width="40" height="8" rx="4" fill="#14F195" />
-      <rect x="12" y="28" width="40" height="8" rx="4" fill="#80ECFF" />
-      <rect x="12" y="42" width="40" height="8" rx="4" fill="#9945FF" />
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="solana-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#14F195" />
+          <stop offset="100%" stopColor="#14F195" />
+        </linearGradient>
+        <linearGradient id="solana-grad-2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#80ECFF" />
+          <stop offset="100%" stopColor="#80ECFF" />
+        </linearGradient>
+        <linearGradient id="solana-grad-3" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#9945FF" />
+          <stop offset="100%" stopColor="#9945FF" />
+        </linearGradient>
+      </defs>
+      <rect x="6" y="8" width="20" height="4" rx="2" fill="url(#solana-grad-1)" />
+      <rect x="6" y="14" width="20" height="4" rx="2" fill="url(#solana-grad-2)" />
+      <rect x="6" y="20" width="20" height="4" rx="2" fill="url(#solana-grad-3)" />
     </svg>
   );
 }
@@ -123,8 +132,6 @@ export default function TopupPage() {
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
   const isEmailActionFlow = Boolean(actionToken.trim()) && Boolean(caseId);
-  const effectiveNetwork: "base" | "solana" =
-    (inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana" ? "solana" : "base";
 
   const walletReadyEvm = mounted && isConnected && !!address && !!walletClient;
   const walletReadySolana = mounted && !!solanaAddress;
@@ -411,7 +418,13 @@ export default function TopupPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-end gap-3">
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          {status !== "idle" && (
+            <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
+              {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
+            </Badge>
+          )}
+
           {merchantCaip10 && (
             <div className="text-right">
               <div className="text-xs text-muted-foreground">Credit Balance</div>
@@ -425,12 +438,6 @@ export default function TopupPage() {
                       : "—"}
               </div>
             </div>
-          )}
-
-          {status !== "idle" && (
-            <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
-              {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
-            </Badge>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
@@ -469,16 +476,6 @@ export default function TopupPage() {
                       <code className="mt-1 block font-mono text-sm break-all text-foreground">{caseId}</code>
                     </div>
                   ) : null}
-
-                  {isEmailActionFlow && (
-                    <div className="text-xs text-muted-foreground">
-                      Network:{" "}
-                      <span className="inline-flex items-center gap-1 text-foreground">
-                        <ChainIcon network={effectiveNetwork} className="h-4 w-4" />
-                        {effectiveNetwork === "solana" ? "Solana (USDC)" : "Base (USDC)"}
-                      </span>
-                    </div>
-                  )}
                 </>
               )}
 
@@ -546,9 +543,9 @@ export default function TopupPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               {isEmailActionFlow ? (
-                <div className="text-sm font-medium text-foreground">Amount (USDC)</div>
+                <div className="text-sm font-medium text-foreground">Amount</div>
               ) : (
-                <Label htmlFor="amount">Amount (USDC)</Label>
+                <Label htmlFor="amount">Amount</Label>
               )}
             </div>
             {typeof requiredUsdc === "number" && caseId && (
@@ -557,7 +554,7 @@ export default function TopupPage() {
               </div>
             )}
             {isEmailActionFlow ? (
-              <div aria-label="Amount (USDC)" className="text-lg font-semibold text-foreground font-mono">
+              <div aria-label="Amount" className="text-lg font-semibold text-foreground font-mono">
                 {amountUsdc
                   ? `${amountUsdc} USDC`
                   : typeof requiredUsdc === "number"

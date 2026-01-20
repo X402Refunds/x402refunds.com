@@ -19,11 +19,9 @@ test.describe("TopUp email-linked locking", () => {
 
     // Email flow: amount is rendered as non-editable text (no input box).
     await expect(page.locator("#amount")).toHaveCount(0);
-    await expect(page.getByLabel("Amount (USDC)")).toBeVisible();
+    await expect(page.getByLabel("Amount")).toBeVisible();
 
-    // Tabs should not render in email mode; show compact Network row instead.
-    await expect(page.getByText(/Network:/i)).toBeVisible();
-    await expect(page.getByText(/Base \(USDC\)/i)).toBeVisible();
+    // Tabs should not render in email mode.
     await expect(page.getByRole("tab", { name: /Base \(USDC\)/i })).toHaveCount(0);
     await expect(page.getByRole("tab", { name: /Solana \(USDC\)/i })).toHaveCount(0);
 
