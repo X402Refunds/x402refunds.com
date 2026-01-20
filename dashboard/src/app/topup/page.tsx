@@ -41,6 +41,41 @@ function parseUsdcToMicros(amount: string): string | null {
   return micros.toString(10);
 }
 
+function ChainIcon({
+  network,
+  className,
+}: {
+  network: "base" | "solana";
+  className?: string;
+}) {
+  if (network === "base") {
+    return (
+      <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#0052FF" />
+        <text
+          x="16"
+          y="21"
+          textAnchor="middle"
+          fontSize="16"
+          fontWeight="700"
+          fill="#fff"
+          fontFamily="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+        >
+          B
+        </text>
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <rect x="12" y="14" width="40" height="8" rx="4" fill="#14F195" />
+      <rect x="12" y="28" width="40" height="8" rx="4" fill="#80ECFF" />
+      <rect x="12" y="42" width="40" height="8" rx="4" fill="#9945FF" />
+    </svg>
+  );
+}
+
 export default function TopupPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -88,6 +123,8 @@ export default function TopupPage() {
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
   const isEmailActionFlow = Boolean(actionToken.trim()) && Boolean(caseId);
+  const effectiveNetwork: "base" | "solana" =
+    (inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana" ? "solana" : "base";
 
   const walletReadyEvm = mounted && isConnected && !!address && !!walletClient;
   const walletReadySolana = mounted && !!solanaAddress;
@@ -436,10 +473,9 @@ export default function TopupPage() {
                   {isEmailActionFlow && (
                     <div className="text-xs text-muted-foreground">
                       Network:{" "}
-                      <span className="text-foreground">
-                        {(inferred.locked && inferred.network ? inferred.network : payNetwork) === "solana"
-                          ? "Solana (USDC)"
-                          : "Base (USDC)"}
+                      <span className="inline-flex items-center gap-1 text-foreground">
+                        <ChainIcon network={effectiveNetwork} className="h-4 w-4" />
+                        {effectiveNetwork === "solana" ? "Solana (USDC)" : "Base (USDC)"}
                       </span>
                     </div>
                   )}
@@ -478,14 +514,6 @@ export default function TopupPage() {
                       : completionMessage || "Top-up submitted — processing…"}
                 </span>
               </div>
-              <div className="mt-2">
-                <a
-                  className="text-xs underline text-muted-foreground"
-                  href={`/cases/${encodeURIComponent(caseId)}`}
-                >
-                  View case
-                </a>
-              </div>
             </div>
           )}
 
@@ -517,20 +545,33 @@ export default function TopupPage() {
           {/* Step 3: Amount + Pay */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="amount">Amount (USDC)</Label>
+              {isEmailActionFlow ? (
+                <div className="text-sm font-medium text-foreground">Amount (USDC)</div>
+              ) : (
+                <Label htmlFor="amount">Amount (USDC)</Label>
+              )}
             </div>
             {typeof requiredUsdc === "number" && caseId && (
               <div className="text-xs text-muted-foreground">
                 Required to proceed: <code className="font-mono">{requiredUsdc.toFixed(6)}</code> USDC
               </div>
             )}
-            <Input
-              id="amount"
-              placeholder="e.g. 5.00"
-              value={amountUsdc}
-              disabled={isEmailActionFlow}
-              onChange={(e) => setAmountUsdc(e.target.value)}
-            />
+            {isEmailActionFlow ? (
+              <div aria-label="Amount (USDC)" className="text-lg font-semibold text-foreground font-mono">
+                {amountUsdc
+                  ? `${amountUsdc} USDC`
+                  : typeof requiredUsdc === "number"
+                    ? `${formatUsdc2.format(requiredUsdc)} USDC`
+                    : "—"}
+              </div>
+            ) : (
+              <Input
+                id="amount"
+                placeholder="e.g. 5.00"
+                value={amountUsdc}
+                onChange={(e) => setAmountUsdc(e.target.value)}
+              />
+            )}
             {amountUsdc && !amountMicros && (
               <div className="text-xs text-destructive">Invalid amount (max 6 decimals)</div>
             )}
@@ -545,21 +586,33 @@ export default function TopupPage() {
           {payNetwork === "base" ? (
             !isConnected ? (
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">Connect payer wallet (Base)</div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ChainIcon network="base" className="h-4 w-4" />
+                  <span>Connect payer wallet (Base)</span>
+                </div>
                 <ConnectWalletButton />
               </div>
             ) : (
-              <div className="text-xs text-muted-foreground">
-                Payer wallet (connected): <code className="font-mono">{address}</code>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ChainIcon network="base" className="h-4 w-4" />
+                <span>
+                  Payer wallet (Base): <code className="font-mono">{address}</code>
+                </span>
               </div>
             )
           ) : (
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Connect payer wallet (Solana)</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <ChainIcon network="solana" className="h-4 w-4" />
+                <span>Connect payer wallet (Solana)</span>
+              </div>
               {solanaAddress ? (
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs text-muted-foreground">
-                    Connected: <code className="font-mono">{solanaAddress}</code>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <ChainIcon network="solana" className="h-4 w-4" />
+                    <span>
+                      Payer wallet (Solana): <code className="font-mono">{solanaAddress}</code>
+                    </span>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
                     Disconnect

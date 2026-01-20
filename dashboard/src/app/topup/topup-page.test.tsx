@@ -53,9 +53,9 @@ describe("TopupPage (email-linked locking)", () => {
     // Merchant is rendered as a copyable code field (not an editable input) in email mode.
     expect(screen.getByText(/eip155:8453/i)).toBeInTheDocument();
 
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
-
-    expect(amount).toBeDisabled();
+    // Email flow: amount is non-editable display (not an input box).
+    expect(screen.queryByLabelText("Amount (USDC)", { selector: "input" })).toBeNull();
+    expect(screen.getByLabelText("Amount (USDC)")).toBeInTheDocument();
 
     // Tabs should not render in email mode; we show a compact Network row.
     expect(screen.queryByRole("tab", { name: /Base \(USDC\)/i })).toBeNull();
@@ -105,8 +105,9 @@ describe("TopupPage (email-linked locking)", () => {
 
     await screen.findByText("Add refund credits");
 
-    const amount = screen.getByLabelText("Amount (USDC)") as HTMLInputElement;
-    expect(amount).toBeDisabled();
+    // Email flow: amount is non-editable display (not an input box).
+    expect(screen.queryByLabelText("Amount (USDC)", { selector: "input" })).toBeNull();
+    expect(screen.getByLabelText("Amount (USDC)")).toBeInTheDocument();
 
     // Email-mode banner should show the legacy case id.
     expect(screen.getByText(/Approving case/i)).toBeInTheDocument();

@@ -17,8 +17,9 @@ test.describe("TopUp email-linked locking", () => {
     // Merchant renders as a copyable code field (not an editable input) in email mode.
     await expect(page.getByText(/eip155:8453/i)).toBeVisible();
 
-    const amountInput = page.getByLabel("Amount (USDC)");
-    await expect(amountInput).toBeDisabled();
+    // Email flow: amount is rendered as non-editable text (no input box).
+    await expect(page.locator("#amount")).toHaveCount(0);
+    await expect(page.getByLabel("Amount (USDC)")).toBeVisible();
 
     // Tabs should not render in email mode; show compact Network row instead.
     await expect(page.getByText(/Network:/i)).toBeVisible();
