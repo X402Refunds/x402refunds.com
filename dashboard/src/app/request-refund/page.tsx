@@ -1,17 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import Link from "next/link";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Section, SectionHeading } from "@/components/layout";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
@@ -94,7 +103,7 @@ type FormInput = z.input<typeof formSchema>;
 function JsonPreview({ value }: { value: unknown }) {
   const s = useMemo(() => JSON.stringify(value, null, 2), [value]);
   return (
-    <pre className="overflow-x-auto rounded-md border border-border bg-muted/20 p-3 text-xs leading-5">
+    <pre className="overflow-x-auto rounded-md border border-border bg-muted/30 p-3 text-xs leading-5">
       <code className="font-mono">{s}</code>
     </pre>
   );
@@ -109,12 +118,15 @@ export default function RequestRefundPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
     getValues,
+    control,
+    watch,
     formState: { errors, isSubmitting: formSubmitting },
   } = useForm<FormInput>({
     resolver: zodResolver(formSchema),
@@ -131,6 +143,9 @@ export default function RequestRefundPage() {
       responseBodyJson: "",
     },
   });
+
+  const descriptionValue = watch("description") ?? "";
+  const isBusy = uploading || submitting || formSubmitting;
 
   // Merchant-friendly deep link prefills:
   // /request-refund?sellerEndpointUrl=https://...&transactionHash=0x...
@@ -282,227 +297,345 @@ export default function RequestRefundPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col">
       <Navigation currentPage="home" />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">Request a refund</h1>
-          <p className="text-sm text-muted-foreground">Base only (USDC). One submission.</p>
-        </div>
-
-        {fileResult?.caseId ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <span>{fileResult.created === false ? "Already filed" : "Refund request filed"}</span>
-                <Badge>{fileResult.created === false ? "Existing" : "Success"}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-muted-foreground">
-                Case ID: <code className="font-mono text-foreground">{fileResult.caseId}</code>
-              </div>
-              {fileResult.trackingUrl ? (
-                <div className="text-sm">
-                  Tracking:{" "}
-                  <a className="underline underline-offset-4" href={fileResult.trackingUrl}>
-                    {fileResult.trackingUrl}
-                  </a>
-                </div>
-              ) : null}
-              <div className="flex flex-col sm:flex-row gap-2">
-                {fileResult.trackingUrl ? (
-                  <Button onClick={() => window.open(fileResult.trackingUrl as string, "_self")}>Open case</Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    reset();
-                    setFileResult(null);
-                    setApiError(null);
-                    setUploadedEvidenceUrls([]);
-                  }}
-                >
-                  File another
+      <main className="flex-1 bg-background">
+        <Section spacing="tight" containerClassName="max-w-4xl">
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <SectionHeading
+                title={
+                  <span className="inline-flex items-center gap-3">
+                    Request a refund
+                    <Badge variant="secondary" className="hidden sm:inline-flex">Base (USDC)</Badge>
+                  </span>
+                }
+                description={
+                  <span>
+                    Paste the exact paid API URL and your Base transaction hash. Please submit once to avoid duplicates.
+                  </span>
+                }
+                size="md"
+                align="left"
+              />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild>
+                  <Link href="/docs">Docs</Link>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        ) : null}
+            </div>
 
-        {fileResult?.caseId ? null : (
-          <form className="space-y-6" onSubmit={submitRefundRequest}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="merchantApiUrl">API URL you paid for</Label>
-                  <div className="text-xs text-muted-foreground">Paste the exact URL you called when the payment happened.</div>
-                  <Input id="merchantApiUrl" placeholder="https://api.merchant.com/v1/..." {...register("merchantApiUrl")} />
-                  {errors.merchantApiUrl ? <div className="text-xs text-destructive">{errors.merchantApiUrl.message}</div> : null}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="txHash">Transaction hash</Label>
-                  <Input id="txHash" placeholder="0x... (Base tx hash)" {...register("txHash")} />
-                  {errors.txHash ? <div className="text-xs text-destructive">{errors.txHash.message}</div> : null}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Reasoning</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Label htmlFor="description">What happened?</Label>
-                <Textarea id="description" placeholder="What you expected vs what happened (10–500 chars)" {...register("description")} />
-                {errors.description ? <div className="text-xs text-destructive">{errors.description.message}</div> : null}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Provide Evidence (optional)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <input
-                  ref={fileInputRef}
-                  className="hidden"
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  multiple
-                  onChange={(e) => void uploadEvidenceFiles(e.target.files)}
-                  disabled={uploading || submitting || formSubmitting}
-                />
-
-                <button
-                  type="button"
-                  disabled={uploading || submitting || formSubmitting}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full rounded-lg border-2 border-dashed border-border bg-card/30 px-6 py-10 text-center transition-colors hover:bg-muted/30 disabled:opacity-60"
-                >
-                  <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
-                    <div className="text-sm font-medium text-foreground">Click to upload</div>
-                    <div className="text-xs text-muted-foreground">PNG, JPG up to 10MB</div>
+            {fileResult?.caseId ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span>{fileResult.created === false ? "Already filed" : "Refund request filed"}</span>
+                    <Badge>{fileResult.created === false ? "Existing" : "Success"}</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    Keep this case ID handy. If you submitted twice, you may see “Existing”.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-lg border border-border bg-muted/20 p-4">
+                    <div className="text-xs text-muted-foreground">Case ID</div>
+                    <div className="mt-1 font-mono text-sm text-foreground">{fileResult.caseId}</div>
                   </div>
-                </button>
 
-                {uploadedEvidenceUrls.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Uploaded</div>
-                    <JsonPreview value={uploadedEvidenceUrls} />
-                    <Button type="button" variant="outline" onClick={() => setUploadedEvidenceUrls([])}>
-                      Clear uploads
+                  {fileResult.trackingUrl ? (
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">Tracking</div>
+                      <a className="break-all text-sm underline underline-offset-4" href={fileResult.trackingUrl}>
+                        {fileResult.trackingUrl}
+                      </a>
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    {fileResult.trackingUrl ? (
+                      <Button onClick={() => window.open(fileResult.trackingUrl as string, "_self")}>Open case</Button>
+                    ) : null}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        reset();
+                        setFileResult(null);
+                        setApiError(null);
+                        setUploadedEvidenceUrls([]);
+                      }}
+                    >
+                      File another
                     </Button>
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between gap-3">
-                  <span>Advanced (optional)</span>
-                  <Button type="button" variant="ghost" onClick={() => setAdvancedOpen((v) => !v)}>
-                    {advancedOpen ? "Hide" : "Show"}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              {advancedOpen ? (
-                <CardContent className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    The API does <span className="font-medium text-foreground">not require</span> request/response for this form,
-                    but providing them can strengthen the evidence.
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Request method</Label>
-                    <Input placeholder="POST" {...register("requestMethod")} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="requestHeadersJson">Request headers (JSON)</Label>
-                    <Textarea id="requestHeadersJson" className="font-mono" placeholder="{ }" {...register("requestHeadersJson")} />
-                    {errors.requestHeadersJson ? (
-                      <div className="text-xs text-destructive">{errors.requestHeadersJson.message}</div>
-                    ) : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="requestBodyJson">Request body (JSON)</Label>
-                    <Textarea id="requestBodyJson" className="font-mono" placeholder="{ }" {...register("requestBodyJson")} />
-                    {errors.requestBodyJson ? (
-                      <div className="text-xs text-destructive">{errors.requestBodyJson.message}</div>
-                    ) : null}
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="responseStatus">Response status (optional)</Label>
-                    <Input id="responseStatus" type="number" placeholder="500" {...register("responseStatus")} />
-                    {errors.responseStatus ? (
-                      <div className="text-xs text-destructive">{errors.responseStatus.message}</div>
-                    ) : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="responseHeadersJson">Response headers (JSON)</Label>
-                    <Textarea id="responseHeadersJson" className="font-mono" placeholder="{ }" {...register("responseHeadersJson")} />
-                    {errors.responseHeadersJson ? (
-                      <div className="text-xs text-destructive">{errors.responseHeadersJson.message}</div>
-                    ) : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="responseBodyJson">Response body (JSON)</Label>
-                    <Textarea id="responseBodyJson" className="font-mono" placeholder="{ }" {...register("responseBodyJson")} />
-                    {errors.responseBodyJson ? (
-                      <div className="text-xs text-destructive">{errors.responseBodyJson.message}</div>
-                    ) : null}
-                  </div>
                 </CardContent>
-              ) : null}
-            </Card>
-
-            <Separator />
-
-            {apiError ? (
-              <Alert variant="destructive">
-                <AlertTitle>Request failed</AlertTitle>
-                <AlertDescription>{apiError}</AlertDescription>
-              </Alert>
+              </Card>
             ) : null}
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="submit" disabled={uploading || submitting || formSubmitting}>
-                {submitting ? "Submitting…" : "Submit refund request"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  reset();
-                  setFileResult(null);
-                  setApiError(null);
-                  setUploadedEvidenceUrls([]);
-                  setAdvancedOpen(false);
-                }}
-                disabled={uploading || submitting || formSubmitting}
-              >
-                Reset
-              </Button>
-            </div>
+            {fileResult?.caseId ? null : (
+              <form className="space-y-6" onSubmit={submitRefundRequest}>
+                <Alert>
+                  <AlertTitle>Tip</AlertTitle>
+                  <AlertDescription>
+                    Use the <span className="font-medium text-foreground">exact</span> paid endpoint URL (including path).
+                    If the transaction includes multiple USDC recipients, consider adding the recipient address via MCP instead.
+                  </AlertDescription>
+                </Alert>
 
-            <div className="text-xs text-muted-foreground">
-              Note: Filing is permissionless. We’ll attach any uploaded evidence as URLs on the case.
-            </div>
-          </form>
-        )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Details</CardTitle>
+                    <CardDescription>What you paid for, and the Base transaction hash.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="merchantApiUrl">API URL you paid for</Label>
+                          <div className="text-xs text-muted-foreground">Paste the exact URL you called when the payment happened.</div>
+                          <Input id="merchantApiUrl" placeholder="https://api.merchant.com/v1/..." {...register("merchantApiUrl")} />
+                          {errors.merchantApiUrl ? (
+                            <div className="text-xs text-destructive">{errors.merchantApiUrl.message}</div>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="txHash">Transaction hash</Label>
+                          <Input id="txHash" placeholder="0x... (Base tx hash)" {...register("txHash")} />
+                          {errors.txHash ? <div className="text-xs text-destructive">{errors.txHash.message}</div> : null}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Label htmlFor="description">What happened?</Label>
+                          <div className="text-xs text-muted-foreground">
+                            {Math.min(descriptionValue.length, 500)}/500
+                          </div>
+                        </div>
+                        <Textarea
+                          id="description"
+                          placeholder="What you expected vs what happened (10–500 chars)"
+                          {...register("description")}
+                        />
+                        {errors.description ? <div className="text-xs text-destructive">{errors.description.message}</div> : null}
+                        <div className="text-xs text-muted-foreground">
+                          Keep it concrete (timeouts, wrong output, empty response, 5xx after payment).
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Evidence (optional)</CardTitle>
+                    <CardDescription>Upload screenshots/logs (PNG/JPG, up to 10MB each). We store them as URLs on the case.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <input
+                      ref={fileInputRef}
+                      className="hidden"
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      multiple
+                      onChange={(e) => void uploadEvidenceFiles(e.target.files)}
+                      disabled={isBusy}
+                    />
+
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        setDragActive(false);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragActive(true);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragActive(false);
+                        void uploadEvidenceFiles(e.dataTransfer.files);
+                      }}
+                      className={[
+                        "w-full rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors disabled:opacity-60",
+                        dragActive ? "border-foreground/40 bg-muted/30" : "border-border bg-card/30 hover:bg-muted/20",
+                      ].join(" ")}
+                    >
+                      <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
+                        <div className="text-sm font-medium text-foreground">
+                          {uploading ? "Uploading…" : dragActive ? "Drop files to upload" : "Click or drag files here"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">PNG, JPG up to 10MB</div>
+                      </div>
+                    </button>
+
+                    {uploadedEvidenceUrls.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-medium">Uploaded</div>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setUploadedEvidenceUrls([])}>
+                            Clear
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {uploadedEvidenceUrls.map((u, idx) => (
+                            <div key={`${u}-${idx}`} className="flex items-start gap-2 rounded-md border border-border bg-muted/20 p-3">
+                              <Badge variant="secondary" className="mt-0.5">{idx + 1}</Badge>
+                              <a className="break-all text-xs underline underline-offset-4" href={u}>
+                                {u}
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+
+                <div className="rounded-xl border bg-card shadow-sm">
+                  <Accordion
+                    type="single"
+                    collapsible
+                    value={advancedOpen ? "advanced" : undefined}
+                    onValueChange={(v) => setAdvancedOpen(v === "advanced")}
+                    className="px-6"
+                  >
+                    <AccordionItem value="advanced" className="border-b-0">
+                      <AccordionTrigger className="py-6 text-base">
+                        Advanced (optional)
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-6">
+                        <div className="space-y-4">
+                          <div className="text-sm text-muted-foreground">
+                            Not required, but request/response details can strengthen the evidence.
+                            Provide JSON for headers/bodies.
+                          </div>
+
+                          <div className="grid gap-6 md:grid-cols-2">
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label>Request method</Label>
+                                <Controller
+                                  control={control}
+                                  name="requestMethod"
+                                  render={({ field }) => (
+                                    <Select value={field.value} onValueChange={field.onChange}>
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="POST" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {(["GET", "POST", "PUT", "PATCH", "DELETE"] as const).map((m) => (
+                                          <SelectItem key={m} value={m}>
+                                            {m}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="requestHeadersJson">Request headers (JSON)</Label>
+                                <Textarea id="requestHeadersJson" className="font-mono" placeholder="{ }" {...register("requestHeadersJson")} />
+                                {errors.requestHeadersJson ? (
+                                  <div className="text-xs text-destructive">{errors.requestHeadersJson.message}</div>
+                                ) : null}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="requestBodyJson">Request body (JSON)</Label>
+                                <Textarea id="requestBodyJson" className="font-mono" placeholder="{ }" {...register("requestBodyJson")} />
+                                {errors.requestBodyJson ? (
+                                  <div className="text-xs text-destructive">{errors.requestBodyJson.message}</div>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="responseStatus">Response status (optional)</Label>
+                                <Input id="responseStatus" type="number" placeholder="500" {...register("responseStatus")} />
+                                {errors.responseStatus ? (
+                                  <div className="text-xs text-destructive">{errors.responseStatus.message}</div>
+                                ) : null}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="responseHeadersJson">Response headers (JSON)</Label>
+                                <Textarea id="responseHeadersJson" className="font-mono" placeholder="{ }" {...register("responseHeadersJson")} />
+                                {errors.responseHeadersJson ? (
+                                  <div className="text-xs text-destructive">{errors.responseHeadersJson.message}</div>
+                                ) : null}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="responseBodyJson">Response body (JSON)</Label>
+                                <Textarea id="responseBodyJson" className="font-mono" placeholder="{ }" {...register("responseBodyJson")} />
+                                {errors.responseBodyJson ? (
+                                  <div className="text-xs text-destructive">{errors.responseBodyJson.message}</div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
+                {apiError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>Request failed</AlertTitle>
+                    <AlertDescription>{apiError}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-xs text-muted-foreground">
+                    Filing is permissionless. Avoid submitting duplicates.
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button type="submit" disabled={isBusy}>
+                      {submitting ? "Submitting…" : "Submit refund request"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        reset();
+                        setFileResult(null);
+                        setApiError(null);
+                        setUploadedEvidenceUrls([]);
+                        setAdvancedOpen(false);
+                      }}
+                      disabled={isBusy}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+
+                {uploadedEvidenceUrls.length > 0 ? (
+                  <div className="text-xs text-muted-foreground">
+                    Uploaded URLs preview:
+                    <div className="mt-2">
+                      <JsonPreview value={uploadedEvidenceUrls} />
+                    </div>
+                  </div>
+                ) : null}
+              </form>
+            )}
+          </div>
+        </Section>
       </main>
 
       <Footer />
