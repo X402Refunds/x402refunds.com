@@ -15,10 +15,21 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
-  // Redirect x402refunds.com to Loom video
   const host = request.headers.get("host") || ""
-  if (host === "x402refunds.com" || host === "www.x402refunds.com") {
+  const pathname = request.nextUrl.pathname
+  const isRefundsHost = host === "x402refunds.com" || host === "www.x402refunds.com"
+
+  if (isRefundsHost && (pathname === "/founder-intro" || pathname === "/founder-intro/")) {
     return NextResponse.redirect("https://www.loom.com/share/84214facab4b4dcda3b7a3837680b787", 308)
+  }
+
+  // Force canonical host so /topup works even if one hostname points at a stale deployment.
+  // Canonical host: apex (no www)
+  if (host === "www.x402refunds.com") {
+    const url = request.nextUrl.clone()
+    url.host = "x402refunds.com"
+    url.protocol = "https:"
+    return NextResponse.redirect(url, 308)
   }
 
   // Protect all non-public routes
