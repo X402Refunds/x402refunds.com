@@ -763,7 +763,13 @@ export const customerReview = mutation({
     const reviewer = await ctx.db.get(args.reviewerUserId);
     if (!reviewer) throw new Error("Reviewer not found");
 
-    if (dispute.reviewerOrganizationId && reviewer.organizationId !== dispute.reviewerOrganizationId) {
+    if (!reviewer.organizationId) {
+      throw new Error("Reviewer is not assigned to an organization");
+    }
+    if (!dispute.reviewerOrganizationId) {
+      throw new Error("Dispute is not assigned to a reviewer organization");
+    }
+    if (reviewer.organizationId !== dispute.reviewerOrganizationId) {
       throw new Error("Unauthorized: reviewer not from customer organization");
     }
 
@@ -812,6 +818,38 @@ export const customerReview = mutation({
           throw new Error("Partial refund amount exceeds payment amount");
         }
         finalRefundAmountMicrousdc = Math.round(amt);
+      }
+    }
+
+    if (args.finalVerdict === "CONSUMER_WINS" || args.finalVerdict === "PARTIAL_REFUND") {
+      if (typeof finalRefundAmountMicrousdc !== "number" || !Number.isFinite(finalRefundAmountMicrousdc) || finalRefundAmountMicrousdc <= 0) {
+        throw new Error("Missing refund amount for refund decision");
+      }
+
+      const credits: any = await ctx.runQuery(api.refundCredits.getOrgRefundCreditsSummary, {
+        organizationId: reviewer.organizationId,
+      });
+      if (!credits || credits.enabled === false) {
+        throw new Error("Refund credits are not enabled for this organization");
+      }
+
+      const remainingMicrousdc =
+        typeof credits.remainingMicrousdc === "number" && Number.isFinite(credits.remainingMicrousdc)
+          ? Math.max(0, Math.round(credits.remainingMicrousdc))
+          : 0;
+      const maxPerCaseMicrousdc =
+        typeof credits.maxPerCaseMicrousdc === "number" && Number.isFinite(credits.maxPerCaseMicrousdc)
+          ? Math.max(0, Math.round(credits.maxPerCaseMicrousdc))
+          : undefined;
+
+      if (typeof maxPerCaseMicrousdc === "number" && finalRefundAmountMicrousdc > maxPerCaseMicrousdc) {
+        throw new Error("Refund amount exceeds the per-case maximum for this organization");
+      }
+
+      if (remainingMicrousdc < finalRefundAmountMicrousdc) {
+        const requiredUsdc = (finalRefundAmountMicrousdc / 1_000_000).toFixed(6);
+        const availableUsdc = (remainingMicrousdc / 1_000_000).toFixed(6);
+        throw new Error(`INSUFFICIENT_CREDITS: Need ${requiredUsdc} USDC, available ${availableUsdc} USDC`);
       }
     }
 

@@ -2,17 +2,21 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from "next/server"
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
+export const publicRoutes = [
   '/',           // Landing page
   '/sign-in(.*)', // Sign-in pages
   '/sign-up(.*)', // Sign-up pages
   '/screenshots(.*)', // Public screenshot routes for marketing assets (no auth)
   // Top-ups use x402 payment proof; keep endpoint public to avoid www/apex session issues.
   '/api/billing/topup(.*)',
+  // Wallet-first top-ups (no-login flow) should remain public.
+  '/api/wallet-first/topup(.*)',
   // Wallet-first v1 (no-login) pages
   '/topup(.*)',
   '/disputes(.*)',
-])
+]
+
+const isPublicRoute = createRouteMatcher(publicRoutes)
 
 export default clerkMiddleware(async (auth, request) => {
   const host = request.nextUrl.hostname

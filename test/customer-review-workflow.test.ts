@@ -92,7 +92,7 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         enabled: true,
         trialCreditMicrousdc: 5_000_000,
         spentMicrousdc: 0,
-        maxPerCaseMicrousdc: 250_000,
+        maxPerCaseMicrousdc: 5_000_000,
         createdAt: Date.now(),
       });
     });
@@ -276,6 +276,85 @@ describe("Customer Review Workflow - Infrastructure Model", () => {
         finalVerdict: "CONSUMER_WINS",
       })
     ).rejects.toThrow(/Unauthorized/);
+  });
+
+  it("should reject customer review when dispute is not assigned to a reviewer org", async () => {
+    const now = Date.now();
+    const caseId = await t.run(async (ctx: any) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: "merchant:test",
+        status: "IN_REVIEW",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "test: no reviewer org",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        paymentDetails: {
+          transactionId: "0x" + "11".repeat(32),
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {},
+          defendantMetadata: {},
+        },
+      } as any);
+    });
+
+    await expect(
+      t.mutation(api.paymentDisputes.customerReview, {
+        paymentDisputeId: caseId,
+        reviewerUserId: testUserId,
+        decision: "OVERRIDE",
+        finalVerdict: "MERCHANT_WINS",
+        notes: "Not assigned to org",
+      })
+    ).rejects.toThrow(/reviewer organization/i);
+  });
+
+  it("should reject refund decisions when credits are insufficient", async () => {
+    const created = await t.mutation(api.pool.cases_fileWalletPaymentDispute, {
+      blockchain: "base",
+      transactionHash: "0xmock_low_credits",
+      sellerEndpointUrl: "https://merchant.example/v1/paid",
+      origin: "https://merchant.example",
+      payer: "eip155:8453:0x00000000000000000000000000000000000000aa",
+      merchant: "eip155:8453:0x0000000000000000000000000000000000000001",
+      amountMicrousdc: 250_000,
+      sourceTransferLogIndex: 0,
+      description: "test: insufficient credits",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    await t.run(async (ctx: any) => {
+      const credits = await ctx.db
+        .query("orgRefundCredits")
+        .withIndex("by_organization", (q: any) => q.eq("organizationId", testOrgId))
+        .first();
+      if (!credits) throw new Error("Credits row not found");
+      await ctx.db.patch(credits._id, {
+        trialCreditMicrousdc: 0,
+        topUpMicrousdc: 0,
+        spentMicrousdc: 0,
+      });
+    });
+
+    await expect(
+      t.mutation(api.paymentDisputes.customerReview, {
+        paymentDisputeId: created.disputeId,
+        reviewerUserId: testUserId,
+        decision: "OVERRIDE",
+        finalVerdict: "CONSUMER_WINS",
+        notes: "Approve refund",
+      })
+    ).rejects.toThrow(/INSUFFICIENT_CREDITS/);
   });
 
   it("should require human review for all disputes (Option 3)", async () => {

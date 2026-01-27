@@ -40,6 +40,7 @@ export default function DisputeDetailPage() {
   const qGetCurrentUser = makeFunctionReference<"query">("users:getCurrentUser")
   const qGetPaymentDispute = makeFunctionReference<"query">("paymentDisputes:getPaymentDispute")
   const qGetRefundStatus = makeFunctionReference<"query">("refunds:getRefundStatus")
+  const qGetOrgRefundCreditsSummary = makeFunctionReference<"query">("refundCredits:getOrgRefundCreditsSummary")
   const mCustomerReview = makeFunctionReference<"mutation">("paymentDisputes:customerReview")
   const mRetryRefundForCase = makeFunctionReference<"mutation">("refunds:retryRefundForCase")
   const mManualApproveRefund = makeFunctionReference<"mutation">("refunds:manualApproveRefund")
@@ -61,6 +62,11 @@ export default function DisputeDetailPage() {
     dispute ? { caseId: dispute._id } : "skip"
   )
 
+  const credits = useQuery(
+    qGetOrgRefundCreditsSummary,
+    currentUser?.organizationId ? { organizationId: currentUser.organizationId as Id<"organizations"> } : "skip"
+  )
+
   const customerReview = useMutation(mCustomerReview)
   const retryRefundForCase = useMutation(mRetryRefundForCase)
   const manualApproveRefund = useMutation(mManualApproveRefund)
@@ -69,6 +75,10 @@ export default function DisputeDetailPage() {
     if (!currentUser || !dispute) return
     setSubmitting(true)
     try {
+      if (decisionBlockedReason) {
+        toast.error(decisionBlockedReason)
+        return
+      }
       if (!dispute.aiRecommendation) {
         throw new Error("AI recommendation is not ready yet");
       }
@@ -111,6 +121,10 @@ export default function DisputeDetailPage() {
     }
     setSubmitting(true)
     try {
+      if (decisionBlockedReason) {
+        toast.error(decisionBlockedReason)
+        return
+      }
       // If AI said NEED_REVIEW, this is a manual decision (not an override)
       const decision = aiNeedsReview ? "AI_UNABLE" : "OVERRIDE"
       let finalRefundAmountMicrousdc: number | undefined;
@@ -251,6 +265,95 @@ export default function DisputeDetailPage() {
     if (ai.verdict === "MERCHANT_WINS") return "Approve: Deny refund";
     return null;
   }
+
+  const parseUsdcToMicros = (value: string): number | undefined => {
+    const raw = value.trim();
+    if (!raw) return undefined;
+    if (!/^\d+(\.\d{0,6})?$/.test(raw)) return undefined;
+    const [whole, frac = ""] = raw.split(".");
+    const padded = (frac + "000000").slice(0, 6);
+    const micros = BigInt(whole) * BigInt(1_000_000) + BigInt(padded);
+    if (micros <= BigInt(0) || micros > BigInt(Number.MAX_SAFE_INTEGER)) return undefined;
+    return Number(micros);
+  };
+
+  const formatMicrosToUsdc = (value?: number) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return null;
+    return (value / 1_000_000).toFixed(6);
+  };
+
+  const reviewerOrgId = currentUser?.organizationId;
+  const reviewerOrgMatch =
+    reviewerOrgId && dispute?.reviewerOrganizationId
+      ? String(reviewerOrgId) === String(dispute.reviewerOrganizationId)
+      : false;
+
+  const paymentAmountMicros =
+    typeof (dispute?.paymentDetails as PaymentDetailsWithAmount | undefined)?.amountMicrousdc === "number"
+      ? Math.round((dispute?.paymentDetails as PaymentDetailsWithAmount).amountMicrousdc as number)
+      : typeof dispute?.amount === "number"
+        ? Math.round(dispute.amount * 1_000_000)
+        : undefined;
+
+  const aiVerdict = dispute?.aiRecommendation?.verdict as PaymentVerdict | undefined;
+  const aiRefundMicros =
+    aiVerdict === "CONSUMER_WINS"
+      ? paymentAmountMicros
+      : aiVerdict === "PARTIAL_REFUND"
+        ? typeof (dispute?.aiRecommendation as AiRecommendationWithRefund | undefined)?.refundAmountMicrousdc === "number"
+          ? Math.round((dispute?.aiRecommendation as AiRecommendationWithRefund).refundAmountMicrousdc as number)
+          : undefined
+        : undefined;
+
+  const overrideRefundMicros =
+    selectedVerdict === "CONSUMER_WINS"
+      ? paymentAmountMicros
+      : selectedVerdict === "PARTIAL_REFUND"
+        ? parseUsdcToMicros(selectedPartialAmount)
+        : undefined;
+
+  const decisionVerdict = showOverride ? selectedVerdict : aiVerdict;
+  const requiredRefundMicros = showOverride ? overrideRefundMicros : aiRefundMicros;
+  const needsCredits = decisionVerdict === "CONSUMER_WINS" || decisionVerdict === "PARTIAL_REFUND";
+
+  const remainingMicros =
+    typeof credits?.remainingMicrousdc === "number" && Number.isFinite(credits.remainingMicrousdc)
+      ? Math.max(0, Math.round(credits.remainingMicrousdc))
+      : undefined;
+  const maxPerCaseMicros =
+    typeof credits?.maxPerCaseMicrousdc === "number" && Number.isFinite(credits.maxPerCaseMicrousdc)
+      ? Math.max(0, Math.round(credits.maxPerCaseMicrousdc))
+      : undefined;
+
+  let decisionBlockedReason: string | null = null;
+  let decisionNeedsTopUp = false;
+  if (currentUser && dispute) {
+    if (!reviewerOrgId) {
+      decisionBlockedReason = "You must belong to an organization to make a decision.";
+    } else if (!dispute.reviewerOrganizationId) {
+      decisionBlockedReason = "This dispute is not assigned to your organization for review.";
+    } else if (!reviewerOrgMatch) {
+      decisionBlockedReason = "This dispute is assigned to a different organization.";
+    } else if (needsCredits) {
+      if (typeof requiredRefundMicros !== "number") {
+        decisionBlockedReason = "Enter a valid refund amount to continue.";
+      } else if (!credits) {
+        decisionBlockedReason = "Loading refund credits…";
+      } else if (credits.enabled === false) {
+        decisionBlockedReason = "Refund credits are disabled for your organization.";
+        decisionNeedsTopUp = true;
+      } else if (typeof maxPerCaseMicros === "number" && requiredRefundMicros > maxPerCaseMicros) {
+        decisionBlockedReason = "Refund amount exceeds your per-case limit.";
+      } else if (typeof remainingMicros === "number" && remainingMicros < requiredRefundMicros) {
+        const requiredUsdc = formatMicrosToUsdc(requiredRefundMicros);
+        const availableUsdc = formatMicrosToUsdc(remainingMicros);
+        decisionBlockedReason = `Insufficient refund credits. Need ${requiredUsdc} USDC, available ${availableUsdc} USDC.`;
+        decisionNeedsTopUp = true;
+      }
+    }
+  }
+
+  const decisionDisabled = Boolean(decisionBlockedReason) || submitting;
 
   if (!currentUser) {
     return (
@@ -595,13 +698,28 @@ export default function DisputeDetailPage() {
                 <CardDescription>Refund, deny, or partial refund.</CardDescription>
               </CardHeader>
               <CardContent>
+                {decisionBlockedReason && (
+                  <div className="mb-4 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+                    <div className="font-medium text-foreground">Decision unavailable</div>
+                    <div className="mt-1">{decisionBlockedReason}</div>
+                    {decisionNeedsTopUp && (
+                      <Button
+                        variant="outline"
+                        className="mt-3"
+                        onClick={() => router.push("/dashboard/billing")}
+                      >
+                        Top up refund credits
+                      </Button>
+                    )}
+                  </div>
+                )}
                 {!showOverride ? (
                   <div className="flex gap-4">
                     {/* Only show Approve button if AI made an actual recommendation (not NEED_REVIEW) */}
                     {dispute.aiRecommendation && dispute.aiRecommendation.verdict !== "NEED_REVIEW" && (
                       <Button
                         onClick={handleApprove}
-                        disabled={submitting}
+                        disabled={decisionDisabled}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12"
                       >
                         <CheckCircle className="h-5 w-5 mr-2" />
@@ -610,7 +728,7 @@ export default function DisputeDetailPage() {
                     )}
                     <Button
                       onClick={() => setShowOverride(true)}
-                      disabled={submitting}
+                      disabled={decisionDisabled}
                       variant={dispute.aiRecommendation?.verdict === "NEED_REVIEW" ? "default" : "outline"}
                       className={dispute.aiRecommendation?.verdict === "NEED_REVIEW" 
                         ? "flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
@@ -696,7 +814,7 @@ export default function DisputeDetailPage() {
                     <div className="flex gap-3">
                       <Button
                         onClick={handleOverride}
-                        disabled={submitting || !notes.trim()}
+                        disabled={decisionDisabled || !notes.trim()}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         {dispute.aiRecommendation?.verdict === "NEED_REVIEW"
