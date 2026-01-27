@@ -15,7 +15,7 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
-  const host = request.headers.get("host") || ""
+  const host = request.nextUrl.hostname
   const pathname = request.nextUrl.pathname
   const isRefundsHost = host === "x402refunds.com" || host === "www.x402refunds.com"
 
@@ -46,4 +46,3 @@ export const config = {
     '/(api|trpc)(.*)',
   ],
 }
-
