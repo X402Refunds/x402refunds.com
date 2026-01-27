@@ -661,6 +661,140 @@ export const getRefundBySourceTriplet = internalQuery({
   },
 });
 
+export const listInsufficientRefundsForOrg = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+    scanLimit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.max(1, Math.min(args.limit ?? 25, 100));
+    const scanLimit = Math.max(limit, Math.min(args.scanLimit ?? limit * 4, 500));
+
+    const rows = await ctx.db
+      .query("refundTransactions")
+      .withIndex("by_status", (q: any) => q.eq("status", "INSUFFICIENT_CREDITS"))
+      .take(scanLimit);
+
+    const matches: any[] = [];
+    for (const refund of rows) {
+      const caseData: any = await ctx.db.get(refund.caseId);
+      if (!caseData) continue;
+      if (String(caseData.reviewerOrganizationId || "") !== String(args.organizationId)) continue;
+
+      const verdict = typeof caseData.finalVerdict === "string" ? caseData.finalVerdict : "";
+      if (verdict !== "CONSUMER_WINS" && verdict !== "PARTIAL_REFUND") continue;
+
+      const amountMicrousdc =
+        typeof refund.amountMicrousdc === "number"
+          ? Math.round(refund.amountMicrousdc)
+          : typeof caseData.finalRefundAmountMicrousdc === "number"
+            ? Math.round(caseData.finalRefundAmountMicrousdc)
+            : undefined;
+
+      matches.push({
+        refundId: refund._id,
+        caseId: refund.caseId,
+        createdAt: typeof refund.createdAt === "number" ? refund.createdAt : 0,
+        amountMicrousdc,
+        refundToAddress: typeof refund.refundToAddress === "string" ? refund.refundToAddress : undefined,
+        sourceChain: refund.sourceChain,
+        sourceTxHash: refund.sourceTxHash,
+        sourceTransferLogIndex: typeof refund.sourceTransferLogIndex === "number" ? refund.sourceTransferLogIndex : undefined,
+      });
+    }
+
+    matches.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    return matches.slice(0, limit);
+  },
+});
+
+export const autoRetryInsufficientCreditsForOrg = internalAction({
+  args: {
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+    scanLimit: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<any> => {
+    const credits: any = await ctx.runQuery(api.refundCredits.getOrgRefundCreditsSummary, {
+      organizationId: args.organizationId,
+    });
+    if (!credits || credits.enabled === false) {
+      return { ok: false as const, code: "CREDITS_DISABLED", message: "Refund credits are not enabled for this org" };
+    }
+
+    let remainingMicrousdc =
+      typeof credits.remainingMicrousdc === "number" && Number.isFinite(credits.remainingMicrousdc)
+        ? Math.max(0, Math.round(credits.remainingMicrousdc))
+        : 0;
+    if (remainingMicrousdc <= 0) {
+      return { ok: true as const, attempted: 0, retried: 0, skipped: 0, remainingMicrousdc, stoppedReason: "NO_CREDITS" };
+    }
+
+    const candidates: any[] = await ctx.runQuery((internal as any).refunds.listInsufficientRefundsForOrg, {
+      organizationId: args.organizationId,
+      limit: args.limit,
+      scanLimit: args.scanLimit,
+    });
+
+    let attempted = 0;
+    let retried = 0;
+    let skipped = 0;
+    let stoppedReason = "NONE";
+
+    for (const refund of candidates) {
+      const amount = typeof refund.amountMicrousdc === "number" ? Math.round(refund.amountMicrousdc) : NaN;
+      const hasRequiredFields =
+        refund.sourceChain &&
+        refund.sourceTxHash &&
+        typeof refund.sourceTransferLogIndex === "number" &&
+        typeof refund.refundToAddress === "string" &&
+        Number.isFinite(amount) &&
+        amount > 0;
+
+      if (!hasRequiredFields) {
+        skipped++;
+        continue;
+      }
+
+      // FIFO policy: stop once we cannot cover the next refund.
+      if (remainingMicrousdc < amount) {
+        stoppedReason = "INSUFFICIENT_REMAINING";
+        break;
+      }
+
+      attempted++;
+      const res: any = await ctx.runMutation(internal.refunds.createRefundAttemptRecord as any, {
+        caseId: refund.caseId,
+        organizationId: args.organizationId,
+        sourceChain: refund.sourceChain,
+        sourceTxHash: refund.sourceTxHash,
+        sourceTransferLogIndex: refund.sourceTransferLogIndex,
+        amountMicrousdc: amount,
+        refundToAddress: refund.refundToAddress,
+      });
+
+      if (res?.status === "PENDING_SEND") {
+        retried++;
+        remainingMicrousdc = Math.max(0, remainingMicrousdc - amount);
+        if (isCoinbaseRefundsEnabled()) {
+          await ctx.scheduler.runAfter(0, internal.refunds.sendPendingRefund as any, { refundId: res.refundId });
+        }
+        continue;
+      }
+
+      if (res?.status === "INSUFFICIENT_CREDITS") {
+        stoppedReason = "INSUFFICIENT_CREDITS";
+        break;
+      }
+
+      skipped++;
+    }
+
+    return { ok: true as const, attempted, retried, skipped, remainingMicrousdc, stoppedReason };
+  },
+});
+
 export const getMerchantBalanceByWalletCurrency = internalQuery({
   args: { walletAddress: v.string(), currency: v.string() },
   handler: async (ctx, args) => {
@@ -896,13 +1030,14 @@ export const createRefundAttemptRecord = internalMutation({
       .first();
     if (existing) {
       // Allow retry for Coinbase send failures (e.g., insufficient ETH for gas on Base)
-      // by re-debiting credits and moving the record back to PENDING_SEND.
+      // and for previously insufficient credits after a top-up.
       const retryableCoinbaseFailure =
         existing.provider === "coinbase" &&
         (existing.status === "FAILED" || existing.status === "COINBASE_DISABLED") &&
         (existing.failureCode === "COINBASE_SEND_FAILED" || existing.failureCode === "COINBASE_DISABLED");
+      const retryableInsufficientCredits = existing.status === "INSUFFICIENT_CREDITS";
 
-      if (!retryableCoinbaseFailure) {
+      if (!retryableCoinbaseFailure && !retryableInsufficientCredits) {
         return { status: "ALREADY_EXISTS", refundId: existing._id };
       }
 

@@ -1317,6 +1317,257 @@ describe("Refund System - Edge Cases", () => {
     // Note: Full execution would fail in production with "Unsupported blockchain"
     // but that's tested in integration tests with actual Solana endpoint
   });
+
+  it("auto-retries insufficient-credit refunds in order and stops when credits run out", async () => {
+    const now = Date.now();
+    const refundToAddress = "0x0000000000000000000000000000000000000b01";
+    const merchant = "eip155:8453:0x0000000000000000000000000000000000000a01";
+
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", { name: "Auto Retry Org", createdAt: now } as any);
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: orgId,
+        enabled: true,
+        trialCreditMicrousdc: 0,
+        topUpMicrousdc: 150_000, // 0.15 USDC, enough for one refund
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 1_000_000,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const { caseId1, caseId2 } = await t.run(async (ctx) => {
+      const caseId1 = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "auto retry 1",
+        amount: 0.1,
+        currency: "USDC",
+        evidenceIds: [],
+        reviewerOrganizationId: orgId,
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 100_000,
+        decidedAt: now,
+        createdAt: now,
+      } as any);
+
+      const caseId2 = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now + 1,
+        description: "auto retry 2",
+        amount: 0.1,
+        currency: "USDC",
+        evidenceIds: [],
+        reviewerOrganizationId: orgId,
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 100_000,
+        decidedAt: now + 1,
+        createdAt: now + 1,
+      } as any);
+
+      return { caseId1, caseId2 };
+    });
+
+    const { refundId1, refundId2 } = await t.run(async (ctx) => {
+      const refundId1 = await ctx.db.insert("refundTransactions", {
+        caseId: caseId1,
+        fromWallet: "platform",
+        toWallet: refundToAddress,
+        amount: 0.1,
+        currency: "USDC",
+        blockchain: "base",
+        status: "INSUFFICIENT_CREDITS",
+        errorMessage: "Insufficient refund credits",
+        createdAt: now + 2,
+        sourceChain: "base",
+        sourceTxHash: "0x" + "11".repeat(32),
+        sourceTransferLogIndex: 0,
+        amountMicrousdc: 100_000,
+        refundToAddress,
+        provider: "coinbase",
+        failureCode: "INSUFFICIENT_CREDITS",
+        failureReason: "Insufficient credits",
+      } as any);
+
+      const refundId2 = await ctx.db.insert("refundTransactions", {
+        caseId: caseId2,
+        fromWallet: "platform",
+        toWallet: refundToAddress,
+        amount: 0.1,
+        currency: "USDC",
+        blockchain: "base",
+        status: "INSUFFICIENT_CREDITS",
+        errorMessage: "Insufficient refund credits",
+        createdAt: now + 3,
+        sourceChain: "base",
+        sourceTxHash: "0x" + "22".repeat(32),
+        sourceTransferLogIndex: 1,
+        amountMicrousdc: 100_000,
+        refundToAddress,
+        provider: "coinbase",
+        failureCode: "INSUFFICIENT_CREDITS",
+        failureReason: "Insufficient credits",
+      } as any);
+
+      return { refundId1, refundId2 };
+    });
+
+    const res = await t.action((internal as any).refunds.autoRetryInsufficientCreditsForOrg, {
+      organizationId: orgId,
+    });
+    expect(res.ok).toBe(true);
+    expect(res.retried).toBe(1);
+    expect(res.stoppedReason).toBe("INSUFFICIENT_REMAINING");
+
+    const { refund1, refund2, credits } = await t.run(async (ctx) => {
+      const refund1 = await ctx.db.get(refundId1);
+      const refund2 = await ctx.db.get(refundId2);
+      const credits = await ctx.db
+        .query("orgRefundCredits")
+        .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
+        .first();
+      return { refund1, refund2, credits };
+    });
+
+    expect(refund1?.status).toBe("PENDING_SEND");
+    expect(refund2?.status).toBe("INSUFFICIENT_CREDITS");
+    expect(credits?.spentMicrousdc).toBe(100_000);
+  });
+
+  it("auto-retries multiple refunds when credits cover them", async () => {
+    const now = Date.now();
+    const refundToAddress = "0x0000000000000000000000000000000000000c01";
+    const merchant = "eip155:8453:0x0000000000000000000000000000000000000a02";
+
+    const orgId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organizations", { name: "Auto Retry Org 2", createdAt: now } as any);
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("orgRefundCredits", {
+        organizationId: orgId,
+        enabled: true,
+        trialCreditMicrousdc: 0,
+        topUpMicrousdc: 250_000, // 0.25 USDC, enough for both refunds
+        spentMicrousdc: 0,
+        maxPerCaseMicrousdc: 1_000_000,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const { caseId1, caseId2 } = await t.run(async (ctx) => {
+      const caseId1 = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "auto retry 1",
+        amount: 0.1,
+        currency: "USDC",
+        evidenceIds: [],
+        reviewerOrganizationId: orgId,
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 100_000,
+        decidedAt: now,
+        createdAt: now,
+      } as any);
+
+      const caseId2 = await ctx.db.insert("cases", {
+        plaintiff: "buyer:test",
+        defendant: merchant,
+        status: "DECIDED",
+        type: "PAYMENT",
+        filedAt: now + 1,
+        description: "auto retry 2",
+        amount: 0.1,
+        currency: "USDC",
+        evidenceIds: [],
+        reviewerOrganizationId: orgId,
+        finalVerdict: "CONSUMER_WINS",
+        finalRefundAmountMicrousdc: 100_000,
+        decidedAt: now + 1,
+        createdAt: now + 1,
+      } as any);
+
+      return { caseId1, caseId2 };
+    });
+
+    const { refundId1, refundId2 } = await t.run(async (ctx) => {
+      const refundId1 = await ctx.db.insert("refundTransactions", {
+        caseId: caseId1,
+        fromWallet: "platform",
+        toWallet: refundToAddress,
+        amount: 0.1,
+        currency: "USDC",
+        blockchain: "base",
+        status: "INSUFFICIENT_CREDITS",
+        errorMessage: "Insufficient refund credits",
+        createdAt: now + 2,
+        sourceChain: "base",
+        sourceTxHash: "0x" + "33".repeat(32),
+        sourceTransferLogIndex: 0,
+        amountMicrousdc: 100_000,
+        refundToAddress,
+        provider: "coinbase",
+        failureCode: "INSUFFICIENT_CREDITS",
+        failureReason: "Insufficient credits",
+      } as any);
+
+      const refundId2 = await ctx.db.insert("refundTransactions", {
+        caseId: caseId2,
+        fromWallet: "platform",
+        toWallet: refundToAddress,
+        amount: 0.1,
+        currency: "USDC",
+        blockchain: "base",
+        status: "INSUFFICIENT_CREDITS",
+        errorMessage: "Insufficient refund credits",
+        createdAt: now + 3,
+        sourceChain: "base",
+        sourceTxHash: "0x" + "44".repeat(32),
+        sourceTransferLogIndex: 1,
+        amountMicrousdc: 100_000,
+        refundToAddress,
+        provider: "coinbase",
+        failureCode: "INSUFFICIENT_CREDITS",
+        failureReason: "Insufficient credits",
+      } as any);
+
+      return { refundId1, refundId2 };
+    });
+
+    const res = await t.action((internal as any).refunds.autoRetryInsufficientCreditsForOrg, {
+      organizationId: orgId,
+    });
+    expect(res.ok).toBe(true);
+    expect(res.retried).toBe(2);
+
+    const { refund1, refund2, credits } = await t.run(async (ctx) => {
+      const refund1 = await ctx.db.get(refundId1);
+      const refund2 = await ctx.db.get(refundId2);
+      const credits = await ctx.db
+        .query("orgRefundCredits")
+        .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
+        .first();
+      return { refund1, refund2, credits };
+    });
+
+    expect(refund1?.status).toBe("PENDING_SEND");
+    expect(refund2?.status).toBe("PENDING_SEND");
+    expect(credits?.spentMicrousdc).toBe(200_000);
+  });
 });
 
 console.log("✅ Refund system test suite created");

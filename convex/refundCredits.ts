@@ -197,6 +197,15 @@ export const applyVerifiedTopUp = internalMutation({
       updatedAt: now,
     });
 
+    // Best-effort: retry insufficient-credit refunds in FIFO order after top-up.
+    try {
+      await ctx.scheduler.runAfter(0, (internal as any).refunds.autoRetryInsufficientCreditsForOrg, {
+        organizationId: args.organizationId,
+      });
+    } catch {
+      // Never fail top-up application due to retry scheduling.
+    }
+
     return { ok: true as const, topUpId, alreadyApplied: false };
   },
 });
