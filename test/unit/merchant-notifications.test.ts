@@ -173,6 +173,75 @@ describe("merchant notifications (unit)", () => {
     expect(typeof tokens[0].token).toBe("string");
   });
 
+  it("derives notification origin from sellerEndpointUrl even when merchantOrigin is wrong", async () => {
+    const merchantAddress = "0x0000000000000000000000000000000000000004";
+    const merchantCaip10 = `eip155:8453:${merchantAddress}`;
+
+    globalThis.fetch = vi.fn(async (url: any) => {
+      throw new Error(`Unexpected fetch: ${String(url)}`);
+    }) as any;
+
+    const now = Date.now();
+    const caseId = await t.run(async (ctx) => {
+      return await ctx.db.insert("cases", {
+        plaintiff: "0xbuyer",
+        defendant: merchantAddress,
+        status: "FILED",
+        type: "PAYMENT",
+        filedAt: now,
+        description: "api_timeout: test",
+        amount: 0.01,
+        currency: "USDC",
+        evidenceIds: [],
+        createdAt: now,
+        metadata: {
+          v1: {
+            endpointPayToMatch: true,
+            merchantOrigin: "https://wrong.example",
+            sellerEndpointUrl: "https://merchant3.example/v1/paid",
+            paymentSupportEmail: "refunds@merchant.com",
+          },
+        },
+        paymentDetails: {
+          transactionId: "tx_test",
+          transactionHash: "0x" + "11".repeat(32),
+          blockchain: "base",
+          amountMicrousdc: 10_000,
+          amountUnit: "microusdc",
+          sourceTransferLogIndex: 0,
+          disputeFee: 0.05,
+          regulationEDeadline: now + 10_000,
+          plaintiffMetadata: {
+            requestJson: JSON.stringify({ method: "POST", url: "https://merchant3.example/v1/paid" }),
+          },
+          defendantMetadata: {},
+        },
+        paymentSourceChain: "base",
+        paymentSourceTxHash: "0x" + "11".repeat(32),
+      } as any);
+    });
+
+    const res = await t.action(api.merchantNotifications.notifyMerchantDisputeFiled, { caseId });
+    expect(res.ok).toBe(true);
+    expect(res.emailed).toBe(false);
+    expect(res.reason).toBe("EMAIL_NOT_CONFIGURED");
+
+    const tokens = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("merchantEmailVerificationTokens")
+        .withIndex("by_tuple", (q) =>
+          q
+            .eq("merchant", merchantCaip10)
+            .eq("origin", "https://merchant3.example")
+            .eq("supportEmail", "refunds@merchant.com"),
+        )
+        .collect();
+    });
+
+    expect(tokens.length).toBe(1);
+    expect(tokens[0].origin).toBe("https://merchant3.example");
+  });
+
   it("when credits are insufficient, dispute email includes 3 action links and routes approve links through top-up", async () => {
     const prevResendKey = process.env.RESEND_API_KEY;
     const prevEmailFrom = process.env.EMAIL_FROM;

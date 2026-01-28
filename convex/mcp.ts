@@ -170,12 +170,6 @@ export const MCP_TOOLS: any[] = [
           description: "Optional. Webhook URL to receive resolution updates.",
           examples: ["https://api.myapp.com/webhooks/dispute-updates"]
         },
-        merchantOrigin: {
-          type: "string",
-          description:
-            "Optional. HTTPS origin of the merchant API (e.g. https://api.merchant.com). If omitted, we derive it from request.url.",
-          examples: ["https://api.merchant.com"]
-        },
         dryRun: {
           type: "boolean",
           default: false,

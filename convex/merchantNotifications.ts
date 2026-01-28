@@ -42,6 +42,57 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function normalizeOriginFromUrl(value: string): string | null {
+  try {
+    const u = new URL(value);
+    if (u.protocol !== "https:") return null;
+    return u.origin;
+  } catch {
+    return null;
+  }
+}
+
+function deriveSellerEndpointUrl(caseData: any): string | null {
+  const meta = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+  const v1 = meta?.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
+  const v1Url = typeof v1?.sellerEndpointUrl === "string" ? String(v1.sellerEndpointUrl).trim() : "";
+  if (v1Url) {
+    try {
+      const u = new URL(v1Url);
+      if (u.protocol === "https:" && u.pathname && u.pathname !== "/") return u.toString();
+    } catch {
+      // ignore
+    }
+  }
+
+  const reqJson = caseData?.paymentDetails?.plaintiffMetadata?.requestJson;
+  if (typeof reqJson === "string" && reqJson.trim()) {
+    try {
+      const parsed = JSON.parse(reqJson) as any;
+      const url = typeof parsed?.url === "string" ? String(parsed.url).trim() : "";
+      if (!url || !url.startsWith("https://")) return null;
+      const u = new URL(url);
+      if (u.pathname && u.pathname !== "/") return u.toString();
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
+}
+
+function deriveMerchantOrigin(caseData: any): string | null {
+  const sellerEndpointUrl = deriveSellerEndpointUrl(caseData);
+  const fromSeller = sellerEndpointUrl ? normalizeOriginFromUrl(sellerEndpointUrl) : null;
+  if (fromSeller) return fromSeller;
+
+  const meta = caseData?.metadata && typeof caseData.metadata === "object" ? caseData.metadata : {};
+  const v1 = meta?.v1 && typeof meta.v1 === "object" ? meta.v1 : {};
+  const legacyOrigin = typeof v1?.merchantOrigin === "string" ? String(v1.merchantOrigin).trim() : "";
+  if (!legacyOrigin) return null;
+  return normalizeOriginFromUrl(legacyOrigin);
+}
+
 export function computeEndpointPayToMatch(params: {
   expectedMerchant: string;
   payToCandidates: string[];
@@ -288,7 +339,7 @@ export const notifyMerchantDisputeFiled: any = internalAction({
     const paymentDetails = caseData?.paymentDetails;
     const paymentChain = typeof paymentDetails?.blockchain === "string" ? paymentDetails.blockchain : undefined;
 
-    const merchantOrigin = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOrigin = deriveMerchantOrigin(caseData);
     if (!merchantOrigin) {
       console.info("merchantNotifications:notifyMerchantDisputeFiled: skip (NO_MERCHANT_ORIGIN)", {
         caseId: String(args.caseId),
@@ -708,7 +759,7 @@ export const getNotificationStatusForCase: any = internalAction({
     const v1 = caseData?.metadata?.v1 || {};
 
     const paymentDetails = caseData?.paymentDetails;
-    const merchantOrigin = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOrigin = deriveMerchantOrigin(caseData);
 
     const expectedMerchant = normalizeMerchantId(merchantRaw);
     if (!expectedMerchant) return { ok: false, reason: "UNSUPPORTED_MERCHANT_ID" };
@@ -901,7 +952,7 @@ export const notifyMerchantRefundExecuted: any = internalAction({
     }
 
     const paymentDetails = caseData?.paymentDetails;
-    const merchantOrigin = typeof v1?.merchantOrigin === "string" ? v1.merchantOrigin : "";
+    const merchantOrigin = deriveMerchantOrigin(caseData);
     if (!merchantOrigin) return { ok: true, emailed: false, reason: "NO_MERCHANT_ORIGIN" };
 
     const expectedMerchant = normalizeMerchantId(merchantRaw);

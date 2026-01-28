@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Codebase Context Graph
 
-**Auto-generated on**: 2026-01-27T09:28:41.707Z
+**Auto-generated on**: 2026-01-28T06:31:35.254Z
 
 This file is automatically regenerated on every commit. It provides a comprehensive map of the codebase structure, file locations, and common operations.
 
@@ -76,7 +76,7 @@ consulate/
 
 ## ⚡ Backend API (Convex Functions)
 
-### Convex Files (75 files)
+### Convex Files (76 files)
 - **admin.ts** - adminCreateOrganization, adminGrantOrganizationCredits, adminGetOrganizationByDomain
 - **agentWalletMigrations.ts** - runMigrateAgentWalletsToCaip10
 - **damageAgent.ts** - computeRefundRecommendationMicrousdc, damageCalculationAgent, calculateRefund
@@ -129,6 +129,7 @@ consulate/
 - **llmEngine.ts** - Core logic
 - **mcp.ts** - MCP_ERROR_CODES, MCP_TOOLS, mcpDiscovery, mcpInvoke
 - **merchantEmailActions.ts** - createActionTokensForCase, getToken, validateTokenContextForTopup, markTokenUsed, applyDecisionFromToken
+- **merchantEmailMigrations.ts** - migrateMerchantEmailVerificationOrigins
 - **merchantEmailVerification.ts** - getVerification, createOrReuseVerificationToken, confirmVerificationToken
 - **merchantNotifications.ts** - computeEndpointPayToMatch, notifyMerchantDisputeFiled, refreshMerchantContactForCase, _patchCaseMetadataV1, _patchCasePartnerMetadata, getNotificationStatusForCase, markRefundExecutedEmailSent, notifyMerchantRefundExecuted, throttleResendForCase
 - **merchantWallets.ts** - getMerchantWalletMapping, upsertMerchantProfileAndWallet, discoverSellerWalletsByEmailInternal
@@ -383,7 +384,7 @@ Common HTTP routes exposed:
 - @solana/web3.js@^1.98.4
 - @x402sdk/sdk@^1.1.0
 
-### Dev Dependencies (14)
+### Dev Dependencies (15)
 - @playwright/test@^1.57.0
 - @semantic-release/changelog@^6.0.0
 - @semantic-release/git@^10.0.0
@@ -406,7 +407,7 @@ Common HTTP routes exposed:
 - 78 components organized by feature
 
 **Backend Logic**: Look in `convex/`
-- 75 TypeScript files with serverless functions
+- 76 TypeScript files with serverless functions
 
 **API Endpoints**: Check `convex/http.ts`
 - HTTP actions for external integrations
@@ -445,5 +446,5 @@ A: `pnpm deploy` (backend), `git push` (frontend auto-deploys via Vercel)
 
 ## 🔄 Last Updated
 
-Generated: 1/27/2026, 1:28:41 AM
-Files scanned: 590
+Generated: 1/27/2026, 10:31:35 PM
+Files scanned: 591

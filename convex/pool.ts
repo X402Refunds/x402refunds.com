@@ -85,6 +85,16 @@ function parseMicros(input: unknown): { ok: true; microusdc: number } | { ok: fa
   return { ok: false, code: "INVALID_AMOUNT", message: "amountMicrousdc is required" };
 }
 
+function deriveOriginFromSellerEndpointUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
 function generateSHA256(_input: string): string {
   // Simple hash for now (in production: use crypto.subtle). Must be 64 hex chars for tests.
   const chars = "0123456789abcdef";
@@ -105,7 +115,7 @@ export const cases_fileWalletPaymentDispute = mutation({
     blockchain: v.union(v.literal("base"), v.literal("solana")),
     transactionHash: v.string(),
     sellerEndpointUrl: v.string(),
-    origin: v.string(), // https origin of sellerEndpointUrl
+    origin: v.optional(v.string()), // deprecated: derived from sellerEndpointUrl
     payer: v.string(), // CAIP-10 (derived from chain)
     merchant: v.string(), // CAIP-10 (derived from chain)
     amountMicrousdc: v.number(),
@@ -139,10 +149,13 @@ export const cases_fileWalletPaymentDispute = mutation({
     const sellerEndpointUrl = (args.sellerEndpointUrl || "").trim();
     if (!sellerEndpointUrl) return { ok: false, code: "INVALID_SELLER_ENDPOINT_URL", message: "sellerEndpointUrl is required" };
 
-    const origin = (args.origin || "").trim();
-    if (!origin) return { ok: false, code: "INVALID_ORIGIN", message: "origin is required" };
-    if (!origin.startsWith("https://")) {
-      return { ok: false, code: "INVALID_ORIGIN", message: "origin must be an https:// origin" };
+    const origin = deriveOriginFromSellerEndpointUrl(sellerEndpointUrl);
+    if (!origin) {
+      return {
+        ok: false,
+        code: "INVALID_ORIGIN",
+        message: "origin could not be derived from sellerEndpointUrl (must be https://)",
+      };
     }
 
     const txHash = (args.transactionHash || "").trim();

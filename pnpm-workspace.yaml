@@ -42,3 +42,7 @@ public-hoist-pattern:
 # Workspace resolution strategy
 # Ensures consistent dependency resolution across the monorepo
 resolution-mode: "highest"
+
+# Allow native build scripts for required deps
+onlyBuiltDependencies:
+  - bigint-buffer
