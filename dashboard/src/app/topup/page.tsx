@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ import {
   getSolanaAmountMicrousdcFromRequirement,
   getSolanaProvider,
 } from "@/lib/x402-solana";
-import { Loader2 } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Coins, Loader2, Wallet } from "lucide-react";
 const API_BASE = "https://api.x402refunds.com";
 const TOPUP_PROXY_PATH = "/api/wallet-first/topup";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
@@ -354,6 +354,9 @@ export default function TopupPage() {
   const availableUsdc =
     balanceStatus === "success" && balanceMicros ? Number(balanceMicros) / 1_000_000 : null;
   const requiredUsdc = typeof notificationRequiredUsdc === "number" ? notificationRequiredUsdc : null;
+  const enteredAmountUsdc = amountMicrosBig ? Number(amountMicrosBig) / 1_000_000 : null;
+  const previewBalanceUsdc =
+    typeof availableUsdc === "number" && typeof enteredAmountUsdc === "number" ? availableUsdc + enteredAmountUsdc : null;
 
   const formatUsdc2 = useMemo(() => {
     return new Intl.NumberFormat("en-US", {
@@ -417,14 +420,20 @@ export default function TopupPage() {
         ) : null}
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-3">
-          <div className="flex-1">
+      <Card className="overflow-hidden border-border/80 shadow-sm">
+        <CardHeader className="flex flex-col gap-4 border-b bg-muted/10 sm:flex-row sm:items-start">
+          <div className="flex-1 space-y-2">
             {status !== "idle" && (
               <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
                 {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
               </Badge>
             )}
+            <div className="space-y-1">
+              <CardTitle className="text-base">Funding details</CardTitle>
+              <CardDescription>
+                Confirm the merchant wallet, choose the payer network, and add USDC credits.
+              </CardDescription>
+            </div>
           </div>
           {merchantCaip10 && (
             <div className="ml-auto text-right">
@@ -443,60 +452,121 @@ export default function TopupPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Step 1: Confirm */}
-          <div className="space-y-3">
-            {!isEmailActionFlow && <div className="text-sm font-medium text-foreground">Confirm</div>}
-
-            <div className="space-y-2">
-              <Label htmlFor="merchant">Merchant</Label>
-              {isEmailActionFlow ? (
-                <div className="space-y-2">
-                  <CopyableField
-                    value={merchantAddress || merchantCaip10 || ""}
-                    label="Copied merchant"
-                  />
-                </div>
-              ) : (
-                <Input
-                  id="merchant"
-                  placeholder="0x... or <Solana base58> or solana:<chainRef>:<base58>"
-                  value={merchantAddress}
-                  disabled={isEmailActionFlow}
-                  onChange={(e) => setMerchantAddress(e.target.value)}
-                />
-              )}
-
-              {merchantAddress.trim() && inferred.error && (
-                <div className="text-xs text-destructive">{inferred.error}</div>
-              )}
-
-              {merchantCaip10 && (
-                <>
-                  {caseId ? (
-                    <div className="text-sm">
-                      <div className="text-xs text-muted-foreground">Case</div>
-                      <code className="mt-1 block font-mono text-sm break-all text-foreground">{caseId}</code>
-                    </div>
-                  ) : null}
-                </>
-              )}
-
+          <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-3">
               {!isEmailActionFlow && (
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="examples">
-                    <AccordionTrigger className="text-sm">Wallet format examples</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="text-xs text-muted-foreground space-y-2">
-                        <div>
-                          EVM: <code className="font-mono">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code>
-                        </div>
-                        <div>
-                          Solana: <code className="font-mono">FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N</code>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Wallet className="h-4 w-4 text-primary" />
+                    <span>Confirm merchant wallet</span>
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    Paste the merchant wallet that should receive refund credits. We&apos;ll detect the correct
+                    network automatically.
+                  </p>
+                </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="merchant">Merchant</Label>
+                {isEmailActionFlow ? (
+                  <div className="space-y-2">
+                    <CopyableField
+                      value={merchantAddress || merchantCaip10 || ""}
+                      label="Copied merchant"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    id="merchant"
+                    placeholder="Paste a Base/EVM wallet, Solana wallet, or CAIP-10 wallet ID"
+                    value={merchantAddress}
+                    disabled={isEmailActionFlow}
+                    onChange={(e) => setMerchantAddress(e.target.value)}
+                  />
+                )}
+                {!isEmailActionFlow && (
+                  <p className="text-xs text-muted-foreground">
+                    Supports <code className="font-mono">0x...</code>, raw Solana base58 addresses, and CAIP-10
+                    wallet IDs.
+                  </p>
+                )}
+
+                {merchantAddress.trim() && inferred.error && (
+                  <div className="text-xs text-destructive">{inferred.error}</div>
+                )}
+
+                {merchantCaip10 && (
+                  <>
+                    {inferred.network && !inferred.error ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="gap-1.5">
+                          <ChainIcon
+                            network={inferred.network === "solana" ? "solana" : "base"}
+                            className="h-3.5 w-3.5"
+                          />
+                          {inferred.network === "solana" ? "Solana wallet detected" : "Base / EVM wallet detected"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Credits will be added to this merchant wallet.
+                        </span>
+                      </div>
+                    ) : null}
+                    {caseId ? (
+                      <div className="text-sm">
+                        <div className="text-xs text-muted-foreground">Case</div>
+                        <code className="mt-1 block font-mono text-sm break-all text-foreground">{caseId}</code>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+
+                {!isEmailActionFlow && (
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className="rounded-lg border border-border/60 bg-background/80 px-3"
+                  >
+                    <AccordionItem value="examples" className="border-none">
+                      <AccordionTrigger className="py-3 text-sm font-medium hover:no-underline">
+                        Wallet format examples
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                              <ChainIcon network="base" className="h-3.5 w-3.5" />
+                              Base / EVM
+                            </div>
+                            <div className="space-y-2 text-xs text-muted-foreground">
+                              <code className="block break-all font-mono text-foreground">
+                                0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                              </code>
+                              <code className="block break-all font-mono text-foreground">
+                                eip155:8453:0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                              </code>
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                              <ChainIcon network="solana" className="h-3.5 w-3.5" />
+                              Solana
+                            </div>
+                            <div className="space-y-2 text-xs text-muted-foreground">
+                              <code className="block break-all font-mono text-foreground">
+                                FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+                              </code>
+                              <code className="block break-all font-mono text-foreground">
+                                solana:mainnet:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+              </div>
             </div>
           </div>
 
@@ -517,117 +587,241 @@ export default function TopupPage() {
 
           {/* Step 2: Pay on */}
           {!isEmailActionFlow && (
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-foreground">Pay on</div>
-              <Tabs value={payNetwork} onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}>
-                <TabsList className="grid w-full grid-cols-2 bg-muted p-1">
+            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ArrowLeftRight className="h-4 w-4 text-primary" />
+                  <span>Choose a payer network</span>
+                </div>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Select the wallet you&apos;ll use to fund this top-up. If the merchant wallet only supports one
+                  network, we&apos;ll lock the correct option automatically.
+                </p>
+              </div>
+              <Tabs
+                value={payNetwork}
+                className="w-full"
+                onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}
+              >
+                <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 sm:grid-cols-2">
                   <TabsTrigger
+                    aria-label="Base (USDC)"
                     value="base"
                     disabled={inferred.locked && inferred.network === "solana"}
-                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                    className="h-auto min-h-[92px] flex-col items-start justify-start gap-2 rounded-xl border border-border bg-background px-4 py-3 text-left whitespace-normal data-[state=active]:border-primary/30 data-[state=active]:bg-primary/5 data-[state=active]:text-foreground data-[state=active]:shadow-sm disabled:cursor-not-allowed disabled:bg-muted/40 disabled:opacity-60"
                   >
-                    Base (USDC)
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <ChainIcon network="base" className="h-4 w-4" />
+                      Base
+                    </span>
+                    <span className="text-xs font-normal leading-5 text-muted-foreground">
+                      Use Coinbase Wallet, MetaMask, or another Base-compatible wallet to pay in USDC.
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
+                    aria-label="Solana (USDC)"
                     value="solana"
                     disabled={inferred.locked && inferred.network === "base"}
-                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm disabled:opacity-50"
+                    className="h-auto min-h-[92px] flex-col items-start justify-start gap-2 rounded-xl border border-border bg-background px-4 py-3 text-left whitespace-normal data-[state=active]:border-primary/30 data-[state=active]:bg-primary/5 data-[state=active]:text-foreground data-[state=active]:shadow-sm disabled:cursor-not-allowed disabled:bg-muted/40 disabled:opacity-60"
                   >
-                    Solana (USDC)
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <ChainIcon network="solana" className="h-4 w-4" />
+                      Solana
+                    </span>
+                    <span className="text-xs font-normal leading-5 text-muted-foreground">
+                      Use Phantom or another Solana wallet to pay in USDC on Solana.
+                    </span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              {inferred.locked && inferred.network && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                  Merchant wallet is on{" "}
+                  <span className="font-medium text-foreground">
+                    {inferred.network === "solana" ? "Solana" : "Base / EVM"}
+                  </span>
+                  , so we&apos;ve preselected the matching payer network.
+                </div>
+              )}
             </div>
           )}
 
           {/* Step 3: Amount + Pay */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            {!isEmailActionFlow && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span>Set top-up amount</span>
+                </div>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Choose how much USDC to add. Suggested amounts are auto-filled when a case needs more credits to
+                  complete.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                {isEmailActionFlow ? (
+                  <div className="text-sm font-medium text-foreground">Amount</div>
+                ) : (
+                  <Label htmlFor="amount">Amount</Label>
+                )}
+              </div>
+              {typeof requiredUsdc === "number" && caseId && (
+                <div className="text-xs text-muted-foreground">
+                  Required to proceed: <code className="font-mono">{requiredUsdc.toFixed(6)}</code> USDC
+                </div>
+              )}
               {isEmailActionFlow ? (
-                <div className="text-sm font-medium text-foreground">Amount</div>
+                <div aria-label="Amount" className="text-base font-medium text-foreground/70 font-mono">
+                  {amountUsdc
+                    ? `${amountUsdc} USDC`
+                    : typeof requiredUsdc === "number"
+                      ? `${formatUsdc2.format(requiredUsdc)} USDC`
+                      : "—"}
+                </div>
               ) : (
-                <Label htmlFor="amount">Amount</Label>
+                <Input
+                  id="amount"
+                  placeholder="e.g. 5.00"
+                  value={amountUsdc}
+                  onChange={(e) => setAmountUsdc(e.target.value)}
+                />
+              )}
+              {!isEmailActionFlow && (
+                <p className="text-xs text-muted-foreground">
+                  Minimum 0.01 USDC, maximum 10.00 USDC, up to 6 decimal places.
+                </p>
+              )}
+              {amountUsdc && !amountMicros && (
+                <div className="text-xs text-destructive">Invalid amount (max 6 decimals)</div>
+              )}
+              {overMax && (
+                <div className="text-xs text-destructive">Max top up is $10 USDC</div>
+              )}
+              {underMin && (
+                <div className="text-xs text-destructive">Minimum top up is $0.01 USDC</div>
               )}
             </div>
-            {typeof requiredUsdc === "number" && caseId && (
-              <div className="text-xs text-muted-foreground">
-                Required to proceed: <code className="font-mono">{requiredUsdc.toFixed(6)}</code> USDC
+
+            {!isEmailActionFlow && (typeof availableUsdc === "number" || typeof requiredUsdc === "number" || amountMicros) && (
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Current balance
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {typeof availableUsdc === "number" ? `${formatUsdc2.format(availableUsdc)} USDC` : "—"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Required
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {typeof requiredUsdc === "number" ? `${formatUsdc2.format(requiredUsdc)} USDC` : "Optional"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Balance after top-up
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {typeof previewBalanceUsdc === "number" ? `${formatUsdc2.format(previewBalanceUsdc)} USDC` : "—"}
+                  </div>
+                </div>
               </div>
-            )}
-            {isEmailActionFlow ? (
-              <div aria-label="Amount" className="text-base font-medium text-foreground/70 font-mono">
-                {amountUsdc
-                  ? `${amountUsdc} USDC`
-                  : typeof requiredUsdc === "number"
-                    ? `${formatUsdc2.format(requiredUsdc)} USDC`
-                    : "—"}
-              </div>
-            ) : (
-              <Input
-                id="amount"
-                placeholder="e.g. 5.00"
-                value={amountUsdc}
-                onChange={(e) => setAmountUsdc(e.target.value)}
-              />
-            )}
-            {amountUsdc && !amountMicros && (
-              <div className="text-xs text-destructive">Invalid amount (max 6 decimals)</div>
-            )}
-            {overMax && (
-              <div className="text-xs text-destructive">Max top up is $10 USDC</div>
-            )}
-            {underMin && (
-              <div className="text-xs text-destructive">Minimum top up is $0.01 USDC</div>
             )}
           </div>
 
-          {payNetwork === "base" ? (
-            !isConnected ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ChainIcon network="base" className="h-4 w-4" />
-                  <span>Connect payer wallet (Base)</span>
-                </div>
-                <ConnectWalletButton />
+          <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Wallet className="h-4 w-4 text-primary" />
+                <span>Connect payer wallet</span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <ChainIcon network="base" className="h-4 w-4" />
-                <span>
-                  Payer wallet (Base): <code className="font-mono">{address}</code>
-                </span>
-              </div>
-            )
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ChainIcon network="solana" className="h-4 w-4" />
-                <span>Connect payer wallet (Solana)</span>
-              </div>
-              {solanaAddress ? (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <ChainIcon network="solana" className="h-4 w-4" />
-                    <span>
-                      Payer wallet (Solana): <code className="font-mono">{solanaAddress}</code>
-                    </span>
+              <p className="text-xs leading-5 text-muted-foreground">
+                {payNetwork === "base"
+                  ? "Use a Base-compatible wallet to approve the payment. If needed, we’ll prompt a switch to Base before signing."
+                  : "Use a Solana wallet to sign the payment. Phantom is the smoothest option today."}
+              </p>
+            </div>
+
+            {payNetwork === "base" ? (
+              walletReadyEvm ? (
+                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="w-fit gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Base wallet connected
+                      </Badge>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">Payer wallet</div>
+                        <code className="block break-all font-mono text-xs text-foreground">{address}</code>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Payment will be signed from this wallet on Base.
+                    </div>
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
-                    Disconnect
-                  </Button>
                 </div>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void connectSolanaWallet()}
-                  disabled={solanaConnectStatus === "connecting"}
-                >
-                  {solanaConnectStatus === "connecting" ? "Connecting…" : "Connect Phantom"}
-                </Button>
-              )}
-            </div>
-          )}
+                <div className="rounded-lg border border-dashed border-border/70 bg-background/70 p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <ChainIcon network="base" className="h-4 w-4" />
+                      <span>Connect a Base wallet to continue</span>
+                    </div>
+                    <Badge variant="outline">Base</Badge>
+                  </div>
+                  <ConnectWalletButton />
+                </div>
+              )
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ChainIcon network="solana" className="h-4 w-4" />
+                    <span>Connect a Solana wallet to continue</span>
+                  </div>
+                  <Badge variant="outline">Solana</Badge>
+                </div>
+                {solanaAddress ? (
+                  <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-2">
+                        <Badge variant="secondary" className="w-fit gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Solana wallet connected
+                        </Badge>
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">Payer wallet</div>
+                          <code className="block break-all font-mono text-xs text-foreground">{solanaAddress}</code>
+                        </div>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
+                        Disconnect
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border/70 bg-background/70 p-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void connectSolanaWallet()}
+                      disabled={solanaConnectStatus === "connecting"}
+                    >
+                      {solanaConnectStatus === "connecting" ? "Connecting…" : "Connect Phantom"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <Button
             disabled={status === "processing"}

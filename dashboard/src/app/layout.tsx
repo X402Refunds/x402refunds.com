@@ -15,6 +15,9 @@ import {
 } from "@/components/StructuredData";
 import { WagmiProviderWrapper } from '@/lib/wagmi-provider';
 
+const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const fallbackClerkPublishableKey = "pk_test_ZXhhbXBsZS5hY2NvdW50cy5kZXYk";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -122,8 +125,52 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const app = (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Favicon and Icons */}
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        
+        {/* Preconnect to external domains for performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://perceptive-lyrebird-89.convex.cloud" />
+        
+        {/* DNS Prefetch for additional domains */}
+        <link rel="dns-prefetch" href="https://vercel.com" />
+        
+        {/* Structured Data */}
+        <OrganizationStructuredData />
+        <WebSiteStructuredData />
+        <ServiceStructuredData />
+        <SoftwareApplicationStructuredData />
+        <FAQStructuredData />
+        <HowToStructuredData />
+        <WebAPIStructuredData />
+        
+        {/* Ahrefs Analytics */}
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="t8J3APG0cO6rucq4JUwaWw" async></script>
+      </head>
+      <body
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <WagmiProviderWrapper>
+          <ConvexClientProvider>
+            {children}
+          </ConvexClientProvider>
+        </WagmiProviderWrapper>
+        <Analytics />
+      </body>
+    </html>
+  );
+
   return (
     <ClerkProvider
+      publishableKey={clerkPublishableKey ?? fallbackClerkPublishableKey}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       signInForceRedirectUrl="/dashboard"
@@ -132,46 +179,7 @@ export default function RootLayout({
         cssLayerName: 'clerk' // Required for Tailwind 4 compatibility
       }}
     >
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          {/* Favicon and Icons */}
-          <link rel="icon" href="/favicon.ico" sizes="32x32" />
-          <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
-          <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-          
-          {/* Preconnect to external domains for performance */}
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://perceptive-lyrebird-89.convex.cloud" />
-          
-          {/* DNS Prefetch for additional domains */}
-          <link rel="dns-prefetch" href="https://vercel.com" />
-          
-          {/* Structured Data */}
-          <OrganizationStructuredData />
-          <WebSiteStructuredData />
-          <ServiceStructuredData />
-          <SoftwareApplicationStructuredData />
-          <FAQStructuredData />
-          <HowToStructuredData />
-          <WebAPIStructuredData />
-          
-          {/* Ahrefs Analytics */}
-          <script src="https://analytics.ahrefs.com/analytics.js" data-key="t8J3APG0cO6rucq4JUwaWw" async></script>
-        </head>
-        <body
-          className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
-          suppressHydrationWarning
-        >
-          <WagmiProviderWrapper>
-            <ConvexClientProvider>
-              {children}
-            </ConvexClientProvider>
-          </WagmiProviderWrapper>
-          <Analytics />
-        </body>
-      </html>
+      {app}
     </ClerkProvider>
   );
 }
