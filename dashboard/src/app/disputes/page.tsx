@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { CopyableField } from "@/components/case-detail/CopyableField";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402refunds.com";
@@ -51,11 +50,11 @@ export default function DisputesPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lookup</CardTitle>
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle>Merchant</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
@@ -69,7 +68,7 @@ export default function DisputesPage() {
             )}
             {merchantCaip10 && (
               <div className="text-xs text-muted-foreground">
-                Normalized identity: <code className="font-mono">{merchantCaip10}</code>
+                Normalized identity: <code className="font-mono text-foreground">{merchantCaip10}</code>
               </div>
             )}
           </div>
@@ -110,47 +109,53 @@ export default function DisputesPage() {
           </div>
 
           {fetchUrl && (
-            <CopyableField value={fetchUrl} label="API" truncate={false} />
+            <div className="text-xs text-muted-foreground">
+              API: <code className="break-all font-mono text-foreground">{fetchUrl}</code>
+            </div>
           )}
 
           {error && <div className="text-sm text-destructive">{error}</div>}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Results</CardTitle>
-          <Badge variant="secondary">{rows.length}</Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {rows.length === 0 ? (
-            <div className="text-sm text-muted-foreground">No refund requests loaded.</div>
-          ) : (
-            <div className="space-y-2">
-              {rows.map((r) => {
-                const poolStatus = r?.metadata?.poolStatus || r?.metadata?.pool_status;
-                return (
-                  <div key={r._id} className="rounded-lg border border-border bg-card p-4 space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-mono text-xs">{r._id}</div>
-                      <div className="flex gap-2 items-center">
-                        {poolStatus ? <Badge>{String(poolStatus)}</Badge> : <Badge variant="secondary">{r.status || "UNKNOWN"}</Badge>}
+          <div className="space-y-4 border-t border-border/60 pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-foreground">Results</div>
+              <Badge variant="secondary">{rows.length}</Badge>
+            </div>
+
+            {rows.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No refund requests loaded.</div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {rows.map((r) => {
+                  const poolStatus = r?.metadata?.poolStatus || r?.metadata?.pool_status;
+                  return (
+                    <div key={r._id} className="space-y-2 py-4 first:pt-0 last:pb-0">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-mono text-xs text-foreground">{r._id}</div>
+                        <div className="flex gap-2 items-center">
+                          {poolStatus ? <Badge>{String(poolStatus)}</Badge> : <Badge variant="secondary">{r.status || "UNKNOWN"}</Badge>}
+                        </div>
+                      </div>
+                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                        <div>
+                          Buyer: <span className="font-mono text-foreground">{r.plaintiff || "unknown"}</span>
+                        </div>
+                        <div>
+                          Merchant: <span className="font-mono text-foreground">{r.defendant || "unknown"}</span>
+                        </div>
+                        <div>
+                          Amount:{" "}
+                          <span className="text-foreground">
+                            {typeof r.amount === "number" ? r.amount : "n/a"} {r.currency || ""}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Buyer: <span className="font-mono text-foreground">{r.plaintiff || "unknown"}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Merchant: <span className="font-mono text-foreground">{r.defendant || "unknown"}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Amount: <span className="text-foreground">{typeof r.amount === "number" ? r.amount : "n/a"} {r.currency || ""}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

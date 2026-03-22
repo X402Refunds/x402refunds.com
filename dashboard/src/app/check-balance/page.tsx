@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { CopyableField } from "@/components/case-detail/CopyableField";
 import { normalizeMerchantToCaip10Base } from "@/lib/caip10";
 
 const API_BASE = "https://api.x402refunds.com";
@@ -32,7 +31,7 @@ export default function CheckBalancePage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 space-y-6">
+    <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Check balance</h1>
         <p className="text-sm text-muted-foreground">
@@ -40,11 +39,11 @@ export default function CheckBalancePage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lookup</CardTitle>
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle>Merchant</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="merchant">Merchant wallet address</Label>
             <Input
@@ -62,7 +61,7 @@ export default function CheckBalancePage() {
             )}
             {merchantCaip10 && (
               <div className="text-xs text-muted-foreground">
-                Normalized identity: <code className="font-mono">{merchantCaip10}</code>
+                Normalized identity: <code className="font-mono text-foreground">{merchantCaip10}</code>
               </div>
             )}
           </div>
@@ -114,26 +113,34 @@ export default function CheckBalancePage() {
             )}
           </div>
 
-          {fetchUrl && <CopyableField value={fetchUrl} label="API" truncate={false} />}
-
-          {error && <div className="text-sm text-destructive">{error}</div>}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Results</CardTitle>
-          <Badge variant="secondary">{availableUsdc === null ? "—" : "1"}</Badge>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {availableUsdc === null ? (
-            <div className="text-sm text-muted-foreground">No balance loaded.</div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              Available refund credits:{" "}
-              <code className="font-mono text-foreground">{availableUsdc.toFixed(6)} USDC</code>
+          {fetchUrl && (
+            <div className="text-xs text-muted-foreground">
+              API: <code className="break-all font-mono text-foreground">{fetchUrl}</code>
             </div>
           )}
+
+          {error && <div className="text-sm text-destructive">{error}</div>}
+
+          <div className="space-y-3 border-t border-border/60 pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-foreground">Available credits</div>
+              <Badge variant="secondary">{availableUsdc === null ? "—" : "Loaded"}</Badge>
+            </div>
+
+            {availableUsdc === null ? (
+              <div className="space-y-1">
+                <div className="text-3xl font-semibold tracking-tight text-foreground">—</div>
+                <div className="text-sm text-muted-foreground">No balance loaded.</div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-3xl font-semibold tracking-tight text-foreground">
+                  {availableUsdc.toFixed(6)} <span className="text-lg font-medium text-muted-foreground">USDC</span>
+                </div>
+                <div className="text-sm text-muted-foreground">Available refund credits for this merchant.</div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
