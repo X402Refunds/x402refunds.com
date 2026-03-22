@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ import {
   getSolanaAmountMicrousdcFromRequirement,
   getSolanaProvider,
 } from "@/lib/x402-solana";
-import { ArrowLeftRight, CheckCircle2, Coins, Loader2, Wallet } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 const API_BASE = "https://api.x402refunds.com";
 const TOPUP_PROXY_PATH = "/api/wallet-first/topup";
 const MAX_TOPUP_MICROUSDC = BigInt(10_000_000); // $10.00
@@ -420,158 +420,114 @@ export default function TopupPage() {
         ) : null}
       </div>
 
-      <Card className="overflow-hidden border-border/80 shadow-sm">
-        <CardHeader className="flex flex-col gap-4 border-b bg-muted/10 sm:flex-row sm:items-start">
-          <div className="flex-1 space-y-2">
-            {status !== "idle" && (
-              <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
-                {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
-              </Badge>
-            )}
-            <div className="space-y-1">
-              <CardTitle className="text-base">Funding details</CardTitle>
-              <CardDescription>
-                Confirm the merchant wallet, choose the payer network, and add USDC credits.
-              </CardDescription>
-            </div>
-          </div>
-          {merchantCaip10 && (
-            <div className="ml-auto text-right">
-              <div className="text-xs text-muted-foreground">Credit Balance</div>
-              <div className="text-sm font-medium text-foreground">
-                {balanceStatus === "loading"
-                  ? "Loading…"
-                  : balanceStatus === "success" && typeof availableUsdc === "number"
-                    ? `${formatUsdc2.format(availableUsdc)} USDC`
-                    : balanceStatus === "error"
-                      ? "Unable to load"
-                      : "—"}
-              </div>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Step 1: Confirm */}
-          <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-4">
-            <div className="space-y-3">
-              {!isEmailActionFlow && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Wallet className="h-4 w-4 text-primary" />
-                    <span>Confirm merchant wallet</span>
-                  </div>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Paste the merchant wallet that should receive refund credits. We&apos;ll detect the correct
-                    network automatically.
-                  </p>
-                </div>
+      <Card className="border-border/60 shadow-sm">
+        {(status !== "idle" || merchantCaip10) && (
+          <CardHeader className="flex flex-row items-start gap-3 pb-0">
+            <div className="flex-1">
+              {status !== "idle" && (
+                <Badge variant={status === "submitted" ? "default" : status === "error" ? "destructive" : "secondary"}>
+                  {status === "processing" ? "Processing" : status === "submitted" ? "Submitted" : "Error"}
+                </Badge>
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="merchant">Merchant</Label>
-                {isEmailActionFlow ? (
-                  <div className="space-y-2">
-                    <CopyableField
-                      value={merchantAddress || merchantCaip10 || ""}
-                      label="Copied merchant"
-                    />
-                  </div>
-                ) : (
-                  <Input
-                    id="merchant"
-                    placeholder="Paste a Base/EVM wallet, Solana wallet, or CAIP-10 wallet ID"
-                    value={merchantAddress}
-                    disabled={isEmailActionFlow}
-                    onChange={(e) => setMerchantAddress(e.target.value)}
-                  />
-                )}
-                {!isEmailActionFlow && (
-                  <p className="text-xs text-muted-foreground">
-                    Supports <code className="font-mono">0x...</code>, raw Solana base58 addresses, and CAIP-10
-                    wallet IDs.
-                  </p>
-                )}
-
-                {merchantAddress.trim() && inferred.error && (
-                  <div className="text-xs text-destructive">{inferred.error}</div>
-                )}
-
-                {merchantCaip10 && (
-                  <>
-                    {inferred.network && !inferred.error ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary" className="gap-1.5">
-                          <ChainIcon
-                            network={inferred.network === "solana" ? "solana" : "base"}
-                            className="h-3.5 w-3.5"
-                          />
-                          {inferred.network === "solana" ? "Solana wallet detected" : "Base / EVM wallet detected"}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          Credits will be added to this merchant wallet.
-                        </span>
-                      </div>
-                    ) : null}
-                    {caseId ? (
-                      <div className="text-sm">
-                        <div className="text-xs text-muted-foreground">Case</div>
-                        <code className="mt-1 block font-mono text-sm break-all text-foreground">{caseId}</code>
-                      </div>
-                    ) : null}
-                  </>
-                )}
-
-                {!isEmailActionFlow && (
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className="rounded-lg border border-border/60 bg-background/80 px-3"
-                  >
-                    <AccordionItem value="examples" className="border-none">
-                      <AccordionTrigger className="py-3 text-sm font-medium hover:no-underline">
-                        Wallet format examples
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                              <ChainIcon network="base" className="h-3.5 w-3.5" />
-                              Base / EVM
-                            </div>
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                              <code className="block break-all font-mono text-foreground">
-                                0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-                              </code>
-                              <code className="block break-all font-mono text-foreground">
-                                eip155:8453:0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-                              </code>
-                            </div>
-                          </div>
-                          <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                              <ChainIcon network="solana" className="h-3.5 w-3.5" />
-                              Solana
-                            </div>
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                              <code className="block break-all font-mono text-foreground">
-                                FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
-                              </code>
-                              <code className="block break-all font-mono text-foreground">
-                                solana:mainnet:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
-                              </code>
-                            </div>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
-              </div>
             </div>
+            {merchantCaip10 && (
+              <div className="text-right">
+                <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Credit Balance</div>
+                <div className="text-sm font-semibold text-foreground">
+                  {balanceStatus === "loading"
+                    ? "Loading…"
+                    : balanceStatus === "success" && typeof availableUsdc === "number"
+                      ? `${formatUsdc2.format(availableUsdc)} USDC`
+                      : balanceStatus === "error"
+                        ? "Unable to load"
+                        : "—"}
+                </div>
+              </div>
+            )}
+          </CardHeader>
+        )}
+        <CardContent className={`space-y-6 ${status !== "idle" || merchantCaip10 ? "pt-6" : ""}`}>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="merchant">Merchant</Label>
+              {isEmailActionFlow ? (
+                <CopyableField
+                  value={merchantAddress || merchantCaip10 || ""}
+                  label="Copied merchant"
+                />
+              ) : (
+                <Input
+                  id="merchant"
+                  placeholder="Paste a Base/EVM wallet, Solana wallet, or CAIP-10 wallet ID"
+                  value={merchantAddress}
+                  disabled={isEmailActionFlow}
+                  onChange={(e) => setMerchantAddress(e.target.value)}
+                />
+              )}
+              {!isEmailActionFlow && (
+                <p className="text-xs text-muted-foreground">
+                  Supports <code className="font-mono">0x...</code>, raw Solana base58 addresses, and CAIP-10 wallet IDs.
+                </p>
+              )}
+              {merchantAddress.trim() && inferred.error && (
+                <div className="text-xs text-destructive">{inferred.error}</div>
+              )}
+            </div>
+
+            {merchantCaip10 && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
+                {inferred.network && !inferred.error ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-medium text-foreground">
+                    <ChainIcon
+                      network={inferred.network === "solana" ? "solana" : "base"}
+                      className="h-3.5 w-3.5"
+                    />
+                    {inferred.network === "solana" ? "Detected: Solana" : "Detected: Base / EVM"}
+                  </span>
+                ) : null}
+                {caseId ? (
+                  <span>
+                    Case <code className="font-mono text-foreground">{caseId}</code>
+                  </span>
+                ) : null}
+              </div>
+            )}
+
+            {!isEmailActionFlow && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="examples" className="border-none">
+                  <AccordionTrigger className="w-fit gap-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:no-underline">
+                    Wallet format examples
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2">
+                    <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <div className="font-medium uppercase tracking-[0.08em]">Base / EVM</div>
+                        <code className="block break-all font-mono text-foreground">
+                          0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                        </code>
+                        <code className="block break-all font-mono text-foreground">
+                          eip155:8453:0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                        </code>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="font-medium uppercase tracking-[0.08em]">Solana</div>
+                        <code className="block break-all font-mono text-foreground">
+                          FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+                        </code>
+                        <code className="block break-all font-mono text-foreground">
+                          solana:mainnet:FiZy3ch8QSDVWhJfZJYA75ZvDQgu4FJY4NfesZhbda4N
+                        </code>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
           </div>
 
           {caseId && completionStatus !== "idle" && (
-            <div className={completionStatus === "done" ? "rounded-lg border border-border bg-muted/20 p-3 text-sm text-foreground" : "rounded-lg border border-border bg-muted/20 p-3 text-sm text-muted-foreground"}>
+            <div className={completionStatus === "done" ? "rounded-lg bg-muted/40 p-3 text-sm text-foreground" : "rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground"}>
               <div className="flex items-center gap-2">
                 {completionStatus === "waiting" && <Loader2 className="h-4 w-4 animate-spin" />}
                 <span>
@@ -585,57 +541,44 @@ export default function TopupPage() {
             </div>
           )}
 
-          {/* Step 2: Pay on */}
           {!isEmailActionFlow && (
-            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-3 border-t border-border/60 pt-6">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <ArrowLeftRight className="h-4 w-4 text-primary" />
-                  <span>Choose a payer network</span>
-                </div>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Select the wallet you&apos;ll use to fund this top-up. If the merchant wallet only supports one
-                  network, we&apos;ll lock the correct option automatically.
-                </p>
+                <div className="text-sm font-medium text-foreground">Pay with</div>
+                <p className="text-xs text-muted-foreground">Choose the wallet that will fund this top-up.</p>
               </div>
               <Tabs
                 value={payNetwork}
-                className="w-full"
+                className="w-full items-start"
                 onValueChange={(v) => setPayNetwork(v === "solana" ? "solana" : "base")}
               >
-                <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 sm:grid-cols-2">
+                <TabsList className="inline-flex h-10 w-auto rounded-full bg-muted/70 p-1">
                   <TabsTrigger
                     aria-label="Base (USDC)"
                     value="base"
                     disabled={inferred.locked && inferred.network === "solana"}
-                    className="h-auto min-h-[92px] flex-col items-start justify-start gap-2 rounded-xl border border-border bg-background px-4 py-3 text-left whitespace-normal data-[state=active]:border-primary/30 data-[state=active]:bg-primary/5 data-[state=active]:text-foreground data-[state=active]:shadow-sm disabled:cursor-not-allowed disabled:bg-muted/40 disabled:opacity-60"
+                    className="min-w-[108px] rounded-full px-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                   >
-                    <span className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex items-center gap-2 text-sm">
                       <ChainIcon network="base" className="h-4 w-4" />
                       Base
-                    </span>
-                    <span className="text-xs font-normal leading-5 text-muted-foreground">
-                      Use Coinbase Wallet, MetaMask, or another Base-compatible wallet to pay in USDC.
                     </span>
                   </TabsTrigger>
                   <TabsTrigger
                     aria-label="Solana (USDC)"
                     value="solana"
                     disabled={inferred.locked && inferred.network === "base"}
-                    className="h-auto min-h-[92px] flex-col items-start justify-start gap-2 rounded-xl border border-border bg-background px-4 py-3 text-left whitespace-normal data-[state=active]:border-primary/30 data-[state=active]:bg-primary/5 data-[state=active]:text-foreground data-[state=active]:shadow-sm disabled:cursor-not-allowed disabled:bg-muted/40 disabled:opacity-60"
+                    className="min-w-[108px] rounded-full px-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                   >
-                    <span className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex items-center gap-2 text-sm">
                       <ChainIcon network="solana" className="h-4 w-4" />
                       Solana
-                    </span>
-                    <span className="text-xs font-normal leading-5 text-muted-foreground">
-                      Use Phantom or another Solana wallet to pay in USDC on Solana.
                     </span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
               {inferred.locked && inferred.network && (
-                <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   Merchant wallet is on{" "}
                   <span className="font-medium text-foreground">
                     {inferred.network === "solana" ? "Solana" : "Base / EVM"}
@@ -646,28 +589,17 @@ export default function TopupPage() {
             </div>
           )}
 
-          {/* Step 3: Amount + Pay */}
-          <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
-            {!isEmailActionFlow && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Coins className="h-4 w-4 text-primary" />
-                  <span>Set top-up amount</span>
-                </div>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Choose how much USDC to add. Suggested amounts are auto-filled when a case needs more credits to
-                  complete.
-                </p>
-              </div>
-            )}
-
+          <div className="space-y-3 border-t border-border/60 pt-6">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-3">
                 {isEmailActionFlow ? (
                   <div className="text-sm font-medium text-foreground">Amount</div>
                 ) : (
                   <Label htmlFor="amount">Amount</Label>
                 )}
+                {!isEmailActionFlow && typeof availableUsdc === "number" ? (
+                  <div className="text-xs text-muted-foreground">Balance: {formatUsdc2.format(availableUsdc)} USDC</div>
+                ) : null}
               </div>
               {typeof requiredUsdc === "number" && caseId && (
                 <div className="text-xs text-muted-foreground">
@@ -683,17 +615,18 @@ export default function TopupPage() {
                       : "—"}
                 </div>
               ) : (
-                <Input
-                  id="amount"
-                  placeholder="e.g. 5.00"
-                  value={amountUsdc}
-                  onChange={(e) => setAmountUsdc(e.target.value)}
-                />
-              )}
-              {!isEmailActionFlow && (
-                <p className="text-xs text-muted-foreground">
-                  Minimum 0.01 USDC, maximum 10.00 USDC, up to 6 decimal places.
-                </p>
+                <div className="relative">
+                  <Input
+                    id="amount"
+                    className="pr-16"
+                    placeholder="e.g. 5.00"
+                    value={amountUsdc}
+                    onChange={(e) => setAmountUsdc(e.target.value)}
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                    USDC
+                  </div>
+                </div>
               )}
               {amountUsdc && !amountMicros && (
                 <div className="text-xs text-destructive">Invalid amount (max 6 decimals)</div>
@@ -706,109 +639,68 @@ export default function TopupPage() {
               )}
             </div>
 
-            {!isEmailActionFlow && (typeof availableUsdc === "number" || typeof requiredUsdc === "number" || amountMicros) && (
-              <div className="grid gap-2 sm:grid-cols-3">
-                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Current balance
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    {typeof availableUsdc === "number" ? `${formatUsdc2.format(availableUsdc)} USDC` : "—"}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Required
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    {typeof requiredUsdc === "number" ? `${formatUsdc2.format(requiredUsdc)} USDC` : "Optional"}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Balance after top-up
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    {typeof previewBalanceUsdc === "number" ? `${formatUsdc2.format(previewBalanceUsdc)} USDC` : "—"}
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {!isEmailActionFlow && <span>Min 0.01 · Max 10.00</span>}
+              {typeof requiredUsdc === "number" && <span>Required: {formatUsdc2.format(requiredUsdc)} USDC</span>}
+              {!isEmailActionFlow && typeof previewBalanceUsdc === "number" && amountMicros && !overMax && !underMin ? (
+                <span>After top-up: {formatUsdc2.format(previewBalanceUsdc)} USDC</span>
+              ) : null}
+            </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+          <div className="space-y-3 border-t border-border/60 pt-6">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Wallet className="h-4 w-4 text-primary" />
-                <span>Connect payer wallet</span>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-foreground">Wallet</div>
+                  <p className="text-xs text-muted-foreground">
+                    {payNetwork === "base"
+                      ? "Connect a Base wallet to approve payment."
+                      : "Connect a Solana wallet to sign payment."}
+                  </p>
+                </div>
+                {!isEmailActionFlow ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+                    <ChainIcon network={payNetwork} className="h-3.5 w-3.5" />
+                    {payNetwork === "base" ? "Base" : "Solana"}
+                  </span>
+                ) : null}
               </div>
-              <p className="text-xs leading-5 text-muted-foreground">
-                {payNetwork === "base"
-                  ? "Use a Base-compatible wallet to approve the payment. If needed, we’ll prompt a switch to Base before signing."
-                  : "Use a Solana wallet to sign the payment. Phantom is the smoothest option today."}
-              </p>
             </div>
 
             {payNetwork === "base" ? (
               walletReadyEvm ? (
-                <div className="rounded-lg border border-border/60 bg-background/80 p-3">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
-                      <Badge variant="secondary" className="w-fit gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Base wallet connected
-                      </Badge>
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">Payer wallet</div>
-                        <code className="block break-all font-mono text-xs text-foreground">{address}</code>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Payment will be signed from this wallet on Base.
-                    </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Base wallet connected</span>
                   </div>
+                  <code className="block break-all font-mono text-xs text-muted-foreground">{address}</code>
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-border/70 bg-background/70 p-3 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <ChainIcon network="base" className="h-4 w-4" />
-                      <span>Connect a Base wallet to continue</span>
-                    </div>
-                    <Badge variant="outline">Base</Badge>
-                  </div>
+                <div className="space-y-3">
+                  <div className="text-sm text-muted-foreground">Connect a Base wallet to continue.</div>
                   <ConnectWalletButton />
                 </div>
               )
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ChainIcon network="solana" className="h-4 w-4" />
-                    <span>Connect a Solana wallet to continue</span>
-                  </div>
-                  <Badge variant="outline">Solana</Badge>
-                </div>
+              <div className="space-y-3">
                 {solanaAddress ? (
-                  <div className="rounded-lg border border-border/60 bg-background/80 p-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-2">
-                        <Badge variant="secondary" className="w-fit gap-1.5">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          Solana wallet connected
-                        </Badge>
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">Payer wallet</div>
-                          <code className="block break-all font-mono text-xs text-foreground">{solanaAddress}</code>
-                        </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <span>Solana wallet connected</span>
                       </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
-                        Disconnect
-                      </Button>
+                      <code className="block break-all font-mono text-xs text-muted-foreground">{solanaAddress}</code>
                     </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => void disconnectSolanaWallet()}>
+                      Disconnect
+                    </Button>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed border-border/70 bg-background/70 p-3">
+                  <>
+                    <div className="text-sm text-muted-foreground">Connect a Solana wallet to continue.</div>
                     <Button
                       type="button"
                       variant="outline"
@@ -817,225 +709,230 @@ export default function TopupPage() {
                     >
                       {solanaConnectStatus === "connecting" ? "Connecting…" : "Connect Phantom"}
                     </Button>
-                  </div>
+                  </>
                 )}
               </div>
             )}
           </div>
 
-          <Button
-            disabled={status === "processing"}
-            onClick={async () => {
-              setError(null);
-              setFriendlyError(null);
-              setTxHash(null);
-              setEstimatedNewBalanceUsdc(null);
-              setCompletionStatus("idle");
-              setCompletionMessage(null);
-              setStatus("processing");
-              try {
-                if (!merchantCaip10) throw new Error(inferred.error || "Merchant wallet is required");
-                if (!amountMicros) throw new Error("Enter an amount");
-                if (!amountMicrosBig) throw new Error("Enter an amount");
-                if (overMax) throw new Error("Max top up is $10 USDC");
-                if (underMin) throw new Error("Minimum top up is $0.01 USDC");
-                if (payNetwork === "base" && !walletReadyEvm) throw new Error("Connect a Base wallet to pay");
-                if (payNetwork === "solana" && !walletReadySolana) throw new Error("Connect a Solana wallet to pay");
+          <div className="flex flex-col gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-muted-foreground">
+              No gas fees. Powered by X-402.
+            </div>
+            <Button
+              className="sm:min-w-[180px]"
+              disabled={status === "processing"}
+              onClick={async () => {
+                setError(null);
+                setFriendlyError(null);
+                setTxHash(null);
+                setEstimatedNewBalanceUsdc(null);
+                setCompletionStatus("idle");
+                setCompletionMessage(null);
+                setStatus("processing");
+                try {
+                  if (!merchantCaip10) throw new Error(inferred.error || "Merchant wallet is required");
+                  if (!amountMicros) throw new Error("Enter an amount");
+                  if (!amountMicrosBig) throw new Error("Enter an amount");
+                  if (overMax) throw new Error("Max top up is $10 USDC");
+                  if (underMin) throw new Error("Minimum top up is $0.01 USDC");
+                  if (payNetwork === "base" && !walletReadyEvm) throw new Error("Connect a Base wallet to pay");
+                  if (payNetwork === "solana" && !walletReadySolana) throw new Error("Connect a Solana wallet to pay");
 
-                if (payNetwork === "base" && walletClient) {
-                  // Best-effort: switch to Base before signing (prevents chainId mismatch errors).
-                  const active = await getActiveEvmChainId();
-                  if (typeof active === "number" && active !== 8453) {
-                    try {
-                      await switchChainAsync({ chainId: 8453 });
-                    } catch (e: unknown) {
-                      const msg = e instanceof Error ? e.message : String(e);
-                      throw new Error(`Please switch your wallet to Base (chainId 8453). ${msg}`);
+                  if (payNetwork === "base" && walletClient) {
+                    // Best-effort: switch to Base before signing (prevents chainId mismatch errors).
+                    const active = await getActiveEvmChainId();
+                    if (typeof active === "number" && active !== 8453) {
+                      try {
+                        await switchChainAsync({ chainId: 8453 });
+                      } catch (e: unknown) {
+                        const msg = e instanceof Error ? e.message : String(e);
+                        throw new Error(`Please switch your wallet to Base (chainId 8453). ${msg}`);
+                      }
                     }
                   }
-                }
 
-                // 1) request payment requirements (402)
-                const res = await fetch(TOPUP_PROXY_PATH, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    merchant: merchantCaip10,
-                    amountMicrousdc: amountMicros,
-                    currency: "USDC",
-                    blockchain: payNetwork,
-                    caseId: caseId || undefined,
-                    actionToken: actionToken || undefined,
-                  }),
-                });
-                if (res.status === 400) {
-                  const parsed = (await res.json().catch(() => null)) as unknown;
-                  const obj: Record<string, unknown> | null =
-                    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                  const code = typeof obj?.code === "string" ? obj.code : "";
-                  if (code === "ACTION_TOKEN_USED") {
-                    setFriendlyError({
-                      title: "Already processed",
-                      body: "This case has already been decided, so there’s nothing to process.",
-                    });
+                  // 1) request payment requirements (402)
+                  const res = await fetch(TOPUP_PROXY_PATH, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      merchant: merchantCaip10,
+                      amountMicrousdc: amountMicros,
+                      currency: "USDC",
+                      blockchain: payNetwork,
+                      caseId: caseId || undefined,
+                      actionToken: actionToken || undefined,
+                    }),
+                  });
+                  if (res.status === 400) {
+                    const parsed = (await res.json().catch(() => null)) as unknown;
+                    const obj: Record<string, unknown> | null =
+                      parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                    const code = typeof obj?.code === "string" ? obj.code : "";
+                    if (code === "ACTION_TOKEN_USED") {
+                      setFriendlyError({
+                        title: "Already processed",
+                        body: "This case has already been decided, so there’s nothing to process.",
+                      });
+                      setStatus("error");
+                      return;
+                    }
+                    const msg = typeof obj?.message === "string" ? obj.message : "";
+                    setError(msg || "Unable to process this request.");
                     setStatus("error");
                     return;
                   }
-                  const msg = typeof obj?.message === "string" ? obj.message : "";
-                  setError(msg || "Unable to process this request.");
-                  setStatus("error");
-                  return;
-                }
-                if (res.status !== 402) {
-                  const text = await res.text();
-                  throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
-                }
-                const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED") || res.headers.get("payment-required") || "";
-                const response402 = await res.json().catch(() => ({}));
-                const requirement =
-                  payNetwork === "base"
-                    ? pickPaymentRequirementByNetwork(response402, "base")
-                    : pickPaymentRequirementByNetwork(response402, "solana");
-                if (!requirement) throw new Error("Missing payment requirement.");
-
-                let xPayment: string;
-
-                if (payNetwork === "base") {
-                  if (!address || !walletClient) throw new Error("Connect a Base wallet to pay");
-                  // v1 requirement
-                  const req = parsePaymentRequirements(response402);
-                  if (address.toLowerCase() === String(req.payTo).toLowerCase()) {
-                    throw new Error(`Connected wallet is the same as payTo (${req.payTo}). Switch to a payer wallet.`);
+                  if (res.status !== 402) {
+                    const text = await res.text();
+                    throw new Error(`Expected 402 from /v1/topup, got ${res.status}: ${text}`);
                   }
-                  xPayment = await createX402PaymentSignature(walletClient, req, address);
-                } else {
-                  const pk = solanaAddress || (await connectSolanaWallet());
-                  if (!pk) throw new Error("Connect a Solana wallet to pay");
+                  const paymentRequiredHeader = res.headers.get("PAYMENT-REQUIRED") || res.headers.get("payment-required") || "";
+                  const response402 = await res.json().catch(() => ({}));
+                  const requirement =
+                    payNetwork === "base"
+                      ? pickPaymentRequirementByNetwork(response402, "base")
+                      : pickPaymentRequirementByNetwork(response402, "solana");
+                  if (!requirement) throw new Error("Missing payment requirement.");
 
-                  const parsedHeader = paymentRequiredHeader ? decodePaymentRequiredHeader(paymentRequiredHeader) : null;
-                  const parsedObj: Record<string, unknown> | null =
-                    parsedHeader && typeof parsedHeader === "object" ? (parsedHeader as Record<string, unknown>) : null;
-                  const acceptsRaw = parsedObj?.accepts;
-                  const headerAccepts = Array.isArray(acceptsRaw) ? (acceptsRaw as unknown[]) : [];
-                  const solReq = headerAccepts.find((x) => {
-                    if (!x || typeof x !== "object") return false;
-                    const net = String((x as Record<string, unknown>).network || "").toLowerCase();
-                    return net.includes("solana");
-                  }) as
-                    | {
-                        scheme: string;
-                        network: string;
-                        asset: string;
-                        amount: string;
-                        payTo: string;
-                        maxTimeoutSeconds: number;
-                        extra?: Record<string, unknown>;
-                      }
-                    | undefined;
-                  if (!solReq) throw new Error("Missing Solana v2 requirement (PAYMENT-REQUIRED).");
+                  let xPayment: string;
 
-                  const feePayer = typeof solReq.extra?.feePayer === "string" ? solReq.extra.feePayer : "";
-                  if (!feePayer) throw new Error("Solana fee payer not provided by facilitator. Please retry.");
+                  if (payNetwork === "base") {
+                    if (!address || !walletClient) throw new Error("Connect a Base wallet to pay");
+                    // v1 requirement
+                    const req = parsePaymentRequirements(response402);
+                    if (address.toLowerCase() === String(req.payTo).toLowerCase()) {
+                      throw new Error(`Connected wallet is the same as payTo (${req.payTo}). Switch to a payer wallet.`);
+                    }
+                    xPayment = await createX402PaymentSignature(walletClient, req, address);
+                  } else {
+                    const pk = solanaAddress || (await connectSolanaWallet());
+                    if (!pk) throw new Error("Connect a Solana wallet to pay");
 
-                  const bhRes = await fetch(`${API_BASE}/demo-agents/solana/blockhash`, { method: "GET" });
-                  const bhJson = (await bhRes.json().catch(() => null)) as unknown;
-                  const blockhash =
-                    bhRes.ok && bhJson && typeof bhJson === "object"
-                      ? (bhJson as Record<string, unknown>).blockhash
-                      : null;
-                  if (typeof blockhash !== "string" || !blockhash) {
-                    throw new Error("Failed to fetch recent blockhash from server.");
-                  }
+                    const parsedHeader = paymentRequiredHeader ? decodePaymentRequiredHeader(paymentRequiredHeader) : null;
+                    const parsedObj: Record<string, unknown> | null =
+                      parsedHeader && typeof parsedHeader === "object" ? (parsedHeader as Record<string, unknown>) : null;
+                    const acceptsRaw = parsedObj?.accepts;
+                    const headerAccepts = Array.isArray(acceptsRaw) ? (acceptsRaw as unknown[]) : [];
+                    const solReq = headerAccepts.find((x) => {
+                      if (!x || typeof x !== "object") return false;
+                      const net = String((x as Record<string, unknown>).network || "").toLowerCase();
+                      return net.includes("solana");
+                    }) as
+                      | {
+                          scheme: string;
+                          network: string;
+                          asset: string;
+                          amount: string;
+                          payTo: string;
+                          maxTimeoutSeconds: number;
+                          extra?: Record<string, unknown>;
+                        }
+                      | undefined;
+                    if (!solReq) throw new Error("Missing Solana v2 requirement (PAYMENT-REQUIRED).");
 
-                  const provider = getSolanaProvider();
-                  if (!provider) throw new Error("No Solana wallet found.");
+                    const feePayer = typeof solReq.extra?.feePayer === "string" ? solReq.extra.feePayer : "";
+                    if (!feePayer) throw new Error("Solana fee payer not provided by facilitator. Please retry.");
 
-                  const tx = await createSolanaExactPaymentTransaction({
-                    recentBlockhash: blockhash,
-                    payer: new PublicKey(pk),
-                    feePayer: new PublicKey(feePayer),
-                    payTo: new PublicKey(String(solReq.payTo)),
-                    mint: new PublicKey(String(solReq.asset)),
-                    amountMicrousdc: getSolanaAmountMicrousdcFromRequirement(solReq),
-                  });
-                  const signed = await provider.signTransaction(tx);
-                  const partialTx = encodePartialSolanaTransactionBase64(signed);
+                    const bhRes = await fetch(`${API_BASE}/demo-agents/solana/blockhash`, { method: "GET" });
+                    const bhJson = (await bhRes.json().catch(() => null)) as unknown;
+                    const blockhash =
+                      bhRes.ok && bhJson && typeof bhJson === "object"
+                        ? (bhJson as Record<string, unknown>).blockhash
+                        : null;
+                    if (typeof blockhash !== "string" || !blockhash) {
+                      throw new Error("Failed to fetch recent blockhash from server.");
+                    }
 
-                  // Canonical x402 v2 Solana payment payload (matches demo agent flow).
-                  const amount = getSolanaAmountMicrousdcFromRequirement(solReq);
-                  const paymentPayload = {
-                    x402Version: 2,
-                    scheme: solReq.scheme,
-                    network: solReq.network,
-                    accepted: {
+                    const provider = getSolanaProvider();
+                    if (!provider) throw new Error("No Solana wallet found.");
+
+                    const tx = await createSolanaExactPaymentTransaction({
+                      recentBlockhash: blockhash,
+                      payer: new PublicKey(pk),
+                      feePayer: new PublicKey(feePayer),
+                      payTo: new PublicKey(String(solReq.payTo)),
+                      mint: new PublicKey(String(solReq.asset)),
+                      amountMicrousdc: getSolanaAmountMicrousdcFromRequirement(solReq),
+                    });
+                    const signed = await provider.signTransaction(tx);
+                    const partialTx = encodePartialSolanaTransactionBase64(signed);
+
+                    // Canonical x402 v2 Solana payment payload (matches demo agent flow).
+                    const amount = getSolanaAmountMicrousdcFromRequirement(solReq);
+                    const paymentPayload = {
+                      x402Version: 2,
                       scheme: solReq.scheme,
                       network: solReq.network,
-                      amount: String(amount),
-                      asset: solReq.asset,
-                      payTo: solReq.payTo,
-                      maxTimeoutSeconds: solReq.maxTimeoutSeconds,
-                      extra: { feePayer },
+                      accepted: {
+                        scheme: solReq.scheme,
+                        network: solReq.network,
+                        amount: String(amount),
+                        asset: solReq.asset,
+                        payTo: solReq.payTo,
+                        maxTimeoutSeconds: solReq.maxTimeoutSeconds,
+                        extra: { feePayer },
+                      },
+                      payload: { transaction: partialTx },
+                    };
+                    xPayment = btoa(JSON.stringify(paymentPayload));
+                  }
+
+                  // 3) settle (send X-PAYMENT header)
+                  const res2 = await fetch(TOPUP_PROXY_PATH, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
                     },
-                    payload: { transaction: partialTx },
-                  };
-                  xPayment = btoa(JSON.stringify(paymentPayload));
-                }
+                    body: JSON.stringify({
+                      merchant: merchantCaip10,
+                      amountMicrousdc: amountMicros,
+                      currency: "USDC",
+                      blockchain: payNetwork,
+                      paymentHeader: xPayment,
+                      caseId: caseId || undefined,
+                      actionToken: actionToken || undefined,
+                    }),
+                  });
 
-                // 3) settle (send X-PAYMENT header)
-                const res2 = await fetch(TOPUP_PROXY_PATH, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    merchant: merchantCaip10,
-                    amountMicrousdc: amountMicros,
-                    currency: "USDC",
-                    blockchain: payNetwork,
-                    paymentHeader: xPayment,
-                    caseId: caseId || undefined,
-                    actionToken: actionToken || undefined,
-                  }),
-                });
+                  const text = await res2.text().catch(() => "");
+                  let parsed: unknown = null;
+                  try {
+                    parsed = text ? (JSON.parse(text) as unknown) : null;
+                  } catch {
+                    parsed = null;
+                  }
 
-                const text = await res2.text().catch(() => "");
-                let parsed: unknown = null;
-                try {
-                  parsed = text ? (JSON.parse(text) as unknown) : null;
-                } catch {
-                  parsed = null;
-                }
+                  const obj: Record<string, unknown> | null =
+                    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                  const ok = obj?.ok === true;
+                  if (!res2.ok || !ok) {
+                    const message = typeof obj?.message === "string" ? obj.message : "";
+                    const code = typeof obj?.code === "string" ? obj.code : "";
+                    const details = obj
+                      ? JSON.stringify(obj, null, 2).slice(0, 2000)
+                      : text
+                        ? text.slice(0, 2000)
+                        : "";
+                    throw new Error(
+                      `${message || `Topup failed: ${res2.status}`}${code ? ` (${code})` : ""}${details ? `\n\n${details}` : ""}`,
+                    );
+                  }
 
-                const obj: Record<string, unknown> | null =
-                  parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                const ok = obj?.ok === true;
-                if (!res2.ok || !ok) {
-                  const message = typeof obj?.message === "string" ? obj.message : "";
-                  const code = typeof obj?.code === "string" ? obj.code : "";
-                  const details = obj
-                    ? JSON.stringify(obj, null, 2).slice(0, 2000)
-                    : text
-                      ? text.slice(0, 2000)
-                      : "";
-                  throw new Error(
-                    `${message || `Topup failed: ${res2.status}`}${code ? ` (${code})` : ""}${details ? `\n\n${details}` : ""}`,
+                  setTxHash(typeof obj?.txHash === "string" ? obj.txHash : null);
+                  setEstimatedNewBalanceUsdc(
+                    typeof obj?.estimatedNewBalanceUsdc === "number" ? obj.estimatedNewBalanceUsdc : null,
                   );
+                  setStatus("submitted");
+                } catch (e: unknown) {
+                  setStatus("error");
+                  setError(e instanceof Error ? e.message : String(e));
                 }
-
-                setTxHash(typeof obj?.txHash === "string" ? obj.txHash : null);
-                setEstimatedNewBalanceUsdc(
-                  typeof obj?.estimatedNewBalanceUsdc === "number" ? obj.estimatedNewBalanceUsdc : null,
-                );
-                setStatus("submitted");
-              } catch (e: unknown) {
-                setStatus("error");
-                setError(e instanceof Error ? e.message : String(e));
-              }
-            }}
-          >
-            {isEmailActionFlow ? "Process refund" : "Add USDC credits"}
-          </Button>
-          <div className="text-xs text-muted-foreground">No gas fees. Powered by X-402.</div>
+              }}
+            >
+              {isEmailActionFlow ? "Process refund" : "Add USDC credits"}
+            </Button>
+          </div>
 
           {friendlyError && (
             <div className="rounded-lg border border-border bg-muted/20 p-3">
