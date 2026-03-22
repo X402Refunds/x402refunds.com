@@ -4,7 +4,6 @@
 
 - **Production**: `https://x402refunds.com`
 - **API Base (HTTP Routes/Actions)**: `https://api.x402refunds.com`
-- **Convex SDK URL (SDK only)**: `https://youthful-orca-358.convex.cloud`
 
 ## Key Endpoints
 
